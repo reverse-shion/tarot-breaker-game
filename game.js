@@ -27,6 +27,10 @@
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
   const SHIOPON_WANDER_RADIUS = 48;
+  const SHIOPON_FOLLOW_SPEED = 210;
+  const SHIOPON_FOLLOW_DISTANCE = 56;
+  const SHIOPON_FOLLOW_STOP = 5;
+  const SHIOPON_FOLLOW_MIN_GAP = 44;
   const ACTOR_COLLISION_DISTANCE = 26;
   const LUMIERE_HOME = { x: 810, y: 212 };
   const LUMIERE_COLLISION_DISTANCE = 32;
@@ -164,6 +168,7 @@
     anim: 0,
     wait: 1.2,
     target: null,
+    following: false,
   };
   const lumiere = {
     x: LUMIERE_HOME.x,
@@ -282,6 +287,7 @@
     shiopon.anim = 0;
     shiopon.wait = 0.9 + Math.random() * 1.4;
     shiopon.target = null;
+    shiopon.following = false;
   }
 
   function resetLumiere() {
@@ -343,9 +349,11 @@
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
 
+    const shioponBlocked =
+      !shiopon.following && movingIntoActor(from, next, shioponRef());
     const npcBlocked =
       next.moving &&
-      (movingIntoActor(from, next, shioponRef()) ||
+      (shioponBlocked ||
         movingIntoActor(
           from,
           next,
@@ -420,10 +428,126 @@
     setDirection(shiopon, playerNow.x - current.x, playerNow.y - current.y);
   }
 
+  function shioponFollowTarget() {
+    const playerNow = playerRef();
+    const behind = {
+      up: { x: 0, y: 1 },
+      down: { x: 0, y: -1 },
+      left: { x: 1, y: 0 },
+      right: { x: -1, y: 0 },
+    }[player.dir] || { x: 0, y: 1 };
+
+    for (const gap of [
+      SHIOPON_FOLLOW_DISTANCE,
+      SHIOPON_FOLLOW_DISTANCE + 8,
+      SHIOPON_FOLLOW_DISTANCE - 8,
+    ]) {
+      const candidate = {
+        x: playerNow.x + behind.x * gap,
+        y: playerNow.y + behind.y * gap,
+      };
+      if (
+        isWalkableRef(candidate.x, candidate.y) &&
+        refDistance(candidate, playerNow) >= SHIOPON_FOLLOW_MIN_GAP
+      ) {
+        return candidate;
+      }
+    }
+
+    const fallback = collision.nearestWalkable({
+      x: playerNow.x + behind.x * SHIOPON_FOLLOW_DISTANCE,
+      y: playerNow.y + behind.y * SHIOPON_FOLLOW_DISTANCE,
+    });
+    if (
+      fallback &&
+      refDistance(fallback, playerNow) >= SHIOPON_FOLLOW_MIN_GAP
+    ) {
+      return fallback;
+    }
+    return shioponRef();
+  }
+
+  function moveShioponFollowStep(current, next, target) {
+    if (isWalkableRef(next.x, next.y) && collision.segmentClear(current, next))
+      return next;
+
+    const horizontal = { x: next.x, y: current.y };
+    const vertical = { x: current.x, y: next.y };
+    const candidates = [horizontal, vertical]
+      .filter(
+        (point) =>
+          isWalkableRef(point.x, point.y) &&
+          collision.segmentClear(current, point),
+      )
+      .sort((a, b) => refDistance(a, target) - refDistance(b, target));
+    return candidates[0] || current;
+  }
+
+  function updateShioponFollow(dt) {
+    const current = shioponRef();
+    const playerNow = playerRef();
+    const target = shioponFollowTarget();
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance <= SHIOPON_FOLLOW_STOP) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.dir = player.dir;
+      return;
+    }
+
+    const step = Math.min(distance, SHIOPON_FOLLOW_SPEED * dt);
+    let next = {
+      x: current.x + (dx / distance) * step,
+      y: current.y + (dy / distance) * step,
+    };
+    next = moveShioponFollowStep(current, next, target);
+
+    if (refDistance(next, playerNow) < SHIOPON_FOLLOW_MIN_GAP) {
+      const awayX = current.x - playerNow.x;
+      const awayY = current.y - playerNow.y;
+      const awayLength = Math.hypot(awayX, awayY);
+      if (awayLength > 1e-6) {
+        const separated = {
+          x: playerNow.x + (awayX / awayLength) * SHIOPON_FOLLOW_MIN_GAP,
+          y: playerNow.y + (awayY / awayLength) * SHIOPON_FOLLOW_MIN_GAP,
+        };
+        if (isWalkableRef(separated.x, separated.y)) next = separated;
+      } else {
+        next = target;
+      }
+    }
+
+    if (next.x === current.x && next.y === current.y) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      return;
+    }
+
+    shiopon.x = next.x * scale.x;
+    shiopon.y = next.y * scale.y;
+    shiopon.moving = true;
+    setDirection(shiopon, next.x - current.x, next.y - current.y);
+    shiopon.anim += dt;
+    while (shiopon.anim >= 0.16) {
+      shiopon.anim -= 0.16;
+      shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+    }
+  }
+
   function updateShiopon(dt) {
     if (npcSuspended) {
       shiopon.moving = false;
       shiopon.frame = 0;
+      return;
+    }
+
+    if (shiopon.following) {
+      updateShioponFollow(dt);
       return;
     }
 
@@ -662,8 +786,6 @@
       ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH + visualOffsetY
       : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
     if (normalizedLumiere) {
-      // One complete silhouette, one draw: no black underpainting, broad halo,
-      // repeated alpha buildup, or moving body underneath the fixed torso.
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       ctx.globalAlpha = 1;
@@ -735,7 +857,6 @@
       drawH,
     );
     ctx.restore();
-
   }
 
   function drawGroundShadowAt(actor, radius, opacity) {
@@ -786,7 +907,13 @@
         drawHeight: DRAW_HEIGHT,
         glowColor: "rgba(255,236,190,.22)",
       },
-    ].sort((a, b) => a.actor.y - b.actor.y);
+    ].sort((a, b) => {
+      const ay =
+        shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
+      const by =
+        shiopon.following && b.actor === shiopon ? player.y - 0.01 : b.actor.y;
+      return ay - by;
+    });
 
     for (const entry of actors) {
       drawActor(
@@ -918,7 +1045,7 @@
     debugStatus.textContent =
       `NAV 16px · ${navigation.nodes.length} cells\n` +
       `${player.x.toFixed(1)}, ${player.y.toFixed(1)} · ${player.dir} ${player.moving ? "walk" : "idle"} ${player.frame}\n` +
-      `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
+      `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.following ? "follow" : "wander"} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
       `Lumiere ${lumiere.x.toFixed(1)}, ${lumiere.y.toFixed(1)} · fixed hover ${lumiere.frame}\n` +
       `${state.stick.active ? "stick" : state.keys.size ? "keyboard" : state.route.length ? "auto" : "idle"} · ${state.route.length} waypoints`;
 
@@ -933,6 +1060,7 @@
         wait: shiopon.wait,
         target: shiopon.target,
         homeRef: shiopon.homeRef,
+        following: shiopon.following,
       },
       lumiere: {
         x: lumiere.x,
@@ -947,6 +1075,8 @@
       },
       actorCollisionDistance: ACTOR_COLLISION_DISTANCE,
       actorGap: refDistance(playerRef(), shioponRef()),
+      shioponFollowDistance: SHIOPON_FOLLOW_DISTANCE,
+      shioponFollowMinGap: SHIOPON_FOLLOW_MIN_GAP,
       lumiereCollisionDistance: LUMIERE_COLLISION_DISTANCE,
       lumiereGap: refDistance(playerRef(), lumiereRef()),
       camera: { ...camera },
@@ -1076,6 +1206,31 @@
     syncStick();
   }
 
+  function startShioponFollow() {
+    if (!ready) return;
+    shiopon.following = true;
+    shiopon.target = null;
+    shiopon.wait = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    const target = shioponFollowTarget();
+    if (isWalkableRef(target.x, target.y)) {
+      shiopon.x = target.x * scale.x;
+      shiopon.y = target.y * scale.y;
+    }
+    shiopon.dir = player.dir;
+  }
+
+  function stopShioponFollow() {
+    shiopon.following = false;
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.9 + Math.random() * 1.4;
+  }
+
   start.addEventListener("click", begin);
   resetButton.addEventListener("pointerdown", () => clearInput("reset"));
   resetButton.addEventListener("click", reset);
@@ -1128,6 +1283,8 @@
     controls?.resume();
     npcSuspended = false;
   });
+  window.addEventListener("tarot-breaker:shiopon-follow-start", startShioponFollow);
+  window.addEventListener("tarot-breaker:shiopon-follow-stop", stopShioponFollow);
 
   (async () => {
     try {
