@@ -64,6 +64,7 @@ test('390x844 boots with Shion + Shiopon, DPR cap, corrected spawn and actor siz
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.equal(s.player.x, 729); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
   assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
+  assert.equal(s.actorCollisionDistance, 26); assert.ok(s.actorGap > s.actorCollisionDistance);
   const shionDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shion_'));
   const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
@@ -90,9 +91,9 @@ test('real event bindings: drag/keyboard/reset cancel and reset clears held stic
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
 test('four directions use all four Shion walk frames then the matching idle frame', async () => {
-  const h = await boot(); h.tapWorld(810, 800); h.tick(250);
+  const h = await boot(); h.tapWorld(810, 700); h.tick(250);
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    h.tapWorld(810, 800); h.tick(200);
+    h.tapWorld(810, 700); h.tick(200);
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
     for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
     assert.equal(frames.size, 4);
