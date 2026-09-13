@@ -18,7 +18,7 @@
   const DPR_LIMIT = 2;
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
   const DRAW_HEIGHT = 78;
-  const SHIOPON_DRAW_HEIGHT = 66;
+  const SHIOPON_DRAW_HEIGHT = 72;
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
   const SHIOPON_WANDER_RADIUS = 48;
@@ -483,7 +483,7 @@
   }
 
   function drawActors() {
-    drawGroundShadowAt(shiopon, 15, 0.34);
+    drawGroundShadowAt(shiopon, 16, 0.36);
     drawGroundShadowAt(player, 20, 0.46);
 
     const actors = [
