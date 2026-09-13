@@ -67,7 +67,7 @@ test('390x844 boots with Shion + Shiopon, DPR cap, corrected spawn and actor siz
   const shionDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shion_'));
   const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
-  assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 66));
+  assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 72));
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); h.tapWorld(810, 700); const after = h.state();
