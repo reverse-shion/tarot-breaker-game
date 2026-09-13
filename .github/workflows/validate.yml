@@ -23,11 +23,14 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check game.js
+          node --check audio.js
           node --check navigation.js
           node --check controls.js
 
       - name: Validate game assets and manifest
-        run: node scripts/validate.mjs
+        run: |
+          node scripts/validate.mjs
+          node scripts/validate-audio.mjs
 
       - name: Test collision, navigation, input and game integration
         run: node --test tests/*.test.cjs
