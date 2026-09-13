@@ -18,7 +18,7 @@
   const DPR_LIMIT = 2;
   let manifest;
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
-  const DRAW_HEIGHT = 65;
+  const DRAW_HEIGHT = 78;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
