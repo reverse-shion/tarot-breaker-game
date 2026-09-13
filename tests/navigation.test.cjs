@@ -8,12 +8,25 @@ const spawn = { x: 729, y: 1015 };
 const rect = (x, y, w, h) => ({ type: 'poly', points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
 const fixture = areas => ({ ...data, walkAreas: areas });
 
-// Independent copy of the original ray-crossing rule, for dense route sampling.
+// Independent copy of the polygon rule for dense route sampling.
+// The production collision contract treats polygon boundaries as walkable,
+// so this oracle must include edges/vertices too instead of rejecting them.
+function pointOnSegment(p, a, b, eps = 1e-7) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const px = p.x - a[0], py = p.y - a[1];
+  const cross = dx * py - dy * px;
+  if (Math.abs(cross) > eps) return false;
+  const dot = px * dx + py * dy;
+  if (dot < -eps) return false;
+  return dot <= dx * dx + dy * dy + eps;
+}
 function originalWalkable(p) {
   return data.walkAreas.some(area => {
     let inside = false;
     for (let i = 0, j = area.points.length - 1; i < area.points.length; j = i++) {
-      const [xi, yi] = area.points[i], [xj, yj] = area.points[j];
+      const a = area.points[j], b = area.points[i];
+      if (pointOnSegment(p, a, b)) return true;
+      const [xi, yi] = b, [xj, yj] = a;
       if ((yi > p.y) !== (yj > p.y) && p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi) inside = !inside;
     }
     return inside;
