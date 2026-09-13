@@ -96,7 +96,7 @@ test('Lumiere bobs as one body while slow wing frames change independently', asy
   assert.notEqual(after.frame, before.frame);
   assert.notEqual(after.bobOffsetY, before.bobOffsetY);
   assert.ok(Math.abs(after.bobOffsetY) <= 2.4);
-  assert.ok(after.wingHold >= 0.48 && after.wingHold <= 0.9);
+  assert.ok(after.wingHold >= 0.7 && after.wingHold <= 1.35);
 });
 test('Lumiere has solid collision while remaining fixed at the gate', async () => {
   const h = await boot();
