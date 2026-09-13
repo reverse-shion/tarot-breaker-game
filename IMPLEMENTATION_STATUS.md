@@ -61,11 +61,57 @@ Phase 1の目的:
 - 柱周辺の当たり判定が厳しすぎないか／緩すぎないか
 - iPhoneで前景再描画による性能低下がないか
 
-次の品質ゲート:
-1. iPhoneで通常プレビューを起動
-2. 噴水の奥側へ移動し、シオンの下半身が手前縁に自然に隠れるか確認
-3. 左右の柱・花壇沿いを歩き、背景オブジェクトの裏に入る感覚があるか確認
-4. 噴水・柱へ入り込めないか確認
-5. 不自然な遮蔽がある場合は `?depthDebug=1` で境界を確認して座標調整
+## 操作系 Phase 2 — Tap-to-Move + improved floating stick
 
-Phase 1実機確認後、遮蔽マスク座標を微調整し、Phase 2（奥行きスケール／NPC Y-sort）へ進む。
+2026-09-13: IMPLEMENTATION COMPLETE / IPHONE UX CHECK PENDING
+
+実装内容:
+- `feature/tarot-breaker-tap-to-move` を作成
+- 手動作成した `star-country-gate-garden-collision.json` をNavigationの唯一の歩行ソースとして使用
+- 16px Navigation Grid生成
+- 8方向A*経路探索
+- Line-of-Sightによる経路短縮
+- 歩行不可地点タップ時の最近傍歩行可能地点への補正
+- Tap-to-Moveを主操作として追加
+- 左側ドラッグ時のみフローティングスティックへ切替
+- 12 CSS px / 250msによるTapとDragの判定
+- スティック半径64px、15%デッドゾーン、指数1.4の速度カーブ
+- スティック／キーボード入力で自動移動を即キャンセル
+- 会話・調査イベント用の入力suspend/resumeイベントを追加
+- タップ地点へ控えめな星光フィードバックを追加
+- `?navDebug=1` でNavigation Grid・経路・Waypoint・入力状態を表示
+- PCのWASD / Arrow Keysを維持
+- 正式シオン78px、4方向4フレーム、方向別idle、影、カメラを維持
+- 公開プレビューをTap-to-Move版へ更新
+
+仕上げ修正:
+- 最新の手動当たり判定22範囲を取り込み
+- 右側横通路と本線の間に残っていた約3〜4pxの編集誤差を、8×8pxの極小接続ポリゴンで補正
+- 右側横通路もNavigation上で到達可能になることを自動テスト対象へ変更
+- 公開プレビューを `preview-10` へ更新
+
+自動テスト:
+- JavaScript syntax check
+- PNG / manifest / required assets validation
+- collision JSON validation
+- A* route generation
+- fountain detour
+- nearest walkable projection
+- route smoothing safety
+- Tap / Drag arbitration
+- floating-stick response curve
+- manual input cancellation
+- game integration
+- east passage route connectivity
+
+残る確認:
+- iPhone SafariでTap-to-Moveの体感が自然か
+- タップとドラッグの12px閾値が誤操作を起こさないか
+- スティックのデッドゾーンと速度カーブが使いやすいか
+- 右側横通路を実際に最後まで歩けるか
+
+Phase 2判定:
+- 技術実装: PASS
+- 自動検証: PASS（最新Actions結果で最終確認）
+- 実機UX: PENDING
+- Phase 3には進まない

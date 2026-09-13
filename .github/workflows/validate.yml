@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - feature/shion-official-sprite-player
+      - feature/tarot-breaker-tap-to-move
 
 jobs:
   validate:
@@ -20,7 +21,13 @@ jobs:
           node-version: '22'
 
       - name: Check JavaScript syntax
-        run: node --check game.js
+        run: |
+          node --check game.js
+          node --check navigation.js
+          node --check controls.js
 
       - name: Validate game assets and manifest
         run: node scripts/validate.mjs
+
+      - name: Test collision, navigation, input and game integration
+        run: node --test tests/*.test.cjs

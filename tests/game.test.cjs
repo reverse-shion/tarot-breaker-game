@@ -1,0 +1,124 @@
+// Execute the real scripts and event bindings with a deterministic DOM/canvas
+// harness. Browser rendering and physical Safari are separate checks.
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
+const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
+
+async function boot({ width = 390, height = 844, spriteBase, collisionUrl, badCollision = false } = {}) {
+  let raf, now = 1000;
+  const drawCalls = [], errors = [], captured = new Set();
+  class Element {
+    constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
+    addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
+    emit(type, values = {}) {
+      const event = { type, timeStamp: now, preventDefault() { this.defaultPrevented = true; }, ...values };
+      for (const fn of this.listeners.get(type) || []) fn(event);
+      return event;
+    }
+    appendChild(child) { elements[child.id] = child; }
+    getBoundingClientRect() { return { left: 34, top: 20, width, height }; }
+    setPointerCapture(id) { captured.add(id); }
+    hasPointerCapture(id) { return captured.has(id); }
+    releasePointerCapture(id) { captured.delete(id); }
+  }
+  const elements = Object.fromEntries(['game', 'map-layer', 'start', 'start-screen', 'load-note', 'guide', 'joystick', 'joystick-knob', 'reset', 'game-shell'].map(id => [id, new Element()]));
+  const context = new Proxy({}, { get(_, key) {
+    if (key === 'drawImage') return (...args) => drawCalls.push(args);
+    if (key === 'createRadialGradient') return () => ({ addColorStop() {} });
+    return () => {};
+  }, set() { return true; } });
+  elements.game.getContext = () => context;
+  Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1448, naturalHeight: 1086 });
+  const document = new Element();
+  document.currentScript = { dataset: { spriteBase, collisionUrl } };
+  document.getElementById = id => elements[id]; document.createElement = () => new Element();
+  const window = new Element(); window.devicePixelRatio = 3;
+  class Image {
+    naturalWidth = 1536; naturalHeight = 512;
+    set src(src) { this.url = src; queueMicrotask(() => this.onload()); }
+  }
+  const fetched = [];
+  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location: { search: '?navDebug=1' },
+    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
+    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
+    console: { error: e => errors.push(e), warn() {}, log() {} } });
+  for (const name of ['navigation.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
+  await new Promise(setImmediate);
+  const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
+  const state = () => JSON.parse(elements['nav-status'].dataset.state);
+  const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
+  const tapWorld = (x, y) => {
+    const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
+    pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy); tick();
+  };
+  elements.start.emit('click'); tick(120);
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, captured };
+}
+
+test('390x844 boots with official assets, DPR cap, corrected spawn and 78px sprite', async () => {
+  const h = await boot(); const s = h.state();
+  assert.equal(h.errors.length, 0); assert.equal(s.cssWidth, 390); assert.equal(s.cssHeight, 844);
+  assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
+  assert.equal(s.player.x, 729); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
+  assert.ok(h.drawCalls.every(call => call[8] === 78));
+});
+test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
+  const h = await boot(), before = h.state(); h.tapWorld(810, 700); const after = h.state();
+  assert.ok(after.route.length); assert.equal(after.requested.x, 810); assert.equal(after.requested.y, 700);
+  assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
+  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
+  h.tick(350); const arrived = h.state();
+  assert.equal(arrived.route.length, 0); assert.equal(arrived.player.moving, false);
+  const idleDirection = arrived.player.dir; h.tick(120); assert.equal(h.state().player.dir, idleDirection);
+});
+test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
+  const h = await boot(); h.tapWorld(810, 700);
+  h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
+  assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
+  h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
+  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 729);
+  h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
+  h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
+  h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
+});
+test('four directions use all four walk frames then the matching idle frame', async () => {
+  const h = await boot(); h.tapWorld(810, 800); h.tick(250);
+  for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
+    h.tapWorld(810, 800); h.tick(200);
+    const frames = new Set(); h.window.emit('keydown', { key });
+    for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
+    assert.equal(frames.size, 4); assert.ok(h.drawCalls.at(-1)[0].url.endsWith(`shion_walk_${dir}.png`));
+    h.window.emit('keyup', { key }); h.tick();
+    assert.equal(h.state().player.dir, dir); assert.equal(h.state().player.moving, false);
+    assert.ok(h.drawCalls.at(-1)[0].url.endsWith('shion_idle.png')); assert.equal(h.drawCalls.at(-1)[1], idleIndex * 384);
+  }
+});
+test('pointercancel, lost capture, blur and hidden page prevent stuck movement', async () => {
+  for (const event of ['pointercancel', 'lostpointercapture', 'blur', 'visibilitychange', 'pagehide']) {
+    const h = await boot(); h.tapWorld(810, 700); h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 150, 600);
+    if (event.startsWith('pointer') || event === 'lostpointercapture') h.pointer(event, 150, 600);
+    else if (event === 'visibilitychange') { h.document.hidden = true; h.document.emit(event); }
+    else h.window.emit(event);
+    h.tick(); assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.moving, false);
+  }
+});
+test('future interaction lifecycle cancels and suspends movement', async () => {
+  const h = await boot(); h.tapWorld(810, 700); h.window.emit('tarot-breaker:interaction-start'); h.tick();
+  assert.equal(h.state().route.length, 0); assert.equal(h.state().suspended, true);
+  h.tapWorld(810, 600); assert.equal(h.state().route.length, 0);
+  h.window.emit('tarot-breaker:interaction-end'); h.tapWorld(810, 700); assert.ok(h.state().route.length);
+});
+test('desktop click uses the same input at camera zoom 1.22', async () => {
+  const h = await boot({ width: 1280, height: 900 }); h.tapWorld(810, 700);
+  assert.equal(h.state().camera.zoom, 1.22); assert.equal(h.state().requested.x, 810); assert.equal(h.state().requested.y, 700);
+  assert.ok(h.state().route.length);
+});
+test('preview asset configuration loads the same game and rejects invalid collision data', async () => {
+  const h = await boot({ spriteBase: '/sprites/', collisionUrl: '/official-collision.json' });
+  assert.ok(h.fetched.includes('/sprites/shion_sprite_manifest.json')); assert.ok(h.fetched.includes('/official-collision.json'));
+  assert.equal(h.errors.length, 0);
+  const bad = await boot({ badCollision: true }); assert.equal(bad.elements.start.disabled, true); assert.equal(bad.errors.length, 1);
+});
