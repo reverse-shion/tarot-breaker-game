@@ -1,0 +1,26 @@
+name: Validate TAROT BREAKER 2D
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/shion-official-sprite-player
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check JavaScript syntax
+        run: node --check game.js
+
+      - name: Validate game assets and manifest
+        run: node scripts/validate.mjs
