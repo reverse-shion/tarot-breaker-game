@@ -28,8 +28,8 @@
   const LUMIERE_COLLISION_DISTANCE = 32;
   const LUMIERE_BOB_AMPLITUDE = 2.4;
   const LUMIERE_BOB_PERIOD = 5.2;
-  const LUMIERE_WING_HOLD_MIN = 0.48;
-  const LUMIERE_WING_HOLD_RANGE = 0.42;
+  const LUMIERE_WING_HOLD_MIN = 0.7;
+  const LUMIERE_WING_HOLD_RANGE = 0.65;
   // The supplied frames have different transparent margins. Crop each one to
   // the character silhouette, then render every crop into the same box so the
   // head and lower body stay together while hair, wings and drapery animate.
