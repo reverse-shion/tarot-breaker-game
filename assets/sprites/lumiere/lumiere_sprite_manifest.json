@@ -1,1 +1,67 @@
+{
+  "character": "Lumiere",
+  "format": "RGBA PNG",
+  "cell_size": {
+    "width": 384,
+    "height": 512
+  },
+  "baseline_y": 480,
 
+  "frame_count": {
+    "idle": 4,
+    "hover_down": 4,
+    "hover_up": 4,
+    "hover_left": 4,
+    "hover_right": 4
+  },
+
+  "idle_frame_order": [
+    "down",
+    "up",
+    "left",
+    "right"
+  ],
+
+  "hover_frame_order": [
+    0,
+    1,
+    2,
+    3
+  ],
+
+  "files": {
+    "idle": "lumiere_idle.png",
+    "hover_down": "lumiere_hover_down.png",
+    "hover_up": "lumiere_hover_up.png",
+    "hover_left": "lumiere_hover_left.png",
+    "hover_right": "lumiere_hover_right.png"
+  },
+
+  "movement_type": "hover",
+
+  "visual_rules": {
+    "barefoot": true,
+    "floating": true,
+    "ground_contact": false,
+    "heterochromia": {
+      "viewer_left_eye": "violet",
+      "viewer_right_eye": "azure",
+      "left_facing_visible_eye": "azure",
+      "right_facing_visible_eye": "violet"
+    }
+  },
+
+  "notes": [
+    "All sheets use true transparent alpha.",
+    "Every frame uses the same 384x512 cell.",
+    "Implementation alignment uses baseline_y=480.",
+    "Lumiere visually floats slightly above the baseline and does not make direct ground contact.",
+    "Movement animation uses hovering instead of walking.",
+    "Hover motion is expressed through subtle vertical bobbing, wing movement, hair sway, and flowing drapery.",
+    "Bare feet must remain visible.",
+    "Heterochromia must remain consistent in every visible-eye frame.",
+    "Front view: viewer-left eye is violet and viewer-right eye is azure.",
+    "Left-facing profile: visible eye is azure.",
+    "Right-facing profile: visible eye is violet."
+  ]
+}
