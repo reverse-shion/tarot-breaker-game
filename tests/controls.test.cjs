@@ -47,9 +47,17 @@ test('all WASD/arrows cancel auto movement; unrelated keys do not', () => {
   c.tap(goal, spawn); assert.equal(c.keyDown('Shift'), false); assert.ok(c.state.route.length);
 });
 test('new tap replaces the old route, including an unreachable new target', () => {
-  const c = createControls(collision, nav); c.tap(goal, spawn);
+  const failingNav = {
+    findPath(position, point) {
+      if (point.x === -999) return null;
+      return nav.findPath(position, point);
+    }
+  };
+  const c = createControls(collision, failingNav); c.tap(goal, spawn);
   c.tap({ x: 800, y: 900 }, spawn); assert.deepEqual(c.state.target, { x: 800, y: 900 });
-  c.tap({ x: 1190, y: 490 }, spawn); assert.equal(c.state.route.length, 0);
+  assert.equal(c.tap({ x: -999, y: -999 }, spawn), null);
+  assert.equal(c.state.route.length, 0);
+  assert.equal(c.state.target, null);
 });
 test('stick overrides keyboard; taps never queue underneath manual inputs', () => {
   const c = createControls(collision, nav), p = { x: 810, y: 800 };
