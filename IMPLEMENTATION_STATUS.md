@@ -1,5 +1,14 @@
 # TAROT BREAKER 2D implementation status
 
+## Preview 21 — Lumiere rendering correction (supersedes prior outline notes)
+
+- Removed Lumiere's eight black underpaint passes and broad violet glow.
+- Cached four full-body composites; clear the body region before drawing the fixed body, rather than stacking two poses.
+- Render Lumiere once per tick with a restrained neutral dark edge shadow, without Canvas filters.
+- Preserve position, collision, 5.2-second whole-body float, and randomized wing-frame timing. Shion and Shiopon are unchanged.
+- 32 automated tests pass, including replacement order, four-frame caching, and single draw per tick.
+- Rendered all four poses beside Shion using the real drawActor code in a local Canvas renderer. Original material/style differences remain; no claim of fully matching pixel-art styles. iOS Safari visual verification remains pending.
+
 ## 2026-09-13 continuation
 
 Astraの既存2Dプロトタイプを監査し、専用リポジトリへ正式プレイヤー実装を継続した。
