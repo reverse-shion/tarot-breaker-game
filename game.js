@@ -22,12 +22,14 @@
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
   const SHIOPON_WANDER_RADIUS = 48;
+  const ACTOR_COLLISION_DISTANCE = 26;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
   const CAMERA_LOOK_AHEAD_Y = 28;
-  const DEPTH_DEBUG = new URLSearchParams(location.search).has("depthDebug");
-  const NAV_DEBUG = new URLSearchParams(location.search).get("navDebug") === "1";
+  const params = new URLSearchParams(location.search);
+  const DEPTH_DEBUG = params.has("depthDebug");
+  const NAV_DEBUG = params.get("navDebug") === "1";
 
   const config = document.currentScript?.dataset || {};
   const COLLISION_URL =
@@ -47,13 +49,25 @@
   let tapEffect = null;
   let debugStatus = null;
   let npcSuspended = false;
+  let walkAreas = [];
+  let collisionVersion = 0;
+  let spawnRef = { ...DEFAULT_SPAWN };
+  let world = { w: REF.w, h: REF.h };
+  let scale = { x: 1, y: 1 };
+  let cssWidth = 1;
+  let cssHeight = 1;
+  let dpr = 1;
+  let ready = false;
+  let running = false;
+  let last = 0;
+  let anim = 0;
 
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
     debugStatus.id = "nav-status";
     debugStatus.className = "nav-status";
     document.getElementById("game-shell").appendChild(debugStatus);
-    if (new URLSearchParams(location.search).get("viewport") === "390x844") {
+    if (params.get("viewport") === "390x844") {
       const shell = document.getElementById("game-shell");
       shell.style.width = "390px";
       shell.style.height = "844px";
@@ -76,7 +90,6 @@
     left: SHIOPON_BASE + "shiopon_walk_left.png",
     right: SHIOPON_BASE + "shiopon_walk_right.png",
   };
-
   const images = {};
   const shioponImages = {};
 
@@ -104,25 +117,19 @@
     zoom: 1,
   };
 
-  let walkAreas = [];
-  let collisionVersion = 0;
-  let spawnRef = { ...DEFAULT_SPAWN };
-  let world = { w: REF.w, h: REF.h };
-  let scale = { x: 1, y: 1 };
-  let cssWidth = 1;
-  let cssHeight = 1;
-  let dpr = 1;
-  let ready = false;
-  let running = false;
-  let last = 0;
-  let anim = 0;
-
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomDirection = () =>
     ["down", "up", "left", "right"][Math.floor(Math.random() * 4)];
+  const refDistance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
   function isWalkableRef(x, y) {
     return collision.isWalkable(x, y);
+  }
+
+  function movingIntoActor(from, to, other) {
+    const before = refDistance(from, other);
+    const after = refDistance(to, other);
+    return after < ACTOR_COLLISION_DISTANCE && after < before - 1e-6;
   }
 
   async function loadCollision() {
@@ -229,6 +236,7 @@
   }
 
   function setDirection(actor, dx, dy) {
+    if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return;
     actor.dir =
       Math.abs(dx) > Math.abs(dy)
         ? dx < 0
@@ -240,7 +248,18 @@
   }
 
   function updatePlayer(dt) {
-    const next = controls.step(playerRef(), dt, SPEED);
+    const from = playerRef();
+    const next = controls.step(from, dt, SPEED);
+
+    if (next.moving && movingIntoActor(from, next, shioponRef())) {
+      setDirection(player, next.dx, next.dy);
+      controls.cancel("npc-blocked");
+      player.moving = false;
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
+
     player.x = next.x * scale.x;
     player.y = next.y * scale.y;
     player.moving = next.moving;
@@ -275,9 +294,7 @@
       };
       if (!isWalkableRef(candidate.x, candidate.y)) continue;
       if (!collision.segmentClear(current, candidate)) continue;
-      if (
-        Math.hypot(candidate.x - playerNow.x, candidate.y - playerNow.y) < 26
-      )
+      if (refDistance(candidate, playerNow) < ACTOR_COLLISION_DISTANCE + 4)
         continue;
       shiopon.target = candidate;
       setDirection(
@@ -291,6 +308,15 @@
 
     shiopon.dir = randomDirection();
     shiopon.wait = 0.8 + Math.random() * 1.4;
+  }
+
+  function stopShioponNearPlayer(current, playerNow) {
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.7 + Math.random() * 1.3;
+    setDirection(shiopon, playerNow.x - current.x, playerNow.y - current.y);
   }
 
   function updateShiopon(dt) {
@@ -330,6 +356,12 @@
       x: current.x + (dx / distance) * step,
       y: current.y + (dy / distance) * step,
     };
+    const playerNow = playerRef();
+
+    if (movingIntoActor(current, next, playerNow)) {
+      stopShioponNearPlayer(current, playerNow);
+      return;
+    }
 
     if (!isWalkableRef(next.x, next.y) || !collision.segmentClear(current, next)) {
       shiopon.target = null;
@@ -381,16 +413,8 @@
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     return {
-      x: clamp(
-        camera.x - viewW / 2,
-        0,
-        Math.max(0, world.w - viewW),
-      ),
-      y: clamp(
-        camera.y - viewH / 2,
-        0,
-        Math.max(0, world.h - viewH),
-      ),
+      x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
+      y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
     };
   }
 
@@ -527,9 +551,8 @@
     }
     const points = shape.points;
     ctx.moveTo(points[0][0] * scale.x, points[0][1] * scale.y);
-    for (let i = 1; i < points.length; i++) {
+    for (let i = 1; i < points.length; i++)
       ctx.lineTo(points[i][0] * scale.x, points[i][1] * scale.y);
-    }
     ctx.closePath();
   }
 
@@ -582,15 +605,16 @@
     ctx.save();
     ctx.scale(scale.x, scale.y);
     ctx.fillStyle = "rgba(170,220,255,.45)";
-    for (const point of navigation.nodes) {
+    for (const point of navigation.nodes)
       ctx.fillRect(point.x - 1, point.y - 1, 2, 2);
-    }
+
     ctx.strokeStyle = "#ffe6a0";
     ctx.lineWidth = 2 / camera.zoom;
     ctx.beginPath();
     ctx.moveTo(player.x / scale.x, player.y / scale.y);
     for (const point of state.route) ctx.lineTo(point.x, point.y);
     ctx.stroke();
+
     for (const point of state.route) {
       ctx.beginPath();
       ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
@@ -602,6 +626,7 @@
       ctx.arc(state.requested.x, state.requested.y, 6, 0, Math.PI * 2);
       ctx.stroke();
     }
+
     ctx.strokeStyle = "#e4b8ff";
     ctx.beginPath();
     ctx.arc(
@@ -612,6 +637,12 @@
       Math.PI * 2,
     );
     ctx.stroke();
+
+    const sr = shioponRef();
+    ctx.strokeStyle = "#ffb7df";
+    ctx.beginPath();
+    ctx.arc(sr.x, sr.y, ACTOR_COLLISION_DISTANCE, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
 
     debugStatus.textContent =
@@ -619,6 +650,7 @@
       `${player.x.toFixed(1)}, ${player.y.toFixed(1)} · ${player.dir} ${player.moving ? "walk" : "idle"} ${player.frame}\n` +
       `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
       `${state.stick.active ? "stick" : state.keys.size ? "keyboard" : state.route.length ? "auto" : "idle"} · ${state.route.length} waypoints`;
+
     debugStatus.dataset.state = JSON.stringify({
       player: { ...player },
       shiopon: {
@@ -631,6 +663,8 @@
         target: shiopon.target,
         homeRef: shiopon.homeRef,
       },
+      actorCollisionDistance: ACTOR_COLLISION_DISTANCE,
+      actorGap: refDistance(playerRef(), shioponRef()),
       camera: { ...camera },
       origin: viewportOrigin(),
       cssWidth,
@@ -641,6 +675,7 @@
       stick: state.stick.active,
       suspended: state.suspended,
       reason: state.cancelReason,
+      collisionVersion,
     });
   }
 
@@ -648,7 +683,8 @@
     const origin = viewportOrigin();
     map.style.width = world.w + "px";
     map.style.height = world.h + "px";
-    map.style.transform = `translate3d(${-origin.x * camera.zoom}px,${-origin.y * camera.zoom}px,0) scale(${camera.zoom})`;
+    map.style.transform =
+      `translate3d(${-origin.x * camera.zoom}px,${-origin.y * camera.zoom}px,0) scale(${camera.zoom})`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssWidth, cssHeight);
     ctx.save();
@@ -745,9 +781,8 @@
       playerRef(),
     );
     if (action) tapEffect = { ...action.point, age: 0 };
-    if (canvas.hasPointerCapture?.(event.pointerId)) {
+    if (canvas.hasPointerCapture?.(event.pointerId))
       canvas.releasePointerCapture(event.pointerId);
-    }
     syncStick();
   }
 
@@ -761,9 +796,8 @@
   resetButton.addEventListener("click", reset);
   canvas.addEventListener("pointerdown", pointerDown, { passive: false });
   canvas.addEventListener("pointermove", pointerMove, { passive: false });
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
     canvas.addEventListener(type, pointerEnd, { passive: false });
-  }
   for (const type of [
     "contextmenu",
     "dragstart",
@@ -848,28 +882,24 @@
         if (
           images[dir].naturalWidth !== FRAME.w * 4 ||
           images[dir].naturalHeight !== FRAME.h
-        ) {
+        )
           throw new Error(dir + "歩行画像サイズ不正");
-        }
         if (
           shioponImages[dir].naturalWidth !== FRAME.w * 4 ||
           shioponImages[dir].naturalHeight !== FRAME.h
-        ) {
+        )
           throw new Error("しおぽん" + dir + "歩行画像サイズ不正");
-        }
       }
       if (
         images.idle.naturalWidth !== FRAME.w * 4 ||
         images.idle.naturalHeight !== FRAME.h
-      ) {
+      )
         throw new Error("待機画像サイズ不正");
-      }
       if (
         shioponImages.idle.naturalWidth !== FRAME.w * 4 ||
         shioponImages.idle.naturalHeight !== FRAME.h
-      ) {
+      )
         throw new Error("しおぽん待機画像サイズ不正");
-      }
 
       ready = true;
       resize();
