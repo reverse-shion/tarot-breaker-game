@@ -20,6 +20,11 @@
   const DRAW_HEIGHT = 78;
   const SHIOPON_DRAW_HEIGHT = 76;
   const LUMIERE_DRAW_HEIGHT = 78;
+  const ACTOR_OUTLINES = {
+    player: { color: "rgba(54,31,34,.92)", width: 0.72, opacity: 0.72 },
+    shiopon: { color: "rgba(43,25,78,.96)", width: 1.05, opacity: 0.9 },
+    lumiere: { color: "rgba(58,48,92,.9)", width: 0.95, opacity: 0.82 },
+  };
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
   const SHIOPON_WANDER_RADIUS = 48;
@@ -557,12 +562,64 @@
     ctx.restore();
   }
 
+  function drawOutlinePass(
+    image,
+    sourceX,
+    sourceY,
+    sourceW,
+    sourceH,
+    dx,
+    dy,
+    drawW,
+    drawH,
+    { color, width, opacity },
+  ) {
+    const step = width / camera.zoom;
+    const offsets = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+      [-0.72, -0.72],
+      [0.72, -0.72],
+      [-0.72, 0.72],
+      [0.72, 0.72],
+    ];
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = "brightness(0)";
+    ctx.globalAlpha = opacity;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 0;
+    for (const [offsetX, offsetY] of offsets) {
+      ctx.shadowOffsetX = offsetX * step;
+      ctx.shadowOffsetY = offsetY * step;
+      ctx.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        dx,
+        dy,
+        drawW,
+        drawH,
+      );
+    }
+    ctx.restore();
+  }
+
   function drawActor(
     actor,
     actorImages,
     drawHeight,
     glowColor,
-    { frameSpec = FRAME, hover = false, visualOffsetY = 0 } = {},
+    {
+      frameSpec = FRAME,
+      hover = false,
+      visualOffsetY = 0,
+      outline = ACTOR_OUTLINES.player,
+    } = {},
   ) {
     const scaleDraw = drawHeight / frameSpec.h;
     const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
@@ -588,6 +645,18 @@
           sourceX: actor.frame * frameSpec.w + sourceRect.x,
         }
       : spriteFrame(actor, actorImages, frameSpec);
+    drawOutlinePass(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      outline,
+    );
     drawSpritePass(
       image,
       sourceX,
@@ -681,6 +750,7 @@
           frameSpec: lumiereFrame,
           hover: true,
           visualOffsetY: lumiere.bobOffsetY,
+          outline: ACTOR_OUTLINES.lumiere,
         },
       },
       {
@@ -688,6 +758,7 @@
         actorImages: shioponImages,
         drawHeight: SHIOPON_DRAW_HEIGHT,
         glowColor: "rgba(235,210,255,.22)",
+        options: { outline: ACTOR_OUTLINES.shiopon },
       },
       {
         actor: player,
