@@ -2,7 +2,7 @@
 'use strict';
 const c=document.getElementById('game'),x=c.getContext('2d',{alpha:true}),map=document.getElementById('map-layer');
 const start=document.getElementById('start'),screen=document.getElementById('start-screen'),note=document.getElementById('load-note'),guide=document.getElementById('guide'),joy=document.getElementById('joystick'),knob=document.getElementById('joystick-knob'),resetBtn=document.getElementById('reset');
-const REF={w:1448,h:1086},SPAWN={x:724,y:1015},SPEED=155,DPRMAX=2,DRAWH=52;
+const REF={w:1448,h:1086},SPAWN={x:724,y:1015},SPEED=155,DPRMAX=2,DRAWH=65;
 const areas=[{t:'p',p:[[590,1086],[858,1086],[885,955],[905,825],[910,730],[885,655],[835,605],[615,605],[570,660],[565,780],[575,925]]},{t:'e',cx:724,cy:535,rx:300,ry:174},{t:'p',p:[[575,500],[875,500],[885,420],[870,340],[860,245],[850,190],[598,190],[588,250],[575,345],[565,430]]}],blocks=[{t:'e',cx:724,cy:545,rx:128,ry:84}];
 const files={idle:'./assets/sprites/shion/shion_idle.png',down:'./assets/sprites/shion/shion_walk_down.png',up:'./assets/sprites/shion/shion_walk_up.png',left:'./assets/sprites/shion/shion_walk_left.png',right:'./assets/sprites/shion/shion_walk_right.png'};
 const imgs={},keys=new Set(),stick={on:false,id:null,ox:0,oy:0,x:0,y:0};
