@@ -33,7 +33,7 @@ function checkRoute(result) {
 }
 
 test('official JSON parses: reference size, nonempty polygons and finite coordinates', () => {
-  assert.equal(validateCollision(data).areas.length, 22);
+  assert.equal(validateCollision(data).areas.length, 23);
   assert.ok(collision.isWalkable(spawn.x, spawn.y));
   assert.equal(nav.cellSize, 16);
 });
@@ -67,9 +67,9 @@ test('flowerbed/fountain taps project to the nearest JSON boundary', () => {
   const c = createCollision(fixture([rect(100, 100, 100, 100)]));
   assert.deepEqual(c.nearestWalkable({ x: 220, y: 155 }), { x: 200, y: 155 });
 });
-test('disconnected east passage remains unreachable; invalid coordinates never crash', () => {
+test('east passage is connected; invalid coordinates never crash', () => {
   assert.ok(collision.isWalkable(1190, 490));
-  assert.equal(nav.findPath(spawn, { x: 1190, y: 490 }), null);
+  checkRoute(nav.findPath(spawn, { x: 1190, y: 490 }));
   assert.equal(nav.findPath(spawn, { x: NaN, y: 0 }), null);
   assert.equal(nav.findPath({ x: -1, y: -1 }, spawn), null);
   assert.doesNotThrow(() => nav.findPath(spawn, { x: -9999, y: 9999 }));
