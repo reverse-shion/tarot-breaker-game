@@ -23,7 +23,6 @@
   const ACTOR_OUTLINES = {
     player: { color: "rgba(54,31,34,.92)", width: 0.72, opacity: 0.72 },
     shiopon: { color: "rgba(43,25,78,.96)", width: 1.05, opacity: 0.9 },
-    lumiere: { color: "rgba(58,48,92,.9)", width: 0.95, opacity: 0.82 },
   };
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
@@ -124,6 +123,29 @@
   const images = {};
   const shioponImages = {};
   const lumiereImages = {};
+  const lumiereComposites = new Map();
+
+  // Assemble each pose once, replacing (not overlaying) the fixed body area.
+  // No pixel reads or Canvas filters: this also works with cross-origin assets.
+  function lumiereComposite(frame) {
+    if (lumiereComposites.has(frame)) return lumiereComposites.get(frame);
+    const surface = document.createElement("canvas");
+    surface.width = LUMIERE_NORMALIZED_SIZE.w;
+    surface.height = LUMIERE_NORMALIZED_SIZE.h;
+    const paint = surface.getContext("2d");
+    const rect = LUMIERE_FRAME_RECTS[frame];
+    const base = LUMIERE_FRAME_RECTS[0];
+    const core = LUMIERE_BODY_CORE;
+    paint.imageSmoothingEnabled = false;
+    paint.drawImage(lumiereImages.hover,
+      frame * lumiereFrame.w + rect.x, rect.y, rect.w, rect.h,
+      0, 0, surface.width, surface.height);
+    paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
+    paint.drawImage(lumiereImages.hover, core.x, core.y, core.w, core.h,
+      core.x - base.x, core.y - base.y, core.w, core.h);
+    lumiereComposites.set(frame, surface);
+    return surface;
+  }
 
   const player = {
     x: DEFAULT_SPAWN.x,
@@ -639,6 +661,22 @@
     const dy = normalizedLumiere
       ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH + visualOffsetY
       : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    if (normalizedLumiere) {
+      // One complete silhouette, one draw: no black underpainting, broad halo,
+      // repeated alpha buildup, or moving body underneath the fixed torso.
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = "rgba(54,41,58,.65)";
+      ctx.shadowBlur = 0.7 / camera.zoom;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.drawImage(lumiereComposite(actor.frame), 0, 0,
+        LUMIERE_NORMALIZED_SIZE.w, LUMIERE_NORMALIZED_SIZE.h,
+        dx, dy, drawW, drawH);
+      ctx.restore();
+      return;
+    }
     const { image, sourceX } = hover
       ? {
           image: actorImages.hover,
@@ -698,23 +736,6 @@
     );
     ctx.restore();
 
-    if (normalizedLumiere) {
-      const frameZeroRect = LUMIERE_FRAME_RECTS[0];
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(
-        actorImages.hover,
-        LUMIERE_BODY_CORE.x,
-        LUMIERE_BODY_CORE.y,
-        LUMIERE_BODY_CORE.w,
-        LUMIERE_BODY_CORE.h,
-        dx + (LUMIERE_BODY_CORE.x - frameZeroRect.x) * scaleDraw,
-        dy + (LUMIERE_BODY_CORE.y - frameZeroRect.y) * scaleDraw,
-        LUMIERE_BODY_CORE.w * scaleDraw,
-        LUMIERE_BODY_CORE.h * scaleDraw,
-      );
-      ctx.restore();
-    }
   }
 
   function drawGroundShadowAt(actor, radius, opacity) {
@@ -750,7 +771,6 @@
           frameSpec: lumiereFrame,
           hover: true,
           visualOffsetY: lumiere.bobOffsetY,
-          outline: ACTOR_OUTLINES.lumiere,
         },
       },
       {
