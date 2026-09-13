@@ -1,1 +1,230 @@
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090c20}body{touch-action:none}#game-shell{position:relative;width:100%;height:100%;overflow:hidden}.map-layer,#game{position:absolute;inset:0;width:100%;height:100%}.map-layer{object-fit:cover}.start-screen{position:absolute;inset:0;display:grid;place-items:center;z-index:10;background:rgba(8,10,29,.55)}.start-card{text-align:center;padding:24px;border-radius:18px;background:rgba(12,15,38,.8);color:white}.guide,.reset{position:absolute;z-index:12}.guide{left:50%;bottom:20px;transform:translateX(-50%)}.reset{right:12px;top:12px}.joystick{position:absolute;z-index:12;width:112px;height:112px;margin:-56px 0 0 -56px}.joystick__ring{position:absolute;inset:0;border:1px solid white;border-radius:50%}.joystick__knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;background:rgba(255,255,255,.4)}[hidden]{display:none!important}
+:root {
+  color-scheme: dark;
+  --ink: #f7f3eb;
+  --glass: rgba(15, 18, 43, 0.52);
+  --line: rgba(240, 215, 157, 0.64);
+}
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #090c20;
+}
+body {
+  font-family: ui-serif, "Yu Mincho", "Hiragino Mincho ProN", serif;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+#game-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #090c20;
+}
+.map-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  z-index: 0;
+}
+#game {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  background: transparent;
+}
+.start-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 10, 29, 0.62),
+    rgba(8, 10, 29, 0.22) 48%,
+    rgba(8, 10, 29, 0.68)
+  );
+  backdrop-filter: blur(2px);
+}
+.start-card {
+  width: min(92vw, 420px);
+  text-align: center;
+  padding: 26px 22px 24px;
+  border: 1px solid var(--line);
+  background: rgba(12, 15, 38, 0.76);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.28);
+  border-radius: 18px;
+  color: var(--ink);
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: #ead7aa;
+}
+.start-card h1 {
+  margin: 12px 0 4px;
+  font-size: clamp(24px, 7vw, 42px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.start-card p {
+  margin: 0 0 22px;
+  color: #d9d9ef;
+  letter-spacing: 0.12em;
+  font-size: 13px;
+}
+.start-card button {
+  min-width: 170px;
+  min-height: 48px;
+  border-radius: 999px;
+  border: 1px solid #e9cf8e;
+  background: #f4e5ba;
+  color: #171a31;
+  font:
+    600 15px/1 system-ui,
+    sans-serif;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.start-card button:disabled {
+  opacity: 0.45;
+}
+.start-card small {
+  display: block;
+  margin-top: 12px;
+  color: #c3c7df;
+  font:
+    12px/1.5 system-ui,
+    sans-serif;
+}
+.guide {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: calc(100% - 92px);
+  white-space: nowrap;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--ink);
+  font:
+    12px/1.2 system-ui,
+    sans-serif;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.joystick {
+  position: absolute;
+  z-index: 12;
+  width: 112px;
+  height: 112px;
+  margin: -56px 0 0 -56px;
+  pointer-events: none;
+}
+.joystick__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  background: rgba(12, 16, 43, 0.2);
+  backdrop-filter: blur(3px);
+}
+.joystick__knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 219, 158, 0.76);
+  background: rgba(236, 225, 211, 0.34);
+  box-shadow: 0 0 18px rgba(163, 184, 255, 0.22);
+}
+.reset {
+  position: absolute;
+  z-index: 12;
+  right: max(12px, env(safe-area-inset-right));
+  top: max(12px, env(safe-area-inset-top));
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: #f4e7c7;
+  background: rgba(15, 18, 43, 0.48);
+  font-size: 22px;
+  backdrop-filter: blur(8px);
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+/* Phase 2 touch surface and progressive floating stick. */
+html,
+body {
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#game-shell {
+  height: 100dvh;
+  max-height: 100%;
+}
+#game {
+  touch-action: none;
+  -webkit-user-drag: none;
+}
+.guide {
+  white-space: normal;
+  width: max-content;
+  text-align: center;
+  line-height: 1.6;
+  border-radius: 14px;
+}
+.joystick {
+  width: 144px;
+  height: 144px;
+  margin: -72px 0 0 -72px;
+}
+.nav-status {
+  position: absolute;
+  z-index: 15;
+  top: 12px;
+  left: 12px;
+  pointer-events: none;
+  white-space: pre-line;
+  background: rgba(9, 12, 32, 0.78);
+  color: #dbf0ff;
+  padding: 8px;
+  border-radius: 6px;
+  font: 11px/1.5 monospace;
+}
