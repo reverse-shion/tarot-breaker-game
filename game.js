@@ -2,7 +2,7 @@
 'use strict';
 const c=document.getElementById('game'),x=c.getContext('2d',{alpha:true}),map=document.getElementById('map-layer');
 const start=document.getElementById('start'),screen=document.getElementById('start-screen'),note=document.getElementById('load-note'),guide=document.getElementById('guide'),joy=document.getElementById('joystick'),knob=document.getElementById('joystick-knob'),resetBtn=document.getElementById('reset');
-const REF={w:1448,h:1086},SPAWN={x:724,y:1015},SPEED=155,DPRMAX=2,DRAWH=65;
+const REF={w:1448,h:1086},SPAWN={x:724,y:1015},SPEED=155,DPRMAX=2,DRAWH=65,CAMMIN=1,CAMMAX=1.22;
 const areas=[{t:'p',p:[[590,1086],[858,1086],[885,955],[905,825],[910,730],[885,655],[835,605],[615,605],[570,660],[565,780],[575,925]]},{t:'e',cx:724,cy:535,rx:300,ry:174},{t:'p',p:[[575,500],[875,500],[885,420],[870,340],[860,245],[850,190],[598,190],[588,250],[575,345],[565,430]]}],blocks=[{t:'e',cx:724,cy:545,rx:128,ry:84}];
 const files={idle:'./assets/sprites/shion/shion_idle.png',down:'./assets/sprites/shion/shion_walk_down.png',up:'./assets/sprites/shion/shion_walk_up.png',left:'./assets/sprites/shion/shion_walk_left.png',right:'./assets/sprites/shion/shion_walk_right.png'};
 const imgs={},keys=new Set(),stick={on:false,id:null,ox:0,oy:0,x:0,y:0};
@@ -14,7 +14,7 @@ function inside(px,py,a){return a.t==='e'?((px-a.cx)/a.rx)**2+((py-a.cy)/a.ry)**
 function canStand(px,py){const rx=px/scale.x,ry=py/scale.y,walk=(a,b)=>a>4&&b>4&&a<REF.w-4&&b<REF.h-4&&areas.some(z=>inside(a,b,z))&&!blocks.some(z=>inside(a,b,z));return walk(rx,ry)&&walk(rx-6,ry)&&walk(rx+6,ry)&&walk(rx,ry+3)}
 function loadImage(src){return new Promise((ok,no)=>{const i=new Image;i.onload=()=>ok(i);i.onerror=()=>no(new Error('画像を読み込めません: '+src));i.src=src})}
 function waitMap(){return new Promise((ok,no)=>{if(map.complete&&map.naturalWidth)return ok(map);map.addEventListener('load',()=>ok(map),{once:true});map.addEventListener('error',()=>no(new Error('マップを読み込めません')),{once:true})})}
-function resize(){const r=c.getBoundingClientRect();cw=Math.max(1,r.width);ch=Math.max(1,r.height);dpr=Math.min(devicePixelRatio||1,DPRMAX);c.width=Math.round(cw*dpr);c.height=Math.round(ch*dpr);x.setTransform(dpr,0,0,dpr,0,0);camera.zoom=clamp(Math.min(cw/620,ch/560),.88,1.22)}
+function resize(){const r=c.getBoundingClientRect();cw=Math.max(1,r.width);ch=Math.max(1,r.height);dpr=Math.min(devicePixelRatio||1,DPRMAX);c.width=Math.round(cw*dpr);c.height=Math.round(ch*dpr);x.setTransform(dpr,0,0,dpr,0,0);camera.zoom=clamp(Math.min(cw/620,ch/560),CAMMIN,CAMMAX)}
 function reset(){player.x=SPAWN.x*scale.x;player.y=SPAWN.y*scale.y;player.dir='up';player.moving=false;player.frame=0;camera.x=player.x;camera.y=player.y-42*scale.y}
 function input(){let vx=0,vy=0;if(keys.has('ArrowLeft')||keys.has('a'))vx--;if(keys.has('ArrowRight')||keys.has('d'))vx++;if(keys.has('ArrowUp')||keys.has('w'))vy--;if(keys.has('ArrowDown')||keys.has('s'))vy++;if(stick.on){vx+=stick.x;vy+=stick.y}const l=Math.hypot(vx,vy);return l>1?{x:vx/l,y:vy/l}:{x:vx,y:vy}}
 function update(dt){const v=input();player.moving=Math.hypot(v.x,v.y)>.08;if(!player.moving){player.frame=0;anim=0;return}player.dir=Math.abs(v.x)>Math.abs(v.y)?(v.x<0?'left':'right'):(v.y<0?'up':'down');const sp=SPEED*((scale.x+scale.y)/2),nx=player.x+v.x*sp*dt,ny=player.y+v.y*sp*dt;if(canStand(nx,ny)){player.x=nx;player.y=ny}else{if(canStand(nx,player.y))player.x=nx;if(canStand(player.x,ny))player.y=ny}anim+=dt;if(anim>=.12){anim=0;player.frame=(player.frame+1)%4}}
