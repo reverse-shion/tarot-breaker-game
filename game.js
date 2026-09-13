@@ -19,10 +19,16 @@
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
   const DRAW_HEIGHT = 78;
   const SHIOPON_DRAW_HEIGHT = 76;
+  const LUMIERE_DRAW_HEIGHT = 78;
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
   const SHIOPON_WANDER_RADIUS = 48;
   const ACTOR_COLLISION_DISTANCE = 26;
+  const LUMIERE_HOME = { x: 810, y: 212 };
+  const LUMIERE_COLLISION_DISTANCE = 32;
+  const LUMIERE_BOB_AMPLITUDE = 3;
+  const LUMIERE_BOB_PERIOD = 2.4;
+  const LUMIERE_FRAME_SECONDS = 0.22;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
@@ -38,6 +44,9 @@
   const SHIOPON_BASE =
     config.shioponBase ||
     "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/";
+  const LUMIERE_BASE =
+    config.lumiereBase ||
+    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/";
 
   const { createCollision, createNavigator } = window.TarotNavigation;
   const { createControls } = window.TarotControls;
@@ -61,6 +70,7 @@
   let running = false;
   let last = 0;
   let anim = 0;
+  let lumiereFrame = { ...FRAME };
 
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
@@ -90,8 +100,12 @@
     left: SHIOPON_BASE + "shiopon_walk_left.png",
     right: SHIOPON_BASE + "shiopon_walk_right.png",
   };
+  const lumiereFiles = {
+    hover: LUMIERE_BASE + "lumiere_hover_down.png",
+  };
   const images = {};
   const shioponImages = {};
+  const lumiereImages = {};
 
   const player = {
     x: DEFAULT_SPAWN.x,
@@ -111,6 +125,17 @@
     wait: 1.2,
     target: null,
   };
+  const lumiere = {
+    x: LUMIERE_HOME.x,
+    y: LUMIERE_HOME.y,
+    homeRef: { ...LUMIERE_HOME },
+    dir: "down",
+    moving: false,
+    frame: 0,
+    anim: 0,
+    bobPhase: 0,
+    bobOffsetY: 0,
+  };
   const camera = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y - CAMERA_BASE_OFFSET_Y,
@@ -126,10 +151,15 @@
     return collision.isWalkable(x, y);
   }
 
-  function movingIntoActor(from, to, other) {
+  function movingIntoActor(
+    from,
+    to,
+    other,
+    collisionDistance = ACTOR_COLLISION_DISTANCE,
+  ) {
     const before = refDistance(from, other);
     const after = refDistance(to, other);
-    return after < ACTOR_COLLISION_DISTANCE && after < before - 1e-6;
+    return after < collisionDistance && after < before - 1e-6;
   }
 
   async function loadCollision() {
@@ -212,6 +242,18 @@
     shiopon.target = null;
   }
 
+  function resetLumiere() {
+    lumiere.x = LUMIERE_HOME.x * scale.x;
+    lumiere.y = LUMIERE_HOME.y * scale.y;
+    lumiere.homeRef = { ...LUMIERE_HOME };
+    lumiere.dir = "down";
+    lumiere.moving = false;
+    lumiere.frame = 0;
+    lumiere.anim = 0;
+    lumiere.bobPhase = 0;
+    lumiere.bobOffsetY = 0;
+  }
+
   function reset() {
     controls?.clearInput("reset");
     tapEffect = null;
@@ -223,6 +265,7 @@
     player.moving = false;
     player.frame = 0;
     resetShiopon();
+    resetLumiere();
     camera.x = player.x;
     camera.y = player.y - CAMERA_BASE_OFFSET_Y * scale.y;
   }
@@ -233,6 +276,10 @@
 
   function shioponRef() {
     return { x: shiopon.x / scale.x, y: shiopon.y / scale.y };
+  }
+
+  function lumiereRef() {
+    return { x: lumiere.x / scale.x, y: lumiere.y / scale.y };
   }
 
   function setDirection(actor, dx, dy) {
@@ -251,7 +298,16 @@
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
 
-    if (next.moving && movingIntoActor(from, next, shioponRef())) {
+    const npcBlocked =
+      next.moving &&
+      (movingIntoActor(from, next, shioponRef()) ||
+        movingIntoActor(
+          from,
+          next,
+          lumiereRef(),
+          LUMIERE_COLLISION_DISTANCE,
+        ));
+    if (npcBlocked) {
       setDirection(player, next.dx, next.dy);
       controls.cancel("npc-blocked");
       player.moving = false;
@@ -382,6 +438,19 @@
     }
   }
 
+  function updateLumiere(dt) {
+    lumiere.anim += dt;
+    while (lumiere.anim >= LUMIERE_FRAME_SECONDS) {
+      lumiere.anim -= LUMIERE_FRAME_SECONDS;
+      lumiere.frame = (lumiere.frame + 1) % lumiereFrame.count;
+    }
+    lumiere.bobPhase =
+      (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
+      (Math.PI * 2);
+    lumiere.bobOffsetY =
+      Math.sin(lumiere.bobPhase) * LUMIERE_BOB_AMPLITUDE * scale.y;
+  }
+
   function cameraOffsetY() {
     let offset = CAMERA_BASE_OFFSET_Y;
     if (player.moving && player.dir === "up") offset += CAMERA_LOOK_AHEAD_Y;
@@ -418,17 +487,19 @@
     };
   }
 
-  function spriteFrame(actor, actorImages) {
+  function spriteFrame(actor, actorImages, frameSpec = FRAME) {
     const idleIndex = { down: 0, up: 1, left: 2, right: 3 }[actor.dir];
     return {
       image: actor.moving ? actorImages[actor.dir] : actorImages.idle,
-      sourceX: (actor.moving ? actor.frame : idleIndex) * FRAME.w,
+      sourceX: (actor.moving ? actor.frame : idleIndex) * frameSpec.w,
     };
   }
 
   function drawSpritePass(
     image,
     sourceX,
+    sourceW,
+    sourceH,
     dx,
     dy,
     drawW,
@@ -444,8 +515,8 @@
       image,
       sourceX,
       0,
-      FRAME.w,
-      FRAME.h,
+      sourceW,
+      sourceH,
       dx,
       dy,
       drawW,
@@ -454,17 +525,41 @@
     ctx.restore();
   }
 
-  function drawActor(actor, actorImages, drawHeight, glowColor) {
-    const scaleDraw = drawHeight / FRAME.h;
-    const drawW = FRAME.w * scaleDraw;
-    const drawH = FRAME.h * scaleDraw;
+  function drawActor(
+    actor,
+    actorImages,
+    drawHeight,
+    glowColor,
+    { frameSpec = FRAME, hover = false, visualOffsetY = 0 } = {},
+  ) {
+    const scaleDraw = drawHeight / frameSpec.h;
+    const drawW = frameSpec.w * scaleDraw;
+    const drawH = frameSpec.h * scaleDraw;
     const dx = actor.x - drawW / 2;
-    const dy = actor.y - FRAME.baseline * scaleDraw;
-    const { image, sourceX } = spriteFrame(actor, actorImages);
-    drawSpritePass(image, sourceX, dx, dy, drawW, drawH, glowColor, 5);
+    const dy = actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    const { image, sourceX } = hover
+      ? {
+          image: actorImages.hover,
+          sourceX: actor.frame * frameSpec.w,
+        }
+      : spriteFrame(actor, actorImages, frameSpec);
     drawSpritePass(
       image,
       sourceX,
+      frameSpec.w,
+      frameSpec.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      glowColor,
+      5,
+    );
+    drawSpritePass(
+      image,
+      sourceX,
+      frameSpec.w,
+      frameSpec.h,
       dx,
       dy,
       drawW,
@@ -478,8 +573,8 @@
       image,
       sourceX,
       0,
-      FRAME.w,
-      FRAME.h,
+      frameSpec.w,
+      frameSpec.h,
       dx,
       dy,
       drawW,
@@ -507,10 +602,22 @@
   }
 
   function drawActors() {
+    drawGroundShadowAt(lumiere, 18, 0.2);
     drawGroundShadowAt(shiopon, 17, 0.36);
     drawGroundShadowAt(player, 20, 0.46);
 
     const actors = [
+      {
+        actor: lumiere,
+        actorImages: lumiereImages,
+        drawHeight: LUMIERE_DRAW_HEIGHT,
+        glowColor: "rgba(226,210,255,.34)",
+        options: {
+          frameSpec: lumiereFrame,
+          hover: true,
+          visualOffsetY: lumiere.bobOffsetY,
+        },
+      },
       {
         actor: shiopon,
         actorImages: shioponImages,
@@ -531,6 +638,7 @@
         entry.actorImages,
         entry.drawHeight,
         entry.glowColor,
+        entry.options,
       );
     }
   }
@@ -643,12 +751,19 @@
     ctx.beginPath();
     ctx.arc(sr.x, sr.y, ACTOR_COLLISION_DISTANCE, 0, Math.PI * 2);
     ctx.stroke();
+
+    const lr = lumiereRef();
+    ctx.strokeStyle = "#aeeeff";
+    ctx.beginPath();
+    ctx.arc(lr.x, lr.y, LUMIERE_COLLISION_DISTANCE, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
 
     debugStatus.textContent =
       `NAV 16px · ${navigation.nodes.length} cells\n` +
       `${player.x.toFixed(1)}, ${player.y.toFixed(1)} · ${player.dir} ${player.moving ? "walk" : "idle"} ${player.frame}\n` +
       `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
+      `Lumiere ${lumiere.x.toFixed(1)}, ${lumiere.y.toFixed(1)} · fixed hover ${lumiere.frame}\n` +
       `${state.stick.active ? "stick" : state.keys.size ? "keyboard" : state.route.length ? "auto" : "idle"} · ${state.route.length} waypoints`;
 
     debugStatus.dataset.state = JSON.stringify({
@@ -663,8 +778,19 @@
         target: shiopon.target,
         homeRef: shiopon.homeRef,
       },
+      lumiere: {
+        x: lumiere.x,
+        y: lumiere.y,
+        dir: lumiere.dir,
+        moving: lumiere.moving,
+        frame: lumiere.frame,
+        bobOffsetY: lumiere.bobOffsetY,
+        homeRef: lumiere.homeRef,
+      },
       actorCollisionDistance: ACTOR_COLLISION_DISTANCE,
       actorGap: refDistance(playerRef(), shioponRef()),
+      lumiereCollisionDistance: LUMIERE_COLLISION_DISTANCE,
+      lumiereGap: refDistance(playerRef(), lumiereRef()),
       camera: { ...camera },
       origin: viewportOrigin(),
       cssWidth,
@@ -707,6 +833,7 @@
     }
     updatePlayer(dt);
     updateShiopon(dt);
+    updateLumiere(dt);
     updateCamera(dt);
     draw();
     requestAnimationFrame(loop);
@@ -872,6 +999,9 @@
         ...Object.entries(shioponFiles).map(async ([key, src]) => {
           shioponImages[key] = await loadImage(src);
         }),
+        ...Object.entries(lumiereFiles).map(async ([key, src]) => {
+          lumiereImages[key] = await loadImage(src);
+        }),
       ]);
 
       const loadedMap = loaded[0];
@@ -901,13 +1031,26 @@
       )
         throw new Error("しおぽん待機画像サイズ不正");
 
+      if (
+        lumiereImages.hover.naturalWidth % FRAME.count !== 0 ||
+        lumiereImages.hover.naturalHeight <= 0
+      )
+        throw new Error("リュミエール浮遊画像サイズ不正");
+      lumiereFrame = {
+        w: lumiereImages.hover.naturalWidth / FRAME.count,
+        h: lumiereImages.hover.naturalHeight,
+        baseline:
+          lumiereImages.hover.naturalHeight * (FRAME.baseline / FRAME.h),
+        count: FRAME.count,
+      };
+
       ready = true;
       resize();
       reset();
       draw();
       start.disabled = false;
       start.textContent = "星の国へ";
-      note.textContent = "しおぽんが暮らす星門庭園を歩いてみよう";
+      note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
     } catch (error) {
       console.error(error);
       start.disabled = true;

@@ -29,7 +29,9 @@ html = html.replace(/<script[^>]*src="\.\/game\.js[^>]*><\/script>/,
   `<script src="./navigation.js?v=${version}" defer></script>\n` +
   `  <script src="./controls.js?v=${version}" defer></script>\n` +
   `  <script src="./game.js?v=${version}" data-collision-url="./star-country-gate-garden-collision.json" ` +
-  `data-sprite-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shion/" defer></script>`);
+  `data-sprite-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shion/" ` +
+  `data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" ` +
+  `data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>`);
 fs.writeFileSync(indexPath, html);
 fs.writeFileSync(path.join(out, 'preview-source.json'), JSON.stringify({
   version, repository: 'reverse-shion/tarot-breaker-game',

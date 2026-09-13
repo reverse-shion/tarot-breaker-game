@@ -1,0 +1,39 @@
+{
+  "character": "Shiopon",
+  "format": "RGBA PNG",
+  "cell_size": {
+    "width": 384,
+    "height": 512
+  },
+  "baseline_y": 480,
+  "frame_count": {
+    "idle": 4,
+    "walk_down": 4,
+    "walk_up": 4,
+    "walk_left": 4,
+    "walk_right": 4
+  },
+  "idle_frame_order": [
+    "down",
+    "up",
+    "left",
+    "right"
+  ],
+  "walk_frame_order": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "recommended_rendering": {
+    "match_shion_frame_draw_height": true,
+    "note": "Using the same 384x512 frame draw size as Shion keeps Shiopon visibly smaller because the character occupies less of the cell."
+  },
+  "notes": [
+    "All sheets use true transparent alpha.",
+    "Every frame uses the same 384x512 cell as Shion.",
+    "Feet/bottom contact is aligned to baseline_y=480.",
+    "Tiny isolated generation speckles were removed without regenerating the character.",
+    "This pack was split from the approved Shiopon sprite sheet and is ready for GitHub game integration."
+  ]
+}
