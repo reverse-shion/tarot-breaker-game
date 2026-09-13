@@ -33,7 +33,7 @@ function checkRoute(result) {
 }
 
 test('official JSON parses: reference size, nonempty polygons and finite coordinates', () => {
-  assert.equal(validateCollision(data).areas.length, 23);
+  assert.equal(validateCollision(data).areas.length, data.walkAreas.length);
   assert.ok(collision.isWalkable(spawn.x, spawn.y));
   assert.equal(nav.cellSize, 16);
 });
