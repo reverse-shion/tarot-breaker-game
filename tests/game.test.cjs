@@ -84,6 +84,7 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   const lumiereCoreDraws = lumiereDraws.filter(call => call[3] === 243 && call[4] === 564);
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
   assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
+  assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
   assert.ok(lumiereMotionDraws.length > 0); assert.ok(lumiereCoreDraws.length > 0);
   assert.ok(lumiereMotionDraws.every(call => [490, 493, 495].includes(call[3])));
   assert.ok(lumiereMotionDraws.every(call => [567, 586, 596].includes(call[4])));
