@@ -82,13 +82,17 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   const lumiereDraws = h.drawCalls.filter(call => call[0]?.url?.includes('lumiere_'));
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
   assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
-  assert.ok(lumiereDraws.length > 0); assert.ok(lumiereDraws.every(call => call[3] === 543 && call[4] === 724 && call[8] === 78));
+  assert.ok(lumiereDraws.length > 0);
+  assert.ok(lumiereDraws.every(call => [490, 493, 495].includes(call[3])));
+  assert.ok(lumiereDraws.every(call => [567, 586, 596].includes(call[4])));
+  assert.ok(lumiereDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
 });
-test('Lumiere stays at the gate and only her hover drawing offset changes', async () => {
+test('Lumiere stays fixed while her stabilized hover frames play without body bobbing', async () => {
   const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
   assert.equal(after.x, before.x); assert.equal(after.y, before.y);
   assert.deepEqual(after.homeRef, { x: 810, y: 212 }); assert.equal(after.moving, false);
-  assert.notEqual(after.bobOffsetY, before.bobOffsetY); assert.ok(Math.abs(after.bobOffsetY) <= 3);
+  assert.notEqual(after.motionStep, before.motionStep); assert.notEqual(after.frame, before.frame);
+  assert.equal(before.bobOffsetY, 0); assert.equal(after.bobOffsetY, 0);
 });
 test('Lumiere has solid collision while remaining fixed at the gate', async () => {
   const h = await boot();
