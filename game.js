@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d", { alpha: true });
   const map = document.getElementById("map-layer");
@@ -10,38 +11,48 @@
   const joystick = document.getElementById("joystick");
   const knob = document.getElementById("joystick-knob");
   const resetButton = document.getElementById("reset");
+
   const REF = { w: 1448, h: 1086 };
   const DEFAULT_SPAWN = { x: 724, y: 1015 };
   const SPEED = 155;
   const DPR_LIMIT = 2;
-  let manifest;
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
   const DRAW_HEIGHT = 78;
+  const SHIOPON_DRAW_HEIGHT = 66;
+  const SHIOPON_SPEED = 52;
+  const SHIOPON_HOME = { x: 810, y: 800 };
+  const SHIOPON_WANDER_RADIUS = 48;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
   const CAMERA_LOOK_AHEAD_Y = 28;
   const DEPTH_DEBUG = new URLSearchParams(location.search).has("depthDebug");
-  const NAV_DEBUG =
-    new URLSearchParams(location.search).get("navDebug") === "1";
+  const NAV_DEBUG = new URLSearchParams(location.search).get("navDebug") === "1";
+
   const config = document.currentScript?.dataset || {};
   const COLLISION_URL =
-    config.collisionUrl ||
-    "./assets/maps/star-country-gate-garden-collision.json";
+    config.collisionUrl || "./assets/maps/star-country-gate-garden-collision.json";
   const SPRITE_BASE = config.spriteBase || "./assets/sprites/shion/";
+  const SHIOPON_BASE =
+    config.shioponBase ||
+    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/";
+
   const { createCollision, createNavigator } = window.TarotNavigation;
   const { createControls } = window.TarotControls;
-  let collision,
-    navigation,
-    controls,
-    tapEffect = null;
+
+  let manifest;
+  let collision;
+  let navigation;
+  let controls;
+  let tapEffect = null;
   let debugStatus = null;
+  let npcSuspended = false;
+
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
     debugStatus.id = "nav-status";
     debugStatus.className = "nav-status";
     document.getElementById("game-shell").appendChild(debugStatus);
-    // A fixed CSS viewport for reproducible browser QA; never enabled normally.
     if (new URLSearchParams(location.search).get("viewport") === "390x844") {
       const shell = document.getElementById("game-shell");
       shell.style.width = "390px";
@@ -50,6 +61,7 @@
       shell.style.margin = "0 auto";
     }
   }
+
   const files = {
     idle: SPRITE_BASE + "shion_idle.png",
     down: SPRITE_BASE + "shion_walk_down.png",
@@ -57,7 +69,17 @@
     left: SPRITE_BASE + "shion_walk_left.png",
     right: SPRITE_BASE + "shion_walk_right.png",
   };
+  const shioponFiles = {
+    idle: SHIOPON_BASE + "shiopon_idle.png",
+    down: SHIOPON_BASE + "shiopon_walk_down.png",
+    up: SHIOPON_BASE + "shiopon_walk_up.png",
+    left: SHIOPON_BASE + "shiopon_walk_left.png",
+    right: SHIOPON_BASE + "shiopon_walk_right.png",
+  };
+
   const images = {};
+  const shioponImages = {};
+
   const player = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y,
@@ -65,11 +87,23 @@
     moving: false,
     frame: 0,
   };
+  const shiopon = {
+    x: SHIOPON_HOME.x,
+    y: SHIOPON_HOME.y,
+    homeRef: { ...SHIOPON_HOME },
+    dir: "left",
+    moving: false,
+    frame: 0,
+    anim: 0,
+    wait: 1.2,
+    target: null,
+  };
   const camera = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y - CAMERA_BASE_OFFSET_Y,
     zoom: 1,
   };
+
   let walkAreas = [];
   let collisionVersion = 0;
   let spawnRef = { ...DEFAULT_SPAWN };
@@ -82,10 +116,15 @@
   let running = false;
   let last = 0;
   let anim = 0;
+
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const randomDirection = () =>
+    ["down", "up", "left", "right"][Math.floor(Math.random() * 4)];
+
   function isWalkableRef(x, y) {
     return collision.isWalkable(x, y);
   }
+
   async function loadCollision() {
     const response = await fetch(COLLISION_URL, { cache: "no-store" });
     if (!response.ok) throw new Error("当たり判定データを読み込めません");
@@ -95,6 +134,7 @@
     navigation = createNavigator(collision, 16);
     controls = createControls(collision, navigation);
   }
+
   function findNearestSpawnRef() {
     if (isWalkableRef(DEFAULT_SPAWN.x, DEFAULT_SPAWN.y))
       return { ...DEFAULT_SPAWN };
@@ -112,6 +152,7 @@
     if (first?.type === "ellipse") return { x: first.cx, y: first.cy };
     return { ...DEFAULT_SPAWN };
   }
+
   function loadImage(src) {
     return new Promise((resolve, reject) => {
       const image = new Image();
@@ -121,6 +162,7 @@
       image.src = src;
     });
   }
+
   function waitForMap() {
     return new Promise((resolve, reject) => {
       if (map.complete && map.naturalWidth) return resolve(map);
@@ -132,6 +174,7 @@
       );
     });
   }
+
   function resize() {
     const rect = canvas.getBoundingClientRect();
     cssWidth = Math.max(1, rect.width);
@@ -146,6 +189,22 @@
       CAMERA_MAX_ZOOM,
     );
   }
+
+  function resetShiopon() {
+    let home = { ...SHIOPON_HOME };
+    if (!isWalkableRef(home.x, home.y))
+      home = collision.nearestWalkable(home) || home;
+    shiopon.homeRef = home;
+    shiopon.x = home.x * scale.x;
+    shiopon.y = home.y * scale.y;
+    shiopon.dir = "left";
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.9 + Math.random() * 1.4;
+    shiopon.target = null;
+  }
+
   function reset() {
     controls?.clearInput("reset");
     tapEffect = null;
@@ -156,12 +215,30 @@
     player.dir = "up";
     player.moving = false;
     player.frame = 0;
+    resetShiopon();
     camera.x = player.x;
     camera.y = player.y - CAMERA_BASE_OFFSET_Y * scale.y;
   }
+
   function playerRef() {
     return { x: player.x / scale.x, y: player.y / scale.y };
   }
+
+  function shioponRef() {
+    return { x: shiopon.x / scale.x, y: shiopon.y / scale.y };
+  }
+
+  function setDirection(actor, dx, dy) {
+    actor.dir =
+      Math.abs(dx) > Math.abs(dy)
+        ? dx < 0
+          ? "left"
+          : "right"
+        : dy < 0
+          ? "up"
+          : "down";
+  }
+
   function updatePlayer(dt) {
     const next = controls.step(playerRef(), dt, SPEED);
     player.x = next.x * scale.x;
@@ -172,32 +249,124 @@
       anim = 0;
       return;
     }
-    player.dir =
-      Math.abs(next.dx) > Math.abs(next.dy)
-        ? next.dx < 0
-          ? "left"
-          : "right"
-        : next.dy < 0
-          ? "up"
-          : "down";
+    setDirection(player, next.dx, next.dy);
     anim += dt;
     while (anim >= 0.12) {
       anim -= 0.12;
       player.frame = (player.frame + 1) % FRAME.count;
     }
   }
+
+  function chooseShioponTarget() {
+    if (Math.random() < 0.25) {
+      shiopon.dir = randomDirection();
+      shiopon.wait = 0.7 + Math.random() * 1.5;
+      return;
+    }
+
+    const current = shioponRef();
+    const playerNow = playerRef();
+    for (let attempt = 0; attempt < 28; attempt++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 14 + Math.random() * SHIOPON_WANDER_RADIUS;
+      const candidate = {
+        x: shiopon.homeRef.x + Math.cos(angle) * radius,
+        y: shiopon.homeRef.y + Math.sin(angle) * radius,
+      };
+      if (!isWalkableRef(candidate.x, candidate.y)) continue;
+      if (!collision.segmentClear(current, candidate)) continue;
+      if (
+        Math.hypot(candidate.x - playerNow.x, candidate.y - playerNow.y) < 26
+      )
+        continue;
+      shiopon.target = candidate;
+      setDirection(
+        shiopon,
+        candidate.x - current.x,
+        candidate.y - current.y,
+      );
+      shiopon.moving = true;
+      return;
+    }
+
+    shiopon.dir = randomDirection();
+    shiopon.wait = 0.8 + Math.random() * 1.4;
+  }
+
+  function updateShiopon(dt) {
+    if (npcSuspended) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      return;
+    }
+
+    if (!shiopon.target) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.wait -= dt;
+      if (shiopon.wait <= 0) chooseShioponTarget();
+      return;
+    }
+
+    const current = shioponRef();
+    const dx = shiopon.target.x - current.x;
+    const dy = shiopon.target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance <= 2.5) {
+      shiopon.x = shiopon.target.x * scale.x;
+      shiopon.y = shiopon.target.y * scale.y;
+      shiopon.target = null;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.wait = 1.0 + Math.random() * 2.2;
+      return;
+    }
+
+    const step = Math.min(distance, SHIOPON_SPEED * dt);
+    const next = {
+      x: current.x + (dx / distance) * step,
+      y: current.y + (dy / distance) * step,
+    };
+
+    if (!isWalkableRef(next.x, next.y) || !collision.segmentClear(current, next)) {
+      shiopon.target = null;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.wait = 0.7 + Math.random() * 1.3;
+      return;
+    }
+
+    shiopon.x = next.x * scale.x;
+    shiopon.y = next.y * scale.y;
+    shiopon.moving = true;
+    setDirection(shiopon, dx, dy);
+    shiopon.anim += dt;
+    while (shiopon.anim >= 0.16) {
+      shiopon.anim -= 0.16;
+      shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+    }
+  }
+
   function cameraOffsetY() {
     let offset = CAMERA_BASE_OFFSET_Y;
     if (player.moving && player.dir === "up") offset += CAMERA_LOOK_AHEAD_Y;
     if (player.moving && player.dir === "down") offset -= CAMERA_LOOK_AHEAD_Y;
     return offset * scale.y;
   }
+
   function updateCamera(dt) {
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     const halfW = viewW / 2;
     const halfH = viewH / 2;
-    const targetX = clamp(player.x, halfW, Math.max(halfW, world.w - halfW));
+    const targetX = clamp(
+      player.x,
+      halfW,
+      Math.max(halfW, world.w - halfW),
+    );
     const targetY = clamp(
       player.y - cameraOffsetY(),
       halfH,
@@ -207,21 +376,32 @@
     camera.x += (targetX - camera.x) * ease;
     camera.y += (targetY - camera.y) * ease;
   }
+
   function viewportOrigin() {
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     return {
-      x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
-      y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
+      x: clamp(
+        camera.x - viewW / 2,
+        0,
+        Math.max(0, world.w - viewW),
+      ),
+      y: clamp(
+        camera.y - viewH / 2,
+        0,
+        Math.max(0, world.h - viewH),
+      ),
     };
   }
-  function spriteFrame() {
-    const idleIndex = { down: 0, up: 1, left: 2, right: 3 }[player.dir];
+
+  function spriteFrame(actor, actorImages) {
+    const idleIndex = { down: 0, up: 1, left: 2, right: 3 }[actor.dir];
     return {
-      image: player.moving ? images[player.dir] : images.idle,
-      sourceX: (player.moving ? player.frame : idleIndex) * FRAME.w,
+      image: actor.moving ? actorImages[actor.dir] : actorImages.idle,
+      sourceX: (actor.moving ? actor.frame : idleIndex) * FRAME.w,
     };
   }
+
   function drawSpritePass(
     image,
     sourceX,
@@ -236,16 +416,28 @@
     ctx.imageSmoothingEnabled = false;
     ctx.shadowColor = shadowColor;
     ctx.shadowBlur = shadowBlur / camera.zoom;
-    ctx.drawImage(image, sourceX, 0, FRAME.w, FRAME.h, dx, dy, drawW, drawH);
+    ctx.drawImage(
+      image,
+      sourceX,
+      0,
+      FRAME.w,
+      FRAME.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+    );
     ctx.restore();
   }
-  function drawPlayer() {
-    const scaleDraw = DRAW_HEIGHT / FRAME.h;
+
+  function drawActor(actor, actorImages, drawHeight, glowColor) {
+    const scaleDraw = drawHeight / FRAME.h;
     const drawW = FRAME.w * scaleDraw;
     const drawH = FRAME.h * scaleDraw;
-    const dx = player.x - drawW / 2;
-    const dy = player.y - FRAME.baseline * scaleDraw;
-    const { image, sourceX } = spriteFrame();
+    const dx = actor.x - drawW / 2;
+    const dy = actor.y - FRAME.baseline * scaleDraw;
+    const { image, sourceX } = spriteFrame(actor, actorImages);
+    drawSpritePass(image, sourceX, dx, dy, drawW, drawH, glowColor, 5);
     drawSpritePass(
       image,
       sourceX,
@@ -253,29 +445,72 @@
       dy,
       drawW,
       drawH,
-      "rgba(255,236,190,.22)",
-      5,
+      "rgba(6,9,28,.86)",
+      2,
     );
-    drawSpritePass(image, sourceX, dx, dy, drawW, drawH, "rgba(6,9,28,.86)", 2);
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(image, sourceX, 0, FRAME.w, FRAME.h, dx, dy, drawW, drawH);
+    ctx.drawImage(
+      image,
+      sourceX,
+      0,
+      FRAME.w,
+      FRAME.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+    );
     ctx.restore();
   }
-  function drawGroundShadow() {
+
+  function drawGroundShadowAt(actor, radius, opacity) {
     ctx.save();
-    ctx.translate(player.x, player.y + 2);
+    ctx.translate(actor.x, actor.y + 2);
     ctx.scale(1, 0.34);
-    const gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, 20);
-    gradient.addColorStop(0, "rgba(5,7,20,.46)");
-    gradient.addColorStop(0.62, "rgba(5,7,20,.28)");
+    const gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, radius);
+    gradient.addColorStop(0, `rgba(5,7,20,${opacity})`);
+    gradient.addColorStop(
+      0.62,
+      `rgba(5,7,20,${opacity * 0.61})`,
+    );
     gradient.addColorStop(1, "rgba(5,7,20,0)");
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
+
+  function drawActors() {
+    drawGroundShadowAt(shiopon, 15, 0.34);
+    drawGroundShadowAt(player, 20, 0.46);
+
+    const actors = [
+      {
+        actor: shiopon,
+        actorImages: shioponImages,
+        drawHeight: SHIOPON_DRAW_HEIGHT,
+        glowColor: "rgba(235,210,255,.22)",
+      },
+      {
+        actor: player,
+        actorImages: images,
+        drawHeight: DRAW_HEIGHT,
+        glowColor: "rgba(255,236,190,.22)",
+      },
+    ].sort((a, b) => a.actor.y - b.actor.y);
+
+    for (const entry of actors) {
+      drawActor(
+        entry.actor,
+        entry.actorImages,
+        entry.drawHeight,
+        entry.glowColor,
+      );
+    }
+  }
+
   function traceRefShape(shape) {
     ctx.beginPath();
     if (shape.type === "ellipse") {
@@ -292,10 +527,12 @@
     }
     const points = shape.points;
     ctx.moveTo(points[0][0] * scale.x, points[0][1] * scale.y);
-    for (let i = 1; i < points.length; i++)
+    for (let i = 1; i < points.length; i++) {
       ctx.lineTo(points[i][0] * scale.x, points[i][1] * scale.y);
+    }
     ctx.closePath();
   }
+
   function drawCollisionDebug() {
     if (!DEPTH_DEBUG && !NAV_DEBUG) return;
     ctx.save();
@@ -309,6 +546,7 @@
     }
     ctx.restore();
   }
+
   function drawTapEffect() {
     if (!tapEffect) return;
     const progress = tapEffect.age / 0.45;
@@ -318,7 +556,15 @@
     ctx.lineWidth = 1.3 / camera.zoom;
     ctx.strokeStyle = "#c9e7ff";
     ctx.beginPath();
-    ctx.ellipse(0, 0, 8 + 12 * progress, 4 + 6 * progress, 0, 0, Math.PI * 2);
+    ctx.ellipse(
+      0,
+      0,
+      8 + 12 * progress,
+      4 + 6 * progress,
+      0,
+      0,
+      Math.PI * 2,
+    );
     ctx.stroke();
     ctx.strokeStyle = "#fff0bd";
     ctx.beginPath();
@@ -329,14 +575,16 @@
     ctx.stroke();
     ctx.restore();
   }
+
   function drawNavDebug() {
     if (!NAV_DEBUG || !controls) return;
     const state = controls.state;
     ctx.save();
     ctx.scale(scale.x, scale.y);
     ctx.fillStyle = "rgba(170,220,255,.45)";
-    for (const point of navigation.nodes)
+    for (const point of navigation.nodes) {
       ctx.fillRect(point.x - 1, point.y - 1, 2, 2);
+    }
     ctx.strokeStyle = "#ffe6a0";
     ctx.lineWidth = 2 / camera.zoom;
     ctx.beginPath();
@@ -354,13 +602,35 @@
       ctx.arc(state.requested.x, state.requested.y, 6, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.strokeStyle = "#e4b8ff";
+    ctx.beginPath();
+    ctx.arc(
+      shiopon.homeRef.x,
+      shiopon.homeRef.y,
+      SHIOPON_WANDER_RADIUS,
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
     ctx.restore();
+
     debugStatus.textContent =
       `NAV 16px · ${navigation.nodes.length} cells\n` +
       `${player.x.toFixed(1)}, ${player.y.toFixed(1)} · ${player.dir} ${player.moving ? "walk" : "idle"} ${player.frame}\n` +
+      `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
       `${state.stick.active ? "stick" : state.keys.size ? "keyboard" : state.route.length ? "auto" : "idle"} · ${state.route.length} waypoints`;
     debugStatus.dataset.state = JSON.stringify({
       player: { ...player },
+      shiopon: {
+        x: shiopon.x,
+        y: shiopon.y,
+        dir: shiopon.dir,
+        moving: shiopon.moving,
+        frame: shiopon.frame,
+        wait: shiopon.wait,
+        target: shiopon.target,
+        homeRef: shiopon.homeRef,
+      },
       camera: { ...camera },
       origin: viewportOrigin(),
       cssWidth,
@@ -373,6 +643,7 @@
       reason: state.cancelReason,
     });
   }
+
   function draw() {
     const origin = viewportOrigin();
     map.style.width = world.w + "px";
@@ -384,12 +655,12 @@
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-origin.x, -origin.y);
     drawTapEffect();
-    drawGroundShadow();
-    drawPlayer();
+    drawActors();
     drawCollisionDebug();
     drawNavDebug();
     ctx.restore();
   }
+
   function loop(now) {
     if (!running) return;
     const dt = Math.min(last ? (now - last) / 1000 : 0, 0.05);
@@ -399,10 +670,12 @@
       if (tapEffect.age >= 0.45) tapEffect = null;
     }
     updatePlayer(dt);
+    updateShiopon(dt);
     updateCamera(dt);
     draw();
     requestAnimationFrame(loop);
   }
+
   function begin(event) {
     event?.preventDefault();
     if (!ready || running) return;
@@ -419,10 +692,11 @@
       guide.hidden = true;
     }, 5000);
   }
+
   function pointerInfo(event) {
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left,
-      y = event.clientY - rect.top;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
     const origin = viewportOrigin();
     return {
       id: event.pointerId,
@@ -438,6 +712,7 @@
       },
     };
   }
+
   function syncStick() {
     const stick = controls?.state.stick;
     joystick.hidden = !stick?.active;
@@ -446,6 +721,7 @@
     joystick.style.top = stick.oy + "px";
     knob.style.transform = `translate(${stick.knobX}px,${stick.knobY}px)`;
   }
+
   function pointerDown(event) {
     if (!running) return;
     event.preventDefault();
@@ -453,12 +729,14 @@
     canvas.setPointerCapture?.(event.pointerId);
     guide.hidden = true;
   }
+
   function pointerMove(event) {
     if (!running) return;
     event.preventDefault();
     controls.pointerMove(pointerInfo(event));
     syncStick();
   }
+
   function pointerEnd(event) {
     if (!running) return;
     event.preventDefault();
@@ -467,21 +745,25 @@
       playerRef(),
     );
     if (action) tapEffect = { ...action.point, age: 0 };
-    if (canvas.hasPointerCapture?.(event.pointerId))
+    if (canvas.hasPointerCapture?.(event.pointerId)) {
       canvas.releasePointerCapture(event.pointerId);
+    }
     syncStick();
   }
+
   function clearInput(reason) {
     controls?.clearInput(reason);
     syncStick();
   }
+
   start.addEventListener("click", begin);
   resetButton.addEventListener("pointerdown", () => clearInput("reset"));
   resetButton.addEventListener("click", reset);
   canvas.addEventListener("pointerdown", pointerDown, { passive: false });
   canvas.addEventListener("pointermove", pointerMove, { passive: false });
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
     canvas.addEventListener(type, pointerEnd, { passive: false });
+  }
   for (const type of [
     "contextmenu",
     "dragstart",
@@ -494,6 +776,7 @@
       passive: false,
     });
   }
+
   window.addEventListener("resize", () => {
     clearInput("resize");
     resize();
@@ -516,18 +799,20 @@
     if (document.hidden) clearInput("hidden");
     last = 0;
   });
-  // Future dialogue/investigation hosts dispatch these events before taking input.
+
   window.addEventListener("tarot-breaker:interaction-start", () => {
     controls?.suspend();
+    npcSuspended = true;
     syncStick();
   });
-  window.addEventListener("tarot-breaker:interaction-end", () =>
-    controls?.resume(),
-  );
+  window.addEventListener("tarot-breaker:interaction-end", () => {
+    controls?.resume();
+    npcSuspended = false;
+  });
 
   (async () => {
     try {
-      note.textContent = "手動当たり判定データを読み込んでいます…";
+      note.textContent = "手動当たり判定とキャラクターを読み込んでいます…";
       const manifestResponse = await fetch(
         SPRITE_BASE + "shion_sprite_manifest.json",
       );
@@ -541,36 +826,58 @@
       ) {
         throw new Error("スプライト設定が実装仕様と一致しません");
       }
+
       await loadCollision();
       spawnRef = findNearestSpawnRef();
+
       const loaded = await Promise.all([
         waitForMap(),
         ...Object.entries(files).map(async ([key, src]) => {
           images[key] = await loadImage(src);
         }),
+        ...Object.entries(shioponFiles).map(async ([key, src]) => {
+          shioponImages[key] = await loadImage(src);
+        }),
       ]);
+
       const loadedMap = loaded[0];
       world = { w: loadedMap.naturalWidth, h: loadedMap.naturalHeight };
       scale = { x: world.w / REF.w, y: world.h / REF.h };
+
       for (const dir of ["down", "up", "left", "right"]) {
         if (
           images[dir].naturalWidth !== FRAME.w * 4 ||
           images[dir].naturalHeight !== FRAME.h
-        )
+        ) {
           throw new Error(dir + "歩行画像サイズ不正");
+        }
+        if (
+          shioponImages[dir].naturalWidth !== FRAME.w * 4 ||
+          shioponImages[dir].naturalHeight !== FRAME.h
+        ) {
+          throw new Error("しおぽん" + dir + "歩行画像サイズ不正");
+        }
       }
       if (
         images.idle.naturalWidth !== FRAME.w * 4 ||
         images.idle.naturalHeight !== FRAME.h
-      )
+      ) {
         throw new Error("待機画像サイズ不正");
+      }
+      if (
+        shioponImages.idle.naturalWidth !== FRAME.w * 4 ||
+        shioponImages.idle.naturalHeight !== FRAME.h
+      ) {
+        throw new Error("しおぽん待機画像サイズ不正");
+      }
+
       ready = true;
       resize();
       reset();
       draw();
       start.disabled = false;
       start.textContent = "星の国へ";
-      note.textContent = "行きたい場所をタップして、星の国を歩こう";
+      note.textContent = "しおぽんが暮らす星門庭園を歩いてみよう";
     } catch (error) {
       console.error(error);
       start.disabled = true;
