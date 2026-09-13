@@ -26,9 +26,19 @@
   const ACTOR_COLLISION_DISTANCE = 26;
   const LUMIERE_HOME = { x: 810, y: 212 };
   const LUMIERE_COLLISION_DISTANCE = 32;
-  const LUMIERE_BOB_AMPLITUDE = 3;
-  const LUMIERE_BOB_PERIOD = 2.4;
-  const LUMIERE_FRAME_SECONDS = 0.22;
+  const LUMIERE_FRAME_SECONDS = 0.3;
+  const LUMIERE_FRAME_SEQUENCE = [0, 1, 2, 3, 2, 1];
+  // The supplied frames have different transparent margins. Crop each one to
+  // the character silhouette, then render every crop into the same box so the
+  // head and lower body stay together while hair, wings and drapery animate.
+  const LUMIERE_FRAME_RECTS = [
+    { x: 21, y: 58, w: 493, h: 596 },
+    { x: 23, y: 76, w: 493, h: 567 },
+    { x: 24, y: 92, w: 490, h: 567 },
+    { x: 23, y: 68, w: 495, h: 586 },
+  ];
+  const LUMIERE_NORMALIZED_SIZE = { w: 493, h: 596 };
+  const LUMIERE_BOTTOM_GAP = 2.7;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
@@ -133,7 +143,7 @@
     moving: false,
     frame: 0,
     anim: 0,
-    bobPhase: 0,
+    motionStep: 0,
     bobOffsetY: 0,
   };
   const camera = {
@@ -250,7 +260,7 @@
     lumiere.moving = false;
     lumiere.frame = 0;
     lumiere.anim = 0;
-    lumiere.bobPhase = 0;
+    lumiere.motionStep = 0;
     lumiere.bobOffsetY = 0;
   }
 
@@ -442,13 +452,12 @@
     lumiere.anim += dt;
     while (lumiere.anim >= LUMIERE_FRAME_SECONDS) {
       lumiere.anim -= LUMIERE_FRAME_SECONDS;
-      lumiere.frame = (lumiere.frame + 1) % lumiereFrame.count;
+      lumiere.motionStep =
+        (lumiere.motionStep + 1) % LUMIERE_FRAME_SEQUENCE.length;
+      lumiere.frame =
+        LUMIERE_FRAME_SEQUENCE[lumiere.motionStep] % lumiereFrame.count;
     }
-    lumiere.bobPhase =
-      (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
-      (Math.PI * 2);
-    lumiere.bobOffsetY =
-      Math.sin(lumiere.bobPhase) * LUMIERE_BOB_AMPLITUDE * scale.y;
+    lumiere.bobOffsetY = 0;
   }
 
   function cameraOffsetY() {
@@ -498,6 +507,7 @@
   function drawSpritePass(
     image,
     sourceX,
+    sourceY,
     sourceW,
     sourceH,
     dx,
@@ -514,7 +524,7 @@
     ctx.drawImage(
       image,
       sourceX,
-      0,
+      sourceY,
       sourceW,
       sourceH,
       dx,
@@ -533,21 +543,35 @@
     { frameSpec = FRAME, hover = false, visualOffsetY = 0 } = {},
   ) {
     const scaleDraw = drawHeight / frameSpec.h;
-    const drawW = frameSpec.w * scaleDraw;
-    const drawH = frameSpec.h * scaleDraw;
+    const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
+    const sourceRect = normalizedLumiere || {
+      x: 0,
+      y: 0,
+      w: frameSpec.w,
+      h: frameSpec.h,
+    };
+    const drawW =
+      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.w : sourceRect.w) *
+      scaleDraw;
+    const drawH =
+      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : sourceRect.h) *
+      scaleDraw;
     const dx = actor.x - drawW / 2;
-    const dy = actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    const dy = normalizedLumiere
+      ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH
+      : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
     const { image, sourceX } = hover
       ? {
           image: actorImages.hover,
-          sourceX: actor.frame * frameSpec.w,
+          sourceX: actor.frame * frameSpec.w + sourceRect.x,
         }
       : spriteFrame(actor, actorImages, frameSpec);
     drawSpritePass(
       image,
       sourceX,
-      frameSpec.w,
-      frameSpec.h,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
       dx,
       dy,
       drawW,
@@ -558,8 +582,9 @@
     drawSpritePass(
       image,
       sourceX,
-      frameSpec.w,
-      frameSpec.h,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
       dx,
       dy,
       drawW,
@@ -572,9 +597,9 @@
     ctx.drawImage(
       image,
       sourceX,
-      0,
-      frameSpec.w,
-      frameSpec.h,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
       dx,
       dy,
       drawW,
@@ -784,6 +809,7 @@
         dir: lumiere.dir,
         moving: lumiere.moving,
         frame: lumiere.frame,
+        motionStep: lumiere.motionStep,
         bobOffsetY: lumiere.bobOffsetY,
         homeRef: lumiere.homeRef,
       },
