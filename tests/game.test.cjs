@@ -9,7 +9,7 @@ const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
   let raf, now = 1000;
-  const drawCalls = [], errors = [], captured = new Set();
+  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
@@ -34,7 +34,17 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1448, naturalHeight: 1086 });
   const document = new Element();
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
-  document.getElementById = id => elements[id]; document.createElement = () => new Element();
+  document.getElementById = id => elements[id]; document.createElement = tag => {
+    const element = new Element();
+    if (tag === 'canvas') {
+      element.url = 'lumiere_composite';
+      element.getContext = () => new Proxy({}, {
+        get: (_, operation) => (...args) => surfaceCalls.push({ element, operation, args }),
+        set: () => true,
+      });
+    }
+    return element;
+  };
   const window = new Element(); window.devicePixelRatio = 3;
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
@@ -65,7 +75,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy); tick();
   };
   elements.start.emit('click'); tick(120);
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, captured };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -80,15 +90,32 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   const shionDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shion_'));
   const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
   const lumiereDraws = h.drawCalls.filter(call => call[0]?.url?.includes('lumiere_'));
-  const lumiereMotionDraws = lumiereDraws.filter(call => call[3] !== 243);
-  const lumiereCoreDraws = lumiereDraws.filter(call => call[3] === 243 && call[4] === 564);
+  const lumiereMotionDraws = lumiereDraws;
+  const lumiereCoreDraws = h.surfaceCalls.filter(call => call.operation === 'drawImage' && call.args[3] === 243);
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
   assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
   assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
   assert.ok(lumiereMotionDraws.length > 0); assert.ok(lumiereCoreDraws.length > 0);
-  assert.ok(lumiereMotionDraws.every(call => [490, 493, 495].includes(call[3])));
-  assert.ok(lumiereMotionDraws.every(call => [567, 586, 596].includes(call[4])));
+  assert.ok(lumiereMotionDraws.every(call => call[3] === 493));
+  assert.ok(lumiereMotionDraws.every(call => call[4] === 596));
   assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
+});
+test('Lumiere replaces the old torso once and draws one cached silhouette per tick', async () => {
+  const h = await boot();
+  for (let i = 0; i < 420; i++) {
+    const start = h.drawCalls.length;
+    h.tick();
+    const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0].url, 'lumiere_composite');
+  }
+  const surfaces = new Set(h.surfaceCalls.map(call => call.element));
+  assert.equal(surfaces.size, 4);
+  for (const surface of surfaces) {
+    const ops = h.surfaceCalls.filter(call => call.element === surface);
+    assert.deepEqual(ops.map(call => call.operation), ['drawImage', 'clearRect', 'drawImage']);
+    assert.deepEqual(ops[1].args, [129, 32, 243, 564]);
+  }
 });
 test('Lumiere bobs as one body while slow wing frames change independently', async () => {
   const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
