@@ -8,6 +8,7 @@ on:
       - feature/shion-official-sprite-player
       - feature/tarot-breaker-tap-to-move
       - feature/lumiere-gate-npc
+      - feature/gate-garden-dialogue-events
 
 jobs:
   validate:
@@ -26,6 +27,7 @@ jobs:
           node --check game.js
           node --check audio.js
           node --check lumiere-outline.js
+          node --check dialogue.js
           node --check navigation.js
           node --check controls.js
 
