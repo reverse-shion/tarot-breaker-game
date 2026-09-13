@@ -23,6 +23,7 @@
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
   const CAMERA_LOOK_AHEAD_Y = 28;
+  const DEPTH_DEBUG = new URLSearchParams(location.search).has('depthDebug');
 
   const files = {
     idle: './assets/sprites/shion/shion_idle.png',
@@ -37,7 +38,33 @@
     { type: 'ellipse', cx: 724, cy: 535, rx: 300, ry: 174 },
     { type: 'poly', points: [[575,500],[875,500],[885,420],[870,340],[860,245],[850,190],[598,190],[588,250],[575,345],[565,430]] }
   ];
-  const blockers = [{ type: 'ellipse', cx: 724, cy: 545, rx: 128, ry: 84 }];
+
+  const blockers = [
+    { id: 'fountain', type: 'ellipse', cx: 724, cy: 548, rx: 136, ry: 88 },
+    { id: 'left-pillar', type: 'ellipse', cx: 575, cy: 704, rx: 34, ry: 66 },
+    { id: 'right-pillar', type: 'ellipse', cx: 873, cy: 704, rx: 34, ry: 66 }
+  ];
+
+  const foregroundOccluders = [
+    {
+      id: 'fountain-front',
+      depthY: 625,
+      box: { x: 555, y: 515, w: 338, h: 165 },
+      shape: { type: 'poly', points: [[565,532],[883,532],[890,580],[868,628],[825,660],[623,660],[580,628],[558,580]] }
+    },
+    {
+      id: 'left-garden-front',
+      depthY: 835,
+      box: { x: 475, y: 590, w: 165, h: 310 },
+      shape: { type: 'poly', points: [[505,600],[625,590],[617,675],[603,755],[590,840],[550,885],[505,895],[482,835],[487,720]] }
+    },
+    {
+      id: 'right-garden-front',
+      depthY: 835,
+      box: { x: 808, y: 590, w: 165, h: 310 },
+      shape: { type: 'poly', points: [[823,590],[943,600],[961,720],[966,835],[943,895],[898,885],[858,840],[845,755],[831,675]] }
+    }
+  ];
 
   const images = {};
   const keys = new Set();
@@ -78,8 +105,9 @@
   function canStand(x, y) {
     const rx = x / scale.x;
     const ry = y / scale.y;
+    const samples = [[0,0],[-9,0],[9,0],[0,-4],[0,5],[-7,4],[7,4]];
     const walkPoint = (px, py) => px > 4 && py > 4 && px < REF.w - 4 && py < REF.h - 4 && walkAreas.some(a => inArea(px, py, a)) && !blockers.some(a => inArea(px, py, a));
-    return walkPoint(rx, ry) && walkPoint(rx - 6, ry) && walkPoint(rx + 6, ry) && walkPoint(rx, ry + 3);
+    return samples.every(([sx, sy]) => walkPoint(rx + sx, ry + sy));
   }
 
   function loadImage(src) {
@@ -232,14 +260,71 @@
     ctx.save();
     ctx.translate(player.x, player.y + 2);
     ctx.scale(1, 0.34);
-    const gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, 17);
+    const gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, 20);
     gradient.addColorStop(0, 'rgba(5,7,20,.46)');
     gradient.addColorStop(0.62, 'rgba(5,7,20,.28)');
     gradient.addColorStop(1, 'rgba(5,7,20,0)');
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(0, 0, 17, 0, Math.PI * 2);
+    ctx.arc(0, 0, 20, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
+  }
+
+  function traceRefShape(shape) {
+    ctx.beginPath();
+    if (shape.type === 'ellipse') {
+      ctx.ellipse(shape.cx * scale.x, shape.cy * scale.y, shape.rx * scale.x, shape.ry * scale.y, 0, 0, Math.PI * 2);
+      return;
+    }
+    const points = shape.points;
+    ctx.moveTo(points[0][0] * scale.x, points[0][1] * scale.y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0] * scale.x, points[i][1] * scale.y);
+    ctx.closePath();
+  }
+
+  function drawMapRegion(box) {
+    const sourceScaleX = map.naturalWidth / REF.w;
+    const sourceScaleY = map.naturalHeight / REF.h;
+    ctx.drawImage(
+      map,
+      box.x * sourceScaleX,
+      box.y * sourceScaleY,
+      box.w * sourceScaleX,
+      box.h * sourceScaleY,
+      box.x * scale.x,
+      box.y * scale.y,
+      box.w * scale.x,
+      box.h * scale.y
+    );
+  }
+
+  function drawForegroundOccluders() {
+    const playerRefY = player.y / scale.y;
+    for (const occluder of foregroundOccluders) {
+      if (playerRefY >= occluder.depthY) continue;
+      ctx.save();
+      traceRefShape(occluder.shape);
+      ctx.clip();
+      drawMapRegion(occluder.box);
+      ctx.restore();
+    }
+  }
+
+  function drawDepthDebug() {
+    if (!DEPTH_DEBUG) return;
+    ctx.save();
+    ctx.lineWidth = 2 / camera.zoom;
+    ctx.strokeStyle = 'rgba(255,80,80,.9)';
+    for (const blocker of blockers) {
+      traceRefShape(blocker);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(80,220,255,.9)';
+    for (const occluder of foregroundOccluders) {
+      traceRefShape(occluder.shape);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -256,6 +341,8 @@
     ctx.translate(-origin.x, -origin.y);
     drawGroundShadow();
     drawPlayer();
+    drawForegroundOccluders();
+    drawDepthDebug();
     ctx.restore();
   }
 
@@ -349,7 +436,7 @@
 
   (async () => {
     try {
-      note.textContent = '正式シオンと星門庭園を読み込んでいます…';
+      note.textContent = '星門庭園2.5Dレイヤーを読み込んでいます…';
       const manifestResponse = await fetch('./assets/sprites/shion/shion_sprite_manifest.json');
       if (!manifestResponse.ok) throw new Error('スプライト設定を読み込めません');
       manifest = await manifestResponse.json();
@@ -380,7 +467,7 @@
       draw();
       start.disabled = false;
       start.textContent = '星の国へ';
-      note.textContent = `正式シオン / 視認性ブラッシュアップ / ${world.w}×${world.h}`;
+      note.textContent = `2.5D Phase 1 / 前景遮蔽＋精密当たり判定 / ${world.w}×${world.h}`;
     } catch (error) {
       console.error(error);
       start.disabled = true;
