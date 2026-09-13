@@ -58,12 +58,17 @@ async function boot({ width = 390, height = 844, spriteBase, collisionUrl, badCo
   return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, captured };
 }
 
-test('390x844 boots with official assets, DPR cap, corrected spawn and 78px sprite', async () => {
+test('390x844 boots with Shion + Shiopon, DPR cap, corrected spawn and actor sizes', async () => {
   const h = await boot(); const s = h.state();
   assert.equal(h.errors.length, 0); assert.equal(s.cssWidth, 390); assert.equal(s.cssHeight, 844);
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.equal(s.player.x, 729); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
-  assert.ok(h.drawCalls.every(call => call[8] === 78));
+  assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
+  assert.equal(s.actorCollisionDistance, 26); assert.ok(s.actorGap > s.actorCollisionDistance);
+  const shionDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shion_'));
+  const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
+  assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
+  assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); h.tapWorld(810, 700); const after = h.state();
@@ -80,20 +85,24 @@ test('real event bindings: drag/keyboard/reset cancel and reset clears held stic
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 729);
+  assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
   h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
-test('four directions use all four walk frames then the matching idle frame', async () => {
-  const h = await boot(); h.tapWorld(810, 800); h.tick(250);
+test('four directions use all four Shion walk frames then the matching idle frame', async () => {
+  const h = await boot(); h.tapWorld(810, 700); h.tick(250);
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    h.tapWorld(810, 800); h.tick(200);
-    const frames = new Set(); h.window.emit('keydown', { key });
+    h.tapWorld(810, 700); h.tick(200);
+    const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
     for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
-    assert.equal(frames.size, 4); assert.ok(h.drawCalls.at(-1)[0].url.endsWith(`shion_walk_${dir}.png`));
-    h.window.emit('keyup', { key }); h.tick();
+    assert.equal(frames.size, 4);
+    const walkingCalls = h.drawCalls.slice(drawStart).filter(call => call[0]?.url?.endsWith(`shion_walk_${dir}.png`));
+    assert.ok(walkingCalls.length > 0);
+    h.window.emit('keyup', { key }); const idleStart = h.drawCalls.length; h.tick();
     assert.equal(h.state().player.dir, dir); assert.equal(h.state().player.moving, false);
-    assert.ok(h.drawCalls.at(-1)[0].url.endsWith('shion_idle.png')); assert.equal(h.drawCalls.at(-1)[1], idleIndex * 384);
+    const idleCalls = h.drawCalls.slice(idleStart).filter(call => call[0]?.url?.endsWith('shion_idle.png'));
+    assert.ok(idleCalls.length > 0); assert.equal(idleCalls.at(-1)[1], idleIndex * 384);
   }
 });
 test('pointercancel, lost capture, blur and hidden page prevent stuck movement', async () => {
@@ -105,9 +114,9 @@ test('pointercancel, lost capture, blur and hidden page prevent stuck movement',
     h.tick(); assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.moving, false);
   }
 });
-test('future interaction lifecycle cancels and suspends movement', async () => {
+test('future interaction lifecycle cancels and suspends player movement', async () => {
   const h = await boot(); h.tapWorld(810, 700); h.window.emit('tarot-breaker:interaction-start'); h.tick();
-  assert.equal(h.state().route.length, 0); assert.equal(h.state().suspended, true);
+  assert.equal(h.state().route.length, 0); assert.equal(h.state().suspended, true); assert.equal(h.state().shiopon.moving, false);
   h.tapWorld(810, 600); assert.equal(h.state().route.length, 0);
   h.window.emit('tarot-breaker:interaction-end'); h.tapWorld(810, 700); assert.ok(h.state().route.length);
 });
