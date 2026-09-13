@@ -26,8 +26,10 @@
   const ACTOR_COLLISION_DISTANCE = 26;
   const LUMIERE_HOME = { x: 810, y: 212 };
   const LUMIERE_COLLISION_DISTANCE = 32;
-  const LUMIERE_FRAME_SECONDS = 0.3;
-  const LUMIERE_FRAME_SEQUENCE = [0, 1, 2, 3, 2, 1];
+  const LUMIERE_BOB_AMPLITUDE = 2.4;
+  const LUMIERE_BOB_PERIOD = 5.2;
+  const LUMIERE_WING_HOLD_MIN = 0.48;
+  const LUMIERE_WING_HOLD_RANGE = 0.42;
   // The supplied frames have different transparent margins. Crop each one to
   // the character silhouette, then render every crop into the same box so the
   // head and lower body stay together while hair, wings and drapery animate.
@@ -38,6 +40,7 @@
     { x: 23, y: 68, w: 495, h: 586 },
   ];
   const LUMIERE_NORMALIZED_SIZE = { w: 493, h: 596 };
+  const LUMIERE_BODY_CORE = { x: 150, y: 90, w: 243, h: 564 };
   const LUMIERE_BOTTOM_GAP = 2.7;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
@@ -143,7 +146,9 @@
     moving: false,
     frame: 0,
     anim: 0,
-    motionStep: 0,
+    wingDirection: 1,
+    wingHold: LUMIERE_WING_HOLD_MIN,
+    bobPhase: 0,
     bobOffsetY: 0,
   };
   const camera = {
@@ -260,7 +265,10 @@
     lumiere.moving = false;
     lumiere.frame = 0;
     lumiere.anim = 0;
-    lumiere.motionStep = 0;
+    lumiere.wingDirection = 1;
+    lumiere.wingHold =
+      LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
+    lumiere.bobPhase = 0;
     lumiere.bobOffsetY = 0;
   }
 
@@ -450,14 +458,28 @@
 
   function updateLumiere(dt) {
     lumiere.anim += dt;
-    while (lumiere.anim >= LUMIERE_FRAME_SECONDS) {
-      lumiere.anim -= LUMIERE_FRAME_SECONDS;
-      lumiere.motionStep =
-        (lumiere.motionStep + 1) % LUMIERE_FRAME_SEQUENCE.length;
-      lumiere.frame =
-        LUMIERE_FRAME_SEQUENCE[lumiere.motionStep] % lumiereFrame.count;
+    while (lumiere.anim >= lumiere.wingHold) {
+      lumiere.anim -= lumiere.wingHold;
+      if (
+        lumiere.frame + lumiere.wingDirection < 0 ||
+        lumiere.frame + lumiere.wingDirection >= lumiereFrame.count ||
+        Math.random() < 0.18
+      ) {
+        lumiere.wingDirection *= -1;
+      }
+      lumiere.frame = clamp(
+        lumiere.frame + lumiere.wingDirection,
+        0,
+        lumiereFrame.count - 1,
+      );
+      lumiere.wingHold =
+        LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
     }
-    lumiere.bobOffsetY = 0;
+    lumiere.bobPhase =
+      (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
+      (Math.PI * 2);
+    lumiere.bobOffsetY =
+      Math.sin(lumiere.bobPhase) * LUMIERE_BOB_AMPLITUDE * scale.y;
   }
 
   function cameraOffsetY() {
@@ -558,7 +580,7 @@
       scaleDraw;
     const dx = actor.x - drawW / 2;
     const dy = normalizedLumiere
-      ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH
+      ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH + visualOffsetY
       : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
     const { image, sourceX } = hover
       ? {
@@ -606,6 +628,24 @@
       drawH,
     );
     ctx.restore();
+
+    if (normalizedLumiere) {
+      const frameZeroRect = LUMIERE_FRAME_RECTS[0];
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        actorImages.hover,
+        LUMIERE_BODY_CORE.x,
+        LUMIERE_BODY_CORE.y,
+        LUMIERE_BODY_CORE.w,
+        LUMIERE_BODY_CORE.h,
+        dx + (LUMIERE_BODY_CORE.x - frameZeroRect.x) * scaleDraw,
+        dy + (LUMIERE_BODY_CORE.y - frameZeroRect.y) * scaleDraw,
+        LUMIERE_BODY_CORE.w * scaleDraw,
+        LUMIERE_BODY_CORE.h * scaleDraw,
+      );
+      ctx.restore();
+    }
   }
 
   function drawGroundShadowAt(actor, radius, opacity) {
@@ -809,7 +849,8 @@
         dir: lumiere.dir,
         moving: lumiere.moving,
         frame: lumiere.frame,
-        motionStep: lumiere.motionStep,
+        wingDirection: lumiere.wingDirection,
+        wingHold: lumiere.wingHold,
         bobOffsetY: lumiere.bobOffsetY,
         homeRef: lumiere.homeRef,
       },
