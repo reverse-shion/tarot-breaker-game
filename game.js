@@ -33,36 +33,29 @@
     right: './assets/sprites/shion/shion_walk_right.png'
   };
 
+  // Phase 1.1: walkable space is intentionally limited to the paved approach,
+  // the circular path around the fountain, and the central stairs only.
   const walkAreas = [
-    { type: 'poly', points: [[590,1086],[858,1086],[885,955],[905,825],[910,730],[885,655],[835,605],[615,605],[570,660],[565,780],[575,925]] },
-    { type: 'ellipse', cx: 724, cy: 535, rx: 300, ry: 174 },
-    { type: 'poly', points: [[575,500],[875,500],[885,420],[870,340],[860,245],[850,190],[598,190],[588,250],[575,345],[565,430]] }
+    { type: 'poly', points: [[610,1086],[838,1086],[850,980],[860,860],[858,760],[850,690],[835,640],[613,640],[598,690],[590,760],[588,860],[598,980]] },
+    { type: 'ellipse', cx: 724, cy: 545, rx: 230, ry: 132 },
+    { type: 'poly', points: [[620,500],[828,500],[835,430],[827,360],[817,295],[808,235],[800,190],[648,190],[640,235],[631,295],[621,360],[613,430]] }
   ];
 
   const blockers = [
-    { id: 'fountain', type: 'ellipse', cx: 724, cy: 548, rx: 136, ry: 88 },
-    { id: 'left-pillar', type: 'ellipse', cx: 575, cy: 704, rx: 34, ry: 66 },
-    { id: 'right-pillar', type: 'ellipse', cx: 873, cy: 704, rx: 34, ry: 66 }
+    { id: 'fountain', type: 'ellipse', cx: 724, cy: 545, rx: 152, ry: 92 }
   ];
 
+  // Only the fountain lip remains as an occluder. Broad garden masks caused
+  // unrelated disappearances, so pillar/flower-bed occlusion is disabled.
   const foregroundOccluders = [
     {
-      id: 'fountain-front',
-      depthY: 625,
-      box: { x: 555, y: 515, w: 338, h: 165 },
-      shape: { type: 'poly', points: [[565,532],[883,532],[890,580],[868,628],[825,660],[623,660],[580,628],[558,580]] }
-    },
-    {
-      id: 'left-garden-front',
-      depthY: 835,
-      box: { x: 475, y: 590, w: 165, h: 310 },
-      shape: { type: 'poly', points: [[505,600],[625,590],[617,675],[603,755],[590,840],[550,885],[505,895],[482,835],[487,720]] }
-    },
-    {
-      id: 'right-garden-front',
-      depthY: 835,
-      box: { x: 808, y: 590, w: 165, h: 310 },
-      shape: { type: 'poly', points: [[823,590],[943,600],[961,720],[966,835],[943,895],[898,885],[858,840],[845,755],[831,675]] }
+      id: 'fountain-front-lip',
+      depthY: 610,
+      box: { x: 550, y: 548, w: 348, h: 96 },
+      shape: {
+        type: 'poly',
+        points: [[566,554],[882,554],[890,574],[884,594],[866,612],[836,627],[802,638],[646,638],[612,627],[582,612],[564,594],[558,574]]
+      }
     }
   ];
 
@@ -105,8 +98,11 @@
   function canStand(x, y) {
     const rx = x / scale.x;
     const ry = y / scale.y;
-    const samples = [[0,0],[-9,0],[9,0],[0,-4],[0,5],[-7,4],[7,4]];
-    const walkPoint = (px, py) => px > 4 && py > 4 && px < REF.w - 4 && py < REF.h - 4 && walkAreas.some(a => inArea(px, py, a)) && !blockers.some(a => inArea(px, py, a));
+    const samples = [[0,0],[-8,0],[8,0],[0,-4],[0,5],[-6,4],[6,4]];
+    const walkPoint = (px, py) =>
+      px > 4 && py > 4 && px < REF.w - 4 && py < REF.h - 4 &&
+      walkAreas.some(a => inArea(px, py, a)) &&
+      !blockers.some(a => inArea(px, py, a));
     return samples.every(([sx, sy]) => walkPoint(rx + sx, ry + sy));
   }
 
@@ -315,12 +311,20 @@
     if (!DEPTH_DEBUG) return;
     ctx.save();
     ctx.lineWidth = 2 / camera.zoom;
+
+    ctx.strokeStyle = 'rgba(70,255,120,.9)';
+    for (const area of walkAreas) {
+      traceRefShape(area);
+      ctx.stroke();
+    }
+
     ctx.strokeStyle = 'rgba(255,80,80,.9)';
     for (const blocker of blockers) {
       traceRefShape(blocker);
       ctx.stroke();
     }
-    ctx.strokeStyle = 'rgba(80,220,255,.9)';
+
+    ctx.strokeStyle = 'rgba(80,220,255,.95)';
     for (const occluder of foregroundOccluders) {
       traceRefShape(occluder.shape);
       ctx.stroke();
@@ -436,7 +440,7 @@
 
   (async () => {
     try {
-      note.textContent = '星門庭園2.5Dレイヤーを読み込んでいます…';
+      note.textContent = '星門庭園2.5Dを読み込んでいます…';
       const manifestResponse = await fetch('./assets/sprites/shion/shion_sprite_manifest.json');
       if (!manifestResponse.ok) throw new Error('スプライト設定を読み込めません');
       manifest = await manifestResponse.json();
@@ -467,7 +471,7 @@
       draw();
       start.disabled = false;
       start.textContent = '星の国へ';
-      note.textContent = `2.5D Phase 1 / 前景遮蔽＋精密当たり判定 / ${world.w}×${world.h}`;
+      note.textContent = `2.5D Phase 1.1 / 通路・階段限定 / ${world.w}×${world.h}`;
     } catch (error) {
       console.error(error);
       start.disabled = true;
