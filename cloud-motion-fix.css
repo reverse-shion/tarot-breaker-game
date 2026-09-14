@@ -1,6 +1,6 @@
-/* Preview 33 — cloud runtime guard for iOS/Safari.
-   Keeps the Preview 31 one-way cloud motion alive even when the device reports
-   reduced motion. Reduced mode remains slower and removes the vertical bob. */
+/* Preview 34 — perceptible cloud flow for iOS/Safari.
+   The goal is not merely to animate the clouds, but to make the horizontal
+   drift readable on a phone without overpowering the garden or characters. */
 
 @keyframes cloud-runtime-scroll-left {
   from { transform: translate3d(0, 0, 0); }
@@ -12,43 +12,81 @@
   to { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
 }
 
+@keyframes cloud-runtime-near-bob {
+  0%, 100% { transform: translate3d(0, -2.5px, 0) scale(1.04); }
+  50% { transform: translate3d(0, 2.5px, 0) scale(1.04); }
+}
+
+@-webkit-keyframes cloud-runtime-near-bob {
+  0%, 100% { -webkit-transform: translate3d(0, -2.5px, 0) scale(1.04); transform: translate3d(0, -2.5px, 0) scale(1.04); }
+  50% { -webkit-transform: translate3d(0, 2.5px, 0) scale(1.04); transform: translate3d(0, 2.5px, 0) scale(1.04); }
+}
+
+.scene-cloud {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.scene-cloud-far {
+  opacity: .30 !important;
+}
+
+.scene-cloud-near {
+  opacity: .54 !important;
+}
+
 .scene-cloud-far-track {
-  -webkit-animation: cloud-runtime-scroll-left 90s linear infinite !important;
-  animation: cloud-runtime-scroll-left 90s linear infinite !important;
-  -webkit-animation-delay: -23s !important;
-  animation-delay: -23s !important;
+  -webkit-animation: cloud-runtime-scroll-left 48s linear infinite !important;
+  animation: cloud-runtime-scroll-left 48s linear infinite !important;
+  -webkit-animation-delay: -17s !important;
+  animation-delay: -17s !important;
   -webkit-animation-play-state: running !important;
   animation-play-state: running !important;
 }
 
 .scene-cloud-near-track {
-  -webkit-animation: cloud-runtime-scroll-left 54s linear infinite !important;
-  animation: cloud-runtime-scroll-left 54s linear infinite !important;
-  -webkit-animation-delay: -9s !important;
-  animation-delay: -9s !important;
+  -webkit-animation: cloud-runtime-scroll-left 24s linear infinite !important;
+  animation: cloud-runtime-scroll-left 24s linear infinite !important;
+  -webkit-animation-delay: -5s !important;
+  animation-delay: -5s !important;
   -webkit-animation-play-state: running !important;
   animation-play-state: running !important;
 }
 
+.scene-cloud-near .scene-cloud-copy {
+  -webkit-animation: cloud-runtime-near-bob 6.4s ease-in-out infinite !important;
+  animation: cloud-runtime-near-bob 6.4s ease-in-out infinite !important;
+  -webkit-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .scene-cloud-far {
+    opacity: .26 !important;
+  }
+
+  .scene-cloud-near {
+    opacity: .46 !important;
+  }
+
   .scene-cloud-far-track {
-    -webkit-animation-duration: 150s !important;
-    animation-duration: 150s !important;
-    -webkit-animation-delay: -38s !important;
-    animation-delay: -38s !important;
+    -webkit-animation-duration: 78s !important;
+    animation-duration: 78s !important;
+    -webkit-animation-delay: -26s !important;
+    animation-delay: -26s !important;
   }
 
   .scene-cloud-near-track {
-    -webkit-animation-duration: 96s !important;
-    animation-duration: 96s !important;
-    -webkit-animation-delay: -24s !important;
-    animation-delay: -24s !important;
+    -webkit-animation-duration: 46s !important;
+    animation-duration: 46s !important;
+    -webkit-animation-delay: -15s !important;
+    animation-delay: -15s !important;
   }
 
   .scene-cloud-near .scene-cloud-copy {
     -webkit-animation: none !important;
     animation: none !important;
-    -webkit-transform: scale(1.03);
-    transform: scale(1.03);
+    -webkit-transform: scale(1.04);
+    transform: scale(1.04);
   }
 }
