@@ -1,6 +1,5 @@
 /* Preview 32 — fountain geometry/depth polish.
    Keep this isolated from movement, collision, clouds and gate logic. */
-@import url("./cloud-motion-fix.css?v=1.0.0");
 
 .scene-fountain-water {
   overflow: hidden;
