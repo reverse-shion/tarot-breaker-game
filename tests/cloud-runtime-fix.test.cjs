@@ -13,7 +13,7 @@ test('cloud stylesheet is loaded directly and fountain CSS stays isolated', () =
   assert.doesNotMatch(fountainCss, /cloud-motion-fix\.css/);
 });
 
-test('Preview 44 uses one three-copy buffered cloud track', () => {
+test('Preview 45 uses one three-copy buffered cloud track', () => {
   const mainLayers = html.match(/scene-cloud-main/g) || [];
   const copies = html.match(/class="scene-cloud-copy"/g) || [];
   const worldCloudCopies = html.match(/star-country-world-clouds\.webp/g) || [];
@@ -27,9 +27,9 @@ test('Preview 44 uses one three-copy buffered cloud track', () => {
   assert.doesNotMatch(html, /scene-cloud-near/);
 });
 
-test('cloud artwork scrolls left continuously between identical copies at authored size', () => {
+test('cloud artwork scrolls left continuously above the celestial sky and below authored map plates', () => {
   assert.match(cloudCss, /@keyframes cloud-main-scroll-left[\s\S]*?translate3d\(-33\.333333%,\s*0,\s*0\)[\s\S]*?translate3d\(-66\.666667%,\s*0,\s*0\)/);
-  assert.match(cloudCss, /\.scene-cloud-main[\s\S]*?z-index:\s*-1\s*!important/);
+  assert.match(cloudCss, /\.scene-cloud-main[\s\S]*?z-index:\s*0\s*!important/);
   assert.match(cloudCss, /\.scene-cloud-main[\s\S]*?opacity:\s*\.72\s*!important/);
   assert.match(cloudCss, /scene-cloud-main-track[\s\S]*?64s linear infinite/);
   assert.match(cloudCss, /scene-cloud-main-track[\s\S]*?animation-play-state:\s*running\s*!important/);
