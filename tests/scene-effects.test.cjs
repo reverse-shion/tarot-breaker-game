@@ -9,6 +9,7 @@ const html=fs.readFileSync('index.html','utf8'),css=fs.readFileSync('game.css','
 
 test('gate opening aligns with stair centre; one base and no full foreground over actors',()=>{
  assert.equal(layout.gate.x+720*layout.gate.w/1448,800);
+ assert.deepEqual(layout.foregroundOffset,{x:-12,y:0});
  assert.equal((html.match(/class="scene-object scene-back scene-gate-base"/g)||[]).length,1);
  assert.doesNotMatch(html,/scene-front scene-foreground/);
  assert.match(html,/scene-back scene-foreground/);
@@ -16,9 +17,9 @@ test('gate opening aligns with stair centre; one base and no full foreground ove
 });
 test('foot baseline is strict, local to the object and independent for each actor',()=>{
  const ids=p=>layout.activeOccluders(p).map(o=>o.id);
- assert.ok(ids({x:584,y:438}).includes('west-court-post'));
- assert.ok(!ids({x:584,y:463}).includes('west-court-post'));
- assert.ok(!ids({x:584,y:510}).includes('west-court-post'));
+ assert.ok(ids({x:572,y:438}).includes('west-court-post'));
+ assert.ok(!ids({x:572,y:463}).includes('west-court-post'));
+ assert.ok(!ids({x:572,y:510}).includes('west-court-post'));
  assert.ok(!ids({x:810,y:438}).includes('west-court-post'));
  assert.equal(ids({x:810,y:800}).length,0);
  assert.equal(ids({x:800,y:910}).length,0);
@@ -56,9 +57,9 @@ function bootScene(){
 test('rear actor is alpha-masked in an isolated surface; front actor draws directly',async()=>{
  const {api,calls}=bootScene();await api.ready;
  const main={drawImage(...args){calls.push({tag:'main',key:'drawImage',args});}};
- const targets=[];api.drawMaskedActor(main,{x:584,y:438},{x:1,y:1},2,p=>targets.push(p));
+ const targets=[];api.drawMaskedActor(main,{x:572,y:438},{x:1,y:1},2,p=>targets.push(p));
  assert.notEqual(targets[0],main);
- api.drawMaskedActor(main,{x:584,y:470},{x:1,y:1},2,p=>targets.push(p));
+ api.drawMaskedActor(main,{x:572,y:470},{x:1,y:1},2,p=>targets.push(p));
  assert.equal(targets[1],main);
  assert.equal(calls.filter(c=>c.tag==='main'&&c.key==='drawImage').length,1);
  api.drawMaskedActor(main,{x:1168,y:876},{x:2,y:2},1,p=>targets.push(p));
