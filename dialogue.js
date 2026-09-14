@@ -186,6 +186,18 @@
     el.hidden = !text;
   }
 
+  function runLineCue() {
+    if (story.eventId !== "shioponMeet") return;
+    if (story.lineIndex === 0)
+      window.dispatchEvent(new Event("tarot-breaker:shiopon-face-player"));
+    if (story.lineIndex === 55)
+      window.dispatchEvent(new Event("tarot-breaker:shiopon-race-start"));
+    if (story.lineIndex === 58)
+      window.dispatchEvent(new Event("tarot-breaker:shiopon-trip"));
+    if (story.lineIndex === 61)
+      window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
+  }
+
   function renderLine() {
     const line = scripts[story.eventId]?.[story.lineIndex];
     if (!line) return finishEvent();
@@ -196,6 +208,7 @@
     speakerEl.textContent = speaker;
     textEl.textContent = text;
     document.getElementById("dialogue-layer").dataset.speaker = speaker;
+    runLineCue();
   }
 
   function startEvent(eventId) {
@@ -221,6 +234,7 @@
     if (layer) layer.hidden = true;
 
     if (completed === "shioponMeet") {
+      window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
       story.shioponDone = true;
       story.joined = true;
       showObjective("星門へ向かう");
@@ -278,6 +292,7 @@
   function resetStory() {
     if (story.active) window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
     window.dispatchEvent(new Event("tarot-breaker:shiopon-follow-stop"));
+    window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
     story.active = false;
     story.eventId = null;
     story.lineIndex = 0;
