@@ -5,12 +5,14 @@ const root = process.cwd();
 const required = [
   'index.html',
   'game.css',
+  'sky-atmosphere.css',
   'game.js',
   'scene-effects.js',
   'scene-layout.js',
   'navigation.js',
   'controls.js',
   'assets/maps/star-country-gate-garden-collision.json',
+  'assets/maps/star-country-farthest-sky-background.webp',
   'assets/maps/star-country-world-islands.webp',
   'assets/maps/star-country-gate-garden-star-sky.webp',
   'assets/maps/star-country-world-clouds.webp',
@@ -88,9 +90,12 @@ for (const rel of lumiereSheets) {
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 for (const ref of [
   './game.css',
+  './sky-atmosphere.css',
   './game.js',
   './scene-effects.js',
+  './assets/maps/star-country-farthest-sky-background.webp',
   './assets/maps/star-country-world-islands.webp',
+  './assets/maps/star-country-gate-garden-star-sky.webp',
   './assets/maps/star-country-world-clouds.webp'
 ]) {
   if (!html.includes(ref)) throw new Error(`index.html missing reference: ${ref}`);
@@ -106,7 +111,7 @@ for (const token of ['TarotSceneEffects','tarot-breaker:gate-state','data-scene-
 
 console.log('TAROT BREAKER validation passed');
 console.log('Required files:', required.length);
-console.log('Dynamic Star Gate Garden assets: separated islands + clouds, 15 WebP layers');
+console.log('Dynamic Star Gate Garden assets: static far sky + celestial overlay + repeating clouds');
 console.log('Shion / Shiopon sheets: 1536x512, 4 frames each');
 console.log(`Lumiere sheets: ${lumiereSize.width}x${lumiereSize.height}, 4 frames each`);
 console.log('Manifest: 384x512 cells, baseline_y=480');
