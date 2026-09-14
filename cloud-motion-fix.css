@@ -1,9 +1,9 @@
 /* Preview 43 — Chrono Trigger-style cloud drift.
    Keep the supplied cloud artwork at its authored world size. Two exact copies
    form one continuous strip and move only from right to left at a constant
-   rate. No per-copy scaling, bobbing, drop-shadow or heavy filtering: this
-   keeps iPhone Safari on a simple compositor transform and avoids visible
-   stutter while preserving the original cloud shapes. */
+   rate. No per-copy scaling, secondary vertical motion, drop-shadow or heavy
+   filtering: this keeps iPhone Safari on a simple compositor transform and
+   avoids visible stutter while preserving the original cloud shapes. */
 
 @keyframes cloud-main-scroll-left {
   from { transform: translate3d(0, 0, 0); }
@@ -23,8 +23,6 @@
   contain: layout paint size;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  /* Only soften the viewport entry/exit edges. The cloud illustration itself
-     remains unscaled and unfiltered so its authored look is preserved. */
   -webkit-mask-image: linear-gradient(to right,
     transparent 0%,
     #000 1.2%,
@@ -79,7 +77,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Keep direction and continuity identical; only slow the drift. */
   .scene-cloud-main-track {
     -webkit-animation-duration: 112s !important;
     animation-duration: 112s !important;
