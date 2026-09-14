@@ -4,6 +4,7 @@ const fs = require('node:fs');
 
 const html = fs.readFileSync('index.html', 'utf8');
 const css = fs.readFileSync('fountain-polish.css', 'utf8');
+const cssRulesOnly = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
 test('fountain water is reduced and centered inside the basin', () => {
   const match = html.match(/class="scene-object scene-back scene-fountain-water"[\s\S]*?data-world-x="([^"]+)"[\s\S]*?data-world-y="([^"]+)"[\s\S]*?data-world-w="([^"]+)"[\s\S]*?data-world-h="([^"]+)"/);
@@ -29,6 +30,7 @@ test('crystal ring is rendered behind the reconstructed crystal core', () => {
 
 test('fountain polish is isolated and does not modify collision or scene logic', () => {
   assert.match(html, /fountain-polish\.css\?v=1\.0\.0/);
-  assert.doesNotMatch(css, /collision|walkArea|blockedArea|navigation/i);
+  assert.doesNotMatch(cssRulesOnly, /collision|walkArea|blockedArea|navigation/i);
+  assert.doesNotMatch(cssRulesOnly, /\.scene-cloud|\.scene-waterfall|\.scene-gate|#game/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
 });
