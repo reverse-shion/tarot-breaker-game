@@ -5,11 +5,11 @@
 })(typeof window === "object" ? window : this, function () {
   "use strict";
   const referenceSize = { width: 1448, height: 1086 };
-  // The split foreground artwork sits about 12 reference pixels to the right
-  // of the avenue centre in the reconstructed scene. Keep the authored ground,
-  // fountain and collision centreline fixed, and bring only the foreground
-  // cutout back onto the original avenue axis.
-  const foregroundOffset = Object.freeze({ x: -12, y: 0 });
+  // Preview 40: the split foreground still sat a few reference pixels to the
+  // right after Preview 39. Keep the authored ground, fountain and route axis
+  // fixed and move only the split foreground/corresponding masks left by 15px
+  // total (3px farther left than Preview 39).
+  const foregroundOffset = Object.freeze({ x: -15, y: 0 });
   const shiftPoints = (points, dx = 0, dy = 0) => points.map(([x,y]) => [x+dx,y+dy]);
   const shiftShape = (shape, dx = 0, dy = 0) => {
     if (shape.type === "ellipse") return {...shape,cx:shape.cx+dx,cy:shape.cy+dy};
