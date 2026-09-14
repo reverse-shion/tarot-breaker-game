@@ -6,12 +6,12 @@ const html = fs.readFileSync('index.html', 'utf8');
 const css = fs.readFileSync('fountain-polish.css', 'utf8');
 const cssRulesOnly = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-test('fountain water is reduced and centered inside the basin', () => {
+test('fountain water is reduced, centered and seated farther into the basin', () => {
   const match = html.match(/class="scene-object scene-back scene-fountain-water"[\s\S]*?data-world-x="([^"]+)"[\s\S]*?data-world-y="([^"]+)"[\s\S]*?data-world-w="([^"]+)"[\s\S]*?data-world-h="([^"]+)"/);
   assert.ok(match, 'fountain water layer exists');
   const [, x, y, w, h] = match.map(Number);
   assert.equal(x, 650);
-  assert.equal(y, 419);
+  assert.equal(y, 409);
   assert.equal(w, 300);
   assert.equal(h, 176);
   assert.equal(x + w / 2, 800);
@@ -19,13 +19,16 @@ test('fountain water is reduced and centered inside the basin', () => {
   assert.match(css, /clip-path:\s*ellipse\(48% 43% at 50% 52%\)/);
 });
 
-test('crystal ring is rendered behind the reconstructed crystal core', () => {
-  const ring = html.indexOf('<canvas class="scene-crystal-ring"');
-  const core = html.indexOf('<canvas class="scene-crystal-core"');
-  assert.ok(ring >= 0 && core >= 0, 'ring and core canvases exist');
-  assert.ok(ring < core, 'ring canvas is before core canvas in paint order');
-  assert.match(css, /\.scene-crystal-ring\s*\{[\s\S]*?z-index:\s*0/);
-  assert.match(css, /\.scene-crystal-core\s*\{[\s\S]*?z-index:\s*1/);
+test('crystal is moved deeper and detached ring is disabled', () => {
+  const crystal = html.match(/class="scene-object scene-back scene-fountain-crystal"[\s\S]*?data-world-x="([^"]+)"[\s\S]*?data-world-y="([^"]+)"[\s\S]*?data-world-w="([^"]+)"[\s\S]*?data-world-h="([^"]+)"/);
+  assert.ok(crystal, 'fountain crystal layer exists');
+  const [, x, y, w, h] = crystal.map(Number);
+  assert.equal(x, 708);
+  assert.equal(y, 353);
+  assert.equal(w, 184);
+  assert.equal(h, 230);
+  assert.match(html, /<canvas class="scene-crystal-ring"[^>]*hidden/);
+  assert.match(html, /<canvas class="scene-crystal-core"/);
 });
 
 test('fountain polish is isolated and does not modify collision or scene logic', () => {
