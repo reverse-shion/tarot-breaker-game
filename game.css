@@ -29,8 +29,10 @@ body {
   height: 100%;
   overflow: hidden;
   background: #090c20;
+  isolation: isolate;
 }
-.map-layer {
+.map-layer,
+.scene-world-layer {
   position: absolute;
   left: 0;
   top: 0;
@@ -40,7 +42,143 @@ body {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+.map-layer {
   z-index: 0;
+}
+.scene-world-layer {
+  z-index: 0;
+  overflow: visible;
+}
+.scene-world-layer > img,
+.scene-object > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.scene-object {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: left, top, width, height, opacity;
+}
+.scene-front {
+  z-index: 2;
+}
+.scene-star-sky {
+  mix-blend-mode: screen;
+  opacity: 0.62;
+}
+.scene-star-sky img {
+  animation: star-sky-breathe 6.4s ease-in-out infinite alternate;
+}
+.scene-cloud {
+  opacity: 0.68;
+}
+.scene-cloud img {
+  transform: scale(1.025);
+  animation: cloud-drift 34s ease-in-out infinite alternate;
+}
+.scene-waterfall-base {
+  opacity: 0.78;
+}
+.scene-waterfall-flow {
+  opacity: 0.46;
+}
+.scene-waterfall-flow img {
+  animation: waterfall-flow 2.15s linear infinite;
+}
+.scene-ground {
+  opacity: 1;
+}
+.scene-fountain-base {
+  opacity: 0.98;
+}
+.scene-fountain-water {
+  opacity: 0.88;
+}
+.scene-fountain-water img {
+  transform-origin: 50% 53%;
+  animation: fountain-water-breathe 3.6s ease-in-out infinite alternate;
+}
+.scene-fountain-crystal img {
+  transform-origin: 50% 56%;
+  animation: fountain-crystal-float 4.8s ease-in-out infinite;
+}
+.scene-fountain-glow {
+  opacity: 0.5;
+  mix-blend-mode: screen;
+}
+.scene-fountain-glow img {
+  transform-origin: 50% 54%;
+  animation:
+    fountain-glow-orbit 38s linear infinite,
+    fountain-glow-pulse 3.2s ease-in-out infinite alternate;
+}
+.scene-fountain-sparkle {
+  opacity: 0.42;
+  mix-blend-mode: screen;
+}
+.scene-fountain-sparkle img {
+  animation: fountain-sparkle 2.9s ease-in-out infinite alternate;
+}
+.scene-gate-inner-light {
+  opacity: 0.62;
+  mix-blend-mode: screen;
+}
+.scene-gate-inner-light img {
+  animation: gate-breathe 5.6s ease-in-out infinite alternate;
+}
+.scene-gate-base {
+  opacity: 1;
+}
+.scene-gate-particle {
+  opacity: 0.48;
+  mix-blend-mode: screen;
+}
+.scene-gate-particle img {
+  animation: gate-particle-drift 8s ease-in-out infinite alternate;
+}
+.scene-gate-event {
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 700ms ease;
+}
+.scene-gate-event img {
+  animation: gate-event-energy 4.6s ease-in-out infinite alternate;
+}
+.scene-foreground {
+  opacity: 1;
+}
+[data-gate-state="unstable"] .scene-gate-inner-light img {
+  animation: gate-unstable 2.8s ease-in-out infinite;
+}
+[data-gate-state="unstable"] .scene-gate-particle {
+  opacity: 0.28;
+}
+[data-gate-state="event"] .scene-gate-inner-light {
+  opacity: 0.9;
+}
+[data-gate-state="event"] .scene-gate-inner-light img {
+  animation-duration: 2.8s;
+}
+[data-gate-state="event"] .scene-gate-particle {
+  opacity: 0.9;
+}
+[data-gate-state="event"] .scene-gate-event {
+  opacity: 0.82;
+}
+.scene-debug .scene-object {
+  outline: 1px solid rgba(70, 225, 255, 0.9);
+  background: rgba(70, 225, 255, 0.05);
+}
+.scene-debug .scene-front.scene-object {
+  outline-color: rgba(255, 166, 235, 0.9);
 }
 #game {
   position: absolute;
@@ -179,9 +317,157 @@ body {
   font-size: 22px;
   backdrop-filter: blur(8px);
 }
+
+@keyframes star-sky-breathe {
+  from {
+    opacity: 0.76;
+    filter: brightness(0.95) saturate(0.98);
+  }
+  to {
+    opacity: 1;
+    filter: brightness(1.12) saturate(1.08);
+  }
+}
+@keyframes cloud-drift {
+  from {
+    transform: translate3d(-9px, 3px, 0) scale(1.025);
+  }
+  to {
+    transform: translate3d(9px, -3px, 0) scale(1.025);
+  }
+}
+@keyframes waterfall-flow {
+  0% {
+    transform: translate3d(0, -2px, 0);
+    filter: brightness(0.94);
+  }
+  70% {
+    opacity: 0.58;
+  }
+  100% {
+    transform: translate3d(0, 7px, 0);
+    filter: brightness(1.12);
+    opacity: 0.18;
+  }
+}
+@keyframes fountain-crystal-float {
+  0%,
+  100% {
+    transform: translate3d(0, 5px, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+@keyframes fountain-water-breathe {
+  from {
+    transform: scale(0.985);
+    opacity: 0.82;
+    filter: brightness(0.96);
+  }
+  to {
+    transform: scale(1.015);
+    opacity: 1;
+    filter: brightness(1.1);
+  }
+}
+@keyframes fountain-glow-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fountain-glow-pulse {
+  from {
+    opacity: 0.46;
+    filter: brightness(0.92);
+  }
+  to {
+    opacity: 0.78;
+    filter: brightness(1.18);
+  }
+}
+@keyframes fountain-sparkle {
+  from {
+    transform: translate3d(0, 2px, 0) scale(0.99);
+    opacity: 0.42;
+    filter: brightness(0.96);
+  }
+  to {
+    transform: translate3d(0, -2px, 0) scale(1.015);
+    opacity: 0.72;
+    filter: brightness(1.16);
+  }
+}
+@keyframes gate-breathe {
+  from {
+    opacity: 0.62;
+    filter: brightness(0.92) saturate(0.96);
+  }
+  to {
+    opacity: 0.9;
+    filter: brightness(1.15) saturate(1.08);
+  }
+}
+@keyframes gate-particle-drift {
+  from {
+    transform: translate3d(0, 4px, 0);
+    filter: brightness(0.96);
+  }
+  to {
+    transform: translate3d(0, -5px, 0);
+    filter: brightness(1.12);
+  }
+}
+@keyframes gate-event-energy {
+  from {
+    transform: scale(0.985);
+    filter: brightness(0.95) saturate(0.98);
+  }
+  to {
+    transform: scale(1.025);
+    filter: brightness(1.2) saturate(1.12);
+  }
+}
+@keyframes gate-unstable {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: brightness(0.88);
+  }
+  18% {
+    opacity: 0.46;
+    filter: brightness(0.72);
+  }
+  37% {
+    opacity: 0.84;
+    filter: brightness(1.16);
+  }
+  61% {
+    opacity: 0.58;
+    filter: brightness(0.82);
+  }
+  78% {
+    opacity: 0.92;
+    filter: brightness(1.2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
+  }
+  .scene-world-layer img,
+  .scene-object img {
+    animation: none !important;
+  }
+  .scene-waterfall-flow {
+    display: none;
+  }
+  .scene-gate-event {
+    transition: none;
   }
 }
 /* Phase 2 touch surface and progressive floating stick. */
