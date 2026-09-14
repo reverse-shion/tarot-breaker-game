@@ -1,0 +1,144 @@
+/* Preview 38 — Star Country celestial atmosphere.
+   The farthest sky is authored as a static world plate. Only the transparent
+   nebula/star overlay receives extremely small motion; the sun remains fixed
+   to the world and uses layered light rather than a moving sprite. */
+
+.scene-farthest-sky {
+  z-index: -4 !important;
+  overflow: hidden !important;
+  opacity: 1;
+  background: #5458a6;
+  pointer-events: none;
+}
+
+.scene-farthest-sky > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+  image-rendering: auto;
+  transform: none !important;
+  animation: none !important;
+}
+
+.scene-star-sky {
+  z-index: -3 !important;
+  overflow: hidden !important;
+  opacity: .30 !important;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.scene-star-sky > img {
+  display: block;
+  width: 101.6%;
+  height: 101.6%;
+  max-width: none;
+  margin: -.8%;
+  object-fit: fill;
+  image-rendering: auto;
+  transform-origin: 50% 48%;
+  will-change: transform, opacity, filter;
+  animation:
+    star-country-nebula-drift 42s ease-in-out infinite alternate,
+    star-country-nebula-shimmer 8.5s ease-in-out infinite alternate;
+}
+
+/* Tiny points sit in the same layer as the nebula so the sparkle feels like
+   light inside the atmosphere, not a UI particle effect. */
+.scene-star-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .32;
+  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(circle at 13% 17%, rgba(255,255,255,.92) 0 1px, transparent 2px),
+    radial-gradient(circle at 71% 23%, rgba(219,229,255,.78) 0 1px, transparent 2px),
+    radial-gradient(circle at 42% 11%, rgba(255,221,249,.72) 0 1px, transparent 2px),
+    radial-gradient(circle at 83% 39%, rgba(255,243,219,.68) 0 1px, transparent 2px);
+  background-size: 223px 197px, 281px 257px, 347px 313px, 401px 367px;
+  animation: star-country-twinkle 6.8s ease-in-out infinite alternate;
+}
+
+/* The generated sky plate already contains the sun. This layer does not draw
+   a second sun; it only adds a soft physical halo, core bloom and horizontal
+   scattering around the baked light source. */
+.scene-sun-light {
+  z-index: -2 !important;
+  overflow: visible !important;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.scene-sun-light::before,
+.scene-sun-light::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.scene-sun-light::before {
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle,
+      rgba(255,255,247,.94) 0 2.5%,
+      rgba(255,246,213,.70) 6%,
+      rgba(255,219,166,.34) 18%,
+      rgba(255,185,140,.15) 34%,
+      rgba(255,183,217,.06) 50%,
+      transparent 70%);
+  filter: blur(.35px);
+  opacity: .84;
+  animation: star-country-sun-bloom 7.5s ease-in-out infinite alternate;
+}
+
+.scene-sun-light::after {
+  left: -65%;
+  right: -65%;
+  top: 49.5%;
+  height: 2.4%;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255,214,172,.08) 20%,
+    rgba(255,244,217,.30) 43%,
+    rgba(255,255,248,.66) 50%,
+    rgba(255,244,217,.30) 57%,
+    rgba(255,214,172,.08) 80%,
+    transparent);
+  filter: blur(2.2px);
+  opacity: .54;
+}
+
+@keyframes star-country-nebula-drift {
+  from { transform: translate3d(-.22%, -.12%, 0) scale(1.006); }
+  to   { transform: translate3d(.22%, .16%, 0) scale(1.012); }
+}
+
+@keyframes star-country-nebula-shimmer {
+  from { opacity: .86; filter: brightness(1) saturate(1); }
+  to   { opacity: 1; filter: brightness(1.08) saturate(1.04); }
+}
+
+@keyframes star-country-twinkle {
+  from { opacity: .18; filter: brightness(.94); }
+  to   { opacity: .42; filter: brightness(1.18); }
+}
+
+@keyframes star-country-sun-bloom {
+  from { opacity: .76; transform: scale(.985); }
+  to   { opacity: .88; transform: scale(1.015); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-star-sky > img {
+    animation: star-country-nebula-shimmer 14s ease-in-out infinite alternate;
+    transform: scale(1.008);
+  }
+  .scene-star-sky::after { animation-duration: 12s; }
+  .scene-sun-light::before { animation-duration: 12s; }
+}
