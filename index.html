@@ -8,19 +8,147 @@
     />
     <meta name="theme-color" content="#0b1029" />
     <title>TAROT BREAKER — 1000年前の星の国</title>
-    <link rel="stylesheet" href="./game.css?v=0.5.0" />
+    <link rel="stylesheet" href="./game.css?v=1.0.0" />
+    <link rel="stylesheet" href="./audio.css?v=0.7.1" />
+    <link rel="stylesheet" href="./dialogue.css?v=0.8.0" />
   </head>
   <body>
-    <main id="game-shell" aria-label="TAROT BREAKER 1000年前の星の国">
+    <main
+      id="game-shell"
+      data-gate-state="normal"
+      aria-label="TAROT BREAKER 1000年前の星の国"
+    >
       <img
         id="map-layer"
-        class="map-layer"
-        src="./assets/maps/star-country-gate-garden.webp"
+        class="map-layer scene-map-base"
+        src="./assets/maps/star-country-gate-garden-background.webp"
         alt=""
         aria-hidden="true"
         draggable="false"
       />
+
+      <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true">
+        <img src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" />
+      </div>
+      <div class="scene-world-layer scene-back scene-cloud" data-scene-world aria-hidden="true">
+        <img src="./assets/maps/star-country-gate-garden-cloud.webp" alt="" draggable="false" />
+      </div>
+      <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-base" data-scene-world aria-hidden="true">
+        <img src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
+      </div>
+      <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-flow" data-scene-world aria-hidden="true">
+        <img src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
+      </div>
+      <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true">
+        <img src="./assets/maps/star-country-gate-garden-ground.webp" alt="" draggable="false" />
+      </div>
+
+      <div
+        class="scene-object scene-back scene-fountain-base"
+        data-scene-object
+        data-world-x="601"
+        data-world-y="388"
+        data-world-w="350"
+        data-world-h="245"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-fountain-base.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-back scene-fountain-water"
+        data-scene-object
+        data-world-x="619"
+        data-world-y="405"
+        data-world-w="314"
+        data-world-h="205"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-fountain-water.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-back scene-fountain-crystal"
+        data-scene-object
+        data-world-x="684"
+        data-world-y="365"
+        data-world-w="184"
+        data-world-h="230"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-fountain-crystal.webp" alt="" draggable="false" />
+      </div>
+
+      <div
+        class="scene-object scene-back scene-gate-inner-light"
+        data-scene-object
+        data-world-x="666"
+        data-world-y="58"
+        data-world-w="220"
+        data-world-h="245"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-back scene-gate-base"
+        data-scene-object
+        data-world-x="586"
+        data-world-y="20"
+        data-world-w="380"
+        data-world-h="300"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-star-gate-base.webp" alt="" draggable="false" />
+      </div>
+
       <canvas id="game" aria-label="星の国を探索するゲーム画面"></canvas>
+
+      <div
+        class="scene-object scene-front scene-fountain-glow"
+        data-scene-object
+        data-world-x="626"
+        data-world-y="350"
+        data-world-w="300"
+        data-world-h="250"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-fountain-crystal-glow.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-front scene-fountain-sparkle"
+        data-scene-object
+        data-world-x="616"
+        data-world-y="390"
+        data-world-w="320"
+        data-world-h="220"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-front scene-gate-particle"
+        data-scene-object
+        data-world-x="596"
+        data-world-y="24"
+        data-world-w="360"
+        data-world-h="300"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-front scene-gate-event"
+        data-scene-object
+        data-world-x="576"
+        data-world-y="4"
+        data-world-w="400"
+        data-world-h="330"
+        aria-hidden="true"
+      >
+        <img src="./assets/maps/star-country-gate-garden-star-gate-event-fx.webp" alt="" draggable="false" />
+      </div>
+      <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true">
+        <img src="./assets/maps/star-country-gate-garden-foreground.webp" alt="" draggable="false" />
+      </div>
 
       <section id="start-screen" class="start-screen" aria-live="polite">
         <div class="start-card">
@@ -28,7 +156,7 @@
           <h1>1000年前の星の国</h1>
           <p>星門庭園</p>
           <button id="start" type="button" disabled>起動準備中…</button>
-          <small id="load-note">正式シオンとしおぽんを読み込んでいます</small>
+          <small id="load-note">動的星門庭園とキャラクターを読み込んでいます</small>
         </div>
       </section>
 
@@ -48,13 +176,29 @@
       >
         ↺
       </button>
+      <button
+        id="audio-toggle"
+        class="audio-toggle"
+        type="button"
+        aria-label="BGMをオフにする"
+        aria-pressed="true"
+        hidden
+      >
+        ♪
+      </button>
     </main>
 
-    <script src="./navigation.js?v=0.5.0" defer></script>
-    <script src="./controls.js?v=0.5.0" defer></script>
+    <script src="./navigation.js?v=0.7.1" defer></script>
+    <script src="./blocked-collision.js?v=0.9.0" defer></script>
+    <script src="./controls.js?v=0.7.1" defer></script>
+    <script src="./audio.js?v=0.7.1" defer></script>
+    <script src="./lumiere-outline.js?v=0.7.1" defer></script>
+    <script src="./dialogue.js?v=0.8.0" defer></script>
+    <script src="./scene-effects.js?v=1.0.0" defer></script>
     <script
-      src="./game.js?v=0.5.0"
+      src="./game.js?v=0.7.1"
       data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/"
+      data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/"
       defer
     ></script>
   </body>

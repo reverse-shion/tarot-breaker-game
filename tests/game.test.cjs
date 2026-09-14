@@ -7,9 +7,9 @@ const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 
-async function boot({ width = 390, height = 844, spriteBase, collisionUrl, badCollision = false } = {}) {
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
   let raf, now = 1000;
-  const drawCalls = [], errors = [], captured = new Set();
+  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
@@ -33,17 +33,37 @@ async function boot({ width = 390, height = 844, spriteBase, collisionUrl, badCo
   elements.game.getContext = () => context;
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1448, naturalHeight: 1086 });
   const document = new Element();
-  document.currentScript = { dataset: { spriteBase, collisionUrl } };
-  document.getElementById = id => elements[id]; document.createElement = () => new Element();
+  document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
+  document.getElementById = id => elements[id]; document.createElement = tag => {
+    const element = new Element();
+    if (tag === 'canvas') {
+      element.url = 'lumiere_composite';
+      element.getContext = () => new Proxy({}, {
+        get: (_, operation) => (...args) => surfaceCalls.push({ element, operation, args }),
+        set: () => true,
+      });
+    }
+    return element;
+  };
   const window = new Element(); window.devicePixelRatio = 3;
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
-    set src(src) { this.url = src; queueMicrotask(() => this.onload()); }
+    set src(src) {
+      this.url = src;
+      if (src.includes('lumiere_')) {
+        this.naturalWidth = 2172;
+        this.naturalHeight = 724;
+      }
+      queueMicrotask(() => this.onload());
+    }
   }
   const fetched = [];
+  const deterministicMath = Object.create(Math);
+  deterministicMath.random = () => 0.5;
   const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location: { search: '?navDebug=1' },
     performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
+    Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
   await new Promise(setImmediate);
@@ -55,20 +75,67 @@ async function boot({ width = 390, height = 844, spriteBase, collisionUrl, badCo
     pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy); tick();
   };
   elements.start.emit('click'); tick(120);
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, captured };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured };
 }
 
-test('390x844 boots with Shion + Shiopon, DPR cap, corrected spawn and actor sizes', async () => {
+test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
   const h = await boot(); const s = h.state();
   assert.equal(h.errors.length, 0); assert.equal(s.cssWidth, 390); assert.equal(s.cssHeight, 844);
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.equal(s.player.x, 729); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
   assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
+  assert.equal(s.lumiere.homeRef.x, 810); assert.equal(s.lumiere.homeRef.y, 212);
+  assert.equal(s.lumiere.moving, false); assert.equal(s.lumiereCollisionDistance, 32);
   assert.equal(s.actorCollisionDistance, 26); assert.ok(s.actorGap > s.actorCollisionDistance);
   const shionDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shion_'));
   const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
+  const lumiereDraws = h.drawCalls.filter(call => call[0]?.url?.includes('lumiere_'));
+  const lumiereMotionDraws = lumiereDraws;
+  const lumiereCoreDraws = h.surfaceCalls.filter(call => call.operation === 'drawImage' && call.args[3] === 243);
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
   assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
+  assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
+  assert.ok(lumiereMotionDraws.length > 0); assert.ok(lumiereCoreDraws.length > 0);
+  assert.ok(lumiereMotionDraws.every(call => call[3] === 493));
+  assert.ok(lumiereMotionDraws.every(call => call[4] === 596));
+  assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
+});
+test('Lumiere replaces the old torso once and draws one cached silhouette per tick', async () => {
+  const h = await boot();
+  for (let i = 0; i < 420; i++) {
+    const start = h.drawCalls.length;
+    h.tick();
+    const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0].url, 'lumiere_composite');
+  }
+  const surfaces = new Set(h.surfaceCalls.map(call => call.element));
+  assert.equal(surfaces.size, 4);
+  for (const surface of surfaces) {
+    const ops = h.surfaceCalls.filter(call => call.element === surface);
+    assert.deepEqual(ops.map(call => call.operation), ['drawImage', 'clearRect', 'drawImage']);
+    assert.deepEqual(ops[1].args, [129, 32, 243, 564]);
+  }
+});
+test('Lumiere bobs as one body while slow wing frames change independently', async () => {
+  const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
+  assert.equal(after.x, before.x); assert.equal(after.y, before.y);
+  assert.deepEqual(after.homeRef, { x: 810, y: 212 }); assert.equal(after.moving, false);
+  assert.notEqual(after.frame, before.frame);
+  assert.notEqual(after.bobOffsetY, before.bobOffsetY);
+  assert.ok(Math.abs(after.bobOffsetY) <= 2.4);
+  assert.ok(after.wingHold >= 0.7 && after.wingHold <= 1.35);
+});
+test('Lumiere has solid collision while remaining fixed at the gate', async () => {
+  const h = await boot();
+  for (const [x, y, frames] of [[880, 900, 180], [880, 650, 220], [860, 390, 260], [810, 212, 260]]) {
+    h.tapWorld(x, y); h.tick(frames);
+  }
+  const s = h.state();
+  assert.equal(s.reason, 'npc-blocked'); assert.equal(s.player.moving, false);
+  assert.ok(s.lumiereGap >= s.lumiereCollisionDistance);
+  assert.ok(s.lumiereGap < s.lumiereCollisionDistance + 8, `gap=${s.lumiereGap} reason=${s.reason}`);
+  assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); h.tapWorld(810, 700); const after = h.state();

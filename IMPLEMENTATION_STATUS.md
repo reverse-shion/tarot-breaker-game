@@ -1,5 +1,14 @@
 # TAROT BREAKER 2D implementation status
 
+## Preview 21 — Lumiere rendering correction (supersedes prior outline notes)
+
+- Removed Lumiere's eight black underpaint passes and broad violet glow.
+- Cached four full-body composites; clear the body region before drawing the fixed body, rather than stacking two poses.
+- Render Lumiere once per tick with a restrained neutral dark edge shadow, without Canvas filters.
+- Preserve position, collision, 5.2-second whole-body float, and randomized wing-frame timing. Shion and Shiopon are unchanged.
+- 32 automated tests pass, including replacement order, four-frame caching, and single draw per tick.
+- Rendered all four poses beside Shion using the real drawActor code in a local Canvas renderer. Original material/style differences remain; no claim of fully matching pixel-art styles. iOS Safari visual verification remains pending.
+
 ## 2026-09-13 continuation
 
 Astraの既存2Dプロトタイプを監査し、専用リポジトリへ正式プレイヤー実装を継続した。
@@ -115,3 +124,33 @@ Phase 2判定:
 - 自動検証: PASS（最新Actions結果で最終確認）
 - 実機UX: PENDING
 - Phase 3には進まない
+
+## NPC Phase 4 — リュミエール門前配置
+
+2026-09-13: IMPLEMENTED / DEVICE POSITION CHECK PENDING
+
+実装内容:
+- `main` にアップロードされたリュミエール正式スプライト5枚とmanifestを取り込み
+- 星門中央の「最上段の階段と門の間」へ固定配置（基準座標 `x=810, y=212`）
+- リュミエールの世界座標は固定したまま、全身をひとつの塊として振幅2.4px・周期5.2秒でゆっくり上下させる浮遊待機へ調整
+- `lumiere_hover_down.png` のフレームごとの余白差を正規化し、中央の頭・胸・腰・脚を第1フレームの固定コアで統一
+- 外側の翼・髪・服だけを隣接フレームでゆっくり動かし、0.7〜1.35秒の可変間隔とランダムな折り返しで機械的なループ感を軽減
+- 半径32pxの独立したNPC当たり判定を追加し、シオンのTap-to-Move／手動移動の両方で貫通を防止
+- 既存のYソートへ追加し、シオン・しおぽんとの前後関係を維持
+- 浮遊キャラ用の薄い接地点影と淡い星光グローを追加
+- 3人共通の8方向ソリッド輪郭処理を追加し、背景からの分離感を統一
+- シオンを視認性の基準に、しおぽんは濃い紫紺1.05px、リュミエールは濃いラベンダー0.95pxで淡色素材を補強
+- 輪郭の外側に既存グローを重ね、NPCの個性とリュミエールの透明感を維持
+- `?navDebug=1` に固定座標・浮遊フレーム・当たり判定円を追加
+
+素材互換:
+- manifest上の規格は384×512だが、アップロードPNGの実寸は2172×724（1コマ543×724）
+- 実画像から4等分セルを自動計算し、将来1536×512へ正規化してもコード変更なしで表示できる
+
+自動テスト:
+- 固定座標がフレーム更新後も変化しないこと
+- 固定座標を保ったまま全身上下オフセットだけがゆっくり変化すること
+- 胴体固定コアと可変間隔の翼フレームが同時に描画されること
+- シオン・しおぽん・リュミエールの輪郭パスが各スプライト描画で実行されること
+- リュミエール接近時に半径32pxで停止すること
+- 実寸2172×724を4コマとして正しく描画すること

@@ -19,10 +19,46 @@
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
   const DRAW_HEIGHT = 78;
   const SHIOPON_DRAW_HEIGHT = 76;
+  const LUMIERE_DRAW_HEIGHT = 78;
+  const ACTOR_OUTLINES = {
+    player: { color: "rgba(54,31,34,.92)", width: 0.72, opacity: 0.72 },
+    shiopon: { color: "rgba(43,25,78,.96)", width: 1.05, opacity: 0.9 },
+  };
   const SHIOPON_SPEED = 52;
   const SHIOPON_HOME = { x: 810, y: 800 };
   const SHIOPON_WANDER_RADIUS = 48;
+  const SHIOPON_FOLLOW_SPEED = 210;
+  const SHIOPON_FOLLOW_CATCHUP_SPEED = 285;
+  const SHIOPON_FOLLOW_SPRINT_SPEED = 360;
+  const SHIOPON_FOLLOW_DISTANCE = 56;
+  const SHIOPON_FOLLOW_STOP = 5;
+  const SHIOPON_FOLLOW_MIN_GAP = 44;
+  const SHIOPON_FOLLOW_REPLAN_INTERVAL = 0.18;
+  const SHIOPON_FOLLOW_REPLAN_DISTANCE = 14;
+  const SHIOPON_FOLLOW_EMERGENCY_GAP = 260;
+  const SHIOPON_RACE_SPEED = 235;
+  const SHIOPON_RACE_DISTANCE = 92;
+  const SHIOPON_TRIP_DURATION = 0.2;
+  const SHIOPON_TRIP_ANGLE = Math.PI * 0.32;
   const ACTOR_COLLISION_DISTANCE = 26;
+  const LUMIERE_HOME = { x: 810, y: 212 };
+  const LUMIERE_COLLISION_DISTANCE = 32;
+  const LUMIERE_BOB_AMPLITUDE = 2.4;
+  const LUMIERE_BOB_PERIOD = 5.2;
+  const LUMIERE_WING_HOLD_MIN = 0.7;
+  const LUMIERE_WING_HOLD_RANGE = 0.65;
+  // The supplied frames have different transparent margins. Crop each one to
+  // the character silhouette, then render every crop into the same box so the
+  // head and lower body stay together while hair, wings and drapery animate.
+  const LUMIERE_FRAME_RECTS = [
+    { x: 21, y: 58, w: 493, h: 596 },
+    { x: 23, y: 76, w: 493, h: 567 },
+    { x: 24, y: 92, w: 490, h: 567 },
+    { x: 23, y: 68, w: 495, h: 586 },
+  ];
+  const LUMIERE_NORMALIZED_SIZE = { w: 493, h: 596 };
+  const LUMIERE_BODY_CORE = { x: 150, y: 90, w: 243, h: 564 };
+  const LUMIERE_BOTTOM_GAP = 2.7;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
@@ -38,6 +74,9 @@
   const SHIOPON_BASE =
     config.shioponBase ||
     "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/";
+  const LUMIERE_BASE =
+    config.lumiereBase ||
+    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/";
 
   const { createCollision, createNavigator } = window.TarotNavigation;
   const { createControls } = window.TarotControls;
@@ -61,6 +100,7 @@
   let running = false;
   let last = 0;
   let anim = 0;
+  let lumiereFrame = { ...FRAME };
 
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
@@ -90,8 +130,35 @@
     left: SHIOPON_BASE + "shiopon_walk_left.png",
     right: SHIOPON_BASE + "shiopon_walk_right.png",
   };
+  const lumiereFiles = {
+    hover: LUMIERE_BASE + "lumiere_hover_down.png",
+  };
   const images = {};
   const shioponImages = {};
+  const lumiereImages = {};
+  const lumiereComposites = new Map();
+
+  // Assemble each pose once, replacing (not overlaying) the fixed body area.
+  // No pixel reads or Canvas filters: this also works with cross-origin assets.
+  function lumiereComposite(frame) {
+    if (lumiereComposites.has(frame)) return lumiereComposites.get(frame);
+    const surface = document.createElement("canvas");
+    surface.width = LUMIERE_NORMALIZED_SIZE.w;
+    surface.height = LUMIERE_NORMALIZED_SIZE.h;
+    const paint = surface.getContext("2d");
+    const rect = LUMIERE_FRAME_RECTS[frame];
+    const base = LUMIERE_FRAME_RECTS[0];
+    const core = LUMIERE_BODY_CORE;
+    paint.imageSmoothingEnabled = false;
+    paint.drawImage(lumiereImages.hover,
+      frame * lumiereFrame.w + rect.x, rect.y, rect.w, rect.h,
+      0, 0, surface.width, surface.height);
+    paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
+    paint.drawImage(lumiereImages.hover, core.x, core.y, core.w, core.h,
+      core.x - base.x, core.y - base.y, core.w, core.h);
+    lumiereComposites.set(frame, surface);
+    return surface;
+  }
 
   const player = {
     x: DEFAULT_SPAWN.x,
@@ -110,6 +177,26 @@
     anim: 0,
     wait: 1.2,
     target: null,
+    following: false,
+    followRoute: [],
+    followReplan: 0,
+    followTarget: null,
+    scripted: null,
+    rotation: 0,
+    visualOffsetY: 0,
+  };
+  const lumiere = {
+    x: LUMIERE_HOME.x,
+    y: LUMIERE_HOME.y,
+    homeRef: { ...LUMIERE_HOME },
+    dir: "down",
+    moving: false,
+    frame: 0,
+    anim: 0,
+    wingDirection: 1,
+    wingHold: LUMIERE_WING_HOLD_MIN,
+    bobPhase: 0,
+    bobOffsetY: 0,
   };
   const camera = {
     x: DEFAULT_SPAWN.x,
@@ -126,10 +213,15 @@
     return collision.isWalkable(x, y);
   }
 
-  function movingIntoActor(from, to, other) {
+  function movingIntoActor(
+    from,
+    to,
+    other,
+    collisionDistance = ACTOR_COLLISION_DISTANCE,
+  ) {
     const before = refDistance(from, other);
     const after = refDistance(to, other);
-    return after < ACTOR_COLLISION_DISTANCE && after < before - 1e-6;
+    return after < collisionDistance && after < before - 1e-6;
   }
 
   async function loadCollision() {
@@ -210,6 +302,28 @@
     shiopon.anim = 0;
     shiopon.wait = 0.9 + Math.random() * 1.4;
     shiopon.target = null;
+    shiopon.following = false;
+    shiopon.followRoute = [];
+    shiopon.followReplan = 0;
+    shiopon.followTarget = null;
+    shiopon.scripted = null;
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+  }
+
+  function resetLumiere() {
+    lumiere.x = LUMIERE_HOME.x * scale.x;
+    lumiere.y = LUMIERE_HOME.y * scale.y;
+    lumiere.homeRef = { ...LUMIERE_HOME };
+    lumiere.dir = "down";
+    lumiere.moving = false;
+    lumiere.frame = 0;
+    lumiere.anim = 0;
+    lumiere.wingDirection = 1;
+    lumiere.wingHold =
+      LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
+    lumiere.bobPhase = 0;
+    lumiere.bobOffsetY = 0;
   }
 
   function reset() {
@@ -223,6 +337,7 @@
     player.moving = false;
     player.frame = 0;
     resetShiopon();
+    resetLumiere();
     camera.x = player.x;
     camera.y = player.y - CAMERA_BASE_OFFSET_Y * scale.y;
   }
@@ -233,6 +348,10 @@
 
   function shioponRef() {
     return { x: shiopon.x / scale.x, y: shiopon.y / scale.y };
+  }
+
+  function lumiereRef() {
+    return { x: lumiere.x / scale.x, y: lumiere.y / scale.y };
   }
 
   function setDirection(actor, dx, dy) {
@@ -251,7 +370,18 @@
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
 
-    if (next.moving && movingIntoActor(from, next, shioponRef())) {
+    const shioponBlocked =
+      !shiopon.following && movingIntoActor(from, next, shioponRef());
+    const npcBlocked =
+      next.moving &&
+      (shioponBlocked ||
+        movingIntoActor(
+          from,
+          next,
+          lumiereRef(),
+          LUMIERE_COLLISION_DISTANCE,
+        ));
+    if (npcBlocked) {
       setDirection(player, next.dx, next.dy);
       controls.cancel("npc-blocked");
       player.moving = false;
@@ -319,10 +449,297 @@
     setDirection(shiopon, playerNow.x - current.x, playerNow.y - current.y);
   }
 
+  function faceShioponTowardPlayer() {
+    if (!ready) return;
+    const current = shioponRef();
+    const playerNow = playerRef();
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    setDirection(shiopon, playerNow.x - current.x, playerNow.y - current.y);
+  }
+
+  function shioponFollowTarget() {
+    const playerNow = playerRef();
+    const behind = {
+      up: { x: 0, y: 1 },
+      down: { x: 0, y: -1 },
+      left: { x: 1, y: 0 },
+      right: { x: -1, y: 0 },
+    }[player.dir] || { x: 0, y: 1 };
+
+    for (const gap of [
+      SHIOPON_FOLLOW_DISTANCE,
+      SHIOPON_FOLLOW_DISTANCE + 8,
+      SHIOPON_FOLLOW_DISTANCE - 8,
+    ]) {
+      const candidate = {
+        x: playerNow.x + behind.x * gap,
+        y: playerNow.y + behind.y * gap,
+      };
+      if (
+        isWalkableRef(candidate.x, candidate.y) &&
+        refDistance(candidate, playerNow) >= SHIOPON_FOLLOW_MIN_GAP
+      ) {
+        return candidate;
+      }
+    }
+
+    const fallback = collision.nearestWalkable({
+      x: playerNow.x + behind.x * SHIOPON_FOLLOW_DISTANCE,
+      y: playerNow.y + behind.y * SHIOPON_FOLLOW_DISTANCE,
+    });
+    if (
+      fallback &&
+      refDistance(fallback, playerNow) >= SHIOPON_FOLLOW_MIN_GAP
+    ) {
+      return fallback;
+    }
+    return shioponRef();
+  }
+
+  function moveShioponFollowStep(current, next, target) {
+    if (isWalkableRef(next.x, next.y) && collision.segmentClear(current, next))
+      return next;
+
+    const horizontal = { x: next.x, y: current.y };
+    const vertical = { x: current.x, y: next.y };
+    const candidates = [horizontal, vertical]
+      .filter(
+        (point) =>
+          isWalkableRef(point.x, point.y) &&
+          collision.segmentClear(current, point),
+      )
+      .sort((a, b) => refDistance(a, target) - refDistance(b, target));
+    return candidates[0] || current;
+  }
+
+  function planShioponFollowRoute(current, target) {
+    if (collision.segmentClear(current, target)) return [{ ...target }];
+    const plan = navigation?.findPath(current, target);
+    return plan?.points?.slice(1).map((point) => ({ ...point })) || [];
+  }
+
+  function updateShioponFollow(dt) {
+    const current = shioponRef();
+    const playerNow = playerRef();
+    const target = shioponFollowTarget();
+    const playerGap = refDistance(current, playerNow);
+    const targetMoved =
+      !shiopon.followTarget ||
+      refDistance(shiopon.followTarget, target) >= SHIOPON_FOLLOW_REPLAN_DISTANCE;
+
+    shiopon.followReplan -= dt;
+    if (
+      targetMoved ||
+      shiopon.followReplan <= 0 ||
+      !shiopon.followRoute.length
+    ) {
+      shiopon.followRoute = planShioponFollowRoute(current, target);
+      shiopon.followTarget = { ...target };
+      shiopon.followReplan = SHIOPON_FOLLOW_REPLAN_INTERVAL;
+    }
+
+    while (
+      shiopon.followRoute.length &&
+      refDistance(current, shiopon.followRoute[0]) <= SHIOPON_FOLLOW_STOP
+    ) {
+      shiopon.followRoute.shift();
+    }
+
+    let waypoint = shiopon.followRoute[0];
+    if (!waypoint && playerGap > SHIOPON_FOLLOW_EMERGENCY_GAP) {
+      if (isWalkableRef(target.x, target.y)) {
+        shiopon.x = target.x * scale.x;
+        shiopon.y = target.y * scale.y;
+        shiopon.followRoute = [];
+        shiopon.followTarget = { ...target };
+        shiopon.moving = false;
+        shiopon.frame = 0;
+        shiopon.anim = 0;
+        shiopon.dir = player.dir;
+        return;
+      }
+    }
+    waypoint ||= target;
+
+    const dx = waypoint.x - current.x;
+    const dy = waypoint.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= SHIOPON_FOLLOW_STOP) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.dir = player.dir;
+      return;
+    }
+
+    const speed =
+      playerGap > 170
+        ? SHIOPON_FOLLOW_SPRINT_SPEED
+        : playerGap > 95
+          ? SHIOPON_FOLLOW_CATCHUP_SPEED
+          : SHIOPON_FOLLOW_SPEED;
+    const step = Math.min(distance, speed * dt);
+    let next = {
+      x: current.x + (dx / distance) * step,
+      y: current.y + (dy / distance) * step,
+    };
+    next = moveShioponFollowStep(current, next, waypoint);
+
+    if (refDistance(next, playerNow) < SHIOPON_FOLLOW_MIN_GAP) {
+      const awayX = current.x - playerNow.x;
+      const awayY = current.y - playerNow.y;
+      const awayLength = Math.hypot(awayX, awayY);
+      if (awayLength > 1e-6) {
+        const separated = {
+          x: playerNow.x + (awayX / awayLength) * SHIOPON_FOLLOW_MIN_GAP,
+          y: playerNow.y + (awayY / awayLength) * SHIOPON_FOLLOW_MIN_GAP,
+        };
+        if (isWalkableRef(separated.x, separated.y)) next = separated;
+      } else {
+        next = target;
+      }
+    }
+
+    if (next.x === current.x && next.y === current.y) {
+      shiopon.followReplan = 0;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      return;
+    }
+
+    shiopon.x = next.x * scale.x;
+    shiopon.y = next.y * scale.y;
+    shiopon.moving = true;
+    setDirection(shiopon, next.x - current.x, next.y - current.y);
+    shiopon.anim += dt;
+    while (shiopon.anim >= 0.13) {
+      shiopon.anim -= 0.13;
+      shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+    }
+  }
+
+  function startShioponRace() {
+    if (!ready) return;
+    const current = shioponRef();
+    const requested = { x: current.x, y: current.y - SHIOPON_RACE_DISTANCE };
+    const target = collision.nearestWalkable(requested) || current;
+    const plan = navigation?.findPath(current, target);
+    const route =
+      plan?.points?.slice(1).map((point) => ({ ...point })) ||
+      (collision.segmentClear(current, target) ? [{ ...target }] : []);
+
+    shiopon.following = false;
+    shiopon.followRoute = [];
+    shiopon.followTarget = null;
+    shiopon.target = null;
+    shiopon.scripted = { type: "race", phase: "run", route, elapsed: 0 };
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.dir = "up";
+    shiopon.moving = route.length > 0;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+  }
+
+  function tripShiopon() {
+    if (!ready) return;
+    if (!shiopon.scripted)
+      shiopon.scripted = { type: "race", phase: "trip", route: [], elapsed: 0 };
+    shiopon.scripted.phase = "trip";
+    shiopon.scripted.elapsed = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+  }
+
+  function recoverShiopon() {
+    if (!ready) return;
+    shiopon.scripted = null;
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    faceShioponTowardPlayer();
+  }
+
+  function updateShioponScript(dt) {
+    const script = shiopon.scripted;
+    if (!script) return;
+
+    if (script.phase === "run") {
+      const current = shioponRef();
+      while (script.route.length && refDistance(current, script.route[0]) <= 3)
+        script.route.shift();
+      const target = script.route[0];
+      if (!target) {
+        shiopon.moving = false;
+        shiopon.frame = 0;
+        shiopon.anim = 0;
+        shiopon.dir = "up";
+        return;
+      }
+      const dx = target.x - current.x;
+      const dy = target.y - current.y;
+      const distance = Math.hypot(dx, dy);
+      const step = Math.min(distance, SHIOPON_RACE_SPEED * dt);
+      const next = {
+        x: current.x + (dx / distance) * step,
+        y: current.y + (dy / distance) * step,
+      };
+      if (isWalkableRef(next.x, next.y) && collision.segmentClear(current, next)) {
+        shiopon.x = next.x * scale.x;
+        shiopon.y = next.y * scale.y;
+        shiopon.moving = true;
+        setDirection(shiopon, dx, dy);
+        shiopon.anim += dt;
+        while (shiopon.anim >= 0.1) {
+          shiopon.anim -= 0.1;
+          shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+        }
+      } else {
+        script.route = planShioponFollowRoute(current, target);
+      }
+      return;
+    }
+
+    if (script.phase === "trip") {
+      script.elapsed += dt;
+      const progress = clamp(script.elapsed / SHIOPON_TRIP_DURATION, 0, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      shiopon.rotation = SHIOPON_TRIP_ANGLE * eased;
+      shiopon.visualOffsetY = Math.sin(progress * Math.PI) * 3;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      if (progress >= 1) {
+        script.phase = "fallen";
+        shiopon.visualOffsetY = 0;
+      }
+      return;
+    }
+
+    shiopon.moving = false;
+    shiopon.frame = 0;
+  }
+
   function updateShiopon(dt) {
+    if (shiopon.scripted) {
+      updateShioponScript(dt);
+      return;
+    }
+
     if (npcSuspended) {
       shiopon.moving = false;
       shiopon.frame = 0;
+      return;
+    }
+
+    if (shiopon.following) {
+      updateShioponFollow(dt);
       return;
     }
 
@@ -382,6 +799,32 @@
     }
   }
 
+  function updateLumiere(dt) {
+    lumiere.anim += dt;
+    while (lumiere.anim >= lumiere.wingHold) {
+      lumiere.anim -= lumiere.wingHold;
+      if (
+        lumiere.frame + lumiere.wingDirection < 0 ||
+        lumiere.frame + lumiere.wingDirection >= lumiereFrame.count ||
+        Math.random() < 0.18
+      ) {
+        lumiere.wingDirection *= -1;
+      }
+      lumiere.frame = clamp(
+        lumiere.frame + lumiere.wingDirection,
+        0,
+        lumiereFrame.count - 1,
+      );
+      lumiere.wingHold =
+        LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
+    }
+    lumiere.bobPhase =
+      (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
+      (Math.PI * 2);
+    lumiere.bobOffsetY =
+      Math.sin(lumiere.bobPhase) * LUMIERE_BOB_AMPLITUDE * scale.y;
+  }
+
   function cameraOffsetY() {
     let offset = CAMERA_BASE_OFFSET_Y;
     if (player.moving && player.dir === "up") offset += CAMERA_LOOK_AHEAD_Y;
@@ -418,17 +861,20 @@
     };
   }
 
-  function spriteFrame(actor, actorImages) {
+  function spriteFrame(actor, actorImages, frameSpec = FRAME) {
     const idleIndex = { down: 0, up: 1, left: 2, right: 3 }[actor.dir];
     return {
       image: actor.moving ? actorImages[actor.dir] : actorImages.idle,
-      sourceX: (actor.moving ? actor.frame : idleIndex) * FRAME.w,
+      sourceX: (actor.moving ? actor.frame : idleIndex) * frameSpec.w,
     };
   }
 
   function drawSpritePass(
     image,
     sourceX,
+    sourceY,
+    sourceW,
+    sourceH,
     dx,
     dy,
     drawW,
@@ -443,9 +889,9 @@
     ctx.drawImage(
       image,
       sourceX,
-      0,
-      FRAME.w,
-      FRAME.h,
+      sourceY,
+      sourceW,
+      sourceH,
       dx,
       dy,
       drawW,
@@ -454,17 +900,143 @@
     ctx.restore();
   }
 
-  function drawActor(actor, actorImages, drawHeight, glowColor) {
-    const scaleDraw = drawHeight / FRAME.h;
-    const drawW = FRAME.w * scaleDraw;
-    const drawH = FRAME.h * scaleDraw;
+  function drawOutlinePass(
+    image,
+    sourceX,
+    sourceY,
+    sourceW,
+    sourceH,
+    dx,
+    dy,
+    drawW,
+    drawH,
+    { color, width, opacity },
+  ) {
+    const step = width / camera.zoom;
+    const offsets = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+      [-0.72, -0.72],
+      [0.72, -0.72],
+      [-0.72, 0.72],
+      [0.72, 0.72],
+    ];
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = "brightness(0)";
+    ctx.globalAlpha = opacity;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 0;
+    for (const [offsetX, offsetY] of offsets) {
+      ctx.shadowOffsetX = offsetX * step;
+      ctx.shadowOffsetY = offsetY * step;
+      ctx.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        dx,
+        dy,
+        drawW,
+        drawH,
+      );
+    }
+    ctx.restore();
+  }
+
+  function drawActor(
+    actor,
+    actorImages,
+    drawHeight,
+    glowColor,
+    {
+      frameSpec = FRAME,
+      hover = false,
+      visualOffsetY = 0,
+      rotation = 0,
+      outline = ACTOR_OUTLINES.player,
+    } = {},
+  ) {
+    const scaleDraw = drawHeight / frameSpec.h;
+    const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
+    const sourceRect = normalizedLumiere || {
+      x: 0,
+      y: 0,
+      w: frameSpec.w,
+      h: frameSpec.h,
+    };
+    const drawW =
+      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.w : sourceRect.w) *
+      scaleDraw;
+    const drawH =
+      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : sourceRect.h) *
+      scaleDraw;
     const dx = actor.x - drawW / 2;
-    const dy = actor.y - FRAME.baseline * scaleDraw;
-    const { image, sourceX } = spriteFrame(actor, actorImages);
-    drawSpritePass(image, sourceX, dx, dy, drawW, drawH, glowColor, 5);
+    const dy = normalizedLumiere
+      ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH + visualOffsetY
+      : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    const rotated = Math.abs(rotation) > 1e-6;
+    if (rotated) {
+      ctx.save();
+      ctx.translate(actor.x, actor.y);
+      ctx.rotate(rotation);
+      ctx.translate(-actor.x, -actor.y);
+    }
+    if (normalizedLumiere) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = "rgba(54,41,58,.65)";
+      ctx.shadowBlur = 0.7 / camera.zoom;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.drawImage(lumiereComposite(actor.frame), 0, 0,
+        LUMIERE_NORMALIZED_SIZE.w, LUMIERE_NORMALIZED_SIZE.h,
+        dx, dy, drawW, drawH);
+      ctx.restore();
+      if (rotated) ctx.restore();
+      return;
+    }
+    const { image, sourceX } = hover
+      ? {
+          image: actorImages.hover,
+          sourceX: actor.frame * frameSpec.w + sourceRect.x,
+        }
+      : spriteFrame(actor, actorImages, frameSpec);
+    drawOutlinePass(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      outline,
+    );
     drawSpritePass(
       image,
       sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      glowColor,
+      5,
+    );
+    drawSpritePass(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
       dx,
       dy,
       drawW,
@@ -477,15 +1049,16 @@
     ctx.drawImage(
       image,
       sourceX,
-      0,
-      FRAME.w,
-      FRAME.h,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
       dx,
       dy,
       drawW,
       drawH,
     );
     ctx.restore();
+    if (rotated) ctx.restore();
   }
 
   function drawGroundShadowAt(actor, radius, opacity) {
@@ -507,15 +1080,32 @@
   }
 
   function drawActors() {
+    drawGroundShadowAt(lumiere, 18, 0.2);
     drawGroundShadowAt(shiopon, 17, 0.36);
     drawGroundShadowAt(player, 20, 0.46);
 
     const actors = [
       {
+        actor: lumiere,
+        actorImages: lumiereImages,
+        drawHeight: LUMIERE_DRAW_HEIGHT,
+        glowColor: "rgba(226,210,255,.34)",
+        options: {
+          frameSpec: lumiereFrame,
+          hover: true,
+          visualOffsetY: lumiere.bobOffsetY,
+        },
+      },
+      {
         actor: shiopon,
         actorImages: shioponImages,
         drawHeight: SHIOPON_DRAW_HEIGHT,
         glowColor: "rgba(235,210,255,.22)",
+        options: {
+          outline: ACTOR_OUTLINES.shiopon,
+          visualOffsetY: shiopon.visualOffsetY,
+          rotation: shiopon.rotation,
+        },
       },
       {
         actor: player,
@@ -523,7 +1113,13 @@
         drawHeight: DRAW_HEIGHT,
         glowColor: "rgba(255,236,190,.22)",
       },
-    ].sort((a, b) => a.actor.y - b.actor.y);
+    ].sort((a, b) => {
+      const ay =
+        shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
+      const by =
+        shiopon.following && b.actor === shiopon ? player.y - 0.01 : b.actor.y;
+      return ay - by;
+    });
 
     for (const entry of actors) {
       drawActor(
@@ -531,6 +1127,7 @@
         entry.actorImages,
         entry.drawHeight,
         entry.glowColor,
+        entry.options,
       );
     }
   }
@@ -643,12 +1240,19 @@
     ctx.beginPath();
     ctx.arc(sr.x, sr.y, ACTOR_COLLISION_DISTANCE, 0, Math.PI * 2);
     ctx.stroke();
+
+    const lr = lumiereRef();
+    ctx.strokeStyle = "#aeeeff";
+    ctx.beginPath();
+    ctx.arc(lr.x, lr.y, LUMIERE_COLLISION_DISTANCE, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
 
     debugStatus.textContent =
       `NAV 16px · ${navigation.nodes.length} cells\n` +
       `${player.x.toFixed(1)}, ${player.y.toFixed(1)} · ${player.dir} ${player.moving ? "walk" : "idle"} ${player.frame}\n` +
-      `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
+      `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.scripted?.phase || (shiopon.following ? "follow" : "wander")} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
+      `Lumiere ${lumiere.x.toFixed(1)}, ${lumiere.y.toFixed(1)} · fixed hover ${lumiere.frame}\n` +
       `${state.stick.active ? "stick" : state.keys.size ? "keyboard" : state.route.length ? "auto" : "idle"} · ${state.route.length} waypoints`;
 
     debugStatus.dataset.state = JSON.stringify({
@@ -662,9 +1266,28 @@
         wait: shiopon.wait,
         target: shiopon.target,
         homeRef: shiopon.homeRef,
+        following: shiopon.following,
+        scripted: shiopon.scripted,
+        followRoute: shiopon.followRoute,
+        rotation: shiopon.rotation,
+      },
+      lumiere: {
+        x: lumiere.x,
+        y: lumiere.y,
+        dir: lumiere.dir,
+        moving: lumiere.moving,
+        frame: lumiere.frame,
+        wingDirection: lumiere.wingDirection,
+        wingHold: lumiere.wingHold,
+        bobOffsetY: lumiere.bobOffsetY,
+        homeRef: lumiere.homeRef,
       },
       actorCollisionDistance: ACTOR_COLLISION_DISTANCE,
       actorGap: refDistance(playerRef(), shioponRef()),
+      shioponFollowDistance: SHIOPON_FOLLOW_DISTANCE,
+      shioponFollowMinGap: SHIOPON_FOLLOW_MIN_GAP,
+      lumiereCollisionDistance: LUMIERE_COLLISION_DISTANCE,
+      lumiereGap: refDistance(playerRef(), lumiereRef()),
       camera: { ...camera },
       origin: viewportOrigin(),
       cssWidth,
@@ -707,6 +1330,7 @@
     }
     updatePlayer(dt);
     updateShiopon(dt);
+    updateLumiere(dt);
     updateCamera(dt);
     draw();
     requestAnimationFrame(loop);
@@ -791,6 +1415,44 @@
     syncStick();
   }
 
+  function startShioponFollow() {
+    if (!ready) return;
+    shiopon.scripted = null;
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.following = true;
+    shiopon.followRoute = [];
+    shiopon.followReplan = 0;
+    shiopon.followTarget = null;
+    shiopon.target = null;
+    shiopon.wait = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    const current = shioponRef();
+    const target = shioponFollowTarget();
+    if (
+      refDistance(current, playerRef()) > SHIOPON_FOLLOW_EMERGENCY_GAP &&
+      isWalkableRef(target.x, target.y)
+    ) {
+      shiopon.x = target.x * scale.x;
+      shiopon.y = target.y * scale.y;
+    }
+    shiopon.dir = player.dir;
+  }
+
+  function stopShioponFollow() {
+    shiopon.following = false;
+    shiopon.followRoute = [];
+    shiopon.followReplan = 0;
+    shiopon.followTarget = null;
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.9 + Math.random() * 1.4;
+  }
+
   start.addEventListener("click", begin);
   resetButton.addEventListener("pointerdown", () => clearInput("reset"));
   resetButton.addEventListener("click", reset);
@@ -843,6 +1505,12 @@
     controls?.resume();
     npcSuspended = false;
   });
+  window.addEventListener("tarot-breaker:shiopon-face-player", faceShioponTowardPlayer);
+  window.addEventListener("tarot-breaker:shiopon-race-start", startShioponRace);
+  window.addEventListener("tarot-breaker:shiopon-trip", tripShiopon);
+  window.addEventListener("tarot-breaker:shiopon-recover", recoverShiopon);
+  window.addEventListener("tarot-breaker:shiopon-follow-start", startShioponFollow);
+  window.addEventListener("tarot-breaker:shiopon-follow-stop", stopShioponFollow);
 
   (async () => {
     try {
@@ -871,6 +1539,9 @@
         }),
         ...Object.entries(shioponFiles).map(async ([key, src]) => {
           shioponImages[key] = await loadImage(src);
+        }),
+        ...Object.entries(lumiereFiles).map(async ([key, src]) => {
+          lumiereImages[key] = await loadImage(src);
         }),
       ]);
 
@@ -901,13 +1572,26 @@
       )
         throw new Error("しおぽん待機画像サイズ不正");
 
+      if (
+        lumiereImages.hover.naturalWidth % FRAME.count !== 0 ||
+        lumiereImages.hover.naturalHeight <= 0
+      )
+        throw new Error("リュミエール浮遊画像サイズ不正");
+      lumiereFrame = {
+        w: lumiereImages.hover.naturalWidth / FRAME.count,
+        h: lumiereImages.hover.naturalHeight,
+        baseline:
+          lumiereImages.hover.naturalHeight * (FRAME.baseline / FRAME.h),
+        count: FRAME.count,
+      };
+
       ready = true;
       resize();
       reset();
       draw();
       start.disabled = false;
       start.textContent = "星の国へ";
-      note.textContent = "しおぽんが暮らす星門庭園を歩いてみよう";
+      note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
     } catch (error) {
       console.error(error);
       start.disabled = true;
