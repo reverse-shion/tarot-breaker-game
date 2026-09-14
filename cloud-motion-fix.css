@@ -1,7 +1,7 @@
-/* Preview 37 — separated world clouds.
-   The static world/island artwork now sits above this layer, while two copies
-   of the dedicated cloud artwork move steadily from right to left. This keeps
-   cloud motion independent from collision, actors and the garden geometry. */
+/* Preview 38 — soft continuous world-cloud scroll.
+   Two copies of the supplied transparent cloud artwork repeat forever from
+   right to left. The world-scale source is kept close to 1:1 and softened into
+   the celestial sky so the alpha edge does not read as a cut-out sticker. */
 
 @keyframes cloud-main-scroll-left {
   from { transform: translate3d(0, 0, 0); }
@@ -14,17 +14,28 @@
 }
 
 .scene-cloud-main {
-  /* z=-1 places clouds behind the separated islands (z=0), but because this
-     node follows scene-star-sky in the DOM it remains above the sky layer. */
   z-index: -1 !important;
   overflow: hidden !important;
-  opacity: .66 !important;
+  opacity: .54 !important;
   pointer-events: none;
   contain: paint;
+  mix-blend-mode: screen;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0%,
+    rgba(0,0,0,.45) 1.4%,
+    #000 4.2%,
+    #000 95.8%,
+    rgba(0,0,0,.45) 98.6%,
+    transparent 100%);
+  mask-image: linear-gradient(to right,
+    transparent 0%,
+    rgba(0,0,0,.45) 1.4%,
+    #000 4.2%,
+    #000 95.8%,
+    rgba(0,0,0,.45) 98.6%,
+    transparent 100%);
 }
 
 .scene-cloud-main-track {
@@ -47,12 +58,12 @@
 
 .scene-cloud-main-track > .scene-cloud-copy {
   display: block;
-  flex: 0 0 calc(50% + 2px);
-  width: calc(50% + 2px);
-  min-width: calc(50% + 2px);
+  flex: 0 0 calc(50% + 3px);
+  width: calc(50% + 3px);
+  min-width: calc(50% + 3px);
   height: 100%;
   max-width: none;
-  margin-right: -2px;
+  margin-right: -3px;
   object-fit: fill;
   image-rendering: auto;
   pointer-events: none;
@@ -60,21 +71,47 @@
   -webkit-user-drag: none;
   -webkit-animation: none !important;
   animation: none !important;
-  -webkit-transform: translateZ(0) scale(1.012);
-  transform: translateZ(0) scale(1.012);
+  -webkit-transform: translateZ(0) scale(1.016);
+  transform: translateZ(0) scale(1.016);
   -webkit-transform-origin: 50% 50%;
   transform-origin: 50% 50%;
+  filter:
+    blur(.55px)
+    brightness(1.035)
+    saturate(.90)
+    drop-shadow(0 0 12px rgba(255,225,250,.13));
+}
+
+/* A soft atmospheric veil at the top and bottom helps the dedicated cloud
+   layer disappear into the painted sky instead of ending on a hard contour. */
+.scene-cloud-main::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom,
+      rgba(89,96,173,.12) 0%,
+      transparent 12%,
+      transparent 82%,
+      rgba(238,196,237,.11) 100%);
+  mix-blend-mode: screen;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .scene-cloud-main {
-    opacity: .58 !important;
+    opacity: .48 !important;
   }
 
   .scene-cloud-main-track {
-    -webkit-animation-duration: 108s !important;
-    animation-duration: 108s !important;
+    -webkit-animation-duration: 112s !important;
+    animation-duration: 112s !important;
     -webkit-animation-delay: -19s !important;
     animation-delay: -19s !important;
+  }
+
+  .scene-cloud-main-track > .scene-cloud-copy {
+    filter: blur(.45px) brightness(1.025) saturate(.92);
   }
 }
