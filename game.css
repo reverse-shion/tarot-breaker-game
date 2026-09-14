@@ -73,12 +73,44 @@ body {
   z-index: 2;
 }
 .scene-star-sky { z-index: -1; opacity: 1; }
-.scene-cloud { overflow: hidden; }
-.scene-cloud img { transform-origin: 50% 50%; }
-.scene-cloud-far { opacity: .24; }
-.scene-cloud-near { opacity: .42; }
-.scene-cloud-far img { animation: cloud-far-drift 40s ease-in-out infinite alternate; }
-.scene-cloud-near img { animation: cloud-drift 24s ease-in-out infinite alternate; animation-delay: -8s; }
+.scene-cloud {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0, #000 2.5%, #000 97.5%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 2.5%, #000 97.5%, transparent 100%);
+}
+.scene-cloud-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+.scene-cloud-copy {
+  display: block;
+  flex: 0 0 calc(50% + 1px);
+  width: calc(50% + 1px);
+  height: 100%;
+  max-width: none;
+  margin-right: -1px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 50%;
+}
+.scene-cloud-far { opacity: .22; }
+.scene-cloud-near { opacity: .40; }
+.scene-cloud-far-track {
+  animation: cloud-scroll-left 90s linear infinite;
+  animation-delay: -23s;
+}
+.scene-cloud-near-track {
+  animation: cloud-scroll-left 54s linear infinite;
+  animation-delay: -9s;
+}
+.scene-cloud-far .scene-cloud-copy { transform: scale(1.01); }
+.scene-cloud-near .scene-cloud-copy {
+  animation: cloud-near-bob 7.5s ease-in-out infinite;
+}
 .scene-waterfall { opacity: .88; mask-size:100% 100%; mask-repeat:no-repeat;
   -webkit-mask-size:100% 100%; -webkit-mask-repeat:no-repeat; }
 .scene-waterfall canvas { animation: waterfall-flow 2.2s linear infinite; }
@@ -240,14 +272,14 @@ body {
   backdrop-filter: blur(8px);
 }
 
-/* Durations below are complete cycles unless explicitly using alternate. */
-@keyframes cloud-far-drift {
-  from { transform:translate3d(-16px,2px,0) scale(1.08); }
-  to { transform:translate3d(16px,-2px,0) scale(1.08); }
+/* Preview 31: two-copy, one-way cloud flow. */
+@keyframes cloud-scroll-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
 }
-@keyframes cloud-drift {
-  from { transform:translate3d(-32px,3px,0) scale(1.1); }
-  to { transform:translate3d(32px,-3px,0) scale(1.1); }
+@keyframes cloud-near-bob {
+  0%, 100% { transform: translate3d(0, -1.5px, 0) scale(1.03); }
+  50% { transform: translate3d(0, 1.5px, 0) scale(1.03); }
 }
 /* The reset happens at zero alpha. A second copy is half a cycle ahead;
    the static mask holds the spillway in place while texture travels down. */
@@ -295,8 +327,21 @@ body {
   50% { opacity:.78; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .scene-cloud-far img { animation-name:cloud-far-reduced; animation-duration:50s; }
-  .scene-cloud-near img { animation-name:cloud-near-reduced; animation-duration:40s; }
+  .scene-cloud-far-track {
+    animation: none;
+    transform: translate3d(0, 0, 0);
+  }
+  .scene-cloud-near-track {
+    animation-name: cloud-scroll-left;
+    animation-duration: 180s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-delay: -60s;
+  }
+  .scene-cloud-near .scene-cloud-copy {
+    animation: none;
+    transform: scale(1.03);
+  }
   .scene-crystal-float, .scene-crystal-ring, .scene-fountain-water img,
   .scene-fountain-sparkle img, .scene-gate-event img { animation:none; }
   .scene-fountain-sparkle { opacity:.35; }
@@ -307,16 +352,8 @@ body {
   /* Gentle glow continues; no rotation or pulsing geometry. */
   .scene-fountain-glow img { animation-duration:5.2s; }
 }
-@keyframes cloud-far-reduced {
-  from { transform:translate3d(-6px,1px,0) scale(1.08); }
-  to { transform:translate3d(6px,-1px,0) scale(1.08); }
-}
-@keyframes cloud-near-reduced {
-  from { transform:translate3d(-12px,1px,0) scale(1.1); }
-  to { transform:translate3d(12px,-1px,0) scale(1.1); }
-}
 @media (prefers-reduced-motion: no-preference) {
-  .scene-world-layer canvas, .scene-cloud img, .scene-object img,
+  .scene-world-layer canvas, .scene-cloud-track, .scene-cloud-copy, .scene-object img,
   .scene-crystal-float, .scene-crystal-ring { will-change:transform,opacity; }
 }
 /* Phase 2 touch surface and progressive floating stick. */
