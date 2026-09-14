@@ -1,8 +1,9 @@
-/* Preview 44 — seamless Chrono Trigger-style cloud drift.
+/* Preview 45 — seamless Chrono Trigger-style cloud drift.
    Preserve the supplied cloud artwork at its authored world size. Three exact
    copies form a buffered strip. The viewport travels from the middle copy to
    the next identical copy, so the animation reset lands on the same pixels and
-   cannot visibly pop. Motion remains right-to-left, constant and compositor-only. */
+   cannot visibly pop. The cloud layer now sits above the static sky/nebula/sun
+   but below the authored islands, ground and foreground plates. */
 
 @keyframes cloud-main-scroll-left {
   from { transform: translate3d(-33.333333%, 0, 0); }
@@ -15,7 +16,7 @@
 }
 
 .scene-cloud-main {
-  z-index: -1 !important;
+  z-index: 0 !important;
   overflow: hidden !important;
   opacity: .72 !important;
   pointer-events: none;
