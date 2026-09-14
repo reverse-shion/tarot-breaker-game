@@ -19,20 +19,20 @@ test('fountain water is reduced, centered and seated farther into the basin', ()
   assert.match(css, /clip-path:\s*ellipse\(48% 43% at 50% 52%\)/);
 });
 
-test('crystal is moved deeper and detached ring is disabled', () => {
+test('crystal is moved farther toward the rear and detached ring is disabled', () => {
   const crystal = html.match(/class="scene-object scene-back scene-fountain-crystal"[\s\S]*?data-world-x="([^"]+)"[\s\S]*?data-world-y="([^"]+)"[\s\S]*?data-world-w="([^"]+)"[\s\S]*?data-world-h="([^"]+)"/);
   assert.ok(crystal, 'fountain crystal layer exists');
   const [, x, y, w, h] = crystal.map(Number);
   assert.equal(x, 708);
-  assert.equal(y, 353);
+  assert.equal(y, 333);
   assert.equal(w, 184);
   assert.equal(h, 230);
   assert.match(html, /<canvas class="scene-crystal-ring"[^>]*hidden/);
   assert.match(html, /<canvas class="scene-crystal-core"/);
 });
 
-test('gate haze is removed from in front of Lumiere while inner light remains behind actors', () => {
-  assert.match(html, /class="scene-object scene-back scene-gate-inner-light"/);
+test('all always-on gate haze is removed around Lumiere', () => {
+  assert.match(html, /class="scene-object scene-back scene-gate-inner-light"[\s\S]*?hidden/);
   assert.match(html, /class="scene-object scene-back scene-gate-particle"[\s\S]*?hidden/);
   assert.doesNotMatch(html, /class="scene-object scene-front scene-gate-particle"/);
 });
