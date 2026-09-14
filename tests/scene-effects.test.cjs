@@ -76,16 +76,17 @@ test('scene and actors share the current camera; event FX is opt-in',async()=>{
  assert.equal(api.setGateState('unknown'),'normal');
  assert.match(css,/\.scene-gate-event\s*\{\s*visibility:hidden; opacity:0/);
 });
-test('motion uses independent cycles; Preview 38 cloud artwork scrolls left as one track',()=>{
+test('motion uses independent cycles; Preview 44 cloud artwork scrolls left in a buffered track',()=>{
  for(const t of ['4.4s','3.1s','24s','4.7s','2.6s','5s']) assert.ok(css.includes(t),t);
- assert.equal((html.match(/class="scene-cloud-copy"/g)||[]).length,2);
+ assert.equal((html.match(/class="scene-cloud-copy"/g)||[]).length,3);
  assert.match(html,/scene-cloud-main-track/);
  assert.doesNotMatch(html,/scene-cloud-far-track/);
  assert.doesNotMatch(html,/scene-cloud-near-track/);
- assert.match(cloudCss,/@keyframes cloud-main-scroll-left[\s\S]*?translate3d\(-50%, 0, 0\)/);
+ assert.match(cloudCss,/@keyframes cloud-main-scroll-left[\s\S]*?translate3d\(-33\.333333%, 0, 0\)[\s\S]*?translate3d\(-66\.666667%, 0, 0\)/);
  assert.match(cloudCss,/\.scene-cloud-main-track\s*\{[\s\S]*?64s linear infinite/);
  assert.match(cloudCss,/prefers-reduced-motion: reduce/);
  assert.match(cloudCss,/scene-cloud-main-track[\s\S]*?112s/);
+ assert.doesNotMatch(cloudCss,/animation-delay/);
  assert.doesNotMatch(cloudCss,/alternate/);
  assert.doesNotMatch(cloudCss,/bob/);
  assert.match(css,/@keyframes waterfall-flow[\s\S]*?100% \{ transform:translate3d\(0,8px,0\); opacity:0/);
