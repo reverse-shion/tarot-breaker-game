@@ -1,18 +1,17 @@
-/* Preview 43 — Chrono Trigger-style cloud drift.
-   Keep the supplied cloud artwork at its authored world size. Two exact copies
-   form one continuous strip and move only from right to left at a constant
-   rate. No per-copy scaling, secondary vertical motion, drop-shadow or heavy
-   filtering: this keeps iPhone Safari on a simple compositor transform and
-   avoids visible stutter while preserving the original cloud shapes. */
+/* Preview 44 — seamless Chrono Trigger-style cloud drift.
+   Preserve the supplied cloud artwork at its authored world size. Three exact
+   copies form a buffered strip. The viewport travels from the middle copy to
+   the next identical copy, so the animation reset lands on the same pixels and
+   cannot visibly pop. Motion remains right-to-left, constant and compositor-only. */
 
 @keyframes cloud-main-scroll-left {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-50%, 0, 0); }
+  from { transform: translate3d(-33.333333%, 0, 0); }
+  to { transform: translate3d(-66.666667%, 0, 0); }
 }
 
 @-webkit-keyframes cloud-main-scroll-left {
-  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
-  to { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+  from { -webkit-transform: translate3d(-33.333333%, 0, 0); transform: translate3d(-33.333333%, 0, 0); }
+  to { -webkit-transform: translate3d(-66.666667%, 0, 0); transform: translate3d(-66.666667%, 0, 0); }
 }
 
 .scene-cloud-main {
@@ -39,30 +38,30 @@
   position: absolute;
   inset: 0 auto 0 0;
   display: flex;
-  width: 200%;
-  min-width: 200%;
+  width: 300%;
+  min-width: 300%;
   height: 100%;
   will-change: transform;
-  -webkit-transform: translate3d(0, 0, 0);
-  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(-33.333333%, 0, 0);
+  transform: translate3d(-33.333333%, 0, 0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   -webkit-animation: cloud-main-scroll-left 64s linear infinite !important;
   animation: cloud-main-scroll-left 64s linear infinite !important;
-  -webkit-animation-delay: -11s !important;
-  animation-delay: -11s !important;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
   -webkit-animation-play-state: running !important;
   animation-play-state: running !important;
 }
 
 .scene-cloud-main-track > .scene-cloud-copy {
   display: block;
-  flex: 0 0 50%;
-  width: 50%;
-  min-width: 50%;
+  flex: 0 0 calc(33.333333% + 1px);
+  width: calc(33.333333% + 1px);
+  min-width: calc(33.333333% + 1px);
   height: 100%;
   max-width: none;
-  margin: 0;
+  margin: 0 -1px 0 0;
   object-fit: fill;
   image-rendering: auto;
   opacity: 1;
@@ -80,7 +79,5 @@
   .scene-cloud-main-track {
     -webkit-animation-duration: 112s !important;
     animation-duration: 112s !important;
-    -webkit-animation-delay: -19s !important;
-    animation-delay: -19s !important;
   }
 }
