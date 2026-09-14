@@ -24,7 +24,7 @@
       <img
         id="map-layer"
         class="map-layer scene-map-base"
-        src="./assets/maps/star-country-world-islands.webp"
+        src="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/2d8b4cec9b6dbb96f5dc0c4d8412f8a44acae59f/assets/maps/star-country-world-islands.webp"
         alt=""
         aria-hidden="true"
         draggable="false"
@@ -65,8 +65,8 @@
       <div class="scene-world-layer scene-back scene-foreground" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
-      <!-- Preview 40: the high-detail standalone gate is mask-only. The gate
-           already painted into the authored map is the visible gate body. -->
+      <!-- Preview 41: the authored map gate is visible. The separate high-detail
+           gate stays hidden and is retained only as a mask reference. -->
       <div
         class="scene-object scene-back scene-gate-base"
         data-scene-object
@@ -218,6 +218,7 @@
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
     <script src="./dialogue.js?v=0.8.0" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
+    <script src="./scene-preview41-fix.js?v=1.0.0" defer></script>
     <script src="./scene-effects.js?v=1.1.0" defer></script>
     <script
       src="./game.js?v=1.1.0"
