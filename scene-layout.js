@@ -5,6 +5,16 @@
 })(typeof window === "object" ? window : this, function () {
   "use strict";
   const referenceSize = { width: 1448, height: 1086 };
+  // The split foreground artwork sits about 12 reference pixels to the right
+  // of the avenue centre in the reconstructed scene. Keep the authored ground,
+  // fountain and collision centreline fixed, and bring only the foreground
+  // cutout back onto the original avenue axis.
+  const foregroundOffset = Object.freeze({ x: -12, y: 0 });
+  const shiftPoints = (points, dx = 0, dy = 0) => points.map(([x,y]) => [x+dx,y+dy]);
+  const shiftShape = (shape, dx = 0, dy = 0) => {
+    if (shape.type === "ellipse") return {...shape,cx:shape.cx+dx,cy:shape.cy+dy};
+    return {...shape,points:shiftPoints(shape.points,dx,dy)};
+  };
   // The opening is at source x=720, not at the image centre (724).
   // Align it to the stair star/centreline at x=800; Lumiere stays at (810,212).
   const gate = { x: 800 - 720 * 560 / 1448, y: -70, w: 560, h: 420,
@@ -12,8 +22,19 @@
   const legacyGate = [[629,0],[997,0],[997,269],[946,281],[881,278],
     [866,253],[763,253],[749,285],[685,283],[629,263]];
   const rect = (x,y,w,h) => ({type:"poly",points:[[x,y],[x+w,y],[x+w,y+h],[x,y+h]]});
-  const occluder = (id, bounds, baseline, footArea, source="foreground", points=null) =>
-    ({id,bounds,baseline,footArea,source,points:points || rect(...bounds).points});
+  const occluder = (id, bounds, baseline, footArea, source="foreground", points=null) => {
+    const dx = source === "foreground" ? foregroundOffset.x : 0;
+    const dy = source === "foreground" ? foregroundOffset.y : 0;
+    const [x,y,w,h] = bounds;
+    return {
+      id,
+      bounds:[x+dx,y+dy,w,h],
+      baseline:baseline+dy,
+      footArea:shiftShape(footArea,dx,dy),
+      source,
+      points:shiftPoints(points || rect(...bounds).points,dx,dy),
+    };
+  };
   // Only real, local floor behind a visual may activate it. The long bridge
   // supports hanging in empty sky are background, never occluders.
   const occluders = [
@@ -38,14 +59,15 @@
       [[627,543],[662,566],[706,585],[751,596],[800,600],[850,596],[895,585],[940,566],[973,543],[973,609],[625,609]])
   ];
   // Small physical footprints, independent of masks. The authored walk polygons
-  // remain untouched; these only make the placed objects solid.
+  // remain untouched; these only make the placed objects solid. Foreground
+  // posts follow the same horizontal correction as their visible cutout.
   const solidBases = [
     {type:"ellipse",cx:800,cy:533,rx:170,ry:75},
     rect(746,233,28,15), rect(831,233,28,15),
-    {type:"ellipse",cx:584,cy:452,rx:14,ry:9},
-    {type:"ellipse",cx:1025,cy:452,rx:14,ry:9},
-    {type:"ellipse",cx:242,cy:438,rx:13,ry:8},
-    {type:"ellipse",cx:1238,cy:528,rx:15,ry:10}
+    shiftShape({type:"ellipse",cx:584,cy:452,rx:14,ry:9},foregroundOffset.x,foregroundOffset.y),
+    shiftShape({type:"ellipse",cx:1025,cy:452,rx:14,ry:9},foregroundOffset.x,foregroundOffset.y),
+    shiftShape({type:"ellipse",cx:242,cy:438,rx:13,ry:8},foregroundOffset.x,foregroundOffset.y),
+    shiftShape({type:"ellipse",cx:1238,cy:528,rx:15,ry:10},foregroundOffset.x,foregroundOffset.y)
   ];
   function contains(point, shape) {
     if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return false;
@@ -67,9 +89,9 @@
     for (const point of points.slice(1)) ctx.lineTo(...point);
     ctx.closePath();
   }
-  function removeLegacyGate(ctx) {
+  function removeLegacyGate(ctx, dx = 0, dy = 0) {
     ctx.save(); ctx.globalCompositeOperation = "destination-out";
-    trace(ctx, legacyGate); ctx.fill(); ctx.restore();
+    trace(ctx,shiftPoints(legacyGate,dx,dy)); ctx.fill(); ctx.restore();
   }
   // Reuse the supplied star-sky behind a clipped hole. Source WebPs stay intact;
   // no regenerated architecture, image re-encoding or opaque cover over actors.
@@ -88,8 +110,9 @@
     }
   }
   function paintForeground(ctx, foreground) {
-    ctx.clearRect(0,0,1448,1086); ctx.drawImage(foreground,0,0,1448,1086);
-    removeLegacyGate(ctx);
+    ctx.clearRect(0,0,1448,1086);
+    ctx.drawImage(foreground,foregroundOffset.x,foregroundOffset.y,1448,1086);
+    removeLegacyGate(ctx,foregroundOffset.x,foregroundOffset.y);
   }
   // Derive two runtime masks from the existing artwork. The upright crystal
   // uses its own blue facet texture underneath the removed gold crossing;
@@ -144,7 +167,7 @@
     }
     ring.restore();
   }
-  return { referenceSize, gate, legacyGate, rect, trace, removeLegacyGate,
+  return { referenceSize, foregroundOffset, gate, legacyGate, rect, trace, removeLegacyGate,
     occluders, solidBases, contains, activeOccluders,
     paintBackground, paintForeground, splitCrystal };
 });
