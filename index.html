@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="./game.css?v=1.2.0" />
     <link rel="stylesheet" href="./fountain-polish.css?v=1.0.0" />
     <link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0" />
-    <link rel="stylesheet" href="./cloud-motion-fix.css?v=1.4.0" />
+    <link rel="stylesheet" href="./cloud-motion-fix.css?v=1.5.0" />
     <link rel="stylesheet" href="./audio.css?v=0.7.1" />
     <link rel="stylesheet" href="./dialogue.css?v=0.8.0" />
   </head>
@@ -92,8 +92,6 @@
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-base.webp" alt="" draggable="false" />
       </div>
-      <!-- Preview 42: the animated water is seated 10 reference pixels farther
-           into the basin so it aligns with the authored inner ellipse. -->
       <div
         class="scene-object scene-back scene-fountain-water"
         data-scene-object
@@ -105,13 +103,13 @@
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-water.webp" alt="" draggable="false" />
       </div>
-      <!-- Preview 42: move the crystal 12 reference pixels toward the back.
-           The detached gold gimbal/ring is intentionally hidden. -->
+      <!-- Preview 43: preserve the supplied crystal size and move the complete
+           crystal stack another 20 reference pixels toward the rear of basin. -->
       <div
         class="scene-object scene-back scene-fountain-crystal"
         data-scene-object
         data-world-x="708"
-        data-world-y="353"
+        data-world-y="333"
         data-world-w="184"
         data-world-h="230"
         aria-hidden="true"
@@ -121,12 +119,11 @@
 
       <canvas id="game" aria-label="星の国を探索するゲーム画面"></canvas>
 
-      <!-- Glow and sparkle follow the same -12px crystal correction. -->
       <div
         class="scene-object scene-front scene-fountain-glow"
         data-scene-object
         data-world-x="650"
-        data-world-y="338"
+        data-world-y="318"
         data-world-w="300"
         data-world-h="250"
         aria-hidden="true"
@@ -137,15 +134,15 @@
         class="scene-object scene-front scene-fountain-sparkle"
         data-scene-object
         data-world-x="640"
-        data-world-y="378"
+        data-world-y="358"
         data-world-w="320"
         data-world-h="220"
         aria-hidden="true"
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
       </div>
-      <!-- Preview 42: keep only the gate's restrained inner light behind the
-           actors. The broad particle veil that read as haze over Lumiere is off. -->
+      <!-- Preview 43: all always-on Star Gate haze is disabled. The authored
+           gate keeps its own painted light, while event FX stays opt-in. -->
       <div
         class="scene-object scene-back scene-gate-inner-light"
         data-scene-object
@@ -154,6 +151,7 @@
         data-world-w="212"
         data-world-h="224"
         aria-hidden="true"
+        hidden
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp" alt="" draggable="false" />
       </div>
