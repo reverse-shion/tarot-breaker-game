@@ -1,0 +1,38 @@
+/* Preview 32 — fountain geometry/depth polish.
+   Keep this isolated from movement, collision, clouds and gate logic. */
+
+.scene-fountain-water {
+  overflow: hidden;
+  /* The supplied water FX must stay inside the basin's blue inner ellipse. */
+  clip-path: ellipse(48% 43% at 50% 52%);
+  -webkit-clip-path: ellipse(48% 43% at 50% 52%);
+}
+
+.scene-fountain-water img {
+  transform-origin: 50% 52%;
+}
+
+/* The gimbal is a rear structure. The reconstructed crystal core is opaque
+   across its silhouette, so placing the ring below it removes the old
+   "ring cutting across the front face" look while retaining rotation around
+   the exposed sides. */
+.scene-crystal-ring {
+  z-index: 0;
+  transform-origin: 50% 55%;
+}
+
+.scene-crystal-core {
+  z-index: 1;
+}
+
+/* Keep the light treatment restrained: it may bloom around the crystal, but
+   the water surface itself remains clipped by the basin geometry above. */
+.scene-fountain-glow {
+  opacity: .92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-crystal-ring {
+    animation: none;
+  }
+}
