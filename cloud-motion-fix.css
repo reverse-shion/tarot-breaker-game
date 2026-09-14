@@ -1,7 +1,9 @@
-/* Preview 38 — soft continuous world-cloud scroll.
-   Two copies of the supplied transparent cloud artwork repeat forever from
-   right to left. The world-scale source is kept close to 1:1 and softened into
-   the celestial sky so the alpha edge does not read as a cut-out sticker. */
+/* Preview 43 — Chrono Trigger-style cloud drift.
+   Keep the supplied cloud artwork at its authored world size. Two exact copies
+   form one continuous strip and move only from right to left at a constant
+   rate. No per-copy scaling, bobbing, drop-shadow or heavy filtering: this
+   keeps iPhone Safari on a simple compositor transform and avoids visible
+   stutter while preserving the original cloud shapes. */
 
 @keyframes cloud-main-scroll-left {
   from { transform: translate3d(0, 0, 0); }
@@ -16,25 +18,22 @@
 .scene-cloud-main {
   z-index: -1 !important;
   overflow: hidden !important;
-  opacity: .54 !important;
+  opacity: .72 !important;
   pointer-events: none;
-  contain: paint;
-  mix-blend-mode: screen;
+  contain: layout paint size;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  /* Only soften the viewport entry/exit edges. The cloud illustration itself
+     remains unscaled and unfiltered so its authored look is preserved. */
   -webkit-mask-image: linear-gradient(to right,
     transparent 0%,
-    rgba(0,0,0,.45) 1.4%,
-    #000 4.2%,
-    #000 95.8%,
-    rgba(0,0,0,.45) 98.6%,
+    #000 1.2%,
+    #000 98.8%,
     transparent 100%);
   mask-image: linear-gradient(to right,
     transparent 0%,
-    rgba(0,0,0,.45) 1.4%,
-    #000 4.2%,
-    #000 95.8%,
-    rgba(0,0,0,.45) 98.6%,
+    #000 1.2%,
+    #000 98.8%,
     transparent 100%);
 }
 
@@ -48,6 +47,8 @@
   will-change: transform;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   -webkit-animation: cloud-main-scroll-left 64s linear infinite !important;
   animation: cloud-main-scroll-left 64s linear infinite !important;
   -webkit-animation-delay: -11s !important;
@@ -58,60 +59,31 @@
 
 .scene-cloud-main-track > .scene-cloud-copy {
   display: block;
-  flex: 0 0 calc(50% + 3px);
-  width: calc(50% + 3px);
-  min-width: calc(50% + 3px);
+  flex: 0 0 50%;
+  width: 50%;
+  min-width: 50%;
   height: 100%;
   max-width: none;
-  margin-right: -3px;
+  margin: 0;
   object-fit: fill;
   image-rendering: auto;
+  opacity: 1;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
   -webkit-animation: none !important;
   animation: none !important;
-  -webkit-transform: translateZ(0) scale(1.016);
-  transform: translateZ(0) scale(1.016);
-  -webkit-transform-origin: 50% 50%;
-  transform-origin: 50% 50%;
-  filter:
-    blur(.55px)
-    brightness(1.035)
-    saturate(.90)
-    drop-shadow(0 0 12px rgba(255,225,250,.13));
-}
-
-/* A soft atmospheric veil at the top and bottom helps the dedicated cloud
-   layer disappear into the painted sky instead of ending on a hard contour. */
-.scene-cloud-main::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom,
-      rgba(89,96,173,.12) 0%,
-      transparent 12%,
-      transparent 82%,
-      rgba(238,196,237,.11) 100%);
-  mix-blend-mode: screen;
+  -webkit-transform: none !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scene-cloud-main {
-    opacity: .48 !important;
-  }
-
+  /* Keep direction and continuity identical; only slow the drift. */
   .scene-cloud-main-track {
     -webkit-animation-duration: 112s !important;
     animation-duration: 112s !important;
     -webkit-animation-delay: -19s !important;
     animation-delay: -19s !important;
-  }
-
-  .scene-cloud-main-track > .scene-cloud-copy {
-    filter: blur(.45px) brightness(1.025) saturate(.92);
   }
 }
