@@ -8,12 +8,12 @@ const cloudCss = fs.readFileSync('cloud-motion-fix.css', 'utf8');
 
 test('cloud stylesheet is loaded directly and fountain CSS stays isolated', () => {
   const fountain = html.indexOf('./fountain-polish.css?v=1.0.0');
-  const cloud = html.indexOf('./cloud-motion-fix.css?v=1.4.0');
+  const cloud = html.indexOf('./cloud-motion-fix.css?v=1.5.0');
   assert.ok(fountain >= 0 && cloud > fountain, 'cloud CSS must load after fountain polish');
   assert.doesNotMatch(fountainCss, /cloud-motion-fix\.css/);
 });
 
-test('Preview 38 uses exactly one duplicated dedicated cloud track', () => {
+test('Preview 43 uses exactly one duplicated dedicated cloud track', () => {
   const mainLayers = html.match(/scene-cloud-main/g) || [];
   const copies = html.match(/class="scene-cloud-copy"/g) || [];
   const worldCloudCopies = html.match(/star-country-world-clouds\.webp/g) || [];
@@ -27,20 +27,24 @@ test('Preview 38 uses exactly one duplicated dedicated cloud track', () => {
   assert.doesNotMatch(html, /scene-cloud-near/);
 });
 
-test('cloud artwork scrolls left continuously behind the islands at world scale', () => {
+test('cloud artwork scrolls left continuously at authored size', () => {
   assert.match(cloudCss, /@keyframes cloud-main-scroll-left[\s\S]*?translate3d\(-50%,\s*0,\s*0\)/);
   assert.match(cloudCss, /\.scene-cloud-main[\s\S]*?z-index:\s*-1\s*!important/);
+  assert.match(cloudCss, /\.scene-cloud-main[\s\S]*?opacity:\s*\.72\s*!important/);
   assert.match(cloudCss, /scene-cloud-main-track[\s\S]*?64s linear infinite/);
   assert.match(cloudCss, /scene-cloud-main-track[\s\S]*?animation-play-state:\s*running\s*!important/);
   assert.match(cloudCss, /scene-cloud-main-track[\s\S]*?width:\s*200%/);
-  assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?flex:\s*0 0 calc\(50% \+ 3px\)/);
+  assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?flex:\s*0 0 50%/);
+  assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?width:\s*50%/);
 });
 
-test('cloud edges are softened instead of reading as a hard cutout', () => {
-  assert.match(cloudCss, /mix-blend-mode:\s*screen/);
-  assert.match(cloudCss, /blur\(\.55px\)/);
-  assert.match(cloudCss, /drop-shadow\(0 0 12px/);
-  assert.match(cloudCss, /margin-right:\s*-3px/);
+test('cloud copies avoid expensive per-frame visual transforms and keep only soft viewport edges', () => {
+  assert.doesNotMatch(cloudCss, /mix-blend-mode:\s*screen/);
+  assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?transform:\s*none\s*!important/);
+  assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?filter:\s*none\s*!important/);
+  assert.match(cloudCss, /mask-image:\s*linear-gradient\(to right/);
+  assert.doesNotMatch(cloudCss, /scale\(1\.016\)/);
+  assert.doesNotMatch(cloudCss, /drop-shadow\(/);
 });
 
 test('reduced motion keeps the same one-way scroll at a gentler speed', () => {
