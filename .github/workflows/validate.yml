@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check game.js
           node --check scene-effects.js
+          node --check scene-layout.js
           node --check audio.js
           node --check lumiere-outline.js
           node --check dialogue.js

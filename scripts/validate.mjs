@@ -7,6 +7,7 @@ const required = [
   'game.css',
   'game.js',
   'scene-effects.js',
+  'scene-layout.js',
   'navigation.js',
   'controls.js',
   'assets/maps/star-country-gate-garden-collision.json',
@@ -98,7 +99,7 @@ for (const token of ['requestAnimationFrame','pointerdown','shion_walk_down.png'
   if (!js.includes(token)) throw new Error(`game.js missing expected behavior token: ${token}`);
 }
 const sceneJs = fs.readFileSync(path.join(root, 'scene-effects.js'), 'utf8');
-for (const token of ['TarotSceneEffects','tarot-breaker:gate-state','data-scene-world','data-scene-object']) {
+for (const token of ['TarotSceneEffects','tarot-breaker:gate-state','data-scene-world','data-scene-object','drawMaskedActor','syncCamera','ready']) {
   if (!sceneJs.includes(token)) throw new Error(`scene-effects.js missing expected token: ${token}`);
 }
 

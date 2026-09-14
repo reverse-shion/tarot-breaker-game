@@ -8,7 +8,7 @@
     />
     <meta name="theme-color" content="#0b1029" />
     <title>TAROT BREAKER — 1000年前の星の国</title>
-    <link rel="stylesheet" href="./game.css?v=1.0.0" />
+    <link rel="stylesheet" href="./game.css?v=1.1.0" />
     <link rel="stylesheet" href="./audio.css?v=0.7.1" />
     <link rel="stylesheet" href="./dialogue.css?v=0.8.0" />
   </head>
@@ -27,128 +27,133 @@
         draggable="false"
       />
 
+      <div class="scene-world-layer scene-back scene-background" data-scene-world aria-hidden="true"><canvas width="1448" height="1086"></canvas></div>
       <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" />
       </div>
-      <div class="scene-world-layer scene-back scene-cloud" data-scene-world aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-cloud.webp" alt="" draggable="false" />
+      <div class="scene-world-layer scene-back scene-cloud scene-cloud-far" data-scene-world aria-hidden="true">
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-cloud.webp" alt="" draggable="false" />
+      </div>
+      <div class="scene-world-layer scene-back scene-cloud scene-cloud-near" data-scene-world aria-hidden="true">
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-cloud.webp" alt="" draggable="false" />
       </div>
       <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-base" data-scene-world aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
-      </div>
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
+      <canvas width="1448" height="1086"></canvas></div>
       <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-flow" data-scene-world aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
-      </div>
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
+      <canvas width="1448" height="1086"></canvas></div>
       <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-ground.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-ground.webp" alt="" draggable="false" />
+      </div>
+
+      <div class="scene-world-layer scene-back scene-foreground" data-scene-world aria-hidden="true">
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp" alt="" draggable="false" />
+      <canvas width="1448" height="1086"></canvas></div>
+      <div
+        class="scene-object scene-back scene-gate-base"
+        data-scene-object
+        data-world-x="521.5469613259668"
+        data-world-y="-70"
+        data-world-w="560"
+        data-world-h="420"
+        aria-hidden="true"
+      >
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-base.webp" alt="" draggable="false" />
       </div>
 
       <div
         class="scene-object scene-back scene-fountain-base"
         data-scene-object
-        data-world-x="601"
+        data-world-x="625"
         data-world-y="388"
         data-world-w="350"
         data-world-h="245"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-fountain-base.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-base.webp" alt="" draggable="false" />
       </div>
       <div
         class="scene-object scene-back scene-fountain-water"
         data-scene-object
-        data-world-x="619"
+        data-world-x="643"
         data-world-y="405"
         data-world-w="314"
         data-world-h="205"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-fountain-water.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-water.webp" alt="" draggable="false" />
       </div>
       <div
         class="scene-object scene-back scene-fountain-crystal"
         data-scene-object
-        data-world-x="684"
+        data-world-x="708"
         data-world-y="365"
         data-world-w="184"
         data-world-h="230"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-fountain-crystal.webp" alt="" draggable="false" />
-      </div>
-
-      <div
-        class="scene-object scene-back scene-gate-inner-light"
-        data-scene-object
-        data-world-x="666"
-        data-world-y="58"
-        data-world-w="220"
-        data-world-h="245"
-        aria-hidden="true"
-      >
-        <img src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp" alt="" draggable="false" />
-      </div>
-      <div
-        class="scene-object scene-back scene-gate-base"
-        data-scene-object
-        data-world-x="586"
-        data-world-y="20"
-        data-world-w="380"
-        data-world-h="300"
-        aria-hidden="true"
-      >
-        <img src="./assets/maps/star-country-gate-garden-star-gate-base.webp" alt="" draggable="false" />
-      </div>
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-fountain-crystal.webp" alt="" draggable="false" />
+      <div class="scene-crystal-float"><canvas class="scene-crystal-core" width="1254" height="1254"></canvas><canvas class="scene-crystal-ring" width="1254" height="1254"></canvas></div></div>
 
       <canvas id="game" aria-label="星の国を探索するゲーム画面"></canvas>
 
       <div
         class="scene-object scene-front scene-fountain-glow"
         data-scene-object
-        data-world-x="626"
+        data-world-x="650"
         data-world-y="350"
         data-world-w="300"
         data-world-h="250"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-fountain-crystal-glow.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-crystal-glow.webp" alt="" draggable="false" />
       </div>
       <div
         class="scene-object scene-front scene-fountain-sparkle"
         data-scene-object
-        data-world-x="616"
+        data-world-x="640"
         data-world-y="390"
         data-world-w="320"
         data-world-h="220"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
+      </div>
+      <div
+        class="scene-object scene-front scene-gate-inner-light"
+        data-scene-object
+        data-world-x="694"
+        data-world-y="35"
+        data-world-w="212"
+        data-world-h="224"
+        aria-hidden="true"
+      >
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp" alt="" draggable="false" />
       </div>
       <div
         class="scene-object scene-front scene-gate-particle"
         data-scene-object
-        data-world-x="596"
-        data-world-y="24"
-        data-world-w="360"
-        data-world-h="300"
+        data-world-x="590"
+        data-world-y="-32"
+        data-world-w="420"
+        data-world-h="320"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" />
       </div>
       <div
         class="scene-object scene-front scene-gate-event"
         data-scene-object
-        data-world-x="576"
-        data-world-y="4"
-        data-world-w="400"
-        data-world-h="330"
+        data-world-x="560"
+        data-world-y="-52"
+        data-world-w="480"
+        data-world-h="350"
         aria-hidden="true"
       >
-        <img src="./assets/maps/star-country-gate-garden-star-gate-event-fx.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-event-fx.webp" alt="" draggable="false" />
       </div>
-      <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-foreground.webp" alt="" draggable="false" />
-      </div>
+
 
       <section id="start-screen" class="start-screen" aria-live="polite">
         <div class="start-card">
@@ -194,9 +199,10 @@
     <script src="./audio.js?v=0.7.1" defer></script>
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
     <script src="./dialogue.js?v=0.8.0" defer></script>
-    <script src="./scene-effects.js?v=1.0.0" defer></script>
+    <script src="./scene-layout.js?v=1.1.0" defer></script>
+    <script src="./scene-effects.js?v=1.1.0" defer></script>
     <script
-      src="./game.js?v=0.7.1"
+      src="./game.js?v=1.1.0"
       data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/"
       data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/"
       defer
