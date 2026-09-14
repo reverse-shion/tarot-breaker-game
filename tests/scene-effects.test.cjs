@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const layout=require('../scene-layout.js');
 const {createCollision,createNavigator}=require('../blocked-collision.js');
 const data=require('../assets/maps/star-country-gate-garden-collision.json');
-const html=fs.readFileSync('index.html','utf8'),css=fs.readFileSync('game.css','utf8');
+const html=fs.readFileSync('index.html','utf8'),css=fs.readFileSync('game.css','utf8'),cloudCss=fs.readFileSync('cloud-motion-fix.css','utf8');
 
 test('gate opening aligns with stair centre; one base and no full foreground over actors',()=>{
  assert.equal(layout.gate.x+720*layout.gate.w/1448,800);
@@ -74,21 +74,19 @@ test('scene and actors share the current camera; event FX is opt-in',async()=>{
  assert.equal(api.setGateState('unknown'),'normal');
  assert.match(css,/\.scene-gate-event\s*\{\s*visibility:hidden; opacity:0/);
 });
-test('motion uses independent cycles; Preview 31 clouds scroll one-way and reduced motion is restrained',()=>{
- for(const t of ['4.4s','3.1s','24s','4.7s','2.6s','90s','54s','180s','5s']) assert.ok(css.includes(t),t);
- assert.equal((html.match(/class="scene-cloud-copy"/g)||[]).length,4);
- assert.match(html,/scene-cloud-far-track/);
- assert.match(html,/scene-cloud-near-track/);
- assert.match(css,/@keyframes cloud-scroll-left[\s\S]*?translate3d\(-50%, 0, 0\)/);
- assert.match(css,/\.scene-cloud-far-track\s*\{[\s\S]*?90s linear infinite/);
- assert.match(css,/\.scene-cloud-near-track\s*\{[\s\S]*?54s linear infinite/);
- assert.doesNotMatch(css,/cloud-(?:far-)?drift/);
- assert.doesNotMatch(css,/alternate/);
- assert.match(css,/@keyframes cloud-near-bob[\s\S]*?1\.5px[\s\S]*?1\.5px/);
+test('motion uses independent cycles; Preview 36 cloud artwork scrolls left as one track',()=>{
+ for(const t of ['4.4s','3.1s','24s','4.7s','2.6s','5s']) assert.ok(css.includes(t),t);
+ assert.equal((html.match(/class="scene-cloud-copy"/g)||[]).length,2);
+ assert.match(html,/scene-cloud-main-track/);
+ assert.doesNotMatch(html,/scene-cloud-far-track/);
+ assert.doesNotMatch(html,/scene-cloud-near-track/);
+ assert.match(cloudCss,/@keyframes cloud-main-scroll-left[\s\S]*?translate3d\(-50%, 0, 0\)/);
+ assert.match(cloudCss,/\.scene-cloud-main-track\s*\{[\s\S]*?64s linear infinite/);
+ assert.match(cloudCss,/prefers-reduced-motion: reduce/);
+ assert.match(cloudCss,/scene-cloud-main-track[\s\S]*?108s/);
+ assert.doesNotMatch(cloudCss,/alternate/);
+ assert.doesNotMatch(cloudCss,/bob/);
  assert.match(css,/@keyframes waterfall-flow[\s\S]*?100% \{ transform:translate3d\(0,8px,0\); opacity:0/);
- assert.match(css,/prefers-reduced-motion: reduce/);
- assert.match(css,/scene-cloud-far-track[\s\S]*?animation: none/);
- assert.match(css,/scene-cloud-near-track[\s\S]*?animation-duration: 180s/);
  assert.match(css,/scene-waterfall canvas \{ animation-duration:5s/);
  assert.match(css,/scene-fountain-glow img \{ animation-duration:5.2s/);
 });
