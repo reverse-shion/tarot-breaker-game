@@ -31,6 +31,12 @@ test('crystal is moved deeper and detached ring is disabled', () => {
   assert.match(html, /<canvas class="scene-crystal-core"/);
 });
 
+test('gate haze is removed from in front of Lumiere while inner light remains behind actors', () => {
+  assert.match(html, /class="scene-object scene-back scene-gate-inner-light"/);
+  assert.match(html, /class="scene-object scene-back scene-gate-particle"[\s\S]*?hidden/);
+  assert.doesNotMatch(html, /class="scene-object scene-front scene-gate-particle"/);
+});
+
 test('fountain polish is isolated and does not modify collision or scene logic', () => {
   assert.match(html, /fountain-polish\.css\?v=1\.0\.0/);
   assert.doesNotMatch(cssRulesOnly, /collision|walkArea|blockedArea|navigation/i);
