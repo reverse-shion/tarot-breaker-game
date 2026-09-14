@@ -65,7 +65,7 @@
       <div class="scene-world-layer scene-back scene-foreground" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
-      <!-- Preview 41: the authored map gate is visible. The separate high-detail
+      <!-- Preview 41+: the authored map gate is visible. The separate high-detail
            gate stays hidden and is retained only as a mask reference. -->
       <div
         class="scene-object scene-back scene-gate-base"
@@ -92,36 +92,41 @@
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-base.webp" alt="" draggable="false" />
       </div>
+      <!-- Preview 42: the animated water is seated 10 reference pixels farther
+           into the basin so it aligns with the authored inner ellipse. -->
       <div
         class="scene-object scene-back scene-fountain-water"
         data-scene-object
         data-world-x="650"
-        data-world-y="419"
+        data-world-y="409"
         data-world-w="300"
         data-world-h="176"
         aria-hidden="true"
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-water.webp" alt="" draggable="false" />
       </div>
+      <!-- Preview 42: move the crystal 12 reference pixels toward the back.
+           The detached gold gimbal/ring is intentionally hidden. -->
       <div
         class="scene-object scene-back scene-fountain-crystal"
         data-scene-object
         data-world-x="708"
-        data-world-y="365"
+        data-world-y="353"
         data-world-w="184"
         data-world-h="230"
         aria-hidden="true"
       >
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-fountain-crystal.webp" alt="" draggable="false" />
-      <div class="scene-crystal-float"><canvas class="scene-crystal-ring" width="1254" height="1254"></canvas><canvas class="scene-crystal-core" width="1254" height="1254"></canvas></div></div>
+      <div class="scene-crystal-float"><canvas class="scene-crystal-ring" width="1254" height="1254" hidden></canvas><canvas class="scene-crystal-core" width="1254" height="1254"></canvas></div></div>
 
       <canvas id="game" aria-label="星の国を探索するゲーム画面"></canvas>
 
+      <!-- Glow and sparkle follow the same -12px crystal correction. -->
       <div
         class="scene-object scene-front scene-fountain-glow"
         data-scene-object
         data-world-x="650"
-        data-world-y="350"
+        data-world-y="338"
         data-world-w="300"
         data-world-h="250"
         aria-hidden="true"
@@ -132,15 +137,17 @@
         class="scene-object scene-front scene-fountain-sparkle"
         data-scene-object
         data-world-x="640"
-        data-world-y="390"
+        data-world-y="378"
         data-world-w="320"
         data-world-h="220"
         aria-hidden="true"
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
       </div>
+      <!-- Preview 42: keep only the gate's restrained inner light behind the
+           actors. The broad particle veil that read as haze over Lumiere is off. -->
       <div
-        class="scene-object scene-front scene-gate-inner-light"
+        class="scene-object scene-back scene-gate-inner-light"
         data-scene-object
         data-world-x="694"
         data-world-y="35"
@@ -151,13 +158,14 @@
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp" alt="" draggable="false" />
       </div>
       <div
-        class="scene-object scene-front scene-gate-particle"
+        class="scene-object scene-back scene-gate-particle"
         data-scene-object
         data-world-x="590"
         data-world-y="-32"
         data-world-w="420"
         data-world-h="320"
         aria-hidden="true"
+        hidden
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" />
       </div>
