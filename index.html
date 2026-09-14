@@ -10,7 +10,8 @@
     <title>TAROT BREAKER — 1000年前の星の国</title>
     <link rel="stylesheet" href="./game.css?v=1.2.0" />
     <link rel="stylesheet" href="./fountain-polish.css?v=1.0.0" />
-    <link rel="stylesheet" href="./cloud-motion-fix.css?v=1.3.0" />
+    <link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0" />
+    <link rel="stylesheet" href="./cloud-motion-fix.css?v=1.4.0" />
     <link rel="stylesheet" href="./audio.css?v=0.7.1" />
     <link rel="stylesheet" href="./dialogue.css?v=0.8.0" />
   </head>
@@ -29,16 +30,28 @@
         draggable="false"
       />
 
-      <div class="scene-world-layer scene-back scene-background" data-scene-world aria-hidden="true"><canvas width="1448" height="1086"></canvas></div>
+      <div class="scene-world-layer scene-back scene-farthest-sky" data-scene-world aria-hidden="true">
+        <img crossorigin="anonymous" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" draggable="false" />
+      </div>
       <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" />
       </div>
+      <div
+        class="scene-object scene-back scene-sun-light"
+        data-scene-object
+        data-world-x="100"
+        data-world-y="130"
+        data-world-w="340"
+        data-world-h="340"
+        aria-hidden="true"
+      ></div>
       <div class="scene-world-layer scene-back scene-cloud scene-cloud-main" data-scene-world aria-hidden="true">
         <div class="scene-cloud-track scene-cloud-main-track">
           <img class="scene-cloud-copy" crossorigin="anonymous" src="./assets/maps/star-country-world-clouds.webp" alt="" draggable="false" />
           <img class="scene-cloud-copy" crossorigin="anonymous" src="./assets/maps/star-country-world-clouds.webp" alt="" draggable="false" />
         </div>
       </div>
+      <div class="scene-world-layer scene-back scene-background" data-scene-world aria-hidden="true"><canvas width="1448" height="1086"></canvas></div>
       <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-base" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
