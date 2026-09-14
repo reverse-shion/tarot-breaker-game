@@ -1,0 +1,54 @@
+/* Preview 33 — cloud runtime guard for iOS/Safari.
+   Keeps the Preview 31 one-way cloud motion alive even when the device reports
+   reduced motion. Reduced mode remains slower and removes the vertical bob. */
+
+@keyframes cloud-runtime-scroll-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@-webkit-keyframes cloud-runtime-scroll-left {
+  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+  to { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+}
+
+.scene-cloud-far-track {
+  -webkit-animation: cloud-runtime-scroll-left 90s linear infinite !important;
+  animation: cloud-runtime-scroll-left 90s linear infinite !important;
+  -webkit-animation-delay: -23s !important;
+  animation-delay: -23s !important;
+  -webkit-animation-play-state: running !important;
+  animation-play-state: running !important;
+}
+
+.scene-cloud-near-track {
+  -webkit-animation: cloud-runtime-scroll-left 54s linear infinite !important;
+  animation: cloud-runtime-scroll-left 54s linear infinite !important;
+  -webkit-animation-delay: -9s !important;
+  animation-delay: -9s !important;
+  -webkit-animation-play-state: running !important;
+  animation-play-state: running !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-cloud-far-track {
+    -webkit-animation-duration: 150s !important;
+    animation-duration: 150s !important;
+    -webkit-animation-delay: -38s !important;
+    animation-delay: -38s !important;
+  }
+
+  .scene-cloud-near-track {
+    -webkit-animation-duration: 96s !important;
+    animation-duration: 96s !important;
+    -webkit-animation-delay: -24s !important;
+    animation-delay: -24s !important;
+  }
+
+  .scene-cloud-near .scene-cloud-copy {
+    -webkit-animation: none !important;
+    animation: none !important;
+    -webkit-transform: scale(1.03);
+    transform: scale(1.03);
+  }
+}
