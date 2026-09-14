@@ -65,14 +65,18 @@
       <div class="scene-world-layer scene-back scene-foreground" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
+      <!-- Preview 40: the high-detail standalone gate is mask-only. The gate
+           already painted into the authored map is the visible gate body. -->
       <div
         class="scene-object scene-back scene-gate-base"
         data-scene-object
+        data-mask-only="true"
         data-world-x="521.5469613259668"
         data-world-y="-70"
         data-world-w="560"
         data-world-h="420"
         aria-hidden="true"
+        hidden
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-base.webp" alt="" draggable="false" />
       </div>
@@ -213,7 +217,7 @@
     <script src="./audio.js?v=0.7.1" defer></script>
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
     <script src="./dialogue.js?v=0.8.0" defer></script>
-    <script src="./scene-layout.js?v=1.1.0" defer></script>
+    <script src="./scene-layout.js?v=1.2.0" defer></script>
     <script src="./scene-effects.js?v=1.1.0" defer></script>
     <script
       src="./game.js?v=1.1.0"
