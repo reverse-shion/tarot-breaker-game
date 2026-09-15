@@ -63,6 +63,17 @@
   const CAMERA_MAX_ZOOM = 1.22;
   const CAMERA_BASE_OFFSET_Y = 58;
   const CAMERA_LOOK_AHEAD_Y = 28;
+  const STAGE_LANDMARKS = Object.freeze({
+    flower: Object.freeze({ x: 930, y: 770 }),
+    fountain: Object.freeze({ x: 810, y: 500 }),
+    gate: Object.freeze({ x: 810, y: 105 }),
+  });
+  const STAGE_DIRECTIONS = Object.freeze({
+    down: Object.freeze({ x: 0, y: 1 }),
+    up: Object.freeze({ x: 0, y: -1 }),
+    left: Object.freeze({ x: -1, y: 0 }),
+    right: Object.freeze({ x: 1, y: 0 }),
+  });
   const params = new URLSearchParams(location.search);
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
@@ -131,7 +142,10 @@
     right: SHIOPON_BASE + "shiopon_walk_right.png",
   };
   const lumiereFiles = {
-    hover: LUMIERE_BASE + "lumiere_hover_down.png",
+    down: LUMIERE_BASE + "lumiere_hover_down.png",
+    up: LUMIERE_BASE + "lumiere_hover_up.png",
+    left: LUMIERE_BASE + "lumiere_hover_left.png",
+    right: LUMIERE_BASE + "lumiere_hover_right.png",
   };
   const images = {};
   const shioponImages = {};
@@ -140,8 +154,9 @@
 
   // Assemble each pose once, replacing (not overlaying) the fixed body area.
   // No pixel reads or Canvas filters: this also works with cross-origin assets.
-  function lumiereComposite(frame) {
-    if (lumiereComposites.has(frame)) return lumiereComposites.get(frame);
+  function lumiereComposite(direction, frame) {
+    const key = `${direction}:${frame}`;
+    if (lumiereComposites.has(key)) return lumiereComposites.get(key);
     const surface = document.createElement("canvas");
     surface.width = LUMIERE_NORMALIZED_SIZE.w;
     surface.height = LUMIERE_NORMALIZED_SIZE.h;
@@ -150,13 +165,14 @@
     const base = LUMIERE_FRAME_RECTS[0];
     const core = LUMIERE_BODY_CORE;
     paint.imageSmoothingEnabled = false;
-    paint.drawImage(lumiereImages.hover,
+    const image = lumiereImages[direction] || lumiereImages.down;
+    paint.drawImage(image,
       frame * lumiereFrame.w + rect.x, rect.y, rect.w, rect.h,
       0, 0, surface.width, surface.height);
     paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
-    paint.drawImage(lumiereImages.hover, core.x, core.y, core.w, core.h,
+    paint.drawImage(image, core.x, core.y, core.w, core.h,
       core.x - base.x, core.y - base.y, core.w, core.h);
-    lumiereComposites.set(frame, surface);
+    lumiereComposites.set(key, surface);
     return surface;
   }
 
@@ -166,6 +182,7 @@
     dir: "up",
     moving: false,
     frame: 0,
+    stageOffsetY: 0,
   };
   const shiopon = {
     x: SHIOPON_HOME.x,
@@ -184,6 +201,7 @@
     scripted: null,
     rotation: 0,
     visualOffsetY: 0,
+    stageOffsetY: 0,
   };
   const lumiere = {
     x: LUMIERE_HOME.x,
@@ -197,12 +215,15 @@
     wingHold: LUMIERE_WING_HOLD_MIN,
     bobPhase: 0,
     bobOffsetY: 0,
+    stageOffsetY: 0,
   };
   const camera = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y - CAMERA_BASE_OFFSET_Y,
     zoom: 1,
   };
+  const stageMotions = { shion: null, shiopon: null, lumiere: null };
+  let stageCommandId = 0;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomDirection = () =>
@@ -312,6 +333,7 @@
     shiopon.scripted = null;
     shiopon.rotation = 0;
     shiopon.visualOffsetY = 0;
+    shiopon.stageOffsetY = 0;
   }
 
   function resetLumiere() {
@@ -327,9 +349,11 @@
       LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
     lumiere.bobPhase = 0;
     lumiere.bobOffsetY = 0;
+    lumiere.stageOffsetY = 0;
   }
 
   function reset() {
+    cancelAllStageMotions(false);
     controls?.clearInput("reset");
     tapEffect = null;
     anim = 0;
@@ -339,6 +363,7 @@
     player.dir = "up";
     player.moving = false;
     player.frame = 0;
+    player.stageOffsetY = 0;
     resetShiopon();
     resetLumiere();
     camera.x = player.x;
@@ -369,9 +394,252 @@
           : "down";
   }
 
+  function stageActor(actorId) {
+    return { shion: player, shiopon, lumiere }[actorId] || null;
+  }
+
+  function stageActorRef(actorId) {
+    if (actorId === "shion") return playerRef();
+    if (actorId === "shiopon") return shioponRef();
+    if (actorId === "lumiere") return lumiereRef();
+    return null;
+  }
+
+  function stageTargetRef(target) {
+    if (typeof target === "string")
+      return stageActorRef(target) || STAGE_LANDMARKS[target] || null;
+    if (Number.isFinite(target?.x) && Number.isFinite(target?.y))
+      return { x: target.x, y: target.y };
+    return null;
+  }
+
+  function resolvedStageAction(id, result = { completed: true, skipped: false }) {
+    return Object.freeze({
+      id,
+      promise: Promise.resolve(result),
+      finish() {},
+      cancel() {},
+    });
+  }
+
+  function settleStageMotion(actorId, motion, { snap = false, skipped = false } = {}) {
+    if (stageMotions[actorId] !== motion) return;
+    const actor = stageActor(actorId);
+    if (actor && snap && motion.kind === "move") {
+      actor.x = motion.final.x * scale.x;
+      actor.y = motion.final.y * scale.y;
+    }
+    if (actor) {
+      actor.stageOffsetY = 0;
+      actor.moving = false;
+      actor.frame = 0;
+      if ("anim" in actor) actor.anim = 0;
+    }
+    if (actorId === "shion") anim = 0;
+    stageMotions[actorId] = null;
+    motion.resolve({ completed: true, skipped });
+  }
+
+  function cancelAllStageMotions(snap = false) {
+    for (const actorId of Object.keys(stageMotions)) {
+      const motion = stageMotions[actorId];
+      if (motion) settleStageMotion(actorId, motion, { snap, skipped: true });
+    }
+  }
+
+  function legalStageRoute(actorId, current, requested) {
+    if (actorId === "lumiere") return [{ ...requested }];
+    if (!collision || !navigation) return [];
+
+    const destination = isWalkableRef(requested.x, requested.y)
+      ? requested
+      : collision.nearestWalkable(requested);
+    if (!destination) return [];
+    if (collision.segmentClear(current, destination)) return [{ ...destination }];
+    return (
+      navigation.findPath(current, destination)?.points
+        ?.slice(1)
+        .map((point) => ({ ...point })) || []
+    );
+  }
+
+  function performStageCommand(command = {}) {
+    const id = ++stageCommandId;
+    const actorId = command.actor;
+    const actor = stageActor(actorId);
+    if (!actor) return resolvedStageAction(id, { completed: false, skipped: false });
+
+    if (command.type === "face" || command.type === "lookTarget") {
+      const target = stageTargetRef(command.target);
+      const current = stageActorRef(actorId);
+      if (target && current)
+        setDirection(actor, target.x - current.x, target.y - current.y);
+      actor.moving = false;
+      actor.frame = 0;
+      return resolvedStageAction(id);
+    }
+
+    if (!ready) return resolvedStageAction(id, { completed: false, skipped: false });
+    const existing = stageMotions[actorId];
+    if (existing)
+      settleStageMotion(actorId, existing, { snap: true, skipped: true });
+
+    const current = stageActorRef(actorId);
+    if (command.type === "bounce") {
+      let resolveMotion;
+      const motion = {
+        id,
+        kind: "bounce",
+        elapsed: 0,
+        duration: clamp(Number(command.duration) || 320, 80, 900) / 1000,
+        height: clamp(Number(command.height) || 7, 1, 14),
+        resolve: (value) => resolveMotion(value),
+      };
+      const promise = new Promise((resolve) => {
+        resolveMotion = resolve;
+      });
+      stageMotions[actorId] = motion;
+      return Object.freeze({
+        id,
+        promise,
+        finish: () =>
+          settleStageMotion(actorId, motion, { snap: true, skipped: true }),
+        cancel: () =>
+          settleStageMotion(actorId, motion, { snap: false, skipped: true }),
+      });
+    }
+
+    let requested = null;
+    if (command.type === "approach") {
+      const target = stageTargetRef(command.target);
+      if (target) {
+        let dx = current.x - target.x;
+        let dy = current.y - target.y;
+        let length = Math.hypot(dx, dy);
+        if (length < 1e-6) {
+          dx = 0;
+          dy = 1;
+          length = 1;
+        }
+        const gap = clamp(Number(command.distance) || 46, 32, 90);
+        requested = {
+          x: target.x + (dx / length) * gap,
+          y: target.y + (dy / length) * gap,
+        };
+      }
+    } else if (command.type === "step") {
+      const direction = STAGE_DIRECTIONS[command.direction || actor.dir];
+      if (direction) {
+        const distance = clamp(Number(command.distance) || 12, 2, 64);
+        requested = {
+          x: current.x + direction.x * distance,
+          y: current.y + direction.y * distance,
+        };
+      }
+    } else if (command.type === "move") {
+      requested = stageTargetRef(command.target || command.to);
+    }
+
+    if (!requested) return resolvedStageAction(id, { completed: false, skipped: false });
+    const route = legalStageRoute(actorId, current, requested);
+    if (!route.length)
+      return resolvedStageAction(id, { completed: false, skipped: false });
+
+    let previous = current;
+    let routeDistance = 0;
+    for (const point of route) {
+      routeDistance += refDistance(previous, point);
+      previous = point;
+    }
+    if (routeDistance < 0.5) return resolvedStageAction(id);
+
+    let resolveMotion;
+    const duration = clamp(Number(command.duration) || 240, 80, 1400) / 1000;
+    const motion = {
+      id,
+      kind: "move",
+      route,
+      final: { ...route.at(-1) },
+      speed: routeDistance / duration,
+      anim: 0,
+      resolve: (value) => resolveMotion(value),
+    };
+    const promise = new Promise((resolve) => {
+      resolveMotion = resolve;
+    });
+    stageMotions[actorId] = motion;
+    return Object.freeze({
+      id,
+      promise,
+      finish: () =>
+        settleStageMotion(actorId, motion, { snap: true, skipped: true }),
+      cancel: () =>
+        settleStageMotion(actorId, motion, { snap: false, skipped: true }),
+    });
+  }
+
+  function updateStageActor(actorId, dt) {
+    const motion = stageMotions[actorId];
+    if (!motion) return false;
+    const actor = stageActor(actorId);
+
+    if (motion.kind === "bounce") {
+      motion.elapsed += dt;
+      const progress = clamp(motion.elapsed / motion.duration, 0, 1);
+      actor.stageOffsetY = -Math.sin(progress * Math.PI) * motion.height * scale.y;
+      actor.moving = false;
+      actor.frame = 0;
+      if (progress >= 1) settleStageMotion(actorId, motion);
+      return true;
+    }
+
+    const current = stageActorRef(actorId);
+    while (motion.route.length && refDistance(current, motion.route[0]) <= 0.75)
+      motion.route.shift();
+    const target = motion.route[0];
+    if (!target) {
+      settleStageMotion(actorId, motion, { snap: true });
+      return true;
+    }
+
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    const step = Math.min(distance, motion.speed * dt);
+    actor.x = (current.x + (dx / distance) * step) * scale.x;
+    actor.y = (current.y + (dy / distance) * step) * scale.y;
+    actor.moving = true;
+    setDirection(actor, dx, dy);
+    if (actorId !== "lumiere") {
+      motion.anim += dt;
+      const frameDuration = actorId === "shion" ? 0.12 : 0.13;
+      while (motion.anim >= frameDuration) {
+        motion.anim -= frameDuration;
+        actor.frame = (actor.frame + 1) % FRAME.count;
+      }
+    }
+    if (step >= distance - 1e-6) {
+      motion.route.shift();
+      if (!motion.route.length)
+        settleStageMotion(actorId, motion, { snap: true });
+    }
+    return true;
+  }
+
   function updatePlayer(dt) {
+    if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
+
+    // A proximity event can begin inside the wrapped controls.step call.
+    if (stageMotions.shion) {
+      player.x = next.x * scale.x;
+      player.y = next.y * scale.y;
+      player.moving = false;
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
 
     const shioponBlocked =
       !shiopon.following && movingIntoActor(from, next, shioponRef());
@@ -730,6 +998,7 @@
   }
 
   function updateShiopon(dt) {
+    if (updateStageActor("shiopon", dt)) return;
     if (shiopon.scripted) {
       updateShioponScript(dt);
       return;
@@ -803,6 +1072,7 @@
   }
 
   function updateLumiere(dt) {
+    updateStageActor("lumiere", dt);
     lumiere.anim += dt;
     while (lumiere.anim >= lumiere.wingHold) {
       lumiere.anim -= lumiere.wingHold;
@@ -996,7 +1266,7 @@
       ctx.shadowBlur = 0.7 / camera.zoom;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      ctx.drawImage(lumiereComposite(actor.frame), 0, 0,
+      ctx.drawImage(lumiereComposite(actor.dir, actor.frame), 0, 0,
         LUMIERE_NORMALIZED_SIZE.w, LUMIERE_NORMALIZED_SIZE.h,
         dx, dy, drawW, drawH);
       ctx.restore();
@@ -1096,7 +1366,7 @@
         options: {
           frameSpec: lumiereFrame,
           hover: true,
-          visualOffsetY: lumiere.bobOffsetY,
+          visualOffsetY: lumiere.bobOffsetY + lumiere.stageOffsetY,
         },
       },
       {
@@ -1106,7 +1376,7 @@
         glowColor: "rgba(235,210,255,.22)",
         options: {
           outline: ACTOR_OUTLINES.shiopon,
-          visualOffsetY: shiopon.visualOffsetY,
+          visualOffsetY: shiopon.visualOffsetY + shiopon.stageOffsetY,
           rotation: shiopon.rotation,
         },
       },
@@ -1115,6 +1385,9 @@
         actorImages: images,
         drawHeight: DRAW_HEIGHT,
         glowColor: "rgba(255,236,190,.22)",
+        options: {
+          visualOffsetY: player.stageOffsetY,
+        },
       },
     ].sort((a, b) => {
       const ay =
@@ -1278,6 +1551,7 @@
         scripted: shiopon.scripted,
         followRoute: shiopon.followRoute,
         rotation: shiopon.rotation,
+        stageOffsetY: shiopon.stageOffsetY,
       },
       lumiere: {
         x: lumiere.x,
@@ -1288,8 +1562,15 @@
         wingDirection: lumiere.wingDirection,
         wingHold: lumiere.wingHold,
         bobOffsetY: lumiere.bobOffsetY,
+        stageOffsetY: lumiere.stageOffsetY,
         homeRef: lumiere.homeRef,
       },
+      stage: Object.fromEntries(
+        Object.entries(stageMotions).map(([actorId, motion]) => [
+          actorId,
+          motion ? { id: motion.id, kind: motion.kind } : null,
+        ]),
+      ),
       actorCollisionDistance: ACTOR_COLLISION_DISTANCE,
       actorGap: refDistance(playerRef(), shioponRef()),
       shioponFollowDistance: SHIOPON_FOLLOW_DISTANCE,
@@ -1463,6 +1744,26 @@
     shiopon.wait = 0.9 + Math.random() * 1.4;
   }
 
+  window.TarotStage = Object.freeze({
+    perform: performStageCommand,
+    finishAll: () => cancelAllStageMotions(true),
+    cancelAll: () => cancelAllStageMotions(false),
+    getState: () => ({
+      actors: {
+        shion: { ...playerRef(), dir: player.dir },
+        shiopon: { ...shioponRef(), dir: shiopon.dir },
+        lumiere: { ...lumiereRef(), dir: lumiere.dir },
+      },
+      motions: Object.fromEntries(
+        Object.entries(stageMotions).map(([actorId, motion]) => [
+          actorId,
+          motion ? { id: motion.id, kind: motion.kind } : null,
+        ]),
+      ),
+    }),
+    landmarks: STAGE_LANDMARKS,
+  });
+
   start.addEventListener("click", begin);
   resetButton.addEventListener("pointerdown", () => clearInput("reset"));
   resetButton.addEventListener("click", reset);
@@ -1512,6 +1813,7 @@
     syncStick();
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
+    cancelAllStageMotions(true);
     controls?.resume();
     npcSuspended = false;
   });
@@ -1583,16 +1885,20 @@
       )
         throw new Error("しおぽん待機画像サイズ不正");
 
-      if (
-        lumiereImages.hover.naturalWidth % FRAME.count !== 0 ||
-        lumiereImages.hover.naturalHeight <= 0
-      )
-        throw new Error("リュミエール浮遊画像サイズ不正");
+      for (const dir of ["down", "up", "left", "right"]) {
+        if (
+          lumiereImages[dir].naturalWidth % FRAME.count !== 0 ||
+          lumiereImages[dir].naturalHeight <= 0 ||
+          lumiereImages[dir].naturalWidth !== lumiereImages.down.naturalWidth ||
+          lumiereImages[dir].naturalHeight !== lumiereImages.down.naturalHeight
+        )
+          throw new Error("リュミエール" + dir + "浮遊画像サイズ不正");
+      }
       lumiereFrame = {
-        w: lumiereImages.hover.naturalWidth / FRAME.count,
-        h: lumiereImages.hover.naturalHeight,
+        w: lumiereImages.down.naturalWidth / FRAME.count,
+        h: lumiereImages.down.naturalHeight,
         baseline:
-          lumiereImages.hover.naturalHeight * (FRAME.baseline / FRAME.h),
+          lumiereImages.down.naturalHeight * (FRAME.baseline / FRAME.h),
         count: FRAME.count,
       };
 

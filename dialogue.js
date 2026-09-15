@@ -4,147 +4,226 @@
   const SHIOPON_HOME = { x: 810, y: 800 };
   const LUMIERE_HOME = { x: 810, y: 212 };
   const TRIGGERS = { shiopon: 62, lumiere: 70 };
+  const ACTOR_NAMES = Object.freeze({
+    shion: "シオン",
+    shiopon: "しおぽん",
+    lumiere: "リュミエール",
+  });
 
-  const scripts = {
+  const say = (actor, text) => ({ type: "dialogue", actor, text });
+  const face = (actor, target) => ({ type: "face", actor, target });
+  const wait = (duration) => ({ type: "wait", duration });
+  const bounce = (height = 7, duration = 320) => ({
+    type: "bounce",
+    actor: "shiopon",
+    height,
+    duration,
+  });
+  const signal = (name, detail) => ({ type: "signal", name, detail });
+
+  // Dialogue and blocking are authored together. Adding a look, step or pause no
+  // longer requires a line-number condition in the runtime.
+  const events = {
     shioponMeet: [
-      ["シオン", "しおぽん、何してるんだ？"],
-      ["しおぽん", "しーっ！"],
-      ["シオン", "え？"],
-      ["しおぽん", "今ね、この子の声を聞いてるところなの。"],
-      ["シオン", "この子って……花？"],
-      ["しおぽん", "そうなの！"],
-      ["しおぽん", "…………。"],
-      ["シオン", "…………。"],
-      ["しおぽん", "シオンさんまで聞かなくていいの！"],
-      ["シオン", "いや、ちょっと気になって。"],
-      ["しおぽん", "もう！　集中できないの〜！"],
-      ["シオン", "ごめんごめん。"],
-      ["しおぽん", "……よし！"],
-      ["シオン", "で、何て言ってた？"],
-      ["しおぽん", "今日も元気にキラキラ〜☆って！"],
-      ["シオン", "ほんとに？"],
-      ["しおぽん", "……たぶん！"],
-      ["シオン", "たぶんなんだ。"],
-      ["しおぽん", "お花の言葉は難しいの！"],
-      ["シオン", "星の声はあんなに分かるのに。"],
-      ["しおぽん", "星とお花は全然違うの！"],
-      ["シオン", "へえ。"],
-      ["しおぽん", "信じてない顔なの！"],
-      ["シオン", "いや、信じてるよ。"],
-      ["しおぽん", "ほんとに〜？"],
-      ["シオン", "半分くらい。"],
-      ["しおぽん", "半分なの！？"],
-      ["しおぽん", "むぅ〜……。"],
-      ["シオン", "ほら、行こう。リュミエールが待ってる。"],
-      ["しおぽん", "あっ、星門？"],
-      ["シオン", "そう。"],
-      ["しおぽん", "じゃあ、しおぽんも行く！"],
-      ["シオン", "やっぱり。"],
-      ["しおぽん", "やっぱり？"],
-      ["シオン", "オレを待ってたんじゃないの？"],
-      ["しおぽん", "…………。"],
-      ["シオン", "その顔は当たりだね。"],
-      ["しおぽん", "べ、別に待ってないの！"],
-      ["シオン", "はいはい。"],
-      ["しおぽん", "その言い方ずるいの〜！"],
-      ["しおぽん", "……シオンさん。"],
-      ["シオン", "ん？"],
-      ["しおぽん", "今日ね、星の声がちょっと変なの。"],
-      ["シオン", "変？"],
-      ["しおぽん", "うん……。"],
-      ["しおぽん", "なんていうか……遠いの。"],
-      ["シオン", "遠い、か……。"],
-      ["しおぽん", "いつもなら、もっと近くで聞こえるのに。"],
-      ["シオン", "そっか。"],
-      ["シオン", "じゃあ、リュミエールにも聞いてみよう。"],
-      ["しおぽん", "うん！"],
-      ["しおぽん", "よーし！　じゃあ競争なの！"],
-      ["シオン", "え？"],
-      ["しおぽん", "リュミエールのところまで！"],
-      ["シオン", "ちょ、待って。急に始めるのずるいぞ？"],
-      ["しおぽん", "早い者勝ちなの〜！"],
-      ["シオン", "はぁ……。"],
-      ["シオン", "転ぶなよー！"],
-      ["しおぽん", "転ばないの〜！"],
-      ["しおぽん", "ぴゃっ！"],
-      ["シオン", "ほら。"],
-      ["しおぽん", "今のは転んでないの！"],
-      ["シオン", "はいはい。"],
+      face("shiopon", "flower"),
+      { type: "approach", actor: "shion", target: "shiopon", distance: 48, duration: 260 },
+      say("shion", "しおぽん、何してるんだ？"),
+      wait(220),
+      face("shiopon", "shion"),
+      say("shiopon", "しーっ！"),
+      wait(180),
+      face("shiopon", "flower"),
+      say(
+        "shiopon",
+        "今ね、この子の声を聞いてるところなの。\n今日はいつもより、よくおしゃべりしてるの！",
+      ),
+      face("shion", "flower"),
+      wait(200),
+      say("shion", "この子って……花？"),
+      face("shiopon", "shion"),
+      bounce(6, 300),
+      say("shiopon", "そうなの！"),
+      face("shiopon", "flower"),
+      say(
+        "shiopon",
+        "“今日は光がきれい”って。\nそれからね、“風がやさしい”って言ってるの。",
+      ),
+      face("shion", "flower"),
+      wait(420),
+      say("shion", "……お前には、そんなふうに聞こえるんだな。"),
+      wait(480),
+      face("shiopon", "shion"),
+      say("shiopon", "うん。でもね……"),
+      wait(560),
+      face("shiopon", "gate"),
+      say("shiopon", "今日は、ちょっとだけ変なの。"),
+      face("shion", "shiopon"),
+      say("shion", "変？"),
+      face("shiopon", "gate"),
+      wait(380),
+      say(
+        "shiopon",
+        "星の声がね、いつもより遠いの。\nいつもなら、もっと近くで聞こえるのに。",
+      ),
+      face("shion", "gate"),
+      wait(440),
+      say("shion", "遠い、か……。"),
+      face("shion", "shiopon"),
+      say("shion", "ほら、行こう。\nリュミエールにも聞いてみよう。"),
+      face("shiopon", "shion"),
+      bounce(7, 330),
+      say("shiopon", "あっ、星門？\nじゃあ、しおぽんも行く！"),
+      say("shion", "やっぱり。\nオレを待ってたんじゃないの？"),
+      wait(420),
+      face("shiopon", "flower"),
+      say("shiopon", "べ、別に待ってないの！"),
+      say("shion", "はいはい。"),
+      face("shiopon", "shion"),
+      bounce(5, 280),
+      say("shiopon", "その言い方、ずるいの〜！"),
+      wait(220),
+      say("shiopon", "よーし！\nリュミエールのところまで競争なの！"),
+      say("shion", "え？"),
+      face("shiopon", "gate"),
+      signal("tarot-breaker:shiopon-race-start"),
+      wait(180),
+      say("shiopon", "早い者勝ちなの〜！"),
+      say("shion", "ちょ、待って。\n急に始めるの、ずるいぞ？"),
+      say("shion", "転ぶなよー！"),
+      say("shiopon", "転ばないの〜！"),
+      signal("tarot-breaker:shiopon-trip"),
+      wait(240),
+      say("shiopon", "ぴゃっ！"),
+      say("shion", "ほら。"),
+      signal("tarot-breaker:shiopon-recover"),
+      face("shiopon", "shion"),
+      say("shiopon", "今のは転んでないの！"),
+      say("shion", "はいはい。"),
     ],
     lumiereGate: [
-      ["しおぽん", "リュミエール〜！"],
-      ["リュミエール", "……あ。"],
-      ["リュミエール", "しおぽん様。"],
-      ["リュミエール", "シオン様も。"],
-      ["シオン", "待たせた？"],
-      ["リュミエール", "いえ。"],
-      ["リュミエール", "私も、少し考えごとをしていました。"],
-      ["しおぽん", "また考えごとなの？"],
-      ["リュミエール", "……また、ですね。"],
-      ["しおぽん", "ちゃんと戻ってきた？"],
-      ["リュミエール", "はい。"],
-      ["リュミエール", "今、戻りました。"],
-      ["シオン", "ならよかった。"],
-      ["しおぽん", "ねえ、リュミエール。"],
-      ["リュミエール", "はい、しおぽん様。"],
-      ["しおぽん", "今日の星門、何か違う？"],
-      ["リュミエール", "……。"],
-      ["リュミエール", "私も、少し気になっていました。"],
-      ["シオン", "何かあった？"],
-      ["リュミエール", "何かあった、と言えるほどではないのですが……。"],
-      ["リュミエール", "光が、いつもより……。"],
-      ["リュミエール", "……いえ。"],
-      ["シオン", "？"],
-      ["リュミエール", "弱い、というのは少し違いますね。"],
-      ["リュミエール", "揺れているように見えるんです。"],
-      ["シオン", "揺れてる……。"],
-      ["しおぽん", "やっぱり、ちょっと変なの。"],
-      ["シオン", "しおぽんも感じた？"],
-      ["しおぽん", "うん。"],
-      ["しおぽん", "さっきからね。"],
-      ["しおぽん", "星の声が、遠いの。"],
-      ["リュミエール", "遠い……。"],
-      ["しおぽん", "いつもなら、もっと近いの。"],
-      ["しおぽん", "でも今日は……。"],
-      ["しおぽん", "……やっぱり遠いの。"],
-      ["リュミエール", "……そうですか。"],
-      ["リュミエール", "でしたら、すぐに――"],
-      ["リュミエール", "……すみません。"],
-      ["シオン", "どうした？"],
-      ["リュミエール", "今のは、少し先を言いすぎました。"],
-      ["リュミエール", "まだ、何も分かっていませんから。"],
-      ["シオン", "うん。"],
-      ["シオン", "今は、決めなくていい。"],
-      ["リュミエール", "……そうですね。"],
-      ["しおぽん", "しおぽん、もうちょっと近くで聞いてみたいの。"],
-      ["シオン", "そっか。"],
-      ["シオン", "じゃあ、まずは見てみよう。"],
-      ["しおぽん", "うん！"],
-      ["しおぽん", "リュミエールも行くの！"],
-      ["リュミエール", "私も……。"],
-      ["しおぽん", "置いてっちゃうよ〜？"],
-      ["リュミエール", "それは困ります。"],
-      ["リュミエール", "……また、考えすぎるところでした。"],
-      ["シオン", "じゃ、行こう。"],
-      ["リュミエール", "はい。"],
-      ["しおぽん", "キラキラ〜☆を探しに行くの！"],
-      ["シオン", "何を探すのか分かってないだろ。"],
-      ["しおぽん", "まだ分かってないの！"],
-      ["シオン", "やっぱり。"],
-      ["リュミエール", "……ふふ。"],
+      face("shiopon", "lumiere"),
+      bounce(7, 330),
+      say("shiopon", "リュミエール〜！"),
+      wait(260),
+      face("lumiere", "shiopon"),
+      say("lumiere", "……あ。\nしおぽん様。シオン様も。"),
+      face("shion", "lumiere"),
+      say("shion", "待たせた？"),
+      face("lumiere", "shion"),
+      say(
+        "lumiere",
+        "いいえ。\n私も、少し考えごとをしていました。",
+      ),
+      face("shiopon", "lumiere"),
+      say("shiopon", "また考えごとなの？\nちゃんと戻ってきた？"),
+      wait(300),
+      face("lumiere", "shiopon"),
+      say("lumiere", "はい。\n今、戻りました。"),
+      say("shion", "ならよかった。"),
+      face("shiopon", "gate"),
+      say("shiopon", "ねえ、リュミエール。\n今日の星門、何か違う？"),
+      wait(520),
+      face("lumiere", "gate"),
+      say(
+        "lumiere",
+        "……。\n私も、少し気になっていました。",
+      ),
+      face("shion", "gate"),
+      say("shion", "何かあった？"),
+      say(
+        "lumiere",
+        "何かあった、と言えるほどではないのですが……。\n光が、いつもより……。",
+      ),
+      wait(620),
+      face("lumiere", "shion"),
+      say(
+        "lumiere",
+        "……いえ。弱い、とは少し違います。\n揺れているように見えるんです。",
+      ),
+      face("shion", "gate"),
+      wait(320),
+      say("shion", "揺れてる……。"),
+      face("shiopon", "gate"),
+      say("shiopon", "やっぱり、ちょっと変なの。"),
+      face("shion", "shiopon"),
+      say("shion", "しおぽんも感じた？"),
+      say(
+        "shiopon",
+        "うん。さっきからね、星の声が遠いの。\nいつもなら、もっと近いのに。",
+      ),
+      face("lumiere", "shiopon"),
+      wait(420),
+      say("lumiere", "遠い……。\nでしたら、すぐに――"),
+      wait(560),
+      face("lumiere", "shion"),
+      say(
+        "lumiere",
+        "……すみません。今のは、少し先を言いすぎました。\nまだ、何も分かっていませんから。",
+      ),
+      face("shion", "lumiere"),
+      say("shion", "うん。今は、決めなくていい。\nまず確かめよう。"),
+      wait(260),
+      face("lumiere", "gate"),
+      say("lumiere", "……そうですね。"),
+      face("shiopon", "gate"),
+      say("shiopon", "しおぽん、もうちょっと近くで聞いてみたいの。"),
+      say("shion", "そっか。\nじゃあ、まずは見てみよう。"),
+      face("shiopon", "lumiere"),
+      bounce(6, 300),
+      say("shiopon", "リュミエールも行くの！"),
+      face("lumiere", "shiopon"),
+      say("lumiere", "私も……。"),
+      say("shiopon", "置いてっちゃうよ〜？"),
+      wait(280),
+      say(
+        "lumiere",
+        "それは困ります。\n……また、考えすぎるところでした。",
+      ),
+      face("shion", "gate"),
+      say("shion", "じゃ、行こう。"),
+      face("shiopon", "gate"),
+      face("lumiere", "gate"),
+      { type: "step", actor: "shion", direction: "up", distance: 10, duration: 180 },
+      { type: "step", actor: "shiopon", direction: "up", distance: 14, duration: 220 },
+      say("lumiere", "はい。"),
+      bounce(6, 300),
+      say("shiopon", "キラキラ〜☆を探しに行くの！"),
+      say("shion", "何を探すのか、まだ分かってないだろ。"),
+      say("shiopon", "まだ分かってないの！"),
+      wait(260),
+      face("lumiere", "shiopon"),
+      say("lumiere", "……ふふ。"),
+      face("lumiere", "gate"),
     ],
   };
+
+  // Kept as a read-only dialogue-only view for tooling that still inspects the
+  // approved lines. Runtime playback uses events above.
+  const scripts = Object.fromEntries(
+    Object.entries(events).map(([eventId, sequence]) => [
+      eventId,
+      sequence
+        .filter((command) => command.type === "dialogue")
+        .map((command) => [ACTOR_NAMES[command.actor], command.text]),
+    ]),
+  );
 
   const story = {
     active: false,
     eventId: null,
-    lineIndex: 0,
+    stepIndex: 0,
+    lineIndex: -1,
+    mode: "idle",
+    actionType: null,
     shioponDone: false,
     lumiereDone: false,
     joined: false,
     player: { x: 724, y: 1015 },
     objective: "",
   };
+
+  let playbackToken = 0;
+  let currentAction = null;
 
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -156,6 +235,7 @@
     dialogue.id = "dialogue-layer";
     dialogue.className = "dialogue-layer";
     dialogue.hidden = true;
+    dialogue.dataset.state = "idle";
     dialogue.setAttribute("aria-live", "polite");
     dialogue.innerHTML = `
       <button id="dialogue-advance" class="dialogue-box" type="button" aria-label="会話を進める">
@@ -178,6 +258,18 @@
     });
   }
 
+  function setUiState(next) {
+    const layer = document.getElementById("dialogue-layer");
+    const button = document.getElementById("dialogue-advance");
+    if (layer) layer.dataset.state = next;
+    if (button) {
+      button.setAttribute(
+        "aria-label",
+        next === "acting" ? "会話演出を早送りする" : "会話を進める",
+      );
+    }
+  }
+
   function showObjective(text) {
     story.objective = text;
     const el = document.getElementById("story-objective");
@@ -186,52 +278,128 @@
     el.hidden = !text;
   }
 
-  function runLineCue() {
-    if (story.eventId !== "shioponMeet") return;
-    if (story.lineIndex === 0)
-      window.dispatchEvent(new Event("tarot-breaker:shiopon-face-player"));
-    if (story.lineIndex === 55)
-      window.dispatchEvent(new Event("tarot-breaker:shiopon-race-start"));
-    if (story.lineIndex === 58)
-      window.dispatchEvent(new Event("tarot-breaker:shiopon-trip"));
-    if (story.lineIndex === 61)
-      window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
+  function makeTimerAction(duration) {
+    let settled = false;
+    let timer = null;
+    let resolveAction;
+    const promise = new Promise((resolve) => {
+      resolveAction = resolve;
+      timer = setTimeout(() => settle(false), Math.max(0, duration || 0));
+    });
+    function settle(skipped) {
+      if (settled) return;
+      settled = true;
+      if (timer !== null) clearTimeout(timer);
+      resolveAction({ skipped });
+    }
+    return {
+      promise,
+      finish: () => settle(true),
+      cancel: () => settle(true),
+    };
   }
 
-  function renderLine() {
-    const line = scripts[story.eventId]?.[story.lineIndex];
-    if (!line) return finishEvent();
-    const [speaker, text] = line;
+  function immediateAction() {
+    return {
+      promise: Promise.resolve({ skipped: false }),
+      finish() {},
+      cancel() {},
+    };
+  }
+
+  function executeCommand(command) {
+    if (command.type === "wait") return makeTimerAction(command.duration);
+
+    if (command.type === "signal") {
+      window.dispatchEvent(
+        new CustomEvent(command.name, { detail: command.detail }),
+      );
+      return immediateAction();
+    }
+
+    const stageAction = window.TarotStage?.perform?.(command);
+    if (stageAction?.promise) return stageAction;
+    return immediateAction();
+  }
+
+  function renderDialogue(command) {
+    const speaker = ACTOR_NAMES[command.actor] || command.actor;
+    const layer = document.getElementById("dialogue-layer");
     const speakerEl = document.getElementById("dialogue-speaker");
     const textEl = document.getElementById("dialogue-text");
-    if (!speakerEl || !textEl) return;
+    if (!layer || !speakerEl || !textEl) return;
+
     speakerEl.textContent = speaker;
-    textEl.textContent = text;
-    document.getElementById("dialogue-layer").dataset.speaker = speaker;
-    runLineCue();
+    textEl.textContent = command.text;
+    layer.dataset.speaker = speaker;
+    layer.dataset.actor = command.actor;
+    layer.hidden = false;
+    story.mode = "dialogue";
+    story.actionType = null;
+    story.lineIndex += 1;
+    setUiState("dialogue");
+  }
+
+  async function playUntilDialogue(token) {
+    const sequence = events[story.eventId];
+    if (!sequence) return;
+
+    while (story.active && token === playbackToken) {
+      if (story.stepIndex >= sequence.length) {
+        finishEvent(token);
+        return;
+      }
+
+      const command = sequence[story.stepIndex++];
+      if (command.type === "dialogue") {
+        renderDialogue(command);
+        return;
+      }
+
+      story.mode = "action";
+      story.actionType = command.type;
+      setUiState("acting");
+      const action = executeCommand(command);
+      currentAction = action;
+      await action.promise;
+      if (!story.active || token !== playbackToken) return;
+      if (currentAction === action) currentAction = null;
+    }
   }
 
   function startEvent(eventId) {
-    if (story.active || !scripts[eventId]) return;
+    if (story.active || !events[eventId]) return;
     makeUi();
     story.active = true;
     story.eventId = eventId;
-    story.lineIndex = 0;
+    story.stepIndex = 0;
+    story.lineIndex = -1;
+    story.mode = "opening";
+    story.actionType = null;
+    playbackToken += 1;
     document.getElementById("guide")?.setAttribute("hidden", "");
-    const layer = document.getElementById("dialogue-layer");
-    layer.hidden = false;
     window.dispatchEvent(new Event("tarot-breaker:interaction-start"));
-    renderLine();
-    queueMicrotask(() => document.getElementById("dialogue-advance")?.focus({ preventScroll: true }));
+    playUntilDialogue(playbackToken);
+    queueMicrotask(() =>
+      document.getElementById("dialogue-advance")?.focus({ preventScroll: true }),
+    );
   }
 
-  function finishEvent() {
+  function finishEvent(token = playbackToken) {
+    if (!story.active || token !== playbackToken) return;
     const completed = story.eventId;
     story.active = false;
     story.eventId = null;
-    story.lineIndex = 0;
+    story.stepIndex = 0;
+    story.lineIndex = -1;
+    story.mode = "idle";
+    story.actionType = null;
+    currentAction = null;
     const layer = document.getElementById("dialogue-layer");
-    if (layer) layer.hidden = true;
+    if (layer) {
+      layer.hidden = true;
+      layer.dataset.state = "idle";
+    }
 
     if (completed === "shioponMeet") {
       window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
@@ -250,8 +418,14 @@
 
   function advance() {
     if (!story.active) return;
-    story.lineIndex += 1;
-    renderLine();
+    if (story.mode === "action") {
+      currentAction?.finish?.();
+      return;
+    }
+    if (story.mode !== "dialogue") return;
+    story.mode = "transition";
+    setUiState("acting");
+    playUntilDialogue(playbackToken);
   }
 
   function observePlayer(next) {
@@ -290,12 +464,18 @@
   }
 
   function resetStory() {
+    playbackToken += 1;
+    currentAction?.cancel?.();
+    currentAction = null;
     if (story.active) window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
     window.dispatchEvent(new Event("tarot-breaker:shiopon-follow-stop"));
     window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
     story.active = false;
     story.eventId = null;
-    story.lineIndex = 0;
+    story.stepIndex = 0;
+    story.lineIndex = -1;
+    story.mode = "idle";
+    story.actionType = null;
     story.shioponDone = false;
     story.lumiereDone = false;
     story.joined = false;
@@ -303,7 +483,10 @@
     story.objective = "";
     const layer = document.getElementById("dialogue-layer");
     const objective = document.getElementById("story-objective");
-    if (layer) layer.hidden = true;
+    if (layer) {
+      layer.hidden = true;
+      layer.dataset.state = "idle";
+    }
     if (objective) objective.hidden = true;
   }
 
@@ -322,6 +505,7 @@
     advance,
     reset: resetStory,
     getState: () => JSON.parse(JSON.stringify(story)),
+    events,
     scripts,
   };
 })();

@@ -1,5 +1,31 @@
 # TAROT BREAKER 2D implementation status
 
+## 会話演出・ダイアログUI Phase 1
+
+2026-09-15: IMPLEMENTED / IPHONE VISUAL CHECK PENDING
+
+実装内容:
+- 既存のマップ上会話を維持し、セリフと芝居を同じイベントデータで再生する方式へ変更
+- `dialogue / face / approach / step / wait / bounce / signal` 命令を順番に実行
+- シオン・しおぽん・リュミエール・花・星門を対象にした視線変更
+- シオンの接近、会話終盤の小移動、しおぽんの短い跳ねを既存スプライトで表現
+- リュミエールの上下左右浮遊シートを方向変更に応じて使用
+- 長い1行交互会話を、意味のまとまりごとの自然な複数行へ再構成
+- 待機または動作中のタップで、その演出だけを即時完了して次へ進める高速送り
+- リセット・会話終了時に演出状態を解放し、移動入力を必ず復帰
+- ダイアログを明るい群青の半透明UIへ軽量化し、iPhone Safe Areaを維持
+
+自動検証:
+- イベント命令の順序、複数行表示、視線、接近、小移動、跳ね
+- 動作途中の高速送りとイベント完了後の入力復帰
+- 390×844縦画面の既存ゲーム起動・描画・操作回帰
+- 会話文の呼称・一人称・関係性ルール
+
+残る確認:
+- iPhone Safari実機でUIの透明度・文字量・キャラクターの見える範囲を確認
+- 各「間」が実際の読書速度に対して長すぎないか確認
+- Phase 2のカメラ・感情アイコン・環境反応は実機確認後に判断
+
 ## Preview 21 — Lumiere rendering correction (supersedes prior outline notes)
 
 - Removed Lumiere's eight black underpaint passes and broad violet glow.

@@ -187,6 +187,54 @@ test('future interaction lifecycle cancels and suspends player movement', async 
   h.tapWorld(810, 600); assert.equal(h.state().route.length, 0);
   h.window.emit('tarot-breaker:interaction-end'); h.tapWorld(810, 700); assert.ok(h.state().route.length);
 });
+test('stage commands face actors, animate safe steps and expose a skip-to-end handle', async () => {
+  const h = await boot();
+  h.window.emit('tarot-breaker:interaction-start');
+  await h.window.TarotStage.perform({ type: 'face', actor: 'shiopon', target: 'flower' }).promise;
+  h.tick();
+  assert.equal(h.state().shiopon.dir, 'right');
+
+  const lumiereDrawStart = h.surfaceCalls.length;
+  await h.window.TarotStage.perform({ type: 'face', actor: 'lumiere', target: 'gate' }).promise;
+  h.tick();
+  assert.equal(h.state().lumiere.dir, 'up');
+  assert.ok(
+    h.surfaceCalls.slice(lumiereDrawStart).some(call =>
+      call.operation === 'drawImage' && call.args[0]?.url?.endsWith('lumiere_hover_up.png')),
+  );
+
+  const before = h.state().player;
+  const step = h.window.TarotStage.perform({
+    type: 'step', actor: 'shion', direction: 'up', distance: 12, duration: 300,
+  });
+  h.tick(3);
+  assert.equal(h.state().stage.shion.kind, 'move');
+  assert.equal(h.state().player.moving, true);
+  step.finish();
+  await step.promise;
+  h.tick();
+  const after = h.state();
+  assert.equal(after.stage.shion, null);
+  assert.equal(after.player.moving, false);
+  assert.ok(Math.abs(after.player.y - (before.y - 12)) < 0.01);
+  h.window.emit('tarot-breaker:interaction-end');
+});
+test('Shiopon bounce is visible mid-action and returns to its exact baseline', async () => {
+  const h = await boot();
+  h.window.emit('tarot-breaker:interaction-start');
+  const bounce = h.window.TarotStage.perform({
+    type: 'bounce', actor: 'shiopon', height: 7, duration: 320,
+  });
+  h.tick(6);
+  assert.equal(h.state().stage.shiopon.kind, 'bounce');
+  assert.ok(h.state().shiopon.stageOffsetY < -1);
+  bounce.finish();
+  await bounce.promise;
+  h.tick();
+  assert.equal(h.state().shiopon.stageOffsetY, 0);
+  assert.equal(h.state().stage.shiopon, null);
+  h.window.emit('tarot-breaker:interaction-end');
+});
 test('desktop click uses the same input at camera zoom 1.22', async () => {
   const h = await boot({ width: 1280, height: 900 }); h.tapWorld(810, 700);
   assert.equal(h.state().camera.zoom, 1.22); assert.equal(h.state().requested.x, 810); assert.equal(h.state().requested.y, 700);
