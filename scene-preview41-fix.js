@@ -4,8 +4,8 @@
   if (!layout) return;
 
   const REFERENCE = layout.referenceSize;
+  const FOREGROUND_SOURCE_SCALE = 0.81;
 
-  // Latest uploaded island plate: preserve aspect ratio and draw once.
   layout.paintBackground = function paintBackground(ctx, background) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -15,31 +15,28 @@
     const drawW = sourceW * scale;
     const drawH = sourceH * scale;
     const drawX = (w - drawW) / 2;
-
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(background, drawX, 0, drawW, drawH);
   };
 
-  // Latest uploaded foreground is 1672x941 while the game reference is
-  // 1448x1086. Fit the COMPLETE source to the scene width exactly once.
-  // This is intentionally independent from the legacy foregroundOffset and
-  // never repeats, mirrors, patches, crops, or enlarges the right edge.
+  // The current foreground upload stores the authored 1448x1086 scene at
+  // roughly 81% scale inside a wider source canvas. Restore that authored
+  // scale, keep the established -15px horizontal correction, and draw once.
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
-    const sourceW = foreground.naturalWidth || w;
-    const sourceH = foreground.naturalHeight || h;
-    const fit = w / sourceW;
-    const drawW = w;
-    const drawH = sourceH * fit;
-
+    const sourceW = foreground.naturalWidth || w * FOREGROUND_SOURCE_SCALE;
+    const sourceH = foreground.naturalHeight || h * FOREGROUND_SOURCE_SCALE;
+    const drawW = sourceW / FOREGROUND_SOURCE_SCALE;
+    const drawH = sourceH / FOREGROUND_SOURCE_SCALE;
+    const dx = layout.foregroundOffset?.x || 0;
+    const dy = layout.foregroundOffset?.y || 0;
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, 0, 0, drawW, drawH);
+    ctx.drawImage(foreground, dx, dy, drawW, drawH);
   };
 
-  // Depth/collision coordinates stay in the canonical game space.
-  const dx = 0;
-  const dy = 0;
+  const dx = layout.foregroundOffset?.x || 0;
+  const dy = layout.foregroundOffset?.y || 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
   function hasNearbySolid(shape) {
@@ -54,14 +51,7 @@
   for (const area of layout.occluders) {
     if (!/(post|pillar)$/.test(area.id)) continue;
     const [x, , w] = area.bounds;
-    const solid = {
-      type: "ellipse",
-      cx: x + w / 2,
-      cy: area.baseline - 4,
-      rx: clamp(w * 0.24, 12, 20),
-      ry: 10,
-      depthFix: area.id,
-    };
+    const solid = { type: "ellipse", cx: x + w / 2, cy: area.baseline - 4, rx: clamp(w * 0.24, 12, 20), ry: 10, depthFix: area.id };
     if (!hasNearbySolid(solid)) layout.solidBases.push(solid);
   }
 
@@ -80,7 +70,6 @@
   for (const [id, minX, minY, maxX, maxY] of depthZones) {
     const fullId = `depth-${id}`;
     if (existingIds.has(fullId)) continue;
-
     const visualLeft = Math.max(0, minX + dx - 18);
     const visualTop = Math.max(0, minY + dy - 190);
     const visualRight = Math.min(layout.referenceSize.width, maxX + dx + 18);
@@ -89,52 +78,21 @@
     const rearBottom = Math.min(layout.referenceSize.height, minY + dy + 12);
     const rearLeft = Math.max(0, minX + dx - 12);
     const rearRight = Math.min(layout.referenceSize.width, maxX + dx + 12);
-
-    const bounds = [
-      visualLeft,
-      visualTop,
-      Math.max(1, visualRight - visualLeft),
-      Math.max(1, visualBottom - visualTop),
-    ];
-    const footArea = layout.rect(
-      rearLeft,
-      rearTop,
-      Math.max(1, rearRight - rearLeft),
-      Math.max(1, rearBottom - rearTop),
-    );
-
-    layout.occluders.push({
-      id: fullId,
-      bounds,
-      baseline: minY + dy + 10,
-      footArea,
-      source: "foreground",
-      points: layout.rect(...bounds).points,
-      rearInset: 6,
-      depthFix: true,
-    });
+    const bounds = [visualLeft, visualTop, Math.max(1, visualRight - visualLeft), Math.max(1, visualBottom - visualTop)];
+    const footArea = layout.rect(rearLeft, rearTop, Math.max(1, rearRight - rearLeft), Math.max(1, rearBottom - rearTop));
+    layout.occluders.push({ id: fullId, bounds, baseline: minY + dy + 10, footArea, source: "foreground", points: layout.rect(...bounds).points, rearInset: 6, depthFix: true });
   }
 
   layout.activeOccluders = function activeOccluders(foot, areas = layout.occluders) {
     if (!foot || !Number.isFinite(foot.x) || !Number.isFinite(foot.y)) return [];
     if (layout.solidBases.some((shape) => layout.contains(foot, shape))) return [];
-    return areas.filter((area) =>
-      foot.y < area.baseline - (area.rearInset ?? 4) &&
-      layout.contains(foot, area.footArea),
-    );
+    return areas.filter((area) => foot.y < area.baseline - (area.rearInset ?? 4) && layout.contains(foot, area.footArea));
   };
 
   layout.depthModelVersion = "preview-49";
   layout.artworkPlacement = Object.freeze({
-    islands: Object.freeze({ mode: "contain-once", alignX: 0.5, alignY: 0, repeat: false }),
-    foreground: Object.freeze({
-      mode: "fit-width-once",
-      x: 0,
-      y: 0,
-      repeat: false,
-      sourceWidth: 1672,
-      sceneWidth: REFERENCE.width,
-    }),
+    islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
+    foreground: Object.freeze({ sourceScale: FOREGROUND_SOURCE_SCALE, x: dx, y: dy, repeat: false }),
   });
-  layout.artworkModelVersion = "latest-two-artworks-fit-once";
+  layout.artworkModelVersion = "foreground-authored-alignment-restored";
 })(window);
