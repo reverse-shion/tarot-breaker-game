@@ -1,9 +1,10 @@
-/* Preview 45 — seamless Chrono Trigger-style cloud drift.
-   Preserve the supplied cloud artwork at its authored world size. Three exact
-   copies form a buffered strip. The viewport travels from the middle copy to
-   the next identical copy, so the animation reset lands on the same pixels and
-   cannot visibly pop. The cloud layer now sits above the static sky/nebula/sun
-   but below the authored islands, ground and foreground plates. */
+/* Preview 46 — stable seamless Chrono Trigger-style cloud drift.
+   Keep the supplied cloud artwork at its authored 1448x1086 world size and
+   move only the three-copy strip from right to left. The cloud layer receives
+   its world geometry immediately, before async game setup, so Safari never
+   starts the percentage animation against a zero-size parent. Avoid masks,
+   contain and backface compositing on the moving layer because those can make
+   a transformed WebKit layer intermittently disappear after page load. */
 
 @keyframes cloud-main-scroll-left {
   from { transform: translate3d(-33.333333%, 0, 0); }
@@ -16,23 +17,12 @@
 }
 
 .scene-cloud-main {
-  z-index: 0 !important;
+  z-index: -1 !important;
+  width: 1448px;
+  height: 1086px;
   overflow: hidden !important;
   opacity: .72 !important;
   pointer-events: none;
-  contain: layout paint size;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-mask-image: linear-gradient(to right,
-    transparent 0%,
-    #000 1.2%,
-    #000 98.8%,
-    transparent 100%);
-  mask-image: linear-gradient(to right,
-    transparent 0%,
-    #000 1.2%,
-    #000 98.8%,
-    transparent 100%);
 }
 
 .scene-cloud-main-track {
@@ -45,14 +35,10 @@
   will-change: transform;
   -webkit-transform: translate3d(-33.333333%, 0, 0);
   transform: translate3d(-33.333333%, 0, 0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
   -webkit-animation: cloud-main-scroll-left 64s linear infinite !important;
   animation: cloud-main-scroll-left 64s linear infinite !important;
   -webkit-animation-fill-mode: both;
   animation-fill-mode: both;
-  -webkit-animation-play-state: running !important;
-  animation-play-state: running !important;
 }
 
 .scene-cloud-main-track > .scene-cloud-copy {
