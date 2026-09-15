@@ -14,7 +14,7 @@ const geometry=bytes=>{const d=JSON.parse(bytes);return JSON.stringify([d.map,d.
 if(geometry(collision)!==geometry(publishedCollision)) throw new Error('Collision geometry differs: review the user-authored data before syncing');
 const commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
-const runtime=['game.js','game.css','fountain-polish.css','sky-atmosphere.css','cloud-motion-fix.css','scene-layout.js','scene-effects.js','navigation.js','blocked-collision.js','controls.js','dialogue.js','dialogue.css','audio.js','audio.css','lumiere-outline.js'];
+const runtime=['game.js','game.css','fountain-polish.css','sky-atmosphere.css','cloud-motion-fix.css','scene-layout.js','scene-preview41-fix.js','scene-effects.js','navigation.js','blocked-collision.js','controls.js','dialogue.js','dialogue.css','audio.js','audio.css','lumiere-outline.js'];
 const files={};
 for(const name of runtime) {
  const content=fs.readFileSync(name);fs.writeFileSync(path.join(out,name),content);files[name]=hash(content);
