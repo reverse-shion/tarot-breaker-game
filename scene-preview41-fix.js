@@ -5,6 +5,7 @@
 
   const REFERENCE = layout.referenceSize;
   const FOREGROUND_SOURCE_SCALE = 0.81;
+  const FOREGROUND_NUDGE_X = 4;
 
   layout.paintBackground = function paintBackground(ctx, background) {
     const w = REFERENCE.width;
@@ -21,7 +22,7 @@
 
   // The current foreground upload stores the authored 1448x1086 scene at
   // roughly 81% scale inside a wider source canvas. Restore that authored
-  // scale, keep the established -15px horizontal correction, and draw once.
+  // scale, then nudge the complete foreground 4px to the right and draw once.
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -29,13 +30,13 @@
     const sourceH = foreground.naturalHeight || h * FOREGROUND_SOURCE_SCALE;
     const drawW = sourceW / FOREGROUND_SOURCE_SCALE;
     const drawH = sourceH / FOREGROUND_SOURCE_SCALE;
-    const dx = layout.foregroundOffset?.x || 0;
+    const dx = (layout.foregroundOffset?.x || 0) + FOREGROUND_NUDGE_X;
     const dy = layout.foregroundOffset?.y || 0;
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(foreground, dx, dy, drawW, drawH);
   };
 
-  const dx = layout.foregroundOffset?.x || 0;
+  const dx = (layout.foregroundOffset?.x || 0) + FOREGROUND_NUDGE_X;
   const dy = layout.foregroundOffset?.y || 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -94,5 +95,5 @@
     islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
     foreground: Object.freeze({ sourceScale: FOREGROUND_SOURCE_SCALE, x: dx, y: dy, repeat: false }),
   });
-  layout.artworkModelVersion = "foreground-authored-alignment-restored";
+  layout.artworkModelVersion = "foreground-authored-alignment-right-4px";
 })(window);
