@@ -4,12 +4,9 @@
   if (!layout) return;
 
   const REFERENCE = layout.referenceSize;
-  const FOREGROUND_SOURCE_SCALE = 0.81;
 
-  // The replacement island plate is 1469x1071 instead of the scene's
-  // 1448x1086 reference canvas. Fit the complete artwork by width so neither
-  // edge is cut off, preserve its aspect ratio and leave any remaining pixels
-  // transparent for the animated sky/cloud layers underneath.
+  // Keep the latest uploaded islands artwork inside the canonical 1448x1086
+  // game coordinate space without stretching it.
   layout.paintBackground = function paintBackground(ctx, background) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -24,27 +21,22 @@
     ctx.drawImage(background, drawX, 0, drawW, drawH);
   };
 
-  // The re-uploaded foreground contains the original scene artwork reduced to
-  // about 81%, followed by additional right-edge canvas. Restore that authored
-  // scale around the unchanged scene origin and clip once at the world edge.
-  // Drawing a second copy or an edge patch would recreate the duplicate that
-  // appeared in the previous preview, so this is deliberately one draw only.
+  // The latest foreground already contains the complete authored artwork.
+  // Draw that source exactly once at its native scale and let the 1448x1086
+  // canvas clip only the pixels that fall outside the world. Do not rescale,
+  // repeat, mirror, stretch or add an edge-copy: those operations caused the
+  // visible duplicate on the right side.
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
-    const sourceW = foreground.naturalWidth || w * FOREGROUND_SOURCE_SCALE;
-    const sourceH = foreground.naturalHeight || h * FOREGROUND_SOURCE_SCALE;
-    const drawW = sourceW / FOREGROUND_SOURCE_SCALE;
-    const drawH = sourceH / FOREGROUND_SOURCE_SCALE;
     const dx = layout.foregroundOffset?.x || 0;
     const dy = layout.foregroundOffset?.y || 0;
 
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, dx, dy, drawW, drawH);
+    ctx.drawImage(foreground, dx, dy);
   };
 
-  // Preview 49 depth/collision fix.
-  // Keep collision data intact while the visual front layers are hidden.
+  // Preview 49 depth/collision fix remains unchanged.
   const dx = layout.foregroundOffset?.x || 0;
   const dy = layout.foregroundOffset?.y || 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -135,11 +127,12 @@
   layout.artworkPlacement = Object.freeze({
     islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
     foreground: Object.freeze({
-      sourceScale: FOREGROUND_SOURCE_SCALE,
+      mode: "native-once",
       x: dx,
       y: dy,
       repeat: false,
+      scale: 1,
     }),
   });
-  layout.artworkModelVersion = "preview-55-latest-artwork-aligned";
+  layout.artworkModelVersion = "latest-artwork-native-foreground";
 })(window);
