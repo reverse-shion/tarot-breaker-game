@@ -162,10 +162,10 @@
 
   layout.depthModelVersion = "preview-49";
 
-  // Pin the latest user-uploaded transparent island plate instead of the older
-  // white-backed copy that Preview 40 referenced through its feature commit.
+  // Use only the current repository file. Do not pin this artwork to an older
+  // commit; replacing star-country-world-islands.webp must be enough to update it.
   const transparentIslands =
-    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/2d8b4cec9b6dbb96f5dc0c4d8412f8a44acae59f/assets/maps/star-country-world-islands.webp";
+    "./assets/maps/star-country-world-islands.webp?v=20260915-2027";
   const mapLayer = document.getElementById("map-layer");
-  if (mapLayer && mapLayer.src !== transparentIslands) mapLayer.src = transparentIslands;
+  if (mapLayer) mapLayer.src = transparentIslands;
 })(window);
