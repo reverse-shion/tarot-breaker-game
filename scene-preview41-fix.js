@@ -10,8 +10,10 @@
     ctx.drawImage(background, 0, 0, layout.referenceSize.width, layout.referenceSize.height);
   };
 
-  // Preview 45: keep the global -15px foreground correction around the centre
-  // route, while closing the exposed strip at the far-right world edge.
+  // Preview 50: draw the supplied foreground only once. Preview 45 shifted the
+  // plate left and then painted a second copy into the far-right gap, which can
+  // duplicate the right bridge/edge architecture. Keep the established -15px
+  // alignment correction, but do not clone, blend, mirror or patch the edge.
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = layout.referenceSize.width;
     const h = layout.referenceSize.height;
@@ -20,31 +22,6 @@
 
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(foreground, dx, dy, w, h);
-
-    const gap = Math.max(0, -dx);
-    if (!gap) return;
-
-    const blendWidth = Math.max(84, gap * 6);
-    const edge = document.createElement("canvas");
-    edge.width = w;
-    edge.height = h;
-    const paint = edge.getContext("2d");
-
-    paint.save();
-    paint.beginPath();
-    paint.rect(w - blendWidth, 0, blendWidth, h);
-    paint.clip();
-    paint.drawImage(foreground, 0, dy, w, h);
-    paint.globalCompositeOperation = "destination-in";
-    const fade = paint.createLinearGradient(w - blendWidth, 0, w, 0);
-    fade.addColorStop(0, "rgba(0,0,0,0)");
-    fade.addColorStop(0.72, "rgba(0,0,0,0.55)");
-    fade.addColorStop(1, "rgba(0,0,0,1)");
-    paint.fillStyle = fade;
-    paint.fillRect(w - blendWidth, 0, blendWidth, h);
-    paint.restore();
-
-    ctx.drawImage(edge, 0, 0);
   };
 
   // Preview 49 depth/collision fix.
@@ -161,11 +138,9 @@
   };
 
   layout.depthModelVersion = "preview-49";
+  layout.artworkModelVersion = "preview-50";
 
-  // Pin the latest user-uploaded transparent island plate instead of the older
-  // white-backed copy that Preview 40 referenced through its feature commit.
-  const transparentIslands =
-    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/2d8b4cec9b6dbb96f5dc0c4d8412f8a44acae59f/assets/maps/star-country-world-islands.webp";
-  const mapLayer = document.getElementById("map-layer");
-  if (mapLayer && mapLayer.src !== transparentIslands) mapLayer.src = transparentIslands;
+  // Preview 50: do not pin the world-islands artwork to an older commit URL.
+  // index.html owns the asset URL, so the latest file in this branch is used
+  // directly and future same-name replacements can be cache-busted normally.
 })(window);
