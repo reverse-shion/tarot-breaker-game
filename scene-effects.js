@@ -10,13 +10,51 @@
   const objectLayers = [...document.querySelectorAll("[data-scene-object]")];
   const validGateStates = new Set(["normal", "unstable", "event"]);
   const params = new URLSearchParams(location.search);
+  const config = document.currentScript?.dataset || {};
+  const DEPTH_URL = config.depthUrl || "./assets/maps/star-country-gate-garden-depth.json";
 
   const layout = window.TarotSceneLayout;
   let lastCamera = "";
   const masks = new Map();
   let actorSurface;
+  let foregroundSurface;
+  let depthZones = { behindForegroundAreas: [], backgroundAreas: [] };
   const debug = params.get("sceneDebug") === "1";
   let debugOutput;
+
+  function normalizePolys(list) {
+    return (Array.isArray(list) ? list : []).filter((area) =>
+      area?.type === "poly" &&
+      Array.isArray(area.points) &&
+      area.points.length >= 3 &&
+      area.points.every((point) =>
+        Array.isArray(point) && point.length === 2 && point.every(Number.isFinite),
+      ),
+    );
+  }
+
+  async function loadDepthZones() {
+    try {
+      const response = await fetch(`${DEPTH_URL}${DEPTH_URL.includes("?") ? "&" : "?"}t=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (
+        data?.map !== "star-country-gate-garden" ||
+        data?.referenceSize?.width !== REF.w ||
+        data?.referenceSize?.height !== REF.h
+      ) return;
+      depthZones = {
+        behindForegroundAreas: normalizePolys(data.behindForegroundAreas),
+        backgroundAreas: normalizePolys(data.backgroundAreas),
+      };
+    } catch (error) {
+      console.warn("前後関係データを読み込めませんでした", error);
+    }
+  }
+
+  const footIn = (foot, areas) => areas.some((area) => layout.contains(foot, area));
 
   function prepareOccluders(foreground) {
     for (const area of layout.occluders) {
@@ -33,11 +71,18 @@
       masks.set(area.id,{surface,x,y,w,h});
     }
   }
-  // Mask each actor in isolation: a rear actor must never cause a foreground
-  // redraw that covers another actor standing in front of the same object.
+
+  // Manual depth zones are intentionally independent from collision.
+  // backgroundAreas force the actor in front; behindForegroundAreas force the
+  // actor behind the alpha of the authored foreground plate at that location.
+  // This lets the map author decide depth directly without changing walkability.
   function drawMaskedActor(ctx, actor, scale, density, draw) {
-    const active=layout.activeOccluders({x:actor.x/scale.x,y:actor.y/scale.y});
-    if (!active.length) { draw(ctx); return; }
+    const foot={x:actor.x/scale.x,y:actor.y/scale.y};
+    const forcedFront=footIn(foot,depthZones.backgroundAreas);
+    const forcedBehind=!forcedFront && footIn(foot,depthZones.behindForegroundAreas);
+    const active=forcedFront ? [] : layout.activeOccluders(foot);
+    if (!forcedBehind && !active.length) { draw(ctx); return; }
+
     actorSurface ||= document.createElement("canvas");
     const left=actor.x-84*scale.x, top=actor.y-110*scale.y;
     const width=168*scale.x, height=142*scale.y;
@@ -50,6 +95,13 @@
     paint.setTransform(pw/width,0,0,ph/height,-left*pw/width,-top*ph/height);
     draw(paint);
     paint.save(); paint.globalCompositeOperation="destination-out";
+
+    // For a user-authored "behind foreground" zone, use the complete authored
+    // foreground alpha around the actor. The trigger polygon says WHEN the actor
+    // is behind; the artwork itself says WHICH pixels cover the actor.
+    if (forcedBehind && foregroundSurface) {
+      paint.drawImage(foregroundSurface,0,0,REF.w*scale.x,REF.h*scale.y);
+    }
     for(const area of active) {
       const mask=masks.get(area.id);
       if(mask) paint.drawImage(mask.surface,mask.x*scale.x,mask.y*scale.y,mask.w*scale.x,mask.h*scale.y);
@@ -57,6 +109,7 @@
     paint.restore();
     ctx.drawImage(actorSurface,0,0,pw,ph,left,top,width,height);
   }
+
   function drawDebug(ctx, actors, scale, zoom) {
     if(!debug) return;
     ctx.save(); ctx.scale(scale.x,scale.y); ctx.lineWidth=1/zoom;
@@ -69,10 +122,23 @@
       ctx.lineTo(area.bounds[0]+area.bounds[2],area.baseline); ctx.stroke();
       ctx.setLineDash([]);
     }
+    for (const area of depthZones.behindForegroundAreas) {
+      ctx.strokeStyle="#d88cff"; ctx.fillStyle="rgba(216,140,255,.12)";
+      layout.trace(ctx,area.points); ctx.fill(); ctx.stroke();
+    }
+    for (const area of depthZones.backgroundAreas) {
+      ctx.strokeStyle="#62dfff"; ctx.fillStyle="rgba(98,223,255,.10)";
+      layout.trace(ctx,area.points); ctx.fill(); ctx.stroke();
+    }
     const states={};
     for(const [name,actor] of Object.entries(actors)) {
       const foot={x:actor.x/scale.x,y:actor.y/scale.y};
-      states[name]={...foot,occluders:layout.activeOccluders(foot).map(area=>area.id)};
+      states[name]={
+        ...foot,
+        manual: footIn(foot,depthZones.backgroundAreas) ? "background" :
+          footIn(foot,depthZones.behindForegroundAreas) ? "behind" : "auto",
+        occluders:layout.activeOccluders(foot).map(area=>area.id),
+      };
       ctx.strokeStyle="#fff"; ctx.fillStyle="#fff";
       ctx.beginPath();ctx.arc(foot.x,foot.y,3/zoom,0,Math.PI*2);ctx.stroke();
       ctx.fillText(name,foot.x+5,foot.y+12);
@@ -80,8 +146,8 @@
     ctx.strokeStyle="#ffe277";ctx.setLineDash([6,4]);
     ctx.beginPath();ctx.moveTo(layout.gate.openingX,0);ctx.lineTo(layout.gate.openingX,395);ctx.stroke();
     ctx.restore();
-    debugOutput.textContent="SCENE 1.1 · "+Object.entries(states).map(([name,s])=>`${name}: ${s.occluders.join(",")||"clear"}`).join(" · ");
-    debugOutput.dataset.state=JSON.stringify({gate:layout.gate,actors:states});
+    debugOutput.textContent="SCENE 1.2 · "+Object.entries(states).map(([name,s])=>`${name}:${s.manual}/${s.occluders.join(",")||"clear"}`).join(" · ");
+    debugOutput.dataset.state=JSON.stringify({gate:layout.gate,depthZones,actors:states});
   }
   let gateState = "normal";
 
@@ -92,8 +158,6 @@
     return state;
   }
 
-  // Called by the game's draw loop, so actors and scenery use the same camera
-  // in the same frame. No second RAF, layout reads, or per-frame CSS size writes.
   function syncCamera({ world, origin, zoom }) {
     const signature = [world.w,world.h,origin.x,origin.y,zoom].join(",");
     if (signature === lastCamera) return;
@@ -112,6 +176,7 @@
       layer.style.transform = `translate3d(${(Number(x)*sx-origin.x)*zoom}px,${(Number(y)*sy-origin.y)*zoom}px,0) scale(${zoom})`;
     }
   }
+
   function waitImage(img) {
     if (img.complete && img.naturalWidth) return Promise.resolve(img);
     return new Promise((resolve,reject) => {
@@ -119,12 +184,16 @@
       img.addEventListener("error", () => reject(new Error("庭園レイヤーを読み込めません")), {once:true});
     });
   }
-  const ready = Promise.all([map,...document.querySelectorAll(".scene-world-layer img, .scene-object img")].map(waitImage))
-    .then(() => {
+
+  const ready = Promise.all([
+    loadDepthZones(),
+    ...[map,...document.querySelectorAll(".scene-world-layer img, .scene-object img")].map(waitImage),
+  ]).then(() => {
       const background = document.querySelector(".scene-background canvas");
       const foreground = document.querySelector(".scene-foreground canvas");
       layout.paintBackground(background.getContext("2d"),map,document.querySelector(".scene-star-sky img"));
       layout.paintForeground(foreground.getContext("2d"),document.querySelector(".scene-foreground img"));
+      foregroundSurface=foreground;
       prepareOccluders(foreground);
       for(const layer of document.querySelectorAll(".scene-waterfall")) {
         const img=layer.querySelector("img"), paint=layer.querySelector("canvas").getContext("2d");
@@ -137,13 +206,10 @@
         document.querySelector(".scene-fountain-crystal img"));
       shell.dataset.sceneReady = "true";
     });
-  // Report through the game's startup error UI; avoid an unhandled rejection
-  // when sprites or collision take longer than a failed scene image.
   ready.catch(() => {});
 
   window.addEventListener("tarot-breaker:gate-state", (event) => {
-    const requested =
-      typeof event.detail === "string" ? event.detail : event.detail?.state;
+    const requested = typeof event.detail === "string" ? event.detail : event.detail?.state;
     setGateState(requested || "normal");
   });
 
@@ -158,12 +224,12 @@
     ready, syncCamera, drawMaskedActor, drawDebug,
     setGateState,
     getGateState: () => gateState,
+    getDepthZones: () => ({
+      behindForegroundAreas: [...depthZones.behindForegroundAreas],
+      backgroundAreas: [...depthZones.backgroundAreas],
+    }),
     referenceSize: Object.freeze({ ...REF }),
   });
 
-  window.dispatchEvent(
-    new CustomEvent("tarot-breaker:scene-ready", {
-      detail: { gateState },
-    }),
-  );
+  window.dispatchEvent(new CustomEvent("tarot-breaker:scene-ready", {detail: { gateState }}));
 })();
