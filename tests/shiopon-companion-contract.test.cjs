@@ -32,11 +32,11 @@ test('companion replans a collision-safe route and accelerates when Shion gets a
   assert.match(game, /playerGap\s*>\s*170/);
 });
 
-test('Shiopon faces Shion when the first conversation starts', () => {
-  assert.match(dialogue, /tarot-breaker:shiopon-face-player/);
-  assert.match(game, /function faceShioponTowardPlayer\(/);
-  assert.match(game, /playerNow\.x\s*-\s*current\.x/);
-  assert.match(game, /playerNow\.y\s*-\s*current\.y/);
+test('Shiopon can face Shion through the data-driven stage command', () => {
+  assert.match(dialogue, /face\("shiopon", "shion"\)/);
+  assert.match(game, /function performStageCommand\(/);
+  assert.match(game, /function stageTargetRef\(/);
+  assert.match(game, /setDirection\(actor, target\.x - current\.x, target\.y - current\.y\)/);
 });
 
 test('race dialogue drives a real run, trip and recovery animation', () => {

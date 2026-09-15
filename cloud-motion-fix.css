@@ -1,10 +1,10 @@
-/* Preview 46 — stable seamless Chrono Trigger-style cloud drift.
-   Keep the supplied cloud artwork at its authored 1448x1086 world size and
-   move only the three-copy strip from right to left. The cloud layer receives
+/* Preview 47 — stable seamless Chrono Trigger-style cloud drift.
+   Keep the replacement cloud artwork inside the authored 1448x1086 world box
+   and move only the three-copy strip from right to left. The cloud layer receives
    its world geometry immediately, before async game setup, so Safari never
-   starts the percentage animation against a zero-size parent. Avoid masks,
-   contain and backface compositing on the moving layer because those can make
-   a transformed WebKit layer intermittently disappear after page load. */
+   starts the percentage animation against a zero-size parent. The replacement
+   artwork is already prepared for continuous scrolling, so edge masks are
+   disabled to avoid dark/faded vertical bands at the loop boundary. */
 
 @keyframes cloud-main-scroll-left {
   from { transform: translate3d(-33.333333%, 0, 0); }
@@ -23,6 +23,8 @@
   overflow: hidden !important;
   opacity: .72 !important;
   pointer-events: none;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }
 
 .scene-cloud-main-track {

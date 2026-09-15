@@ -5,6 +5,11 @@ const vm = require('node:vm');
 
 function bootDialogue() {
   const elements = {};
+  const performed = [];
+  const stageFinishes = [];
+  const signals = [];
+  let timerId = 0;
+  const timers = new Map();
 
   class Element {
     constructor(id = '') {
@@ -54,13 +59,6 @@ function bootDialogue() {
   for (const id of ['game-shell', 'map-layer', 'guide', 'reset', 'game']) {
     elements[id] = new Element(id);
   }
-  Object.assign(elements['map-layer'], {
-    naturalWidth: 1448,
-    naturalHeight: 1086,
-  });
-  elements['map-layer'].style.transform = 'translate3d(0px,0px,0) scale(1)';
-  elements['map-layer'].style.width = '1448px';
-  elements['map-layer'].style.height = '1086px';
 
   const document = {
     getElementById: (id) => elements[id] || null,
@@ -74,11 +72,12 @@ function bootDialogue() {
       this.listeners.get(type).push(fn);
     }
     dispatchEvent(event) {
+      signals.push({ type: event.type, detail: event.detail });
       for (const fn of this.listeners.get(event.type) || []) fn(event);
       return true;
     }
     emit(type, extra = {}) {
-      for (const fn of this.listeners.get(type) || []) fn({ type, preventDefault() {}, ...extra });
+      this.dispatchEvent({ type, preventDefault() {}, ...extra });
     }
   }
 
@@ -93,6 +92,28 @@ function bootDialogue() {
       };
     },
   };
+  window.TarotStage = {
+    perform(command) {
+      performed.push(command);
+      if (command.type === 'face' || command.type === 'lookTarget') {
+        return { promise: Promise.resolve(), finish() {}, cancel() {} };
+      }
+      let settled = false;
+      let resolveAction;
+      const promise = new Promise(resolve => { resolveAction = resolve; });
+      const settle = (kind) => {
+        if (settled) return;
+        settled = true;
+        stageFinishes.push({ command, kind });
+        resolveAction();
+      };
+      return {
+        promise,
+        finish: () => settle('finish'),
+        cancel: () => settle('cancel'),
+      };
+    },
+  };
 
   let interactionStarts = 0;
   let interactionEnds = 0;
@@ -104,10 +125,14 @@ function bootDialogue() {
     document,
     console,
     Event: class Event { constructor(type) { this.type = type; } },
+    CustomEvent: class CustomEvent {
+      constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
+    },
     queueMicrotask: (fn) => fn(),
+    setTimeout: (fn) => { const id = ++timerId; timers.set(id, fn); return id; },
+    clearTimeout: (id) => timers.delete(id),
     Math,
     JSON,
-    parseFloat,
   });
   vm.runInContext(fs.readFileSync('dialogue.js', 'utf8'), sandbox, { filename: 'dialogue.js' });
 
@@ -116,53 +141,80 @@ function bootDialogue() {
     window,
     controls,
     elements,
+    performed,
+    stageFinishes,
+    signals,
     starts: () => interactionStarts,
     ends: () => interactionEnds,
+    timers,
   };
 }
 
-function finishCurrentEvent(dialogue) {
-  const state = dialogue.getState();
-  const total = dialogue.scripts[state.eventId].length;
-  for (let i = state.lineIndex; i < total; i++) dialogue.advance();
+async function flush() {
+  for (let i = 0; i < 8; i++) await Promise.resolve();
 }
 
-test('Shiopon proximity starts once, pauses interaction, then joins the party', () => {
+async function revealOpening(dialogue) {
+  await flush();
+  if (dialogue.getState().mode === 'action') dialogue.advance();
+  await flush();
+}
+
+async function finishCurrentEvent(dialogue) {
+  for (let guard = 0; guard < 500 && dialogue.getState().active; guard++) {
+    const state = dialogue.getState();
+    if (state.mode === 'dialogue' || state.mode === 'action') dialogue.advance();
+    await flush();
+  }
+  assert.equal(dialogue.getState().active, false, 'event runner must reach its end');
+}
+
+test('Shiopon proximity starts once, stages the opening, then joins the party', async () => {
   const h = bootDialogue();
   h.controls.step({ x: 810, y: 850 }, 0.016, 155);
   let state = h.window.TarotDialogue.getState();
   assert.equal(state.active, true);
   assert.equal(state.eventId, 'shioponMeet');
   assert.equal(h.starts(), 1);
+  assert.equal(h.elements['dialogue-layer'].hidden, true, 'empty dialogue box stays hidden during approach');
+
+  await revealOpening(h.window.TarotDialogue);
+  state = h.window.TarotDialogue.getState();
+  assert.equal(state.mode, 'dialogue');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
   assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  assert.deepEqual(
+    h.performed.slice(0, 2).map(command => command.type),
+    ['face', 'approach'],
+  );
 
-  finishCurrentEvent(h.window.TarotDialogue);
+  await finishCurrentEvent(h.window.TarotDialogue);
   state = h.window.TarotDialogue.getState();
-  assert.equal(state.active, false);
   assert.equal(state.shioponDone, true);
   assert.equal(state.joined, true);
   assert.equal(state.objective, '星門へ向かう');
   assert.equal(h.ends(), 1);
+  assert.ok(h.signals.some(event => event.type === 'tarot-breaker:shiopon-follow-start'));
 
   h.controls.step({ x: 810, y: 850 }, 0.016, 155);
   assert.equal(h.starts(), 1, 'completed proximity event must not retrigger');
 });
 
-test('Lumiere event requires Shiopon completion and updates the objective once', () => {
+test('Lumiere event requires Shiopon completion and updates the objective once', async () => {
   const h = bootDialogue();
   h.controls.step({ x: 810, y: 250 }, 0.016, 155);
   assert.equal(h.window.TarotDialogue.getState().active, false);
 
   h.controls.step({ x: 810, y: 850 }, 0.016, 155);
-  finishCurrentEvent(h.window.TarotDialogue);
+  await revealOpening(h.window.TarotDialogue);
+  await finishCurrentEvent(h.window.TarotDialogue);
   h.controls.step({ x: 810, y: 250 }, 0.016, 155);
+  await revealOpening(h.window.TarotDialogue);
   let state = h.window.TarotDialogue.getState();
-  assert.equal(state.active, true);
   assert.equal(state.eventId, 'lumiereGate');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'しおぽん');
 
-  finishCurrentEvent(h.window.TarotDialogue);
+  await finishCurrentEvent(h.window.TarotDialogue);
   state = h.window.TarotDialogue.getState();
   assert.equal(state.lumiereDone, true);
   assert.equal(state.objective, '星門の様子を確かめる');
@@ -173,16 +225,71 @@ test('Lumiere event requires Shiopon completion and updates the objective once',
   assert.equal(h.starts(), 2, 'completed gate event must not retrigger');
 });
 
-test('dialogue text preserves core speech constraints from the approved script', () => {
+test('event data combines multiline dialogue, looks, waits, steps and Shiopon bounce', () => {
+  const h = bootDialogue();
+  const events = h.window.TarotDialogue.events;
+  const commands = [...events.shioponMeet, ...events.lumiereGate];
+  const types = new Set(commands.map(command => command.type));
+  for (const type of ['dialogue', 'face', 'approach', 'step', 'wait', 'bounce', 'signal']) {
+    assert.ok(types.has(type), `missing ${type} command`);
+  }
+  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.includes('\n')));
+  assert.ok(events.shioponMeet.filter(command => command.type === 'dialogue').length < 32);
+  assert.ok(events.lumiereGate.filter(command => command.type === 'dialogue').length < 36);
+});
+
+test('dialogue UI stays lightweight, multiline and safe-area aware', () => {
+  const css = fs.readFileSync('dialogue.css', 'utf8');
+  assert.match(css, /rgba\(24, 38, 82, 0\.87\)/);
+  assert.match(css, /white-space:\s*pre-line/);
+  assert.match(css, /safe-area-inset-bottom/);
+  assert.match(css, /max-height:\s*min\(34vh, 206px\)/);
+  assert.match(css, /data-state="acting"/);
+  assert.doesNotMatch(css, /rgba\(11, 15, 39, 0\.94\)/);
+});
+
+test('tap during wait or actor motion finishes only that action and playback stays ordered', async () => {
+  const h = bootDialogue();
+  h.controls.step({ x: 810, y: 850 }, 0.016, 155);
+  await flush();
+  assert.equal(h.window.TarotDialogue.getState().actionType, 'approach');
+  h.window.TarotDialogue.advance();
+  await flush();
+  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  assert.equal(h.stageFinishes[0].kind, 'finish');
+
+  h.window.TarotDialogue.advance();
+  await flush();
+  assert.equal(h.window.TarotDialogue.getState().actionType, 'wait');
+  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  h.window.TarotDialogue.advance();
+  await flush();
+  assert.equal(h.elements['dialogue-text'].textContent, 'しーっ！');
+});
+
+test('dialogue text preserves approved speech and relationship constraints', () => {
   const h = bootDialogue();
   const scripts = h.window.TarotDialogue.scripts;
   const all = [...scripts.shioponMeet, ...scripts.lumiereGate];
   const shion = all.filter(([speaker]) => speaker === 'シオン').map(([, text]) => text);
   const lumiere = all.filter(([speaker]) => speaker === 'リュミエール').map(([, text]) => text);
 
-  assert.ok(shion.includes('オレを待ってたんじゃないの？'));
-  assert.ok(shion.every((text) => !/(^|[^ァ-ヶ])私(?:は|が|も|、)/.test(text)));
-  assert.ok(lumiere.includes('しおぽん様。'));
-  assert.ok(lumiere.includes('シオン様も。'));
-  assert.ok(lumiere.includes('今のは、少し先を言いすぎました。'));
+  assert.ok(shion.some(text => text.includes('オレを待ってたんじゃないの？')));
+  assert.ok(shion.every(text => !/(^|[^ァ-ヶ])私(?:は|が|も|、)/.test(text)));
+  assert.ok(lumiere.some(text => text.includes('しおぽん様。')));
+  assert.ok(lumiere.some(text => text.includes('シオン様も。')));
+  assert.ok(lumiere.some(text => text.includes('今のは、少し先を言いすぎました。')));
+});
+
+test('reset during a blocking action cancels stale playback and releases interaction', async () => {
+  const h = bootDialogue();
+  h.controls.step({ x: 810, y: 850 }, 0.016, 155);
+  await flush();
+  assert.equal(h.window.TarotDialogue.getState().mode, 'action');
+  h.window.TarotDialogue.reset();
+  await flush();
+  assert.equal(h.window.TarotDialogue.getState().active, false);
+  assert.equal(h.ends(), 1);
+  assert.equal(h.stageFinishes.at(-1).kind, 'cancel');
+  assert.equal(h.elements['dialogue-layer'].hidden, true);
 });
