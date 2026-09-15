@@ -1,10 +1,10 @@
-/* Preview 51 — uploaded world-islands artwork is the visible source of truth.
-   The legacy split ground/foreground plates are retained in the DOM only as
-   geometry/mask sources for collision and actor occlusion. They must not be
-   painted over the newly uploaded complete island plate, shifted, cloned,
-   mirrored, edge-filled, or otherwise composited into the visible scene. */
+/* Preview 52 — replace only star-country-world-islands.webp.
+   Keep the existing Gate Garden ground and foreground visible exactly as before.
+   The uploaded islands artwork is swapped independently; path, buildings,
+   stairs, pillars, flower beds and actor-depth foreground must not disappear.
+   Right-edge duplication remains disabled in scene-preview41-fix.js. */
 .scene-ground,
 .scene-foreground {
-  visibility: hidden !important;
-  opacity: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
