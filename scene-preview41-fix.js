@@ -5,8 +5,7 @@
 
   const REFERENCE = layout.referenceSize;
 
-  // Keep the latest uploaded islands artwork inside the canonical 1448x1086
-  // game coordinate space without stretching it.
+  // Latest uploaded island plate: preserve aspect ratio and draw once.
   layout.paintBackground = function paintBackground(ctx, background) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -21,24 +20,26 @@
     ctx.drawImage(background, drawX, 0, drawW, drawH);
   };
 
-  // The latest foreground already contains the complete authored artwork.
-  // Draw that source exactly once at its native scale and let the 1448x1086
-  // canvas clip only the pixels that fall outside the world. Do not rescale,
-  // repeat, mirror, stretch or add an edge-copy: those operations caused the
-  // visible duplicate on the right side.
+  // Latest uploaded foreground is 1672x941 while the game reference is
+  // 1448x1086. Fit the COMPLETE source to the scene width exactly once.
+  // This is intentionally independent from the legacy foregroundOffset and
+  // never repeats, mirrors, patches, crops, or enlarges the right edge.
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
-    const dx = layout.foregroundOffset?.x || 0;
-    const dy = layout.foregroundOffset?.y || 0;
+    const sourceW = foreground.naturalWidth || w;
+    const sourceH = foreground.naturalHeight || h;
+    const fit = w / sourceW;
+    const drawW = w;
+    const drawH = sourceH * fit;
 
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, dx, dy);
+    ctx.drawImage(foreground, 0, 0, drawW, drawH);
   };
 
-  // Preview 49 depth/collision fix remains unchanged.
-  const dx = layout.foregroundOffset?.x || 0;
-  const dy = layout.foregroundOffset?.y || 0;
+  // Depth/collision coordinates stay in the canonical game space.
+  const dx = 0;
+  const dy = 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
   function hasNearbySolid(shape) {
@@ -125,14 +126,15 @@
 
   layout.depthModelVersion = "preview-49";
   layout.artworkPlacement = Object.freeze({
-    islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
+    islands: Object.freeze({ mode: "contain-once", alignX: 0.5, alignY: 0, repeat: false }),
     foreground: Object.freeze({
-      mode: "native-once",
-      x: dx,
-      y: dy,
+      mode: "fit-width-once",
+      x: 0,
+      y: 0,
       repeat: false,
-      scale: 1,
+      sourceWidth: 1672,
+      sceneWidth: REFERENCE.width,
     }),
   });
-  layout.artworkModelVersion = "latest-artwork-native-foreground";
+  layout.artworkModelVersion = "latest-two-artworks-fit-once";
 })(window);
