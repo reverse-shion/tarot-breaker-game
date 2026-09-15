@@ -3,35 +3,31 @@
   const layout = root.TarotSceneLayout;
   if (!layout) return;
 
-  // Preview 41+: use the gate already painted into the authored map as the
-  // visible gate body. Keep the standalone high-detail gate mask-only.
+  // Preview 54 debug isolation: temporarily hide the legacy Gate Garden
+  // ground/foreground plates so the newly uploaded world-islands artwork can
+  // be checked by itself. This is intentionally temporary and does not delete
+  // any assets.
+  for (const selector of [".scene-ground", ".scene-foreground"]) {
+    const layer = document.querySelector(selector);
+    if (layer) layer.hidden = true;
+  }
+
+  // Use the current world-islands artwork exactly as supplied.
   layout.paintBackground = function paintBackground(ctx, background) {
     ctx.clearRect(0, 0, layout.referenceSize.width, layout.referenceSize.height);
     ctx.drawImage(background, 0, 0, layout.referenceSize.width, layout.referenceSize.height);
   };
 
-  // Preview 53: draw the supplied foreground exactly once. Preview 45 shifted
-  // the plate left and then painted a second copy into the far-right gap,
-  // duplicating the right bridge/edge architecture. Keep only the established
-  // -15px alignment correction; do not clone, blend, mirror or patch the edge.
-  layout.paintForeground = function paintForeground(ctx, foreground) {
+  // Foreground is temporarily disabled. Keep its canvas transparent as well so
+  // hidden legacy pixels cannot still mask actors through the depth compositor.
+  layout.paintForeground = function paintForeground(ctx) {
     const w = layout.referenceSize.width;
     const h = layout.referenceSize.height;
-    const dx = layout.foregroundOffset.x;
-    const dy = layout.foregroundOffset.y;
-
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, dx, dy, w, h);
   };
 
   // Preview 49 depth/collision fix.
-  // The foreground is a single authored plate, but only a small subset of its
-  // pillars/flower fronts used to participate in actor occlusion. That allowed
-  // Shion and Shiopon to appear on top of banners and crystal pedestals in some
-  // places, while disappearing too early at the edge of a blocked area in
-  // others. Keep collision and visual depth separate: collision stops the foot
-  // point, while a narrow rear strip decides whether the foreground should sit
-  // in front of the actor.
+  // Keep collision data intact while the visual front layers are hidden.
   const dx = layout.foregroundOffset?.x || 0;
   const dy = layout.foregroundOffset?.y || 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -45,9 +41,6 @@
     );
   }
 
-  // Every foreground post/pillar with a crystal or cap gets a small physical
-  // foot base. Previously only four of them were solid, so the player could
-  // stand directly on several crystals/pedestals.
   for (const area of layout.occluders) {
     if (!/(post|pillar)$/.test(area.id)) continue;
     const [x, , w] = area.bounds;
@@ -62,13 +55,6 @@
     if (!hasNearbySolid(solid)) layout.solidBases.push(solid);
   }
 
-  // These zones follow the latest user-authored blocked geometry around the
-  // left/right garden structures and the upper gate approach. They do not turn
-  // the whole foreground into one giant front layer. Instead they create a
-  // short walkable strip BEHIND each structure; only there can foreground alpha
-  // erase the actor. This makes banners, walls and crystal posts consistently
-  // pass in front without hiding a character who merely touches a forbidden
-  // edge from the front.
   const depthZones = [
     ["east-upper-structure", 867, 217, 1215, 470],
     ["east-mid-structure", 873, 508, 1214, 697],
@@ -119,18 +105,9 @@
     });
   }
 
-  // Do not flip an actor behind a foreground object the instant the foot point
-  // grazes its baseline. A few pixels of rear clearance prevent the old
-  // "blocked but suddenly disappears" symptom while preserving correct hiding
-  // once the actor has actually moved behind the object.
   layout.activeOccluders = function activeOccluders(foot, areas = layout.occluders) {
     if (!foot || !Number.isFinite(foot.x) || !Number.isFinite(foot.y)) return [];
-
-    // Scripted motion/collision projection can briefly leave a foot on the
-    // exact edge of a physical base. Keep the actor visible in that ambiguous
-    // frame instead of erasing it into the foreground.
     if (layout.solidBases.some((shape) => layout.contains(foot, shape))) return [];
-
     return areas.filter((area) =>
       foot.y < area.baseline - (area.rearInset ?? 4) &&
       layout.contains(foot, area.footArea),
@@ -138,9 +115,5 @@
   };
 
   layout.depthModelVersion = "preview-49";
-  layout.artworkModelVersion = "preview-53";
-
-  // The visible island artwork source is owned by index.html. Keeping one
-  // source avoids runtime URL replacement races and makes the selected upload
-  // explicit for each preview revision.
+  layout.artworkModelVersion = "preview-54-front-layers-hidden";
 })(window);
