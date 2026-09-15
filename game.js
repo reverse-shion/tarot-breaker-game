@@ -152,8 +152,10 @@
   const lumiereImages = {};
   const lumiereComposites = new Map();
 
-  // Assemble each pose once, replacing (not overlaying) the fixed body area.
-  // No pixel reads or Canvas filters: this also works with cross-origin assets.
+  // Every directional pose must come from one frame only. The old body-core
+  // replacement is kept only for the original down sheet it was calibrated
+  // against; applying that frame-0 core to up/left/right creates a second,
+  // cropped head that moves with the hover animation.
   function lumiereComposite(direction, frame) {
     const key = `${direction}:${frame}`;
     if (lumiereComposites.has(key)) return lumiereComposites.get(key);
@@ -163,15 +165,17 @@
     const paint = surface.getContext("2d");
     const rect = LUMIERE_FRAME_RECTS[frame];
     const base = LUMIERE_FRAME_RECTS[0];
-    const core = LUMIERE_BODY_CORE;
     paint.imageSmoothingEnabled = false;
     const image = lumiereImages[direction] || lumiereImages.down;
     paint.drawImage(image,
       frame * lumiereFrame.w + rect.x, rect.y, rect.w, rect.h,
       0, 0, surface.width, surface.height);
-    paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
-    paint.drawImage(image, core.x, core.y, core.w, core.h,
-      core.x - base.x, core.y - base.y, core.w, core.h);
+    if (direction === "down") {
+      const core = LUMIERE_BODY_CORE;
+      paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
+      paint.drawImage(image, core.x, core.y, core.w, core.h,
+        core.x - base.x, core.y - base.y, core.w, core.h);
+    }
     lumiereComposites.set(key, surface);
     return surface;
   }
