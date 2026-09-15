@@ -1581,6 +1581,8 @@
       shioponFollowMinGap: SHIOPON_FOLLOW_MIN_GAP,
       lumiereCollisionDistance: LUMIERE_COLLISION_DISTANCE,
       lumiereGap: refDistance(playerRef(), lumiereRef()),
+      world: { ...world },
+      scale: { ...scale },
       camera: { ...camera },
       origin: viewportOrigin(),
       cssWidth,
@@ -1863,8 +1865,16 @@
       ]);
 
       const loadedMap = loaded[0];
-      world = { w: loadedMap.naturalWidth, h: loadedMap.naturalHeight };
-      scale = { x: world.w / REF.w, y: world.h / REF.h };
+      if (!loadedMap.naturalWidth || !loadedMap.naturalHeight)
+        throw new Error("背景画像サイズを取得できません");
+
+      // Artwork files may be replaced with a larger source canvas, but game
+      // coordinates, collision data and every authored scene layer share the
+      // fixed 1448x1086 reference space. Keeping the world canonical prevents
+      // a replacement image's aspect ratio from stretching actors or shifting
+      // interaction points. Each raster layer handles its own visual fit.
+      world = { w: REF.w, h: REF.h };
+      scale = { x: 1, y: 1 };
 
       for (const dir of ["down", "up", "left", "right"]) {
         if (

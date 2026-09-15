@@ -31,7 +31,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return () => {};
   }, set() { return true; } });
   elements.game.getContext = () => context;
-  Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1448, naturalHeight: 1086 });
+  Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
   document.getElementById = id => elements[id]; document.createElement = tag => {
@@ -82,6 +82,8 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   const h = await boot(); const s = h.state();
   assert.equal(h.errors.length, 0); assert.equal(s.cssWidth, 390); assert.equal(s.cssHeight, 844);
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
+  assert.deepEqual(s.world, { w: 1448, h: 1086 });
+  assert.deepEqual(s.scale, { x: 1, y: 1 });
   assert.equal(s.player.x, 729); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
   assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
   assert.equal(s.lumiere.homeRef.x, 810); assert.equal(s.lumiere.homeRef.y, 212);

@@ -3,27 +3,44 @@
   const layout = root.TarotSceneLayout;
   if (!layout) return;
 
-  // Preview 54 debug isolation: temporarily hide the legacy Gate Garden
-  // ground/foreground plates so the newly uploaded world-islands artwork can
-  // be checked by itself. This is intentionally temporary and does not delete
-  // any assets.
-  for (const selector of [".scene-ground", ".scene-foreground"]) {
-    const layer = document.querySelector(selector);
-    if (layer) layer.hidden = true;
-  }
+  const REFERENCE = layout.referenceSize;
+  const FOREGROUND_SOURCE_SCALE = 0.81;
 
-  // Use the current world-islands artwork exactly as supplied.
+  // The replacement island plate is 1469x1071 instead of the scene's
+  // 1448x1086 reference canvas. Fit the complete artwork by width so neither
+  // edge is cut off, preserve its aspect ratio and leave any remaining pixels
+  // transparent for the animated sky/cloud layers underneath.
   layout.paintBackground = function paintBackground(ctx, background) {
-    ctx.clearRect(0, 0, layout.referenceSize.width, layout.referenceSize.height);
-    ctx.drawImage(background, 0, 0, layout.referenceSize.width, layout.referenceSize.height);
+    const w = REFERENCE.width;
+    const h = REFERENCE.height;
+    const sourceW = background.naturalWidth || w;
+    const sourceH = background.naturalHeight || h;
+    const scale = Math.min(w / sourceW, h / sourceH);
+    const drawW = sourceW * scale;
+    const drawH = sourceH * scale;
+    const drawX = (w - drawW) / 2;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(background, drawX, 0, drawW, drawH);
   };
 
-  // Foreground is temporarily disabled. Keep its canvas transparent as well so
-  // hidden legacy pixels cannot still mask actors through the depth compositor.
-  layout.paintForeground = function paintForeground(ctx) {
-    const w = layout.referenceSize.width;
-    const h = layout.referenceSize.height;
+  // The re-uploaded foreground contains the original scene artwork reduced to
+  // about 81%, followed by additional right-edge canvas. Restore that authored
+  // scale around the unchanged scene origin and clip once at the world edge.
+  // Drawing a second copy or an edge patch would recreate the duplicate that
+  // appeared in the previous preview, so this is deliberately one draw only.
+  layout.paintForeground = function paintForeground(ctx, foreground) {
+    const w = REFERENCE.width;
+    const h = REFERENCE.height;
+    const sourceW = foreground.naturalWidth || w * FOREGROUND_SOURCE_SCALE;
+    const sourceH = foreground.naturalHeight || h * FOREGROUND_SOURCE_SCALE;
+    const drawW = sourceW / FOREGROUND_SOURCE_SCALE;
+    const drawH = sourceH / FOREGROUND_SOURCE_SCALE;
+    const dx = layout.foregroundOffset?.x || 0;
+    const dy = layout.foregroundOffset?.y || 0;
+
     ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(foreground, dx, dy, drawW, drawH);
   };
 
   // Preview 49 depth/collision fix.
@@ -115,5 +132,14 @@
   };
 
   layout.depthModelVersion = "preview-49";
-  layout.artworkModelVersion = "preview-54-front-layers-hidden";
+  layout.artworkPlacement = Object.freeze({
+    islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
+    foreground: Object.freeze({
+      sourceScale: FOREGROUND_SOURCE_SCALE,
+      x: dx,
+      y: dy,
+      repeat: false,
+    }),
+  });
+  layout.artworkModelVersion = "preview-55-latest-artwork-aligned";
 })(window);

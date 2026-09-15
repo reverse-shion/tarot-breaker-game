@@ -8,7 +8,7 @@ const cloudCss = fs.readFileSync('cloud-motion-fix.css', 'utf8');
 
 test('cloud stylesheet is loaded directly and fountain CSS stays isolated', () => {
   const fountain = html.indexOf('./fountain-polish.css?v=1.0.0');
-  const cloud = html.indexOf('./cloud-motion-fix.css?v=1.6.0');
+  const cloud = html.indexOf('./cloud-motion-fix.css?v=1.7.0');
   assert.ok(fountain >= 0 && cloud > fountain, 'cloud CSS must load after fountain polish');
   assert.doesNotMatch(fountainCss, /cloud-motion-fix\.css/);
 });
@@ -44,7 +44,8 @@ test('cloud copies preserve supplied scale and avoid Safari mask-compositor haza
   assert.doesNotMatch(cloudCss, /mix-blend-mode:\s*screen/);
   assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?transform:\s*none\s*!important/);
   assert.match(cloudCss, /scene-cloud-main-track > \.scene-cloud-copy[\s\S]*?filter:\s*none\s*!important/);
-  assert.doesNotMatch(cloudCss, /mask-image:/);
+  assert.match(cloudCss, /mask-image:\s*none\s*!important/);
+  assert.match(cloudCss, /-webkit-mask-image:\s*none\s*!important/);
   assert.doesNotMatch(cloudCss, /contain:\s*layout paint size/);
   assert.doesNotMatch(cloudCss, /backface-visibility/);
   assert.match(cloudCss, /margin:\s*0 -1px 0 0/);

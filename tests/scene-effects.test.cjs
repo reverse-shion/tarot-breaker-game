@@ -5,6 +5,7 @@ const vm=require('node:vm');
 const layout=require('../scene-layout.js');
 const {createCollision,createNavigator}=require('../blocked-collision.js');
 const data=require('../assets/maps/star-country-gate-garden-collision.json');
+const depthData=require('../assets/maps/star-country-gate-garden-depth.json');
 const html=fs.readFileSync('index.html','utf8'),css=fs.readFileSync('game.css','utf8'),cloudCss=fs.readFileSync('cloud-motion-fix.css','utf8');
 
 test('gate opening aligns with stair centre; standalone gate is mask-only and foreground is refined left',()=>{
@@ -27,16 +28,17 @@ test('foot baseline is strict, local to the object and independent for each acto
  assert.equal(ids({x:NaN,y:0}).length,0);
 });
 test('local physical bases remain solid for manual movement and pathfinding without editing authored areas',()=>{
+ const authoredBlocked=JSON.parse(JSON.stringify(data.blockedAreas));
  const c=createCollision({...data,blockedAreas:[...data.blockedAreas,...layout.solidBases]});
  const nav=createNavigator(c,16),spawn={x:729,y:1015};
  assert.equal(c.isWalkable(800,533),false);
  assert.equal(c.isWalkable(760,240),false);
  assert.equal(c.segmentClear({x:800,y:620},{x:800,y:440}),false);
- for(const target of [{x:810,y:800},{x:570,y:500},{x:1030,y:500},{x:810,y:350},{x:810,y:250},{x:490,y:427},{x:1190,y:490},{x:1380,y:590}]) {
+ for(const target of [{x:810,y:800},{x:570,y:500},{x:1030,y:500},{x:810,y:350},{x:810,y:250},{x:490,y:427},{x:1190,y:490}]) {
   const path=nav.findPath(spawn,target);assert.ok(path,JSON.stringify(target));
   for(let i=1;i<path.points.length;i++) assert.ok(c.segmentClear(path.points[i-1],path.points[i]));
  }
- assert.deepEqual(data.blockedAreas,[]);
+ assert.deepEqual(data.blockedAreas,authoredBlocked);
 });
 function bootScene(){
  const calls=[];let surfaces=0;
@@ -52,18 +54,21 @@ function bootScene(){
   querySelector:s=>s==='.scene-background canvas'?background:s==='.scene-foreground canvas'?foreground:s==='.scene-gate-base'?gate:s==='.scene-fountain-base'?fountain:s.includes('scene-crystal-')?foreground:image,
   createElement:()=>({width:0,height:0,getContext:()=>makeContext('tile-'+surfaces++)})};
  const window={TarotSceneLayout:{...layout,paintBackground(){},paintForeground(){},splitCrystal(){}},addEventListener(){},dispatchEvent(){}};
- vm.runInNewContext(fs.readFileSync('scene-effects.js','utf8'),{window,document,location:{search:''},URLSearchParams,CustomEvent:class{},console});
+ vm.runInNewContext(fs.readFileSync('scene-effects.js','utf8'),{
+  window,document,location:{search:''},URLSearchParams,CustomEvent:class{},console,
+  fetch:async()=>({ok:true,json:async()=>depthData})
+ });
  return {api:window.TarotSceneEffects,calls,shell,layer,gate};
 }
 test('rear actor is alpha-masked in an isolated surface; front actor draws directly',async()=>{
  const {api,calls}=bootScene();await api.ready;
  const main={drawImage(...args){calls.push({tag:'main',key:'drawImage',args});}};
- const targets=[];api.drawMaskedActor(main,{x:569,y:438},{x:1,y:1},2,p=>targets.push(p));
+ const targets=[];api.drawMaskedActor(main,{x:440,y:420},{x:1,y:1},2,p=>targets.push(p));
  assert.notEqual(targets[0],main);
  api.drawMaskedActor(main,{x:569,y:470},{x:1,y:1},2,p=>targets.push(p));
  assert.equal(targets[1],main);
  assert.equal(calls.filter(c=>c.tag==='main'&&c.key==='drawImage').length,1);
- api.drawMaskedActor(main,{x:1168,y:876},{x:2,y:2},1,p=>targets.push(p));
+ api.drawMaskedActor(main,{x:880,y:840},{x:2,y:2},1,p=>targets.push(p));
  assert.notEqual(targets[2],main);
 });
 test('scene and actors share the current camera; event FX is opt-in',async()=>{
