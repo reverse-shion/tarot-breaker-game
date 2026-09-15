@@ -1,0 +1,10 @@
+/* Preview 51 — uploaded world-islands artwork is the visible source of truth.
+   The legacy split ground/foreground plates are retained in the DOM only as
+   geometry/mask sources for collision and actor occlusion. They must not be
+   painted over the newly uploaded complete island plate, shifted, cloned,
+   mirrored, edge-filled, or otherwise composited into the visible scene. */
+.scene-ground,
+.scene-foreground {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
