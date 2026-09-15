@@ -170,6 +170,22 @@
     const game = document.getElementById("game");
     if (!shell || !game) return;
 
+    // Preserve the already-resolved image URLs before removing the legacy
+    // objects. Public previews rewrite these URLs to immutable raw GitHub
+    // commits, while the repository build keeps relative paths. Reusing the
+    // resolved sources makes the same compositor work in both environments.
+    const resolvedGateAssets = {
+      normal:
+        shell.querySelector?.(".scene-gate-inner-light img")?.src ||
+        STAR_GATE_ASSETS.normal,
+      event:
+        shell.querySelector?.(".scene-gate-event img")?.src ||
+        STAR_GATE_ASSETS.event,
+      aura:
+        shell.querySelector?.(".scene-gate-particle img")?.src ||
+        STAR_GATE_ASSETS.aura,
+    };
+
     // The old implementation scales full-reference artwork into arbitrary
     // rectangles. Remove those DOM objects so no hidden/visible duplicate can
     // ever appear behind the new reference-space stack.
@@ -252,9 +268,9 @@
     }
 
     const layers = [
-      ["scene-gate-normal", STAR_GATE_ASSETS.normal],
-      ["scene-gate-event-core", STAR_GATE_ASSETS.event],
-      ["scene-gate-event-aura", STAR_GATE_ASSETS.aura],
+      ["scene-gate-normal", resolvedGateAssets.normal],
+      ["scene-gate-event-core", resolvedGateAssets.event],
+      ["scene-gate-event-aura", resolvedGateAssets.aura],
     ];
 
     for (const [className, src] of layers) {
