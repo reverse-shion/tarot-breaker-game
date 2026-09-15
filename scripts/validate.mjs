@@ -5,14 +5,17 @@ const root = process.cwd();
 const required = [
   'index.html',
   'game.css',
+  'sky-atmosphere.css',
   'game.js',
   'scene-effects.js',
+  'scene-layout.js',
   'navigation.js',
   'controls.js',
   'assets/maps/star-country-gate-garden-collision.json',
-  'assets/maps/star-country-gate-garden-background.webp',
+  'assets/maps/star-country-farthest-sky-background.webp',
+  'assets/maps/star-country-world-islands.webp',
   'assets/maps/star-country-gate-garden-star-sky.webp',
-  'assets/maps/star-country-gate-garden-cloud.webp',
+  'assets/maps/star-country-world-clouds.webp',
   'assets/maps/star-country-gate-garden-waterfall.webp',
   'assets/maps/star-country-gate-garden-ground.webp',
   'assets/maps/star-country-gate-garden-foreground.webp',
@@ -87,9 +90,13 @@ for (const rel of lumiereSheets) {
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 for (const ref of [
   './game.css',
+  './sky-atmosphere.css',
   './game.js',
   './scene-effects.js',
-  './assets/maps/star-country-gate-garden-background.webp'
+  './assets/maps/star-country-farthest-sky-background.webp',
+  './assets/maps/star-country-world-islands.webp',
+  './assets/maps/star-country-gate-garden-star-sky.webp',
+  './assets/maps/star-country-world-clouds.webp'
 ]) {
   if (!html.includes(ref)) throw new Error(`index.html missing reference: ${ref}`);
 }
@@ -98,13 +105,13 @@ for (const token of ['requestAnimationFrame','pointerdown','shion_walk_down.png'
   if (!js.includes(token)) throw new Error(`game.js missing expected behavior token: ${token}`);
 }
 const sceneJs = fs.readFileSync(path.join(root, 'scene-effects.js'), 'utf8');
-for (const token of ['TarotSceneEffects','tarot-breaker:gate-state','data-scene-world','data-scene-object']) {
+for (const token of ['TarotSceneEffects','tarot-breaker:gate-state','data-scene-world','data-scene-object','drawMaskedActor','syncCamera','ready']) {
   if (!sceneJs.includes(token)) throw new Error(`scene-effects.js missing expected token: ${token}`);
 }
 
 console.log('TAROT BREAKER validation passed');
 console.log('Required files:', required.length);
-console.log('Dynamic Star Gate Garden assets: 15 WebP layers');
+console.log('Dynamic Star Gate Garden assets: static far sky + celestial overlay + repeating clouds');
 console.log('Shion / Shiopon sheets: 1536x512, 4 frames each');
 console.log(`Lumiere sheets: ${lumiereSize.width}x${lumiereSize.height}, 4 frames each`);
 console.log('Manifest: 384x512 cells, baseline_y=480');

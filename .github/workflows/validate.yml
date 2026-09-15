@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check game.js
           node --check scene-effects.js
+          node --check scene-layout.js
           node --check audio.js
           node --check lumiere-outline.js
           node --check dialogue.js
@@ -36,6 +37,7 @@ jobs:
       - name: Validate game assets and manifest
         run: |
           node scripts/validate.mjs
+          node scripts/validate-background-assets.mjs
           node scripts/validate-audio.mjs
 
       - name: Test collision, navigation, input and game integration

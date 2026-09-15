@@ -9,7 +9,7 @@
   const NORMAL_VOLUME = 0.35;
   const INTERACTION_VOLUME = 0.16;
   const FADE_MS = 320;
-  const BGM_SRC = "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3";
+  const BGM_SRC = document.currentScript?.dataset.bgmUrl || "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3";
 
   const bgm = new Audio(BGM_SRC);
   bgm.loop = true;

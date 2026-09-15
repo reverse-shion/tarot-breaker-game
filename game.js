@@ -2,7 +2,7 @@
   "use strict";
 
   const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d", { alpha: true });
+  let ctx = canvas.getContext("2d", { alpha: true });
   const map = document.getElementById("map-layer");
   const start = document.getElementById("start");
   const startScreen = document.getElementById("start-screen");
@@ -227,7 +227,10 @@
   async function loadCollision() {
     const response = await fetch(COLLISION_URL, { cache: "no-store" });
     if (!response.ok) throw new Error("当たり判定データを読み込めません");
-    collision = createCollision(await response.json());
+    const data = await response.json();
+    collision = createCollision(window.TarotSceneLayout ? {
+      ...data, blockedAreas: [...(data.blockedAreas || []), ...window.TarotSceneLayout.solidBases],
+    } : data);
     walkAreas = collision.areas;
     collisionVersion = collision.version;
     navigation = createNavigator(collision, 16);
@@ -1122,13 +1125,18 @@
     });
 
     for (const entry of actors) {
-      drawActor(
-        entry.actor,
-        entry.actorImages,
-        entry.drawHeight,
-        entry.glowColor,
-        entry.options,
-      );
+      const paint = (target) => {
+        const original = ctx;
+        ctx = target;
+        try {
+          drawActor(entry.actor, entry.actorImages, entry.drawHeight,
+            entry.glowColor, entry.options);
+        } finally { ctx = original; }
+      };
+      if (window.TarotSceneEffects) {
+        window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
+          Math.min(2, dpr * camera.zoom), paint);
+      } else paint(ctx);
     }
   }
 
@@ -1308,6 +1316,7 @@
     map.style.height = world.h + "px";
     map.style.transform =
       `translate3d(${-origin.x * camera.zoom}px,${-origin.y * camera.zoom}px,0) scale(${camera.zoom})`;
+    window.TarotSceneEffects?.syncCamera({ world, origin, zoom: camera.zoom });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssWidth, cssHeight);
     ctx.save();
@@ -1317,6 +1326,7 @@
     drawActors();
     drawCollisionDebug();
     drawNavDebug();
+    window.TarotSceneEffects?.drawDebug(ctx, { player, shiopon, lumiere }, scale, camera.zoom);
     ctx.restore();
   }
 
@@ -1534,6 +1544,7 @@
 
       const loaded = await Promise.all([
         waitForMap(),
+        window.TarotSceneEffects?.ready,
         ...Object.entries(files).map(async ([key, src]) => {
           images[key] = await loadImage(src);
         }),

@@ -1,0 +1,70 @@
+/* Preview 46 — stable seamless Chrono Trigger-style cloud drift.
+   Keep the supplied cloud artwork at its authored 1448x1086 world size and
+   move only the three-copy strip from right to left. The cloud layer receives
+   its world geometry immediately, before async game setup, so Safari never
+   starts the percentage animation against a zero-size parent. Avoid masks,
+   contain and backface compositing on the moving layer because those can make
+   a transformed WebKit layer intermittently disappear after page load. */
+
+@keyframes cloud-main-scroll-left {
+  from { transform: translate3d(-33.333333%, 0, 0); }
+  to { transform: translate3d(-66.666667%, 0, 0); }
+}
+
+@-webkit-keyframes cloud-main-scroll-left {
+  from { -webkit-transform: translate3d(-33.333333%, 0, 0); transform: translate3d(-33.333333%, 0, 0); }
+  to { -webkit-transform: translate3d(-66.666667%, 0, 0); transform: translate3d(-66.666667%, 0, 0); }
+}
+
+.scene-cloud-main {
+  z-index: -1 !important;
+  width: 1448px;
+  height: 1086px;
+  overflow: hidden !important;
+  opacity: .72 !important;
+  pointer-events: none;
+}
+
+.scene-cloud-main-track {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: flex;
+  width: 300%;
+  min-width: 300%;
+  height: 100%;
+  will-change: transform;
+  -webkit-transform: translate3d(-33.333333%, 0, 0);
+  transform: translate3d(-33.333333%, 0, 0);
+  -webkit-animation: cloud-main-scroll-left 64s linear infinite !important;
+  animation: cloud-main-scroll-left 64s linear infinite !important;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.scene-cloud-main-track > .scene-cloud-copy {
+  display: block;
+  flex: 0 0 calc(33.333333% + 1px);
+  width: calc(33.333333% + 1px);
+  min-width: calc(33.333333% + 1px);
+  height: 100%;
+  max-width: none;
+  margin: 0 -1px 0 0;
+  object-fit: fill;
+  image-rendering: auto;
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-animation: none !important;
+  animation: none !important;
+  -webkit-transform: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-cloud-main-track {
+    -webkit-animation-duration: 112s !important;
+    animation-duration: 112s !important;
+  }
+}

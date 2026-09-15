@@ -45,12 +45,14 @@ body {
 }
 .map-layer {
   z-index: 0;
+  visibility: hidden; /* sizing reference; the cleaned canvas is the visible map */
 }
 .scene-world-layer {
   z-index: 0;
   overflow: visible;
 }
 .scene-world-layer > img,
+.scene-world-layer > canvas,
 .scene-object > img {
   display: block;
   width: 100%;
@@ -64,122 +66,74 @@ body {
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  transform-origin: 50% 50%;
-  will-change: left, top, width, height, opacity;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 .scene-front {
   z-index: 2;
 }
-.scene-star-sky {
-  mix-blend-mode: screen;
-  opacity: 0.62;
-}
-.scene-star-sky img {
-  animation: star-sky-breathe 6.4s ease-in-out infinite alternate;
-}
+.scene-star-sky { z-index: -1; opacity: 1; }
 .scene-cloud {
-  opacity: 0.68;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0, #000 2.5%, #000 97.5%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 2.5%, #000 97.5%, transparent 100%);
 }
-.scene-cloud img {
-  transform: scale(1.025);
-  animation: cloud-drift 34s ease-in-out infinite alternate;
+.scene-cloud-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
-.scene-waterfall-base {
-  opacity: 0.78;
+.scene-cloud-copy {
+  display: block;
+  flex: 0 0 calc(50% + 1px);
+  width: calc(50% + 1px);
+  height: 100%;
+  max-width: none;
+  margin-right: -1px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 50%;
 }
-.scene-waterfall-flow {
-  opacity: 0.46;
+.scene-cloud-far { opacity: .22; }
+.scene-cloud-near { opacity: .40; }
+.scene-cloud-far-track {
+  animation: cloud-scroll-left 90s linear infinite;
+  animation-delay: -23s;
 }
-.scene-waterfall-flow img {
-  animation: waterfall-flow 2.15s linear infinite;
+.scene-cloud-near-track {
+  animation: cloud-scroll-left 54s linear infinite;
+  animation-delay: -9s;
 }
-.scene-ground {
-  opacity: 1;
+.scene-cloud-far .scene-cloud-copy { transform: scale(1.01); }
+.scene-cloud-near .scene-cloud-copy {
+  animation: cloud-near-bob 7.5s ease-in-out infinite;
 }
-.scene-fountain-base {
-  opacity: 0.98;
-}
-.scene-fountain-water {
-  opacity: 0.88;
-}
-.scene-fountain-water img {
-  transform-origin: 50% 53%;
-  animation: fountain-water-breathe 3.6s ease-in-out infinite alternate;
-}
-.scene-fountain-crystal img {
-  transform-origin: 50% 56%;
-  animation: fountain-crystal-float 4.8s ease-in-out infinite;
-}
-.scene-fountain-glow {
-  opacity: 0.5;
-  mix-blend-mode: screen;
-}
-.scene-fountain-glow img {
-  transform-origin: 50% 54%;
-  animation:
-    fountain-glow-orbit 38s linear infinite,
-    fountain-glow-pulse 3.2s ease-in-out infinite alternate;
-}
-.scene-fountain-sparkle {
-  opacity: 0.42;
-  mix-blend-mode: screen;
-}
-.scene-fountain-sparkle img {
-  animation: fountain-sparkle 2.9s ease-in-out infinite alternate;
-}
-.scene-gate-inner-light {
-  opacity: 0.62;
-  mix-blend-mode: screen;
-}
-.scene-gate-inner-light img {
-  animation: gate-breathe 5.6s ease-in-out infinite alternate;
-}
-.scene-gate-base {
-  opacity: 1;
-}
-.scene-gate-particle {
-  opacity: 0.48;
-  mix-blend-mode: screen;
-}
-.scene-gate-particle img {
-  animation: gate-particle-drift 8s ease-in-out infinite alternate;
-}
-.scene-gate-event {
-  opacity: 0;
-  mix-blend-mode: screen;
-  transition: opacity 700ms ease;
-}
-.scene-gate-event img {
-  animation: gate-event-energy 4.6s ease-in-out infinite alternate;
-}
-.scene-foreground {
-  opacity: 1;
-}
-[data-gate-state="unstable"] .scene-gate-inner-light img {
-  animation: gate-unstable 2.8s ease-in-out infinite;
-}
-[data-gate-state="unstable"] .scene-gate-particle {
-  opacity: 0.28;
-}
-[data-gate-state="event"] .scene-gate-inner-light {
-  opacity: 0.9;
-}
-[data-gate-state="event"] .scene-gate-inner-light img {
-  animation-duration: 2.8s;
-}
-[data-gate-state="event"] .scene-gate-particle {
-  opacity: 0.9;
-}
-[data-gate-state="event"] .scene-gate-event {
-  opacity: 0.82;
-}
-.scene-debug .scene-object {
-  outline: 1px solid rgba(70, 225, 255, 0.9);
-  background: rgba(70, 225, 255, 0.05);
-}
-.scene-debug .scene-front.scene-object {
-  outline-color: rgba(255, 166, 235, 0.9);
-}
+.scene-waterfall { opacity: .88; mask-size:100% 100%; mask-repeat:no-repeat;
+  -webkit-mask-size:100% 100%; -webkit-mask-repeat:no-repeat; }
+.scene-waterfall canvas { animation: waterfall-flow 2.2s linear infinite; }
+.scene-waterfall-flow canvas { animation-delay: -1.1s; }
+.scene-ground, .scene-fountain-base, .scene-foreground, .scene-gate-base { opacity:1; }
+.scene-fountain-water img { transform-origin:50% 62%; animation:fountain-water-breathe 4.7s ease-in-out infinite; }
+.scene-crystal-float { position:relative; width:100%; height:100%; animation:fountain-crystal-float 4.4s ease-in-out infinite; }
+.scene-crystal-float canvas { position:absolute; inset:0; width:100%; height:100%; }
+.scene-crystal-ring { transform-origin:50% 55%; animation:fountain-ring-rotate 24s linear infinite; }
+.scene-fountain-glow, .scene-fountain-sparkle, .scene-gate-inner-light,
+.scene-gate-particle, .scene-gate-event { mix-blend-mode:screen; }
+.scene-fountain-glow img { animation:fountain-glow-pulse 3.1s ease-in-out infinite; }
+.scene-fountain-sparkle img { animation:fountain-sparkle 2.6s ease-in-out infinite; animation-delay:-.8s; }
+.scene-gate-inner-light img { animation:gate-breathe 5s ease-in-out infinite; }
+.scene-gate-particle img { animation:gate-particle-drift 7.6s ease-in-out infinite; }
+.scene-gate-event { visibility:hidden; opacity:0; transition:opacity 700ms ease; }
+.scene-gate-event img { animation:gate-event-energy 4.6s ease-in-out infinite; }
+[data-gate-state="unstable"] .scene-gate-inner-light img { animation:gate-unstable 3.6s ease-in-out infinite; }
+[data-gate-state="event"] .scene-gate-inner-light img { animation-duration:3.2s; }
+[data-gate-state="event"] .scene-gate-event { visibility:visible; opacity:.82; }
+.scene-debug .scene-object { outline:1px solid #54dfff; }
+.scene-debug .scene-gate-base, .scene-debug .scene-gate-inner-light,
+.scene-debug .scene-gate-particle, .scene-debug .scene-gate-event { outline-color:#ffe277; }
 #game {
   position: absolute;
   inset: 0;
@@ -206,7 +160,7 @@ body {
   backdrop-filter: blur(2px);
 }
 .start-card {
-  width: min(92vw, 420px);
+  width: min(100%, 420px);
   text-align: center;
   padding: 26px 22px 24px;
   border: 1px solid var(--line);
@@ -318,157 +272,89 @@ body {
   backdrop-filter: blur(8px);
 }
 
-@keyframes star-sky-breathe {
-  from {
-    opacity: 0.76;
-    filter: brightness(0.95) saturate(0.98);
-  }
-  to {
-    opacity: 1;
-    filter: brightness(1.12) saturate(1.08);
-  }
+/* Preview 31: two-copy, one-way cloud flow. */
+@keyframes cloud-scroll-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
 }
-@keyframes cloud-drift {
-  from {
-    transform: translate3d(-9px, 3px, 0) scale(1.025);
-  }
-  to {
-    transform: translate3d(9px, -3px, 0) scale(1.025);
-  }
+@keyframes cloud-near-bob {
+  0%, 100% { transform: translate3d(0, -1.5px, 0) scale(1.03); }
+  50% { transform: translate3d(0, 1.5px, 0) scale(1.03); }
 }
+/* The reset happens at zero alpha. A second copy is half a cycle ahead;
+   the static mask holds the spillway in place while texture travels down. */
 @keyframes waterfall-flow {
-  0% {
-    transform: translate3d(0, -2px, 0);
-    filter: brightness(0.94);
-  }
-  70% {
-    opacity: 0.58;
-  }
-  100% {
-    transform: translate3d(0, 7px, 0);
-    filter: brightness(1.12);
-    opacity: 0.18;
-  }
+  0% { transform:translate3d(0,-8px,0); opacity:0; }
+  20% { opacity:.72; }
+  45% { opacity:.95; }
+  70% { opacity:.72; }
+  100% { transform:translate3d(0,8px,0); opacity:0; }
 }
 @keyframes fountain-crystal-float {
-  0%,
-  100% {
-    transform: translate3d(0, 5px, 0);
-  }
-  50% {
-    transform: translate3d(0, -5px, 0);
-  }
+  0%,100% { transform:translate3d(0,6px,0); }
+  50% { transform:translate3d(0,-6px,0); }
+}
+@keyframes fountain-ring-rotate {
+  from { transform:rotate(0deg); }
+  to { transform:rotate(360deg); }
 }
 @keyframes fountain-water-breathe {
-  from {
-    transform: scale(0.985);
-    opacity: 0.82;
-    filter: brightness(0.96);
-  }
-  to {
-    transform: scale(1.015);
-    opacity: 1;
-    filter: brightness(1.1);
-  }
-}
-@keyframes fountain-glow-orbit {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  0%,100% { transform:rotate(-.45deg) scale(.985); opacity:.78; }
+  50% { transform:rotate(.45deg) scale(1.015); opacity:.98; }
 }
 @keyframes fountain-glow-pulse {
-  from {
-    opacity: 0.46;
-    filter: brightness(0.92);
-  }
-  to {
-    opacity: 0.78;
-    filter: brightness(1.18);
-  }
+  0%,100% { opacity:.55; }
+  50% { opacity:.95; }
 }
 @keyframes fountain-sparkle {
-  from {
-    transform: translate3d(0, 2px, 0) scale(0.99);
-    opacity: 0.42;
-    filter: brightness(0.96);
-  }
-  to {
-    transform: translate3d(0, -2px, 0) scale(1.015);
-    opacity: 0.72;
-    filter: brightness(1.16);
-  }
+  0%,100% { transform:scale(.98); opacity:.35; }
+  50% { transform:scale(1.02); opacity:.8; }
 }
 @keyframes gate-breathe {
-  from {
-    opacity: 0.62;
-    filter: brightness(0.92) saturate(0.96);
-  }
-  to {
-    opacity: 0.9;
-    filter: brightness(1.15) saturate(1.08);
-  }
+  0%,100% { opacity:.45; }
+  50% { opacity:.7; }
 }
 @keyframes gate-particle-drift {
-  from {
-    transform: translate3d(0, 4px, 0);
-    filter: brightness(0.96);
-  }
-  to {
-    transform: translate3d(0, -5px, 0);
-    filter: brightness(1.12);
-  }
+  0%,100% { transform:translate3d(0,3px,0); opacity:.12; }
+  50% { transform:translate3d(0,-3px,0); opacity:.22; }
 }
 @keyframes gate-event-energy {
-  from {
-    transform: scale(0.985);
-    filter: brightness(0.95) saturate(0.98);
-  }
-  to {
-    transform: scale(1.025);
-    filter: brightness(1.2) saturate(1.12);
-  }
+  0%,100% { transform:scale(.99); }
+  50% { transform:scale(1.02); }
 }
 @keyframes gate-unstable {
-  0%,
-  100% {
-    opacity: 0.72;
-    filter: brightness(0.88);
-  }
-  18% {
-    opacity: 0.46;
-    filter: brightness(0.72);
-  }
-  37% {
-    opacity: 0.84;
-    filter: brightness(1.16);
-  }
-  61% {
-    opacity: 0.58;
-    filter: brightness(0.82);
-  }
-  78% {
-    opacity: 0.92;
-    filter: brightness(1.2);
-  }
+  0%,100% { opacity:.45; }
+  50% { opacity:.78; }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  * {
-    scroll-behavior: auto !important;
+  .scene-cloud-far-track {
+    animation: none;
+    transform: translate3d(0, 0, 0);
   }
-  .scene-world-layer img,
-  .scene-object img {
-    animation: none !important;
+  .scene-cloud-near-track {
+    animation-name: cloud-scroll-left;
+    animation-duration: 180s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-delay: -60s;
   }
-  .scene-waterfall-flow {
-    display: none;
+  .scene-cloud-near .scene-cloud-copy {
+    animation: none;
+    transform: scale(1.03);
   }
-  .scene-gate-event {
-    transition: none;
-  }
+  .scene-crystal-float, .scene-crystal-ring, .scene-fountain-water img,
+  .scene-fountain-sparkle img, .scene-gate-event img { animation:none; }
+  .scene-fountain-sparkle { opacity:.35; }
+  .scene-waterfall canvas { animation-duration:5s; }
+  .scene-waterfall-flow canvas { animation-delay:-2.5s; }
+  .scene-gate-particle img { animation:none; opacity:.06; }
+  .scene-gate-event { transition:none; }
+  /* Gentle glow continues; no rotation or pulsing geometry. */
+  .scene-fountain-glow img { animation-duration:5.2s; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scene-world-layer canvas, .scene-cloud-track, .scene-cloud-copy, .scene-object img,
+  .scene-crystal-float, .scene-crystal-ring { will-change:transform,opacity; }
 }
 /* Phase 2 touch surface and progressive floating stick. */
 html,
@@ -514,3 +400,11 @@ body {
   border-radius: 6px;
   font: 11px/1.5 monospace;
 }
+
+#game-shell:not([data-scene-ready="true"]) .scene-world-layer,
+#game-shell:not([data-scene-ready="true"]) .scene-object { visibility: hidden; }
+.scene-debug .scene-gate-base, .scene-debug .scene-gate-inner-light,
+.scene-debug .scene-gate-particle, .scene-debug .scene-gate-event { outline-color: #ffe277; }
+.scene-status { position:absolute; z-index:15; left:8px; bottom:8px;
+  max-width:calc(100% - 16px); padding:5px; color:white;
+  background:rgba(9,12,32,.8); font:10px/1.5 monospace; pointer-events:none; }
