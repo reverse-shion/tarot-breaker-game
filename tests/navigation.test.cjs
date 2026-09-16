@@ -80,13 +80,11 @@ test('flowerbed/fountain taps project to the nearest legal boundary', () => {
   const c = createCollision(fixture([rect(100, 100, 100, 100)]));
   assert.deepEqual(c.nearestWalkable({ x: 220, y: 155 }), { x: 200, y: 155 });
 });
-test('lateral map edges stay blocked; invalid coordinates never crash', () => {
-  const east = { x: 1190, y: 490 };
-  assert.equal(collision.isWalkable(east.x, east.y), false);
-  const projected = collision.nearestWalkable(east);
-  assert.ok(projected && collision.isWalkable(projected.x, projected.y));
-  assert.ok(projected.x < 1100);
-  assert.ok(nav.findPath(spawn, east));
+test('authored east side passage stays walkable while the far map edge remains blocked', () => {
+  const eastPassage = { x: 1190, y: 490 };
+  assert.equal(collision.isWalkable(eastPassage.x, eastPassage.y), true);
+  checkRoute(nav.findPath(spawn, eastPassage));
+  assert.equal(collision.isWalkable(1300, 500), false);
   assert.equal(nav.findPath(spawn, { x: NaN, y: 0 }), null);
   assert.equal(nav.findPath({ x: -1, y: -1 }, spawn), null);
   assert.doesNotThrow(() => nav.findPath(spawn, { x: -9999, y: 9999 }));
