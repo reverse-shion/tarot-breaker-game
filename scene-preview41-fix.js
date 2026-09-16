@@ -5,11 +5,11 @@
 
   // Gate presentation is isolated in its own stylesheet so collision, map,
   // fountain, cloud and character logic stay untouched.
-  if (!document.querySelector('link[data-gate-polish="v1"]')) {
+  if (!document.querySelector('link[data-gate-polish="v2"]')) {
     const gatePolish = document.createElement("link");
     gatePolish.rel = "stylesheet";
-    gatePolish.href = "./gate-polish.css?v=20260916-gate-polish-v1";
-    gatePolish.dataset.gatePolish = "v1";
+    gatePolish.href = "./gate-polish.css?v=20260916-gate-polish-v2";
+    gatePolish.dataset.gatePolish = "v2";
     document.head.appendChild(gatePolish);
   }
 
@@ -18,9 +18,8 @@
   const FOREGROUND_NUDGE_X = 4;
 
   // Keep the current authored map placement, but remove the legacy gate baked
-  // into the map. The replacement gate is rendered by independent scene layers
-  // below, so moving the gate now moves the visible artwork instead of only the
-  // light overlay.
+  // into the map. Only the approved inner-light WebP is used as the visible
+  // replacement gate; the old/high-detail gate-base artwork stays hidden.
   layout.paintBackground = function paintBackground(ctx, background, sky) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -53,13 +52,11 @@
     }
   };
 
-  // One source of truth for the complete gate assembly. Future gate position
-  // changes must change only these offsets so base, inner light and event FX
-  // remain aligned with each other.
+  // One source of truth for the approved gate and its FX. The position and
+  // size of the approved gate remain unchanged; only effects are polished.
   const GATE_OFFSET_X = 0;
   const GATE_OFFSET_Y = 0;
   const gateParts = [
-    [".scene-gate-base", 521.5469613259668, -70, 560, 420],
     [".scene-gate-inner-light", 651, 10, 299, 224],
     [".scene-gate-particle", 590, -32, 420, 320],
     [".scene-gate-event", 560, -52, 480, 350],
@@ -73,12 +70,12 @@
     node.dataset.worldH = String(height);
   }
   const gateBase = document.querySelector(".scene-gate-base");
-  if (gateBase) gateBase.hidden = false;
+  if (gateBase) gateBase.hidden = true;
   layout.gateAssembly = Object.freeze({
     offsetX: GATE_OFFSET_X,
     offsetY: GATE_OFFSET_Y,
     baseline: (layout.gate?.baseline ?? 242) + GATE_OFFSET_Y,
-    version: "gate-assembly-v1",
+    version: "gate-polish-v2",
   });
 
   // The current foreground upload stores the authored 1448x1086 scene at
