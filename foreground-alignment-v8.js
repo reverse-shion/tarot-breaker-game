@@ -24,8 +24,6 @@
     return { ...shape, points: shiftPoints(shape.points, dx, dy) };
   };
 
-  // scene-preview41-fix.js currently normalizes foreground helpers to x=0.
-  // Restore the authored -15px alignment to every foreground-derived occluder.
   for (const area of layout.occluders || []) {
     if (area.source !== "foreground") continue;
     if (Array.isArray(area.bounds)) {
@@ -52,17 +50,13 @@
     }
   }
 
-  layout.foregroundOffset = Object.freeze({
-    x: FOREGROUND_X,
-    y: FOREGROUND_Y,
-  });
+  layout.foregroundOffset = Object.freeze({ x: FOREGROUND_X, y: FOREGROUND_Y });
 
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(foreground, FOREGROUND_X, FOREGROUND_Y, w, h);
-
     layout.latestForegroundPlacement = Object.freeze({
       sourceW: foreground.naturalWidth || w,
       sourceH: foreground.naturalHeight || h,
@@ -90,14 +84,14 @@
   layout.depthModelVersion = "preview-53-foreground-aligned";
   layout.artworkModelVersion = "foreground-alignment-v8";
 
-  // Optional on-device calibration mode. This is intentionally loaded only
-  // when ?fgAlign=1 is present so normal gameplay is unchanged.
+  // Optional on-device calibration mode. v10 adds a complete-map overview,
+  // wider scale range and faster scale controls. Normal gameplay is unchanged.
   if (new URLSearchParams(location.search).get("fgAlign") === "1") {
     setTimeout(() => {
-      if (document.querySelector('script[data-fg-calibrator="v9"]')) return;
+      if (document.querySelector('script[data-fg-calibrator="v10"]')) return;
       const script = document.createElement("script");
-      script.src = "./foreground-calibrator-v9.js?v=20260916-v9";
-      script.dataset.fgCalibrator = "v9";
+      script.src = "./foreground-calibrator-v10.js?v=20260916-v10";
+      script.dataset.fgCalibrator = "v10";
       document.head.appendChild(script);
     }, 0);
   }
