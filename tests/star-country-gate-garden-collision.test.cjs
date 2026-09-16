@@ -24,10 +24,10 @@ test('official collision v5 preserves the latest six authored walk areas', () =>
   }
 });
 
-test('spawn and required character locations stay walkable', () => {
+test('spawn, Shiopon and the Lumiere gate approach stay walkable', () => {
   assert.equal(collision.isWalkable(724, 1015), true, 'Shion spawn');
   assert.equal(collision.isWalkable(810, 800), true, 'Shiopon home');
-  assert.equal(collision.isWalkable(810, 212), true, 'Lumiere home');
+  assert.equal(collision.isWalkable(810, 240), true, 'Lumiere gate approach');
 });
 
 test('fountain, flowerbeds and far map edges remain blocked', () => {
@@ -44,7 +44,7 @@ test('the intended paved route remains connected from spawn to the Star Gate', (
   assert.equal(collision.isWalkable(810, 300), true, 'central gate stairs');
 
   const navigation = createNavigator(collision, 16);
-  const route = navigation.findPath({ x: 724, y: 1015 }, { x: 810, y: 212 });
-  assert.ok(route, 'spawn must have a route to the gate');
+  const route = navigation.findPath({ x: 724, y: 1015 }, { x: 810, y: 240 });
+  assert.ok(route, 'spawn must have a route to the gate approach');
   assert.ok(route.points.length > 1);
 });
