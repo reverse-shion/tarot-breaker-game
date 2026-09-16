@@ -65,7 +65,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
-  for (const name of ['navigation.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
+  for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
   await new Promise(setImmediate);
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
@@ -84,7 +84,7 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.deepEqual(s.world, { w: 1448, h: 1086 });
   assert.deepEqual(s.scale, { x: 1, y: 1 });
-  assert.equal(s.player.x, 729); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
+  assert.equal(s.player.x, 724); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
   assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
   assert.equal(s.lumiere.homeRef.x, 810); assert.equal(s.lumiere.homeRef.y, 212);
   assert.equal(s.lumiere.moving, false); assert.equal(s.lumiereCollisionDistance, 32);
@@ -153,7 +153,7 @@ test('real event bindings: drag/keyboard/reset cancel and reset clears held stic
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
-  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 729);
+  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 724);
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
   h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
