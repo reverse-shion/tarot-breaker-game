@@ -8,25 +8,59 @@
   const map = document.getElementById("map-layer");
   const source = document.querySelector(".scene-foreground img");
   const groundLayer = document.querySelector(".scene-ground");
-  const FOUNTAIN_SHIFT_Y = 50;
-  const AUTHORITATIVE_MAP = "./assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v3";
-  const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v3";
+
+  const FOUNTAIN_SHIFT_X = 14;
+  const FOUNTAIN_SHIFT_Y = 24;
+  const AUTHORITATIVE_MAP = "./assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v4";
+  const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v4";
 
   let precisePolys = [];
 
-  function shiftPoints(points, dx, dy) {
-    return (points || []).map(([x, y]) => [x + dx, y + dy]);
+  // The new map is authoritative. Old authored collision/depth helpers from the
+  // previous map must not survive this migration.
+  if (Array.isArray(layout.solidBases)) layout.solidBases.splice(0);
+  if (Array.isArray(layout.occluders)) layout.occluders.splice(0);
+  layout.activeOccluders = () => [];
+
+  // A completely empty collision JSON means "reset/open map" while the user is
+  // rebuilding collision for the new artwork. Internally use one synthetic
+  // full-map walk polygon without writing it back to JSON/editor data.
+  const navigation = root.TarotNavigation;
+  if (navigation && !navigation.__singleMapEmptyWalkReset) {
+    const originalCreateCollision = navigation.createCollision;
+    navigation.createCollision = function createCollisionWithReset(data) {
+      const emptyWalk =
+        data?.map === "star-country-gate-garden" &&
+        Array.isArray(data.walkAreas) &&
+        data.walkAreas.length === 0;
+      if (!emptyWalk) return originalCreateCollision(data);
+
+      const synthetic = {
+        ...data,
+        walkAreas: [
+          {
+            type: "poly",
+            points: [
+              [0, 0],
+              [reference.width, 0],
+              [reference.width, reference.height],
+              [0, reference.height],
+            ],
+          },
+        ],
+        blockedAreas: [],
+      };
+      const collision = originalCreateCollision(synthetic);
+      return {
+        ...collision,
+        areas: [],
+        blockedAreas: [],
+        version: Number(data.version) || collision.version,
+      };
+    };
+    navigation.__singleMapEmptyWalkReset = true;
   }
 
-  function shiftShape(shape, dx, dy) {
-    if (!shape) return shape;
-    if (shape.type === "ellipse") {
-      return { ...shape, cx: shape.cx + dx, cy: shape.cy + dy };
-    }
-    return { ...shape, points: shiftPoints(shape.points, dx, dy) };
-  }
-
-  // The transparent garden WebP is the one and only map artwork.
   if (source) {
     source.crossOrigin = "anonymous";
     source.src = AUTHORITATIVE_MAP;
@@ -37,8 +71,9 @@
   }
   if (groundLayer) groundLayer.hidden = true;
 
-  // Move the complete fountain stack toward the camera, and keep its physical
-  // footprint / front-rim occlusion aligned with the visible fountain.
+  // Pull the fountain part-way back from the previous +50px placement and nudge
+  // it slightly to the rear-right. It stays a background object; actor masking
+  // no longer uses the old fountain/depth polygons.
   for (const selector of [
     ".scene-fountain-base",
     ".scene-fountain-water",
@@ -47,34 +82,12 @@
     ".scene-fountain-sparkle",
   ]) {
     const node = document.querySelector(selector);
-    if (!node || node.dataset.singleMapFountainShift === "1") continue;
+    if (!node || node.dataset.singleMapFountainShift === "v4") continue;
+    node.dataset.worldX = String(Number(node.dataset.worldX || 0) + FOUNTAIN_SHIFT_X);
     node.dataset.worldY = String(Number(node.dataset.worldY || 0) + FOUNTAIN_SHIFT_Y);
-    node.dataset.singleMapFountainShift = "1";
+    node.dataset.singleMapFountainShift = "v4";
   }
 
-  if (!layout.singleMapFountainShiftApplied) {
-    for (const area of layout.occluders || []) {
-      if (area.source !== "fountain") continue;
-      if (Array.isArray(area.bounds)) area.bounds[1] += FOUNTAIN_SHIFT_Y;
-      area.baseline += FOUNTAIN_SHIFT_Y;
-      area.footArea = shiftShape(area.footArea, 0, FOUNTAIN_SHIFT_Y);
-      area.points = shiftPoints(area.points, 0, FOUNTAIN_SHIFT_Y);
-    }
-    for (const shape of layout.solidBases || []) {
-      if (
-        shape.type === "ellipse" &&
-        Math.abs(shape.cx - 800) < 2 &&
-        Math.abs(shape.cy - 533) < 2 &&
-        shape.rx > 150
-      ) {
-        shape.cy += FOUNTAIN_SHIFT_Y;
-      }
-    }
-    layout.singleMapFountainShiftApplied = true;
-  }
-
-  // Restore the actual Star Gate frame in normal play. The public preview used
-  // to contain only the inner light node, so create the missing frame when needed.
   const STAIR_TOP_Y = layout.gate?.baseline ?? 242;
   const GATE_CENTER_X = layout.gate?.openingX ?? 800;
   const GATE_LIFT = 32;
@@ -123,6 +136,7 @@
   placeObject(innerLight, INNER_LIGHT_X, INNER_LIGHT_Y, INNER_LIGHT_W, INNER_LIGHT_H);
   placeObject(document.querySelector(".scene-gate-particle"), GATE_CENTER_X - 210, STAIR_TOP_Y - 320 - GATE_LIFT, 420, 320);
   placeObject(document.querySelector(".scene-gate-event"), GATE_CENTER_X - 240, STAIR_TOP_Y - 350 - GATE_LIFT, 480, 350);
+
   const gateBase = document.querySelector(".scene-gate-base");
   if (gateBase) gateBase.hidden = true;
 
@@ -132,15 +146,12 @@
     lift: GATE_LIFT,
     starGate: Object.freeze({ x: STAR_GATE_X, y: STAR_GATE_Y, w: STAR_GATE_W, h: STAR_GATE_H }),
     innerLight: Object.freeze({ x: INNER_LIGHT_X, y: INNER_LIGHT_Y, w: INNER_LIGHT_W, h: INNER_LIGHT_H }),
-    version: "single-map-gate-v3",
+    version: "single-map-gate-v4",
   });
 
   layout.foregroundOffset = Object.freeze({ x: 0, y: 0 });
   layout.foregroundScale = 1;
 
-  // Normal play and the editor now use the exact same behindForegroundAreas.
-  // Never fall back to legacy rectangular occluders: that was the source of the
-  // visible square/rectangular fragments while walking behind scenery.
   async function loadPrecisePolys() {
     const candidates = [
       "./assets/maps/star-country-gate-garden-depth.json",
@@ -161,11 +172,10 @@
         );
         repaintForeground();
         return;
-      } catch (_) {
-        // Try the other repository layout.
-      }
+      } catch (_) {}
     }
-    console.warn("前景ポリゴンを読み込めませんでした。旧前景は描画しません。");
+    precisePolys = [];
+    repaintForeground();
   }
 
   layout.paintBackground = function paintBackgroundFromSingleMap(ctx, background) {
@@ -181,7 +191,6 @@
     const h = reference.height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, w, h);
-
     for (const area of precisePolys) {
       ctx.save();
       layout.trace(ctx, area.points);
@@ -189,7 +198,6 @@
       ctx.drawImage(foregroundSource, 0, 0, w, h);
       ctx.restore();
     }
-
     layout.latestForegroundPlacement = Object.freeze({
       sourceW: foregroundSource.naturalWidth || w,
       sourceH: foregroundSource.naturalHeight || h,
@@ -198,7 +206,7 @@
       drawW: w,
       drawH: h,
       scale: 1,
-      mode: "single-map-depth-json-v3",
+      mode: "single-map-reset-v4",
       occluderCount: precisePolys.length,
     });
   };
@@ -214,10 +222,10 @@
 
   layout.artworkPlacement = Object.freeze({
     ...(layout.artworkPlacement || {}),
-    background: Object.freeze({ mode: "single-map-authoritative-v3", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
-    foreground: Object.freeze({ mode: "single-map-depth-json-v3", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    background: Object.freeze({ mode: "single-map-authoritative-v4", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    foreground: Object.freeze({ mode: "single-map-reset-v4", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
     gate: layout.gateAssembly,
   });
-  layout.depthModelVersion = "single-map-depth-json-v3";
-  layout.artworkModelVersion = "single-map-transparent-v3";
+  layout.depthModelVersion = "single-map-reset-v4";
+  layout.artworkModelVersion = "single-map-transparent-v4";
 })(window);
