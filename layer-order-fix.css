@@ -1,0 +1,51 @@
+/* TAROT BREAKER single-map layer order v5
+   Back -> front:
+   scenery -> clouds -> islands -> waterfall -> gate light -> star gate -> garden background -> actors.
+*/
+.scene-farthest-sky,
+.scene-star-sky {
+  z-index: 0 !important;
+}
+
+.scene-cloud {
+  z-index: 1 !important;
+}
+
+.scene-islands {
+  z-index: 2 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.scene-waterfall {
+  z-index: 3 !important;
+}
+
+.scene-gate-inner-light,
+.scene-gate-particle,
+.scene-gate-event {
+  z-index: 4 !important;
+}
+
+.scene-star-gate {
+  z-index: 5 !important;
+}
+
+.scene-background,
+.scene-fountain-base,
+.scene-fountain-water,
+.scene-fountain-crystal,
+.scene-fountain-glow,
+.scene-fountain-sparkle {
+  z-index: 6 !important;
+}
+
+#game {
+  z-index: 7 !important;
+}
+
+/* Currently empty after the collision/depth reset. Keep this above actors for
+   future hand-authored occlusion polygons without affecting the present map. */
+.scene-foreground {
+  z-index: 8 !important;
+}
