@@ -60,17 +60,16 @@
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
 
-      <!-- Core artwork stack: ground and foreground use the 1448x1086 map axis.
-           Gate and inner light are independently anchored to the top stair. -->
+      <!-- Ground stays on the 1448x1086 map axis. Latest foreground is
+           restored to authored scale and centred by scene-preview41-fix.js. -->
       <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-ground.webp?v=20260916-shared-axis-v3" alt="" draggable="false" />
       </div>
 
       <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true">
-        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp?v=20260916-foreground-restore-v4" alt="" draggable="false" />
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp?v=20260916-latest-foreground-centered-v5" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
 
-      <!-- Legacy/high-detail gate base stays hidden. -->
       <div
         class="scene-object scene-back scene-gate-base"
         data-scene-object
@@ -148,34 +147,34 @@
         class="scene-object scene-back scene-gate-inner-light"
         data-scene-object
         data-world-x="705"
-        data-world-y="-42.814453125"
+        data-world-y="-74.814453125"
         data-world-w="190"
         data-world-h="284.814453125"
-        data-gate-position-revision="shared-axis-v3"
+        data-gate-position-revision="latest-foreground-centered-v5"
         aria-hidden="true"
         style="mix-blend-mode:normal;opacity:1;filter:none"
       >
-        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-shared-axis-v3" alt="" draggable="false" style="opacity:1;mix-blend-mode:normal" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-latest-foreground-centered-v5" alt="" draggable="false" style="opacity:1;mix-blend-mode:normal" />
       </div>
 
       <div
         class="scene-object scene-back scene-star-gate"
         data-scene-object
         data-world-x="520"
-        data-world-y="-131.33333333333331"
+        data-world-y="-163.33333333333331"
         data-world-w="560"
         data-world-h="373.3333333333333"
-        data-gate-position-revision="shared-axis-v3"
+        data-gate-position-revision="latest-foreground-centered-v5"
         aria-hidden="true"
       >
-        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-shared-axis-v3" alt="" draggable="false" style="opacity:1;filter:none;mix-blend-mode:normal;animation:none" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-latest-foreground-centered-v5" alt="" draggable="false" style="opacity:1;filter:none;mix-blend-mode:normal;animation:none" />
       </div>
 
       <div
         class="scene-object scene-back scene-gate-particle"
         data-scene-object
         data-world-x="590"
-        data-world-y="-78"
+        data-world-y="-110"
         data-world-w="420"
         data-world-h="320"
         aria-hidden="true"
@@ -188,7 +187,7 @@
         class="scene-object scene-front scene-gate-event"
         data-scene-object
         data-world-x="560"
-        data-world-y="-108"
+        data-world-y="-140"
         data-world-w="480"
         data-world-h="350"
         aria-hidden="true"
@@ -241,7 +240,7 @@
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
     <script src="./dialogue.js?v=1.0.0" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
-    <script src="./scene-preview41-fix.js?v=foreground-restore-v4" defer></script>
+    <script src="./scene-preview41-fix.js?v=latest-foreground-centered-v5" defer></script>
     <script src="./scene-effects.js?v=1.1.0" defer></script>
     <script
       src="./game.js?v=1.3.0"
