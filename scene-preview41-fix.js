@@ -3,6 +3,16 @@
   const layout = root.TarotSceneLayout;
   if (!layout) return;
 
+  // Gate presentation is isolated in its own stylesheet so collision, map,
+  // fountain, cloud and character logic stay untouched.
+  if (!document.querySelector('link[data-gate-polish="v1"]')) {
+    const gatePolish = document.createElement("link");
+    gatePolish.rel = "stylesheet";
+    gatePolish.href = "./gate-polish.css?v=20260916-gate-polish-v1";
+    gatePolish.dataset.gatePolish = "v1";
+    document.head.appendChild(gatePolish);
+  }
+
   const REFERENCE = layout.referenceSize;
   const FOREGROUND_SOURCE_SCALE = 0.81;
   const FOREGROUND_NUDGE_X = 4;
