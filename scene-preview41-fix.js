@@ -3,7 +3,6 @@
   const layout = root.TarotSceneLayout;
   if (!layout) return;
 
-  // Keep presentation fixes isolated from movement, dialogue and collision data.
   if (!document.querySelector('link[data-gate-polish="v2"]')) {
     const gatePolish = document.createElement("link");
     gatePolish.rel = "stylesheet";
@@ -15,10 +14,14 @@
   const REFERENCE = layout.referenceSize;
   const STAIR_TOP_Y = layout.gate?.baseline ?? 242;
   const GATE_CENTER_X = layout.gate?.openingX ?? 800;
+  const GATE_LIFT = 32;
 
-  // The new foreground is authored as a complete visual layer. The previous
-  // 81% reconstruction enlarged it and shifted every pillar/flower relative to
-  // the road. Draw it exactly onto the 1448x1086 reference canvas instead.
+  // Latest uploaded foreground is authored smaller inside its transparent
+  // source canvas. Restore the authored scale, then center the complete layer
+  // mathematically on the 1448-wide map axis. This removes the accumulated
+  // -15px/+4px legacy nudges that made the scene visibly asymmetric.
+  const FOREGROUND_SOURCE_SCALE = 0.81;
+
   const previousForegroundOffset = {
     x: layout.foregroundOffset?.x || 0,
     y: layout.foregroundOffset?.y || 0,
@@ -27,7 +30,7 @@
   const correctionY = -previousForegroundOffset.y;
 
   function shiftPoints(points, dx, dy) {
-    return points.map(([x, y]) => [x + dx, y + dy]);
+    return (points || []).map(([x, y]) => [x + dx, y + dy]);
   }
   function shiftShape(shape, dx, dy) {
     if (!shape) return shape;
@@ -37,18 +40,16 @@
     return { ...shape, points: shiftPoints(shape.points, dx, dy) };
   }
 
-  // scene-layout.js created foreground occluders using the older -15px offset.
-  // Move those masks back to the same zero-origin used by the latest artwork.
+  // Keep depth/collision helpers on the same zero-origin used by the restored
+  // authored foreground. Movement permission itself is not changed.
   for (const area of layout.occluders || []) {
     if (area.source !== "foreground") continue;
     if (Array.isArray(area.bounds)) area.bounds[0] += correctionX;
     area.baseline += correctionY;
     area.footArea = shiftShape(area.footArea, correctionX, correctionY);
-    area.points = shiftPoints(area.points || [], correctionX, correctionY);
+    area.points = shiftPoints(area.points, correctionX, correctionY);
   }
 
-  // The four foreground-derived physical post bases are not tagged with a
-  // source, so move only their known centres from the old authored offset.
   const oldForegroundSolidCenters = new Set(["569,452", "1010,452", "227,438", "1223,528"]);
   for (const shape of layout.solidBases || []) {
     if (shape.type !== "ellipse") continue;
@@ -62,12 +63,28 @@
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
+    const sourceW = foreground.naturalWidth || w * FOREGROUND_SOURCE_SCALE;
+    const sourceH = foreground.naturalHeight || h * FOREGROUND_SOURCE_SCALE;
+    const drawW = sourceW / FOREGROUND_SOURCE_SCALE;
+    const drawH = sourceH / FOREGROUND_SOURCE_SCALE;
+    const drawX = (w - drawW) / 2;
+    const drawY = 0;
+
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, 0, 0, w, h);
+    ctx.drawImage(foreground, drawX, drawY, drawW, drawH);
+
+    layout.latestForegroundPlacement = Object.freeze({
+      sourceW,
+      sourceH,
+      drawX,
+      drawY,
+      drawW,
+      drawH,
+      sourceScale: FOREGROUND_SOURCE_SCALE,
+    });
   };
 
-  // Preserve the current cleaned map/background routine. Only visual placement
-  // is changed; the island, sky, cloud and waterfall systems remain intact.
+  // Preserve the cleaned map/background pipeline.
   layout.paintBackground = function paintBackground(ctx, background, sky) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -100,20 +117,17 @@
     }
   };
 
-  // Latest Star Gate source is 1536x1024 (3:2). Keep that aspect ratio instead
-  // of stretching it to the previous 560x420 box. Its bottom now lands exactly
-  // on the top stair / gate baseline.
+  // Gate and inner light share one centre axis. Both are lifted together so
+  // the latest gate sits higher than the former stair-top placement.
   const STAR_GATE_W = 560;
   const STAR_GATE_H = STAR_GATE_W * (1024 / 1536);
   const STAR_GATE_X = GATE_CENTER_X - STAR_GATE_W / 2;
-  const STAR_GATE_Y = STAIR_TOP_Y - STAR_GATE_H;
+  const STAR_GATE_Y = STAIR_TOP_Y - STAR_GATE_H - GATE_LIFT;
 
-  // Latest inner-light source is 1024x1535 (portrait). Keep its native ratio,
-  // centre it in the same gate axis, and anchor its bottom to the same stair.
   const INNER_LIGHT_W = 190;
   const INNER_LIGHT_H = INNER_LIGHT_W * (1535 / 1024);
   const INNER_LIGHT_X = GATE_CENTER_X - INNER_LIGHT_W / 2;
-  const INNER_LIGHT_Y = STAIR_TOP_Y - INNER_LIGHT_H;
+  const INNER_LIGHT_Y = STAIR_TOP_Y - INNER_LIGHT_H - GATE_LIFT;
 
   function placeObject(selector, x, y, width, height) {
     const node = document.querySelector(selector);
@@ -126,10 +140,8 @@
 
   placeObject(".scene-star-gate", STAR_GATE_X, STAR_GATE_Y, STAR_GATE_W, STAR_GATE_H);
   placeObject(".scene-gate-inner-light", INNER_LIGHT_X, INNER_LIGHT_Y, INNER_LIGHT_W, INNER_LIGHT_H);
-
-  // Keep event FX centered on the same axis so later activation does not jump.
-  placeObject(".scene-gate-particle", GATE_CENTER_X - 210, STAIR_TOP_Y - 320, 420, 320);
-  placeObject(".scene-gate-event", GATE_CENTER_X - 240, STAIR_TOP_Y - 350, 480, 350);
+  placeObject(".scene-gate-particle", GATE_CENTER_X - 210, STAIR_TOP_Y - 320 - GATE_LIFT, 420, 320);
+  placeObject(".scene-gate-event", GATE_CENTER_X - 240, STAIR_TOP_Y - 350 - GATE_LIFT, 480, 350);
 
   const gateBase = document.querySelector(".scene-gate-base");
   if (gateBase) gateBase.hidden = true;
@@ -137,12 +149,12 @@
   layout.gateAssembly = Object.freeze({
     centerX: GATE_CENTER_X,
     baseline: STAIR_TOP_Y,
+    lift: GATE_LIFT,
     starGate: Object.freeze({ x: STAR_GATE_X, y: STAR_GATE_Y, w: STAR_GATE_W, h: STAR_GATE_H }),
     innerLight: Object.freeze({ x: INNER_LIGHT_X, y: INNER_LIGHT_Y, w: INNER_LIGHT_W, h: INNER_LIGHT_H }),
-    version: "latest-shared-axis-v3",
+    version: "latest-foreground-centered-v5",
   });
 
-  // Recreate extra depth zones on the same zero-origin as the new foreground.
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   function hasNearbySolid(shape) {
     if (shape.type !== "ellipse") return false;
@@ -152,6 +164,7 @@
       Math.abs(item.cy - shape.cy) < 3,
     );
   }
+
   for (const area of layout.occluders || []) {
     if (!/(post|pillar)$/.test(area.id)) continue;
     const [x, , w] = area.bounds;
@@ -210,11 +223,11 @@
     );
   };
 
-  layout.depthModelVersion = "preview-50-shared-axis";
+  layout.depthModelVersion = "preview-51-latest-foreground-centered";
   layout.artworkPlacement = Object.freeze({
     islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
-    foreground: Object.freeze({ mode: "reference-frame", x: 0, y: 0, w: REFERENCE.width, h: REFERENCE.height }),
+    foreground: Object.freeze({ mode: "latest-centered", sourceScale: FOREGROUND_SOURCE_SCALE }),
     gate: layout.gateAssembly,
   });
-  layout.artworkModelVersion = "latest-artwork-shared-axis-v3";
+  layout.artworkModelVersion = "latest-foreground-centered-v5";
 })(window);
