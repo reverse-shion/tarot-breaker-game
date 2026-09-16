@@ -60,13 +60,14 @@
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
 
-      <!-- Ground and approved foreground both use the native 1448x1086 map axis. -->
+      <!-- Single-map mode: the same authored WebP supplies both the visible map
+           and pixel-perfect occlusion cutouts. No split ground/foreground art. -->
       <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true">
-        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-ground.webp?v=20260916-native-foreground-v6" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9" alt="" draggable="false" />
       </div>
 
       <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true">
-        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground-v7.webp?v=6fb56fb28e" alt="" draggable="false" />
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
 
       <div
@@ -240,7 +241,7 @@
     <script src="./dialogue.js?v=1.0.0" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
     <script src="./scene-preview41-fix.js?v=native-foreground-v7" defer></script>
-    <script src="./foreground-alignment-v8.js?v=foreground-alignment-v8" defer></script>
+    <script src="./single-map-occlusion.js?v=single-map-v1" defer></script>
     <script src="./scene-effects.js?v=1.1.0" defer></script>
     <script
       src="./game.js?v=1.3.0"
