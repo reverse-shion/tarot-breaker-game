@@ -7,7 +7,11 @@
   const FOREGROUND_SOURCE_SCALE = 0.81;
   const FOREGROUND_NUDGE_X = 4;
 
-  layout.paintBackground = function paintBackground(ctx, background) {
+  // Keep the current authored map placement, but remove the legacy gate baked
+  // into the map. The replacement gate is rendered by independent scene layers
+  // below, so moving the gate now moves the visible artwork instead of only the
+  // light overlay.
+  layout.paintBackground = function paintBackground(ctx, background, sky) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
     const sourceW = background.naturalWidth || w;
@@ -18,7 +22,54 @@
     const drawX = (w - drawW) / 2;
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(background, drawX, 0, drawW, drawH);
+
+    if (!sky || !Array.isArray(layout.legacyGate) || !layout.legacyGate.length) return;
+    const fill = ctx.createLinearGradient(0, 0, 0, 290);
+    fill.addColorStop(0, "#263b76");
+    fill.addColorStop(1, "#9b95ce");
+    for (let band = 16; band >= 0; band -= 2) {
+      const points = layout.legacyGate.map(([x, y]) => [
+        800 + (x - 800) * (1 + band / 175),
+        140 + (y - 140) * (1 + band / 175),
+      ]);
+      ctx.save();
+      layout.trace(ctx, points);
+      ctx.clip();
+      ctx.globalAlpha = band === 0 ? 1 : 0.2;
+      ctx.fillStyle = fill;
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(sky, 0, 0, w, h);
+      ctx.restore();
+    }
   };
+
+  // One source of truth for the complete gate assembly. Future gate position
+  // changes must change only these offsets so base, inner light and event FX
+  // remain aligned with each other.
+  const GATE_OFFSET_X = 0;
+  const GATE_OFFSET_Y = 0;
+  const gateParts = [
+    [".scene-gate-base", 521.5469613259668, -70, 560, 420],
+    [".scene-gate-inner-light", 651, 10, 299, 224],
+    [".scene-gate-particle", 590, -32, 420, 320],
+    [".scene-gate-event", 560, -52, 480, 350],
+  ];
+  for (const [selector, x, y, width, height] of gateParts) {
+    const node = document.querySelector(selector);
+    if (!node) continue;
+    node.dataset.worldX = String(x + GATE_OFFSET_X);
+    node.dataset.worldY = String(y + GATE_OFFSET_Y);
+    node.dataset.worldW = String(width);
+    node.dataset.worldH = String(height);
+  }
+  const gateBase = document.querySelector(".scene-gate-base");
+  if (gateBase) gateBase.hidden = false;
+  layout.gateAssembly = Object.freeze({
+    offsetX: GATE_OFFSET_X,
+    offsetY: GATE_OFFSET_Y,
+    baseline: (layout.gate?.baseline ?? 242) + GATE_OFFSET_Y,
+    version: "gate-assembly-v1",
+  });
 
   // The current foreground upload stores the authored 1448x1086 scene at
   // roughly 81% scale inside a wider source canvas. Restore that authored
