@@ -67,7 +67,7 @@ test('replacement islands fit completely inside the canonical scene', () => {
   assert.equal(layers['.scene-foreground'].hidden, false);
 });
 
-test('replacement foreground restores authored scale and is drawn only once', () => {
+test('replacement foreground restores authored scale, keeps the approved +4px nudge and is drawn only once', () => {
   const { layout } = bootArtworkLayout();
   const context = recordingContext();
   const image = { naturalWidth: 1672, naturalHeight: 941 };
@@ -77,10 +77,10 @@ test('replacement foreground restores authored scale and is drawn only once', ()
   const draws = context.calls.filter((call) => call.operation === 'drawImage');
   assert.equal(draws.length, 1);
   const [, x, y, width, height] = draws[0].args;
-  assert.equal(x, -15);
+  assert.equal(x, -11);
   assert.equal(y, 0);
   assert.ok(Math.abs(width - 1672 / 0.81) < 1e-9);
   assert.ok(Math.abs(height - 941 / 0.81) < 1e-9);
   assert.equal(layout.artworkPlacement.foreground.repeat, false);
-  assert.equal(layout.artworkModelVersion, 'preview-55-latest-artwork-aligned');
+  assert.equal(layout.artworkModelVersion, 'foreground-authored-alignment-right-4px');
 });
