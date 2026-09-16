@@ -1,0 +1,138 @@
+/* Star Gate polish — contact blend, restrained motion, character-first depth.
+   This file intentionally touches gate presentation only. */
+
+/* Keep every gate visual behind the character canvas (#game is z-index: 1). */
+.scene-gate-base,
+.scene-gate-inner-light,
+.scene-gate-particle,
+.scene-gate-event {
+  z-index: 0 !important;
+}
+
+/* Soften only the very bottom of the replacement gate artwork so it settles
+   into the authored stair landing instead of ending as a hard pasted edge. */
+.scene-gate-base > img {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 88%,
+    rgba(0, 0, 0, .96) 92%,
+    rgba(0, 0, 0, .72) 96%,
+    rgba(0, 0, 0, .16) 99%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 88%,
+    rgba(0, 0, 0, .96) 92%,
+    rgba(0, 0, 0, .72) 96%,
+    rgba(0, 0, 0, .16) 99%,
+    transparent 100%
+  );
+}
+
+/* Blue-white contact light. It is attached to the gate base, so it follows
+   every future gate position change automatically. */
+.scene-gate-base::before,
+.scene-gate-base::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 74.5%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.scene-gate-base::before {
+  width: 49%;
+  height: 11%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(239, 251, 255, .82) 0%,
+    rgba(174, 228, 255, .48) 30%,
+    rgba(124, 185, 255, .22) 58%,
+    rgba(109, 166, 255, 0) 100%
+  );
+  filter: blur(8px);
+  opacity: .72;
+  animation: gate-ground-breathe 4.6s ease-in-out infinite;
+}
+
+.scene-gate-base::after {
+  width: 38%;
+  height: 5.8%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, .9) 0%,
+    rgba(190, 235, 255, .5) 36%,
+    rgba(130, 195, 255, 0) 100%
+  );
+  filter: blur(3px);
+  opacity: .58;
+  animation: gate-ground-core 4.6s ease-in-out infinite;
+}
+
+/* The current HTML carries animation:none inline from the static-placement
+   pass. Override only that animation so the supplied gate image can breathe. */
+.scene-gate-inner-light img {
+  transform-origin: 50% 78%;
+  animation: gate-inner-soft-pulse 4.2s ease-in-out infinite !important;
+  will-change: transform, opacity, filter;
+}
+
+/* Reuse the existing particle artwork at a deliberately low intensity. */
+.scene-gate-particle[hidden] {
+  display: block !important;
+}
+.scene-gate-particle {
+  opacity: .18;
+  mix-blend-mode: screen;
+}
+.scene-gate-particle img {
+  opacity: .68;
+  animation: gate-particle-soft-drift 7.8s ease-in-out infinite !important;
+  will-change: transform, opacity;
+}
+
+@keyframes gate-ground-breathe {
+  0%, 100% { opacity: .56; transform: translate(-50%, -50%) scale(.98); }
+  50% { opacity: .78; transform: translate(-50%, -50%) scale(1.035); }
+}
+
+@keyframes gate-ground-core {
+  0%, 100% { opacity: .42; transform: translate(-50%, -50%) scaleX(.96); }
+  50% { opacity: .66; transform: translate(-50%, -50%) scaleX(1.04); }
+}
+
+@keyframes gate-inner-soft-pulse {
+  0%, 100% {
+    opacity: .9;
+    transform: scale(.997);
+    filter: brightness(1) drop-shadow(0 0 5px rgba(147, 205, 255, .2));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.008);
+    filter: brightness(1.07) drop-shadow(0 0 11px rgba(178, 226, 255, .34));
+  }
+}
+
+@keyframes gate-particle-soft-drift {
+  0%, 100% { transform: translate3d(0, 4px, 0) scale(.995); opacity: .38; }
+  45% { transform: translate3d(0, -7px, 0) scale(1.006); opacity: .72; }
+  70% { transform: translate3d(1px, -11px, 0) scale(1.01); opacity: .48; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-gate-base::before,
+  .scene-gate-base::after,
+  .scene-gate-inner-light img,
+  .scene-gate-particle img {
+    animation: none !important;
+  }
+  .scene-gate-particle { opacity: .1; }
+  .scene-gate-inner-light img { opacity: .96; }
+}
