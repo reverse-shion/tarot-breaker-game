@@ -5,26 +5,35 @@
   if (!layout) return;
 
   const reference = layout.referenceSize || { width: 1448, height: 1086 };
+  const shell = document.getElementById("game-shell");
   const map = document.getElementById("map-layer");
   const source = document.querySelector(".scene-foreground img");
   const groundLayer = document.querySelector(".scene-ground");
 
-  const FOUNTAIN_SHIFT_X = 14;
-  const FOUNTAIN_SHIFT_Y = 24;
-  const AUTHORITATIVE_MAP = "./assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v4";
-  const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v4";
+  const AUTHORITATIVE_MAP = "./assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v5";
+  const ISLANDS_ASSET = "./assets/maps/star-country-world-islands.webp?v=single-map-v5";
+  const WATERFALL_ASSET = "./assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v5";
+  const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v5";
 
   let precisePolys = [];
 
-  // The new map is authoritative. Old authored collision/depth helpers from the
-  // previous map must not survive this migration.
+  // Load the dedicated layer-order stylesheet after the legacy scene CSS so its
+  // z-index rules are authoritative without touching unrelated presentation.
+  if (!document.querySelector('link[data-layer-order="v5"]')) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "./layer-order-fix.css?v=20260917-v5";
+    link.dataset.layerOrder = "v5";
+    document.head.appendChild(link);
+  }
+
+  // The new map starts with no authored collision/depth helpers from the old map.
   if (Array.isArray(layout.solidBases)) layout.solidBases.splice(0);
   if (Array.isArray(layout.occluders)) layout.occluders.splice(0);
   layout.activeOccluders = () => [];
 
-  // A completely empty collision JSON means "reset/open map" while the user is
-  // rebuilding collision for the new artwork. Internally use one synthetic
-  // full-map walk polygon without writing it back to JSON/editor data.
+  // Empty walkAreas means the editor is in its reset state. Allow free movement
+  // temporarily without writing a synthetic full-map polygon back to JSON.
   const navigation = root.TarotNavigation;
   if (navigation && !navigation.__singleMapEmptyWalkReset) {
     const originalCreateCollision = navigation.createCollision;
@@ -37,17 +46,15 @@
 
       const synthetic = {
         ...data,
-        walkAreas: [
-          {
-            type: "poly",
-            points: [
-              [0, 0],
-              [reference.width, 0],
-              [reference.width, reference.height],
-              [0, reference.height],
-            ],
-          },
-        ],
+        walkAreas: [{
+          type: "poly",
+          points: [
+            [0, 0],
+            [reference.width, 0],
+            [reference.width, reference.height],
+            [0, reference.height],
+          ],
+        }],
         blockedAreas: [],
       };
       const collision = originalCreateCollision(synthetic);
@@ -61,6 +68,7 @@
     navigation.__singleMapEmptyWalkReset = true;
   }
 
+  // The transparent garden is the visible background plate and map sizing source.
   if (source) {
     source.crossOrigin = "anonymous";
     source.src = AUTHORITATIVE_MAP;
@@ -71,22 +79,34 @@
   }
   if (groundLayer) groundLayer.hidden = true;
 
-  // Pull the fountain part-way back from the previous +50px placement and nudge
-  // it slightly to the rear-right. It stays a background object; actor masking
-  // no longer uses the old fountain/depth polygons.
-  for (const selector of [
-    ".scene-fountain-base",
-    ".scene-fountain-water",
-    ".scene-fountain-crystal",
-    ".scene-fountain-glow",
-    ".scene-fountain-sparkle",
-  ]) {
-    const node = document.querySelector(selector);
-    if (!node || node.dataset.singleMapFountainShift === "v4") continue;
-    node.dataset.worldX = String(Number(node.dataset.worldX || 0) + FOUNTAIN_SHIFT_X);
-    node.dataset.worldY = String(Number(node.dataset.worldY || 0) + FOUNTAIN_SHIFT_Y);
-    node.dataset.singleMapFountainShift = "v4";
+  // Restore islands as their own world layer. Do not use map-layer for islands:
+  // map-layer is reserved for painting the authoritative garden background.
+  let islandsLayer = document.querySelector(".scene-islands");
+  if (!islandsLayer && shell) {
+    islandsLayer = document.createElement("div");
+    islandsLayer.className = "scene-world-layer scene-back scene-islands";
+    islandsLayer.setAttribute("data-scene-world", "");
+    islandsLayer.setAttribute("aria-hidden", "true");
+    const image = document.createElement("img");
+    image.crossOrigin = "anonymous";
+    image.alt = "";
+    image.draggable = false;
+    islandsLayer.appendChild(image);
+    const waterfall = document.querySelector(".scene-waterfall");
+    if (waterfall?.parentNode) waterfall.parentNode.insertBefore(islandsLayer, waterfall);
+    else shell.appendChild(islandsLayer);
   }
+  const islandsImage = islandsLayer?.querySelector("img");
+  if (islandsImage) islandsImage.src = ISLANDS_ASSET;
+
+  // Waterfall is a background world layer above islands and below gate/background.
+  document.querySelectorAll(".scene-waterfall img").forEach((image) => {
+    image.crossOrigin = "anonymous";
+    image.src = WATERFALL_ASSET;
+  });
+
+  // Fountain position is intentionally NOT modified here. The original HTML
+  // coordinates are authoritative again; previous runtime X/Y shifts are removed.
 
   const STAIR_TOP_Y = layout.gate?.baseline ?? 242;
   const GATE_CENTER_X = layout.gate?.openingX ?? 800;
@@ -109,7 +129,7 @@
   }
 
   let starGate = document.querySelector(".scene-star-gate");
-  if (!starGate) {
+  if (!starGate && shell) {
     starGate = document.createElement("div");
     starGate.className = "scene-object scene-back scene-star-gate";
     starGate.setAttribute("data-scene-object", "");
@@ -118,19 +138,19 @@
     image.crossOrigin = "anonymous";
     image.alt = "";
     image.draggable = false;
-    image.src = STAR_GATE_ASSET;
     image.style.cssText = "opacity:1;visibility:visible;filter:none;mix-blend-mode:normal;animation:none";
     starGate.appendChild(image);
-    const anchor = document.querySelector(".scene-gate-particle") || document.getElementById("start-screen");
+    const anchor = document.querySelector(".scene-gate-particle") || document.querySelector(".scene-background") || document.getElementById("start-screen");
     anchor?.parentNode?.insertBefore(starGate, anchor);
-  } else {
-    const image = starGate.querySelector("img");
-    if (image) image.src = STAR_GATE_ASSET;
   }
-  starGate.style.opacity = "1";
-  starGate.style.visibility = "visible";
-  starGate.style.display = "block";
-  placeObject(starGate, STAR_GATE_X, STAR_GATE_Y, STAR_GATE_W, STAR_GATE_H);
+  const starGateImage = starGate?.querySelector("img");
+  if (starGateImage) starGateImage.src = STAR_GATE_ASSET;
+  if (starGate) {
+    starGate.style.opacity = "1";
+    starGate.style.visibility = "visible";
+    starGate.style.display = "block";
+    placeObject(starGate, STAR_GATE_X, STAR_GATE_Y, STAR_GATE_W, STAR_GATE_H);
+  }
 
   const innerLight = document.querySelector(".scene-gate-inner-light");
   placeObject(innerLight, INNER_LIGHT_X, INNER_LIGHT_Y, INNER_LIGHT_W, INNER_LIGHT_H);
@@ -146,7 +166,7 @@
     lift: GATE_LIFT,
     starGate: Object.freeze({ x: STAR_GATE_X, y: STAR_GATE_Y, w: STAR_GATE_W, h: STAR_GATE_H }),
     innerLight: Object.freeze({ x: INNER_LIGHT_X, y: INNER_LIGHT_Y, w: INNER_LIGHT_W, h: INNER_LIGHT_H }),
-    version: "single-map-gate-v4",
+    version: "single-map-gate-v5",
   });
 
   layout.foregroundOffset = Object.freeze({ x: 0, y: 0 });
@@ -206,7 +226,7 @@
       drawW: w,
       drawH: h,
       scale: 1,
-      mode: "single-map-reset-v4",
+      mode: "single-map-layer-order-v5",
       occluderCount: precisePolys.length,
     });
   };
@@ -222,10 +242,12 @@
 
   layout.artworkPlacement = Object.freeze({
     ...(layout.artworkPlacement || {}),
-    background: Object.freeze({ mode: "single-map-authoritative-v4", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
-    foreground: Object.freeze({ mode: "single-map-reset-v4", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    islands: Object.freeze({ mode: "world-layer", x: 0, y: 0, w: reference.width, h: reference.height }),
+    waterfall: Object.freeze({ mode: "world-layer", x: 0, y: 0, w: reference.width, h: reference.height }),
+    background: Object.freeze({ mode: "single-map-authoritative-v5", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    foreground: Object.freeze({ mode: "single-map-layer-order-v5", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
     gate: layout.gateAssembly,
   });
-  layout.depthModelVersion = "single-map-reset-v4";
-  layout.artworkModelVersion = "single-map-transparent-v4";
+  layout.depthModelVersion = "single-map-layer-order-v5";
+  layout.artworkModelVersion = "single-map-transparent-v5";
 })(window);
