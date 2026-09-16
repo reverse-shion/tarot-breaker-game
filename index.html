@@ -142,7 +142,7 @@
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
       </div>
-      <!-- Star Gate overlay: preserve the source artwork aspect ratio and keep it below the character canvas. -->
+      <!-- Star Gate overlay: plain alpha artwork, below the character canvas. -->
       <div
         class="scene-object scene-back scene-gate-inner-light"
         data-scene-object
@@ -151,8 +151,9 @@
         data-world-w="299"
         data-world-h="224"
         aria-hidden="true"
+        style="mix-blend-mode:normal;opacity:1;filter:none"
       >
-        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-gate-overlay" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-gate-plain" alt="" draggable="false" style="animation:none;opacity:1;filter:none;mix-blend-mode:normal" />
       </div>
       <div
         class="scene-object scene-back scene-gate-particle"
