@@ -4,37 +4,56 @@
   const layout = root.TarotSceneLayout;
   if (!layout) return;
 
-  // Preview 53 / foreground v8
-  // The approved foreground is authored on the 1448x1086 reference canvas,
-  // but its visual artwork is intentionally aligned 15 reference pixels left
-  // of the zero-origin ground layer. Keep scale at 1.0 and move the visual,
-  // occlusion and foreground-derived collision data together.
-  const FOREGROUND_X = -15;
-  const FOREGROUND_Y = 0;
+  // Approved foreground transform from on-device calibration.
+  // Keep the source WebP unchanged; transform visual, occlusion and collision
+  // geometry together in the 1448x1086 reference coordinate system.
+  const FOREGROUND_X = -47;
+  const FOREGROUND_Y = -220;
+  const FOREGROUND_SCALE = 1.43;
   const REFERENCE = layout.referenceSize;
 
-  const shiftPoints = (points, dx, dy) =>
-    (points || []).map(([x, y]) => [x + dx, y + dy]);
+  const transformPoint = ([x, y]) => [
+    FOREGROUND_X + x * FOREGROUND_SCALE,
+    FOREGROUND_Y + y * FOREGROUND_SCALE,
+  ];
 
-  const shiftShape = (shape, dx, dy) => {
+  const transformPoints = (points) => (points || []).map(transformPoint);
+
+  const transformShape = (shape) => {
     if (!shape) return shape;
     if (shape.type === "ellipse") {
-      return { ...shape, cx: shape.cx + dx, cy: shape.cy + dy };
+      return {
+        ...shape,
+        cx: FOREGROUND_X + shape.cx * FOREGROUND_SCALE,
+        cy: FOREGROUND_Y + shape.cy * FOREGROUND_SCALE,
+        rx: shape.rx * FOREGROUND_SCALE,
+        ry: shape.ry * FOREGROUND_SCALE,
+      };
     }
-    return { ...shape, points: shiftPoints(shape.points, dx, dy) };
+    return { ...shape, points: transformPoints(shape.points) };
   };
 
+  // scene-preview41-fix.js has already normalised foreground-derived helpers
+  // to the zero-origin. Apply the approved affine transform once here.
   for (const area of layout.occluders || []) {
     if (area.source !== "foreground") continue;
+
     if (Array.isArray(area.bounds)) {
-      area.bounds[0] += FOREGROUND_X;
-      area.bounds[1] += FOREGROUND_Y;
+      const [x, y, w, h] = area.bounds;
+      area.bounds[0] = FOREGROUND_X + x * FOREGROUND_SCALE;
+      area.bounds[1] = FOREGROUND_Y + y * FOREGROUND_SCALE;
+      area.bounds[2] = w * FOREGROUND_SCALE;
+      area.bounds[3] = h * FOREGROUND_SCALE;
     }
-    area.baseline += FOREGROUND_Y;
-    area.footArea = shiftShape(area.footArea, FOREGROUND_X, FOREGROUND_Y);
-    area.points = shiftPoints(area.points, FOREGROUND_X, FOREGROUND_Y);
+
+    area.baseline = FOREGROUND_Y + area.baseline * FOREGROUND_SCALE;
+    area.footArea = transformShape(area.footArea);
+    area.points = transformPoints(area.points);
+    if (Number.isFinite(area.rearInset)) area.rearInset *= FOREGROUND_SCALE;
   }
 
+  // Only the four authored foreground footprints and generated depth-fix
+  // footprints belong to this image. Fountain/gate solids remain unchanged.
   const zeroOriginForegroundCenters = new Set([
     "584,452",
     "1025,452",
@@ -44,53 +63,60 @@
 
   for (const shape of layout.solidBases || []) {
     if (shape.type !== "ellipse") continue;
-    if (shape.depthFix || zeroOriginForegroundCenters.has(`${shape.cx},${shape.cy}`)) {
-      shape.cx += FOREGROUND_X;
-      shape.cy += FOREGROUND_Y;
-    }
+    if (!(shape.depthFix || zeroOriginForegroundCenters.has(`${shape.cx},${shape.cy}`))) continue;
+
+    shape.cx = FOREGROUND_X + shape.cx * FOREGROUND_SCALE;
+    shape.cy = FOREGROUND_Y + shape.cy * FOREGROUND_SCALE;
+    shape.rx *= FOREGROUND_SCALE;
+    shape.ry *= FOREGROUND_SCALE;
   }
 
   layout.foregroundOffset = Object.freeze({ x: FOREGROUND_X, y: FOREGROUND_Y });
+  layout.foregroundScale = FOREGROUND_SCALE;
 
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
+    const drawW = w * FOREGROUND_SCALE;
+    const drawH = h * FOREGROUND_SCALE;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, FOREGROUND_X, FOREGROUND_Y, w, h);
+    ctx.drawImage(foreground, FOREGROUND_X, FOREGROUND_Y, drawW, drawH);
+
     layout.latestForegroundPlacement = Object.freeze({
       sourceW: foreground.naturalWidth || w,
       sourceH: foreground.naturalHeight || h,
       drawX: FOREGROUND_X,
       drawY: FOREGROUND_Y,
-      drawW: w,
-      drawH: h,
-      scale: 1,
-      mode: "native-reference-authored-offset",
+      drawW,
+      drawH,
+      scale: FOREGROUND_SCALE,
+      mode: "approved-fixed-transform-v11",
     });
   };
 
   layout.artworkPlacement = Object.freeze({
     ...(layout.artworkPlacement || {}),
     foreground: Object.freeze({
-      mode: "native-reference-authored-offset",
+      mode: "approved-fixed-transform-v11",
       x: FOREGROUND_X,
       y: FOREGROUND_Y,
-      w: REFERENCE.width,
-      h: REFERENCE.height,
-      scale: 1,
+      w: REFERENCE.width * FOREGROUND_SCALE,
+      h: REFERENCE.height * FOREGROUND_SCALE,
+      scale: FOREGROUND_SCALE,
     }),
   });
 
-  layout.depthModelVersion = "preview-53-foreground-aligned";
-  layout.artworkModelVersion = "foreground-alignment-v8";
+  layout.depthModelVersion = "preview-54-foreground-fixed";
+  layout.artworkModelVersion = "foreground-fixed-v11";
 
-  // Optional on-device calibration mode. v10 adds a complete-map overview,
-  // wider scale range and faster scale controls. Normal gameplay is unchanged.
+  // Optional on-device calibration mode remains available for later fine tuning.
   if (new URLSearchParams(location.search).get("fgAlign") === "1") {
     setTimeout(() => {
       if (document.querySelector('script[data-fg-calibrator="v10"]')) return;
       const script = document.createElement("script");
-      script.src = "./foreground-calibrator-v10.js?v=20260916-v10";
+      script.src = "./foreground-calibrator-v10.js?v=20260916-v11";
       script.dataset.fgCalibrator = "v10";
       document.head.appendChild(script);
     }, 0);
