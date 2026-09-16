@@ -16,12 +16,8 @@
   const GATE_CENTER_X = layout.gate?.openingX ?? 800;
   const GATE_LIFT = 32;
 
-  // Latest uploaded foreground is authored smaller inside its transparent
-  // source canvas. Restore the authored scale, then center the complete layer
-  // mathematically on the 1448-wide map axis. This removes the accumulated
-  // -15px/+4px legacy nudges that made the scene visibly asymmetric.
-  const FOREGROUND_SOURCE_SCALE = 0.81;
-
+  // The approved foreground is authored at the same 1448x1086 reference size
+  // as the game map. Draw it 1:1. Do not rescale or re-center it.
   const previousForegroundOffset = {
     x: layout.foregroundOffset?.x || 0,
     y: layout.foregroundOffset?.y || 0,
@@ -40,8 +36,8 @@
     return { ...shape, points: shiftPoints(shape.points, dx, dy) };
   }
 
-  // Keep depth/collision helpers on the same zero-origin used by the restored
-  // authored foreground. Movement permission itself is not changed.
+  // scene-layout.js still defines the older -15px foreground offset. Move only
+  // its foreground-derived depth/collision helpers back to the zero-origin.
   for (const area of layout.occluders || []) {
     if (area.source !== "foreground") continue;
     if (Array.isArray(area.bounds)) area.bounds[0] += correctionX;
@@ -63,28 +59,21 @@
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
-    const sourceW = foreground.naturalWidth || w * FOREGROUND_SOURCE_SCALE;
-    const sourceH = foreground.naturalHeight || h * FOREGROUND_SOURCE_SCALE;
-    const drawW = sourceW / FOREGROUND_SOURCE_SCALE;
-    const drawH = sourceH / FOREGROUND_SOURCE_SCALE;
-    const drawX = (w - drawW) / 2;
-    const drawY = 0;
-
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(foreground, drawX, drawY, drawW, drawH);
-
+    ctx.drawImage(foreground, 0, 0, w, h);
     layout.latestForegroundPlacement = Object.freeze({
-      sourceW,
-      sourceH,
-      drawX,
-      drawY,
-      drawW,
-      drawH,
-      sourceScale: FOREGROUND_SOURCE_SCALE,
+      sourceW: foreground.naturalWidth || w,
+      sourceH: foreground.naturalHeight || h,
+      drawX: 0,
+      drawY: 0,
+      drawW: w,
+      drawH: h,
+      mode: "native-reference-1to1",
     });
   };
 
-  // Preserve the cleaned map/background pipeline.
+  // Preserve the cleaned map/background pipeline underneath the transparent
+  // foreground so transparent openings reveal the world rather than a cover.
   layout.paintBackground = function paintBackground(ctx, background, sky) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -117,8 +106,8 @@
     }
   };
 
-  // Gate and inner light share one centre axis. Both are lifted together so
-  // the latest gate sits higher than the former stair-top placement.
+  // Gate and inner light share one centre axis and stay 32px above the older
+  // stair-top placement.
   const STAR_GATE_W = 560;
   const STAR_GATE_H = STAR_GATE_W * (1024 / 1536);
   const STAR_GATE_X = GATE_CENTER_X - STAR_GATE_W / 2;
@@ -152,7 +141,7 @@
     lift: GATE_LIFT,
     starGate: Object.freeze({ x: STAR_GATE_X, y: STAR_GATE_Y, w: STAR_GATE_W, h: STAR_GATE_H }),
     innerLight: Object.freeze({ x: INNER_LIGHT_X, y: INNER_LIGHT_Y, w: INNER_LIGHT_W, h: INNER_LIGHT_H }),
-    version: "latest-foreground-centered-v5",
+    version: "native-foreground-v6",
   });
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -223,11 +212,11 @@
     );
   };
 
-  layout.depthModelVersion = "preview-51-latest-foreground-centered";
+  layout.depthModelVersion = "preview-52-native-foreground";
   layout.artworkPlacement = Object.freeze({
     islands: Object.freeze({ mode: "contain", alignX: 0.5, alignY: 0 }),
-    foreground: Object.freeze({ mode: "latest-centered", sourceScale: FOREGROUND_SOURCE_SCALE }),
+    foreground: Object.freeze({ mode: "native-reference-1to1", x: 0, y: 0, w: REFERENCE.width, h: REFERENCE.height }),
     gate: layout.gateAssembly,
   });
-  layout.artworkModelVersion = "latest-foreground-centered-v5";
+  layout.artworkModelVersion = "native-foreground-v6";
 })(window);
