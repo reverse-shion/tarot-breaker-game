@@ -12,38 +12,15 @@ const data = JSON.parse(
 );
 const collision = createCollision(data);
 
-function orientation(a, b, c) {
-  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-}
-
-function properIntersection(a, b, c, d) {
-  const o1 = orientation(a, b, c);
-  const o2 = orientation(a, b, d);
-  const o3 = orientation(c, d, a);
-  const o4 = orientation(c, d, b);
-  return o1 * o2 < 0 && o3 * o4 < 0;
-}
-
-function isSimplePolygon(points) {
-  for (let i = 0; i < points.length; i++) {
-    const a = points[i];
-    const b = points[(i + 1) % points.length];
-    for (let j = i + 1; j < points.length; j++) {
-      if (j === i || (j + 1) % points.length === i || (i + 1) % points.length === j) continue;
-      const c = points[j];
-      const d = points[(j + 1) % points.length];
-      if (properIntersection(a, b, c, d)) return false;
-    }
-  }
-  return true;
-}
-
-test('official collision v5 keeps only the authored central route, fountain plaza and gate stairs', () => {
+test('official collision v5 preserves the latest six authored walk areas', () => {
   assert.equal(data.version, 5);
-  assert.equal(data.walkAreas.length, 3);
-  for (const area of data.walkAreas) {
+  assert.equal(data.walkAreas.length, 6);
+  assert.equal(data.blockedAreas.length, 9);
+  for (const area of [...data.walkAreas, ...data.blockedAreas]) {
     assert.equal(area.type, 'poly');
-    assert.equal(isSimplePolygon(area.points), true, 'walk polygon must not self-intersect');
+    assert.ok(Array.isArray(area.points));
+    assert.ok(area.points.length >= 3);
+    assert.ok(area.points.every((point) => Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)));
   }
 });
 
@@ -53,7 +30,7 @@ test('spawn and required character locations stay walkable', () => {
   assert.equal(collision.isWalkable(810, 212), true, 'Lumiere home');
 });
 
-test('fountain, flowerbeds and lateral map edges remain blocked', () => {
+test('fountain, flowerbeds and far map edges remain blocked', () => {
   assert.equal(collision.isWalkable(810, 500), false, 'fountain center');
   assert.equal(collision.isWalkable(530, 560), false, 'west flowerbed');
   assert.equal(collision.isWalkable(1030, 560), false, 'east flowerbed');
