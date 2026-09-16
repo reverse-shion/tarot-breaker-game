@@ -59,15 +59,19 @@
       <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-flow" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-waterfall.webp" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
+
+      <!-- Core artwork stack, back to front:
+           1) ground/road  2) gate inner light  3) star gate
+           4) actor canvas  5) foreground artwork. -->
       <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true">
-        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-ground.webp" alt="" draggable="false" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-ground.webp?v=20260916-2044" alt="" draggable="false" />
       </div>
 
-      <div class="scene-world-layer scene-back scene-foreground" data-scene-world aria-hidden="true">
-        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp?v=bffada4ffedbc317" alt="" draggable="false" />
+      <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true">
+        <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp?v=20260916-2044" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
-      <!-- Legacy/high-detail gate base stays hidden. The approved gate artwork
-           is the inner-light WebP below; only effects are layered around it. -->
+
+      <!-- Legacy/high-detail gate base stays hidden. -->
       <div
         class="scene-object scene-back scene-gate-base"
         data-scene-object
@@ -142,8 +146,8 @@
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
       </div>
-      <!-- Approved Star Gate artwork. Position/size stay unchanged; polish v2
-           only softens its lower edge and adds restrained light/particles. -->
+
+      <!-- Latest gate interior light: behind the gate architecture. -->
       <div
         class="scene-object scene-back scene-gate-inner-light"
         data-scene-object
@@ -151,12 +155,29 @@
         data-world-y="10"
         data-world-w="299"
         data-world-h="224"
-        data-gate-position-revision="gate-assembly-v1"
+        data-gate-position-revision="latest-artwork-20260916"
         aria-hidden="true"
         style="mix-blend-mode:normal;opacity:1;filter:none"
       >
-        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-gate-assembly-v1" alt="" draggable="false" style="animation:none;opacity:1;filter:none;mix-blend-mode:normal" />
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-2044" alt="" draggable="false" style="opacity:1;mix-blend-mode:normal" />
       </div>
+
+      <!-- Latest Star Gate artwork. This is the visible gate architecture. -->
+      <div
+        class="scene-object scene-back scene-star-gate"
+        data-scene-object
+        data-world-x="521.5469613259668"
+        data-world-y="-70"
+        data-world-w="560"
+        data-world-h="420"
+        data-gate-position-revision="latest-artwork-20260916"
+        aria-hidden="true"
+      >
+        <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-2044" alt="" draggable="false" style="opacity:1;filter:none;mix-blend-mode:normal;animation:none" />
+      </div>
+
+      <!-- Legacy normal-state particle layer is intentionally kept disabled;
+           the latest inner-light artwork is now the normal gate interior. -->
       <div
         class="scene-object scene-back scene-gate-particle"
         data-scene-object
@@ -166,6 +187,7 @@
         data-world-h="320"
         aria-hidden="true"
         hidden
+        style="display:none !important"
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" />
       </div>
