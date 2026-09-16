@@ -66,8 +66,8 @@
       <div class="scene-world-layer scene-back scene-foreground" data-scene-world aria-hidden="true">
         <img crossorigin="anonymous" hidden src="./assets/maps/star-country-gate-garden-foreground.webp?v=bffada4ffedbc317" alt="" draggable="false" />
       <canvas width="1448" height="1086"></canvas></div>
-      <!-- Gate base is now a real scene layer. The legacy map-baked gate is
-           removed at runtime so the complete gate assembly can move together. -->
+      <!-- Legacy/high-detail gate base stays hidden. The approved gate artwork
+           is the inner-light WebP below; only effects are layered around it. -->
       <div
         class="scene-object scene-back scene-gate-base"
         data-scene-object
@@ -77,6 +77,7 @@
         data-world-w="560"
         data-world-h="420"
         aria-hidden="true"
+        hidden
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1" alt="" draggable="false" />
       </div>
@@ -141,8 +142,8 @@
       >
         <img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" />
       </div>
-      <!-- Star Gate overlay: aligned with the authored gate base and controlled
-           together with all gate FX by scene-preview41-fix.js. -->
+      <!-- Approved Star Gate artwork. Position/size stay unchanged; polish v2
+           only softens its lower edge and adds restrained light/particles. -->
       <div
         class="scene-object scene-back scene-gate-inner-light"
         data-scene-object
@@ -225,7 +226,7 @@
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
     <script src="./dialogue.js?v=1.0.0" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
-    <script src="./scene-preview41-fix.js?v=gate-assembly-v1" defer></script>
+    <script src="./scene-preview41-fix.js?v=gate-polish-v2" defer></script>
     <script src="./scene-effects.js?v=1.1.0" defer></script>
     <script
       src="./game.js?v=1.3.0"
