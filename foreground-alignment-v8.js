@@ -37,8 +37,6 @@
     area.points = shiftPoints(area.points, FOREGROUND_X, FOREGROUND_Y);
   }
 
-  // Restore the four authored foreground physical footprints that the v6 fix
-  // moved back to zero-origin, and shift any generated foreground depth solids.
   const zeroOriginForegroundCenters = new Set([
     "584,452",
     "1025,452",
@@ -59,7 +57,6 @@
     y: FOREGROUND_Y,
   });
 
-  // Native-size render: no resize, no recentering, only the authored offset.
   layout.paintForeground = function paintForeground(ctx, foreground) {
     const w = REFERENCE.width;
     const h = REFERENCE.height;
@@ -92,4 +89,16 @@
 
   layout.depthModelVersion = "preview-53-foreground-aligned";
   layout.artworkModelVersion = "foreground-alignment-v8";
+
+  // Optional on-device calibration mode. This is intentionally loaded only
+  // when ?fgAlign=1 is present so normal gameplay is unchanged.
+  if (new URLSearchParams(location.search).get("fgAlign") === "1") {
+    setTimeout(() => {
+      if (document.querySelector('script[data-fg-calibrator="v9"]')) return;
+      const script = document.createElement("script");
+      script.src = "./foreground-calibrator-v9.js?v=20260916-v9";
+      script.dataset.fgCalibrator = "v9";
+      document.head.appendChild(script);
+    }, 0);
+  }
 })(window);
