@@ -1,12 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { createCollision, createNavigator, validateCollision, distance } = require('../navigation.js');
+const { createCollision, createNavigator, validateCollision, distance } = require('../blocked-collision.js');
 const data = JSON.parse(fs.readFileSync('assets/maps/star-country-gate-garden-collision.json', 'utf8'));
 const collision = createCollision(data), nav = createNavigator(collision);
-const spawn = { x: 729, y: 1015 };
+const spawn = { x: 724, y: 1015 };
 const rect = (x, y, w, h) => ({ type: 'poly', points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
-const fixture = areas => ({ ...data, walkAreas: areas });
+const fixture = areas => ({ ...data, walkAreas: areas, blockedAreas: [] });
 
 // Independent copy of the polygon rule for dense route sampling.
 // The production collision contract treats polygon boundaries as walkable,
@@ -58,7 +58,7 @@ test('invalid reference, empty areas, short polygon and NaN are rejected, not si
   ]) assert.throws(() => createCollision(bad));
 });
 test('center path, both fountain sides and upper stairs remain connected', () => {
-  for (const target of [{ x: 810, y: 800 }, { x: 570, y: 500 }, { x: 1030, y: 500 }, { x: 810, y: 350 }, { x: 810, y: 240 }]) {
+  for (const target of [{ x: 810, y: 800 }, { x: 600, y: 520 }, { x: 1040, y: 520 }, { x: 810, y: 350 }, { x: 810, y: 240 }]) {
     checkRoute(nav.findPath(spawn, target));
   }
 });
@@ -69,8 +69,8 @@ test('fountain is not crossed; A* and smoothing route around it', () => {
   assert.ok(route.points.length > 2);
   checkRoute(route);
 });
-test('flowerbed/fountain taps project to the nearest JSON boundary', () => {
-  for (const point of [{ x: 680, y: 760 }, { x: 930, y: 760 }, { x: 810, y: 530 }]) {
+test('flowerbed/fountain taps project to the nearest legal boundary', () => {
+  for (const point of [{ x: 530, y: 560 }, { x: 1030, y: 560 }, { x: 810, y: 530 }]) {
     assert.equal(collision.isWalkable(point.x, point.y), false);
     const target = collision.nearestWalkable(point);
     assert.ok(collision.isWalkable(target.x, target.y));
@@ -80,9 +80,13 @@ test('flowerbed/fountain taps project to the nearest JSON boundary', () => {
   const c = createCollision(fixture([rect(100, 100, 100, 100)]));
   assert.deepEqual(c.nearestWalkable({ x: 220, y: 155 }), { x: 200, y: 155 });
 });
-test('east passage is connected; invalid coordinates never crash', () => {
-  assert.ok(collision.isWalkable(1190, 490));
-  checkRoute(nav.findPath(spawn, { x: 1190, y: 490 }));
+test('lateral map edges stay blocked; invalid coordinates never crash', () => {
+  const east = { x: 1190, y: 490 };
+  assert.equal(collision.isWalkable(east.x, east.y), false);
+  const projected = collision.nearestWalkable(east);
+  assert.ok(projected && collision.isWalkable(projected.x, projected.y));
+  assert.ok(projected.x < 1100);
+  assert.ok(nav.findPath(spawn, east));
   assert.equal(nav.findPath(spawn, { x: NaN, y: 0 }), null);
   assert.equal(nav.findPath({ x: -1, y: -1 }, spawn), null);
   assert.doesNotThrow(() => nav.findPath(spawn, { x: -9999, y: 9999 }));
