@@ -1,10 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createControls, stickVector } = require('../controls.js');
-const { createCollision, createNavigator, distance } = require('../navigation.js');
+const { createCollision, createNavigator, distance } = require('../blocked-collision.js');
 const data = require('../assets/maps/star-country-gate-garden-collision.json');
 const collision = createCollision(data), nav = createNavigator(collision);
-const spawn = { x: 729, y: 1015 }, goal = { x: 810, y: 350 };
+const spawn = { x: 724, y: 1015 }, goal = { x: 810, y: 350 };
 const down = (c, overrides = {}) => c.pointerDown({ id: 1, x: 100, y: 300, width: 390, time: 100, world: goal, ...overrides });
 
 test('short tap starts navigation on release without showing the stick', () => {
