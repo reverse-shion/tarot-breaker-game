@@ -441,6 +441,138 @@
       display: none !important;
     }
 
+
+    /* PAD / ORB position adjuster: open alenon.html?objects=1 */
+    #object-panel {
+      display: none;
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 1100;
+      padding: 10px;
+      color: #fff;
+      background: rgba(5, 13, 35, .91);
+      border: 1px solid rgba(177, 216, 255, .36);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      touch-action: auto;
+    }
+
+    body.object-mode #object-panel { display: block; }
+
+    body.object-mode #move-guide,
+    body.object-mode #move-reset,
+    body.object-mode #move-joystick,
+    body.object-mode .move-target-ring {
+      display: none !important;
+    }
+
+    .object-top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .object-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .object-hint {
+      font-size: 11px;
+      opacity: .72;
+    }
+
+    .object-tabs,
+    .object-actions,
+    .object-nudge {
+      display: flex;
+      gap: 7px;
+    }
+
+    .object-tabs { margin-bottom: 8px; }
+
+    .object-tabs button,
+    .object-actions button,
+    .object-nudge button {
+      appearance: none;
+      border: 1px solid rgba(197,223,255,.25);
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      min-height: 36px;
+      padding: 7px 11px;
+    }
+
+    .object-tabs button {
+      flex: 1;
+    }
+
+    .object-tabs button[aria-pressed="true"] {
+      background: rgba(111,188,255,.25);
+      border-color: rgba(143,208,255,.72);
+    }
+
+    .object-coords {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+
+    .object-coords label {
+      display: grid;
+      gap: 3px;
+      font-size: 10px;
+      opacity: .92;
+    }
+
+    .object-coords input {
+      width: 100%;
+      height: 34px;
+      padding: 5px 7px;
+      border: 1px solid rgba(197,223,255,.24);
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .object-nudge {
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .object-nudge button {
+      width: 44px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .object-actions button { flex: 1; }
+    #object-copy { background: rgba(75,156,255,.22); }
+    #object-reset { background: rgba(255,149,97,.12); }
+
+    body.object-mode .pad.object-selected {
+      outline: 2px solid rgba(255,236,123,.9);
+      outline-offset: 3px;
+    }
+
+    body.object-mode .orb.object-selected {
+      outline: 1px solid rgba(151,217,255,.75);
+      outline-offset: 2px;
+    }
+
     /* Placement editor: open alenon.html?edit=1 */
     #editor-panel {
       display: none;
@@ -630,7 +762,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="wrapper-drift-v4">
+<body data-alenon-drift-revision="object-adjust-v5">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -676,6 +808,35 @@
       <div id="move-joystick-knob"></div>
     </div>
     <button id="move-reset" type="button" aria-label="開始地点へ戻る">↺</button>
+
+    <aside id="object-panel" aria-label="PADとORBの位置微調整">
+      <div class="object-top">
+        <div class="object-title">PAD / ORB 微調整</div>
+        <div class="object-hint">画面ドラッグ＝移動</div>
+      </div>
+      <div class="object-tabs" role="group" aria-label="調整対象">
+        <button type="button" data-object-select="pad" aria-pressed="true">PAD</button>
+        <button type="button" data-object-select="orb" aria-pressed="false">ORB</button>
+      </div>
+      <div class="object-coords">
+        <label>X
+          <input id="object-x" type="number" inputmode="decimal" step="0.1" />
+        </label>
+        <label>Y
+          <input id="object-y" type="number" inputmode="decimal" step="0.1" />
+        </label>
+      </div>
+      <div class="object-nudge" aria-label="1pxずつ微調整">
+        <button type="button" data-nudge-x="-1" aria-label="左へ1">←</button>
+        <button type="button" data-nudge-y="-1" aria-label="上へ1">↑</button>
+        <button type="button" data-nudge-y="1" aria-label="下へ1">↓</button>
+        <button type="button" data-nudge-x="1" aria-label="右へ1">→</button>
+      </div>
+      <div class="object-actions">
+        <button id="object-reset" type="button">正式位置に戻す</button>
+        <button id="object-copy" type="button">位置をコピー</button>
+      </div>
+    </aside>
 
     <aside id="editor-panel" aria-label="アレノンの遺跡 配置調整">
       <div class="editor-top">
@@ -730,6 +891,7 @@
       const viewport = document.getElementById("viewport");
       const params = new URLSearchParams(location.search);
       const editMode = params.get("edit") === "1";
+      const objectMode = params.get("objects") === "1";
       let worldScale = 1;
       let cameraTx = 0;
       let cameraTy = 0;
@@ -764,16 +926,26 @@
         Object.fromEntries(Object.entries(defaults).map(([key, value]) => [key, { ...value }]));
 
       const STORAGE_KEY = "tarot-breaker-alenon-layout-v2";
+      const OBJECT_STORAGE_KEY = "tarot-breaker-alenon-objects-v1";
       let layout = cloneDefaults();
 
-      // Public view must always use the committed GitHub placement.
-      // Only the editor restores an unfinished local draft.
+      // Public view uses committed placement. Editing modes may restore a local draft.
       if (editMode) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
             for (const key of Object.keys(defaults)) {
+              if (parsed[key]) layout[key] = { ...layout[key], ...parsed[key] };
+            }
+          } catch (_) {}
+        }
+      } else if (objectMode) {
+        const saved = localStorage.getItem(OBJECT_STORAGE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            for (const key of ["pad", "orb"]) {
               if (parsed[key]) layout[key] = { ...layout[key], ...parsed[key] };
             }
           } catch (_) {}
@@ -823,6 +995,11 @@
 
         if (editMode) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+        } else if (objectMode) {
+          localStorage.setItem(OBJECT_STORAGE_KEY, JSON.stringify({
+            pad: layout.pad,
+            orb: layout.orb,
+          }));
         }
       }
 
@@ -872,6 +1049,142 @@
 
       if (params.get("debug") === "1") {
         document.body.classList.add("debug");
+      }
+
+      function initObjectAdjust() {
+        document.body.classList.add("object-mode");
+
+        const xInput = document.getElementById("object-x");
+        const yInput = document.getElementById("object-y");
+        const copyButton = document.getElementById("object-copy");
+        const resetButton = document.getElementById("object-reset");
+        const tabs = [...document.querySelectorAll("[data-object-select]")];
+        const nudges = [...document.querySelectorAll("[data-nudge-x], [data-nudge-y]")];
+
+        let selected = "pad";
+        let drag = null;
+
+        function current() {
+          return layout[selected];
+        }
+
+        function markSelected() {
+          refs.pad.classList.toggle("object-selected", selected === "pad");
+          for (const element of refs.orb) {
+            element.classList.toggle("object-selected", selected === "orb");
+          }
+          for (const button of tabs) {
+            button.setAttribute(
+              "aria-pressed",
+              button.dataset.objectSelect === selected ? "true" : "false",
+            );
+          }
+        }
+
+        function refresh() {
+          const item = current();
+          xInput.value = (Math.round(item.x * 10) / 10).toFixed(1);
+          yInput.value = (Math.round(item.y * 10) / 10).toFixed(1);
+          markSelected();
+        }
+
+        function updateFromInputs() {
+          const item = current();
+          const x = Number(xInput.value);
+          const y = Number(yInput.value);
+          if (Number.isFinite(x)) item.x = x;
+          if (Number.isFinite(y)) item.y = y;
+          applyLayout();
+        }
+
+        for (const button of tabs) {
+          button.addEventListener("click", () => {
+            selected = button.dataset.objectSelect;
+            refresh();
+          });
+        }
+
+        xInput.addEventListener("input", updateFromInputs);
+        yInput.addEventListener("input", updateFromInputs);
+
+        for (const button of nudges) {
+          button.addEventListener("click", () => {
+            const item = current();
+            item.x += Number(button.dataset.nudgeX || 0);
+            item.y += Number(button.dataset.nudgeY || 0);
+            applyLayout();
+            refresh();
+          });
+        }
+
+        resetButton.addEventListener("click", () => {
+          localStorage.removeItem(OBJECT_STORAGE_KEY);
+          layout.pad = { ...defaults.pad };
+          layout.orb = { ...defaults.orb };
+          applyLayout();
+          refresh();
+        });
+
+        copyButton.addEventListener("click", async () => {
+          const payload = {
+            pad: {
+              x: Math.round(layout.pad.x * 10) / 10,
+              y: Math.round(layout.pad.y * 10) / 10,
+              size: Math.round(layout.pad.size),
+            },
+            orb: {
+              x: Math.round(layout.orb.x * 10) / 10,
+              y: Math.round(layout.orb.y * 10) / 10,
+              size: Math.round(layout.orb.size),
+            },
+          };
+          const text = JSON.stringify(payload, null, 2);
+          try {
+            await navigator.clipboard.writeText(text);
+            copyButton.textContent = "コピーしました";
+            setTimeout(() => copyButton.textContent = "位置をコピー", 1200);
+          } catch (_) {
+            window.prompt("この位置情報をコピーしてください", text);
+          }
+        });
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (event.target.closest?.("#object-panel")) return;
+          event.preventDefault();
+          const item = current();
+          drag = {
+            id: event.pointerId,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            x: item.x,
+            y: item.y,
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!drag || drag.id !== event.pointerId) return;
+          event.preventDefault();
+          const item = current();
+          item.x = drag.x + (event.clientX - drag.clientX) / worldScale;
+          item.y = drag.y + (event.clientY - drag.clientY) / worldScale;
+          applyLayout();
+          refresh();
+        }, { passive: false });
+
+        function endDrag(event) {
+          if (!drag || drag.id !== event.pointerId) return;
+          event.preventDefault();
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          drag = null;
+        }
+
+        viewport.addEventListener("pointerup", endDrag, { passive: false });
+        viewport.addEventListener("pointercancel", endDrag, { passive: false });
+
+        refresh();
       }
 
       function initRuinDrift() {
@@ -1197,6 +1510,11 @@
       }
 
       initRuinDrift();
+
+      if (objectMode) {
+        initObjectAdjust();
+        return;
+      }
 
       if (!editMode) {
         initMovement();
