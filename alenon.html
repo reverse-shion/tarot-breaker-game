@@ -122,6 +122,63 @@
       transform-origin: 50% 50%;
     }
 
+    /* Left ruin PAD: depleted / offline.
+       This is a filtered duplicate of ground_l, radially masked around the baked-in PAD.
+       It darkens only opaque ruin pixels, not the sky behind it. */
+    .left-ruin-energy-off {
+      z-index: 11;
+      opacity: .96;
+      filter:
+        grayscale(.88)
+        saturate(.24)
+        brightness(.43)
+        contrast(1.08)
+        sepia(.06);
+      -webkit-mask-image:
+        radial-gradient(
+          ellipse 17% 13% at 54% 89%,
+          #000 0%,
+          #000 50%,
+          rgba(0,0,0,.92) 67%,
+          rgba(0,0,0,.48) 82%,
+          transparent 100%
+        );
+      mask-image:
+        radial-gradient(
+          ellipse 17% 13% at 54% 89%,
+          #000 0%,
+          #000 50%,
+          rgba(0,0,0,.92) 67%,
+          rgba(0,0,0,.48) 82%,
+          transparent 100%
+        );
+      pointer-events: none;
+    }
+
+    .left-pad-dead-vignette {
+      position: absolute;
+      left: 54%;
+      top: 89%;
+      z-index: 12;
+      width: 250px;
+      height: 145px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: .62;
+      background:
+        radial-gradient(
+          ellipse at center,
+          rgba(6,12,24,.34) 0 30%,
+          rgba(5,10,22,.22) 48%,
+          rgba(5,10,22,.08) 67%,
+          transparent 82%
+        );
+      mix-blend-mode: multiply;
+      filter: blur(8px);
+    }
+
+
     .pad {
       position: absolute;
       z-index: 20;
@@ -887,7 +944,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="pad-flight-v7">
+<body data-alenon-drift-revision="left-pad-depleted-v8">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -899,6 +956,8 @@
       <div class="ground-drift ground-drift-left" aria-hidden="true">
         <div class="ground-anchor ground-left-anchor">
           <img class="ground ruin-drift ruin-drift-left" src="./assets/maps/alenon/ground_l.webp" alt="" draggable="false" />
+          <img class="ground left-ruin-energy-off" src="./assets/maps/alenon/ground_l.webp" alt="" draggable="false" />
+          <div class="left-pad-dead-vignette"></div>
         </div>
       </div>
       <div class="ground-drift ground-drift-right" aria-hidden="true">
