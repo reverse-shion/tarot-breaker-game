@@ -12,7 +12,7 @@
   const LUMIERE_HOME = Object.freeze({ x: 810, y: 212 });
   const NORMAL_SHION_SPEED = 155;
   const GATES = Object.freeze({
-    shioponRadius: 220,
+    shioponRadius: 160,
     shioponMandatoryY: 930,
     lumiereRadius: 150,
     lumiereMandatoryY: 360,
@@ -30,40 +30,52 @@
     return true;
   }
 
-  function installDiscoveryBeat() {
+  function installShioponOpening() {
     const sequence = dialogue.events?.shioponMeet;
-    if (!Array.isArray(sequence)) return;
-    const approachIndex = sequence.findIndex(
-      (command) =>
-        command?.type === "approach" &&
-        command.actor === "shion" &&
-        command.target === "shiopon",
-    );
-    if (approachIndex < 0) return;
-
-    const alreadyInstalled = sequence.some(
-      (command) => command?.storyGuard === "discover-shiopon",
-    );
-    if (!alreadyInstalled) {
-      sequence.splice(
-        approachIndex,
-        0,
-        {
-          type: "face",
-          actor: "shion",
-          target: "shiopon",
-          storyGuard: "discover-shiopon",
-        },
-        {
-          type: "wait",
-          duration: 220,
-          storyGuard: "discover-shiopon",
-        },
-      );
+    if (!Array.isArray(sequence) || sequence.some((command) => command?.storyGuard === "shiopon-opening-v4")) {
+      return;
     }
+
+    const shhIndex = sequence.findIndex(
+      (command) =>
+        command?.type === "dialogue" &&
+        command.actor === "shiopon" &&
+        command.text === "しーっ！",
+    );
+    if (shhIndex < 0) return;
+
+    const untouchedRemainder = sequence.slice(shhIndex);
+    sequence.splice(
+      0,
+      sequence.length,
+      { type: "face", actor: "shiopon", target: "flower", storyGuard: "shiopon-opening-v4" },
+      { type: "dialogue", actor: "shion", text: "しおぽん！", storyGuard: "shiopon-opening-v4" },
+      { type: "face", actor: "shion", target: "shiopon", storyGuard: "shiopon-opening-v4" },
+      { type: "face", actor: "shiopon", target: "shion", storyGuard: "shiopon-opening-v4" },
+      { type: "wait", duration: 260, storyGuard: "shiopon-opening-v4" },
+      {
+        type: "approach",
+        actor: "shion",
+        target: "shiopon",
+        distance: 48,
+        duration: 900,
+        storyGuard: "shiopon-opening-v4",
+      },
+      { type: "dialogue", actor: "shiopon", text: "シオンさん", storyGuard: "shiopon-opening-v4" },
+      { type: "wait", duration: 140, storyGuard: "shiopon-opening-v4" },
+      {
+        type: "dialogue",
+        actor: "shion",
+        text: "ここで何してるんだ？",
+        storyGuard: "shiopon-opening-v4",
+      },
+      { type: "wait", duration: 220, storyGuard: "shiopon-opening-v4" },
+      { type: "face", actor: "shiopon", target: "shion", storyGuard: "shiopon-opening-v4" },
+      ...untouchedRemainder,
+    );
   }
 
-  installDiscoveryBeat();
+  installShioponOpening();
 
   const lumiereSequence = dialogue.events?.lumiereGate;
   if (
@@ -106,7 +118,7 @@
 
     const gap = clamp(Number(approach.distance) || 46, 32, 90);
     const travel = Math.max(0, distance(current, target) - gap);
-    const minimum = eventId === "shioponMeet" ? 650 : 450;
+    const minimum = eventId === "shioponMeet" ? 500 : 450;
     approach.duration = Math.round(
       clamp((travel / NORMAL_SHION_SPEED) * 1000, minimum, 1400),
     );
@@ -159,7 +171,7 @@
 
   controlsApi.__mandatoryStoryWrapped = true;
   window.TarotStoryGuard = Object.freeze({
-    version: "mandatory-story-v3",
+    version: "mandatory-story-v4",
     gates: GATES,
     normalShionSpeed: NORMAL_SHION_SPEED,
   });
