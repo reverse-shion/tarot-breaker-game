@@ -1923,6 +1923,12 @@
       start.disabled = false;
       start.textContent = "星の国へ";
       note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
+
+      // Seamless arrival from the PAD landing area.
+      if (params.get("from") === "landing") {
+        note.textContent = "PAD離着陸場から星門庭園へ到着";
+        window.setTimeout(() => begin(), 120);
+      }
     } catch (error) {
       console.error(error);
       start.disabled = true;
