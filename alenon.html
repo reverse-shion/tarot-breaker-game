@@ -119,7 +119,7 @@
 
     .ruin-drift {
       transform-origin: 50% 50%;
-      will-change: transform;
+      will-change: left, top, transform;
     }
 
     .ruin-drift-left,
@@ -670,7 +670,7 @@
     }
   </style>
 </head>
-<body>
+<body data-alenon-drift-revision="visible-drift-v3">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -917,23 +917,27 @@
         const right = refs.driftRight;
         const startedAt = performance.now();
 
+        // Move by left/top instead of translate so the ambient drift cannot be
+        // cancelled by any authored placement transform.
         function frame(now) {
           const t = (now - startedAt) / 1000;
 
-          // Very slow, deliberately asynchronous motion.
-          // Left and right use different periods so they never "breathe" together.
-          const leftY = Math.sin((t / 24.0) * Math.PI * 2) * 9;
-          const leftX = Math.sin((t / 33.0) * Math.PI * 2 + 0.7) * 4;
-          const leftR = Math.sin((t / 29.0) * Math.PI * 2 + 1.2) * 0.42;
+          // Slow but clearly visible after a few seconds.
+          const leftY = Math.sin((t / 18.0) * Math.PI * 2) * 22;
+          const leftX = Math.sin((t / 26.0) * Math.PI * 2 + 0.7) * 9;
+          const leftR = Math.sin((t / 22.0) * Math.PI * 2 + 1.2) * 0.72;
 
-          const rightY = Math.sin((t / 30.5) * Math.PI * 2 + 2.0) * 10;
-          const rightX = Math.sin((t / 38.0) * Math.PI * 2 + 1.1) * 4;
-          const rightR = Math.sin((t / 35.0) * Math.PI * 2 + 2.7) * 0.46;
+          const rightY = Math.sin((t / 22.0) * Math.PI * 2 + 2.0) * 24;
+          const rightX = Math.sin((t / 29.0) * Math.PI * 2 + 1.1) * 10;
+          const rightR = Math.sin((t / 25.0) * Math.PI * 2 + 2.7) * 0.78;
 
-          left.style.transform =
-            `translate3d(${leftX.toFixed(2)}px,${leftY.toFixed(2)}px,0) rotate(${leftR.toFixed(3)}deg)`;
-          right.style.transform =
-            `translate3d(${rightX.toFixed(2)}px,${rightY.toFixed(2)}px,0) rotate(${rightR.toFixed(3)}deg)`;
+          left.style.left = leftX.toFixed(2) + "px";
+          left.style.top = leftY.toFixed(2) + "px";
+          left.style.transform = `rotate(${leftR.toFixed(3)}deg)`;
+
+          right.style.left = rightX.toFixed(2) + "px";
+          right.style.top = rightY.toFixed(2) + "px";
+          right.style.transform = `rotate(${rightR.toFixed(3)}deg)`;
 
           requestAnimationFrame(frame);
         }
