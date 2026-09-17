@@ -1,0 +1,1802 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#06142d" />
+  <title>TAROT BREAKER — アレノンの遺跡</title>
+  <style>
+    :root {
+      --world-w: 1448;
+      --world-h: 1086;
+
+      /* Ground layout: 1448x1086 reference space */
+      --ground-s-x: 0px;
+      --ground-s-y: -12px;
+      --ground-s-scale: .86;
+
+      --ground-side-x: 0px;
+      --ground-side-y: 0px;
+      --ground-side-scale: 1;
+
+      /* Front pad */
+      --pad-x: 730.9px;
+      --pad-y: 857.3px;
+      --pad-size: 140px;
+
+      /* Rear orb */
+      --orb-x: 716px;
+      --orb-y: 254.1px;
+      --orb-size: 449px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #06142d;
+    }
+    body {
+      touch-action: none;
+      overscroll-behavior: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(63,139,255,.14), transparent 55%),
+        #06142d;
+    }
+
+    #world {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1448px;
+      height: 1086px;
+      transform-origin: 0 0;
+      will-change: transform;
+      overflow: hidden;
+      background: #0a2e62;
+      isolation: isolate;
+    }
+
+    .layer,
+    .ground {
+      position: absolute;
+      inset: 0;
+      width: 1448px;
+      height: 1086px;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    .bg {
+      z-index: 0;
+      object-fit: cover;
+    }
+
+    .atmosphere {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 24%, rgba(173,222,255,.10) 0 16%, transparent 44%),
+        linear-gradient(to bottom, rgba(0,15,55,.05), rgba(0,28,70,.03) 66%, rgba(3,18,46,.16));
+    }
+
+    .ground {
+      z-index: 10;
+      object-fit: contain;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .ground-drift,
+    .ground-anchor {
+      position: absolute;
+      inset: 0;
+      width: 1448px;
+      height: 1086px;
+      z-index: 10;
+      pointer-events: none;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .ground-center {
+      z-index: 12;
+      transform: translate3d(var(--ground-s-x), var(--ground-s-y), 0)
+                 scale(var(--ground-s-scale));
+    }
+
+    .ruin-drift {
+      transform-origin: 50% 50%;
+    }
+
+    .pad {
+      position: absolute;
+      z-index: 20;
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: var(--pad-size);
+      height: var(--pad-size);
+      object-fit: contain;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      filter: drop-shadow(0 0 12px rgba(107,206,255,.20));
+    }
+
+    .pad-glow {
+      position: absolute;
+      z-index: 19;
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: calc(var(--pad-size) * .50);
+      height: calc(var(--pad-size) * .25);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(ellipse, rgba(112,220,255,.24), rgba(84,161,255,.08) 46%, transparent 74%);
+      filter: blur(11px);
+      animation: pad-breathe 4.8s ease-in-out infinite;
+    }
+
+    .orb {
+      position: absolute;
+      left: var(--orb-x);
+      top: var(--orb-y);
+      width: var(--orb-size);
+      height: var(--orb-size);
+      object-fit: contain;
+      transform-origin: 50% 50%;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    .orb-outer {
+      z-index: 30;
+      transform: translate(-50%, -50%);
+      animation: orb-outer-spin 28s linear infinite;
+    }
+
+    .orb-inner {
+      z-index: 31;
+      transform: translate(-50%, -50%);
+      animation: orb-inner-spin 17s linear infinite reverse;
+    }
+
+    .orb-core {
+      z-index: 32;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 0 18px rgba(118,220,255,.58));
+      animation: orb-core-breathe 3.7s ease-in-out infinite;
+    }
+
+    .orb-particle {
+      z-index: 33;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: screen;
+      animation:
+        orb-particle-spin 36s linear infinite,
+        orb-particle-fade 5.2s ease-in-out infinite;
+    }
+
+    .orb-aura {
+      position: absolute;
+      z-index: 29;
+      left: var(--orb-x);
+      top: var(--orb-y);
+      width: calc(var(--orb-size) * .60);
+      height: calc(var(--orb-size) * .60);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(101,216,255,.22), rgba(93,150,255,.08) 46%, transparent 72%);
+      filter: blur(16px);
+      animation: orb-aura 4.2s ease-in-out infinite;
+    }
+
+    /* Shion keeps the Star Gate Garden on-screen draw height: 78px.
+       The map/camera zooms independently; inverse scale prevents Shion from growing. */
+    .shion-shadow {
+      position: absolute;
+      z-index: 43;
+      left: 730px;
+      top: 949px;
+      width: 34px;
+      height: 11px;
+      transform: translate(-50%, -50%) scale(var(--actor-inverse-scale, 1));
+      transform-origin: 50% 50%;
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(ellipse, rgba(3, 7, 22, .50), rgba(3, 7, 22, .18) 56%, transparent 76%);
+      filter: blur(1px);
+    }
+
+    .shion-actor {
+      position: absolute;
+      z-index: 44;
+      left: 730px;
+      top: 949px;
+      width: 58.5px;
+      height: 78px;
+      transform: translate(-50%, -100%) scale(var(--actor-inverse-scale, 1));
+      transform-origin: 50% 100%;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      background-image: url("./assets/sprites/shion/shion_idle.png");
+      background-repeat: no-repeat;
+      /* 4 x 384x512 cells rendered with DRAW_HEIGHT=78, matching game.js. */
+      background-size: 234px 78px;
+      /* idle frame order is down, up, left, right: show UP toward the ruins. */
+      background-position: -58.5px 0;
+      image-rendering: pixelated;
+      filter:
+        drop-shadow(0 1px 0 rgba(255,255,255,.14))
+        drop-shadow(0 2px 2px rgba(3,7,22,.46));
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none;
+      background:
+        linear-gradient(to bottom, rgba(4,10,32,.10), transparent 20%, transparent 76%, rgba(4,10,32,.13)),
+        radial-gradient(ellipse at center, transparent 62%, rgba(1,10,30,.13) 100%);
+    }
+
+    @keyframes pad-breathe {
+      0%, 100% { opacity: .56; transform: translate(-50%, -50%) scale(.96); }
+      50% { opacity: .90; transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    @keyframes orb-outer-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes orb-inner-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes orb-particle-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(360deg) scale(1); }
+    }
+
+    @keyframes orb-particle-fade {
+      0%, 100% { opacity: .56; }
+      50% { opacity: .94; }
+    }
+
+    @keyframes orb-core-breathe {
+      0%, 100% {
+        opacity: .90;
+        transform: translate(-50%, -50%) scale(.97);
+        filter: drop-shadow(0 0 16px rgba(118,220,255,.50));
+      }
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.035);
+        filter: drop-shadow(0 0 28px rgba(118,220,255,.78));
+      }
+    }
+
+    @keyframes orb-aura {
+      0%, 100% { opacity: .58; transform: translate(-50%, -50%) scale(.94); }
+      50% { opacity: .92; transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    /* Add ?debug=1 to the URL when fine-tuning placement. */
+    body.debug #world::before,
+    body.debug #world::after {
+      content: "";
+      position: absolute;
+      z-index: 99;
+      pointer-events: none;
+      background: rgba(255, 92, 92, .55);
+    }
+
+    body.debug #world::before {
+      left: 723px;
+      top: 0;
+      width: 2px;
+      height: 1086px;
+    }
+
+    body.debug #world::after {
+      left: 0;
+      top: 542px;
+      width: 1448px;
+      height: 2px;
+    }
+
+    body.debug .pad,
+    body.debug .orb {
+      outline: 2px solid rgba(255,225,80,.72);
+    }
+
+
+
+    /* Alenon movement UI */
+    #move-guide {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, calc(env(safe-area-inset-bottom) + 18px));
+      z-index: 200;
+      transform: translateX(-50%);
+      max-width: min(86vw, 420px);
+      padding: 8px 13px;
+      border: 1px solid rgba(195, 225, 255, .22);
+      border-radius: 999px;
+      color: rgba(255,255,255,.94);
+      background: rgba(4, 12, 34, .64);
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+
+    #move-guide[hidden] { display: none; }
+
+    #object-toggle {
+      position: fixed;
+      top: max(12px, calc(env(safe-area-inset-top) + 8px));
+      left: max(12px, calc(env(safe-area-inset-left) + 8px));
+      z-index: 1150;
+      min-width: 86px;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid rgba(202, 229, 255, .28);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(5, 13, 36, .74);
+      box-shadow: 0 8px 22px rgba(0,0,0,.20);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      touch-action: manipulation;
+    }
+
+    body.object-mode #object-toggle {
+      background: rgba(75,156,255,.30);
+      border-color: rgba(143,208,255,.62);
+    }
+
+    body.edit-mode #object-toggle {
+      display: none !important;
+    }
+
+    #move-reset {
+      position: fixed;
+      top: max(12px, calc(env(safe-area-inset-top) + 8px));
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      z-index: 210;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid rgba(202, 229, 255, .28);
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(5, 13, 36, .68);
+      box-shadow: 0 8px 22px rgba(0,0,0,.20);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 22px;
+      line-height: 38px;
+      text-align: center;
+      touch-action: manipulation;
+    }
+
+    #move-joystick {
+      position: fixed;
+      z-index: 220;
+      width: 92px;
+      height: 92px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    #move-joystick[hidden] { display: none; }
+
+    .move-joystick-ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(212, 235, 255, .38);
+      border-radius: 50%;
+      background: rgba(8, 22, 52, .22);
+      box-shadow:
+        inset 0 0 22px rgba(96, 170, 255, .10),
+        0 6px 22px rgba(0,0,0,.18);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    #move-joystick-knob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+      border: 1px solid rgba(230, 243, 255, .55);
+      border-radius: 50%;
+      background: rgba(147, 204, 255, .45);
+      box-shadow: 0 0 18px rgba(91, 175, 255, .24);
+      transform: translate(0, 0);
+    }
+
+    .move-target-ring {
+      position: absolute;
+      z-index: 42;
+      width: 24px;
+      height: 12px;
+      border: 1.5px solid rgba(209, 238, 255, .88);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(var(--actor-inverse-scale, 1));
+      transform-origin: 50% 50%;
+      pointer-events: none;
+      box-shadow: 0 0 12px rgba(123, 205, 255, .34);
+      opacity: 0;
+      transition: opacity .12s ease;
+    }
+
+    .move-target-ring.active { opacity: .82; }
+
+    body.edit-mode #move-guide,
+    body.edit-mode #move-reset,
+    body.edit-mode #move-joystick,
+    body.edit-mode .move-target-ring {
+      display: none !important;
+    }
+
+
+    /* PAD / ORB position adjuster: open alenon.html?objects=1 */
+    #object-panel {
+      display: none;
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 1100;
+      padding: 10px;
+      color: #fff;
+      background: rgba(5, 13, 35, .91);
+      border: 1px solid rgba(177, 216, 255, .36);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      touch-action: auto;
+    }
+
+    body.object-mode #object-panel { display: block; }
+
+    body.object-mode #move-guide,
+    body.object-mode #move-reset,
+    body.object-mode #move-joystick,
+    body.object-mode .move-target-ring {
+      display: none !important;
+    }
+
+    .object-top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .object-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .object-hint {
+      font-size: 11px;
+      opacity: .72;
+    }
+
+    .object-tabs,
+    .object-actions,
+    .object-nudge {
+      display: flex;
+      gap: 7px;
+    }
+
+    .object-tabs { margin-bottom: 8px; }
+
+    .object-tabs button,
+    .object-actions button,
+    .object-nudge button {
+      appearance: none;
+      border: 1px solid rgba(197,223,255,.25);
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      min-height: 36px;
+      padding: 7px 11px;
+    }
+
+    .object-tabs button {
+      flex: 1;
+    }
+
+    .object-tabs button[aria-pressed="true"] {
+      background: rgba(111,188,255,.25);
+      border-color: rgba(143,208,255,.72);
+    }
+
+    .object-coords {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+
+    .object-coords label {
+      display: grid;
+      gap: 3px;
+      font-size: 10px;
+      opacity: .92;
+    }
+
+    .object-coords input {
+      width: 100%;
+      height: 34px;
+      padding: 5px 7px;
+      border: 1px solid rgba(197,223,255,.24);
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .object-nudge {
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .object-nudge button {
+      width: 44px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .object-actions button { flex: 1; }
+    #object-copy { background: rgba(75,156,255,.22); }
+    #object-reset { background: rgba(255,149,97,.12); }
+
+    body.object-mode .pad.object-selected {
+      outline: 2px solid rgba(255,236,123,.9);
+      outline-offset: 3px;
+    }
+
+    body.object-mode .orb.object-selected {
+      outline: 1px solid rgba(151,217,255,.75);
+      outline-offset: 2px;
+    }
+
+    /* Placement editor: open alenon.html?edit=1 */
+    #editor-panel {
+      display: none;
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 1000;
+      padding: 10px 10px 12px;
+      color: #fff;
+      background: rgba(5, 13, 35, .90);
+      border: 1px solid rgba(177, 216, 255, .34);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      touch-action: auto;
+    }
+
+    body.edit-mode #editor-panel { display: block; }
+    body.edit-mode #viewport { touch-action: none; }
+
+    .editor-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .editor-title {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .editor-hint {
+      font-size: 11px;
+      opacity: .72;
+      white-space: nowrap;
+    }
+
+    .editor-layer-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 7px;
+    }
+
+    .editor-layer-tabs::-webkit-scrollbar { display: none; }
+
+    .editor-layer-tabs button,
+    .editor-actions button {
+      appearance: none;
+      border: 1px solid rgba(197, 223, 255, .25);
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      min-height: 36px;
+      padding: 7px 11px;
+      white-space: nowrap;
+    }
+
+    .editor-layer-tabs button[aria-pressed="true"] {
+      background: rgba(111, 188, 255, .25);
+      border-color: rgba(143, 208, 255, .72);
+      box-shadow: inset 0 0 0 1px rgba(210, 237, 255, .18);
+    }
+
+    .editor-controls {
+      display: grid;
+      grid-template-columns: 76px 76px 1fr;
+      gap: 7px;
+      align-items: end;
+    }
+
+    .editor-field {
+      display: grid;
+      gap: 3px;
+      font-size: 10px;
+      opacity: .92;
+    }
+
+    .editor-field input[type="number"] {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      padding: 5px 7px;
+      border: 1px solid rgba(197, 223, 255, .24);
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .editor-size-wrap {
+      display: grid;
+      grid-template-columns: 1fr 62px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .editor-size-wrap input[type="range"] {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .editor-actions button { flex: 1; }
+    #editor-copy { background: rgba(75, 156, 255, .22); }
+    #editor-reset { background: rgba(255, 149, 97, .12); }
+
+    #editor-toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(205px + env(safe-area-inset-bottom));
+      z-index: 1001;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(0,0,0,.72);
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    #editor-toast.show { opacity: 1; }
+
+    body.edit-mode #world {
+      outline: 1px solid rgba(168, 214, 255, .22);
+    }
+
+    body.edit-mode #world::before,
+    body.edit-mode #world::after {
+      content: "";
+      position: absolute;
+      z-index: 80;
+      pointer-events: none;
+      background: rgba(123, 198, 255, .24);
+    }
+
+    body.edit-mode #world::before {
+      left: 723px;
+      top: 0;
+      width: 2px;
+      height: 1086px;
+    }
+
+    body.edit-mode #world::after {
+      left: 0;
+      top: 542px;
+      width: 1448px;
+      height: 2px;
+    }
+
+    body.edit-mode .vignette { opacity: .35; }
+
+    @media (max-width: 520px) {
+      .editor-hint { display: none; }
+      .editor-controls { grid-template-columns: 68px 68px 1fr; }
+      #editor-toast { bottom: calc(214px + env(safe-area-inset-bottom)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pad-glow,
+      .orb-outer,
+      .orb-inner,
+      .orb-core,
+      .orb-particle,
+      .orb-aura {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body data-alenon-drift-revision="inline-object-adjust-v6">
+  <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
+    <section id="world" aria-label="アレノンの遺跡マップ">
+      <!-- Backmost layer -->
+      <img class="layer bg" src="./assets/maps/alenon/bg.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <div class="atmosphere" aria-hidden="true"></div>
+
+      <!-- Ruin grounds: left / center / right -->
+      <div class="ground-drift ground-drift-left" aria-hidden="true">
+        <div class="ground-anchor ground-left-anchor">
+          <img class="ground ruin-drift ruin-drift-left" src="./assets/maps/alenon/ground_l.webp" alt="" draggable="false" />
+        </div>
+      </div>
+      <div class="ground-drift ground-drift-right" aria-hidden="true">
+        <div class="ground-anchor ground-right-anchor">
+          <img class="ground ruin-drift ruin-drift-right" src="./assets/maps/alenon/ground_r.webp" alt="" draggable="false" />
+        </div>
+      </div>
+      <img class="ground ground-center" src="./assets/maps/alenon/ground_s.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <!-- Front tip pad -->
+      <div class="pad-glow" aria-hidden="true"></div>
+      <img class="pad" src="./assets/maps/alenon/pad.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <!-- Rear-center orb assembly -->
+      <div class="orb-aura" aria-hidden="true"></div>
+      <img class="orb orb-outer" src="./assets/maps/alenon/orb-outer.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="orb orb-inner" src="./assets/maps/alenon/orb-inner.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="orb orb-core" src="./assets/maps/alenon/orb-core.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="orb orb-particle" src="./assets/maps/alenon/orb-particle.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <!-- Prologue spawn: same visual size as Shion in Star Gate Garden. -->
+      <div class="move-target-ring" aria-hidden="true"></div>
+      <div class="shion-shadow" aria-hidden="true"></div>
+      <div class="shion-actor" role="img" aria-label="シオン"></div>
+
+      <div class="vignette" aria-hidden="true"></div>
+    </section>
+
+    <div id="move-guide">行きたい場所をタップ / ドラッグで自由移動</div>
+    <div id="move-joystick" hidden aria-hidden="true">
+      <div class="move-joystick-ring"></div>
+      <div id="move-joystick-knob"></div>
+    </div>
+    <button id="object-toggle" type="button" aria-pressed="false">PAD / ORB</button>
+    <button id="move-reset" type="button" aria-label="開始地点へ戻る">↺</button>
+
+    <aside id="object-panel" aria-label="PADとORBの位置微調整">
+      <div class="object-top">
+        <div class="object-title">PAD / ORB 微調整</div>
+        <div class="object-hint">画面ドラッグ＝移動</div>
+      </div>
+      <div class="object-tabs" role="group" aria-label="調整対象">
+        <button type="button" data-object-select="pad" aria-pressed="true">PAD</button>
+        <button type="button" data-object-select="orb" aria-pressed="false">ORB</button>
+      </div>
+      <div class="object-coords">
+        <label>X
+          <input id="object-x" type="number" inputmode="decimal" step="0.1" />
+        </label>
+        <label>Y
+          <input id="object-y" type="number" inputmode="decimal" step="0.1" />
+        </label>
+      </div>
+      <div class="object-nudge" aria-label="1pxずつ微調整">
+        <button type="button" data-nudge-x="-1" aria-label="左へ1">←</button>
+        <button type="button" data-nudge-y="-1" aria-label="上へ1">↑</button>
+        <button type="button" data-nudge-y="1" aria-label="下へ1">↓</button>
+        <button type="button" data-nudge-x="1" aria-label="右へ1">→</button>
+      </div>
+      <div class="object-actions">
+        <button id="object-reset" type="button">正式位置に戻す</button>
+        <button id="object-copy" type="button">位置をコピー</button>
+      </div>
+    </aside>
+
+    <aside id="editor-panel" aria-label="アレノンの遺跡 配置調整">
+      <div class="editor-top">
+        <div class="editor-title">アレノン配置調整</div>
+        <div class="editor-hint">ドラッグ＝移動 / 2本指＝拡大縮小</div>
+      </div>
+
+      <div class="editor-layer-tabs" role="group" aria-label="調整するレイヤー">
+        <button type="button" data-editor-select="groundS" aria-pressed="true">中央遺跡</button>
+        <button type="button" data-editor-select="groundL" aria-pressed="false">左遺跡</button>
+        <button type="button" data-editor-select="groundR" aria-pressed="false">右遺跡</button>
+        <button type="button" data-editor-select="pad" aria-pressed="false">PAD</button>
+        <button type="button" data-editor-select="orb" aria-pressed="false">ORB</button>
+      </div>
+
+      <div class="editor-controls">
+        <label class="editor-field">X
+          <input id="editor-x" type="number" inputmode="decimal" step="1" />
+        </label>
+        <label class="editor-field">Y
+          <input id="editor-y" type="number" inputmode="decimal" step="1" />
+        </label>
+        <label class="editor-field"><span id="editor-size-label">大きさ</span>
+          <span class="editor-size-wrap">
+            <input id="editor-size" type="range" />
+            <input id="editor-size-number" type="number" inputmode="decimal" />
+          </span>
+        </label>
+      </div>
+
+      <div class="editor-actions">
+        <button id="editor-reset" type="button">初期値に戻す</button>
+        <button id="editor-copy" type="button">調整値をコピー</button>
+      </div>
+    </aside>
+    <div id="editor-toast" role="status" aria-live="polite"></div>
+
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const WORLD_W = 1448;
+      const WORLD_H = 1086;
+      const SHION_SCREEN_HEIGHT = 78;
+      const SHION_SPAWN = Object.freeze({ x: 730, y: 949 });
+      const SHION_SPEED_SCREEN = 155;
+      const CAMERA_LOOK_AHEAD_Y = 110;
+      const WORLD_MARGIN = 34;
+      const world = document.getElementById("world");
+      const viewport = document.getElementById("viewport");
+      const params = new URLSearchParams(location.search);
+      const editMode = params.get("edit") === "1";
+      const objectMode = params.get("objects") === "1";
+      let worldScale = 1;
+      let cameraTx = 0;
+      let cameraTy = 0;
+
+      const shionActor = document.querySelector(".shion-actor");
+      const shionShadow = document.querySelector(".shion-shadow");
+      const moveTargetRing = document.querySelector(".move-target-ring");
+      const moveGuide = document.getElementById("move-guide");
+      const moveReset = document.getElementById("move-reset");
+      const moveJoystick = document.getElementById("move-joystick");
+      const moveJoystickKnob = document.getElementById("move-joystick-knob");
+      const objectToggle = document.getElementById("object-toggle");
+
+      const player = {
+        x: SHION_SPAWN.x,
+        y: SHION_SPAWN.y,
+        dir: "up",
+        moving: false,
+        frame: 0,
+        anim: 0,
+        target: null,
+      };
+
+      const defaults = Object.freeze({
+        groundS: { kind: "ground", x: 0, y: -12, scale: .86 },
+        groundL: { kind: "ground", x: -403.9, y: -16.7, scale: .533 },
+        groundR: { kind: "ground", x: 236.9, y: -63.4, scale: .592 },
+        pad: { kind: "object", x: 730.9, y: 857.3, size: 140 },
+        orb: { kind: "object", x: 716, y: 254.1, size: 449 },
+      });
+
+      const cloneDefaults = () =>
+        Object.fromEntries(Object.entries(defaults).map(([key, value]) => [key, { ...value }]));
+
+      const STORAGE_KEY = "tarot-breaker-alenon-layout-v2";
+      const OBJECT_STORAGE_KEY = "tarot-breaker-alenon-objects-v2";
+      let layout = cloneDefaults();
+
+      // Public view uses committed placement. Editing modes may restore a local draft.
+      if (editMode) {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            for (const key of Object.keys(defaults)) {
+              if (parsed[key]) layout[key] = { ...layout[key], ...parsed[key] };
+            }
+          } catch (_) {}
+        }
+      } else if (objectMode) {
+        const saved = localStorage.getItem(OBJECT_STORAGE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            for (const key of ["pad", "orb"]) {
+              if (parsed[key]) layout[key] = { ...layout[key], ...parsed[key] };
+            }
+          } catch (_) {}
+        }
+      }
+
+      const refs = {
+        groundS: document.querySelector(".ground-center"),
+        groundL: document.querySelector(".ground-left-anchor"),
+        groundR: document.querySelector(".ground-right-anchor"),
+        pad: document.querySelector(".pad"),
+        padGlow: document.querySelector(".pad-glow"),
+        orb: [...document.querySelectorAll(".orb")],
+        orbAura: document.querySelector(".orb-aura"),
+        driftLeft: document.querySelector(".ground-drift-left"),
+        driftRight: document.querySelector(".ground-drift-right"),
+      };
+
+      function applyLayout() {
+        for (const key of ["groundS", "groundL", "groundR"]) {
+          const item = layout[key];
+          refs[key].style.transform =
+            `translate3d(${item.x}px,${item.y}px,0) scale(${item.scale})`;
+        }
+
+        const pad = layout.pad;
+        refs.pad.style.left = pad.x + "px";
+        refs.pad.style.top = pad.y + "px";
+        refs.pad.style.width = pad.size + "px";
+        refs.pad.style.height = pad.size + "px";
+        refs.padGlow.style.left = pad.x + "px";
+        refs.padGlow.style.top = pad.y + "px";
+        refs.padGlow.style.width = pad.size * .50 + "px";
+        refs.padGlow.style.height = pad.size * .25 + "px";
+
+        const orb = layout.orb;
+        for (const element of refs.orb) {
+          element.style.left = orb.x + "px";
+          element.style.top = orb.y + "px";
+          element.style.width = orb.size + "px";
+          element.style.height = orb.size + "px";
+        }
+        refs.orbAura.style.left = orb.x + "px";
+        refs.orbAura.style.top = orb.y + "px";
+        refs.orbAura.style.width = orb.size * .60 + "px";
+        refs.orbAura.style.height = orb.size * .60 + "px";
+
+        if (editMode) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+        } else if (document.body.classList.contains("object-mode")) {
+          localStorage.setItem(OBJECT_STORAGE_KEY, JSON.stringify({
+            pad: layout.pad,
+            orb: layout.orb,
+          }));
+        }
+      }
+
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+      function syncCamera() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const halfW = vw / (2 * worldScale);
+        const halfH = vh / (2 * worldScale);
+
+        const minX = Math.min(halfW, WORLD_W / 2);
+        const maxX = Math.max(minX, WORLD_W - halfW);
+        const minY = Math.min(halfH, WORLD_H / 2);
+        const maxY = Math.max(minY, WORLD_H - halfH);
+
+        const focusX = clamp(player.x, minX, maxX);
+        const focusY = clamp(player.y - CAMERA_LOOK_AHEAD_Y, minY, maxY);
+
+        cameraTx = vw / 2 - focusX * worldScale;
+        cameraTy = vh / 2 - focusY * worldScale;
+
+        world.style.transform =
+          `translate3d(${cameraTx}px,${cameraTy}px,0) scale(${worldScale})`;
+      }
+
+      function fitWorld() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Keep Shion at the Star Gate Garden size and enlarge the map instead.
+        worldScale = Math.max(1, vw / WORLD_W, vh / WORLD_H);
+
+        world.style.setProperty(
+          "--actor-inverse-scale",
+          String(1 / worldScale),
+        );
+        world.dataset.shionScreenHeight = String(SHION_SCREEN_HEIGHT);
+        syncCamera();
+      }
+
+      applyLayout();
+      fitWorld();
+
+      window.addEventListener("resize", fitWorld, { passive: true });
+      window.addEventListener("orientationchange", fitWorld, { passive: true });
+
+      if (params.get("debug") === "1") {
+        document.body.classList.add("debug");
+      }
+
+      function initObjectAdjust() {
+        const xInput = document.getElementById("object-x");
+        const yInput = document.getElementById("object-y");
+        const copyButton = document.getElementById("object-copy");
+        const resetButton = document.getElementById("object-reset");
+        const tabs = [...document.querySelectorAll("[data-object-select]")];
+        const nudges = [...document.querySelectorAll("[data-nudge-x], [data-nudge-y]")];
+
+        let selected = "pad";
+        let drag = null;
+
+        function setObjectMode(open) {
+          document.body.classList.toggle("object-mode", open);
+          objectToggle.setAttribute("aria-pressed", open ? "true" : "false");
+          objectToggle.textContent = open ? "調整完了" : "PAD / ORB";
+          if (open) {
+            player.target = null;
+            clearTargetRing();
+            refresh();
+          } else {
+            drag = null;
+          }
+        }
+
+        function current() {
+          return layout[selected];
+        }
+
+        function markSelected() {
+          refs.pad.classList.toggle("object-selected", selected === "pad");
+          for (const element of refs.orb) {
+            element.classList.toggle("object-selected", selected === "orb");
+          }
+          objectToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          setObjectMode(!document.body.classList.contains("object-mode"));
+        });
+
+        for (const button of tabs) {
+            button.setAttribute(
+              "aria-pressed",
+              button.dataset.objectSelect === selected ? "true" : "false",
+            );
+          }
+        }
+
+        function refresh() {
+          const item = current();
+          xInput.value = (Math.round(item.x * 10) / 10).toFixed(1);
+          yInput.value = (Math.round(item.y * 10) / 10).toFixed(1);
+          markSelected();
+        }
+
+        function updateFromInputs() {
+          const item = current();
+          const x = Number(xInput.value);
+          const y = Number(yInput.value);
+          if (Number.isFinite(x)) item.x = x;
+          if (Number.isFinite(y)) item.y = y;
+          applyLayout();
+        }
+
+        for (const button of tabs) {
+          button.addEventListener("click", () => {
+            selected = button.dataset.objectSelect;
+            refresh();
+          });
+        }
+
+        xInput.addEventListener("input", updateFromInputs);
+        yInput.addEventListener("input", updateFromInputs);
+
+        for (const button of nudges) {
+          button.addEventListener("click", () => {
+            const item = current();
+            item.x += Number(button.dataset.nudgeX || 0);
+            item.y += Number(button.dataset.nudgeY || 0);
+            applyLayout();
+            refresh();
+          });
+        }
+
+        resetButton.addEventListener("click", () => {
+          localStorage.removeItem(OBJECT_STORAGE_KEY);
+          layout.pad = { ...defaults.pad };
+          layout.orb = { ...defaults.orb };
+          applyLayout();
+          refresh();
+        });
+
+        copyButton.addEventListener("click", async () => {
+          const payload = {
+            pad: {
+              x: Math.round(layout.pad.x * 10) / 10,
+              y: Math.round(layout.pad.y * 10) / 10,
+              size: Math.round(layout.pad.size),
+            },
+            orb: {
+              x: Math.round(layout.orb.x * 10) / 10,
+              y: Math.round(layout.orb.y * 10) / 10,
+              size: Math.round(layout.orb.size),
+            },
+          };
+          const text = JSON.stringify(payload, null, 2);
+          try {
+            await navigator.clipboard.writeText(text);
+            copyButton.textContent = "コピーしました";
+            setTimeout(() => copyButton.textContent = "位置をコピー", 1200);
+          } catch (_) {
+            window.prompt("この位置情報をコピーしてください", text);
+          }
+        });
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (!document.body.classList.contains("object-mode")) return;
+          if (event.target.closest?.("#object-panel") || event.target.closest?.("#object-toggle")) return;
+          event.preventDefault();
+          const item = current();
+          drag = {
+            id: event.pointerId,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            x: item.x,
+            y: item.y,
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!document.body.classList.contains("object-mode")) return;
+          if (!drag || drag.id !== event.pointerId) return;
+          event.preventDefault();
+          const item = current();
+          item.x = drag.x + (event.clientX - drag.clientX) / worldScale;
+          item.y = drag.y + (event.clientY - drag.clientY) / worldScale;
+          applyLayout();
+          refresh();
+        }, { passive: false });
+
+        function endDrag(event) {
+          if (!drag || drag.id !== event.pointerId) return;
+          event.preventDefault();
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          drag = null;
+        }
+
+        viewport.addEventListener("pointerup", endDrag, { passive: false });
+        viewport.addEventListener("pointercancel", endDrag, { passive: false });
+
+        refresh();
+        setObjectMode(objectMode);
+      }
+
+      function initRuinDrift() {
+        if (!refs.driftLeft || !refs.driftRight) return;
+
+        const left = refs.driftLeft;
+        const right = refs.driftRight;
+        const startedAt = performance.now();
+
+        function frame(now) {
+          const t = (now - startedAt) / 1000;
+
+          // Outer wrappers move; inner anchors keep the authored position/scale.
+          // This also runs in ?edit=1 so the effect is visible regardless of URL.
+          const leftY = Math.sin((t / 18.0) * Math.PI * 2) * 18;
+          const leftX = Math.sin((t / 25.0) * Math.PI * 2 + 0.65) * 7;
+          const leftR = Math.sin((t / 22.0) * Math.PI * 2 + 1.10) * 0.58;
+
+          const rightY = Math.sin((t / 22.0) * Math.PI * 2 + 1.85) * 20;
+          const rightX = Math.sin((t / 29.0) * Math.PI * 2 + 1.15) * 8;
+          const rightR = Math.sin((t / 25.0) * Math.PI * 2 + 2.55) * 0.62;
+
+          left.style.transform =
+            `translate3d(${leftX.toFixed(2)}px,${leftY.toFixed(2)}px,0) rotate(${leftR.toFixed(3)}deg)`;
+          right.style.transform =
+            `translate3d(${rightX.toFixed(2)}px,${rightY.toFixed(2)}px,0) rotate(${rightR.toFixed(3)}deg)`;
+
+          requestAnimationFrame(frame);
+        }
+
+        requestAnimationFrame(frame);
+      }
+
+      function setActorPosition() {
+        shionActor.style.left = player.x + "px";
+        shionActor.style.top = player.y + "px";
+        shionShadow.style.left = player.x + "px";
+        shionShadow.style.top = player.y + "px";
+      }
+
+      const idleFrame = Object.freeze({ down: 0, up: 1, left: 2, right: 3 });
+      const walkSheet = Object.freeze({
+        down: "./assets/sprites/shion/shion_walk_down.png",
+        up: "./assets/sprites/shion/shion_walk_up.png",
+        left: "./assets/sprites/shion/shion_walk_left.png",
+        right: "./assets/sprites/shion/shion_walk_right.png",
+      });
+
+      function setActorVisual() {
+        if (player.moving) {
+          shionActor.style.backgroundImage = `url("${walkSheet[player.dir]}")`;
+          shionActor.style.backgroundPosition = `${-58.5 * player.frame}px 0`;
+        } else {
+          shionActor.style.backgroundImage =
+            'url("./assets/sprites/shion/shion_idle.png")';
+          shionActor.style.backgroundPosition =
+            `${-58.5 * idleFrame[player.dir]}px 0`;
+        }
+      }
+
+      function directionFromVector(dx, dy) {
+        if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? "left" : "right";
+        return dy < 0 ? "up" : "down";
+      }
+
+      function screenToWorld(clientX, clientY) {
+        return {
+          x: (clientX - cameraTx) / worldScale,
+          y: (clientY - cameraTy) / worldScale,
+        };
+      }
+
+      function clampPlayer() {
+        player.x = clamp(player.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
+        player.y = clamp(player.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+      }
+
+      function showTarget(point) {
+        moveTargetRing.style.left = point.x + "px";
+        moveTargetRing.style.top = point.y + "px";
+        moveTargetRing.classList.add("active");
+      }
+
+      function clearTargetRing() {
+        moveTargetRing.classList.remove("active");
+      }
+
+      function resetPlayer() {
+        player.x = SHION_SPAWN.x;
+        player.y = SHION_SPAWN.y;
+        player.dir = "up";
+        player.moving = false;
+        player.frame = 0;
+        player.anim = 0;
+        player.target = null;
+        clearTargetRing();
+        setActorPosition();
+        setActorVisual();
+        syncCamera();
+      }
+
+      function initMovement() {
+        const keys = new Set();
+        const stick = {
+          active: false,
+          pointerId: null,
+          ox: 0,
+          oy: 0,
+          x: 0,
+          y: 0,
+          startedAt: 0,
+          moved: false,
+        };
+        const STICK_RADIUS = 42;
+        let pointerStart = null;
+        let last = performance.now();
+        let guideTimer = window.setTimeout(() => {
+          moveGuide.hidden = true;
+        }, 5000);
+
+        function hideGuide() {
+          if (!moveGuide.hidden) moveGuide.hidden = true;
+          clearTimeout(guideTimer);
+        }
+
+        function updateJoystick(clientX, clientY) {
+          const dx = clientX - stick.ox;
+          const dy = clientY - stick.oy;
+          const length = Math.hypot(dx, dy);
+          const ratio = length > STICK_RADIUS ? STICK_RADIUS / length : 1;
+          const kx = dx * ratio;
+          const ky = dy * ratio;
+          stick.x = kx / STICK_RADIUS;
+          stick.y = ky / STICK_RADIUS;
+          moveJoystickKnob.style.transform =
+            `translate(${kx}px,${ky}px)`;
+        }
+
+        function startJoystick(event) {
+          stick.active = true;
+          stick.pointerId = event.pointerId;
+          stick.ox = pointerStart.x;
+          stick.oy = pointerStart.y;
+          stick.x = 0;
+          stick.y = 0;
+          stick.moved = true;
+          moveJoystick.hidden = false;
+          moveJoystick.style.left = stick.ox + "px";
+          moveJoystick.style.top = stick.oy + "px";
+          updateJoystick(event.clientX, event.clientY);
+          player.target = null;
+          clearTargetRing();
+          hideGuide();
+        }
+
+        function stopJoystick() {
+          stick.active = false;
+          stick.pointerId = null;
+          stick.x = 0;
+          stick.y = 0;
+          moveJoystick.hidden = true;
+          moveJoystickKnob.style.transform = "translate(0, 0)";
+        }
+
+        function setTapTarget(clientX, clientY) {
+          const point = screenToWorld(clientX, clientY);
+          point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
+          point.y = clamp(point.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+          player.target = point;
+          showTarget(point);
+          hideGuide();
+        }
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (document.body.classList.contains("object-mode")) return;
+          if (event.target.closest?.("#move-reset") || event.target.closest?.("#object-toggle")) return;
+          if (event.button != null && event.button !== 0) return;
+          event.preventDefault();
+          pointerStart = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            time: performance.now(),
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!pointerStart || pointerStart.id !== event.pointerId) return;
+          event.preventDefault();
+
+          if (stick.active && stick.pointerId === event.pointerId) {
+            updateJoystick(event.clientX, event.clientY);
+            return;
+          }
+
+          const dist = Math.hypot(
+            event.clientX - pointerStart.x,
+            event.clientY - pointerStart.y,
+          );
+          if (dist >= 12) startJoystick(event);
+        }, { passive: false });
+
+        function finishPointer(event) {
+          if (!pointerStart || pointerStart.id !== event.pointerId) return;
+          event.preventDefault();
+
+          const wasStick = stick.active && stick.pointerId === event.pointerId;
+          const elapsed = performance.now() - pointerStart.time;
+          const dist = Math.hypot(
+            event.clientX - pointerStart.x,
+            event.clientY - pointerStart.y,
+          );
+
+          if (wasStick) {
+            stopJoystick();
+          } else if (elapsed < 650 && dist < 12) {
+            setTapTarget(event.clientX, event.clientY);
+          }
+
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          pointerStart = null;
+        }
+
+        viewport.addEventListener("pointerup", finishPointer, { passive: false });
+        viewport.addEventListener("pointercancel", (event) => {
+          if (stick.pointerId === event.pointerId) stopJoystick();
+          if (pointerStart?.id === event.pointerId) pointerStart = null;
+        }, { passive: false });
+
+        window.addEventListener("keydown", (event) => {
+          if (document.body.classList.contains("object-mode")) return;
+          const key = event.key.toLowerCase();
+          if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
+            keys.add(key);
+            player.target = null;
+            clearTargetRing();
+            hideGuide();
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        window.addEventListener("keyup", (event) => {
+          keys.delete(event.key.toLowerCase());
+        });
+
+        moveReset.addEventListener("click", (event) => {
+          event.preventDefault();
+          resetPlayer();
+        });
+
+        function keyVector() {
+          let x = 0;
+          let y = 0;
+          if (keys.has("arrowleft") || keys.has("a")) x -= 1;
+          if (keys.has("arrowright") || keys.has("d")) x += 1;
+          if (keys.has("arrowup") || keys.has("w")) y -= 1;
+          if (keys.has("arrowdown") || keys.has("s")) y += 1;
+          const length = Math.hypot(x, y);
+          return length ? { x: x / length, y: y / length } : { x: 0, y: 0 };
+        }
+
+        function loop(now) {
+          const dt = Math.min((now - last) / 1000, .05);
+          last = now;
+
+          const keyboard = keyVector();
+          let vx = keyboard.x;
+          let vy = keyboard.y;
+          let manual = Math.hypot(vx, vy) > .01;
+
+          if (!manual && stick.active) {
+            vx = stick.x;
+            vy = stick.y;
+            manual = Math.hypot(vx, vy) > .08;
+          }
+
+          if (!manual && player.target) {
+            const dx = player.target.x - player.x;
+            const dy = player.target.y - player.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance <= 3.5) {
+              player.x = player.target.x;
+              player.y = player.target.y;
+              player.target = null;
+              clearTargetRing();
+            } else {
+              vx = dx / distance;
+              vy = dy / distance;
+            }
+          }
+
+          const hasMove = manual || !!player.target;
+          if (hasMove && Math.hypot(vx, vy) > .001) {
+            player.dir = directionFromVector(vx, vy);
+
+            // Keep perceived movement speed consistent even when the map zoom changes.
+            const speedWorld = SHION_SPEED_SCREEN / worldScale;
+            player.x += vx * speedWorld * dt;
+            player.y += vy * speedWorld * dt;
+            clampPlayer();
+
+            player.anim += dt * 8.5;
+            player.frame = Math.floor(player.anim) % 4;
+            player.moving = true;
+          } else {
+            player.moving = false;
+            player.anim = 0;
+            player.frame = 0;
+          }
+
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+        }
+
+        resetPlayer();
+        requestAnimationFrame((now) => {
+          last = now;
+          loop(now);
+        });
+      }
+
+      initRuinDrift();
+
+      if (!editMode) {
+        initObjectAdjust();
+        initMovement();
+        return;
+      }
+      document.body.classList.add("edit-mode");
+
+      const xInput = document.getElementById("editor-x");
+      const yInput = document.getElementById("editor-y");
+      const sizeRange = document.getElementById("editor-size");
+      const sizeNumber = document.getElementById("editor-size-number");
+      const sizeLabel = document.getElementById("editor-size-label");
+      const copyButton = document.getElementById("editor-copy");
+      const resetButton = document.getElementById("editor-reset");
+      const toast = document.getElementById("editor-toast");
+      const layerButtons = [...document.querySelectorAll("[data-editor-select]")];
+
+      let selected = "groundS";
+      let toastTimer = 0;
+      const pointers = new Map();
+      let dragStart = null;
+      let pinchStart = null;
+
+      function selectedItem() {
+        return layout[selected];
+      }
+
+      function sizeValue(item) {
+        return item.kind === "ground" ? item.scale : item.size;
+      }
+
+      function configureSizeControl() {
+        const item = selectedItem();
+        const isGround = item.kind === "ground";
+        sizeLabel.textContent = isGround ? "拡大率" : "大きさ";
+        sizeRange.min = isGround ? "0.20" : "80";
+        sizeRange.max = isGround ? "1.40" : "900";
+        sizeRange.step = isGround ? "0.01" : "1";
+        sizeNumber.min = sizeRange.min;
+        sizeNumber.max = sizeRange.max;
+        sizeNumber.step = sizeRange.step;
+      }
+
+      function refreshControls() {
+        const item = selectedItem();
+        configureSizeControl();
+        xInput.value = Math.round(item.x * 10) / 10;
+        yInput.value = Math.round(item.y * 10) / 10;
+        const v = sizeValue(item);
+        sizeRange.value = v;
+        sizeNumber.value = item.kind === "ground"
+          ? (Math.round(v * 100) / 100).toFixed(2)
+          : Math.round(v);
+        for (const button of layerButtons) {
+          button.setAttribute(
+            "aria-pressed",
+            button.dataset.editorSelect === selected ? "true" : "false",
+          );
+        }
+      }
+
+      function setPositionFromInputs() {
+        const item = selectedItem();
+        const x = Number(xInput.value);
+        const y = Number(yInput.value);
+        if (Number.isFinite(x)) item.x = x;
+        if (Number.isFinite(y)) item.y = y;
+        applyLayout();
+      }
+
+      function setSize(value) {
+        const item = selectedItem();
+        const n = Number(value);
+        if (!Number.isFinite(n)) return;
+        if (item.kind === "ground") {
+          item.scale = Math.max(.20, Math.min(1.40, n));
+        } else {
+          item.size = Math.max(80, Math.min(900, n));
+        }
+        applyLayout();
+        refreshControls();
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 1500);
+      }
+
+      for (const button of layerButtons) {
+        button.addEventListener("click", () => {
+          selected = button.dataset.editorSelect;
+          refreshControls();
+          showToast(button.textContent + "を選択");
+        });
+      }
+
+      xInput.addEventListener("input", setPositionFromInputs);
+      yInput.addEventListener("input", setPositionFromInputs);
+      sizeRange.addEventListener("input", () => setSize(sizeRange.value));
+      sizeNumber.addEventListener("input", () => setSize(sizeNumber.value));
+
+      resetButton.addEventListener("click", () => {
+        localStorage.removeItem(STORAGE_KEY);
+        layout = cloneDefaults();
+        applyLayout();
+        refreshControls();
+        showToast("GitHubの現在配置に戻しました");
+      });
+
+      copyButton.addEventListener("click", async () => {
+        const payload = {
+          ground_s: {
+            x: Math.round(layout.groundS.x * 10) / 10,
+            y: Math.round(layout.groundS.y * 10) / 10,
+            scale: Math.round(layout.groundS.scale * 1000) / 1000,
+          },
+          ground_l: {
+            x: Math.round(layout.groundL.x * 10) / 10,
+            y: Math.round(layout.groundL.y * 10) / 10,
+            scale: Math.round(layout.groundL.scale * 1000) / 1000,
+          },
+          ground_r: {
+            x: Math.round(layout.groundR.x * 10) / 10,
+            y: Math.round(layout.groundR.y * 10) / 10,
+            scale: Math.round(layout.groundR.scale * 1000) / 1000,
+          },
+          pad: {
+            x: Math.round(layout.pad.x * 10) / 10,
+            y: Math.round(layout.pad.y * 10) / 10,
+            size: Math.round(layout.pad.size),
+          },
+          orb: {
+            x: Math.round(layout.orb.x * 10) / 10,
+            y: Math.round(layout.orb.y * 10) / 10,
+            size: Math.round(layout.orb.size),
+          },
+        };
+        const text = JSON.stringify(payload, null, 2);
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("調整値をコピーしました");
+        } catch (_) {
+          window.prompt("この調整値をコピーして送ってください", text);
+        }
+      });
+
+      function distance(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      viewport.addEventListener("pointerdown", (event) => {
+        if (event.target.closest?.("#editor-panel")) return;
+        event.preventDefault();
+        viewport.setPointerCapture?.(event.pointerId);
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+        if (pointers.size === 1) {
+          const item = selectedItem();
+          dragStart = {
+            pointerId: event.pointerId,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            x: item.x,
+            y: item.y,
+          };
+          pinchStart = null;
+        } else if (pointers.size === 2) {
+          const values = [...pointers.values()];
+          pinchStart = {
+            distance: Math.max(1, distance(values[0], values[1])),
+            size: sizeValue(selectedItem()),
+          };
+          dragStart = null;
+        }
+      }, { passive: false });
+
+      viewport.addEventListener("pointermove", (event) => {
+        if (!pointers.has(event.pointerId)) return;
+        event.preventDefault();
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+        if (pointers.size >= 2 && pinchStart) {
+          const values = [...pointers.values()];
+          const current = Math.max(1, distance(values[0], values[1]));
+          const ratio = current / pinchStart.distance;
+          setSize(pinchStart.size * ratio);
+          return;
+        }
+
+        if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+        const item = selectedItem();
+        item.x = dragStart.x + (event.clientX - dragStart.clientX) / worldScale;
+        item.y = dragStart.y + (event.clientY - dragStart.clientY) / worldScale;
+        applyLayout();
+        refreshControls();
+      }, { passive: false });
+
+      function endPointer(event) {
+        if (!pointers.has(event.pointerId)) return;
+        event.preventDefault();
+        pointers.delete(event.pointerId);
+        if (viewport.hasPointerCapture?.(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
+
+        if (pointers.size === 1) {
+          const [pointerId, point] = [...pointers.entries()][0];
+          const item = selectedItem();
+          dragStart = {
+            pointerId,
+            clientX: point.x,
+            clientY: point.y,
+            x: item.x,
+            y: item.y,
+          };
+          pinchStart = null;
+        } else {
+          dragStart = null;
+          pinchStart = null;
+        }
+      }
+
+      viewport.addEventListener("pointerup", endPointer, { passive: false });
+      viewport.addEventListener("pointercancel", endPointer, { passive: false });
+      viewport.addEventListener("lostpointercapture", (event) => {
+        pointers.delete(event.pointerId);
+      });
+
+      refreshControls();
+      showToast("配置調整モード");
+    })();
+  </script>
+</body>
+</html>
