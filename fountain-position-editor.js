@@ -4,8 +4,8 @@
   const params=new URLSearchParams(location.search);
   if(params.get("fountainEditor")!=="1")return;
 
-  const STORAGE_KEY="tarot-breaker:fountain-position-v1";
-  const DEFAULT={x:0,y:28,scale:1};
+  const STORAGE_KEY="tarot-breaker:fountain-position-v2";
+  const DEFAULT={x:-11,y:12,scale:1.16};
   const ANCHOR={x:800,y:510.5};
   const SCALE_MIN=0.5;
   const SCALE_MAX=1.8;
@@ -61,7 +61,7 @@
   const panel=document.createElement("section");
   panel.id="fountain-editor-panel";
   panel.innerHTML=`
-    <div class="fe-head"><div class="fe-title">噴水位置・サイズ調整</div><output class="fe-value">X +0 / Y +28</output></div>
+    <div class="fe-head"><div class="fe-title">噴水位置・サイズ調整</div><output class="fe-value">X -11 / Y +12</output></div>
     <div class="fe-row">
       <div class="fe-arrows">
         <button type="button" class="fe-up" data-dx="0" data-dy="-1">↑</button>
@@ -71,11 +71,11 @@
       </div>
       <div>
         <div class="fe-row" style="margin-top:0"><button type="button" data-step="1" data-active="1">1px</button><button type="button" data-step="5">5px</button><button type="button" data-step="10">10px</button></div>
-        <div class="fe-row"><span class="fe-label">サイズ</span><button type="button" data-scale="-0.05">−5%</button><button type="button" data-scale="-0.01">−1%</button><output class="fe-scale-value">100%</output><button type="button" data-scale="0.01">+1%</button><button type="button" data-scale="0.05">+5%</button></div>
-        <div class="fe-row"><button type="button" data-action="save">保存</button><button type="button" data-action="copy">値をコピー</button><button type="button" data-action="reset">初期位置・サイズ</button></div>
+        <div class="fe-row"><span class="fe-label">サイズ</span><button type="button" data-scale="-0.05">−5%</button><button type="button" data-scale="-0.01">−1%</button><output class="fe-scale-value">116%</output><button type="button" data-scale="0.01">+1%</button><button type="button" data-scale="0.05">+5%</button></div>
+        <div class="fe-row"><button type="button" data-action="save">保存</button><button type="button" data-action="copy">値をコピー</button><button type="button" data-action="reset">正式位置に戻す</button></div>
       </div>
     </div>
-    <div class="fe-note">枠をドラッグ＝移動。右下の丸ハンドルをドラッグ＝拡大縮小。位置とサイズはURLにも自動反映されます。</div>
+    <div class="fe-note">枠をドラッグ＝移動。右下の丸ハンドルをドラッグ＝拡大縮小。正式基準は X -11 / Y +12 / 116% です。</div>
   `;
   document.body.appendChild(panel);
 
@@ -107,7 +107,7 @@
       node.dataset.worldY=String(scaledY);
       node.dataset.worldW=String(w*s);
       node.dataset.worldH=String(h*s);
-      node.dataset.positionRevision="fountain-editor-v2";
+      node.dataset.positionRevision="fountain-editor-v3";
     }
     valueOut.textContent=`X ${signed(state.x)} / Y ${signed(state.y)}`;
     scaleOut.textContent=percent(state.scale);
