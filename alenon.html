@@ -20,13 +20,13 @@
       --ground-side-scale: 1;
 
       /* Front pad */
-      --pad-x: 728.9px;
-      --pad-y: 858.3px;
+      --pad-x: 730.9px;
+      --pad-y: 857.3px;
       --pad-size: 140px;
 
       /* Rear orb */
-      --orb-x: 708px;
-      --orb-y: 274.1px;
+      --orb-x: 716px;
+      --orb-y: 254.1px;
       --orb-size: 449px;
     }
 
@@ -950,15 +950,15 @@
         groundS: { kind: "ground", x: 0, y: -12, scale: .86 },
         groundL: { kind: "ground", x: -403.9, y: -16.7, scale: .533 },
         groundR: { kind: "ground", x: 236.9, y: -63.4, scale: .592 },
-        pad: { kind: "object", x: 728.9, y: 858.3, size: 140 },
-        orb: { kind: "object", x: 708, y: 274.1, size: 449 },
+        pad: { kind: "object", x: 730.9, y: 857.3, size: 140 },
+        orb: { kind: "object", x: 716, y: 254.1, size: 449 },
       });
 
       const cloneDefaults = () =>
         Object.fromEntries(Object.entries(defaults).map(([key, value]) => [key, { ...value }]));
 
       const STORAGE_KEY = "tarot-breaker-alenon-layout-v2";
-      const OBJECT_STORAGE_KEY = "tarot-breaker-alenon-objects-v1";
+      const OBJECT_STORAGE_KEY = "tarot-breaker-alenon-objects-v2";
       let layout = cloneDefaults();
 
       // Public view uses committed placement. Editing modes may restore a local draft.
