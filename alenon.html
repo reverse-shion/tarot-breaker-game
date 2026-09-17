@@ -1421,8 +1421,10 @@
         refs.padTrail.style.left = ride.x + "px";
         refs.padTrail.style.top = (visualY + 22) + "px";
 
-        player.x = ride.x;
-        player.y = visualY - 2;
+        if (ride.mode !== "boarding") {
+          player.x = ride.x;
+          player.y = visualY - 2;
+        }
         player.moving = false;
         player.frame = 0;
       }
@@ -1448,7 +1450,7 @@
         setRideMode("exiting");
 
         window.setTimeout(() => {
-          location.href = "./star-country-landing.html?from=alenon";
+          location.href = "./star-country-landing.html?from=alenon&v=pad-route-v1";
         }, 820);
       }
 
