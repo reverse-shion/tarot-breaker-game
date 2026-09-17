@@ -122,34 +122,41 @@
       transform-origin: 50% 50%;
     }
 
+    .ruin-drift-left {
+      filter:
+        saturate(.58)
+        brightness(.72)
+        contrast(1.05);
+    }
+
     /* Left ruin PAD: depleted / offline.
        This is a filtered duplicate of ground_l, radially masked around the baked-in PAD.
        It darkens only opaque ruin pixels, not the sky behind it. */
     .left-ruin-energy-off {
       z-index: 11;
-      opacity: .96;
+      opacity: 1;
       filter:
-        grayscale(.88)
-        saturate(.24)
-        brightness(.43)
-        contrast(1.08)
-        sepia(.06);
+        grayscale(.96)
+        saturate(.10)
+        brightness(.28)
+        contrast(1.14)
+        sepia(.08);
       -webkit-mask-image:
         radial-gradient(
-          ellipse 17% 13% at 54% 89%,
+          ellipse 28% 20% at 54% 89%,
           #000 0%,
-          #000 50%,
-          rgba(0,0,0,.92) 67%,
-          rgba(0,0,0,.48) 82%,
+          #000 48%,
+          rgba(0,0,0,.96) 66%,
+          rgba(0,0,0,.58) 84%,
           transparent 100%
         );
       mask-image:
         radial-gradient(
-          ellipse 17% 13% at 54% 89%,
+          ellipse 28% 20% at 54% 89%,
           #000 0%,
-          #000 50%,
-          rgba(0,0,0,.92) 67%,
-          rgba(0,0,0,.48) 82%,
+          #000 48%,
+          rgba(0,0,0,.96) 66%,
+          rgba(0,0,0,.58) 84%,
           transparent 100%
         );
       pointer-events: none;
@@ -160,22 +167,22 @@
       left: 54%;
       top: 89%;
       z-index: 12;
-      width: 250px;
-      height: 145px;
+      width: 430px;
+      height: 250px;
       transform: translate(-50%, -50%);
       border-radius: 50%;
       pointer-events: none;
-      opacity: .62;
+      opacity: .90;
       background:
         radial-gradient(
           ellipse at center,
-          rgba(6,12,24,.34) 0 30%,
-          rgba(5,10,22,.22) 48%,
-          rgba(5,10,22,.08) 67%,
-          transparent 82%
+          rgba(2,7,18,.76) 0 25%,
+          rgba(4,10,24,.52) 46%,
+          rgba(5,12,28,.22) 68%,
+          transparent 86%
         );
       mix-blend-mode: multiply;
-      filter: blur(8px);
+      filter: blur(11px);
     }
 
 
@@ -944,7 +951,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="left-pad-depleted-v8">
+<body data-alenon-drift-revision="left-pad-depleted-v9">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
