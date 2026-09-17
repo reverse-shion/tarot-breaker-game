@@ -4,10 +4,9 @@
   const params=new URLSearchParams(location.search);
   if(params.get("waterfallEditor")!=="1")return;
 
-  const STORAGE_KEY="tarot-breaker:waterfall-position-v1";
+  const STORAGE_KEY="tarot-breaker:waterfall-position-v2";
   const DEFAULT={x:0,y:22};
   const REF={w:1448,h:1086};
-  // Draggable editing window over the visible waterfall/island area.
   const EDIT_RECT={x:250,y:40,w:950,h:700};
 
   function finite(value,fallback){
@@ -38,9 +37,10 @@
     #waterfall-editor-panel .we-arrows button{padding:0;font-size:18px}
     #waterfall-editor-panel .we-up{grid-column:2}.we-left{grid-column:1;grid-row:2}.we-down{grid-column:2;grid-row:2}.we-right{grid-column:3;grid-row:2}
     #waterfall-editor-panel .we-note{margin-top:7px;color:#c8d1e2;font-weight:500;font-size:11px}
-    #waterfall-editor-hitbox{position:fixed;z-index:100011;border:2px dashed #8de0ff;border-radius:14px;background:rgba(85,205,255,.055);box-sizing:border-box;touch-action:none;cursor:grab;pointer-events:auto}
-    #waterfall-editor-hitbox:active{cursor:grabbing;background:rgba(85,205,255,.12)}
-    #waterfall-editor-hitbox::before{content:"滝をドラッグ";position:absolute;left:50%;top:8px;transform:translateX(-50%);white-space:nowrap;background:rgba(13,24,45,.9);border:1px solid rgba(141,224,255,.8);border-radius:8px;color:#dff7ff;padding:4px 7px;font:700 11px/1 system-ui,-apple-system,sans-serif}
+    #waterfall-editor-hitbox{position:fixed;z-index:100010;border:2px dashed rgba(141,224,255,.78);border-radius:14px;background:rgba(85,205,255,.035);box-sizing:border-box;pointer-events:none}
+    #waterfall-editor-hitbox::before{content:"滝の調整範囲（操作は透過）";position:absolute;left:10px;top:8px;white-space:nowrap;background:rgba(13,24,45,.78);border:1px solid rgba(141,224,255,.5);border-radius:8px;color:#dff7ff;padding:4px 7px;font:700 10px/1 system-ui,-apple-system,sans-serif}
+    #waterfall-editor-handle{position:fixed;z-index:100011;min-width:98px;height:38px;padding:0 12px;border:1px solid #a8eaff;border-radius:12px;background:rgba(29,123,170,.94);color:white;box-shadow:0 5px 16px rgba(0,0,0,.32);font:700 12px/1 system-ui,-apple-system,sans-serif;touch-action:none;cursor:grab;pointer-events:auto}
+    #waterfall-editor-handle:active{cursor:grabbing;background:rgba(39,148,197,.98)}
   `;
   document.head.appendChild(style);
 
@@ -60,13 +60,21 @@
         <div class="we-row"><button type="button" data-action="save">保存</button><button type="button" data-action="copy">値をコピー</button><button type="button" data-action="reset">現在の基準に戻す</button></div>
       </div>
     </div>
-    <div class="we-note">水色の枠を指でドラッグ＝滝全体を移動。現在の正式基準は X 0 / Y +22 です。</div>
+    <div class="we-note">水色の範囲はタップ操作を遮りません。シオンを普通に歩かせながら確認し、滝は「滝を動かす」ボタンをドラッグするか矢印で調整してください。</div>
   `;
   document.body.appendChild(panel);
   const valueOut=panel.querySelector(".we-value");
+
   const hitbox=document.createElement("div");
   hitbox.id="waterfall-editor-hitbox";
   document.body.appendChild(hitbox);
+
+  const handle=document.createElement("button");
+  handle.id="waterfall-editor-handle";
+  handle.type="button";
+  handle.textContent="滝を動かす";
+  handle.setAttribute("aria-label","滝をドラッグして位置調整");
+  document.body.appendChild(handle);
 
   function updateUrl(){
     const url=new URL(location.href);
@@ -80,7 +88,7 @@
     document.querySelectorAll(".scene-waterfall").forEach(layer=>{
       layer.style.left=`${state.x}px`;
       layer.style.top=`${state.y}px`;
-      layer.dataset.positionRevision="waterfall-editor-v1";
+      layer.dataset.positionRevision="waterfall-editor-v2";
     });
     valueOut.textContent=`X ${signed(state.x)} / Y ${signed(state.y)}`;
     updateUrl();
@@ -106,39 +114,60 @@
   });
 
   let drag=null;
-  hitbox.addEventListener("pointerdown",e=>{
+  handle.addEventListener("pointerdown",e=>{
     e.preventDefault();e.stopPropagation();
     const layer=document.querySelector(".scene-waterfall");
     const rect=layer?.getBoundingClientRect();
     if(!rect||rect.width<2||rect.height<2)return;
     drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,startState:{...state},worldPerPxX:REF.w/rect.width,worldPerPxY:REF.h/rect.height};
-    hitbox.setPointerCapture?.(e.pointerId);
+    handle.setPointerCapture?.(e.pointerId);
   },{passive:false});
-  hitbox.addEventListener("pointermove",e=>{
-    if(!drag||e.pointerId!==drag.id)return;e.preventDefault();e.stopPropagation();
+  handle.addEventListener("pointermove",e=>{
+    if(!drag||e.pointerId!==drag.id)return;
+    e.preventDefault();e.stopPropagation();
     state.x=Math.round(drag.startState.x+(e.clientX-drag.startX)*drag.worldPerPxX);
     state.y=Math.round(drag.startState.y+(e.clientY-drag.startY)*drag.worldPerPxY);
     apply();
   },{passive:false});
-  function endDrag(e){if(!drag||e.pointerId!==drag.id)return;e.preventDefault();e.stopPropagation();drag=null;if(hitbox.hasPointerCapture?.(e.pointerId))hitbox.releasePointerCapture(e.pointerId)}
-  hitbox.addEventListener("pointerup",endDrag,{passive:false});
-  hitbox.addEventListener("pointercancel",endDrag,{passive:false});
+  function endDrag(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    e.preventDefault();e.stopPropagation();
+    drag=null;
+    if(handle.hasPointerCapture?.(e.pointerId))handle.releasePointerCapture(e.pointerId);
+  }
+  handle.addEventListener("pointerup",endDrag,{passive:false});
+  handle.addEventListener("pointercancel",endDrag,{passive:false});
 
-  function trackHitbox(){
+  function trackOverlay(){
     const layer=document.querySelector(".scene-waterfall");
     const rect=layer?.getBoundingClientRect();
     if(rect&&rect.width>4&&rect.height>4){
+      const left=rect.left+(EDIT_RECT.x/REF.w)*rect.width;
+      const top=rect.top+(EDIT_RECT.y/REF.h)*rect.height;
+      const width=(EDIT_RECT.w/REF.w)*rect.width;
+      const height=(EDIT_RECT.h/REF.h)*rect.height;
       hitbox.hidden=false;
-      hitbox.style.left=`${rect.left+(EDIT_RECT.x/REF.w)*rect.width}px`;
-      hitbox.style.top=`${rect.top+(EDIT_RECT.y/REF.h)*rect.height}px`;
-      hitbox.style.width=`${(EDIT_RECT.w/REF.w)*rect.width}px`;
-      hitbox.style.height=`${(EDIT_RECT.h/REF.h)*rect.height}px`;
-    }else hitbox.hidden=true;
-    requestAnimationFrame(trackHitbox);
+      hitbox.style.left=`${left}px`;
+      hitbox.style.top=`${top}px`;
+      hitbox.style.width=`${width}px`;
+      hitbox.style.height=`${height}px`;
+
+      const handleW=112;
+      const handleH=38;
+      const hx=Math.max(8,Math.min(window.innerWidth-handleW-8,left+width-handleW-8));
+      const hy=Math.max(8,Math.min(window.innerHeight-handleH-8,top+8));
+      handle.hidden=false;
+      handle.style.left=`${hx}px`;
+      handle.style.top=`${hy}px`;
+    }else{
+      hitbox.hidden=true;
+      handle.hidden=true;
+    }
+    requestAnimationFrame(trackOverlay);
   }
 
   function waitForScene(){
-    if(document.querySelector(".scene-waterfall")&&window.TarotSceneEffects){apply();trackHitbox();return}
+    if(document.querySelector(".scene-waterfall")&&window.TarotSceneEffects){apply();trackOverlay();return}
     setTimeout(waitForScene,50);
   }
   function autoStart(){
