@@ -16,12 +16,13 @@
   const WATERFALL_ASSET = "./assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6";
   const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6";
   const WATERFALL_OFFSET_Y = 22;
-  const FOUNTAIN_OFFSET_Y = 28;
+  const FOUNTAIN_ANCHOR = Object.freeze({ x: 800, y: 510.5 });
+  const FOUNTAIN_OFFSET_X = -11;
+  const FOUNTAIN_OFFSET_Y = 12;
+  const FOUNTAIN_SCALE = 1.16;
 
   let precisePolys = [];
 
-  // Load the dedicated layer-order stylesheet after the legacy scene CSS so its
-  // z-index rules are authoritative without touching unrelated presentation.
   if (!document.querySelector('link[data-layer-order="v6"]')) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -30,13 +31,10 @@
     document.head.appendChild(link);
   }
 
-  // The new map starts with no authored collision/depth helpers from the old map.
   if (Array.isArray(layout.solidBases)) layout.solidBases.splice(0);
   if (Array.isArray(layout.occluders)) layout.occluders.splice(0);
   layout.activeOccluders = () => [];
 
-  // Empty walkAreas means the editor is in its reset state. Allow free movement
-  // temporarily without writing a synthetic full-map polygon back to JSON.
   const navigation = root.TarotNavigation;
   if (navigation && !navigation.__singleMapEmptyWalkReset) {
     const originalCreateCollision = navigation.createCollision;
@@ -71,7 +69,6 @@
     navigation.__singleMapEmptyWalkReset = true;
   }
 
-  // The transparent garden is the visible background plate and map sizing source.
   if (source) {
     source.crossOrigin = "anonymous";
     source.src = AUTHORITATIVE_MAP;
@@ -82,15 +79,11 @@
   }
   if (groundLayer) groundLayer.hidden = true;
 
-  // Cloud animation always uses three copies of the same latest cloud artwork.
-  // This overrides any historical commit-pinned URLs still present in old HTML.
   document.querySelectorAll(".scene-cloud-copy").forEach((image) => {
     image.crossOrigin = "anonymous";
     image.src = CLOUDS_ASSET;
   });
 
-  // Restore islands as their own world layer. Do not use map-layer for islands:
-  // map-layer is reserved for painting the authoritative garden background.
   let islandsLayer = document.querySelector(".scene-islands");
   if (!islandsLayer && shell) {
     islandsLayer = document.createElement("div");
@@ -109,9 +102,6 @@
   const islandsImage = islandsLayer?.querySelector("img");
   if (islandsImage) islandsImage.src = ISLANDS_ASSET;
 
-  // Waterfall stays between islands and the garden background. Move the whole
-  // waterfall sheet down without touching transform, which is reserved for the
-  // world/camera transform. This brings each fall mouth closer to the island edge.
   document.querySelectorAll(".scene-waterfall img").forEach((image) => {
     image.crossOrigin = "anonymous";
     image.src = WATERFALL_ASSET;
@@ -141,13 +131,19 @@
     node.dataset.worldH = String(h);
   }
 
-  // Keep the fountain stack together and move it slightly toward the foreground.
-  // X and all authored sizes remain unchanged.
-  placeObject(document.querySelector(".scene-fountain-base"), 625, 388 + FOUNTAIN_OFFSET_Y, 350, 245);
-  placeObject(document.querySelector(".scene-fountain-water"), 650, 409 + FOUNTAIN_OFFSET_Y, 300, 176);
-  placeObject(document.querySelector(".scene-fountain-crystal"), 708, 333 + FOUNTAIN_OFFSET_Y, 184, 230);
-  placeObject(document.querySelector(".scene-fountain-glow"), 650, 318 + FOUNTAIN_OFFSET_Y, 300, 250);
-  placeObject(document.querySelector(".scene-fountain-sparkle"), 640, 358 + FOUNTAIN_OFFSET_Y, 320, 220);
+  function placeFountainPart(selector, x, y, w, h) {
+    const scaledX = FOUNTAIN_ANCHOR.x + FOUNTAIN_OFFSET_X + (x - FOUNTAIN_ANCHOR.x) * FOUNTAIN_SCALE;
+    const scaledY = FOUNTAIN_ANCHOR.y + FOUNTAIN_OFFSET_Y + (y - FOUNTAIN_ANCHOR.y) * FOUNTAIN_SCALE;
+    placeObject(document.querySelector(selector), scaledX, scaledY, w * FOUNTAIN_SCALE, h * FOUNTAIN_SCALE);
+  }
+
+  // Final approved fountain placement from the visual editor.
+  // Scale all five fountain layers around one shared anchor so their alignment is preserved.
+  placeFountainPart(".scene-fountain-base", 625, 388, 350, 245);
+  placeFountainPart(".scene-fountain-water", 650, 409, 300, 176);
+  placeFountainPart(".scene-fountain-crystal", 708, 333, 184, 230);
+  placeFountainPart(".scene-fountain-glow", 650, 318, 300, 250);
+  placeFountainPart(".scene-fountain-sparkle", 640, 358, 320, 220);
 
   let starGate = document.querySelector(".scene-star-gate");
   if (!starGate && shell) {
@@ -247,7 +243,7 @@
       drawW: w,
       drawH: h,
       scale: 1,
-      mode: "single-map-layer-order-v7",
+      mode: "single-map-layer-order-v8",
       occluderCount: precisePolys.length,
     });
   };
@@ -266,11 +262,11 @@
     islands: Object.freeze({ mode: "world-layer-latest", asset: "34856728cf2b", x: 0, y: 0, w: reference.width, h: reference.height }),
     clouds: Object.freeze({ mode: "three-copy-latest", asset: "eaea4c9513cf", x: 0, y: 0, w: reference.width, h: reference.height }),
     waterfall: Object.freeze({ mode: "world-layer-offset-v7", x: 0, y: WATERFALL_OFFSET_Y, w: reference.width, h: reference.height }),
-    fountain: Object.freeze({ mode: "group-offset-v7", x: 0, y: FOUNTAIN_OFFSET_Y }),
+    fountain: Object.freeze({ mode: "group-offset-scale-v8", x: FOUNTAIN_OFFSET_X, y: FOUNTAIN_OFFSET_Y, scale: FOUNTAIN_SCALE, anchor: FOUNTAIN_ANCHOR }),
     background: Object.freeze({ mode: "single-map-authoritative-v6", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
-    foreground: Object.freeze({ mode: "single-map-layer-order-v7", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    foreground: Object.freeze({ mode: "single-map-layer-order-v8", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
     gate: layout.gateAssembly,
   });
   layout.depthModelVersion = "single-map-layer-order-v7";
-  layout.artworkModelVersion = "single-map-transparent-v7";
+  layout.artworkModelVersion = "single-map-transparent-v8";
 })(window);
