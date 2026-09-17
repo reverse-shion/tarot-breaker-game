@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#090c20" />
+  <title>TAROT BREAKER — Collision Editor v7</title>
+  <link rel="stylesheet" href="./map-editor.css?v=7.0.0" />
+</head>
+<body data-collision-url="./assets/maps/star-country-gate-garden-collision.json?v=collision-v7">
+  <main id="editor">
+    <iframe id="game-frame" src="./index.html?mapEditor=1&collisionEditor=1&build=collision-editor-v7" title="TAROT BREAKER 星門庭園"></iframe>
+    <canvas id="overlay" aria-label="当たり判定編集レイヤー"></canvas>
+
+    <header>
+      <strong>COLLISION EDITOR v7</strong>
+      <span id="status">読み込み中…</span>
+      <span id="counts"></span>
+    </header>
+
+    <nav id="tools" aria-label="編集モード">
+      <button type="button" data-mode="play">PLAY</button>
+      <button type="button" data-mode="walk">歩行範囲</button>
+      <button type="button" data-mode="blocked">障害物</button>
+      <button type="button" data-mode="edit">頂点編集</button>
+      <button type="button" data-mode="erase">削除</button>
+    </nav>
+
+    <footer aria-label="編集操作">
+      <button type="button" id="undo">戻す</button>
+      <button type="button" id="clear-draft">未確定取消</button>
+      <button type="button" id="finish">範囲確定</button>
+      <button type="button" id="delete-selected">選択削除</button>
+      <button type="button" id="restore-local" disabled>端末下書き復元</button>
+      <button type="button" id="reset-server">初期JSON</button>
+      <button type="button" id="copy">JSONコピー</button>
+    </footer>
+
+    <dialog id="output">
+      <h2>Collision JSON</h2>
+      <p>緑が歩行可能範囲、赤が緑の中に置く障害物です。歩行範囲が0件の間だけ、現在のゲームはリセット状態として全体歩行可になります。緑を1つ以上確定すると、緑の内側だけが歩行可能になります。</p>
+      <textarea readonly spellcheck="false"></textarea>
+      <div class="dialog-actions">
+        <button type="button" id="copy-dialog">コピー</button>
+        <button type="button" id="close-dialog">閉じる</button>
+      </div>
+    </dialog>
+  </main>
+  <script src="./map-editor.js?v=7.0.0"></script>
+</body>
+</html>
