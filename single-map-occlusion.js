@@ -15,7 +15,8 @@
   const CLOUDS_ASSET = "./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf";
   const WATERFALL_ASSET = "./assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6";
   const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6";
-  const WATERFALL_OFFSET_Y = 22;
+  const WATERFALL_OFFSET_X = 5;
+  const WATERFALL_OFFSET_Y = 43;
   const FOUNTAIN_ANCHOR = Object.freeze({ x: 800, y: 510.5 });
   const FOUNTAIN_OFFSET_X = -11;
   const FOUNTAIN_OFFSET_Y = 12;
@@ -107,8 +108,9 @@
     image.src = WATERFALL_ASSET;
   });
   document.querySelectorAll(".scene-waterfall").forEach((layer) => {
+    layer.style.left = `${WATERFALL_OFFSET_X}px`;
     layer.style.top = `${WATERFALL_OFFSET_Y}px`;
-    layer.dataset.positionRevision = "waterfall-v7";
+    layer.dataset.positionRevision = "waterfall-final-v8";
   });
 
   const STAIR_TOP_Y = layout.gate?.baseline ?? 242;
@@ -261,7 +263,7 @@
     ...(layout.artworkPlacement || {}),
     islands: Object.freeze({ mode: "world-layer-latest", asset: "34856728cf2b", x: 0, y: 0, w: reference.width, h: reference.height }),
     clouds: Object.freeze({ mode: "three-copy-latest", asset: "eaea4c9513cf", x: 0, y: 0, w: reference.width, h: reference.height }),
-    waterfall: Object.freeze({ mode: "world-layer-offset-v7", x: 0, y: WATERFALL_OFFSET_Y, w: reference.width, h: reference.height }),
+    waterfall: Object.freeze({ mode: "world-layer-offset-final-v8", x: WATERFALL_OFFSET_X, y: WATERFALL_OFFSET_Y, w: reference.width, h: reference.height }),
     fountain: Object.freeze({ mode: "group-offset-scale-v8", x: FOUNTAIN_OFFSET_X, y: FOUNTAIN_OFFSET_Y, scale: FOUNTAIN_SCALE, anchor: FOUNTAIN_ANCHOR }),
     background: Object.freeze({ mode: "single-map-authoritative-v6", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
     foreground: Object.freeze({ mode: "single-map-layer-order-v8", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
