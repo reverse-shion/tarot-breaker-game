@@ -100,18 +100,69 @@
       will-change: transform;
     }
 
-    .ground-left {
-      transform: translate3d(-403.9px, -16.7px, 0) scale(.533);
-    }
-
-    .ground-right {
-      transform: translate3d(236.9px, -63.4px, 0) scale(.592);
+    .ground-anchor {
+      position: absolute;
+      inset: 0;
+      width: 1448px;
+      height: 1086px;
+      z-index: 10;
+      pointer-events: none;
+      transform-origin: 50% 50%;
+      will-change: transform;
     }
 
     .ground-center {
       z-index: 12;
       transform: translate3d(var(--ground-s-x), var(--ground-s-y), 0)
                  scale(var(--ground-s-scale));
+    }
+
+    .ruin-drift {
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .ruin-drift-left {
+      animation: alenon-left-drift 25.5s ease-in-out infinite;
+    }
+
+    .ruin-drift-right {
+      animation: alenon-right-drift 31s ease-in-out infinite;
+    }
+
+    @keyframes alenon-left-drift {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+      }
+      20% {
+        transform: translate3d(-2px, -3px, 0) rotate(-0.16deg);
+      }
+      45% {
+        transform: translate3d(1px, -6px, 0) rotate(0.10deg);
+      }
+      70% {
+        transform: translate3d(3px, -2px, 0) rotate(0.26deg);
+      }
+    }
+
+    @keyframes alenon-right-drift {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+      }
+      30% {
+        transform: translate3d(2px, -2px, 0) rotate(0.12deg);
+      }
+      55% {
+        transform: translate3d(-1px, -7px, 0) rotate(-0.24deg);
+      }
+      80% {
+        transform: translate3d(-3px, -3px, 0) rotate(-0.08deg);
+      }
+    }
+
+    body.edit-mode .ruin-drift-left,
+    body.edit-mode .ruin-drift-right {
+      animation-play-state: paused;
     }
 
     .pad {
@@ -616,7 +667,9 @@
       .orb-inner,
       .orb-core,
       .orb-particle,
-      .orb-aura {
+      .orb-aura,
+      .ruin-drift-left,
+      .ruin-drift-right {
         animation: none !important;
       }
     }
@@ -631,8 +684,12 @@
       <div class="atmosphere" aria-hidden="true"></div>
 
       <!-- Ruin grounds: left / center / right -->
-      <img class="ground ground-left" src="./assets/maps/alenon/ground_l.webp" alt="" aria-hidden="true" draggable="false" />
-      <img class="ground ground-right" src="./assets/maps/alenon/ground_r.webp" alt="" aria-hidden="true" draggable="false" />
+      <div class="ground-anchor ground-left-anchor" aria-hidden="true">
+        <img class="ground ruin-drift ruin-drift-left" src="./assets/maps/alenon/ground_l.webp" alt="" draggable="false" />
+      </div>
+      <div class="ground-anchor ground-right-anchor" aria-hidden="true">
+        <img class="ground ruin-drift ruin-drift-right" src="./assets/maps/alenon/ground_r.webp" alt="" draggable="false" />
+      </div>
       <img class="ground ground-center" src="./assets/maps/alenon/ground_s.webp" alt="" aria-hidden="true" draggable="false" />
 
       <!-- Front tip pad -->
@@ -766,8 +823,8 @@
 
       const refs = {
         groundS: document.querySelector(".ground-center"),
-        groundL: document.querySelector(".ground-left"),
-        groundR: document.querySelector(".ground-right"),
+        groundL: document.querySelector(".ground-left-anchor"),
+        groundR: document.querySelector(".ground-right-anchor"),
         pad: document.querySelector(".pad"),
         padGlow: document.querySelector(".pad-glow"),
         orb: [...document.querySelectorAll(".orb")],
