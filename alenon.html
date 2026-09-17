@@ -324,6 +324,115 @@
     }
 
 
+
+    /* Alenon movement UI */
+    #move-guide {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, calc(env(safe-area-inset-bottom) + 18px));
+      z-index: 200;
+      transform: translateX(-50%);
+      max-width: min(86vw, 420px);
+      padding: 8px 13px;
+      border: 1px solid rgba(195, 225, 255, .22);
+      border-radius: 999px;
+      color: rgba(255,255,255,.94);
+      background: rgba(4, 12, 34, .64);
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+
+    #move-guide[hidden] { display: none; }
+
+    #move-reset {
+      position: fixed;
+      top: max(12px, calc(env(safe-area-inset-top) + 8px));
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      z-index: 210;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid rgba(202, 229, 255, .28);
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(5, 13, 36, .68);
+      box-shadow: 0 8px 22px rgba(0,0,0,.20);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 22px;
+      line-height: 38px;
+      text-align: center;
+      touch-action: manipulation;
+    }
+
+    #move-joystick {
+      position: fixed;
+      z-index: 220;
+      width: 92px;
+      height: 92px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    #move-joystick[hidden] { display: none; }
+
+    .move-joystick-ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(212, 235, 255, .38);
+      border-radius: 50%;
+      background: rgba(8, 22, 52, .22);
+      box-shadow:
+        inset 0 0 22px rgba(96, 170, 255, .10),
+        0 6px 22px rgba(0,0,0,.18);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    #move-joystick-knob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+      border: 1px solid rgba(230, 243, 255, .55);
+      border-radius: 50%;
+      background: rgba(147, 204, 255, .45);
+      box-shadow: 0 0 18px rgba(91, 175, 255, .24);
+      transform: translate(0, 0);
+    }
+
+    .move-target-ring {
+      position: absolute;
+      z-index: 42;
+      width: 24px;
+      height: 12px;
+      border: 1.5px solid rgba(209, 238, 255, .88);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(var(--actor-inverse-scale, 1));
+      transform-origin: 50% 50%;
+      pointer-events: none;
+      box-shadow: 0 0 12px rgba(123, 205, 255, .34);
+      opacity: 0;
+      transition: opacity .12s ease;
+    }
+
+    .move-target-ring.active { opacity: .82; }
+
+    body.edit-mode #move-guide,
+    body.edit-mode #move-reset,
+    body.edit-mode #move-joystick,
+    body.edit-mode .move-target-ring {
+      display: none !important;
+    }
+
     /* Placement editor: open alenon.html?edit=1 */
     #editor-panel {
       display: none;
@@ -538,11 +647,19 @@
       <img class="orb orb-particle" src="./assets/maps/alenon/orb-particle.webp" alt="" aria-hidden="true" draggable="false" />
 
       <!-- Prologue spawn: same visual size as Shion in Star Gate Garden. -->
+      <div class="move-target-ring" aria-hidden="true"></div>
       <div class="shion-shadow" aria-hidden="true"></div>
       <div class="shion-actor" role="img" aria-label="シオン"></div>
 
       <div class="vignette" aria-hidden="true"></div>
     </section>
+
+    <div id="move-guide">行きたい場所をタップ / ドラッグで自由移動</div>
+    <div id="move-joystick" hidden aria-hidden="true">
+      <div class="move-joystick-ring"></div>
+      <div id="move-joystick-knob"></div>
+    </div>
+    <button id="move-reset" type="button" aria-label="開始地点へ戻る">↺</button>
 
     <aside id="editor-panel" aria-label="アレノンの遺跡 配置調整">
       <div class="editor-top">
@@ -589,12 +706,35 @@
       const WORLD_W = 1448;
       const WORLD_H = 1086;
       const SHION_SCREEN_HEIGHT = 78;
-      const CAMERA_FOCUS = Object.freeze({ x: 724, y: 650 });
+      const SHION_SPAWN = Object.freeze({ x: 730, y: 949 });
+      const SHION_SPEED_SCREEN = 155;
+      const CAMERA_LOOK_AHEAD_Y = 110;
+      const WORLD_MARGIN = 34;
       const world = document.getElementById("world");
       const viewport = document.getElementById("viewport");
       const params = new URLSearchParams(location.search);
       const editMode = params.get("edit") === "1";
       let worldScale = 1;
+      let cameraTx = 0;
+      let cameraTy = 0;
+
+      const shionActor = document.querySelector(".shion-actor");
+      const shionShadow = document.querySelector(".shion-shadow");
+      const moveTargetRing = document.querySelector(".move-target-ring");
+      const moveGuide = document.getElementById("move-guide");
+      const moveReset = document.getElementById("move-reset");
+      const moveJoystick = document.getElementById("move-joystick");
+      const moveJoystickKnob = document.getElementById("move-joystick-knob");
+
+      const player = {
+        x: SHION_SPAWN.x,
+        y: SHION_SPAWN.y,
+        dir: "up",
+        moving: false,
+        frame: 0,
+        anim: 0,
+        target: null,
+      };
 
       const defaults = Object.freeze({
         groundS: { kind: "ground", x: 0, y: -12, scale: .86 },
@@ -668,27 +808,42 @@
         }
       }
 
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+      function syncCamera() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const halfW = vw / (2 * worldScale);
+        const halfH = vh / (2 * worldScale);
+
+        const minX = Math.min(halfW, WORLD_W / 2);
+        const maxX = Math.max(minX, WORLD_W - halfW);
+        const minY = Math.min(halfH, WORLD_H / 2);
+        const maxY = Math.max(minY, WORLD_H - halfH);
+
+        const focusX = clamp(player.x, minX, maxX);
+        const focusY = clamp(player.y - CAMERA_LOOK_AHEAD_Y, minY, maxY);
+
+        cameraTx = vw / 2 - focusX * worldScale;
+        cameraTy = vh / 2 - focusY * worldScale;
+
+        world.style.transform =
+          `translate3d(${cameraTx}px,${cameraTy}px,0) scale(${worldScale})`;
+      }
+
       function fitWorld() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
-        // Match the Star Gate Garden scale model:
-        // world pixels are camera pixels instead of shrinking the full 1448x1086 map
-        // into the phone screen. "cover" keeps the ruin scene full-screen.
+        // Keep Shion at the Star Gate Garden size and enlarge the map instead.
         worldScale = Math.max(1, vw / WORLD_W, vh / WORLD_H);
 
-        const tx = vw / 2 - CAMERA_FOCUS.x * worldScale;
-        const ty = vh / 2 - CAMERA_FOCUS.y * worldScale;
-
-        world.style.transform =
-          `translate3d(${tx}px,${ty}px,0) scale(${worldScale})`;
-
-        // Shion remains 78 CSS px tall even when the map is enlarged.
         world.style.setProperty(
           "--actor-inverse-scale",
           String(1 / worldScale),
         );
         world.dataset.shionScreenHeight = String(SHION_SCREEN_HEIGHT);
+        syncCamera();
       }
 
       applyLayout();
@@ -701,7 +856,301 @@
         document.body.classList.add("debug");
       }
 
-      if (!editMode) return;
+      function setActorPosition() {
+        shionActor.style.left = player.x + "px";
+        shionActor.style.top = player.y + "px";
+        shionShadow.style.left = player.x + "px";
+        shionShadow.style.top = player.y + "px";
+      }
+
+      const idleFrame = Object.freeze({ down: 0, up: 1, left: 2, right: 3 });
+      const walkSheet = Object.freeze({
+        down: "./assets/sprites/shion/shion_walk_down.png",
+        up: "./assets/sprites/shion/shion_walk_up.png",
+        left: "./assets/sprites/shion/shion_walk_left.png",
+        right: "./assets/sprites/shion/shion_walk_right.png",
+      });
+
+      function setActorVisual() {
+        if (player.moving) {
+          shionActor.style.backgroundImage = `url("${walkSheet[player.dir]}")`;
+          shionActor.style.backgroundPosition = `${-58.5 * player.frame}px 0`;
+        } else {
+          shionActor.style.backgroundImage =
+            'url("./assets/sprites/shion/shion_idle.png")';
+          shionActor.style.backgroundPosition =
+            `${-58.5 * idleFrame[player.dir]}px 0`;
+        }
+      }
+
+      function directionFromVector(dx, dy) {
+        if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? "left" : "right";
+        return dy < 0 ? "up" : "down";
+      }
+
+      function screenToWorld(clientX, clientY) {
+        return {
+          x: (clientX - cameraTx) / worldScale,
+          y: (clientY - cameraTy) / worldScale,
+        };
+      }
+
+      function clampPlayer() {
+        player.x = clamp(player.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
+        player.y = clamp(player.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+      }
+
+      function showTarget(point) {
+        moveTargetRing.style.left = point.x + "px";
+        moveTargetRing.style.top = point.y + "px";
+        moveTargetRing.classList.add("active");
+      }
+
+      function clearTargetRing() {
+        moveTargetRing.classList.remove("active");
+      }
+
+      function resetPlayer() {
+        player.x = SHION_SPAWN.x;
+        player.y = SHION_SPAWN.y;
+        player.dir = "up";
+        player.moving = false;
+        player.frame = 0;
+        player.anim = 0;
+        player.target = null;
+        clearTargetRing();
+        setActorPosition();
+        setActorVisual();
+        syncCamera();
+      }
+
+      function initMovement() {
+        const keys = new Set();
+        const stick = {
+          active: false,
+          pointerId: null,
+          ox: 0,
+          oy: 0,
+          x: 0,
+          y: 0,
+          startedAt: 0,
+          moved: false,
+        };
+        const STICK_RADIUS = 42;
+        let pointerStart = null;
+        let last = performance.now();
+        let guideTimer = window.setTimeout(() => {
+          moveGuide.hidden = true;
+        }, 5000);
+
+        function hideGuide() {
+          if (!moveGuide.hidden) moveGuide.hidden = true;
+          clearTimeout(guideTimer);
+        }
+
+        function updateJoystick(clientX, clientY) {
+          const dx = clientX - stick.ox;
+          const dy = clientY - stick.oy;
+          const length = Math.hypot(dx, dy);
+          const ratio = length > STICK_RADIUS ? STICK_RADIUS / length : 1;
+          const kx = dx * ratio;
+          const ky = dy * ratio;
+          stick.x = kx / STICK_RADIUS;
+          stick.y = ky / STICK_RADIUS;
+          moveJoystickKnob.style.transform =
+            `translate(${kx}px,${ky}px)`;
+        }
+
+        function startJoystick(event) {
+          stick.active = true;
+          stick.pointerId = event.pointerId;
+          stick.ox = pointerStart.x;
+          stick.oy = pointerStart.y;
+          stick.x = 0;
+          stick.y = 0;
+          stick.moved = true;
+          moveJoystick.hidden = false;
+          moveJoystick.style.left = stick.ox + "px";
+          moveJoystick.style.top = stick.oy + "px";
+          updateJoystick(event.clientX, event.clientY);
+          player.target = null;
+          clearTargetRing();
+          hideGuide();
+        }
+
+        function stopJoystick() {
+          stick.active = false;
+          stick.pointerId = null;
+          stick.x = 0;
+          stick.y = 0;
+          moveJoystick.hidden = true;
+          moveJoystickKnob.style.transform = "translate(0, 0)";
+        }
+
+        function setTapTarget(clientX, clientY) {
+          const point = screenToWorld(clientX, clientY);
+          point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
+          point.y = clamp(point.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+          player.target = point;
+          showTarget(point);
+          hideGuide();
+        }
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (event.target.closest?.("#move-reset")) return;
+          if (event.button != null && event.button !== 0) return;
+          event.preventDefault();
+          pointerStart = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            time: performance.now(),
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!pointerStart || pointerStart.id !== event.pointerId) return;
+          event.preventDefault();
+
+          if (stick.active && stick.pointerId === event.pointerId) {
+            updateJoystick(event.clientX, event.clientY);
+            return;
+          }
+
+          const dist = Math.hypot(
+            event.clientX - pointerStart.x,
+            event.clientY - pointerStart.y,
+          );
+          if (dist >= 12) startJoystick(event);
+        }, { passive: false });
+
+        function finishPointer(event) {
+          if (!pointerStart || pointerStart.id !== event.pointerId) return;
+          event.preventDefault();
+
+          const wasStick = stick.active && stick.pointerId === event.pointerId;
+          const elapsed = performance.now() - pointerStart.time;
+          const dist = Math.hypot(
+            event.clientX - pointerStart.x,
+            event.clientY - pointerStart.y,
+          );
+
+          if (wasStick) {
+            stopJoystick();
+          } else if (elapsed < 650 && dist < 12) {
+            setTapTarget(event.clientX, event.clientY);
+          }
+
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          pointerStart = null;
+        }
+
+        viewport.addEventListener("pointerup", finishPointer, { passive: false });
+        viewport.addEventListener("pointercancel", (event) => {
+          if (stick.pointerId === event.pointerId) stopJoystick();
+          if (pointerStart?.id === event.pointerId) pointerStart = null;
+        }, { passive: false });
+
+        window.addEventListener("keydown", (event) => {
+          const key = event.key.toLowerCase();
+          if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
+            keys.add(key);
+            player.target = null;
+            clearTargetRing();
+            hideGuide();
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        window.addEventListener("keyup", (event) => {
+          keys.delete(event.key.toLowerCase());
+        });
+
+        moveReset.addEventListener("click", (event) => {
+          event.preventDefault();
+          resetPlayer();
+        });
+
+        function keyVector() {
+          let x = 0;
+          let y = 0;
+          if (keys.has("arrowleft") || keys.has("a")) x -= 1;
+          if (keys.has("arrowright") || keys.has("d")) x += 1;
+          if (keys.has("arrowup") || keys.has("w")) y -= 1;
+          if (keys.has("arrowdown") || keys.has("s")) y += 1;
+          const length = Math.hypot(x, y);
+          return length ? { x: x / length, y: y / length } : { x: 0, y: 0 };
+        }
+
+        function loop(now) {
+          const dt = Math.min((now - last) / 1000, .05);
+          last = now;
+
+          const keyboard = keyVector();
+          let vx = keyboard.x;
+          let vy = keyboard.y;
+          let manual = Math.hypot(vx, vy) > .01;
+
+          if (!manual && stick.active) {
+            vx = stick.x;
+            vy = stick.y;
+            manual = Math.hypot(vx, vy) > .08;
+          }
+
+          if (!manual && player.target) {
+            const dx = player.target.x - player.x;
+            const dy = player.target.y - player.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance <= 3.5) {
+              player.x = player.target.x;
+              player.y = player.target.y;
+              player.target = null;
+              clearTargetRing();
+            } else {
+              vx = dx / distance;
+              vy = dy / distance;
+            }
+          }
+
+          const hasMove = manual || !!player.target;
+          if (hasMove && Math.hypot(vx, vy) > .001) {
+            player.dir = directionFromVector(vx, vy);
+
+            // Keep perceived movement speed consistent even when the map zoom changes.
+            const speedWorld = SHION_SPEED_SCREEN / worldScale;
+            player.x += vx * speedWorld * dt;
+            player.y += vy * speedWorld * dt;
+            clampPlayer();
+
+            player.anim += dt * 8.5;
+            player.frame = Math.floor(player.anim) % 4;
+            player.moving = true;
+          } else {
+            player.moving = false;
+            player.anim = 0;
+            player.frame = 0;
+          }
+
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+        }
+
+        resetPlayer();
+        requestAnimationFrame((now) => {
+          last = now;
+          loop(now);
+        });
+      }
+
+      if (!editMode) {
+        initMovement();
+        return;
+      }
       document.body.classList.add("edit-mode");
 
       const xInput = document.getElementById("editor-x");
