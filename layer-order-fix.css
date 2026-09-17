@@ -1,6 +1,6 @@
-/* TAROT BREAKER single-map layer order v5
+/* TAROT BREAKER single-map layer order v7
    Back -> front:
-   scenery -> clouds -> islands -> waterfall -> gate light -> star gate -> garden background -> actors.
+   scenery -> clouds -> islands -> waterfall -> gate light -> star gate -> garden background/fountain -> actors -> fountain crystal -> authored foreground.
 */
 .scene-farthest-sky,
 .scene-star-sky {
@@ -34,7 +34,6 @@
 .scene-background,
 .scene-fountain-base,
 .scene-fountain-water,
-.scene-fountain-crystal,
 .scene-fountain-glow,
 .scene-fountain-sparkle {
   z-index: 6 !important;
@@ -44,8 +43,13 @@
   z-index: 7 !important;
 }
 
-/* Currently empty after the collision/depth reset. Keep this above actors for
-   future hand-authored occlusion polygons without affecting the present map. */
-.scene-foreground {
+/* The moving fountain crystal must always render in front of characters. */
+.scene-fountain-crystal {
   z-index: 8 !important;
+}
+
+/* Hand-authored depth polygons (grass, pillars, flowers, etc.) stay above both
+   actors and the fountain crystal when they are intentionally foreground. */
+.scene-foreground {
+  z-index: 9 !important;
 }
