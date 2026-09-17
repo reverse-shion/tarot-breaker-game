@@ -358,6 +358,36 @@
 
     #move-guide[hidden] { display: none; }
 
+    #object-toggle {
+      position: fixed;
+      top: max(12px, calc(env(safe-area-inset-top) + 8px));
+      left: max(12px, calc(env(safe-area-inset-left) + 8px));
+      z-index: 1150;
+      min-width: 86px;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid rgba(202, 229, 255, .28);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(5, 13, 36, .74);
+      box-shadow: 0 8px 22px rgba(0,0,0,.20);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      touch-action: manipulation;
+    }
+
+    body.object-mode #object-toggle {
+      background: rgba(75,156,255,.30);
+      border-color: rgba(143,208,255,.62);
+    }
+
+    body.edit-mode #object-toggle {
+      display: none !important;
+    }
+
     #move-reset {
       position: fixed;
       top: max(12px, calc(env(safe-area-inset-top) + 8px));
@@ -762,7 +792,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="object-adjust-v5">
+<body data-alenon-drift-revision="inline-object-adjust-v6">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -807,6 +837,7 @@
       <div class="move-joystick-ring"></div>
       <div id="move-joystick-knob"></div>
     </div>
+    <button id="object-toggle" type="button" aria-pressed="false">PAD / ORB</button>
     <button id="move-reset" type="button" aria-label="開始地点へ戻る">↺</button>
 
     <aside id="object-panel" aria-label="PADとORBの位置微調整">
@@ -903,6 +934,7 @@
       const moveReset = document.getElementById("move-reset");
       const moveJoystick = document.getElementById("move-joystick");
       const moveJoystickKnob = document.getElementById("move-joystick-knob");
+      const objectToggle = document.getElementById("object-toggle");
 
       const player = {
         x: SHION_SPAWN.x,
@@ -995,7 +1027,7 @@
 
         if (editMode) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
-        } else if (objectMode) {
+        } else if (document.body.classList.contains("object-mode")) {
           localStorage.setItem(OBJECT_STORAGE_KEY, JSON.stringify({
             pad: layout.pad,
             orb: layout.orb,
@@ -1052,8 +1084,6 @@
       }
 
       function initObjectAdjust() {
-        document.body.classList.add("object-mode");
-
         const xInput = document.getElementById("object-x");
         const yInput = document.getElementById("object-y");
         const copyButton = document.getElementById("object-copy");
@@ -1064,6 +1094,19 @@
         let selected = "pad";
         let drag = null;
 
+        function setObjectMode(open) {
+          document.body.classList.toggle("object-mode", open);
+          objectToggle.setAttribute("aria-pressed", open ? "true" : "false");
+          objectToggle.textContent = open ? "調整完了" : "PAD / ORB";
+          if (open) {
+            player.target = null;
+            clearTargetRing();
+            refresh();
+          } else {
+            drag = null;
+          }
+        }
+
         function current() {
           return layout[selected];
         }
@@ -1073,7 +1116,12 @@
           for (const element of refs.orb) {
             element.classList.toggle("object-selected", selected === "orb");
           }
-          for (const button of tabs) {
+          objectToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          setObjectMode(!document.body.classList.contains("object-mode"));
+        });
+
+        for (const button of tabs) {
             button.setAttribute(
               "aria-pressed",
               button.dataset.objectSelect === selected ? "true" : "false",
@@ -1149,7 +1197,8 @@
         });
 
         viewport.addEventListener("pointerdown", (event) => {
-          if (event.target.closest?.("#object-panel")) return;
+          if (!document.body.classList.contains("object-mode")) return;
+          if (event.target.closest?.("#object-panel") || event.target.closest?.("#object-toggle")) return;
           event.preventDefault();
           const item = current();
           drag = {
@@ -1163,6 +1212,7 @@
         }, { passive: false });
 
         viewport.addEventListener("pointermove", (event) => {
+          if (!document.body.classList.contains("object-mode")) return;
           if (!drag || drag.id !== event.pointerId) return;
           event.preventDefault();
           const item = current();
@@ -1185,6 +1235,7 @@
         viewport.addEventListener("pointercancel", endDrag, { passive: false });
 
         refresh();
+        setObjectMode(objectMode);
       }
 
       function initRuinDrift() {
@@ -1359,7 +1410,8 @@
         }
 
         viewport.addEventListener("pointerdown", (event) => {
-          if (event.target.closest?.("#move-reset")) return;
+          if (document.body.classList.contains("object-mode")) return;
+          if (event.target.closest?.("#move-reset") || event.target.closest?.("#object-toggle")) return;
           if (event.button != null && event.button !== 0) return;
           event.preventDefault();
           pointerStart = {
@@ -1417,6 +1469,7 @@
         }, { passive: false });
 
         window.addEventListener("keydown", (event) => {
+          if (document.body.classList.contains("object-mode")) return;
           const key = event.key.toLowerCase();
           if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
             keys.add(key);
@@ -1511,12 +1564,8 @@
 
       initRuinDrift();
 
-      if (objectMode) {
-        initObjectAdjust();
-        return;
-      }
-
       if (!editMode) {
+        initObjectAdjust();
         initMovement();
         return;
       }
