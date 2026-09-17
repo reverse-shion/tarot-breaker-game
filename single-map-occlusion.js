@@ -10,20 +10,21 @@
   const source = document.querySelector(".scene-foreground img");
   const groundLayer = document.querySelector(".scene-ground");
 
-  const AUTHORITATIVE_MAP = "./assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v5";
-  const ISLANDS_ASSET = "./assets/maps/star-country-world-islands.webp?v=single-map-v5";
-  const WATERFALL_ASSET = "./assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v5";
-  const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v5";
+  const AUTHORITATIVE_MAP = "./assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6";
+  const ISLANDS_ASSET = "./assets/maps/star-country-world-islands.webp?asset=34856728cf2b";
+  const CLOUDS_ASSET = "./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf";
+  const WATERFALL_ASSET = "./assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6";
+  const STAR_GATE_ASSET = "./assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6";
 
   let precisePolys = [];
 
   // Load the dedicated layer-order stylesheet after the legacy scene CSS so its
   // z-index rules are authoritative without touching unrelated presentation.
-  if (!document.querySelector('link[data-layer-order="v5"]')) {
+  if (!document.querySelector('link[data-layer-order="v6"]')) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "./layer-order-fix.css?v=20260917-v5";
-    link.dataset.layerOrder = "v5";
+    link.href = "./layer-order-fix.css?v=20260917-v6";
+    link.dataset.layerOrder = "v6";
     document.head.appendChild(link);
   }
 
@@ -78,6 +79,13 @@
     map.src = AUTHORITATIVE_MAP;
   }
   if (groundLayer) groundLayer.hidden = true;
+
+  // Cloud animation always uses three copies of the same latest cloud artwork.
+  // This overrides any historical commit-pinned URLs still present in old HTML.
+  document.querySelectorAll(".scene-cloud-copy").forEach((image) => {
+    image.crossOrigin = "anonymous";
+    image.src = CLOUDS_ASSET;
+  });
 
   // Restore islands as their own world layer. Do not use map-layer for islands:
   // map-layer is reserved for painting the authoritative garden background.
@@ -166,7 +174,7 @@
     lift: GATE_LIFT,
     starGate: Object.freeze({ x: STAR_GATE_X, y: STAR_GATE_Y, w: STAR_GATE_W, h: STAR_GATE_H }),
     innerLight: Object.freeze({ x: INNER_LIGHT_X, y: INNER_LIGHT_Y, w: INNER_LIGHT_W, h: INNER_LIGHT_H }),
-    version: "single-map-gate-v5",
+    version: "single-map-gate-v6",
   });
 
   layout.foregroundOffset = Object.freeze({ x: 0, y: 0 });
@@ -226,7 +234,7 @@
       drawW: w,
       drawH: h,
       scale: 1,
-      mode: "single-map-layer-order-v5",
+      mode: "single-map-layer-order-v6",
       occluderCount: precisePolys.length,
     });
   };
@@ -242,12 +250,13 @@
 
   layout.artworkPlacement = Object.freeze({
     ...(layout.artworkPlacement || {}),
-    islands: Object.freeze({ mode: "world-layer", x: 0, y: 0, w: reference.width, h: reference.height }),
+    islands: Object.freeze({ mode: "world-layer-latest", asset: "34856728cf2b", x: 0, y: 0, w: reference.width, h: reference.height }),
+    clouds: Object.freeze({ mode: "three-copy-latest", asset: "eaea4c9513cf", x: 0, y: 0, w: reference.width, h: reference.height }),
     waterfall: Object.freeze({ mode: "world-layer", x: 0, y: 0, w: reference.width, h: reference.height }),
-    background: Object.freeze({ mode: "single-map-authoritative-v5", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
-    foreground: Object.freeze({ mode: "single-map-layer-order-v5", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    background: Object.freeze({ mode: "single-map-authoritative-v6", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
+    foreground: Object.freeze({ mode: "single-map-layer-order-v6", x: 0, y: 0, w: reference.width, h: reference.height, scale: 1 }),
     gate: layout.gateAssembly,
   });
-  layout.depthModelVersion = "single-map-layer-order-v5";
-  layout.artworkModelVersion = "single-map-transparent-v5";
+  layout.depthModelVersion = "single-map-layer-order-v6";
+  layout.artworkModelVersion = "single-map-transparent-v6";
 })(window);
