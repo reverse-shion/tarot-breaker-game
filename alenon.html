@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#06142d" />
+  <title>TAROT BREAKER — アレノンの遺跡</title>
+  <style>
+    :root {
+      --world-w: 1448;
+      --world-h: 1086;
+
+      /* Ground layout: 1448x1086 reference space */
+      --ground-s-x: 0px;
+      --ground-s-y: -12px;
+      --ground-s-scale: .86;
+
+      --ground-side-x: 372px;
+      --ground-side-y: 138px;
+      --ground-side-scale: .70;
+
+      /* Front pad */
+      --pad-x: 724px;
+      --pad-y: 862px;
+      --pad-size: 360px;
+
+      /* Rear orb */
+      --orb-x: 724px;
+      --orb-y: 252px;
+      --orb-size: 430px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #06142d;
+    }
+    body {
+      touch-action: none;
+      overscroll-behavior: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(63,139,255,.14), transparent 55%),
+        #06142d;
+    }
+
+    #world {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 1448px;
+      height: 1086px;
+      transform-origin: 0 0;
+      will-change: transform;
+      overflow: hidden;
+      background: #0a2e62;
+      isolation: isolate;
+    }
+
+    .layer,
+    .ground {
+      position: absolute;
+      inset: 0;
+      width: 1448px;
+      height: 1086px;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    .bg {
+      z-index: 0;
+      object-fit: cover;
+    }
+
+    .atmosphere {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 24%, rgba(173,222,255,.10) 0 16%, transparent 44%),
+        linear-gradient(to bottom, rgba(0,15,55,.05), rgba(0,28,70,.03) 66%, rgba(3,18,46,.16));
+    }
+
+    .ground {
+      z-index: 10;
+      object-fit: contain;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .ground-left {
+      transform: translate3d(calc(var(--ground-side-x) * -1), var(--ground-side-y), 0)
+                 scale(var(--ground-side-scale));
+    }
+
+    .ground-right {
+      transform: translate3d(var(--ground-side-x), var(--ground-side-y), 0)
+                 scale(var(--ground-side-scale));
+    }
+
+    .ground-center {
+      z-index: 12;
+      transform: translate3d(var(--ground-s-x), var(--ground-s-y), 0)
+                 scale(var(--ground-s-scale));
+    }
+
+    .pad {
+      position: absolute;
+      z-index: 20;
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: var(--pad-size);
+      height: var(--pad-size);
+      object-fit: contain;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      filter: drop-shadow(0 0 12px rgba(107,206,255,.20));
+    }
+
+    .pad-glow {
+      position: absolute;
+      z-index: 19;
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: calc(var(--pad-size) * .50);
+      height: calc(var(--pad-size) * .25);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(ellipse, rgba(112,220,255,.24), rgba(84,161,255,.08) 46%, transparent 74%);
+      filter: blur(11px);
+      animation: pad-breathe 4.8s ease-in-out infinite;
+    }
+
+    .orb {
+      position: absolute;
+      left: var(--orb-x);
+      top: var(--orb-y);
+      width: var(--orb-size);
+      height: var(--orb-size);
+      object-fit: contain;
+      transform-origin: 50% 50%;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    .orb-outer {
+      z-index: 30;
+      transform: translate(-50%, -50%);
+      animation: orb-outer-spin 28s linear infinite;
+    }
+
+    .orb-inner {
+      z-index: 31;
+      transform: translate(-50%, -50%);
+      animation: orb-inner-spin 17s linear infinite reverse;
+    }
+
+    .orb-core {
+      z-index: 32;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 0 18px rgba(118,220,255,.58));
+      animation: orb-core-breathe 3.7s ease-in-out infinite;
+    }
+
+    .orb-particle {
+      z-index: 33;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: screen;
+      animation:
+        orb-particle-spin 36s linear infinite,
+        orb-particle-fade 5.2s ease-in-out infinite;
+    }
+
+    .orb-aura {
+      position: absolute;
+      z-index: 29;
+      left: var(--orb-x);
+      top: var(--orb-y);
+      width: calc(var(--orb-size) * .60);
+      height: calc(var(--orb-size) * .60);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(101,216,255,.22), rgba(93,150,255,.08) 46%, transparent 72%);
+      filter: blur(16px);
+      animation: orb-aura 4.2s ease-in-out infinite;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none;
+      background:
+        linear-gradient(to bottom, rgba(4,10,32,.10), transparent 20%, transparent 76%, rgba(4,10,32,.13)),
+        radial-gradient(ellipse at center, transparent 62%, rgba(1,10,30,.13) 100%);
+    }
+
+    @keyframes pad-breathe {
+      0%, 100% { opacity: .56; transform: translate(-50%, -50%) scale(.96); }
+      50% { opacity: .90; transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    @keyframes orb-outer-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes orb-inner-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes orb-particle-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(360deg) scale(1); }
+    }
+
+    @keyframes orb-particle-fade {
+      0%, 100% { opacity: .56; }
+      50% { opacity: .94; }
+    }
+
+    @keyframes orb-core-breathe {
+      0%, 100% {
+        opacity: .90;
+        transform: translate(-50%, -50%) scale(.97);
+        filter: drop-shadow(0 0 16px rgba(118,220,255,.50));
+      }
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.035);
+        filter: drop-shadow(0 0 28px rgba(118,220,255,.78));
+      }
+    }
+
+    @keyframes orb-aura {
+      0%, 100% { opacity: .58; transform: translate(-50%, -50%) scale(.94); }
+      50% { opacity: .92; transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    /* Add ?debug=1 to the URL when fine-tuning placement. */
+    body.debug #world::before,
+    body.debug #world::after {
+      content: "";
+      position: absolute;
+      z-index: 99;
+      pointer-events: none;
+      background: rgba(255, 92, 92, .55);
+    }
+
+    body.debug #world::before {
+      left: 723px;
+      top: 0;
+      width: 2px;
+      height: 1086px;
+    }
+
+    body.debug #world::after {
+      left: 0;
+      top: 542px;
+      width: 1448px;
+      height: 2px;
+    }
+
+    body.debug .pad,
+    body.debug .orb {
+      outline: 2px solid rgba(255,225,80,.72);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pad-glow,
+      .orb-outer,
+      .orb-inner,
+      .orb-core,
+      .orb-particle,
+      .orb-aura {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
+    <section id="world" aria-label="アレノンの遺跡マップ">
+      <!-- Backmost layer -->
+      <img class="layer bg" src="./assets/maps/alenon/bg.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <div class="atmosphere" aria-hidden="true"></div>
+
+      <!-- Ruin grounds: left / center / right -->
+      <img class="ground ground-left" src="./assets/maps/alenon/ground_l.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="ground ground-right" src="./assets/maps/alenon/ground_r.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="ground ground-center" src="./assets/maps/alenon/ground_s.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <!-- Front tip pad -->
+      <div class="pad-glow" aria-hidden="true"></div>
+      <img class="pad" src="./assets/maps/alenon/pad.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <!-- Rear-center orb assembly -->
+      <div class="orb-aura" aria-hidden="true"></div>
+      <img class="orb orb-outer" src="./assets/maps/alenon/orb-outer.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="orb orb-inner" src="./assets/maps/alenon/orb-inner.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="orb orb-core" src="./assets/maps/alenon/orb-core.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="orb orb-particle" src="./assets/maps/alenon/orb-particle.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <div class="vignette" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const WORLD_W = 1448;
+      const WORLD_H = 1086;
+      const world = document.getElementById("world");
+
+      if (new URLSearchParams(location.search).get("debug") === "1") {
+        document.body.classList.add("debug");
+      }
+
+      function fitWorld() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const scale = Math.min(vw / WORLD_W, vh / WORLD_H);
+        const width = WORLD_W * scale;
+        const height = WORLD_H * scale;
+        world.style.transform =
+          `translate3d(${-width / 2}px,${-height / 2}px,0) scale(${scale})`;
+      }
+
+      fitWorld();
+      window.addEventListener("resize", fitWorld, { passive: true });
+      window.addEventListener("orientationchange", fitWorld, { passive: true });
+    })();
+  </script>
+</body>
+</html>
