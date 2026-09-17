@@ -4,16 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#090c20" />
-  <title>TAROT BREAKER — Collision Editor v7</title>
-  <link rel="stylesheet" href="./map-editor.css?v=7.0.0" />
+  <title>TAROT BREAKER — Map Editor v8</title>
+  <link rel="stylesheet" href="./map-editor.css?v=8.0.0" />
 </head>
-<body data-collision-url="./assets/maps/star-country-gate-garden-collision.json?v=collision-v7">
+<body data-collision-url="./assets/maps/star-country-gate-garden-collision.json?v=17areas-v1" data-depth-url="./assets/maps/star-country-gate-garden-depth.json?v=depth-editor-v8">
   <main id="editor">
-    <iframe id="game-frame" src="./index.html?mapEditor=1&collisionEditor=1&build=collision-editor-v7" title="TAROT BREAKER 星門庭園"></iframe>
-    <canvas id="overlay" aria-label="当たり判定編集レイヤー"></canvas>
+    <iframe id="game-frame" src="./index.html?mapEditor=1&collisionEditor=1&build=map-editor-v8" title="TAROT BREAKER 星門庭園"></iframe>
+    <canvas id="overlay" aria-label="マップ判定編集レイヤー"></canvas>
 
     <header>
-      <strong>COLLISION EDITOR v7</strong>
+      <strong>MAP EDITOR v8</strong>
       <span id="status">読み込み中…</span>
       <span id="counts"></span>
     </header>
@@ -22,6 +22,7 @@
       <button type="button" data-mode="play">PLAY</button>
       <button type="button" data-mode="walk">歩行範囲</button>
       <button type="button" data-mode="blocked">障害物</button>
+      <button type="button" data-mode="behind">景色の裏</button>
       <button type="button" data-mode="edit">頂点編集</button>
       <button type="button" data-mode="erase">削除</button>
     </nav>
@@ -37,8 +38,8 @@
     </footer>
 
     <dialog id="output">
-      <h2>Collision JSON</h2>
-      <p>緑が歩行可能範囲、赤が緑の中に置く障害物です。歩行範囲が0件の間だけ、現在のゲームはリセット状態として全体歩行可になります。緑を1つ以上確定すると、緑の内側だけが歩行可能になります。</p>
+      <h2>Map JSON</h2>
+      <p>緑＝歩ける場所、赤＝通れない場所、紫＝歩けるまま草・柱・花などの景色の裏に隠れる場所です。紫は通行判定を変えず、前後関係だけを指定します。</p>
       <textarea readonly spellcheck="false"></textarea>
       <div class="dialog-actions">
         <button type="button" id="copy-dialog">コピー</button>
@@ -46,6 +47,6 @@
       </div>
     </dialog>
   </main>
-  <script src="./map-editor.js?v=7.0.0"></script>
+  <script src="./map-editor.js?v=8.0.0"></script>
 </body>
 </html>
