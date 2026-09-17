@@ -122,12 +122,9 @@
       will-change: transform;
     }
 
-    .ruin-drift-left {
-      animation: alenon-left-drift 25.5s ease-in-out infinite;
-    }
-
+    .ruin-drift-left,
     .ruin-drift-right {
-      animation: alenon-right-drift 31s ease-in-out infinite;
+      animation: none;
     }
 
     @keyframes alenon-left-drift {
@@ -667,9 +664,7 @@
       .orb-inner,
       .orb-core,
       .orb-particle,
-      .orb-aura,
-      .ruin-drift-left,
-      .ruin-drift-right {
+      .orb-aura {
         animation: none !important;
       }
     }
@@ -829,6 +824,8 @@
         padGlow: document.querySelector(".pad-glow"),
         orb: [...document.querySelectorAll(".orb")],
         orbAura: document.querySelector(".orb-aura"),
+        driftLeft: document.querySelector(".ruin-drift-left"),
+        driftRight: document.querySelector(".ruin-drift-right"),
       };
 
       function applyLayout() {
@@ -911,6 +908,37 @@
 
       if (params.get("debug") === "1") {
         document.body.classList.add("debug");
+      }
+
+      function initRuinDrift() {
+        if (editMode || !refs.driftLeft || !refs.driftRight) return;
+
+        const left = refs.driftLeft;
+        const right = refs.driftRight;
+        const startedAt = performance.now();
+
+        function frame(now) {
+          const t = (now - startedAt) / 1000;
+
+          // Very slow, deliberately asynchronous motion.
+          // Left and right use different periods so they never "breathe" together.
+          const leftY = Math.sin((t / 24.0) * Math.PI * 2) * 9;
+          const leftX = Math.sin((t / 33.0) * Math.PI * 2 + 0.7) * 4;
+          const leftR = Math.sin((t / 29.0) * Math.PI * 2 + 1.2) * 0.42;
+
+          const rightY = Math.sin((t / 30.5) * Math.PI * 2 + 2.0) * 10;
+          const rightX = Math.sin((t / 38.0) * Math.PI * 2 + 1.1) * 4;
+          const rightR = Math.sin((t / 35.0) * Math.PI * 2 + 2.7) * 0.46;
+
+          left.style.transform =
+            `translate3d(${leftX.toFixed(2)}px,${leftY.toFixed(2)}px,0) rotate(${leftR.toFixed(3)}deg)`;
+          right.style.transform =
+            `translate3d(${rightX.toFixed(2)}px,${rightY.toFixed(2)}px,0) rotate(${rightR.toFixed(3)}deg)`;
+
+          requestAnimationFrame(frame);
+        }
+
+        requestAnimationFrame(frame);
       }
 
       function setActorPosition() {
@@ -1205,6 +1233,7 @@
       }
 
       if (!editMode) {
+        initRuinDrift();
         initMovement();
         return;
       }
