@@ -15,19 +15,19 @@
       --ground-s-y: -12px;
       --ground-s-scale: .86;
 
-      --ground-side-x: 372px;
-      --ground-side-y: 138px;
-      --ground-side-scale: .70;
+      --ground-side-x: 0px;
+      --ground-side-y: 0px;
+      --ground-side-scale: 1;
 
       /* Front pad */
-      --pad-x: 724px;
-      --pad-y: 862px;
-      --pad-size: 360px;
+      --pad-x: 728.9px;
+      --pad-y: 858.3px;
+      --pad-size: 140px;
 
       /* Rear orb */
-      --orb-x: 724px;
-      --orb-y: 252px;
-      --orb-size: 430px;
+      --orb-x: 708px;
+      --orb-y: 274.1px;
+      --orb-size: 449px;
     }
 
     * { box-sizing: border-box; }
@@ -101,13 +101,11 @@
     }
 
     .ground-left {
-      transform: translate3d(calc(var(--ground-side-x) * -1), var(--ground-side-y), 0)
-                 scale(var(--ground-side-scale));
+      transform: translate3d(-403.9px, -16.7px, 0) scale(.533);
     }
 
     .ground-right {
-      transform: translate3d(var(--ground-side-x), var(--ground-side-y), 0)
-                 scale(var(--ground-side-scale));
+      transform: translate3d(236.9px, -63.4px, 0) scale(.592);
     }
 
     .ground-center {
@@ -553,10 +551,10 @@
 
       const defaults = Object.freeze({
         groundS: { kind: "ground", x: 0, y: -12, scale: .86 },
-        groundL: { kind: "ground", x: -372, y: 138, scale: .70 },
-        groundR: { kind: "ground", x: 372, y: 138, scale: .70 },
-        pad: { kind: "object", x: 724, y: 862, size: 360 },
-        orb: { kind: "object", x: 724, y: 252, size: 430 },
+        groundL: { kind: "ground", x: -403.9, y: -16.7, scale: .533 },
+        groundR: { kind: "ground", x: 236.9, y: -63.4, scale: .592 },
+        pad: { kind: "object", x: 728.9, y: 858.3, size: 140 },
+        orb: { kind: "object", x: 708, y: 274.1, size: 449 },
       });
 
       const cloneDefaults = () =>
