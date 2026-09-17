@@ -30,10 +30,9 @@
     return true;
   }
 
-  function addDiscoveryBeat() {
+  function installDiscoveryBeat() {
     const sequence = dialogue.events?.shioponMeet;
     if (!Array.isArray(sequence)) return;
-    if (sequence.some((command) => command?.storyGuard === "discover-shiopon")) return;
     const approachIndex = sequence.findIndex(
       (command) =>
         command?.type === "approach" &&
@@ -41,15 +40,30 @@
         command.target === "shiopon",
     );
     if (approachIndex < 0) return;
-    sequence.splice(
-      approachIndex,
-      0,
-      { type: "face", actor: "shion", target: "shiopon", storyGuard: "discover-shiopon" },
-      { type: "wait", duration: 180, storyGuard: "discover-shiopon" },
+
+    const alreadyInstalled = sequence.some(
+      (command) => command?.storyGuard === "discover-shiopon",
     );
+    if (!alreadyInstalled) {
+      sequence.splice(
+        approachIndex,
+        0,
+        {
+          type: "face",
+          actor: "shion",
+          target: "shiopon",
+          storyGuard: "discover-shiopon",
+        },
+        {
+          type: "wait",
+          duration: 220,
+          storyGuard: "discover-shiopon",
+        },
+      );
+    }
   }
 
-  addDiscoveryBeat();
+  installDiscoveryBeat();
 
   const lumiereSequence = dialogue.events?.lumiereGate;
   if (
@@ -66,47 +80,42 @@
       actor: "shion",
       target: "lumiere",
       distance: 54,
-      duration: 320,
+      duration: 900,
+      storyGuard: "lumiere-approach",
     });
   }
 
-  function installNormalApproachSpeed() {
-    const stage = window.TarotStage;
-    if (!stage?.perform || !stage?.getState || stage.normalApproachSpeed === NORMAL_SHION_SPEED) return;
+  function prepareApproachDuration(eventId) {
+    const sequence = dialogue.events?.[eventId];
+    const stageState = window.TarotStage?.getState?.();
+    if (!Array.isArray(sequence) || !stageState?.actors?.shion) return;
 
-    const wrapped = {
-      ...stage,
-      perform(command = {}) {
-        if (command.type !== "approach" || command.actor !== "shion") {
-          return stage.perform(command);
-        }
+    const approach = sequence.find(
+      (command) =>
+        command?.type === "approach" &&
+        command.actor === "shion",
+    );
+    if (!approach) return;
 
-        const stageState = stage.getState();
-        const current = stageState?.actors?.shion;
-        const target = typeof command.target === "string" ? stageState?.actors?.[command.target] : command.target;
-        if (!current || !target || !Number.isFinite(target.x) || !Number.isFinite(target.y)) {
-          return stage.perform(command);
-        }
+    const current = stageState.actors.shion;
+    const target =
+      typeof approach.target === "string"
+        ? stageState.actors?.[approach.target]
+        : approach.target;
+    if (!target || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return;
 
-        const gap = clamp(Number(command.distance) || 46, 32, 90);
-        const travel = Math.max(0, distance(current, target) - gap);
-        const duration = clamp((travel / NORMAL_SHION_SPEED) * 1000, 80, 1400);
-        return stage.perform({ ...command, duration });
-      },
-      normalApproachSpeed: NORMAL_SHION_SPEED,
-    };
-    window.TarotStage = Object.freeze(wrapped);
-  }
-
-  if (document.readyState === "loading") {
-    window.addEventListener("DOMContentLoaded", installNormalApproachSpeed, { once: true });
-  } else {
-    queueMicrotask(installNormalApproachSpeed);
+    const gap = clamp(Number(approach.distance) || 46, 32, 90);
+    const travel = Math.max(0, distance(current, target) - gap);
+    const minimum = eventId === "shioponMeet" ? 650 : 450;
+    approach.duration = Math.round(
+      clamp((travel / NORMAL_SHION_SPEED) * 1000, minimum, 1400),
+    );
   }
 
   const originalStart = dialogue.start.bind(dialogue);
   dialogue.start = function guardedStoryStart(eventId) {
     if (!canStart(eventId)) return false;
+    prepareApproachDuration(eventId);
     originalStart(eventId);
     return true;
   };
@@ -150,7 +159,7 @@
 
   controlsApi.__mandatoryStoryWrapped = true;
   window.TarotStoryGuard = Object.freeze({
-    version: "mandatory-story-v2",
+    version: "mandatory-story-v3",
     gates: GATES,
     normalShionSpeed: NORMAL_SHION_SPEED,
   });
