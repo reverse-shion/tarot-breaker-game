@@ -4,8 +4,8 @@
   const params=new URLSearchParams(location.search);
   if(params.get("waterfallEditor")!=="1")return;
 
-  const STORAGE_KEY="tarot-breaker:waterfall-position-v2";
-  const DEFAULT={x:0,y:22};
+  const STORAGE_KEY="tarot-breaker:waterfall-position-v3";
+  const DEFAULT={x:5,y:43};
   const REF={w:1448,h:1086};
   const EDIT_RECT={x:250,y:40,w:950,h:700};
 
@@ -47,7 +47,7 @@
   const panel=document.createElement("section");
   panel.id="waterfall-editor-panel";
   panel.innerHTML=`
-    <div class="we-head"><div class="we-title">滝位置調整</div><output class="we-value">X +0 / Y +22</output></div>
+    <div class="we-head"><div class="we-title">滝位置調整</div><output class="we-value">X +5 / Y +43</output></div>
     <div class="we-row">
       <div class="we-arrows">
         <button type="button" class="we-up" data-dx="0" data-dy="-1">↑</button>
@@ -57,10 +57,10 @@
       </div>
       <div>
         <div class="we-row" style="margin-top:0"><button type="button" data-step="1" data-active="1">1px</button><button type="button" data-step="5">5px</button><button type="button" data-step="10">10px</button></div>
-        <div class="we-row"><button type="button" data-action="save">保存</button><button type="button" data-action="copy">値をコピー</button><button type="button" data-action="reset">現在の基準に戻す</button></div>
+        <div class="we-row"><button type="button" data-action="save">保存</button><button type="button" data-action="copy">値をコピー</button><button type="button" data-action="reset">正式位置に戻す</button></div>
       </div>
     </div>
-    <div class="we-note">水色の範囲はタップ操作を遮りません。シオンを普通に歩かせながら確認し、滝は「滝を動かす」ボタンをドラッグするか矢印で調整してください。</div>
+    <div class="we-note">水色の範囲はタップ操作を遮りません。正式基準は X +5 / Y +43 です。滝は「滝を動かす」をドラッグするか矢印で調整できます。</div>
   `;
   document.body.appendChild(panel);
   const valueOut=panel.querySelector(".we-value");
@@ -88,7 +88,7 @@
     document.querySelectorAll(".scene-waterfall").forEach(layer=>{
       layer.style.left=`${state.x}px`;
       layer.style.top=`${state.y}px`;
-      layer.dataset.positionRevision="waterfall-editor-v2";
+      layer.dataset.positionRevision="waterfall-editor-v3";
     });
     valueOut.textContent=`X ${signed(state.x)} / Y ${signed(state.y)}`;
     updateUrl();
