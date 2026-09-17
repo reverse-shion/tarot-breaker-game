@@ -137,6 +137,101 @@
       filter: drop-shadow(0 0 12px rgba(107,206,255,.20));
     }
 
+    .pad-flight-trail {
+      position: absolute;
+      z-index: 18;
+      width: 92px;
+      height: 150px;
+      border-radius: 50%;
+      transform: translate(-50%, -10%);
+      pointer-events: none;
+      opacity: 0;
+      background:
+        radial-gradient(ellipse at 50% 5%, rgba(180,235,255,.34), transparent 42%),
+        linear-gradient(to bottom, rgba(118,211,255,.24), rgba(94,145,255,.08) 45%, transparent 100%);
+      filter: blur(11px);
+      transition: opacity .28s ease;
+    }
+
+    body.pad-boarding .pad,
+    body.pad-riding .pad,
+    body.pad-exiting .pad {
+      z-index: 42;
+      filter:
+        brightness(1.22)
+        drop-shadow(0 0 15px rgba(126,224,255,.78))
+        drop-shadow(0 0 30px rgba(95,157,255,.38));
+    }
+
+    body.pad-boarding .pad-glow,
+    body.pad-riding .pad-glow,
+    body.pad-exiting .pad-glow {
+      z-index: 41;
+      opacity: 1;
+      filter: blur(7px);
+    }
+
+    body.pad-riding .pad-flight-trail,
+    body.pad-exiting .pad-flight-trail {
+      opacity: .82;
+    }
+
+    body.pad-riding .shion-shadow,
+    body.pad-boarding .shion-shadow,
+    body.pad-exiting .shion-shadow {
+      opacity: 0;
+    }
+
+    body.pad-riding #object-toggle,
+    body.pad-boarding #object-toggle,
+    body.pad-exiting #object-toggle,
+    body.pad-exiting #move-reset {
+      display: none !important;
+    }
+
+    #flight-status {
+      position: fixed;
+      left: 50%;
+      top: max(16px, calc(env(safe-area-inset-top) + 12px));
+      z-index: 400;
+      transform: translateX(-50%);
+      padding: 8px 13px;
+      border: 1px solid rgba(194,229,255,.28);
+      border-radius: 999px;
+      color: rgba(255,255,255,.96);
+      background: rgba(5,13,35,.64);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .02em;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+
+    body.pad-boarding #flight-status,
+    body.pad-riding #flight-status,
+    body.pad-exiting #flight-status {
+      opacity: 1;
+    }
+
+    #map-transition {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 50% 68%, rgba(195,239,255,.45), transparent 24%),
+        linear-gradient(to bottom, rgba(9,35,75,0), rgba(135,208,255,.28) 58%, rgba(239,250,255,.96));
+      transition: opacity .78s ease;
+    }
+
+    body.pad-exiting #map-transition {
+      opacity: 1;
+    }
+
     .pad-glow {
       position: absolute;
       z-index: 19;
@@ -792,7 +887,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="inline-object-adjust-v6">
+<body data-alenon-drift-revision="pad-flight-v7">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -814,6 +909,7 @@
       <img class="ground ground-center" src="./assets/maps/alenon/ground_s.webp" alt="" aria-hidden="true" draggable="false" />
 
       <!-- Front tip pad -->
+      <div class="pad-flight-trail" aria-hidden="true"></div>
       <div class="pad-glow" aria-hidden="true"></div>
       <img class="pad" src="./assets/maps/alenon/pad.webp" alt="" aria-hidden="true" draggable="false" />
 
@@ -904,6 +1000,8 @@
       </div>
     </aside>
     <div id="editor-toast" role="status" aria-live="polite"></div>
+    <div id="flight-status" role="status" aria-live="polite">PADが共鳴している…</div>
+    <div id="map-transition" aria-hidden="true"></div>
 
   </main>
 
@@ -916,6 +1014,11 @@
       const SHION_SCREEN_HEIGHT = 78;
       const SHION_SPAWN = Object.freeze({ x: 730, y: 949 });
       const SHION_SPEED_SCREEN = 155;
+      const PAD_SPEED_SCREEN = 175;
+      const PAD_TOUCH_RADIUS = 64;
+      const PAD_LIFT = 18;
+      const PAD_BOARD_DURATION = .92;
+      const PAD_EXIT_Y = 1038;
       const CAMERA_LOOK_AHEAD_Y = 110;
       const WORLD_MARGIN = 34;
       const world = document.getElementById("world");
@@ -935,6 +1038,8 @@
       const moveJoystick = document.getElementById("move-joystick");
       const moveJoystickKnob = document.getElementById("move-joystick-knob");
       const objectToggle = document.getElementById("object-toggle");
+      const flightStatus = document.getElementById("flight-status");
+      const mapTransition = document.getElementById("map-transition");
 
       const player = {
         x: SHION_SPAWN.x,
@@ -944,6 +1049,17 @@
         frame: 0,
         anim: 0,
         target: null,
+      };
+
+      const ride = {
+        mode: "ground",
+        x: 0,
+        y: 0,
+        lift: 0,
+        progress: 0,
+        fromX: 0,
+        fromY: 0,
+        exitStarted: false,
       };
 
       const defaults = Object.freeze({
@@ -990,6 +1106,7 @@
         groundR: document.querySelector(".ground-right-anchor"),
         pad: document.querySelector(".pad"),
         padGlow: document.querySelector(".pad-glow"),
+        padTrail: document.querySelector(".pad-flight-trail"),
         orb: [...document.querySelectorAll(".orb")],
         orbAura: document.querySelector(".orb-aura"),
         driftLeft: document.querySelector(".ground-drift-left"),
@@ -1269,6 +1386,90 @@
         requestAnimationFrame(frame);
       }
 
+      const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+      function setRideMode(mode) {
+        ride.mode = mode;
+        document.body.classList.toggle("pad-boarding", mode === "boarding");
+        document.body.classList.toggle("pad-riding", mode === "flying");
+        document.body.classList.toggle("pad-exiting", mode === "exiting");
+
+        if (mode === "boarding") {
+          flightStatus.textContent = "PADが共鳴している…";
+        } else if (mode === "flying") {
+          flightStatus.textContent = "PAD起動中 — 画面下へ進む";
+          moveGuide.hidden = false;
+          moveGuide.textContent = "PADで移動中 / 下へ進むと次の場所へ";
+        } else if (mode === "exiting") {
+          flightStatus.textContent = "星門庭園方面へ移動中…";
+          moveGuide.hidden = true;
+        }
+      }
+
+      function syncRideVisual(now = performance.now()) {
+        if (ride.mode === "ground") return;
+
+        const bob = ride.mode === "flying"
+          ? Math.sin(now / 620) * 2.2
+          : 0;
+        const visualY = ride.y - ride.lift + bob;
+
+        refs.pad.style.left = ride.x + "px";
+        refs.pad.style.top = visualY + "px";
+        refs.padGlow.style.left = ride.x + "px";
+        refs.padGlow.style.top = visualY + "px";
+        refs.padTrail.style.left = ride.x + "px";
+        refs.padTrail.style.top = (visualY + 22) + "px";
+
+        player.x = ride.x;
+        player.y = visualY - 2;
+        player.moving = false;
+        player.frame = 0;
+      }
+
+      function beginBoarding() {
+        if (ride.mode !== "ground") return;
+        ride.x = layout.pad.x;
+        ride.y = layout.pad.y;
+        ride.lift = 0;
+        ride.progress = 0;
+        ride.fromX = player.x;
+        ride.fromY = player.y;
+        player.target = null;
+        clearTargetRing();
+        setRideMode("boarding");
+      }
+
+      function beginPadExit() {
+        if (ride.exitStarted || ride.mode !== "flying") return;
+        ride.exitStarted = true;
+        player.target = null;
+        clearTargetRing();
+        setRideMode("exiting");
+
+        window.setTimeout(() => {
+          location.href = "./star-country-landing.html?from=alenon";
+        }, 820);
+      }
+
+      function resetRide() {
+        ride.mode = "ground";
+        ride.x = layout.pad.x;
+        ride.y = layout.pad.y;
+        ride.lift = 0;
+        ride.progress = 0;
+        ride.exitStarted = false;
+        document.body.classList.remove("pad-boarding", "pad-riding", "pad-exiting");
+        refs.pad.style.left = layout.pad.x + "px";
+        refs.pad.style.top = layout.pad.y + "px";
+        refs.padGlow.style.left = layout.pad.x + "px";
+        refs.padGlow.style.top = layout.pad.y + "px";
+        refs.padTrail.style.left = layout.pad.x + "px";
+        refs.padTrail.style.top = layout.pad.y + "px";
+        flightStatus.textContent = "PADが共鳴している…";
+        moveGuide.textContent = "行きたい場所をタップ / ドラッグで自由移動";
+      }
+
       function setActorPosition() {
         shionActor.style.left = player.x + "px";
         shionActor.style.top = player.y + "px";
@@ -1324,6 +1525,7 @@
       }
 
       function resetPlayer() {
+        resetRide();
         player.x = SHION_SPAWN.x;
         player.y = SHION_SPAWN.y;
         player.dir = "up";
@@ -1403,7 +1605,11 @@
         function setTapTarget(clientX, clientY) {
           const point = screenToWorld(clientX, clientY);
           point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
-          point.y = clamp(point.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+          if (ride.mode === "flying") {
+            point.y = clamp(point.y, 80, WORLD_H + 24);
+          } else {
+            point.y = clamp(point.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+          }
           player.target = point;
           showTarget(point);
           hideGuide();
@@ -1504,6 +1710,38 @@
           const dt = Math.min((now - last) / 1000, .05);
           last = now;
 
+          if (ride.mode === "boarding") {
+            ride.progress = Math.min(1, ride.progress + dt / PAD_BOARD_DURATION);
+            const t = easeOutCubic(ride.progress);
+            ride.lift = PAD_LIFT * t;
+            player.x = ride.fromX + (ride.x - ride.fromX) * t;
+            player.y = ride.fromY + ((ride.y - PAD_LIFT - 2) - ride.fromY) * t;
+            player.moving = false;
+            player.dir = "down";
+            syncRideVisual(now);
+
+            if (ride.progress >= 1) {
+              setRideMode("flying");
+            }
+
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+            requestAnimationFrame(loop);
+            return;
+          }
+
+          if (ride.mode === "exiting") {
+            ride.y += 95 * dt;
+            ride.lift = PAD_LIFT;
+            syncRideVisual(now);
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+            requestAnimationFrame(loop);
+            return;
+          }
+
           const keyboard = keyVector();
           let vx = keyboard.x;
           let vy = keyboard.y;
@@ -1515,13 +1753,21 @@
             manual = Math.hypot(vx, vy) > .08;
           }
 
+          const originX = ride.mode === "flying" ? ride.x : player.x;
+          const originY = ride.mode === "flying" ? ride.y : player.y;
+
           if (!manual && player.target) {
-            const dx = player.target.x - player.x;
-            const dy = player.target.y - player.y;
+            const dx = player.target.x - originX;
+            const dy = player.target.y - originY;
             const distance = Math.hypot(dx, dy);
             if (distance <= 3.5) {
-              player.x = player.target.x;
-              player.y = player.target.y;
+              if (ride.mode === "flying") {
+                ride.x = player.target.x;
+                ride.y = player.target.y;
+              } else {
+                player.x = player.target.x;
+                player.y = player.target.y;
+              }
               player.target = null;
               clearTargetRing();
             } else {
@@ -1534,19 +1780,38 @@
           if (hasMove && Math.hypot(vx, vy) > .001) {
             player.dir = directionFromVector(vx, vy);
 
-            // Keep perceived movement speed consistent even when the map zoom changes.
-            const speedWorld = SHION_SPEED_SCREEN / worldScale;
-            player.x += vx * speedWorld * dt;
-            player.y += vy * speedWorld * dt;
-            clampPlayer();
-
-            player.anim += dt * 8.5;
-            player.frame = Math.floor(player.anim) % 4;
-            player.moving = true;
+            if (ride.mode === "flying") {
+              const speedWorld = PAD_SPEED_SCREEN / worldScale;
+              ride.x += vx * speedWorld * dt;
+              ride.y += vy * speedWorld * dt;
+              ride.x = clamp(ride.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
+              ride.y = clamp(ride.y, 70, WORLD_H + 32);
+              ride.lift = PAD_LIFT;
+              player.moving = false;
+            } else {
+              const speedWorld = SHION_SPEED_SCREEN / worldScale;
+              player.x += vx * speedWorld * dt;
+              player.y += vy * speedWorld * dt;
+              clampPlayer();
+              player.anim += dt * 8.5;
+              player.frame = Math.floor(player.anim) % 4;
+              player.moving = true;
+            }
           } else {
             player.moving = false;
             player.anim = 0;
             player.frame = 0;
+          }
+
+          if (ride.mode === "flying") {
+            syncRideVisual(now);
+            if (ride.y >= PAD_EXIT_Y) beginPadExit();
+          } else if (ride.mode === "ground") {
+            const padDistance = Math.hypot(
+              player.x - layout.pad.x,
+              player.y - layout.pad.y,
+            );
+            if (padDistance <= PAD_TOUCH_RADIUS) beginBoarding();
           }
 
           setActorPosition();
