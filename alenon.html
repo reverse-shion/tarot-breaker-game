@@ -100,6 +100,7 @@
       will-change: transform;
     }
 
+    .ground-drift,
     .ground-anchor {
       position: absolute;
       inset: 0;
@@ -119,47 +120,6 @@
 
     .ruin-drift {
       transform-origin: 50% 50%;
-      will-change: left, top, transform;
-    }
-
-    .ruin-drift-left,
-    .ruin-drift-right {
-      animation: none;
-    }
-
-    @keyframes alenon-left-drift {
-      0%, 100% {
-        transform: translate3d(0, 0, 0) rotate(0deg);
-      }
-      20% {
-        transform: translate3d(-2px, -3px, 0) rotate(-0.16deg);
-      }
-      45% {
-        transform: translate3d(1px, -6px, 0) rotate(0.10deg);
-      }
-      70% {
-        transform: translate3d(3px, -2px, 0) rotate(0.26deg);
-      }
-    }
-
-    @keyframes alenon-right-drift {
-      0%, 100% {
-        transform: translate3d(0, 0, 0) rotate(0deg);
-      }
-      30% {
-        transform: translate3d(2px, -2px, 0) rotate(0.12deg);
-      }
-      55% {
-        transform: translate3d(-1px, -7px, 0) rotate(-0.24deg);
-      }
-      80% {
-        transform: translate3d(-3px, -3px, 0) rotate(-0.08deg);
-      }
-    }
-
-    body.edit-mode .ruin-drift-left,
-    body.edit-mode .ruin-drift-right {
-      animation-play-state: paused;
     }
 
     .pad {
@@ -670,7 +630,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="visible-drift-v3">
+<body data-alenon-drift-revision="wrapper-drift-v4">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -679,11 +639,15 @@
       <div class="atmosphere" aria-hidden="true"></div>
 
       <!-- Ruin grounds: left / center / right -->
-      <div class="ground-anchor ground-left-anchor" aria-hidden="true">
-        <img class="ground ruin-drift ruin-drift-left" src="./assets/maps/alenon/ground_l.webp" alt="" draggable="false" />
+      <div class="ground-drift ground-drift-left" aria-hidden="true">
+        <div class="ground-anchor ground-left-anchor">
+          <img class="ground ruin-drift ruin-drift-left" src="./assets/maps/alenon/ground_l.webp" alt="" draggable="false" />
+        </div>
       </div>
-      <div class="ground-anchor ground-right-anchor" aria-hidden="true">
-        <img class="ground ruin-drift ruin-drift-right" src="./assets/maps/alenon/ground_r.webp" alt="" draggable="false" />
+      <div class="ground-drift ground-drift-right" aria-hidden="true">
+        <div class="ground-anchor ground-right-anchor">
+          <img class="ground ruin-drift ruin-drift-right" src="./assets/maps/alenon/ground_r.webp" alt="" draggable="false" />
+        </div>
       </div>
       <img class="ground ground-center" src="./assets/maps/alenon/ground_s.webp" alt="" aria-hidden="true" draggable="false" />
 
@@ -824,8 +788,8 @@
         padGlow: document.querySelector(".pad-glow"),
         orb: [...document.querySelectorAll(".orb")],
         orbAura: document.querySelector(".orb-aura"),
-        driftLeft: document.querySelector(".ruin-drift-left"),
-        driftRight: document.querySelector(".ruin-drift-right"),
+        driftLeft: document.querySelector(".ground-drift-left"),
+        driftRight: document.querySelector(".ground-drift-right"),
       };
 
       function applyLayout() {
@@ -911,33 +875,29 @@
       }
 
       function initRuinDrift() {
-        if (editMode || !refs.driftLeft || !refs.driftRight) return;
+        if (!refs.driftLeft || !refs.driftRight) return;
 
         const left = refs.driftLeft;
         const right = refs.driftRight;
         const startedAt = performance.now();
 
-        // Move by left/top instead of translate so the ambient drift cannot be
-        // cancelled by any authored placement transform.
         function frame(now) {
           const t = (now - startedAt) / 1000;
 
-          // Slow but clearly visible after a few seconds.
-          const leftY = Math.sin((t / 18.0) * Math.PI * 2) * 22;
-          const leftX = Math.sin((t / 26.0) * Math.PI * 2 + 0.7) * 9;
-          const leftR = Math.sin((t / 22.0) * Math.PI * 2 + 1.2) * 0.72;
+          // Outer wrappers move; inner anchors keep the authored position/scale.
+          // This also runs in ?edit=1 so the effect is visible regardless of URL.
+          const leftY = Math.sin((t / 18.0) * Math.PI * 2) * 18;
+          const leftX = Math.sin((t / 25.0) * Math.PI * 2 + 0.65) * 7;
+          const leftR = Math.sin((t / 22.0) * Math.PI * 2 + 1.10) * 0.58;
 
-          const rightY = Math.sin((t / 22.0) * Math.PI * 2 + 2.0) * 24;
-          const rightX = Math.sin((t / 29.0) * Math.PI * 2 + 1.1) * 10;
-          const rightR = Math.sin((t / 25.0) * Math.PI * 2 + 2.7) * 0.78;
+          const rightY = Math.sin((t / 22.0) * Math.PI * 2 + 1.85) * 20;
+          const rightX = Math.sin((t / 29.0) * Math.PI * 2 + 1.15) * 8;
+          const rightR = Math.sin((t / 25.0) * Math.PI * 2 + 2.55) * 0.62;
 
-          left.style.left = leftX.toFixed(2) + "px";
-          left.style.top = leftY.toFixed(2) + "px";
-          left.style.transform = `rotate(${leftR.toFixed(3)}deg)`;
-
-          right.style.left = rightX.toFixed(2) + "px";
-          right.style.top = rightY.toFixed(2) + "px";
-          right.style.transform = `rotate(${rightR.toFixed(3)}deg)`;
+          left.style.transform =
+            `translate3d(${leftX.toFixed(2)}px,${leftY.toFixed(2)}px,0) rotate(${leftR.toFixed(3)}deg)`;
+          right.style.transform =
+            `translate3d(${rightX.toFixed(2)}px,${rightY.toFixed(2)}px,0) rotate(${rightR.toFixed(3)}deg)`;
 
           requestAnimationFrame(frame);
         }
@@ -1236,8 +1196,9 @@
         });
       }
 
+      initRuinDrift();
+
       if (!editMode) {
-        initRuinDrift();
         initMovement();
         return;
       }
