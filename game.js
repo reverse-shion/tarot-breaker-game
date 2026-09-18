@@ -1921,8 +1921,8 @@
       reset();
       draw();
       start.disabled = false;
-      start.textContent = "星の国へ";
-      note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
+      start.textContent = "TOUCH TO START";
+      note.textContent = "";
 
       // Seamless arrival from the PAD landing area.
       if (params.get("from") === "landing") {
