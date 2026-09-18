@@ -246,6 +246,15 @@
       pointer-events: none;
     }
 
+    .landing-foreground {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      width: 1448px;
+      height: 1086px;
+      pointer-events: none;
+    }
+
     .shion-actor {
       position: absolute;
       z-index: 44;
@@ -638,7 +647,7 @@
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v11-dim-after-dismount" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v12-depth-runtime" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -666,6 +675,7 @@
       <div class="move-target" aria-hidden="true"></div>
       <div class="shion-shadow" aria-hidden="true"></div>
       <div class="shion-actor" role="img" aria-label="シオン"></div>
+      <canvas id="landing-foreground" class="landing-foreground" width="1448" height="1086" aria-hidden="true"></canvas>
     </section>
 
     <div id="flight-status" role="status" aria-live="polite">PAD着陸中…</div>
@@ -778,6 +788,8 @@
       const pad = document.querySelector(".pad");
       const padGlow = document.querySelector(".pad-glow");
       const padTrail = document.querySelector(".pad-flight-trail");
+      const landingGround = document.querySelector(".landing-ground");
+      const landingForeground = document.getElementById("landing-foreground");
       const guide = document.getElementById("guide");
       const status = document.getElementById("flight-status");
       const joystick = document.getElementById("joystick");
@@ -790,7 +802,8 @@
         !collisionMode &&
         (params.get("padEdit") === "1" || params.get("debug") === "1");
       const PAD_EDIT_STORAGE_KEY = "tarot-breaker:star-landing-pad-layout-v1";
-      const COLLISION_URL = "./assets/maps/star-landing/collision.json?v=1";
+      const COLLISION_URL = "./assets/maps/star-landing/collision.json?v=2";
+      const DEPTH_URL = "./assets/maps/star-landing/depth.json?v=1";
       const COLLISION_DRAFT_KEY = "tarot-breaker:star-landing-collision-v1";
 
       const padEditorToggle = document.getElementById("pad-editor-toggle");
@@ -826,6 +839,8 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
+      let landingBlockedAreas = [];
+      let landingDepthAreas = [];
 
       const player = {
         x: PAD_HOME.x,
@@ -1236,6 +1251,18 @@
             points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
           }));
 
+        landingBlockedAreas = (Array.isArray(data?.blockedAreas) ? data.blockedAreas : [])
+          .filter(
+            (area) =>
+              area?.type === "poly" &&
+              Array.isArray(area.points) &&
+              area.points.length >= 3,
+          )
+          .map((area) => ({
+            type: "poly",
+            points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+          }));
+
         if (collisionMode) {
           try {
             const saved = JSON.parse(localStorage.getItem(COLLISION_DRAFT_KEY) || "null");
@@ -1254,6 +1281,62 @@
               }
             }
           } catch (_) {}
+        }
+      }
+
+      async function loadLandingDepth() {
+        let data = null;
+        try {
+          const response = await fetch(DEPTH_URL, { cache: "no-store" });
+          if (response.ok) data = await response.json();
+        } catch (_) {}
+
+        landingDepthAreas =
+          data?.map === "star-landing" &&
+          data?.referenceSize?.width === WORLD_W &&
+          data?.referenceSize?.height === WORLD_H &&
+          Array.isArray(data?.behindForegroundAreas)
+            ? data.behindForegroundAreas
+                .filter(
+                  (area) =>
+                    area?.type === "poly" &&
+                    Array.isArray(area.points) &&
+                    area.points.length >= 3,
+                )
+                .map((area) => ({
+                  type: "poly",
+                  points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+                }))
+            : [];
+      }
+
+      async function renderLandingForeground() {
+        if (!landingForeground || !landingGround) return;
+        if (!(landingGround.complete && landingGround.naturalWidth)) {
+          await new Promise((resolve) => {
+            landingGround.addEventListener("load", resolve, { once:true });
+            landingGround.addEventListener("error", resolve, { once:true });
+          });
+        }
+        if (typeof landingGround.decode === "function") {
+          try { await landingGround.decode(); } catch (_) {}
+        }
+
+        const ctx = landingForeground.getContext("2d");
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.clearRect(0,0,WORLD_W,WORLD_H);
+
+        for (const area of landingDepthAreas) {
+          ctx.save();
+          ctx.beginPath();
+          area.points.forEach((point, index) => {
+            if (index === 0) ctx.moveTo(point[0], point[1]);
+            else ctx.lineTo(point[0], point[1]);
+          });
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(landingGround, 0, 0, WORLD_W, WORLD_H);
+          ctx.restore();
         }
       }
 
@@ -1511,8 +1594,18 @@
       }
 
       function isGroundWalkable(x, y) {
-        if (!landingWalkAreas.length) return true;
-        return landingWalkAreas.some(
+        const insideWalk =
+          !landingWalkAreas.length ||
+          landingWalkAreas.some(
+            (area) =>
+              area.type === "poly" &&
+              Array.isArray(area.points) &&
+              pointInPoly(x, y, area.points),
+          );
+
+        if (!insideWalk) return false;
+
+        return !landingBlockedAreas.some(
           (area) =>
             area.type === "poly" &&
             Array.isArray(area.points) &&
@@ -2089,7 +2182,11 @@
       }
 
       async function boot() {
-        await loadLandingCollision();
+        await Promise.all([
+          loadLandingCollision(),
+          loadLandingDepth(),
+        ]);
+        await renderLandingForeground();
 
         if (collisionMode) {
           ride.mode = "ground";
