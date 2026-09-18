@@ -1,0 +1,157 @@
+/* TAROT BREAKER shared dialogue UI
+   Canonical appearance/behavior source: Alenon prologue dialogue. */
+
+.tb-dialogue-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding:
+    0 max(14px, env(safe-area-inset-right))
+    max(26px, calc(env(safe-area-inset-bottom) + 20px))
+    max(14px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.tb-dialogue-layer[hidden] {
+  display: none !important;
+}
+
+.tb-dialogue-window {
+  position: relative;
+  width: min(92vw, 720px);
+  min-height: 132px;
+  box-sizing: border-box;
+  transform: translateY(10px);
+  padding: 16px 20px 27px;
+  border: 1px solid rgba(217, 190, 128, .48);
+  border-radius: 10px;
+  color: rgba(249, 250, 255, .98);
+  background:
+    linear-gradient(180deg, rgba(11, 18, 46, .94), rgba(5, 10, 29, .91));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 14px 38px rgba(0, 0, 0, .38),
+    inset 0 1px 0 rgba(255, 243, 207, .06);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .25s ease;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.tb-dialogue-layer.visible .tb-dialogue-window,
+.tb-dialogue-window.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.tb-dialogue-window:focus-visible {
+  outline: 2px solid rgba(235, 224, 194, .88);
+  outline-offset: 2px;
+}
+
+.tb-dialogue-speaker {
+  display: block;
+  margin-bottom: 7px;
+  color: rgba(226, 207, 158, .92);
+  font-size: clamp(11px, 2.8vw, 13px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .08em;
+}
+
+.tb-dialogue-text {
+  display: block;
+  min-height: 3.15em;
+  font-size: clamp(18px, 4.6vw, 21px);
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: .015em;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.tb-dialogue-char {
+  visibility: hidden;
+}
+
+.tb-dialogue-char.revealed {
+  visibility: visible;
+}
+
+.tb-dialogue-next {
+  position: absolute;
+  right: 18px;
+  bottom: 9px;
+  color: rgba(226, 207, 158, .92);
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition: opacity .15s ease;
+}
+
+.tb-dialogue-next.visible {
+  opacity: .96;
+  animation: tb-dialogue-next-bob .9s ease-in-out infinite;
+}
+
+.tb-dialogue-layer[data-state="acting"] .tb-dialogue-next {
+  opacity: 0;
+  animation: none;
+}
+
+.tb-dialogue-layer[data-speaker="しおぽん"] .tb-dialogue-speaker {
+  color: rgba(226, 207, 243, .96);
+}
+
+.tb-dialogue-layer[data-speaker="リュミエール"] .tb-dialogue-speaker {
+  color: rgba(211, 233, 255, .96);
+}
+
+@keyframes tb-dialogue-next-bob {
+  0%, 100% { transform: translateY(-2px); }
+  50% { transform: translateY(2px); }
+}
+
+@media (max-width: 520px) {
+  .tb-dialogue-layer {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: max(26px, calc(env(safe-area-inset-bottom) + 20px));
+  }
+
+  .tb-dialogue-window {
+    width: min(92vw, 460px);
+    min-height: 138px;
+    padding: 15px 18px 27px;
+  }
+
+  .tb-dialogue-speaker {
+    margin-bottom: 6px;
+  }
+
+  .tb-dialogue-text {
+    font-size: clamp(18px, 4.7vw, 20px);
+    line-height: 1.62;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-dialogue-window {
+    transition: none;
+  }
+
+  .tb-dialogue-next.visible {
+    animation: none;
+  }
+}
