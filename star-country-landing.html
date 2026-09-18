@@ -418,6 +418,164 @@
       opacity: .25;
     }
 
+
+    #collision-toggle {
+      position: fixed;
+      z-index: 4300;
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      top: max(14px, calc(env(safe-area-inset-top) + 10px));
+      min-width: 96px;
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid rgba(128,235,204,.42);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(5,32,30,.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font: 800 12px/1 system-ui, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #collision-toggle[hidden] { display: none; }
+
+    #collision-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 90;
+      width: 1448px;
+      height: 1086px;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    body.collision-mode #collision-overlay { display: block; }
+
+    #collision-overlay .collision-area {
+      fill: rgba(70,232,166,.22);
+      stroke: rgba(133,255,210,.95);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-current {
+      fill: rgba(255,208,88,.14);
+      stroke: rgba(255,223,116,.98);
+      stroke-width: 3;
+      stroke-dasharray: 9 7;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-point {
+      fill: #fff3a8;
+      stroke: rgba(45,31,0,.9);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-start {
+      fill: #ffb94a;
+      stroke: #fff4c7;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-panel {
+      display: none;
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 4400;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 10px;
+      color: #fff;
+      background: rgba(4,21,27,.94);
+      border: 1px solid rgba(132,239,207,.36);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.40);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      touch-action: auto;
+    }
+
+    body.collision-mode #collision-panel { display: block; }
+
+    body.collision-mode #guide,
+    body.collision-mode #flight-status,
+    body.collision-mode #joystick,
+    body.collision-mode #pad-editor,
+    body.collision-mode #pad-editor-toggle,
+    body.collision-mode #audio-toggle {
+      display: none !important;
+    }
+
+    body.collision-mode .shion-actor,
+    body.collision-mode .shion-shadow {
+      opacity: .30;
+    }
+
+    .collision-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .collision-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    #collision-status {
+      font-size: 11px;
+      opacity: .78;
+      white-space: nowrap;
+    }
+
+    .collision-help {
+      margin-bottom: 8px;
+      font-size: 11px;
+      line-height: 1.45;
+      opacity: .78;
+    }
+
+    .collision-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .collision-actions button {
+      appearance: none;
+      min-height: 37px;
+      padding: 6px 7px;
+      border: 1px solid rgba(168,235,220,.24);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(255,255,255,.075);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    #collision-finish {
+      background: rgba(63,184,143,.28);
+      border-color: rgba(115,235,195,.48);
+    }
+
+    #collision-copy {
+      background: rgba(65,140,255,.24);
+      border-color: rgba(125,185,255,.42);
+    }
+
+    #collision-clear {
+      background: rgba(223,104,82,.16);
+    }
+
     #fade {
       position: fixed;
       inset: 0;
@@ -435,7 +593,7 @@
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v6-x725" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v7-collision-editor" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -458,6 +616,8 @@
       <div class="pad-glow" aria-hidden="true"></div>
       <img class="pad" src="./assets/maps/alenon/pad.webp" alt="" aria-hidden="true" draggable="false" />
 
+      <svg id="collision-overlay" viewBox="0 0 1448 1086" aria-hidden="true"></svg>
+
       <div class="move-target" aria-hidden="true"></div>
       <div class="shion-shadow" aria-hidden="true"></div>
       <div class="shion-actor" role="img" aria-label="シオン"></div>
@@ -471,6 +631,26 @@
       <div id="joy-knob"></div>
     </div>
 
+
+    <button id="collision-toggle" type="button" hidden aria-pressed="false">当たり判定</button>
+
+    <aside id="collision-panel" aria-label="PAD離着陸マップ当たり判定エディタ">
+      <div class="collision-top">
+        <div class="collision-title">PAD離着陸マップ 当たり判定</div>
+        <div id="collision-status">範囲 0 / 点 0</div>
+      </div>
+      <div class="collision-help">
+        タップ＝歩ける範囲の頂点 / ドラッグ＝画面移動 / 始点付近をタップ＝範囲確定
+      </div>
+      <div class="collision-actions">
+        <button id="collision-undo-point" type="button">1点戻す</button>
+        <button id="collision-finish" type="button">範囲を確定</button>
+        <button id="collision-undo-area" type="button">1範囲戻す</button>
+        <button id="collision-center" type="button">PADへ戻る</button>
+        <button id="collision-clear" type="button">全消去</button>
+        <button id="collision-copy" type="button">JSONコピー</button>
+      </div>
+    </aside>
 
     <button id="pad-editor-toggle" type="button" hidden>PAD調整</button>
     <aside id="pad-editor" hidden aria-label="PAD離着陸位置調整">
@@ -560,8 +740,13 @@
 
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
-      const padEditMode = params.get("padEdit") === "1" || params.get("debug") === "1";
+      const collisionMode = params.get("collision") === "1";
+      const padEditMode =
+        !collisionMode &&
+        (params.get("padEdit") === "1" || params.get("debug") === "1");
       const PAD_EDIT_STORAGE_KEY = "tarot-breaker:star-landing-pad-layout-v1";
+      const COLLISION_URL = "./assets/maps/star-landing/collision.json?v=1";
+      const COLLISION_DRAFT_KEY = "tarot-breaker:star-landing-collision-v1";
 
       const padEditorToggle = document.getElementById("pad-editor-toggle");
       const padEditor = document.getElementById("pad-editor");
@@ -578,10 +763,24 @@
       const padEditCopy = document.getElementById("pad-edit-copy");
       const padEditReset = document.getElementById("pad-edit-reset");
 
+      const collisionToggle = document.getElementById("collision-toggle");
+      const collisionOverlay = document.getElementById("collision-overlay");
+      const collisionPanel = document.getElementById("collision-panel");
+      const collisionStatus = document.getElementById("collision-status");
+      const collisionUndoPoint = document.getElementById("collision-undo-point");
+      const collisionFinish = document.getElementById("collision-finish");
+      const collisionUndoArea = document.getElementById("collision-undo-area");
+      const collisionCenter = document.getElementById("collision-center");
+      const collisionClear = document.getElementById("collision-clear");
+      const collisionCopy = document.getElementById("collision-copy");
+
       let worldScale = 1;
       let cameraTx = 0;
       let cameraTy = 0;
+      let collisionPanX = 0;
+      let collisionPanY = 0;
       let leaving = false;
+      let landingWalkAreas = [];
 
       const player = {
         x: PAD_HOME.x,
@@ -616,21 +815,169 @@
         right: "./assets/sprites/shion/shion_walk_right.png",
       });
 
-      const WALK_POLYGON = Object.freeze([
-        [560, 958],
-        [888, 958],
-        [860, 830],
-        [850, 700],
-        [842, 565],
-        [830, 430],
-        [910, 300],
-        [940, 180],
-        [508, 180],
-        [538, 300],
-        [618, 430],
-        [606, 565],
-        [598, 700],
-        [588, 830],
+      const FALLBACK_WALK_AREAS = Object.freeze([
+              {
+                      "type": "poly",
+                      "points": [
+                              [
+                                      560,
+                                      958
+                              ],
+                              [
+                                      888,
+                                      958
+                              ],
+                              [
+                                      860,
+                                      830
+                              ],
+                              [
+                                      850,
+                                      700
+                              ],
+                              [
+                                      842,
+                                      565
+                              ],
+                              [
+                                      830,
+                                      430
+                              ],
+                              [
+                                      910,
+                                      300
+                              ],
+                              [
+                                      940,
+                                      180
+                              ],
+                              [
+                                      508,
+                                      180
+                              ],
+                              [
+                                      538,
+                                      300
+                              ],
+                              [
+                                      618,
+                                      430
+                              ],
+                              [
+                                      606,
+                                      565
+                              ],
+                              [
+                                      598,
+                                      700
+                              ],
+                              [
+                                      588,
+                                      830
+                              ]
+                      ]
+              },
+              {
+                      "type": "poly",
+                      "points": [
+                              [
+                                      893,
+                                      788
+                              ],
+                              [
+                                      887,
+                                      831
+                              ],
+                              [
+                                      870,
+                                      872
+                              ],
+                              [
+                                      844,
+                                      907
+                              ],
+                              [
+                                      809,
+                                      933
+                              ],
+                              [
+                                      768,
+                                      950
+                              ],
+                              [
+                                      725,
+                                      956
+                              ],
+                              [
+                                      682,
+                                      950
+                              ],
+                              [
+                                      641,
+                                      933
+                              ],
+                              [
+                                      606,
+                                      907
+                              ],
+                              [
+                                      580,
+                                      872
+                              ],
+                              [
+                                      563,
+                                      831
+                              ],
+                              [
+                                      557,
+                                      788
+                              ],
+                              [
+                                      563,
+                                      745
+                              ],
+                              [
+                                      580,
+                                      704
+                              ],
+                              [
+                                      606,
+                                      669
+                              ],
+                              [
+                                      641,
+                                      643
+                              ],
+                              [
+                                      682,
+                                      626
+                              ],
+                              [
+                                      725,
+                                      620
+                              ],
+                              [
+                                      768,
+                                      626
+                              ],
+                              [
+                                      809,
+                                      643
+                              ],
+                              [
+                                      844,
+                                      669
+                              ],
+                              [
+                                      870,
+                                      704
+                              ],
+                              [
+                                      887,
+                                      745
+                              ]
+                      ]
+              }
       ]);
 
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -816,6 +1163,293 @@
         padEditReset.addEventListener("click", resetPadEditor);
       }
 
+
+      async function loadLandingCollision() {
+        let data = null;
+        try {
+          const response = await fetch(COLLISION_URL, { cache: "no-store" });
+          if (response.ok) data = await response.json();
+        } catch (_) {}
+
+        const source =
+          data?.map === "star-landing" &&
+          data?.referenceSize?.width === WORLD_W &&
+          data?.referenceSize?.height === WORLD_H &&
+          Array.isArray(data?.walkAreas)
+            ? data.walkAreas
+            : FALLBACK_WALK_AREAS;
+
+        landingWalkAreas = source
+          .filter(
+            (area) =>
+              area?.type === "poly" &&
+              Array.isArray(area.points) &&
+              area.points.length >= 3,
+          )
+          .map((area) => ({
+            type: "poly",
+            points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+          }));
+
+        if (collisionMode) {
+          try {
+            const saved = JSON.parse(localStorage.getItem(COLLISION_DRAFT_KEY) || "null");
+            if (Array.isArray(saved?.walkAreas)) {
+              const draft = saved.walkAreas.filter(
+                (area) =>
+                  area?.type === "poly" &&
+                  Array.isArray(area.points) &&
+                  area.points.length >= 3,
+              );
+              if (draft.length) {
+                landingWalkAreas = draft.map((area) => ({
+                  type: "poly",
+                  points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+                }));
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      function initCollisionEditor() {
+        if (!collisionMode) return;
+
+        document.body.classList.add("collision-mode");
+        collisionToggle.hidden = false;
+        collisionToggle.setAttribute("aria-pressed", "true");
+        collisionToggle.textContent = "編集完了";
+
+        let areas = landingWalkAreas.map((area) => ({
+          type: "poly",
+          points: area.points.map((p) => [p[0], p[1]]),
+        }));
+        let current = [];
+        let gesture = null;
+
+        const svgNS = "http://www.w3.org/2000/svg";
+
+        function payload() {
+          return {
+            version: 1,
+            map: "star-landing",
+            referenceSize: { width: WORLD_W, height: WORLD_H },
+            walkAreas: areas.map((area) => ({
+              type: "poly",
+              points: area.points.map((p) => [Math.round(p[0]), Math.round(p[1])]),
+            })),
+          };
+        }
+
+        function saveDraft() {
+          landingWalkAreas = areas.map((area) => ({
+            type: "poly",
+            points: area.points.map((p) => [p[0], p[1]]),
+          }));
+          try {
+            localStorage.setItem(COLLISION_DRAFT_KEY, JSON.stringify(payload()));
+          } catch (_) {}
+        }
+
+        function polygon(points, className) {
+          const node = document.createElementNS(svgNS, "polygon");
+          node.setAttribute("class", className);
+          node.setAttribute("points", points.map((p) => p.join(",")).join(" "));
+          return node;
+        }
+
+        function circleNode(point, index) {
+          const node = document.createElementNS(svgNS, "circle");
+          node.setAttribute("class", index === 0 ? "collision-start" : "collision-point");
+          node.setAttribute("cx", point[0]);
+          node.setAttribute("cy", point[1]);
+          node.setAttribute("r", index === 0 ? 7 : 5);
+          return node;
+        }
+
+        function render() {
+          collisionOverlay.replaceChildren();
+
+          for (const area of areas) {
+            collisionOverlay.appendChild(polygon(area.points, "collision-area"));
+          }
+
+          if (current.length) {
+            collisionOverlay.appendChild(polygon(current, "collision-current"));
+            current.forEach((point, index) => {
+              collisionOverlay.appendChild(circleNode(point, index));
+            });
+          }
+
+          collisionStatus.textContent =
+            `範囲 ${areas.length} / 点 ${current.length}`;
+        }
+
+        function finishCurrent() {
+          if (current.length < 3) return false;
+          areas.push({
+            type: "poly",
+            points: current.map((p) => [Math.round(p[0]), Math.round(p[1])]),
+          });
+          current = [];
+          saveDraft();
+          render();
+          return true;
+        }
+
+        function setMode(open) {
+          document.body.classList.toggle("collision-mode", open);
+          collisionToggle.setAttribute("aria-pressed", open ? "true" : "false");
+          collisionToggle.textContent = open ? "編集完了" : "当たり判定";
+          if (open) {
+            clearTarget();
+            render();
+            syncCamera();
+          } else {
+            gesture = null;
+            collisionPanX = 0;
+            collisionPanY = 0;
+            syncCamera();
+          }
+        }
+
+        collisionToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          setMode(!document.body.classList.contains("collision-mode"));
+        });
+
+        collisionUndoPoint.addEventListener("click", () => {
+          current.pop();
+          render();
+        });
+
+        collisionFinish.addEventListener("click", () => {
+          if (!finishCurrent()) {
+            collisionFinish.textContent = "3点以上必要";
+            setTimeout(() => collisionFinish.textContent = "範囲を確定", 1100);
+          }
+        });
+
+        collisionUndoArea.addEventListener("click", () => {
+          if (current.length) {
+            current = [];
+          } else {
+            areas.pop();
+            saveDraft();
+          }
+          render();
+        });
+
+        collisionCenter.addEventListener("click", () => {
+          collisionPanX = 0;
+          collisionPanY = 0;
+          syncCamera();
+        });
+
+        collisionClear.addEventListener("click", () => {
+          if (!areas.length && !current.length) return;
+          if (!window.confirm("作成中の当たり判定をすべて消しますか？")) return;
+          areas = [];
+          current = [];
+          saveDraft();
+          render();
+        });
+
+        collisionCopy.addEventListener("click", async () => {
+          if (current.length >= 3) finishCurrent();
+          const text = JSON.stringify(payload(), null, 2);
+          try {
+            await navigator.clipboard.writeText(text);
+            collisionCopy.textContent = "コピーしました";
+            setTimeout(() => collisionCopy.textContent = "JSONコピー", 1300);
+          } catch (_) {
+            window.prompt("当たり判定JSONをコピーしてください", text);
+          }
+        });
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (!document.body.classList.contains("collision-mode")) return;
+          if (
+            event.target.closest?.("#collision-panel") ||
+            event.target.closest?.("#collision-toggle")
+          ) return;
+          if (event.button != null && event.button !== 0) return;
+
+          event.preventDefault();
+          gesture = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            panX: collisionPanX,
+            panY: collisionPanY,
+            moved: false,
+            time: performance.now(),
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false, capture: true });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!gesture || gesture.id !== event.pointerId) return;
+          if (!document.body.classList.contains("collision-mode")) return;
+          event.preventDefault();
+
+          const dx = event.clientX - gesture.x;
+          const dy = event.clientY - gesture.y;
+
+          if (!gesture.moved && Math.hypot(dx, dy) >= 10) {
+            gesture.moved = true;
+          }
+
+          if (gesture.moved) {
+            collisionPanX = gesture.panX - dx / worldScale;
+            collisionPanY = gesture.panY - dy / worldScale;
+            syncCamera();
+          }
+        }, { passive: false, capture: true });
+
+        function finishGesture(event) {
+          if (!gesture || gesture.id !== event.pointerId) return;
+          event.preventDefault();
+
+          const wasMoved = gesture.moved;
+          const elapsed = performance.now() - gesture.time;
+
+          if (!wasMoved && elapsed < 650) {
+            const p = screenToWorld(event.clientX, event.clientY);
+            const point = [
+              Math.round(clamp(p.x, 0, WORLD_W)),
+              Math.round(clamp(p.y, 0, WORLD_H)),
+            ];
+
+            if (current.length >= 3) {
+              const first = current[0];
+              const close = Math.hypot(point[0] - first[0], point[1] - first[1]);
+              if (close <= 28) {
+                finishCurrent();
+              } else {
+                current.push(point);
+                render();
+              }
+            } else {
+              current.push(point);
+              render();
+            }
+          }
+
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          gesture = null;
+        }
+
+        viewport.addEventListener("pointerup", finishGesture, { passive:false, capture:true });
+        viewport.addEventListener("pointercancel", (event) => {
+          if (gesture?.id === event.pointerId) gesture = null;
+        }, { passive:false, capture:true });
+
+        render();
+      }
+
       function pointInPoly(x, y, points) {
         let inside = false;
         for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
@@ -832,23 +1466,49 @@
       }
 
       function isGroundWalkable(x, y) {
-        const onLandingCircle =
-          Math.hypot(x - PAD_HOME.x, y - PAD_HOME.y) <= 168;
-        return onLandingCircle || pointInPoly(x, y, WALK_POLYGON);
+        if (!landingWalkAreas.length) return true;
+        return landingWalkAreas.some(
+          (area) =>
+            area.type === "poly" &&
+            Array.isArray(area.points) &&
+            pointInPoly(x, y, area.points),
+        );
+      }
+
+      function nearestPointOnSegment(point, a, b) {
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const length2 = dx * dx + dy * dy;
+        const t = length2
+          ? clamp(
+              ((point.x - a[0]) * dx + (point.y - a[1]) * dy) / length2,
+              0,
+              1,
+            )
+          : 0;
+        return { x: a[0] + dx * t, y: a[1] + dy * t };
       }
 
       function nearestGroundPoint(point) {
-        if (isGroundWalkable(point.x, point.y)) return point;
-        for (let radius = 10; radius <= 190; radius += 10) {
-          for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 16) {
-            const candidate = {
-              x: point.x + Math.cos(angle) * radius,
-              y: point.y + Math.sin(angle) * radius,
-            };
-            if (isGroundWalkable(candidate.x, candidate.y)) return candidate;
+        if (!landingWalkAreas.length) return { ...point };
+        if (isGroundWalkable(point.x, point.y)) return { ...point };
+
+        let best = null;
+        let bestDistance = Infinity;
+
+        for (const area of landingWalkAreas) {
+          if (area.type !== "poly" || !Array.isArray(area.points)) continue;
+          for (let i = 0, j = area.points.length - 1; i < area.points.length; j = i++) {
+            const candidate = nearestPointOnSegment(point, area.points[j], area.points[i]);
+            const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+            if (distance < bestDistance) {
+              best = candidate;
+              bestDistance = distance;
+            }
           }
         }
-        return null;
+
+        return best;
       }
 
       function fitWorld() {
@@ -865,8 +1525,10 @@
         const minY = Math.min(halfH, WORLD_H / 2);
         const maxY = Math.max(minY, WORLD_H - halfH);
 
-        const focusX = clamp(player.x, minX, maxX);
-        const focusY = clamp(player.y - 85, minY, maxY);
+        const baseFocusX = player.x + collisionPanX;
+        const baseFocusY = player.y - 85 + collisionPanY;
+        const focusX = clamp(baseFocusX, minX, maxX);
+        const focusY = clamp(baseFocusY, minY, maxY);
 
         cameraTx = innerWidth / 2 - focusX * worldScale;
         cameraTy = innerHeight / 2 - focusY * worldScale;
@@ -1091,6 +1753,7 @@
       }
 
       viewport.addEventListener("pointerdown", (event) => {
+        if (collisionMode) return;
         if (event.target.closest?.("#pad-editor, #pad-editor-toggle")) return;
         if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
         if (event.button != null && event.button !== 0) return;
@@ -1158,6 +1821,7 @@
       viewport.addEventListener("pointercancel", endPointer, { passive:false });
 
       addEventListener("keydown", (event) => {
+        if (collisionMode) return;
         if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
         if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
@@ -1185,6 +1849,15 @@
       function loop(now) {
         const dt = Math.min((now - last) / 1000, .05);
         last = now;
+
+        if (collisionMode) {
+          player.moving = false;
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+          return;
+        }
 
         if (ride.mode === "arriving") {
           ride.progress = Math.min(1, ride.progress + dt / 1.35);
@@ -1357,10 +2030,22 @@
         requestAnimationFrame(loop);
       }
 
-      function boot() {
+      async function boot() {
+        await loadLandingCollision();
+
+        if (collisionMode) {
+          ride.mode = "ground";
+          ride.x = PAD_HOME.x;
+          ride.y = PAD_HOME.y;
+          ride.lift = 0;
+          player.x = PAD_HOME.x;
+          player.y = PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y;
+        }
+
         initPadEditor();
         applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
         fitWorld();
+        initCollisionEditor();
         setActorPosition();
         setActorVisual();
         setRideMode(ride.mode);
