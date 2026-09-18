@@ -1676,21 +1676,28 @@
     #tarot-drawn.show-front .tarot-face-back { opacity: 0; }
     #tarot-drawn.show-front .tarot-face-front { opacity: 1; }
 
+    /* Dialogue UI: classic JRPG readability with TAROT BREAKER styling.
+       The window itself identifies speech, so dialogue text does not use Japanese quote marks. */
     #prologue-dialogue {
       position: fixed;
       left: 50%;
-      bottom: max(36px, calc(env(safe-area-inset-bottom) + 28px));
+      bottom: max(26px, calc(env(safe-area-inset-bottom) + 20px));
       z-index: 2300;
-      width: min(88vw, 560px);
-      transform: translate(-50%, 8px);
-      padding: 12px 16px 13px;
-      border: 1px solid rgba(215, 224, 255, .22);
-      border-radius: 14px;
-      color: rgba(247, 249, 255, .97);
-      background: rgba(7, 12, 32, .72);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, .24);
+      width: min(92vw, 720px);
+      min-height: 132px;
+      box-sizing: border-box;
+      transform: translate(-50%, 10px);
+      padding: 16px 20px 18px;
+      border: 1px solid rgba(217, 190, 128, .48);
+      border-radius: 10px;
+      color: rgba(249, 250, 255, .98);
+      background:
+        linear-gradient(180deg, rgba(11, 18, 46, .94), rgba(5, 10, 29, .91));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow:
+        0 14px 38px rgba(0, 0, 0, .38),
+        inset 0 1px 0 rgba(255, 243, 207, .06);
       opacity: 0;
       pointer-events: none;
       transition: opacity .2s ease, transform .25s ease;
@@ -1703,18 +1710,20 @@
 
     #prologue-speaker {
       display: block;
-      margin-bottom: 5px;
-      color: rgba(196, 213, 255, .78);
-      font-size: 11px;
+      margin-bottom: 7px;
+      color: rgba(226, 207, 158, .92);
+      font-size: clamp(11px, 2.8vw, 13px);
       font-weight: 700;
-      letter-spacing: .11em;
+      letter-spacing: .08em;
     }
 
     #prologue-line {
-      min-height: 1.5em;
-      font-size: clamp(15px, 3.8vw, 19px);
-      line-height: 1.55;
-      letter-spacing: .02em;
+      min-height: 3.15em;
+      font-size: clamp(18px, 4.6vw, 21px);
+      font-weight: 500;
+      line-height: 1.6;
+      letter-spacing: .015em;
+      text-wrap: pretty;
     }
 
     #story-objective {
@@ -1804,6 +1813,21 @@
       .editor-hint { display: none; }
       .editor-controls { grid-template-columns: 68px 68px 1fr; }
       #editor-toast { bottom: calc(214px + env(safe-area-inset-bottom)); }
+
+      #prologue-dialogue {
+        width: min(92vw, 460px);
+        min-height: 138px;
+        padding: 15px 18px 17px;
+      }
+
+      #prologue-speaker {
+        margin-bottom: 6px;
+      }
+
+      #prologue-line {
+        font-size: clamp(18px, 4.7vw, 20px);
+        line-height: 1.62;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1818,7 +1842,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="devil-choice-prologue-v28">
+<body data-alenon-drift-revision="jrpg-dialogue-ui-v29">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
