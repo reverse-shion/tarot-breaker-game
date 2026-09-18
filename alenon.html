@@ -1266,6 +1266,268 @@
 
     body.edit-mode .vignette { opacity: .35; }
 
+
+    /* --- Prologue: tarot -> Alenon -> PAD --- */
+    #prologue-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2100;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #01030a;
+      opacity: 1;
+      pointer-events: auto;
+      transition:
+        background-color .95s ease,
+        opacity .7s ease;
+    }
+
+    #prologue-overlay[hidden] { display: none; }
+
+    #prologue-start {
+      position: absolute;
+      left: 50%;
+      bottom: max(34px, calc(env(safe-area-inset-bottom) + 26px));
+      z-index: 5;
+      transform: translateX(-50%);
+      border: 0;
+      padding: 10px 14px;
+      color: rgba(230, 240, 255, .68);
+      background: transparent;
+      font: 600 11px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      animation: prologue-start-pulse 2.1s ease-in-out infinite;
+    }
+
+    #prologue-start[hidden] { display: none; }
+
+    #tarot-stage {
+      position: relative;
+      width: min(52vw, 410px);
+      height: min(69vh, 615px);
+      opacity: 0;
+      transform: translateY(8px) scale(.985);
+      transition:
+        opacity .5s ease,
+        transform .7s cubic-bezier(.22,.61,.36,1);
+      perspective: 1100px;
+      pointer-events: none;
+    }
+
+    #tarot-stage.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    #tarot-stack,
+    #tarot-drawn {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: min(43.3vh, 286px);
+      height: min(65vh, 429px);
+    }
+
+    #tarot-stack {
+      z-index: 1;
+      transition: opacity .35s ease, transform .55s ease;
+    }
+
+    #tarot-stack img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter:
+        drop-shadow(0 14px 24px rgba(0, 0, 0, .54))
+        drop-shadow(0 0 18px rgba(151, 137, 255, .10));
+    }
+
+    #tarot-stack img:nth-child(1) { transform: translate(-5px, 3px) rotate(-.8deg); opacity: .52; }
+    #tarot-stack img:nth-child(2) { transform: translate(-2px, 1px) rotate(-.3deg); opacity: .72; }
+    #tarot-stack img:nth-child(3) { transform: translate(2px, 1px) rotate(.35deg); opacity: .86; }
+    #tarot-stack img:nth-child(4) { transform: translate(0, 0); opacity: 1; }
+
+    #tarot-stack.is-shuffling img:nth-child(1) { animation: tarot-shuffle-left .42s ease-in-out; }
+    #tarot-stack.is-shuffling img:nth-child(2) { animation: tarot-shuffle-right .42s .04s ease-in-out; }
+    #tarot-stack.is-shuffling img:nth-child(3) { animation: tarot-shuffle-left .42s .08s ease-in-out reverse; }
+
+    #tarot-drawn {
+      z-index: 3;
+      opacity: 0;
+      transform: translateY(42px) scale(.985);
+      transition:
+        opacity .34s ease,
+        transform .58s cubic-bezier(.22,.61,.36,1);
+    }
+
+    #tarot-drawn.is-drawn {
+      opacity: 1;
+      transform: translateY(-18px) scale(1);
+    }
+
+    #tarot-drawn.is-drawn + * { pointer-events: none; }
+
+    .tarot-card-inner {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transition: transform .58s cubic-bezier(.22,.61,.36,1);
+      filter:
+        drop-shadow(0 16px 28px rgba(0, 0, 0, .58))
+        drop-shadow(0 0 20px rgba(161, 146, 255, .12));
+    }
+
+    #tarot-drawn.is-flipped .tarot-card-inner {
+      transform: rotateY(180deg) scale(1.035);
+    }
+
+    .tarot-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .tarot-face-front {
+      transform: rotateY(180deg);
+    }
+
+    #prologue-dialogue {
+      position: fixed;
+      left: 50%;
+      bottom: max(36px, calc(env(safe-area-inset-bottom) + 28px));
+      z-index: 2300;
+      width: min(88vw, 560px);
+      transform: translate(-50%, 8px);
+      padding: 12px 16px 13px;
+      border: 1px solid rgba(215, 224, 255, .22);
+      border-radius: 14px;
+      color: rgba(247, 249, 255, .97);
+      background: rgba(7, 12, 32, .72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, .24);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .25s ease;
+    }
+
+    #prologue-dialogue.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    #prologue-speaker {
+      display: block;
+      margin-bottom: 5px;
+      color: rgba(196, 213, 255, .78);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .11em;
+    }
+
+    #prologue-line {
+      min-height: 1.5em;
+      font-size: clamp(15px, 3.8vw, 19px);
+      line-height: 1.55;
+      letter-spacing: .02em;
+    }
+
+    #story-objective {
+      position: fixed;
+      left: 50%;
+      top: max(18px, calc(env(safe-area-inset-top) + 14px));
+      z-index: 520;
+      width: min(88vw, 460px);
+      transform: translate(-50%, -8px);
+      padding: 10px 14px 11px;
+      border: 1px solid rgba(206, 226, 255, .24);
+      border-radius: 12px;
+      color: rgba(244, 248, 255, .96);
+      background: rgba(5, 14, 37, .69);
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease, transform .3s ease;
+    }
+
+    #story-objective.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    #story-objective strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+      letter-spacing: .08em;
+    }
+
+    #story-objective span {
+      display: block;
+      color: rgba(223, 233, 255, .78);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    body.story-running #move-guide,
+    body.story-running #move-reset,
+    body.story-running #object-toggle,
+    body.story-running #deadpad-toggle,
+    body.story-running #collision-toggle {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    body.prologue-revealing #prologue-overlay {
+      background-color: rgba(1, 3, 10, 0);
+    }
+
+    body.prologue-revealing #tarot-stage {
+      opacity: 0;
+      transform: translateY(-4px) scale(.96);
+    }
+
+    body.pad-boarding #story-objective,
+    body.pad-exiting #story-objective {
+      opacity: 0;
+    }
+
+    body.pad-exiting #map-transition {
+      opacity: 1;
+      background:
+        radial-gradient(circle at 50% 60%, rgba(255,255,255,1) 0 24%, rgba(242,250,255,.98) 50%, rgba(215,239,255,.92) 100%);
+    }
+
+    @keyframes tarot-shuffle-left {
+      0%, 100% { transform: translate(-5px, 3px) rotate(-.8deg); }
+      45% { transform: translate(-30px, -2px) rotate(-2.2deg); }
+    }
+
+    @keyframes tarot-shuffle-right {
+      0%, 100% { transform: translate(-2px, 1px) rotate(-.3deg); }
+      45% { transform: translate(28px, 3px) rotate(2deg); }
+    }
+
+    @keyframes prologue-start-pulse {
+      0%, 100% { opacity: .42; }
+      50% { opacity: .92; }
+    }
+
     @media (max-width: 520px) {
       .editor-hint { display: none; }
       .editor-controls { grid-template-columns: 68px 68px 1fr; }
@@ -1284,7 +1546,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="orb-over-character-v24">
+<body data-alenon-drift-revision="tarot-prologue-v25">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1328,6 +1590,35 @@
 
       <div class="vignette" aria-hidden="true"></div>
     </section>
+
+
+    <section id="prologue-overlay" aria-label="プロローグ">
+      <button id="prologue-start" type="button">TOUCH TO BEGIN</button>
+      <div id="tarot-stage" aria-hidden="true">
+        <div id="tarot-stack">
+          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
+        </div>
+        <div id="tarot-drawn">
+          <div class="tarot-card-inner">
+            <img class="tarot-face tarot-face-back" src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
+            <img class="tarot-face tarot-face-front" src="./assets/tarot/major/15-the-devil.webp" alt="XV THE DEVIL 悪魔" draggable="false" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="prologue-dialogue" role="status" aria-live="polite">
+      <span id="prologue-speaker">シオン</span>
+      <div id="prologue-line"></div>
+    </div>
+
+    <aside id="story-objective" aria-live="polite">
+      <strong>OBJECTIVE — 星門庭園へ向かう</strong>
+      <span>水晶PADを使い、星門庭園へ向かう。</span>
+    </aside>
 
     <div id="move-guide">行きたい場所をタップ / ドラッグで自由移動</div>
     <div id="move-joystick" hidden aria-hidden="true">
@@ -1478,6 +1769,7 @@
       const editMode = params.get("edit") === "1";
       const objectMode = params.get("objects") === "1";
       const collisionMode = params.get("collision") === "1";
+      const storyBypass = editMode || objectMode || collisionMode || params.get("skipPrologue") === "1";
       const COLLISION_URL = "./assets/maps/alenon-collision.json?v=2";
       let alenonWalkAreas = [];
       let alenonCollisionReady = false;
@@ -1486,6 +1778,8 @@
       let cameraTy = 0;
       let collisionPanX = 0;
       let collisionPanY = 0;
+      let storyCameraOffsetX = 0;
+      let storyCameraOffsetY = 0;
 
       const shionActor = document.querySelector(".shion-actor");
       const shionShadow = document.querySelector(".shion-shadow");
@@ -1500,6 +1794,22 @@
       const collisionOverlay = document.getElementById("collision-overlay");
       const flightStatus = document.getElementById("flight-status");
       const mapTransition = document.getElementById("map-transition");
+      const prologueOverlay = document.getElementById("prologue-overlay");
+      const prologueStart = document.getElementById("prologue-start");
+      const tarotStage = document.getElementById("tarot-stage");
+      const tarotStack = document.getElementById("tarot-stack");
+      const tarotDrawn = document.getElementById("tarot-drawn");
+      const prologueDialogue = document.getElementById("prologue-dialogue");
+      const prologueLine = document.getElementById("prologue-line");
+      const storyObjective = document.getElementById("story-objective");
+
+      const story = {
+        locked: !storyBypass,
+        scripted: false,
+        started: false,
+        completed: storyBypass,
+      };
+      let storyAudioContext = null;
 
       const player = {
         x: SHION_SPAWN.x,
@@ -1629,6 +1939,259 @@
 
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+
+      const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+      function showStoryLine(text) {
+        prologueLine.textContent = text;
+        prologueDialogue.classList.add("visible");
+      }
+
+      function hideStoryLine() {
+        prologueDialogue.classList.remove("visible");
+      }
+
+      function showStoryObjective() {
+        storyObjective.classList.add("visible");
+        window.setTimeout(() => {
+          if (story.completed) storyObjective.classList.remove("visible");
+        }, 5200);
+      }
+
+      async function ensureStoryAudio() {
+        if (storyAudioContext) {
+          if (storyAudioContext.state === "suspended") {
+            try { await storyAudioContext.resume(); } catch (_) {}
+          }
+          return storyAudioContext;
+        }
+        const Context = window.AudioContext || window.webkitAudioContext;
+        if (!Context) return null;
+        try {
+          storyAudioContext = new Context();
+          if (storyAudioContext.state === "suspended") {
+            await storyAudioContext.resume();
+          }
+          return storyAudioContext;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function playPaperShuffle(strength = 1) {
+        const ctx = storyAudioContext;
+        if (!ctx || ctx.state !== "running") return;
+        const duration = .075 + Math.random() * .045;
+        const frameCount = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const buffer = ctx.createBuffer(1, frameCount, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < frameCount; i++) {
+          const envelope = Math.sin(Math.PI * i / frameCount);
+          data[i] = (Math.random() * 2 - 1) * envelope;
+        }
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 1450 + Math.random() * 500;
+        filter.Q.value = .7;
+        const gain = ctx.createGain();
+        gain.gain.value = .07 * strength;
+        source.connect(filter).connect(gain).connect(ctx.destination);
+        source.start();
+      }
+
+      function playTarotResonance() {
+        const ctx = storyAudioContext;
+        if (!ctx || ctx.state !== "running") return;
+        const now = ctx.currentTime;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.045, now + .06);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + .75);
+        gain.connect(ctx.destination);
+        for (const frequency of [110, 165]) {
+          const oscillator = ctx.createOscillator();
+          oscillator.type = "sine";
+          oscillator.frequency.value = frequency;
+          oscillator.connect(gain);
+          oscillator.start(now);
+          oscillator.stop(now + .8);
+        }
+      }
+
+      function turnShion(dir) {
+        player.dir = dir;
+        player.moving = false;
+        player.frame = 0;
+        player.anim = 0;
+        setActorVisual();
+      }
+
+      function animateStoryCamera(targetX, targetY, duration = 320) {
+        const fromX = storyCameraOffsetX;
+        const fromY = storyCameraOffsetY;
+        const startedAt = performance.now();
+        return new Promise((resolve) => {
+          function frame(now) {
+            const t = Math.min(1, (now - startedAt) / duration);
+            const eased = 1 - Math.pow(1 - t, 3);
+            storyCameraOffsetX = fromX + (targetX - fromX) * eased;
+            storyCameraOffsetY = fromY + (targetY - fromY) * eased;
+            syncCamera();
+            if (t < 1) requestAnimationFrame(frame);
+            else resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+      }
+
+      function scriptedWalkTo(targetX, targetY, duration = 460) {
+        const nearest = alenonCollisionReady
+          ? nearestGroundPoint({ x: targetX, y: targetY })
+          : { x: targetX, y: targetY };
+        if (!nearest) return Promise.resolve();
+        const fromX = player.x;
+        const fromY = player.y;
+        const dx = nearest.x - fromX;
+        const dy = nearest.y - fromY;
+        const startedAt = performance.now();
+        story.scripted = true;
+        player.dir = directionFromVector(dx, dy);
+        player.moving = true;
+        player.anim = 0;
+
+        return new Promise((resolve) => {
+          function frame(now) {
+            const t = Math.min(1, (now - startedAt) / duration);
+            const eased = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            player.x = fromX + dx * eased;
+            player.y = fromY + dy * eased;
+            player.anim += .13;
+            player.frame = Math.floor(player.anim * 4) % 4;
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+            if (t < 1) {
+              requestAnimationFrame(frame);
+              return;
+            }
+            player.x = nearest.x;
+            player.y = nearest.y;
+            player.moving = false;
+            player.frame = 0;
+            player.anim = 0;
+            story.scripted = false;
+            setActorPosition();
+            setActorVisual();
+            resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+      }
+
+      async function runPrologue() {
+        if (story.started || storyBypass) return;
+        story.started = true;
+        story.locked = true;
+        document.body.classList.add("story-running");
+        prologueStart.hidden = true;
+        moveGuide.hidden = true;
+        storyObjective.classList.remove("visible");
+        await ensureStoryAudio();
+
+        await sleep(420);
+        playPaperShuffle(.95);
+        await sleep(390);
+        playPaperShuffle(.82);
+        await sleep(260);
+        playPaperShuffle(.88);
+        await sleep(520);
+
+        showStoryLine("タロット展開……");
+        await sleep(880);
+        hideStoryLine();
+
+        tarotStage.classList.add("visible");
+        tarotStack.classList.add("is-shuffling");
+        playPaperShuffle(.82);
+        await sleep(470);
+        tarotStack.classList.remove("is-shuffling");
+        await sleep(260);
+
+        tarotDrawn.classList.add("is-drawn");
+        playPaperShuffle(.58);
+        await sleep(650);
+        tarotDrawn.classList.add("is-flipped");
+        playTarotResonance();
+        await sleep(760);
+
+        showStoryLine("悪魔か……");
+        await sleep(1500);
+        hideStoryLine();
+        await sleep(220);
+
+        document.body.classList.add("prologue-revealing");
+        await sleep(1050);
+        prologueOverlay.hidden = true;
+        document.body.classList.remove("prologue-revealing");
+        tarotStage.classList.remove("visible");
+
+        await sleep(520);
+        turnShion("up");
+        await sleep(420);
+
+        await scriptedWalkTo(player.x, player.y + 14, 260);
+        showStoryLine("……？");
+        await sleep(720);
+        hideStoryLine();
+
+        turnShion("left");
+        await sleep(280);
+        turnShion("right");
+        await sleep(360);
+        turnShion("up");
+        await sleep(520);
+
+        turnShion("down");
+        await animateStoryCamera(0, 34, 330);
+        showStoryLine("……星門。");
+        await sleep(820);
+        hideStoryLine();
+
+        turnShion("up");
+        await sleep(350);
+        turnShion("down");
+        await sleep(420);
+        showStoryLine("一度、見ておくか。");
+        await sleep(920);
+        hideStoryLine();
+
+        await scriptedWalkTo(player.x, player.y + 34, 520);
+        await animateStoryCamera(0, 0, 280);
+
+        story.completed = true;
+        story.locked = false;
+        document.body.classList.remove("story-running");
+        showStoryObjective();
+        moveGuide.textContent = "水晶PADまで歩いてみよう";
+        moveGuide.hidden = false;
+      }
+
+      function preparePrologue() {
+        if (storyBypass) {
+          prologueOverlay.hidden = true;
+          story.locked = false;
+          story.completed = true;
+          return;
+        }
+        document.body.classList.add("story-running");
+        prologueOverlay.hidden = false;
+        prologueStart.hidden = false;
+        moveGuide.hidden = true;
+        prologueStart.addEventListener("click", runPrologue, { once: true });
+      }
+
       function syncCamera() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
@@ -1641,12 +2204,12 @@
         const maxY = Math.max(minY, WORLD_H - halfH);
 
         const focusX = clamp(
-          player.x + (document.body.classList.contains("collision-mode") ? collisionPanX : 0),
+          player.x + storyCameraOffsetX + (document.body.classList.contains("collision-mode") ? collisionPanX : 0),
           minX,
           maxX,
         );
         const focusY = clamp(
-          player.y - CAMERA_LOOK_AHEAD_Y +
+          player.y - CAMERA_LOOK_AHEAD_Y + storyCameraOffsetY +
             (document.body.classList.contains("collision-mode") ? collisionPanY : 0),
           minY,
           maxY,
@@ -2338,7 +2901,11 @@
       }
 
       function beginBoarding() {
-        if (ride.mode !== "ground") return;
+        if (ride.mode !== "ground" || !story.completed) return;
+        story.locked = true;
+        document.body.classList.add("story-running");
+        storyObjective.classList.remove("visible");
+        moveGuide.hidden = true;
         ride.x = layout.pad.x;
         ride.y = layout.pad.y;
         ride.lift = 0;
@@ -2404,14 +2971,16 @@
       }
 
       function beginPadExit() {
-        if (ride.exitStarted || ride.mode !== "flying") return;
+        if (ride.exitStarted || (ride.mode !== "flying" && ride.mode !== "boarding")) return;
         ride.exitStarted = true;
+        story.locked = true;
+        document.body.classList.add("story-running");
         player.target = null;
         clearTargetRing();
         setRideMode("exiting");
 
         window.setTimeout(() => {
-          location.href = "./star-country-landing.html?from=alenon&v=pad-route-v1";
+          location.href = "./star-country-landing.html?from=alenon&v=tarot-prologue-v1";
         }, 820);
       }
 
@@ -2671,6 +3240,7 @@
         }
 
         function setTapTarget(clientX, clientY) {
+          if (story.locked) return;
           const point = screenToWorld(clientX, clientY);
           point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
           if (ride.mode === "flying") {
@@ -2690,6 +3260,7 @@
         }
 
         viewport.addEventListener("pointerdown", (event) => {
+          if (story.locked) return;
           if (document.body.classList.contains("object-mode") || document.body.classList.contains("deadpad-mode") || document.body.classList.contains("collision-mode")) return;
           if (event.target.closest?.("#move-reset") || event.target.closest?.("#object-toggle") || event.target.closest?.("#deadpad-toggle") || event.target.closest?.("#collision-toggle")) return;
           if (event.button != null && event.button !== 0) return;
@@ -2749,6 +3320,7 @@
         }, { passive: false });
 
         window.addEventListener("keydown", (event) => {
+          if (story.locked) return;
           if (document.body.classList.contains("object-mode") || document.body.classList.contains("deadpad-mode") || document.body.classList.contains("collision-mode")) return;
           const key = event.key.toLowerCase();
           if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
@@ -2795,7 +3367,7 @@
             syncRideVisual(now);
 
             if (ride.progress >= 1) {
-              setRideMode("flying");
+              beginPadExit();
             }
 
             setActorPosition();
@@ -2827,9 +3399,22 @@
           }
 
           if (ride.mode === "exiting") {
-            ride.y += 95 * dt;
-            ride.lift = PAD_LIFT;
+            ride.lift = 0;
+            player.moving = false;
             syncRideVisual(now);
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+            requestAnimationFrame(loop);
+            return;
+          }
+
+          if (story.locked) {
+            if (!story.scripted) {
+              player.moving = false;
+              player.frame = 0;
+              player.anim = 0;
+            }
             setActorPosition();
             setActorVisual();
             syncCamera();
@@ -3003,7 +3588,10 @@
         initDeadPadAdjust();
         initCollisionEditor();
         loadAlenonCollision()
-          .then(() => initMovement())
+          .then(() => {
+            initMovement();
+            preparePrologue();
+          })
           .catch((error) => {
             console.error(error);
             moveGuide.hidden = false;
