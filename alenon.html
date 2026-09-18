@@ -1107,7 +1107,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="pad-wide-return-dismount-v14">
+<body data-alenon-drift-revision="pad-opposite-dismount-v15">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1888,10 +1888,10 @@
         refs.padTrail.style.left = layout.pad.x + "px";
         refs.padTrail.style.top = layout.pad.y + "px";
 
-        // Dismount behind the PAD (toward the back/top of the map),
+        // Dismount on the opposite side of the PAD from the previous placement,
         // outside the boarding touch radius. Face Shion's back toward the player.
         player.x = layout.pad.x;
-        player.y = layout.pad.y - PAD_DISMOUNT_OFFSET_Y;
+        player.y = layout.pad.y + PAD_DISMOUNT_OFFSET_Y;
         player.dir = "up";
         player.moving = false;
         player.frame = 0;
