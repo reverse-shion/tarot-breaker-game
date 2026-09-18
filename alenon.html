@@ -473,13 +473,35 @@
       transform: translate(-50%, -50%) scale(1);
     }
 
-    body.orb-wind-flow #alenon-wind {
-      opacity: .80;
-      transform: translate(-50%, calc(-50% + 185px)) scale(1.05);
+    /* First wind: leave the ORB core and travel all the way off the lower edge.
+       The wind stays visible for most of the travel, then fades only at the end. */
+    body.orb-wind-escape #alenon-wind {
+      animation: alenon-wind-escape 1.58s cubic-bezier(.18,.66,.22,1) forwards;
     }
 
-    body.orb-wind-flow .alenon-wind-streak {
-      animation: alenon-wind-breathe 1.8s ease-in-out infinite alternate;
+    body.orb-wind-escape .alenon-wind-streak {
+      animation: alenon-wind-breathe .78s ease-in-out infinite alternate;
+    }
+
+    /* Second wind: expands from the remaining core and reconstructs the ORB. */
+    body.orb-restore-wind #alenon-wind {
+      animation: alenon-restore-wind .98s cubic-bezier(.22,.61,.36,1) forwards;
+    }
+
+    body.orb-restoring .orb-aura {
+      animation: orb-restore-aura .78s cubic-bezier(.22,.61,.36,1) forwards !important;
+    }
+
+    body.orb-restoring .orb-inner {
+      animation: orb-restore-inner .88s cubic-bezier(.22,.61,.36,1) forwards !important;
+    }
+
+    body.orb-restoring .orb-outer {
+      animation: orb-restore-outer .96s cubic-bezier(.22,.61,.36,1) forwards !important;
+    }
+
+    body.orb-restoring .orb-particle {
+      animation: orb-restore-particle 1.02s cubic-bezier(.22,.61,.36,1) forwards !important;
     }
 
     @keyframes orb-anomaly-outer {
@@ -537,6 +559,88 @@
     @keyframes alenon-wind-breathe {
       from { filter: brightness(.94); }
       to { filter: brightness(1.18); }
+    }
+
+    @keyframes alenon-wind-escape {
+      0% {
+        opacity: .94;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      72% {
+        opacity: .82;
+        transform: translate(-50%, calc(-50% + 520px)) scale(1.08);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, calc(-50% + 720px)) scale(1.12);
+      }
+    }
+
+    @keyframes alenon-restore-wind {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.16);
+        filter: brightness(1);
+      }
+      28% {
+        opacity: .88;
+        transform: translate(-50%, -50%) scale(.52);
+        filter: brightness(1.18);
+      }
+      72% {
+        opacity: .74;
+        transform: translate(-50%, -50%) scale(1.10);
+        filter: brightness(1.08);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.34);
+        filter: brightness(.96);
+      }
+    }
+
+    @keyframes orb-restore-aura {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.92);
+      }
+      100% {
+        opacity: .72;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes orb-restore-inner {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(-24deg) scale(1.88);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes orb-restore-outer {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(22deg) scale(2.08);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes orb-restore-particle {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(34deg) scale(1.78);
+      }
+      100% {
+        opacity: .88;
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+      }
     }
 
     /* Shion keeps the Star Gate Garden on-screen draw height: 78px.
@@ -1714,7 +1818,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="orb-wind-prologue-v26">
+<body data-alenon-drift-revision="orb-wind-restore-v27">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -2394,22 +2498,46 @@
         // Outer ORB is gone; core remains.
         await sayStory("こんな挙動、見たことない。", 1800, 650);
 
-        document.body.classList.add("orb-core-pulse");
-        await sleep(760);
-        document.body.classList.remove("orb-core-pulse");
-        await sleep(360);
-
-        // 5) Wind is born from the remaining light.
+        // 5) First wind: born from the core, then runs toward the Star Gate Garden.
         document.body.classList.add("orb-wind-born");
         playWindGust(1.9, .92);
-        await sleep(980);
+        await sleep(820);
 
+        // Let the player clearly see the wind cross the lower side of the screen
+        // and disappear completely outside the frame.
+        document.body.classList.add("orb-wind-escape");
+        turnShion("down");
+        const followWind = animateStoryCamera(0, 48, 760);
+        await Promise.all([sleep(1650), followWind]);
+
+        document.body.classList.remove("orb-wind-born", "orb-wind-escape");
+        await sleep(620);
+
+        // 6) The remaining light pulses. A second wind reconstructs the ORB.
         turnShion("up");
+        document.body.classList.add("orb-core-pulse");
+        await sleep(720);
+        document.body.classList.remove("orb-core-pulse");
+        await sleep(260);
+
+        document.body.classList.add("orb-restore-wind");
+        playWindGust(1.45, .68);
+        await sleep(150);
+        document.body.classList.add("orb-restoring");
+        await sleep(1080);
+
+        // Restoration is complete: return every ORB layer to its normal animation.
+        document.body.classList.remove(
+          "orb-anomaly",
+          "orb-restoring",
+          "orb-restore-wind",
+        );
+        await animateStoryCamera(0, 0, 420);
+        await sleep(560);
+
+        // 7) Shion interprets what he physically felt. This is not observation.
         await sayStory("……風の温度が変だ", 1650, 720);
-
         await sayStory("温度じゃない……。", 1450, 780);
-
-        // He does not 'observe'; he judges from the physical phenomenon he feels.
         await sayStory("アレノンの共鳴がずれ始めてる。", 2200, 900);
 
         turnShion("left");
@@ -2421,16 +2549,13 @@
         await sleep(420);
         await sayStory("……そのパメラ達が？", 1800, 920);
 
-        // 6) Wind begins to point toward the PAD / Star Gate Garden.
-        document.body.classList.add("orb-wind-flow");
-        playWindGust(2.1, .78);
+        // He remembers the direction the first wind escaped.
         turnShion("down");
-        await animateStoryCamera(0, 58, 680);
-        await sleep(1050);
-
+        await animateStoryCamera(0, 48, 620);
+        await sleep(720);
         await sayStory("星門庭園へ急がないと。", 2100, 700);
 
-        // 7) Shion himself starts moving before control is handed over.
+        // 8) Shion himself starts moving before control is handed over.
         await scriptedWalkTo(player.x, player.y + 92, 1250);
         await animateStoryCamera(0, 0, 420);
         await sleep(420);
@@ -3245,7 +3370,7 @@
         setRideMode("exiting");
 
         window.setTimeout(() => {
-          location.href = "./star-country-landing.html?from=alenon&v=orb-wind-prologue-v2";
+          location.href = "./star-country-landing.html?from=alenon&v=orb-wind-restore-v21";
         }, 820);
       }
 
