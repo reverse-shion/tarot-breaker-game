@@ -1107,7 +1107,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="pad-return-landing-v13">
+<body data-alenon-drift-revision="pad-wide-return-dismount-v14">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1268,7 +1268,8 @@
       const PAD_BOARD_DURATION = .92;
       const PAD_LAND_DURATION = .78;
       const PAD_HOME_ARM_DISTANCE = 110;
-      const PAD_HOME_LAND_RADIUS = 30;
+      const PAD_HOME_LAND_RADIUS = 60;
+      const PAD_DISMOUNT_OFFSET_Y = 86;
       const PAD_EXIT_Y = 1038;
       const CAMERA_LOOK_AHEAD_Y = 110;
       const WORLD_MARGIN = 34;
@@ -1887,10 +1888,10 @@
         refs.padTrail.style.left = layout.pad.x + "px";
         refs.padTrail.style.top = layout.pad.y + "px";
 
-        // Step Shion back onto the ruin, outside the PAD touch radius,
-        // so landing does not immediately trigger boarding again.
-        player.x = SHION_SPAWN.x;
-        player.y = SHION_SPAWN.y;
+        // Dismount behind the PAD (toward the back/top of the map),
+        // outside the boarding touch radius. Face Shion's back toward the player.
+        player.x = layout.pad.x;
+        player.y = layout.pad.y - PAD_DISMOUNT_OFFSET_Y;
         player.dir = "up";
         player.moving = false;
         player.frame = 0;
