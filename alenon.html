@@ -1107,7 +1107,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="pad-opposite-dismount-v15">
+<body data-alenon-drift-revision="pad-backside-depth-v16">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1888,10 +1888,10 @@
         refs.padTrail.style.left = layout.pad.x + "px";
         refs.padTrail.style.top = layout.pad.y + "px";
 
-        // Dismount on the opposite side of the PAD from the previous placement,
-        // outside the boarding touch radius. Face Shion's back toward the player.
+        // Dismount on the far/back side of the PAD.
+        // Depth is also switched below the PAD layer so it reads visually as behind.
         player.x = layout.pad.x;
-        player.y = layout.pad.y + PAD_DISMOUNT_OFFSET_Y;
+        player.y = layout.pad.y - PAD_DISMOUNT_OFFSET_Y;
         player.dir = "up";
         player.moving = false;
         player.frame = 0;
@@ -1941,6 +1941,20 @@
         shionActor.style.top = player.y + "px";
         shionShadow.style.left = player.x + "px";
         shionShadow.style.top = player.y + "px";
+
+        // Ground depth around the PAD:
+        // smaller Y = farther/back side, so render Shion behind the PAD.
+        // While riding/boarding/landing, keep him above the moving PAD.
+        if (ride.mode === "ground") {
+          const behindPad =
+            Math.abs(player.x - layout.pad.x) <= layout.pad.size * .62 &&
+            player.y < layout.pad.y - 6;
+          shionActor.style.zIndex = behindPad ? "19" : "44";
+          shionShadow.style.zIndex = behindPad ? "18" : "43";
+        } else {
+          shionActor.style.zIndex = "44";
+          shionShadow.style.zIndex = "43";
+        }
       }
 
       const idleFrame = Object.freeze({ down: 0, up: 1, left: 2, right: 3 });
