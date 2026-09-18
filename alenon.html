@@ -1878,45 +1878,6 @@
       }
     }
 
-    #story-objective {
-      position: fixed;
-      left: 50%;
-      top: max(18px, calc(env(safe-area-inset-top) + 14px));
-      z-index: 520;
-      width: min(88vw, 460px);
-      transform: translate(-50%, -8px);
-      padding: 10px 14px 11px;
-      border: 1px solid rgba(206, 226, 255, .24);
-      border-radius: 12px;
-      color: rgba(244, 248, 255, .96);
-      background: rgba(5, 14, 37, .69);
-      backdrop-filter: blur(9px);
-      -webkit-backdrop-filter: blur(9px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .3s ease, transform .3s ease;
-    }
-
-    #story-objective.visible {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    #story-objective strong {
-      display: block;
-      margin-bottom: 3px;
-      font-size: 13px;
-      letter-spacing: .08em;
-    }
-
-    #story-objective span {
-      display: block;
-      color: rgba(223, 233, 255, .78);
-      font-size: 11px;
-      line-height: 1.45;
-    }
-
     body.story-running #move-guide,
     body.story-running #move-reset,
     body.story-running #object-toggle,
@@ -1933,11 +1894,6 @@
     body.prologue-revealing #tarot-stage {
       opacity: 0;
       transform: translateY(-4px) scale(.96);
-    }
-
-    body.pad-boarding #story-objective,
-    body.pad-exiting #story-objective {
-      opacity: 0;
     }
 
     body.pad-exiting #map-transition {
@@ -2005,7 +1961,7 @@
   </style>
   <link rel="stylesheet" href="./shared-dialogue.css?v=1.0.0" />
 </head>
-<body data-alenon-drift-revision="shared-dialogue-v33">
+<body data-alenon-drift-revision="no-objective-v34">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -2090,11 +2046,6 @@
         <button id="orb-interaction-inspect" type="button">光を調べる</button>
         <button id="orb-interaction-leave" type="button">離れる</button>
       </div>
-    </aside>
-
-    <aside id="story-objective" aria-live="polite">
-      <strong>OBJECTIVE — 星門庭園へ向かう</strong>
-      <span>水晶PADを使い、星門庭園へ向かう。</span>
     </aside>
 
     <div id="move-guide">行きたい場所をタップ / ドラッグで自由移動</div>
@@ -2290,7 +2241,6 @@
       const orbInteractionChoice = document.getElementById("orb-interaction-choice");
       const orbInteractionInspect = document.getElementById("orb-interaction-inspect");
       const orbInteractionLeave = document.getElementById("orb-interaction-leave");
-      const storyObjective = document.getElementById("story-objective");
 
       const story = {
         locked: !storyBypass,
@@ -2510,13 +2460,6 @@
         await sleep(Math.min(gapMs, 260));
       }
 
-      function showStoryObjective() {
-        storyObjective.classList.add("visible");
-        window.setTimeout(() => {
-          if (story.completed) storyObjective.classList.remove("visible");
-        }, 5200);
-      }
-
       function hideOrbInteractionChoice() {
         orbInteractionChoice.classList.remove("visible");
         window.setTimeout(() => {
@@ -2548,7 +2491,6 @@
         orbInteraction.armed = false;
         story.locked = true;
         document.body.classList.add("story-running");
-        storyObjective.classList.remove("visible");
         player.target = null;
         clearTargetRing();
         turnShion(directionFromVector(layout.orb.x - player.x, layout.orb.y - player.y));
@@ -2946,7 +2888,6 @@
         story.completed = true;
         story.locked = false;
         document.body.classList.remove("story-running");
-        showStoryObjective();
         moveGuide.textContent = "水晶PADまで歩いてみよう";
         moveGuide.hidden = false;
       }
