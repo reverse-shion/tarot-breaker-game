@@ -123,56 +123,6 @@
     }
 
 
-    .landing-waterfall {
-      position: absolute;
-      inset: 0;
-      z-index: 6;
-      width: 1448px;
-      height: 1086px;
-      overflow: hidden;
-      opacity: .88;
-      pointer-events: none;
-      mask-image: url("./assets/maps/star-country-gate-garden-waterfall.webp");
-      -webkit-mask-image: url("./assets/maps/star-country-gate-garden-waterfall.webp");
-      mask-size: 100% 100%;
-      -webkit-mask-size: 100% 100%;
-      mask-repeat: no-repeat;
-      -webkit-mask-repeat: no-repeat;
-      mask-position: 0 0;
-      -webkit-mask-position: 0 0;
-    }
-
-    .landing-waterfall img {
-      position: absolute;
-      inset: 0;
-      width: 1448px;
-      height: 1086px;
-      object-fit: fill;
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
-      will-change: transform, opacity;
-      animation: landingWaterfallFlow 2.2s linear infinite;
-    }
-
-    .landing-waterfall--flow img {
-      animation-delay: -1.1s;
-    }
-
-    @keyframes landingWaterfallFlow {
-      0% {
-        transform: translate3d(0,-8px,0);
-        opacity: 0;
-      }
-      20% { opacity: .72; }
-      45% { opacity: .95; }
-      70% { opacity: .72; }
-      100% {
-        transform: translate3d(0,8px,0);
-        opacity: 0;
-      }
-    }
-
     .landing-ground {
       position: absolute;
       inset: 0;
@@ -641,12 +591,10 @@
 
     @media (prefers-reduced-motion: reduce) {
       .cloud-track { animation: none; }
-      .landing-waterfall img { animation-duration: 5s; }
-      .landing-waterfall--flow img { animation-delay: -2.5s; }
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v9-waterfall-collision" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v10-no-waterfall" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -662,13 +610,6 @@
       </div>
 
       <div class="atmosphere" aria-hidden="true"></div>
-
-      <div class="landing-waterfall landing-waterfall--base" aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-waterfall.webp?v=star-landing-waterfall-v1" alt="" draggable="false" />
-      </div>
-      <div class="landing-waterfall landing-waterfall--flow" aria-hidden="true">
-        <img src="./assets/maps/star-country-gate-garden-waterfall.webp?v=star-landing-waterfall-v1" alt="" draggable="false" />
-      </div>
 
       <img class="landing-ground" src="./assets/maps/star-landing/ground.webp?v=star-landing-ground-v1" alt="" aria-hidden="true" draggable="false" />
 
@@ -1064,7 +1005,6 @@
         ...Object.values(walkSheet),
         "./assets/maps/alenon/pad.webp",
         "./assets/maps/star-landing/ground.webp",
-        "./assets/maps/star-country-gate-garden-waterfall.webp",
       ].map(preloadImage)).catch(() => {});
 
 
