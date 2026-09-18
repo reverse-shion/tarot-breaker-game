@@ -224,44 +224,42 @@
 
   let playbackToken = 0;
   let currentAction = null;
+  let dialogueUi = null;
 
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
   function makeUi() {
     const shell = document.getElementById("game-shell");
-    if (!shell || document.getElementById("dialogue-layer")) return;
+    if (!shell) return;
 
-    const dialogue = document.createElement("section");
-    dialogue.id = "dialogue-layer";
-    dialogue.className = "dialogue-layer";
-    dialogue.hidden = true;
-    dialogue.dataset.state = "idle";
-    dialogue.setAttribute("aria-live", "polite");
-    dialogue.innerHTML = `
-      <button id="dialogue-advance" class="dialogue-box" type="button" aria-label="会話を進める">
-        <span id="dialogue-speaker" class="dialogue-speaker"></span>
-        <span id="dialogue-text" class="dialogue-text"></span>
-        <span class="dialogue-next" aria-hidden="true">▼</span>
-      </button>`;
-    shell.appendChild(dialogue);
+    if (!dialogueUi) {
+      if (!window.TarotDialogueUI?.create) {
+        throw new Error("Shared dialogue runtime is not loaded");
+      }
+      dialogueUi = window.TarotDialogueUI.create({
+        mount: shell,
+        ids: {
+          layer: "dialogue-layer",
+          advance: "dialogue-advance",
+          speaker: "dialogue-speaker",
+          text: "dialogue-text",
+        },
+        onAdvance: () => advance(),
+      });
+    }
 
-    const objective = document.createElement("aside");
-    objective.id = "story-objective";
-    objective.className = "story-objective";
-    objective.hidden = true;
-    shell.appendChild(objective);
-
-    document.getElementById("dialogue-advance").addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      advance();
-    });
+    if (!document.getElementById("story-objective")) {
+      const objective = document.createElement("aside");
+      objective.id = "story-objective";
+      objective.className = "story-objective";
+      objective.hidden = true;
+      shell.appendChild(objective);
+    }
   }
 
   function setUiState(next) {
-    const layer = document.getElementById("dialogue-layer");
+    dialogueUi?.setState(next);
     const button = document.getElementById("dialogue-advance");
-    if (layer) layer.dataset.state = next;
     if (button) {
       button.setAttribute(
         "aria-label",
@@ -324,16 +322,12 @@
 
   function renderDialogue(command) {
     const speaker = ACTOR_NAMES[command.actor] || command.actor;
-    const layer = document.getElementById("dialogue-layer");
-    const speakerEl = document.getElementById("dialogue-speaker");
-    const textEl = document.getElementById("dialogue-text");
-    if (!layer || !speakerEl || !textEl) return;
-
-    speakerEl.textContent = speaker;
-    textEl.textContent = command.text;
-    layer.dataset.speaker = speaker;
-    layer.dataset.actor = command.actor;
-    layer.hidden = false;
+    makeUi();
+    dialogueUi?.show({
+      speaker,
+      text: command.text,
+      actor: command.actor,
+    });
     story.mode = "dialogue";
     story.actionType = null;
     story.lineIndex += 1;
@@ -395,11 +389,7 @@
     story.mode = "idle";
     story.actionType = null;
     currentAction = null;
-    const layer = document.getElementById("dialogue-layer");
-    if (layer) {
-      layer.hidden = true;
-      layer.dataset.state = "idle";
-    }
+    dialogueUi?.hide();
 
     if (completed === "shioponMeet") {
       window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
@@ -418,6 +408,14 @@
 
   function advance() {
     if (!story.active) return;
+
+    // Same rule as the prologue: first input while characters are appearing
+    // reveals the whole line; the next input advances.
+    if (story.mode === "dialogue" && dialogueUi?.isTyping()) {
+      dialogueUi.revealAll();
+      return;
+    }
+
     if (story.mode === "action") {
       currentAction?.finish?.();
       return;
@@ -489,12 +487,6 @@
     }
     if (objective) objective.hidden = true;
   }
-
-  window.addEventListener("keydown", (event) => {
-    if (!story.active || !["Enter", " "].includes(event.key)) return;
-    event.preventDefault();
-    advance();
-  });
 
   installControlsObserver();
   makeUi();
