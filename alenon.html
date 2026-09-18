@@ -4,6 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#06142d" />
+  <script data-map-zone-editor-redirect="v1">
+    (() => {
+      const p = new URLSearchParams(location.search);
+      if (p.get("collision") === "1" && p.get("legacyCollision") !== "1") {
+        location.replace("./tools/map-zone-editor.html?map=alenon");
+      }
+    })();
+  </script>
   <title>TAROT BREAKER — アレノンの遺跡</title>
   <style>
     :root {
