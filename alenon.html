@@ -1284,7 +1284,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="collision-editor-v20">
+<body data-alenon-drift-revision="alenon-collision-live-v22">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1478,6 +1478,9 @@
       const editMode = params.get("edit") === "1";
       const objectMode = params.get("objects") === "1";
       const collisionMode = params.get("collision") === "1";
+      const COLLISION_URL = "./assets/maps/alenon-collision.json?v=1";
+      let alenonWalkAreas = [];
+      let alenonCollisionReady = false;
       let worldScale = 1;
       let cameraTx = 0;
       let cameraTy = 0;
@@ -1978,7 +1981,7 @@
 
       function initCollisionEditor() {
         const NS = "http://www.w3.org/2000/svg";
-        const STORAGE_KEY_COLLISION = "tarot-breaker-alenon-collision-draft-v1";
+        const STORAGE_KEY_COLLISION = "tarot-breaker-alenon-collision-draft-v2";
         const status = document.getElementById("collision-status");
         const undoPointButton = document.getElementById("collision-undo-point");
         const finishButton = document.getElementById("collision-finish");
@@ -2007,6 +2010,21 @@
                 .filter((area) => area.points.length >= 3);
             }
           } catch (_) {}
+        } else {
+          fetch(COLLISION_URL, { cache: "no-store" })
+            .then((response) => response.ok ? response.json() : null)
+            .then((data) => {
+              if (!data || !Array.isArray(data.walkAreas)) return;
+              areas = data.walkAreas
+                .filter((area) => area?.type === "poly" && Array.isArray(area.points))
+                .map((area) => ({
+                  type: "poly",
+                  points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+                }))
+                .filter((area) => area.points.length >= 3);
+              render();
+            })
+            .catch(() => {});
         }
 
         function pointString(points) {
@@ -2470,6 +2488,95 @@
         };
       }
 
+      function pointInPoly(x, y, points) {
+        let inside = false;
+        for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+          const a = points[j];
+          const b = points[i];
+          const minX = Math.min(a[0], b[0]);
+          const maxX = Math.max(a[0], b[0]);
+          const minY = Math.min(a[1], b[1]);
+          const maxY = Math.max(a[1], b[1]);
+          const cross = (x - a[0]) * (b[1] - a[1]) - (y - a[1]) * (b[0] - a[0]);
+          if (
+            Math.abs(cross) < 0.0001 &&
+            x >= minX - 0.0001 && x <= maxX + 0.0001 &&
+            y >= minY - 0.0001 && y <= maxY + 0.0001
+          ) {
+            return true;
+          }
+          if (
+            (a[1] > y) !== (b[1] > y) &&
+            x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0]
+          ) {
+            inside = !inside;
+          }
+        }
+        return inside;
+      }
+
+      function isGroundWalkable(x, y) {
+        if (!alenonCollisionReady || !alenonWalkAreas.length) return true;
+        return alenonWalkAreas.some(
+          (area) => area.type === "poly" && pointInPoly(x, y, area.points),
+        );
+      }
+
+      function nearestPointOnSegment(point, a, b) {
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const length2 = dx * dx + dy * dy;
+        const t = length2
+          ? clamp(
+              ((point.x - a[0]) * dx + (point.y - a[1]) * dy) / length2,
+              0,
+              1,
+            )
+          : 0;
+        return { x: a[0] + dx * t, y: a[1] + dy * t };
+      }
+
+      function nearestGroundPoint(point) {
+        if (!alenonCollisionReady || !alenonWalkAreas.length) return { ...point };
+        if (isGroundWalkable(point.x, point.y)) return { ...point };
+
+        let best = null;
+        let bestDistance = Infinity;
+        for (const area of alenonWalkAreas) {
+          if (area.type !== "poly" || !Array.isArray(area.points)) continue;
+          for (let i = 0, j = area.points.length - 1; i < area.points.length; j = i++) {
+            const candidate = nearestPointOnSegment(point, area.points[j], area.points[i]);
+            const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+            if (distance < bestDistance) {
+              best = candidate;
+              bestDistance = distance;
+            }
+          }
+        }
+        return best;
+      }
+
+      async function loadAlenonCollision() {
+        const response = await fetch(COLLISION_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error("アレノンの当たり判定を読み込めません");
+        const data = await response.json();
+        if (
+          data?.map !== "alenon" ||
+          data?.referenceSize?.width !== WORLD_W ||
+          data?.referenceSize?.height !== WORLD_H ||
+          !Array.isArray(data?.walkAreas)
+        ) {
+          throw new Error("アレノンの当たり判定データが不正です");
+        }
+        alenonWalkAreas = data.walkAreas.filter(
+          (area) =>
+            area?.type === "poly" &&
+            Array.isArray(area.points) &&
+            area.points.length >= 3,
+        );
+        alenonCollisionReady = alenonWalkAreas.length > 0;
+      }
+
       function clampPlayer() {
         player.x = clamp(player.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
         player.y = clamp(player.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
@@ -2570,6 +2677,12 @@
             point.y = clamp(point.y, 80, WORLD_H + 24);
           } else {
             point.y = clamp(point.y, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN);
+          }
+          if (ride.mode !== "flying" && alenonCollisionReady) {
+            const nearest = nearestGroundPoint(point);
+            if (!nearest) return;
+            point.x = nearest.x;
+            point.y = nearest.y;
           }
           player.target = point;
           showTarget(point);
@@ -2747,8 +2860,10 @@
                 ride.x = player.target.x;
                 ride.y = player.target.y;
               } else {
-                player.x = player.target.x;
-                player.y = player.target.y;
+                if (isGroundWalkable(player.target.x, player.target.y)) {
+                  player.x = player.target.x;
+                  player.y = player.target.y;
+                }
               }
               player.target = null;
               clearTargetRing();
@@ -2772,12 +2887,75 @@
               player.moving = false;
             } else {
               const speedWorld = SHION_SPEED_SCREEN / worldScale;
-              player.x += vx * speedWorld * dt;
-              player.y += vy * speedWorld * dt;
-              clampPlayer();
-              player.anim += dt * 8.5;
-              player.frame = Math.floor(player.anim) % 4;
-              player.moving = true;
+              const stepX = vx * speedWorld * dt;
+              const stepY = vy * speedWorld * dt;
+              const from = { x: player.x, y: player.y };
+              const next = {
+                x: clamp(player.x + stepX, WORLD_MARGIN, WORLD_W - WORLD_MARGIN),
+                y: clamp(player.y + stepY, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN),
+              };
+
+              let moved = false;
+              if (!alenonCollisionReady) {
+                player.x = next.x;
+                player.y = next.y;
+                moved = true;
+              } else if (isGroundWalkable(next.x, next.y)) {
+                player.x = next.x;
+                player.y = next.y;
+                moved = true;
+              } else if (!isGroundWalkable(from.x, from.y)) {
+                const entry = nearestGroundPoint(from);
+                if (entry) {
+                  const before = Math.hypot(from.x - entry.x, from.y - entry.y);
+                  const after = Math.hypot(next.x - entry.x, next.y - entry.y);
+                  if (after < before - 0.01) {
+                    player.x = next.x;
+                    player.y = next.y;
+                    moved = true;
+                  }
+                }
+              } else {
+                const xOnly = {
+                  x: clamp(player.x + stepX, WORLD_MARGIN, WORLD_W - WORLD_MARGIN),
+                  y: player.y,
+                };
+                const yOnly = {
+                  x: player.x,
+                  y: clamp(player.y + stepY, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN),
+                };
+                if (Math.abs(stepX) >= Math.abs(stepY)) {
+                  if (isGroundWalkable(xOnly.x, xOnly.y)) {
+                    player.x = xOnly.x;
+                    moved = true;
+                  } else if (isGroundWalkable(yOnly.x, yOnly.y)) {
+                    player.y = yOnly.y;
+                    moved = true;
+                  }
+                } else {
+                  if (isGroundWalkable(yOnly.x, yOnly.y)) {
+                    player.y = yOnly.y;
+                    moved = true;
+                  } else if (isGroundWalkable(xOnly.x, xOnly.y)) {
+                    player.x = xOnly.x;
+                    moved = true;
+                  }
+                }
+              }
+
+              if (moved) {
+                player.anim += dt * 8.5;
+                player.frame = Math.floor(player.anim) % 4;
+                player.moving = true;
+              } else {
+                player.moving = false;
+                player.anim = 0;
+                player.frame = 0;
+                if (player.target) {
+                  player.target = null;
+                  clearTargetRing();
+                }
+              }
             }
           } else {
             player.moving = false;
@@ -2834,7 +3012,9 @@
         initObjectAdjust();
         initDeadPadAdjust();
         initCollisionEditor();
-        initMovement();
+        loadAlenonCollision()
+          .catch((error) => console.error(error))
+          .finally(() => initMovement());
         return;
       }
       document.body.classList.add("edit-mode");
