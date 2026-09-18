@@ -1284,7 +1284,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="alenon-collision-live-v22">
+<body data-alenon-drift-revision="collision-enforced-orb-spawn-v23">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1458,7 +1458,7 @@
       const WORLD_W = 1448;
       const WORLD_H = 1086;
       const SHION_SCREEN_HEIGHT = 78;
-      const SHION_SPAWN = Object.freeze({ x: 730, y: 949 });
+      const SHION_SPAWN = Object.freeze({ x: 716, y: 330 });
       const SHION_SPEED_SCREEN = 155;
       const PAD_SPEED_SCREEN = 175;
       const PAD_TOUCH_RADIUS = 64;
@@ -1478,7 +1478,7 @@
       const editMode = params.get("edit") === "1";
       const objectMode = params.get("objects") === "1";
       const collisionMode = params.get("collision") === "1";
-      const COLLISION_URL = "./assets/maps/alenon-collision.json?v=1";
+      const COLLISION_URL = "./assets/maps/alenon-collision.json?v=2";
       let alenonWalkAreas = [];
       let alenonCollisionReady = false;
       let worldScale = 1;
@@ -2558,7 +2558,7 @@
 
       async function loadAlenonCollision() {
         const response = await fetch(COLLISION_URL, { cache: "no-store" });
-        if (!response.ok) throw new Error("アレノンの当たり判定を読み込めません");
+        if (!response.ok) throw new Error("アレノンの当たり判定を読み込めません: " + response.status);
         const data = await response.json();
         if (
           data?.map !== "alenon" ||
@@ -2900,21 +2900,6 @@
                 player.x = next.x;
                 player.y = next.y;
                 moved = true;
-              } else if (isGroundWalkable(next.x, next.y)) {
-                player.x = next.x;
-                player.y = next.y;
-                moved = true;
-              } else if (!isGroundWalkable(from.x, from.y)) {
-                const entry = nearestGroundPoint(from);
-                if (entry) {
-                  const before = Math.hypot(from.x - entry.x, from.y - entry.y);
-                  const after = Math.hypot(next.x - entry.x, next.y - entry.y);
-                  if (after < before - 0.01) {
-                    player.x = next.x;
-                    player.y = next.y;
-                    moved = true;
-                  }
-                }
               } else {
                 const xOnly = {
                   x: clamp(player.x + stepX, WORLD_MARGIN, WORLD_W - WORLD_MARGIN),
@@ -2924,7 +2909,12 @@
                   x: player.x,
                   y: clamp(player.y + stepY, WORLD_MARGIN + 60, WORLD_H - WORLD_MARGIN),
                 };
-                if (Math.abs(stepX) >= Math.abs(stepY)) {
+
+                if (isGroundWalkable(next.x, next.y)) {
+                  player.x = next.x;
+                  player.y = next.y;
+                  moved = true;
+                } else if (Math.abs(stepX) >= Math.abs(stepY)) {
                   if (isGroundWalkable(xOnly.x, xOnly.y)) {
                     player.x = xOnly.x;
                     moved = true;
@@ -3013,8 +3003,12 @@
         initDeadPadAdjust();
         initCollisionEditor();
         loadAlenonCollision()
-          .catch((error) => console.error(error))
-          .finally(() => initMovement());
+          .then(() => initMovement())
+          .catch((error) => {
+            console.error(error);
+            moveGuide.hidden = false;
+            moveGuide.textContent = "当たり判定の読み込みに失敗しました";
+          });
         return;
       }
       document.body.classList.add("edit-mode");
