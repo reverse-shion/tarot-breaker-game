@@ -216,6 +216,7 @@
 
     body.pad-boarding .pad,
     body.pad-riding .pad,
+    body.pad-landing .pad,
     body.pad-exiting .pad {
       z-index: 42;
       filter:
@@ -226,6 +227,7 @@
 
     body.pad-boarding .pad-glow,
     body.pad-riding .pad-glow,
+    body.pad-landing .pad-glow,
     body.pad-exiting .pad-glow {
       z-index: 41;
       opacity: 1;
@@ -233,18 +235,21 @@
     }
 
     body.pad-riding .pad-flight-trail,
+    body.pad-landing .pad-flight-trail,
     body.pad-exiting .pad-flight-trail {
       opacity: .82;
     }
 
     body.pad-riding .shion-shadow,
     body.pad-boarding .shion-shadow,
+    body.pad-landing .shion-shadow,
     body.pad-exiting .shion-shadow {
       opacity: 0;
     }
 
     body.pad-riding #object-toggle,
     body.pad-boarding #object-toggle,
+    body.pad-landing #object-toggle,
     body.pad-exiting #object-toggle,
     body.pad-exiting #move-reset {
       display: none !important;
@@ -273,6 +278,7 @@
 
     body.pad-boarding #flight-status,
     body.pad-riding #flight-status,
+    body.pad-landing #flight-status,
     body.pad-exiting #flight-status {
       opacity: 1;
     }
@@ -542,6 +548,7 @@
 
     body.pad-boarding #deadpad-toggle,
     body.pad-riding #deadpad-toggle,
+    body.pad-landing #deadpad-toggle,
     body.pad-exiting #deadpad-toggle,
     body.edit-mode #deadpad-toggle {
       display: none !important;
@@ -1100,7 +1107,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="left-pad-dead-final-v12">
+<body data-alenon-drift-revision="pad-return-landing-v13">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1259,6 +1266,9 @@
       const PAD_TOUCH_RADIUS = 64;
       const PAD_LIFT = 18;
       const PAD_BOARD_DURATION = .92;
+      const PAD_LAND_DURATION = .78;
+      const PAD_HOME_ARM_DISTANCE = 110;
+      const PAD_HOME_LAND_RADIUS = 30;
       const PAD_EXIT_Y = 1038;
       const CAMERA_LOOK_AHEAD_Y = 110;
       const WORLD_MARGIN = 34;
@@ -1302,6 +1312,10 @@
         fromX: 0,
         fromY: 0,
         exitStarted: false,
+        homeArmed: false,
+        landFromX: 0,
+        landFromY: 0,
+        landFromLift: 0,
       };
 
       const defaults = Object.freeze({
@@ -1784,14 +1798,18 @@
         ride.mode = mode;
         document.body.classList.toggle("pad-boarding", mode === "boarding");
         document.body.classList.toggle("pad-riding", mode === "flying");
+        document.body.classList.toggle("pad-landing", mode === "landing");
         document.body.classList.toggle("pad-exiting", mode === "exiting");
 
         if (mode === "boarding") {
           flightStatus.textContent = "PADが共鳴している…";
         } else if (mode === "flying") {
-          flightStatus.textContent = "PAD起動中 — 画面下へ進む";
+          flightStatus.textContent = "PAD起動中 — 元の場所に戻ると降りられる";
           moveGuide.hidden = false;
-          moveGuide.textContent = "PADで移動中 / 下へ進むと次の場所へ";
+          moveGuide.textContent = "PADで移動中 / 元の位置で着陸 / 下へ進むと次の場所へ";
+        } else if (mode === "landing") {
+          flightStatus.textContent = "PAD着陸中…";
+          moveGuide.hidden = true;
         } else if (mode === "exiting") {
           flightStatus.textContent = "星門庭園方面へ移動中…";
           moveGuide.hidden = true;
@@ -1834,6 +1852,58 @@
         setRideMode("boarding");
       }
 
+      function beginPadLanding() {
+        if (ride.mode !== "flying") return;
+        ride.mode = "landing";
+        ride.progress = 0;
+        ride.landFromX = ride.x;
+        ride.landFromY = ride.y;
+        ride.landFromLift = ride.lift;
+        player.target = null;
+        clearTargetRing();
+        setRideMode("landing");
+      }
+
+      function finishPadLanding() {
+        ride.x = layout.pad.x;
+        ride.y = layout.pad.y;
+        ride.lift = 0;
+        ride.progress = 0;
+        ride.homeArmed = false;
+        ride.exitStarted = false;
+
+        document.body.classList.remove(
+          "pad-boarding",
+          "pad-riding",
+          "pad-landing",
+          "pad-exiting",
+        );
+        ride.mode = "ground";
+
+        refs.pad.style.left = layout.pad.x + "px";
+        refs.pad.style.top = layout.pad.y + "px";
+        refs.padGlow.style.left = layout.pad.x + "px";
+        refs.padGlow.style.top = layout.pad.y + "px";
+        refs.padTrail.style.left = layout.pad.x + "px";
+        refs.padTrail.style.top = layout.pad.y + "px";
+
+        // Step Shion back onto the ruin, outside the PAD touch radius,
+        // so landing does not immediately trigger boarding again.
+        player.x = SHION_SPAWN.x;
+        player.y = SHION_SPAWN.y;
+        player.dir = "up";
+        player.moving = false;
+        player.frame = 0;
+        player.anim = 0;
+        player.target = null;
+
+        flightStatus.textContent = "PAD着陸完了";
+        moveGuide.textContent = "行きたい場所をタップ / ドラッグで自由移動";
+        moveGuide.hidden = false;
+        setActorPosition();
+        setActorVisual();
+      }
+
       function beginPadExit() {
         if (ride.exitStarted || ride.mode !== "flying") return;
         ride.exitStarted = true;
@@ -1853,7 +1923,8 @@
         ride.lift = 0;
         ride.progress = 0;
         ride.exitStarted = false;
-        document.body.classList.remove("pad-boarding", "pad-riding", "pad-exiting");
+        ride.homeArmed = false;
+        document.body.classList.remove("pad-boarding", "pad-riding", "pad-landing", "pad-exiting");
         refs.pad.style.left = layout.pad.x + "px";
         refs.pad.style.top = layout.pad.y + "px";
         refs.padGlow.style.left = layout.pad.x + "px";
@@ -2125,6 +2196,27 @@
             return;
           }
 
+          if (ride.mode === "landing") {
+            ride.progress = Math.min(1, ride.progress + dt / PAD_LAND_DURATION);
+            const t = easeOutCubic(ride.progress);
+
+            ride.x = ride.landFromX + (layout.pad.x - ride.landFromX) * t;
+            ride.y = ride.landFromY + (layout.pad.y - ride.landFromY) * t;
+            ride.lift = ride.landFromLift * (1 - t);
+
+            syncRideVisual(now);
+
+            if (ride.progress >= 1) {
+              finishPadLanding();
+            }
+
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+            requestAnimationFrame(loop);
+            return;
+          }
+
           if (ride.mode === "exiting") {
             ride.y += 95 * dt;
             ride.lift = PAD_LIFT;
@@ -2199,7 +2291,21 @@
 
           if (ride.mode === "flying") {
             syncRideVisual(now);
-            if (ride.y >= PAD_EXIT_Y) beginPadExit();
+
+            const homeDistance = Math.hypot(
+              ride.x - layout.pad.x,
+              ride.y - layout.pad.y,
+            );
+
+            if (!ride.homeArmed && homeDistance >= PAD_HOME_ARM_DISTANCE) {
+              ride.homeArmed = true;
+            }
+
+            if (ride.homeArmed && homeDistance <= PAD_HOME_LAND_RADIUS) {
+              beginPadLanding();
+            } else if (ride.y >= PAD_EXIT_Y) {
+              beginPadExit();
+            }
           } else if (ride.mode === "ground") {
             const padDistance = Math.hypot(
               player.x - layout.pad.x,
