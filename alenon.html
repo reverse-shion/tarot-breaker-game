@@ -122,6 +122,13 @@
       transform-origin: 50% 50%;
     }
 
+    .ruin-drift-left {
+      filter:
+        saturate(.72)
+        brightness(.82)
+        contrast(1.04);
+    }
+
     /* Left ruin PAD: depleted / offline.
        This is a filtered duplicate of ground_l, radially masked around the baked-in PAD.
        It darkens only opaque ruin pixels, not the sky behind it. */
@@ -1107,7 +1114,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="left-pad-dead-y272-v18">
+<body data-alenon-drift-revision="left-ruin-muted-v19">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
