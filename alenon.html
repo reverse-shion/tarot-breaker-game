@@ -143,7 +143,9 @@
         sepia(.08);
       -webkit-mask-image:
         radial-gradient(
-          ellipse 28% 20% at 54% 89%,
+          ellipse 405px 217px at
+          var(--left-pad-dead-x, 782px)
+          var(--left-pad-dead-y, 967px),
           #000 0%,
           #000 48%,
           rgba(0,0,0,.96) 66%,
@@ -152,7 +154,9 @@
         );
       mask-image:
         radial-gradient(
-          ellipse 28% 20% at 54% 89%,
+          ellipse 405px 217px at
+          var(--left-pad-dead-x, 782px)
+          var(--left-pad-dead-y, 967px),
           #000 0%,
           #000 48%,
           rgba(0,0,0,.96) 66%,
@@ -164,8 +168,8 @@
 
     .left-pad-dead-vignette {
       position: absolute;
-      left: 54%;
-      top: 89%;
+      left: var(--left-pad-dead-x, 782px);
+      top: var(--left-pad-dead-y, 967px);
       z-index: 12;
       width: 430px;
       height: 250px;
@@ -762,6 +766,12 @@
       outline-offset: 2px;
     }
 
+    body.object-mode .left-pad-dead-vignette.object-selected {
+      outline: 2px dashed rgba(255,215,105,.95);
+      outline-offset: 4px;
+      box-shadow: 0 0 0 1px rgba(20,10,0,.28), 0 0 24px rgba(255,190,75,.22);
+    }
+
     /* Placement editor: open alenon.html?edit=1 */
     #editor-panel {
       display: none;
@@ -951,7 +961,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="left-pad-depleted-v9">
+<body data-alenon-drift-revision="left-pad-mask-editor-v10">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1004,12 +1014,13 @@
 
     <aside id="object-panel" aria-label="PADとORBの位置微調整">
       <div class="object-top">
-        <div class="object-title">PAD / ORB 微調整</div>
+        <div class="object-title">配置・暗部 微調整</div>
         <div class="object-hint">画面ドラッグ＝移動</div>
       </div>
       <div class="object-tabs" role="group" aria-label="調整対象">
         <button type="button" data-object-select="pad" aria-pressed="true">PAD</button>
         <button type="button" data-object-select="orb" aria-pressed="false">ORB</button>
+        <button type="button" data-object-select="deadMask" aria-pressed="false">左PAD暗部</button>
       </div>
       <div class="object-coords">
         <label>X
@@ -1140,7 +1151,9 @@
         Object.fromEntries(Object.entries(defaults).map(([key, value]) => [key, { ...value }]));
 
       const STORAGE_KEY = "tarot-breaker-alenon-layout-v2";
-      const OBJECT_STORAGE_KEY = "tarot-breaker-alenon-objects-v2";
+      const OBJECT_STORAGE_KEY = "tarot-breaker-alenon-objects-v3";
+      const DEAD_MASK_DEFAULT = Object.freeze({ x: 782, y: 967 });
+      let deadMask = { ...DEAD_MASK_DEFAULT };
       let layout = cloneDefaults();
 
       // Public view uses committed placement. Editing modes may restore a local draft.
@@ -1162,6 +1175,9 @@
             for (const key of ["pad", "orb"]) {
               if (parsed[key]) layout[key] = { ...layout[key], ...parsed[key] };
             }
+            if (parsed.deadMask) {
+              deadMask = { ...deadMask, ...parsed.deadMask };
+            }
           } catch (_) {}
         }
       }
@@ -1177,6 +1193,7 @@
         orbAura: document.querySelector(".orb-aura"),
         driftLeft: document.querySelector(".ground-drift-left"),
         driftRight: document.querySelector(".ground-drift-right"),
+        deadVignette: document.querySelector(".left-pad-dead-vignette"),
       };
 
       function applyLayout() {
@@ -1208,12 +1225,16 @@
         refs.orbAura.style.width = orb.size * .60 + "px";
         refs.orbAura.style.height = orb.size * .60 + "px";
 
+        refs.groundL.style.setProperty("--left-pad-dead-x", deadMask.x + "px");
+        refs.groundL.style.setProperty("--left-pad-dead-y", deadMask.y + "px");
+
         if (editMode) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
         } else if (document.body.classList.contains("object-mode")) {
           localStorage.setItem(OBJECT_STORAGE_KEY, JSON.stringify({
             pad: layout.pad,
             orb: layout.orb,
+            deadMask,
           }));
         }
       }
@@ -1280,7 +1301,7 @@
         function setObjectMode(open) {
           document.body.classList.toggle("object-mode", open);
           objectToggle.setAttribute("aria-pressed", open ? "true" : "false");
-          objectToggle.textContent = open ? "調整完了" : "PAD / ORB";
+          objectToggle.textContent = open ? "調整完了" : "位置調整";
           if (open) {
             player.target = null;
             clearTargetRing();
@@ -1291,7 +1312,7 @@
         }
 
         function current() {
-          return layout[selected];
+          return selected === "deadMask" ? deadMask : layout[selected];
         }
 
         function markSelected() {
@@ -1299,12 +1320,9 @@
           for (const element of refs.orb) {
             element.classList.toggle("object-selected", selected === "orb");
           }
-          objectToggle.addEventListener("click", (event) => {
-          event.preventDefault();
-          setObjectMode(!document.body.classList.contains("object-mode"));
-        });
+          refs.deadVignette.classList.toggle("object-selected", selected === "deadMask");
 
-        for (const button of tabs) {
+          for (const button of tabs) {
             button.setAttribute(
               "aria-pressed",
               button.dataset.objectSelect === selected ? "true" : "false",
@@ -1327,6 +1345,11 @@
           if (Number.isFinite(y)) item.y = y;
           applyLayout();
         }
+
+        objectToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          setObjectMode(!document.body.classList.contains("object-mode"));
+        });
 
         for (const button of tabs) {
           button.addEventListener("click", () => {
@@ -1352,6 +1375,7 @@
           localStorage.removeItem(OBJECT_STORAGE_KEY);
           layout.pad = { ...defaults.pad };
           layout.orb = { ...defaults.orb };
+          deadMask = { ...DEAD_MASK_DEFAULT };
           applyLayout();
           refresh();
         });
@@ -1368,6 +1392,10 @@
               y: Math.round(layout.orb.y * 10) / 10,
               size: Math.round(layout.orb.size),
             },
+            left_pad_dead: {
+              x: Math.round(deadMask.x * 10) / 10,
+              y: Math.round(deadMask.y * 10) / 10,
+            },
           };
           const text = JSON.stringify(payload, null, 2);
           try {
@@ -1383,6 +1411,7 @@
           if (!document.body.classList.contains("object-mode")) return;
           if (event.target.closest?.("#object-panel") || event.target.closest?.("#object-toggle")) return;
           event.preventDefault();
+
           const item = current();
           drag = {
             id: event.pointerId,
@@ -1398,9 +1427,14 @@
           if (!document.body.classList.contains("object-mode")) return;
           if (!drag || drag.id !== event.pointerId) return;
           event.preventDefault();
+
           const item = current();
-          item.x = drag.x + (event.clientX - drag.clientX) / worldScale;
-          item.y = drag.y + (event.clientY - drag.clientY) / worldScale;
+          const localScale = selected === "deadMask"
+            ? worldScale * layout.groundL.scale
+            : worldScale;
+
+          item.x = drag.x + (event.clientX - drag.clientX) / localScale;
+          item.y = drag.y + (event.clientY - drag.clientY) / localScale;
           applyLayout();
           refresh();
         }, { passive: false });
