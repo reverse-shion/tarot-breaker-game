@@ -1377,15 +1377,20 @@
     .tarot-card-inner {
       position: absolute;
       inset: 0;
-      transform-style: preserve-3d;
-      transition: transform .58s cubic-bezier(.22,.61,.36,1);
+      transform: scaleX(1);
+      transform-origin: 50% 50%;
+      transition: transform .28s cubic-bezier(.22,.61,.36,1);
       filter:
         drop-shadow(0 16px 28px rgba(0, 0, 0, .58))
         drop-shadow(0 0 20px rgba(161, 146, 255, .12));
     }
 
+    #tarot-drawn.is-flipping .tarot-card-inner {
+      transform: scaleX(.035);
+    }
+
     #tarot-drawn.is-flipped .tarot-card-inner {
-      transform: rotateY(180deg) scale(1.035);
+      transform: scaleX(1.035);
     }
 
     .tarot-face {
@@ -1394,15 +1399,16 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
       user-select: none;
       -webkit-user-drag: none;
+      transition: opacity .01s linear;
     }
 
-    .tarot-face-front {
-      transform: rotateY(180deg);
-    }
+    .tarot-face-back { opacity: 1; }
+    .tarot-face-front { opacity: 0; }
+
+    #tarot-drawn.show-front .tarot-face-back { opacity: 0; }
+    #tarot-drawn.show-front .tarot-face-front { opacity: 1; }
 
     #prologue-dialogue {
       position: fixed;
@@ -1596,15 +1602,15 @@
       <button id="prologue-start" type="button">TOUCH TO BEGIN</button>
       <div id="tarot-stage" aria-hidden="true">
         <div id="tarot-stack">
-          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
-          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
-          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
-          <img src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
+          <img src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
         </div>
         <div id="tarot-drawn">
           <div class="tarot-card-inner">
-            <img class="tarot-face tarot-face-back" src="./assets/tarot/backs/tarot-card-back.webp" alt="" draggable="false" />
-            <img class="tarot-face tarot-face-front" src="./assets/tarot/major/15-the-devil.webp" alt="XV THE DEVIL 悪魔" draggable="false" />
+            <img class="tarot-face tarot-face-back" src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
+            <img class="tarot-face tarot-face-front" src="./assets/tarot/major/15-the-devil.webp?v=20260918-prologue-v2" alt="XV THE DEVIL 悪魔" draggable="false" />
           </div>
         </div>
       </div>
@@ -2122,6 +2128,13 @@
         tarotDrawn.classList.add("is-drawn");
         playPaperShuffle(.58);
         await sleep(650);
+
+        // iOS/Safariでも確実に表面へ切り替える。
+        tarotDrawn.classList.add("is-flipping");
+        await sleep(280);
+        tarotDrawn.classList.add("show-front");
+        tarotDrawn.classList.remove("is-flipping");
+        await sleep(24);
         tarotDrawn.classList.add("is-flipped");
         playTarotResonance();
         await sleep(760);
@@ -2971,7 +2984,7 @@
       }
 
       function beginPadExit() {
-        if (ride.exitStarted || (ride.mode !== "flying" && ride.mode !== "boarding")) return;
+        if (ride.exitStarted || ride.mode !== "flying") return;
         ride.exitStarted = true;
         story.locked = true;
         document.body.classList.add("story-running");
@@ -3367,7 +3380,9 @@
             syncRideVisual(now);
 
             if (ride.progress >= 1) {
-              beginPadExit();
+              story.locked = false;
+              document.body.classList.remove("story-running");
+              setRideMode("flying");
             }
 
             setActorPosition();
