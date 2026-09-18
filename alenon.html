@@ -2076,11 +2076,13 @@
       </div>
     </section>
 
-    <div id="prologue-dialogue" class="tb-dialogue-window" role="status" aria-live="polite" aria-label="会話。タップで進む">
-      <span id="prologue-speaker" class="tb-dialogue-speaker">シオン</span>
-      <div id="prologue-line" class="tb-dialogue-text"></div>
-      <span id="dialogue-next" class="tb-dialogue-next" aria-hidden="true">▼</span>
-    </div>
+    <section id="prologue-dialogue-layer" class="tb-dialogue-layer" hidden aria-live="polite">
+      <button id="prologue-dialogue" class="tb-dialogue-window" type="button" aria-label="会話を進める">
+        <span id="prologue-speaker" class="tb-dialogue-speaker">シオン</span>
+        <span id="prologue-line" class="tb-dialogue-text"></span>
+        <span id="dialogue-next" class="tb-dialogue-next" aria-hidden="true">▼</span>
+      </button>
+    </section>
 
     <aside id="orb-interaction-choice" hidden aria-label="アレノンの光を調べる">
       <div id="orb-interaction-text">アレノンの光が揺らいでいる。</div>
@@ -2281,6 +2283,7 @@
       const tarotDrawn = document.getElementById("tarot-drawn");
       const tarotFront = document.getElementById("prologue-tarot-front");
       const alenonWind = document.getElementById("alenon-wind");
+      const prologueDialogueLayer = document.getElementById("prologue-dialogue-layer");
       const prologueDialogue = document.getElementById("prologue-dialogue");
       const prologueLine = document.getElementById("prologue-line");
       const dialogueNext = document.getElementById("dialogue-next");
@@ -2449,7 +2452,7 @@
       const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
       const storyDialogueUi = window.TarotDialogueUI.bind({
-        layer: prologueDialogue,
+        layer: prologueDialogueLayer,
         button: prologueDialogue,
         speaker: document.getElementById("prologue-speaker"),
         text: prologueLine,
