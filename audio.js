@@ -188,7 +188,11 @@
   // Pages reached through PAD transitions do not have a start button. Try
   // immediately, then retry on the next genuine user gesture if autoplay is
   // blocked by the browser.
-  if (document.body?.dataset.audioAutostart === "true") {
+  const routeParams = new URLSearchParams(location.search);
+  if (
+    document.body?.dataset.audioAutostart === "true" ||
+    routeParams.get("from") === "landing"
+  ) {
     enterWorld();
   }
 
