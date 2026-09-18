@@ -3,13 +3,16 @@
 
   const startButton = document.getElementById("start");
   const toggleButton = document.getElementById("audio-toggle");
-  if (!startButton || !toggleButton || typeof Audio !== "function") return;
+  if (!toggleButton || typeof Audio !== "function") return;
 
   const STORAGE_KEY = "tarot-breaker:bgm-enabled";
+  const POSITION_KEY = "tarot-breaker:bgm-position";
   const NORMAL_VOLUME = 0.35;
   const INTERACTION_VOLUME = 0.16;
   const FADE_MS = 320;
-  const BGM_SRC = document.currentScript?.dataset.bgmUrl || "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3";
+  const BGM_SRC =
+    document.currentScript?.dataset.bgmUrl ||
+    "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3";
 
   const bgm = new Audio(BGM_SRC);
   bgm.loop = true;
@@ -22,6 +25,8 @@
   let targetVolume = NORMAL_VOLUME;
   let fadeFrame = 0;
   let fadeToken = 0;
+  let lastPositionSave = 0;
+  let pendingResume = false;
 
   function readPreference() {
     try {
@@ -36,6 +41,41 @@
       localStorage.setItem(STORAGE_KEY, enabled ? "1" : "0");
     } catch {
       // Private browsing or storage restrictions must not block the game.
+    }
+  }
+
+  function readPosition() {
+    try {
+      const raw = sessionStorage.getItem(POSITION_KEY);
+      const value = Number(raw);
+      return Number.isFinite(value) && value >= 0 ? value : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function savePosition(force = false) {
+    if (!Number.isFinite(bgm.currentTime) || bgm.currentTime < 0) return;
+    const now = performance.now();
+    if (!force && now - lastPositionSave < 900) return;
+    lastPositionSave = now;
+    try {
+      sessionStorage.setItem(POSITION_KEY, String(bgm.currentTime));
+    } catch {
+      // Audio continuity is optional; storage failure must not block playback.
+    }
+  }
+
+  function restorePosition() {
+    const position = readPosition();
+    if (!position) return;
+    try {
+      const duration = Number.isFinite(bgm.duration) && bgm.duration > 0
+        ? bgm.duration
+        : 0;
+      bgm.currentTime = duration ? position % duration : position;
+    } catch {
+      // Some browsers reject currentTime until metadata is ready.
     }
   }
 
@@ -85,21 +125,29 @@
   }
 
   async function resumeBgm() {
-    if (!enteredWorld || !enabled || document.hidden) return;
+    if (!enteredWorld || !enabled || document.hidden) return false;
     try {
       const playResult = bgm.play();
       if (playResult?.then) await playResult;
       if (!enabled || document.hidden) {
         bgm.pause();
-        return;
+        return false;
       }
+      pendingResume = false;
       fadeTo(targetVolume);
+      return true;
     } catch (error) {
-      console.warn("BGMを再生できませんでした", error);
+      // iOS/Safari may block playback after a page transition until the
+      // next user gesture. Keep the request armed instead of treating it
+      // as a permanent failure.
+      pendingResume = true;
+      console.warn("BGM再生待機中 — 次の操作で再開します", error);
+      return false;
     }
   }
 
   function pauseBgm(immediate = false) {
+    savePosition(true);
     if (immediate) {
       cancelFade();
       bgm.pause();
@@ -119,13 +167,38 @@
   }
 
   function enterWorld() {
-    if (enteredWorld) return;
-    enteredWorld = true;
-    toggleButton.hidden = false;
+    if (!enteredWorld) {
+      enteredWorld = true;
+      toggleButton.hidden = false;
+    }
     if (enabled) resumeBgm();
   }
 
-  startButton.addEventListener("click", enterWorld, { capture: true });
+  function resumeFromGesture() {
+    if (!enteredWorld || !enabled) return;
+    if (bgm.paused || pendingResume) resumeBgm();
+  }
+
+  if (startButton) {
+    startButton.addEventListener("click", enterWorld, { capture: true });
+  }
+
+  window.addEventListener("tarot-breaker:world-enter", enterWorld);
+
+  // Pages reached through PAD transitions do not have a start button. Try
+  // immediately, then retry on the next genuine user gesture if autoplay is
+  // blocked by the browser.
+  if (document.body?.dataset.audioAutostart === "true") {
+    enterWorld();
+  }
+
+  for (const type of ["pointerdown", "touchstart", "keydown"]) {
+    window.addEventListener(type, resumeFromGesture, {
+      capture: true,
+      passive: true,
+    });
+  }
+
   toggleButton.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
   });
@@ -151,8 +224,12 @@
   window.addEventListener("pagehide", () => pauseBgm(true));
   window.addEventListener("pageshow", () => resumeBgm());
 
+  bgm.addEventListener("loadedmetadata", restorePosition, { once: true });
+  bgm.addEventListener("timeupdate", () => savePosition(false));
+
   bgm.addEventListener("error", () => {
     cancelFade();
+    pendingResume = false;
     toggleButton.disabled = true;
     toggleButton.textContent = "♪!";
     toggleButton.setAttribute("aria-label", "BGMを読み込めません");
@@ -168,6 +245,11 @@
     get enteredWorld() {
       return enteredWorld;
     },
+    get pendingResume() {
+      return pendingResume;
+    },
     setEnabled,
+    enterWorld,
+    resume: resumeBgm,
   });
 })();
