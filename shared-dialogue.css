@@ -155,3 +155,28 @@
     animation: none;
   }
 }
+
+
+/* Alenon compatibility: its original dialogue window keeps the historical ID,
+   but layout/behavior now comes from the shared wrapper. */
+#prologue-dialogue.tb-dialogue-window {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  z-index: auto;
+  width: min(92vw, 720px);
+  transform: translateY(10px);
+  margin: 0;
+}
+
+.tb-dialogue-layer.visible #prologue-dialogue.tb-dialogue-window {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (max-width: 520px) {
+  #prologue-dialogue.tb-dialogue-window {
+    width: min(92vw, 460px);
+  }
+}
