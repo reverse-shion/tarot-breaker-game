@@ -145,70 +145,55 @@ body {
   background: transparent;
 }
 .start-screen {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: linear-gradient(
-    180deg,
-    rgba(8, 10, 29, 0.62),
-    rgba(8, 10, 29, 0.22) 48%,
-    rgba(8, 10, 29, 0.68)
-  );
-  backdrop-filter: blur(2px);
+  position:absolute; inset:0; z-index:10; display:grid; place-items:center;
+  padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));
+  overflow:hidden;
+  background:#050817 url("./assets/ui/title/title-background.webp?v=20260919") center center / cover no-repeat;
+}
+.title-screen__shade {
+  position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg,rgba(1,4,15,.16),rgba(2,5,18,.04) 46%,rgba(1,3,12,.34)),
+             radial-gradient(ellipse at 50% 42%,transparent 10%,rgba(2,5,18,.08) 50%,rgba(1,3,12,.30) 100%);
 }
 .start-card {
-  width: min(100%, 420px);
-  text-align: center;
-  padding: 26px 22px 24px;
-  border: 1px solid var(--line);
-  background: rgba(12, 15, 38, 0.76);
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.28);
-  border-radius: 18px;
-  color: var(--ink);
+  position:relative; z-index:1; width:min(94vw,980px); height:100%;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:0; border:0; background:transparent; box-shadow:none; color:var(--ink);
 }
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.28em;
-  color: #ead7aa;
-}
-.start-card h1 {
-  margin: 12px 0 4px;
-  font-size: clamp(24px, 7vw, 42px);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-.start-card p {
-  margin: 0 0 22px;
-  color: #d9d9ef;
-  letter-spacing: 0.12em;
-  font-size: 13px;
+.title-logo {
+  display:block; width:min(91vw,940px); max-height:43vh; object-fit:contain;
+  transform:translateY(-4vh);
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,.72)) drop-shadow(0 0 16px rgba(237,191,93,.18));
+  animation:title-logo-enter 1.1s cubic-bezier(.2,.72,.2,1) both;
+  user-select:none; -webkit-user-drag:none;
 }
 .start-card button {
-  min-width: 170px;
-  min-height: 48px;
-  border-radius: 999px;
-  border: 1px solid #e9cf8e;
-  background: #f4e5ba;
-  color: #171a31;
-  font:
-    600 15px/1 system-ui,
-    sans-serif;
-  touch-action: manipulation;
-  cursor: pointer;
+  position:absolute; left:50%; bottom:max(8vh,calc(env(safe-area-inset-bottom) + 28px));
+  transform:translateX(-50%); min-width:220px; min-height:48px; padding:0 24px;
+  border:0; border-radius:0; background:transparent; color:#f3e7c6;
+  font:500 13px/1 system-ui,sans-serif; letter-spacing:.28em; text-indent:.28em;
+  text-shadow:0 1px 8px rgba(0,0,0,.9),0 0 14px rgba(236,207,143,.38);
+  touch-action:manipulation; cursor:pointer; animation:title-start-pulse 2.2s ease-in-out infinite;
 }
-.start-card button:disabled {
-  opacity: 0.45;
-}
+.start-card button:disabled { opacity:.35; animation:none; }
 .start-card small {
-  display: block;
-  margin-top: 12px;
-  color: #c3c7df;
-  font:
-    12px/1.5 system-ui,
-    sans-serif;
+  position:absolute; left:50%; bottom:max(5vh,calc(env(safe-area-inset-bottom) + 8px));
+  transform:translateX(-50%); width:90%; min-height:16px; margin:0;
+  color:rgba(232,235,248,.68); text-shadow:0 1px 6px rgba(0,0,0,.9);
+  font:11px/1.4 system-ui,sans-serif; letter-spacing:.04em;
+}
+@keyframes title-logo-enter {
+  from { opacity:0; transform:translateY(calc(-4vh + 10px)) scale(.985); filter:blur(4px) drop-shadow(0 0 0 transparent); }
+  to { opacity:1; transform:translateY(-4vh) scale(1); }
+}
+@keyframes title-start-pulse { 0%,100%{opacity:.62} 50%{opacity:1} }
+@media (orientation:portrait) {
+  .start-screen { background-position:center center; }
+  .title-logo { width:min(94vw,940px); max-height:34vh; transform:translateY(-7vh); }
+  @keyframes title-logo-enter {
+    from { opacity:0; transform:translateY(calc(-7vh + 10px)) scale(.985); filter:blur(4px) drop-shadow(0 0 0 transparent); }
+    to { opacity:1; transform:translateY(-7vh) scale(1); }
+  }
 }
 .guide {
   position: absolute;
