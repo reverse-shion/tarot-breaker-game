@@ -1727,6 +1727,17 @@
       line-height: 1.6;
       letter-spacing: .015em;
       text-wrap: pretty;
+      overflow-wrap: anywhere;
+    }
+
+    /* Keep the full sentence in layout while revealing characters.
+       This fixes the one-frame "snap" when a long line reaches the right edge. */
+    #prologue-line .dialogue-char {
+      visibility: hidden;
+    }
+
+    #prologue-line .dialogue-char.revealed {
+      visibility: visible;
     }
 
     #dialogue-next {
@@ -1985,7 +1996,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="tap-dialogue-v31">
+<body data-alenon-drift-revision="stable-dialogue-walk-v32">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -2286,6 +2297,7 @@
         active: false,
         complete: false,
         fullText: "",
+        characters: [],
         token: 0,
         advanceResolve: null,
       };
@@ -2426,11 +2438,34 @@
 
       const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+      function buildStoryLine(text) {
+        prologueLine.replaceChildren();
+        const fragment = document.createDocumentFragment();
+        const nodes = [];
+
+        for (const ch of [...text]) {
+          const span = document.createElement("span");
+          span.className = "dialogue-char";
+          span.textContent = ch === " " ? "\u00a0" : ch;
+          fragment.appendChild(span);
+          nodes.push(span);
+        }
+
+        prologueLine.appendChild(fragment);
+        return nodes;
+      }
+
+      function revealWholeStoryLine() {
+        for (const node of dialogueState.characters) {
+          node.classList.add("revealed");
+        }
+      }
+
       function showStoryLine(text) {
         dialogueState.fullText = text;
         dialogueState.complete = false;
         dialogueState.active = true;
-        prologueLine.textContent = "";
+        dialogueState.characters = buildStoryLine(text);
         dialogueNext.classList.remove("visible");
         prologueDialogue.classList.add("visible");
       }
@@ -2440,6 +2475,7 @@
         dialogueState.active = false;
         dialogueState.complete = false;
         dialogueState.fullText = "";
+        dialogueState.characters = [];
         dialogueState.advanceResolve = null;
         dialogueNext.classList.remove("visible");
         prologueDialogue.classList.remove("visible");
@@ -2448,10 +2484,11 @@
       async function typeStoryLine(text) {
         const token = ++dialogueState.token;
         const characters = [...text];
+        const nodes = dialogueState.characters;
         const instant = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
         if (instant) {
-          prologueLine.textContent = text;
+          revealWholeStoryLine();
           dialogueState.complete = true;
           dialogueNext.classList.add("visible");
           return;
@@ -2459,7 +2496,7 @@
 
         for (let i = 0; i < characters.length; i++) {
           if (token !== dialogueState.token || dialogueState.complete) return;
-          prologueLine.textContent += characters[i];
+          nodes[i]?.classList.add("revealed");
 
           const ch = characters[i];
           const pause =
@@ -2470,7 +2507,7 @@
         }
 
         if (token !== dialogueState.token) return;
-        prologueLine.textContent = text;
+        revealWholeStoryLine();
         dialogueState.complete = true;
         dialogueNext.classList.add("visible");
       }
@@ -2478,10 +2515,10 @@
       function advanceStoryDialogue() {
         if (!dialogueState.active) return false;
 
-        // First tap while text is appearing: reveal the whole line.
+        // First tap while text is appearing: reveal the whole line without reflow.
         if (!dialogueState.complete) {
           dialogueState.token += 1;
-          prologueLine.textContent = dialogueState.fullText;
+          revealWholeStoryLine();
           dialogueState.complete = true;
           dialogueNext.classList.add("visible");
           return true;
@@ -2730,7 +2767,7 @@
         });
       }
 
-      function scriptedWalkTo(targetX, targetY, minimumDuration = 0) {
+      function scriptedWalkTo(targetX, targetY, _minimumDuration = 0) {
         const nearest = alenonCollisionReady
           ? nearestGroundPoint({ x: targetX, y: targetY })
           : { x: targetX, y: targetY };
@@ -2743,35 +2780,25 @@
         const distance = Math.hypot(dx, dy);
         if (distance < .5) return Promise.resolve();
 
-        // Use the same on-screen speed as normal walking. Never "jump" coordinates.
+        // Use the exact same on-screen speed as free walking.
+        // Advance by capped frame delta instead of absolute elapsed time so a slow
+        // first frame on mobile can never skip a large section of the walk.
         const speedWorld = SHION_SPEED_SCREEN / Math.max(worldScale, .001);
-        const duration = Math.max(
-          minimumDuration,
-          (distance / speedWorld) * 1000,
-          620,
-        );
-        const startedAt = performance.now();
+        let travelled = 0;
+        let previousNow = 0;
+
         story.scripted = true;
+        player.target = null;
         player.dir = directionFromVector(dx, dy);
         player.moving = true;
         player.anim = 0;
+        player.frame = 0;
+        setActorPosition();
+        setActorVisual();
+        syncCamera();
 
         return new Promise((resolve) => {
-          function frame(now) {
-            const t = Math.min(1, (now - startedAt) / duration);
-            player.x = fromX + dx * t;
-            player.y = fromY + dy * t;
-            player.frame = Math.floor((now - startedAt) / 118) % 4;
-            player.moving = t < 1;
-            setActorPosition();
-            setActorVisual();
-            syncCamera();
-
-            if (t < 1) {
-              requestAnimationFrame(frame);
-              return;
-            }
-
+          function finish() {
             player.x = nearest.x;
             player.y = nearest.y;
             player.moving = false;
@@ -2783,6 +2810,37 @@
             syncCamera();
             resolve();
           }
+
+          function frame(now) {
+            if (!previousNow) {
+              previousNow = now;
+              requestAnimationFrame(frame);
+              return;
+            }
+
+            const dt = Math.min((now - previousNow) / 1000, .05);
+            previousNow = now;
+            travelled = Math.min(distance, travelled + speedWorld * dt);
+            const t = distance > 0 ? travelled / distance : 1;
+
+            player.x = fromX + dx * t;
+            player.y = fromY + dy * t;
+            player.anim += dt * 8.5;
+            player.frame = Math.floor(player.anim) % 4;
+            player.moving = t < 1;
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+
+            if (t < 1) {
+              requestAnimationFrame(frame);
+              return;
+            }
+
+            finish();
+          }
+
+          // Give the newly selected walk sheet one painted frame before movement.
           requestAnimationFrame(frame);
         });
       }
@@ -2839,7 +2897,11 @@
         await sayStory("本当に、選べる道はひとつしかないのだろうか……。", 3250, 1050);
         await sayStory("選択……か……。", 1850, 950);
 
-        // 2) Reveal Alenon only after the tarot question has had time to settle.
+        // 2) Ensure Shion's movement sheets are ready before the map becomes visible.
+        // This prevents the first walk from looking like a teleport on mobile.
+        await shionSpriteReady;
+
+        // Reveal Alenon only after the tarot question has had time to settle.
         document.body.classList.add("prologue-revealing");
         await sleep(1150);
         prologueOverlay.hidden = true;
@@ -2850,7 +2912,11 @@
 
         // 3) Shion walks naturally before anything happens.
         turnShion("down");
-        await scriptedWalkTo(player.x, player.y + 72, 1150);
+        setActorPosition();
+        setActorVisual();
+        syncCamera();
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await scriptedWalkTo(player.x, player.y + 72);
         await sleep(520);
 
         // 4) ORB anomaly. Shion notices first; the player then sees the change.
@@ -2923,7 +2989,7 @@
         await sayStory("星門庭園へ急がないと。", 2100, 700);
 
         // 8) Shion himself starts moving before control is handed over.
-        await scriptedWalkTo(player.x, player.y + 92, 1250);
+        await scriptedWalkTo(player.x, player.y + 92);
         await animateStoryCamera(0, 0, 420);
         await sleep(420);
 
@@ -3789,6 +3855,30 @@
         left: "./assets/sprites/shion/shion_walk_left.png",
         right: "./assets/sprites/shion/shion_walk_right.png",
       });
+
+      function preloadImage(src) {
+        return new Promise((resolve) => {
+          const image = new Image();
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+          };
+          image.onload = finish;
+          image.onerror = finish;
+          image.src = src;
+          if (image.decode) image.decode().then(finish).catch(() => {});
+        });
+      }
+
+      // Start loading every Shion sheet as soon as the map script runs.
+      // The first scripted walk used to request walk_down only when movement began,
+      // which could make Shion disappear/reappear on mobile and look like a jump.
+      const shionSpriteReady = Promise.all([
+        "./assets/sprites/shion/shion_idle.png",
+        ...Object.values(walkSheet),
+      ].map(preloadImage));
 
       function setActorVisual() {
         if (player.moving) {
