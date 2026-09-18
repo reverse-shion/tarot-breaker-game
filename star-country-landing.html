@@ -4,9 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#071735" />
-  <title>TAROT BREAKER — 星門庭園 離着陸場</title>
+  <script data-map-zone-editor-redirect="v1">
+    (() => {
+      const p = new URLSearchParams(location.search);
+      if (p.get("collision") === "1" && p.get("legacyCollision") !== "1") {
+        location.replace("./tools/map-zone-editor.html?map=star-landing");
+      }
+    })();
+  </script>
+  <title>TAROT BREAKER — 星門庭園 PAD離着陸場</title>
+  <link rel="stylesheet" href="./audio.css?v=0.8.0" />
+  <link rel="stylesheet" href="./shared-dialogue.css?v=1.0.0" />
   <style>
+    :root {
+      --world-w: 1448;
+      --world-h: 1086;
+      --pad-x: 725px;
+      --pad-y: 788px;
+      --pad-size: 146px;
+    }
+
     * { box-sizing: border-box; }
+
     html, body {
       width: 100%;
       height: 100%;
@@ -14,17 +33,20 @@
       overflow: hidden;
       background: #071735;
     }
+
     body {
       touch-action: none;
       overscroll-behavior: none;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+
     #viewport {
       position: fixed;
       inset: 0;
       overflow: hidden;
       background: #071735;
     }
+
     #world {
       position: absolute;
       left: 0;
@@ -36,165 +58,182 @@
       isolation: isolate;
       background: #0a2858;
     }
-    .sky {
+
+    .world-layer,
+    .world-layer img {
       position: absolute;
       inset: 0;
       width: 1448px;
       height: 1086px;
-      object-fit: cover;
-      z-index: 0;
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
     }
+
+    .sky-farthest {
+      z-index: 0;
+      object-fit: cover;
+    }
+
+    .sky-stars {
+      z-index: 1;
+      object-fit: cover;
+      opacity: .30;
+      mix-blend-mode: screen;
+    }
+
+    .world-islands {
+      z-index: 2;
+      object-fit: cover;
+      opacity: .94;
+    }
+
     .cloud-layer {
       position: absolute;
-      left: -160px;
-      top: 350px;
-      width: 1768px;
-      height: 520px;
-      z-index: 1;
-      opacity: .46;
+      inset: 0;
+      z-index: 3;
+      width: 1448px;
+      height: 1086px;
       overflow: hidden;
       pointer-events: none;
+      opacity: .70;
     }
+
     .cloud-track {
       display: flex;
-      width: 3536px;
-      height: 100%;
-      animation: clouds 52s linear infinite;
+      width: 4344px;
+      height: 1086px;
+      will-change: transform;
+      animation: starLandingClouds 58s linear infinite;
     }
+
     .cloud-track img {
-      width: 1768px;
-      height: 520px;
+      flex: 0 0 1448px;
+      width: 1448px;
+      height: 1086px;
       object-fit: cover;
-      opacity: .86;
-    }
-    @keyframes clouds {
-      from { transform: translateX(0); }
-      to { transform: translateX(-1768px); }
-    }
-    .garden-preview {
-      position: absolute;
-      left: 50%;
-      top: -286px;
-      z-index: 3;
-      width: 1260px;
-      height: auto;
-      transform: translateX(-50%);
-      opacity: .77;
-      filter: drop-shadow(0 28px 55px rgba(0,0,0,.24));
-      pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
     }
-    .approach-haze {
+
+    @keyframes starLandingClouds {
+      from { transform: translate3d(0,0,0); }
+      to { transform: translate3d(-1448px,0,0); }
+    }
+
+    @keyframes pad-breathe {
+      0%, 100% {
+        opacity: .56;
+        transform: translate(-50%, -50%) scale(.96);
+      }
+      50% {
+        opacity: .90;
+        transform: translate(-50%, -50%) scale(1.08);
+      }
+    }
+
+    .atmosphere {
       position: absolute;
       inset: 0;
       z-index: 4;
       pointer-events: none;
       background:
-        linear-gradient(to bottom, rgba(175,223,255,.12), transparent 28%),
-        radial-gradient(ellipse at 50% 26%, rgba(206,239,255,.15), transparent 35%),
-        linear-gradient(to bottom, transparent 56%, rgba(7,21,50,.18));
+        radial-gradient(ellipse at 50% 15%, rgba(218,242,255,.13), transparent 34%),
+        linear-gradient(to bottom, rgba(184,224,255,.08), transparent 30%, transparent 72%, rgba(9,25,59,.08));
     }
-    .dock {
+
+
+    .landing-ground {
       position: absolute;
-      left: 50%;
-      top: 170px;
-      z-index: 8;
-      width: 430px;
-      height: 880px;
-      transform: translateX(-50%);
-      clip-path: polygon(30% 0,70% 0,93% 100%,7% 100%);
-      background:
-        linear-gradient(90deg, rgba(117,180,232,.12), transparent 14%, transparent 86%, rgba(117,180,232,.12)),
-        linear-gradient(to bottom, rgba(219,239,255,.26), rgba(79,116,176,.13) 50%, rgba(32,62,111,.30));
-      border-top: 2px solid rgba(228,244,255,.48);
-      filter: drop-shadow(0 18px 42px rgba(0,0,0,.18));
-      pointer-events: none;
-    }
-    .dock::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 16px;
-      width: 3px;
-      height: 840px;
-      transform: translateX(-50%);
-      background: linear-gradient(to bottom, rgba(184,225,255,.62), rgba(115,180,245,.10));
-      box-shadow: 0 0 18px rgba(119,196,255,.30);
-    }
-    .dock::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: 30px;
-      width: 310px;
-      height: 115px;
-      transform: translateX(-50%);
-      border: 2px solid rgba(177,223,255,.36);
-      border-radius: 50%;
-      box-shadow: inset 0 0 24px rgba(104,190,255,.12), 0 0 26px rgba(106,190,255,.12);
-    }
-    .gate-direction {
-      position: absolute;
-      left: 50%;
-      top: 190px;
-      z-index: 12;
-      transform: translateX(-50%);
-      color: rgba(235,247,255,.88);
-      font-size: 13px;
-      letter-spacing: .12em;
-      text-shadow: 0 2px 8px rgba(0,0,0,.35);
-      pointer-events: none;
-    }
-    .landing-pad {
-      position: absolute;
-      z-index: 20;
-      left: 724px;
-      top: 900px;
-      width: 140px;
-      height: 140px;
-      transform: translate(-50%,-50%);
+      inset: 0;
+      z-index: 10;
+      width: 1448px;
+      height: 1086px;
       object-fit: contain;
-      filter:
-        brightness(1.18)
-        drop-shadow(0 0 15px rgba(120,219,255,.58))
-        drop-shadow(0 0 28px rgba(91,151,255,.28));
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
+      filter: drop-shadow(0 26px 40px rgba(0,0,0,.16));
     }
-    .landing-glow {
+
+    .pad-glow {
       position: absolute;
       z-index: 19;
-      left: 724px;
-      top: 900px;
-      width: 84px;
-      height: 36px;
-      transform: translate(-50%,-50%);
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: calc(var(--pad-size) * .50);
+      height: calc(var(--pad-size) * .25);
+      transform: translate(-50%, -50%);
       border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(150,232,255,.55), rgba(91,160,255,.15) 52%, transparent 74%);
-      filter: blur(8px);
       pointer-events: none;
+      background: radial-gradient(
+        ellipse,
+        rgba(112,220,255,.24),
+        rgba(84,161,255,.08) 46%,
+        transparent 74%
+      );
+      filter: blur(11px);
+      animation: pad-breathe 4.8s ease-in-out infinite;
     }
-    .landing-beam {
+
+    .pad-flight-trail {
       position: absolute;
-      z-index: 18;
-      left: 724px;
-      top: 900px;
-      width: 110px;
-      height: 190px;
+      z-index: 20;
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: 88px;
+      height: 120px;
       transform: translate(-50%,0);
       border-radius: 50%;
-      opacity: .82;
-      background: linear-gradient(to bottom, rgba(151,228,255,.35), rgba(101,151,255,.08), transparent);
+      opacity: 0;
+      background: linear-gradient(to bottom, rgba(167,235,255,.40), rgba(104,170,255,.10), transparent 80%);
       filter: blur(12px);
       pointer-events: none;
-      transition: opacity .7s ease;
+      transition: opacity .25s ease;
     }
-    body.arrived .landing-beam { opacity: .12; }
+
+    .pad {
+      position: absolute;
+      z-index: 22;
+      left: var(--pad-x);
+      top: var(--pad-y);
+      width: var(--pad-size);
+      height: var(--pad-size);
+      transform: translate(-50%,-50%);
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter: drop-shadow(0 0 12px rgba(107,206,255,.20));
+      transition: filter .28s ease;
+    }
+
+    body.pad-arriving .pad,
+    body.pad-boarding .pad,
+    body.pad-riding .pad,
+    body.pad-landing .pad {
+      z-index: 42;
+      filter:
+        brightness(1.22)
+        drop-shadow(0 0 15px rgba(126,224,255,.78))
+        drop-shadow(0 0 30px rgba(95,157,255,.38));
+    }
+
+    body.pad-arriving .pad-glow,
+    body.pad-boarding .pad-glow,
+    body.pad-riding .pad-glow,
+    body.pad-landing .pad-glow {
+      z-index: 41;
+      opacity: 1;
+      filter: blur(7px);
+    }
+
+    body.pad-arriving .pad-flight-trail,
+    body.pad-boarding .pad-flight-trail,
+    body.pad-riding .pad-flight-trail,
+    body.pad-landing .pad-flight-trail {
+      opacity: .82;
+    }
 
     .shion-shadow {
       position: absolute;
@@ -207,6 +246,16 @@
       background: radial-gradient(ellipse, rgba(2,7,20,.48), rgba(2,7,20,.14) 58%, transparent 76%);
       pointer-events: none;
     }
+
+    .landing-foreground {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      width: 1448px;
+      height: 1086px;
+      pointer-events: none;
+    }
+
     .shion-actor {
       position: absolute;
       z-index: 44;
@@ -222,6 +271,7 @@
       filter: drop-shadow(0 2px 2px rgba(3,7,22,.46));
       pointer-events: none;
     }
+
     .move-target {
       position: absolute;
       z-index: 41;
@@ -235,9 +285,11 @@
       opacity: 0;
       pointer-events: none;
     }
+
     .move-target.active { opacity: .8; }
+
     #guide,
-    #arrival-status {
+    #flight-status {
       position: fixed;
       left: 50%;
       z-index: 300;
@@ -246,20 +298,23 @@
       border: 1px solid rgba(195,225,255,.24);
       border-radius: 999px;
       color: rgba(255,255,255,.96);
-      background: rgba(5,13,35,.64);
+      background: rgba(5,13,35,.68);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       font-size: 12px;
       pointer-events: none;
+      transition: opacity .35s ease;
     }
+
     #guide {
       bottom: max(24px, calc(env(safe-area-inset-bottom) + 18px));
     }
-    #arrival-status {
+
+    #flight-status {
       top: max(16px, calc(env(safe-area-inset-top) + 12px));
       font-weight: 750;
     }
-    body.arrived #arrival-status { opacity: 0; transition: opacity .5s ease; }
+
     #joystick {
       position: fixed;
       z-index: 330;
@@ -268,7 +323,9 @@
       transform: translate(-50%,-50%);
       pointer-events: none;
     }
+
     #joystick[hidden] { display: none; }
+
     .joy-ring {
       position: absolute;
       inset: 0;
@@ -276,6 +333,7 @@
       border-radius: 50%;
       background: rgba(8,22,52,.22);
     }
+
     #joy-knob {
       position: absolute;
       left: 50%;
@@ -287,91 +345,508 @@
       border-radius: 50%;
       background: rgba(147,204,255,.43);
     }
+
+
+    #pad-editor-toggle {
+      position: fixed;
+      z-index: 4100;
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px));
+      min-width: 88px;
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid rgba(219,235,255,.34);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(7,18,43,.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font: 700 12px/1 system-ui, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #pad-editor {
+      position: fixed;
+      z-index: 4200;
+      left: 10px;
+      right: 10px;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 10px 12px 12px;
+      border: 1px solid rgba(219,235,255,.26);
+      border-radius: 16px;
+      color: #fff;
+      background: rgba(5,14,34,.88);
+      box-shadow: 0 14px 40px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font: 12px/1.35 system-ui, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #pad-editor[hidden],
+    #pad-editor-toggle[hidden] {
+      display: none;
+    }
+
+    .pad-editor__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .pad-editor__title {
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .pad-editor__close {
+      width: 34px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid rgba(219,235,255,.24);
+      border-radius: 9px;
+      color: #fff;
+      background: rgba(255,255,255,.07);
+      font-size: 18px;
+    }
+
+    .pad-editor__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 10px;
+    }
+
+    .pad-editor__field {
+      min-width: 0;
+    }
+
+    .pad-editor__label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 2px;
+      color: rgba(238,247,255,.94);
+    }
+
+    .pad-editor__value {
+      color: #bde8ff;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .pad-editor__range {
+      width: 100%;
+      margin: 0;
+      accent-color: #8fdcff;
+    }
+
+    .pad-editor__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .pad-editor__actions button {
+      min-height: 36px;
+      padding: 7px 8px;
+      border: 1px solid rgba(219,235,255,.24);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(43,81,136,.66);
+      font: 700 11px/1.15 system-ui, sans-serif;
+    }
+
+    .pad-editor__note {
+      margin-top: 7px;
+      color: rgba(219,235,255,.68);
+      font-size: 10px;
+    }
+
+    body.pad-editing #guide,
+    body.pad-editing #flight-status {
+      opacity: .25;
+    }
+
+
+    #collision-toggle {
+      position: fixed;
+      z-index: 4300;
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      top: max(14px, calc(env(safe-area-inset-top) + 10px));
+      min-width: 96px;
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid rgba(128,235,204,.42);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(5,32,30,.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font: 800 12px/1 system-ui, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #collision-toggle[hidden] { display: none; }
+
+    #collision-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 90;
+      width: 1448px;
+      height: 1086px;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    body.collision-mode #collision-overlay { display: block; }
+
+    #collision-overlay .collision-area {
+      fill: rgba(70,232,166,.22);
+      stroke: rgba(133,255,210,.95);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-current {
+      fill: rgba(255,208,88,.14);
+      stroke: rgba(255,223,116,.98);
+      stroke-width: 3;
+      stroke-dasharray: 9 7;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-point {
+      fill: #fff3a8;
+      stroke: rgba(45,31,0,.9);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-start {
+      fill: #ffb94a;
+      stroke: #fff4c7;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-panel {
+      display: none;
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 4400;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 10px;
+      color: #fff;
+      background: rgba(4,21,27,.94);
+      border: 1px solid rgba(132,239,207,.36);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.40);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      touch-action: auto;
+    }
+
+    body.collision-mode #collision-panel { display: block; }
+
+    body.collision-mode #guide,
+    body.collision-mode #flight-status,
+    body.collision-mode #joystick,
+    body.collision-mode #pad-editor,
+    body.collision-mode #pad-editor-toggle,
+    body.collision-mode #audio-toggle {
+      display: none !important;
+    }
+
+    body.collision-mode .shion-actor,
+    body.collision-mode .shion-shadow {
+      opacity: .30;
+    }
+
+    .collision-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .collision-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    #collision-status {
+      font-size: 11px;
+      opacity: .78;
+      white-space: nowrap;
+    }
+
+    .collision-help {
+      margin-bottom: 8px;
+      font-size: 11px;
+      line-height: 1.45;
+      opacity: .78;
+    }
+
+    .collision-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .collision-actions button {
+      appearance: none;
+      min-height: 37px;
+      padding: 6px 7px;
+      border: 1px solid rgba(168,235,220,.24);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(255,255,255,.075);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    #collision-finish {
+      background: rgba(63,184,143,.28);
+      border-color: rgba(115,235,195,.48);
+    }
+
+    #collision-copy {
+      background: rgba(65,140,255,.24);
+      border-color: rgba(125,185,255,.42);
+    }
+
+    #collision-clear {
+      background: rgba(223,104,82,.16);
+    }
+
     #fade {
       position: fixed;
       inset: 0;
       z-index: 2000;
       pointer-events: none;
       opacity: 0;
-      background: linear-gradient(to top, rgba(233,249,255,.98), rgba(95,159,225,.38), rgba(4,14,36,.08));
-      transition: opacity .75s ease;
+      background: rgba(244,251,255,.98);
+      transition: opacity .72s ease;
     }
+
     body.leaving #fade { opacity: 1; }
+
     @media (prefers-reduced-motion: reduce) {
       .cloud-track { animation: none; }
     }
   </style>
 </head>
-<body>
-  <main id="viewport" aria-label="星門庭園 離着陸場">
+<body data-star-landing-revision="ground-pad-v12-depth-runtime" data-audio-autostart="true">
+  <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
-      <img class="sky" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="sky-stars world-layer" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" aria-hidden="true" draggable="false" />
+      <img class="world-islands world-layer" src="./assets/maps/star-country-world-islands.webp?asset=34856728cf2b" alt="" aria-hidden="true" draggable="false" />
+
       <div class="cloud-layer" aria-hidden="true">
         <div class="cloud-track">
-          <img src="./assets/maps/star-country-world-clouds.webp" alt="" draggable="false" />
-          <img src="./assets/maps/star-country-world-clouds.webp" alt="" draggable="false" />
+          <img src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false" />
+          <img src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false" />
+          <img src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false" />
         </div>
       </div>
-      <img class="garden-preview" src="./assets/maps/star-country-gate-garden-transparent.webp?v=landing-v1" alt="" aria-hidden="true" draggable="false" />
-      <div class="approach-haze" aria-hidden="true"></div>
-      <div class="dock" aria-hidden="true"></div>
-      <div class="gate-direction" aria-hidden="true">STAR GATE GARDEN ↑</div>
 
-      <div class="landing-beam" aria-hidden="true"></div>
-      <div class="landing-glow" aria-hidden="true"></div>
-      <img class="landing-pad" src="./assets/maps/alenon/pad.webp" alt="" aria-hidden="true" draggable="false" />
+      <div class="atmosphere" aria-hidden="true"></div>
+
+      <img class="landing-ground" src="./assets/maps/star-landing/ground.webp?v=star-landing-ground-v1" alt="" aria-hidden="true" draggable="false" />
+
+      <div class="pad-flight-trail" aria-hidden="true"></div>
+      <div class="pad-glow" aria-hidden="true"></div>
+      <img class="pad" src="./assets/maps/alenon/pad.webp" alt="" aria-hidden="true" draggable="false" />
+
+      <svg id="collision-overlay" viewBox="0 0 1448 1086" aria-hidden="true"></svg>
 
       <div class="move-target" aria-hidden="true"></div>
       <div class="shion-shadow" aria-hidden="true"></div>
       <div class="shion-actor" role="img" aria-label="シオン"></div>
+      <canvas id="landing-foreground" class="landing-foreground" width="1448" height="1086" aria-hidden="true"></canvas>
     </section>
 
-    <div id="arrival-status" role="status">PAD着陸中…</div>
+    <div id="flight-status" role="status" aria-live="polite">PAD着陸中…</div>
     <div id="guide">星門庭園へ向かう</div>
+
     <div id="joystick" hidden aria-hidden="true">
       <div class="joy-ring"></div>
       <div id="joy-knob"></div>
     </div>
+
+
+    <button id="collision-toggle" type="button" hidden aria-pressed="false">当たり判定</button>
+
+    <aside id="collision-panel" aria-label="PAD離着陸マップ当たり判定エディタ">
+      <div class="collision-top">
+        <div class="collision-title">PAD離着陸マップ 当たり判定</div>
+        <div id="collision-status">範囲 0 / 点 0</div>
+      </div>
+      <div class="collision-help">
+        タップ＝歩ける範囲の頂点 / 画面をドラッグ＝マップ移動 / 始点付近をタップ＝範囲確定
+      </div>
+      <div class="collision-actions">
+        <button id="collision-undo-point" type="button">1点戻す</button>
+        <button id="collision-finish" type="button">範囲を確定</button>
+        <button id="collision-undo-area" type="button">1範囲戻す</button>
+        <button id="collision-center" type="button">PADへ戻る</button>
+        <button id="collision-clear" type="button">全消去</button>
+        <button id="collision-copy" type="button">JSONコピー</button>
+      </div>
+    </aside>
+
+    <button id="pad-editor-toggle" type="button" hidden>PAD調整</button>
+    <aside id="pad-editor" hidden aria-label="PAD離着陸位置調整">
+      <div class="pad-editor__head">
+        <div class="pad-editor__title">PAD 離着陸位置調整</div>
+        <button id="pad-editor-close" class="pad-editor__close" type="button" aria-label="調整パネルを閉じる">×</button>
+      </div>
+
+      <div class="pad-editor__grid">
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">X <span id="pad-edit-x-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-x" class="pad-editor__range" type="range" min="420" max="1028" step="0.5" />
+        </label>
+
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">Y <span id="pad-edit-y-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-y" class="pad-editor__range" type="range" min="520" max="1040" step="0.5" />
+        </label>
+
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">大きさ <span id="pad-edit-size-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-size" class="pad-editor__range" type="range" min="80" max="230" step="1" />
+        </label>
+
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">降機位置 <span id="pad-edit-offset-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-offset" class="pad-editor__range" type="range" min="20" max="140" step="1" />
+        </label>
+      </div>
+
+      <div class="pad-editor__actions">
+        <button id="pad-edit-preview" type="button">着陸を再生</button>
+        <button id="pad-edit-copy" type="button">値をコピー</button>
+        <button id="pad-edit-reset" type="button">初期値</button>
+      </div>
+      <div class="pad-editor__note">URLに ?padEdit=1 を付けた時だけ表示。調整値はこの端末に自動保存されます。</div>
+    </aside>
+
+    <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
     <div id="fade" aria-hidden="true"></div>
   </main>
 
+  <script src="./audio.js?v=0.8.0" defer></script>
+  <script src="./shared-dialogue.js?v=1.0.0"></script>
   <script>
     (() => {
       "use strict";
 
       const WORLD_W = 1448;
       const WORLD_H = 1086;
-      const SPEED_SCREEN = 155;
-      const SPAWN = { x: 724, y: 900 };
-      const EXIT_Y = 250;
-      const WALK_X_MIN = 500;
-      const WALK_X_MAX = 948;
-      const WALK_Y_MIN = 205;
-      const WALK_Y_MAX = 970;
+      const SHION_SPEED_SCREEN = 155;
+      const PAD_SPEED_SCREEN = 175;
+
+      const PAD_DEFAULTS = Object.freeze({
+        x: 725,
+        y: 788,
+        size: 146,
+        dismountOffsetY: 72,
+      });
+      let PAD_HOME = { x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y };
+      let PAD_SIZE = PAD_DEFAULTS.size;
+      const PAD_TOUCH_RADIUS = 66;
+      const PAD_LIFT = 18;
+      const PAD_BOARD_DURATION = .92;
+      const PAD_LAND_DURATION = .80;
+      const PAD_HOME_ARM_DISTANCE = 112;
+      const PAD_HOME_LAND_RADIUS = 62;
+      let PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
+      const PAD_REBOARD_COOLDOWN_MS = 900;
+
+      const GARDEN_EXIT_Y = 215;
+      const GARDEN_EXIT_X_MIN = 540;
+      const GARDEN_EXIT_X_MAX = 908;
+      const WORLD_MARGIN = 34;
 
       const viewport = document.getElementById("viewport");
       const world = document.getElementById("world");
       const actor = document.querySelector(".shion-actor");
       const shadow = document.querySelector(".shion-shadow");
       const targetRing = document.querySelector(".move-target");
-      const pad = document.querySelector(".landing-pad");
-      const padGlow = document.querySelector(".landing-glow");
-      const beam = document.querySelector(".landing-beam");
+      const pad = document.querySelector(".pad");
+      const padGlow = document.querySelector(".pad-glow");
+      const padTrail = document.querySelector(".pad-flight-trail");
+      const landingGround = document.querySelector(".landing-ground");
+      const landingForeground = document.getElementById("landing-foreground");
       const guide = document.getElementById("guide");
-      const status = document.getElementById("arrival-status");
+      const status = document.getElementById("flight-status");
       const joystick = document.getElementById("joystick");
       const knob = document.getElementById("joy-knob");
+
+      const params = new URLSearchParams(location.search);
+      const arrivingFromAlenon = params.get("from") === "alenon";
+      const collisionMode = params.get("collision") === "1";
+      const padEditMode =
+        !collisionMode &&
+        (params.get("padEdit") === "1" || params.get("debug") === "1");
+      const PAD_EDIT_STORAGE_KEY = "tarot-breaker:star-landing-pad-layout-v1";
+      const COLLISION_URL = "./assets/maps/star-landing/collision.json?v=2";
+      const DEPTH_URL = "./assets/maps/star-landing/depth.json?v=1";
+      const COLLISION_DRAFT_KEY = "tarot-breaker:star-landing-collision-v1";
+
+      const padEditorToggle = document.getElementById("pad-editor-toggle");
+      const padEditor = document.getElementById("pad-editor");
+      const padEditorClose = document.getElementById("pad-editor-close");
+      const padEditX = document.getElementById("pad-edit-x");
+      const padEditY = document.getElementById("pad-edit-y");
+      const padEditSize = document.getElementById("pad-edit-size");
+      const padEditOffset = document.getElementById("pad-edit-offset");
+      const padEditXValue = document.getElementById("pad-edit-x-value");
+      const padEditYValue = document.getElementById("pad-edit-y-value");
+      const padEditSizeValue = document.getElementById("pad-edit-size-value");
+      const padEditOffsetValue = document.getElementById("pad-edit-offset-value");
+      const padEditPreview = document.getElementById("pad-edit-preview");
+      const padEditCopy = document.getElementById("pad-edit-copy");
+      const padEditReset = document.getElementById("pad-edit-reset");
+
+      const collisionToggle = document.getElementById("collision-toggle");
+      const collisionOverlay = document.getElementById("collision-overlay");
+      const collisionPanel = document.getElementById("collision-panel");
+      const collisionStatus = document.getElementById("collision-status");
+      const collisionUndoPoint = document.getElementById("collision-undo-point");
+      const collisionFinish = document.getElementById("collision-finish");
+      const collisionUndoArea = document.getElementById("collision-undo-area");
+      const collisionCenter = document.getElementById("collision-center");
+      const collisionClear = document.getElementById("collision-clear");
+      const collisionCopy = document.getElementById("collision-copy");
 
       let worldScale = 1;
       let cameraTx = 0;
       let cameraTy = 0;
-      let arrived = false;
+      let collisionPanX = 0;
+      let collisionPanY = 0;
       let leaving = false;
-      let arrivalAge = 0;
+      let landingWalkAreas = [];
+      let landingBlockedAreas = [];
+      let landingDepthAreas = [];
 
       const player = {
-        x: SPAWN.x,
-        y: SPAWN.y,
+        x: PAD_HOME.x,
+        y: PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y,
         dir: "up",
         moving: false,
         frame: 0,
@@ -379,15 +854,802 @@
         target: null,
       };
 
-      const idleFrame = { down: 0, up: 1, left: 2, right: 3 };
-      const walkSheet = {
+      const ride = {
+        mode: arrivingFromAlenon ? "arriving" : "ground",
+        x: PAD_HOME.x,
+        y: arrivingFromAlenon ? Math.min(WORLD_H + 20, PAD_HOME.y + 148) : PAD_HOME.y,
+        lift: arrivingFromAlenon ? 48 : 0,
+        progress: 0,
+        fromX: PAD_HOME.x,
+        fromY: PAD_HOME.y,
+        homeArmed: false,
+        landFromX: 0,
+        landFromY: 0,
+        landFromLift: 0,
+        reboardLockedUntil: 0,
+      };
+
+      const idleFrame = { down:0, up:1, left:2, right:3 };
+      const walkSheet = Object.freeze({
         down: "./assets/sprites/shion/shion_walk_down.png",
         up: "./assets/sprites/shion/shion_walk_up.png",
         left: "./assets/sprites/shion/shion_walk_left.png",
         right: "./assets/sprites/shion/shion_walk_right.png",
-      };
+      });
+
+      const FALLBACK_WALK_AREAS = Object.freeze([
+              {
+                      "type": "poly",
+                      "points": [
+                              [
+                                      560,
+                                      958
+                              ],
+                              [
+                                      888,
+                                      958
+                              ],
+                              [
+                                      860,
+                                      830
+                              ],
+                              [
+                                      850,
+                                      700
+                              ],
+                              [
+                                      842,
+                                      565
+                              ],
+                              [
+                                      830,
+                                      430
+                              ],
+                              [
+                                      910,
+                                      300
+                              ],
+                              [
+                                      940,
+                                      180
+                              ],
+                              [
+                                      508,
+                                      180
+                              ],
+                              [
+                                      538,
+                                      300
+                              ],
+                              [
+                                      618,
+                                      430
+                              ],
+                              [
+                                      606,
+                                      565
+                              ],
+                              [
+                                      598,
+                                      700
+                              ],
+                              [
+                                      588,
+                                      830
+                              ]
+                      ]
+              },
+              {
+                      "type": "poly",
+                      "points": [
+                              [
+                                      893,
+                                      788
+                              ],
+                              [
+                                      887,
+                                      831
+                              ],
+                              [
+                                      870,
+                                      872
+                              ],
+                              [
+                                      844,
+                                      907
+                              ],
+                              [
+                                      809,
+                                      933
+                              ],
+                              [
+                                      768,
+                                      950
+                              ],
+                              [
+                                      725,
+                                      956
+                              ],
+                              [
+                                      682,
+                                      950
+                              ],
+                              [
+                                      641,
+                                      933
+                              ],
+                              [
+                                      606,
+                                      907
+                              ],
+                              [
+                                      580,
+                                      872
+                              ],
+                              [
+                                      563,
+                                      831
+                              ],
+                              [
+                                      557,
+                                      788
+                              ],
+                              [
+                                      563,
+                                      745
+                              ],
+                              [
+                                      580,
+                                      704
+                              ],
+                              [
+                                      606,
+                                      669
+                              ],
+                              [
+                                      641,
+                                      643
+                              ],
+                              [
+                                      682,
+                                      626
+                              ],
+                              [
+                                      725,
+                                      620
+                              ],
+                              [
+                                      768,
+                                      626
+                              ],
+                              [
+                                      809,
+                                      643
+                              ],
+                              [
+                                      844,
+                                      669
+                              ],
+                              [
+                                      870,
+                                      704
+                              ],
+                              [
+                                      887,
+                                      745
+                              ]
+                      ]
+              }
+      ]);
 
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+      function preloadImage(src) {
+        return new Promise((resolve) => {
+          const image = new Image();
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+          };
+          image.onload = finish;
+          image.onerror = finish;
+          image.src = src;
+          if (image.decode) image.decode().then(finish).catch(() => {});
+        });
+      }
+
+      Promise.all([
+        "./assets/sprites/shion/shion_idle.png",
+        ...Object.values(walkSheet),
+        "./assets/maps/alenon/pad.webp",
+        "./assets/maps/star-landing/ground.webp",
+      ].map(preloadImage)).catch(() => {});
+
+
+      function readPadDraft() {
+        if (!padEditMode) return;
+        try {
+          const saved = JSON.parse(localStorage.getItem(PAD_EDIT_STORAGE_KEY) || "null");
+          if (!saved) return;
+          if (Number.isFinite(saved.x)) PAD_HOME.x = clamp(saved.x, 420, 1028);
+          if (Number.isFinite(saved.y)) PAD_HOME.y = clamp(saved.y, 520, 1040);
+          if (Number.isFinite(saved.size)) PAD_SIZE = clamp(saved.size, 80, 230);
+          if (Number.isFinite(saved.dismountOffsetY)) {
+            PAD_DISMOUNT_OFFSET_Y = clamp(saved.dismountOffsetY, 20, 140);
+          }
+        } catch (_) {}
+      }
+
+      function savePadDraft() {
+        if (!padEditMode) return;
+        try {
+          localStorage.setItem(PAD_EDIT_STORAGE_KEY, JSON.stringify({
+            x: PAD_HOME.x,
+            y: PAD_HOME.y,
+            size: PAD_SIZE,
+            dismountOffsetY: PAD_DISMOUNT_OFFSET_Y,
+          }));
+        } catch (_) {}
+      }
+
+      function applyPadEditorLayout({ movePlayer = false } = {}) {
+        document.documentElement.style.setProperty("--pad-x", PAD_HOME.x + "px");
+        document.documentElement.style.setProperty("--pad-y", PAD_HOME.y + "px");
+        document.documentElement.style.setProperty("--pad-size", PAD_SIZE + "px");
+
+        if (ride.mode === "ground") {
+          pad.style.left = PAD_HOME.x + "px";
+          pad.style.top = PAD_HOME.y + "px";
+          padGlow.style.left = PAD_HOME.x + "px";
+          padGlow.style.top = PAD_HOME.y + "px";
+          padTrail.style.left = PAD_HOME.x + "px";
+          padTrail.style.top = PAD_HOME.y + "px";
+
+          if (movePlayer) {
+            player.x = PAD_HOME.x;
+            player.y = PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y;
+            player.dir = "up";
+            player.target = null;
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+          }
+        }
+      }
+
+      function renderPadEditor() {
+        if (!padEditMode) return;
+        padEditX.value = String(PAD_HOME.x);
+        padEditY.value = String(PAD_HOME.y);
+        padEditSize.value = String(PAD_SIZE);
+        padEditOffset.value = String(PAD_DISMOUNT_OFFSET_Y);
+        padEditXValue.textContent = PAD_HOME.x + " px";
+        padEditYValue.textContent = PAD_HOME.y + " px";
+        padEditSizeValue.textContent = Math.round(PAD_SIZE) + " px";
+        padEditOffsetValue.textContent = Math.round(PAD_DISMOUNT_OFFSET_Y) + " px";
+      }
+
+      function updatePadFromEditor(movePlayer = true) {
+        PAD_HOME.x = Number(padEditX.value);
+        PAD_HOME.y = Number(padEditY.value);
+        PAD_SIZE = Number(padEditSize.value);
+        PAD_DISMOUNT_OFFSET_Y = Number(padEditOffset.value);
+        applyPadEditorLayout({ movePlayer });
+        renderPadEditor();
+        savePadDraft();
+      }
+
+      function previewPadArrival() {
+        if (!padEditMode || leaving) return;
+        clearTarget();
+        ride.mode = "arriving";
+        ride.x = PAD_HOME.x;
+        ride.y = Math.min(WORLD_H + 20, PAD_HOME.y + 148);
+        ride.lift = 48;
+        ride.progress = 0;
+        ride.homeArmed = false;
+        player.x = ride.x;
+        player.y = ride.y - ride.lift - 2;
+        player.dir = "up";
+        setRideMode("arriving");
+        status.style.opacity = "1";
+        setActorPosition();
+        setActorVisual();
+        syncCamera();
+      }
+
+      async function copyPadEditorValues() {
+        const value =
+          `PAD_HOME = { x: ${PAD_HOME.x}, y: ${PAD_HOME.y} };\n` +
+          `PAD_SIZE = ${Math.round(PAD_SIZE)};\n` +
+          `PAD_DISMOUNT_OFFSET_Y = ${Math.round(PAD_DISMOUNT_OFFSET_Y)};`;
+        try {
+          await navigator.clipboard.writeText(value);
+          padEditCopy.textContent = "コピー済み";
+        } catch (_) {
+          padEditCopy.textContent = "コピー不可";
+          console.log(value);
+        }
+        window.setTimeout(() => {
+          padEditCopy.textContent = "値をコピー";
+        }, 1100);
+      }
+
+      function resetPadEditor() {
+        PAD_HOME = { x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y };
+        PAD_SIZE = PAD_DEFAULTS.size;
+        PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
+        try { localStorage.removeItem(PAD_EDIT_STORAGE_KEY); } catch (_) {}
+        applyPadEditorLayout({ movePlayer: true });
+        renderPadEditor();
+      }
+
+      function initPadEditor() {
+        if (!padEditMode) return;
+
+        document.body.classList.add("pad-editing");
+        padEditor.hidden = false;
+        padEditorToggle.hidden = true;
+
+        readPadDraft();
+        applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
+        renderPadEditor();
+
+        for (const input of [padEditX, padEditY, padEditSize, padEditOffset]) {
+          input.addEventListener("input", () => updatePadFromEditor(true));
+          input.addEventListener("pointerdown", (event) => event.stopPropagation());
+          input.addEventListener("touchstart", (event) => event.stopPropagation(), { passive:true });
+        }
+
+        for (const element of [padEditor, padEditorToggle]) {
+          element.addEventListener("pointerdown", (event) => event.stopPropagation());
+          element.addEventListener("pointermove", (event) => event.stopPropagation());
+          element.addEventListener("pointerup", (event) => event.stopPropagation());
+        }
+
+        padEditorClose.addEventListener("click", () => {
+          padEditor.hidden = true;
+          padEditorToggle.hidden = false;
+        });
+
+        padEditorToggle.addEventListener("click", () => {
+          padEditor.hidden = false;
+          padEditorToggle.hidden = true;
+        });
+
+        padEditPreview.addEventListener("click", previewPadArrival);
+        padEditCopy.addEventListener("click", copyPadEditorValues);
+        padEditReset.addEventListener("click", resetPadEditor);
+      }
+
+
+      async function loadLandingCollision() {
+        let data = null;
+        try {
+          const response = await fetch(COLLISION_URL, { cache: "no-store" });
+          if (response.ok) data = await response.json();
+        } catch (_) {}
+
+        const source =
+          data?.map === "star-landing" &&
+          data?.referenceSize?.width === WORLD_W &&
+          data?.referenceSize?.height === WORLD_H &&
+          Array.isArray(data?.walkAreas)
+            ? data.walkAreas
+            : FALLBACK_WALK_AREAS;
+
+        landingWalkAreas = source
+          .filter(
+            (area) =>
+              area?.type === "poly" &&
+              Array.isArray(area.points) &&
+              area.points.length >= 3,
+          )
+          .map((area) => ({
+            type: "poly",
+            points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+          }));
+
+        landingBlockedAreas = (Array.isArray(data?.blockedAreas) ? data.blockedAreas : [])
+          .filter(
+            (area) =>
+              area?.type === "poly" &&
+              Array.isArray(area.points) &&
+              area.points.length >= 3,
+          )
+          .map((area) => ({
+            type: "poly",
+            points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+          }));
+
+        if (collisionMode) {
+          try {
+            const saved = JSON.parse(localStorage.getItem(COLLISION_DRAFT_KEY) || "null");
+            if (Array.isArray(saved?.walkAreas)) {
+              const draft = saved.walkAreas.filter(
+                (area) =>
+                  area?.type === "poly" &&
+                  Array.isArray(area.points) &&
+                  area.points.length >= 3,
+              );
+              if (draft.length) {
+                landingWalkAreas = draft.map((area) => ({
+                  type: "poly",
+                  points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+                }));
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      async function loadLandingDepth() {
+        let data = null;
+        try {
+          const response = await fetch(DEPTH_URL, { cache: "no-store" });
+          if (response.ok) data = await response.json();
+        } catch (_) {}
+
+        landingDepthAreas =
+          data?.map === "star-landing" &&
+          data?.referenceSize?.width === WORLD_W &&
+          data?.referenceSize?.height === WORLD_H &&
+          Array.isArray(data?.behindForegroundAreas)
+            ? data.behindForegroundAreas
+                .filter(
+                  (area) =>
+                    area?.type === "poly" &&
+                    Array.isArray(area.points) &&
+                    area.points.length >= 3,
+                )
+                .map((area) => ({
+                  type: "poly",
+                  points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
+                }))
+            : [];
+      }
+
+      async function renderLandingForeground() {
+        if (!landingForeground || !landingGround) return;
+        if (!(landingGround.complete && landingGround.naturalWidth)) {
+          await new Promise((resolve) => {
+            landingGround.addEventListener("load", resolve, { once:true });
+            landingGround.addEventListener("error", resolve, { once:true });
+          });
+        }
+        if (typeof landingGround.decode === "function") {
+          try { await landingGround.decode(); } catch (_) {}
+        }
+
+        const ctx = landingForeground.getContext("2d");
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.clearRect(0,0,WORLD_W,WORLD_H);
+
+        for (const area of landingDepthAreas) {
+          ctx.save();
+          ctx.beginPath();
+          area.points.forEach((point, index) => {
+            if (index === 0) ctx.moveTo(point[0], point[1]);
+            else ctx.lineTo(point[0], point[1]);
+          });
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(landingGround, 0, 0, WORLD_W, WORLD_H);
+          ctx.restore();
+        }
+      }
+
+      function initCollisionEditor() {
+        if (!collisionMode) return;
+
+        document.body.classList.add("collision-mode");
+        collisionToggle.hidden = false;
+        collisionToggle.setAttribute("aria-pressed", "true");
+        collisionToggle.textContent = "編集完了";
+
+        let areas = landingWalkAreas.map((area) => ({
+          type: "poly",
+          points: area.points.map((p) => [p[0], p[1]]),
+        }));
+        let current = [];
+        let gesture = null;
+
+        const svgNS = "http://www.w3.org/2000/svg";
+
+        function payload() {
+          return {
+            version: 1,
+            map: "star-landing",
+            referenceSize: { width: WORLD_W, height: WORLD_H },
+            walkAreas: areas.map((area) => ({
+              type: "poly",
+              points: area.points.map((p) => [Math.round(p[0]), Math.round(p[1])]),
+            })),
+          };
+        }
+
+        function saveDraft() {
+          landingWalkAreas = areas.map((area) => ({
+            type: "poly",
+            points: area.points.map((p) => [p[0], p[1]]),
+          }));
+          try {
+            localStorage.setItem(COLLISION_DRAFT_KEY, JSON.stringify(payload()));
+          } catch (_) {}
+        }
+
+        function polygon(points, className) {
+          const node = document.createElementNS(svgNS, "polygon");
+          node.setAttribute("class", className);
+          node.setAttribute("points", points.map((p) => p.join(",")).join(" "));
+          return node;
+        }
+
+        function circleNode(point, index) {
+          const node = document.createElementNS(svgNS, "circle");
+          node.setAttribute("class", index === 0 ? "collision-start" : "collision-point");
+          node.setAttribute("cx", point[0]);
+          node.setAttribute("cy", point[1]);
+          node.setAttribute("r", index === 0 ? 7 : 5);
+          return node;
+        }
+
+        function render() {
+          collisionOverlay.replaceChildren();
+
+          for (const area of areas) {
+            collisionOverlay.appendChild(polygon(area.points, "collision-area"));
+          }
+
+          if (current.length) {
+            collisionOverlay.appendChild(polygon(current, "collision-current"));
+            current.forEach((point, index) => {
+              collisionOverlay.appendChild(circleNode(point, index));
+            });
+          }
+
+          collisionStatus.textContent =
+            `範囲 ${areas.length} / 点 ${current.length}`;
+        }
+
+        function finishCurrent() {
+          if (current.length < 3) return false;
+          areas.push({
+            type: "poly",
+            points: current.map((p) => [Math.round(p[0]), Math.round(p[1])]),
+          });
+          current = [];
+          saveDraft();
+          render();
+          return true;
+        }
+
+        function setMode(open) {
+          document.body.classList.toggle("collision-mode", open);
+          collisionToggle.setAttribute("aria-pressed", open ? "true" : "false");
+          collisionToggle.textContent = open ? "編集完了" : "当たり判定";
+          if (open) {
+            clearTarget();
+            render();
+            syncCamera();
+          } else {
+            gesture = null;
+            collisionPanX = 0;
+            collisionPanY = 0;
+            syncCamera();
+          }
+        }
+
+        collisionToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          setMode(!document.body.classList.contains("collision-mode"));
+        });
+
+        collisionUndoPoint.addEventListener("click", () => {
+          current.pop();
+          render();
+        });
+
+        collisionFinish.addEventListener("click", () => {
+          if (!finishCurrent()) {
+            collisionFinish.textContent = "3点以上必要";
+            setTimeout(() => collisionFinish.textContent = "範囲を確定", 1100);
+          }
+        });
+
+        collisionUndoArea.addEventListener("click", () => {
+          if (current.length) {
+            current = [];
+          } else {
+            areas.pop();
+            saveDraft();
+          }
+          render();
+        });
+
+        collisionCenter.addEventListener("click", () => {
+          collisionPanX = 0;
+          collisionPanY = 0;
+          syncCamera();
+        });
+
+        collisionClear.addEventListener("click", () => {
+          if (!areas.length && !current.length) return;
+          if (!window.confirm("作成中の当たり判定をすべて消しますか？")) return;
+          areas = [];
+          current = [];
+          saveDraft();
+          render();
+        });
+
+        collisionCopy.addEventListener("click", async () => {
+          if (current.length >= 3) finishCurrent();
+          const text = JSON.stringify(payload(), null, 2);
+          try {
+            await navigator.clipboard.writeText(text);
+            collisionCopy.textContent = "コピーしました";
+            setTimeout(() => collisionCopy.textContent = "JSONコピー", 1300);
+          } catch (_) {
+            window.prompt("当たり判定JSONをコピーしてください", text);
+          }
+        });
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (!document.body.classList.contains("collision-mode")) return;
+          if (
+            event.target.closest?.("#collision-panel") ||
+            event.target.closest?.("#collision-toggle")
+          ) return;
+          if (event.button != null && event.button !== 0) return;
+
+          event.preventDefault();
+          gesture = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            panX: collisionPanX,
+            panY: collisionPanY,
+            moved: false,
+            time: performance.now(),
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false, capture: true });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!gesture || gesture.id !== event.pointerId) return;
+          if (!document.body.classList.contains("collision-mode")) return;
+          event.preventDefault();
+
+          const dx = event.clientX - gesture.x;
+          const dy = event.clientY - gesture.y;
+
+          if (!gesture.moved && Math.hypot(dx, dy) >= 10) {
+            gesture.moved = true;
+          }
+
+          if (gesture.moved) {
+            collisionPanX = gesture.panX - dx / worldScale;
+            collisionPanY = gesture.panY - dy / worldScale;
+            syncCamera();
+          }
+        }, { passive: false, capture: true });
+
+        function finishGesture(event) {
+          if (!gesture || gesture.id !== event.pointerId) return;
+          event.preventDefault();
+
+          const wasMoved = gesture.moved;
+          const elapsed = performance.now() - gesture.time;
+
+          if (!wasMoved && elapsed < 650) {
+            const p = screenToWorld(event.clientX, event.clientY);
+            const point = [
+              Math.round(clamp(p.x, 0, WORLD_W)),
+              Math.round(clamp(p.y, 0, WORLD_H)),
+            ];
+
+            if (current.length >= 3) {
+              const first = current[0];
+              const close = Math.hypot(point[0] - first[0], point[1] - first[1]);
+              if (close <= 28) {
+                finishCurrent();
+              } else {
+                current.push(point);
+                render();
+              }
+            } else {
+              current.push(point);
+              render();
+            }
+          }
+
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          gesture = null;
+        }
+
+        viewport.addEventListener("pointerup", finishGesture, { passive:false, capture:true });
+        viewport.addEventListener("pointercancel", (event) => {
+          if (gesture?.id === event.pointerId) gesture = null;
+        }, { passive:false, capture:true });
+
+        render();
+      }
+
+      function pointInPoly(x, y, points) {
+        let inside = false;
+        for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+          const a = points[j];
+          const b = points[i];
+          if (
+            (a[1] > y) !== (b[1] > y) &&
+            x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0]
+          ) {
+            inside = !inside;
+          }
+        }
+        return inside;
+      }
+
+      function isGroundWalkable(x, y) {
+        const insideWalk =
+          !landingWalkAreas.length ||
+          landingWalkAreas.some(
+            (area) =>
+              area.type === "poly" &&
+              Array.isArray(area.points) &&
+              pointInPoly(x, y, area.points),
+          );
+
+        if (!insideWalk) return false;
+
+        return !landingBlockedAreas.some(
+          (area) =>
+            area.type === "poly" &&
+            Array.isArray(area.points) &&
+            pointInPoly(x, y, area.points),
+        );
+      }
+
+      function nearestPointOnSegment(point, a, b) {
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const length2 = dx * dx + dy * dy;
+        const t = length2
+          ? clamp(
+              ((point.x - a[0]) * dx + (point.y - a[1]) * dy) / length2,
+              0,
+              1,
+            )
+          : 0;
+        return { x: a[0] + dx * t, y: a[1] + dy * t };
+      }
+
+      function nearestGroundPoint(point) {
+        if (!landingWalkAreas.length) return { ...point };
+        if (isGroundWalkable(point.x, point.y)) return { ...point };
+
+        let best = null;
+        let bestDistance = Infinity;
+
+        for (const area of landingWalkAreas) {
+          if (area.type !== "poly" || !Array.isArray(area.points)) continue;
+          for (let i = 0, j = area.points.length - 1; i < area.points.length; j = i++) {
+            const candidate = nearestPointOnSegment(point, area.points[j], area.points[i]);
+            const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+            if (distance < bestDistance) {
+              best = candidate;
+              bestDistance = distance;
+            }
+          }
+        }
+
+        return best;
+      }
 
       function fitWorld() {
         worldScale = Math.max(1, innerWidth / WORLD_W, innerHeight / WORLD_H);
@@ -402,11 +1664,22 @@
         const maxX = Math.max(minX, WORLD_W - halfW);
         const minY = Math.min(halfH, WORLD_H / 2);
         const maxY = Math.max(minY, WORLD_H - halfH);
+
         const focusX = clamp(player.x, minX, maxX);
         const focusY = clamp(player.y - 85, minY, maxY);
+
         cameraTx = innerWidth / 2 - focusX * worldScale;
         cameraTy = innerHeight / 2 - focusY * worldScale;
-        world.style.transform = `translate3d(${cameraTx}px,${cameraTy}px,0) scale(${worldScale})`;
+
+        // Collision editor needs free canvas panning even beyond the normal
+        // gameplay camera limits. Apply its pan after clamping the gameplay
+        // focus so dragging always moves the map on mobile.
+        if (collisionMode) {
+          cameraTx -= collisionPanX * worldScale;
+          cameraTy -= collisionPanY * worldScale;
+        }
+        world.style.transform =
+          `translate3d(${cameraTx}px,${cameraTy}px,0) scale(${worldScale})`;
       }
 
       function setActorPosition() {
@@ -414,6 +1687,17 @@
         actor.style.top = player.y + "px";
         shadow.style.left = player.x + "px";
         shadow.style.top = player.y + "px";
+
+        if (ride.mode === "ground") {
+          const behindPad =
+            Math.abs(player.x - PAD_HOME.x) <= PAD_SIZE * .62 &&
+            player.y < PAD_HOME.y - 6;
+          actor.style.zIndex = behindPad ? "21" : "44";
+          shadow.style.zIndex = behindPad ? "20" : "43";
+        } else {
+          actor.style.zIndex = "45";
+          shadow.style.zIndex = "43";
+        }
       }
 
       function setActorVisual() {
@@ -432,66 +1716,219 @@
       }
 
       function screenToWorld(x, y) {
-        return { x: (x - cameraTx) / worldScale, y: (y - cameraTy) / worldScale };
+        return {
+          x: (x - cameraTx) / worldScale,
+          y: (y - cameraTy) / worldScale,
+        };
       }
 
-      function setTarget(clientX, clientY) {
-        if (!arrived || leaving) return;
-        const point = screenToWorld(clientX, clientY);
-        point.x = clamp(point.x, WALK_X_MIN, WALK_X_MAX);
-        point.y = clamp(point.y, WALK_Y_MIN, WALK_Y_MAX);
-        player.target = point;
+      function showTarget(point) {
         targetRing.style.left = point.x + "px";
         targetRing.style.top = point.y + "px";
         targetRing.classList.add("active");
-        guide.hidden = true;
+      }
+
+      function clearTarget() {
+        player.target = null;
+        targetRing.classList.remove("active");
+      }
+
+      function setRideMode(mode) {
+        ride.mode = mode;
+        document.body.classList.toggle("pad-arriving", mode === "arriving");
+        document.body.classList.toggle("pad-boarding", mode === "boarding");
+        document.body.classList.toggle("pad-riding", mode === "flying");
+        document.body.classList.toggle("pad-landing", mode === "landing");
+
+        if (mode === "arriving") {
+          status.textContent = "PAD着陸中…";
+          guide.hidden = true;
+        } else if (mode === "boarding") {
+          status.textContent = "PADが共鳴している…";
+          guide.hidden = true;
+        } else if (mode === "flying") {
+          status.textContent = "PAD起動中";
+          guide.textContent = "PADで移動 / 離着陸場へ戻ると着陸";
+          guide.hidden = false;
+        } else if (mode === "landing") {
+          status.textContent = "PAD着陸中…";
+          guide.hidden = true;
+        } else {
+          status.textContent = "星門庭園へ続く道";
+          guide.textContent = "星門庭園へ向かう";
+          guide.hidden = false;
+        }
+      }
+
+      function syncRideVisual(now = performance.now()) {
+        if (ride.mode === "ground") return;
+
+        const bob = ride.mode === "flying"
+          ? Math.sin(now / 620) * 2.2
+          : 0;
+        const visualY = ride.y - ride.lift + bob;
+
+        pad.style.left = ride.x + "px";
+        pad.style.top = visualY + "px";
+        padGlow.style.left = ride.x + "px";
+        padGlow.style.top = visualY + "px";
+        padTrail.style.left = ride.x + "px";
+        padTrail.style.top = (visualY + 22) + "px";
+
+        player.x = ride.x;
+        player.y = visualY - 2;
+        player.moving = false;
+        player.frame = 0;
+      }
+
+      function finishArrival() {
+        ride.mode = "ground";
+        ride.x = PAD_HOME.x;
+        ride.y = PAD_HOME.y;
+        ride.lift = 0;
+        ride.progress = 0;
+        ride.homeArmed = false;
+        ride.reboardLockedUntil = performance.now() + PAD_REBOARD_COOLDOWN_MS;
+
+        document.body.classList.remove(
+          "pad-arriving",
+          "pad-riding",
+          "pad-landing",
+          "pad-boarding",
+        );
+
+        // Same behavior as Alenon: once Shion gets off, the PAD settles back
+        // to its weak, inactive ground-state light.
+        pad.style.left = PAD_HOME.x + "px";
+        pad.style.top = PAD_HOME.y + "px";
+        padGlow.style.left = PAD_HOME.x + "px";
+        padGlow.style.top = PAD_HOME.y + "px";
+        padTrail.style.left = PAD_HOME.x + "px";
+        padTrail.style.top = PAD_HOME.y + "px";
+
+        player.x = PAD_HOME.x;
+        player.y = PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y;
+        player.dir = "up";
+        player.moving = false;
+        player.frame = 0;
+        player.anim = 0;
+        clearTarget();
+
+        status.textContent = "PAD着陸完了";
+        guide.textContent = "星門庭園へ向かう";
+        guide.hidden = false;
+
+        setActorPosition();
+        setActorVisual();
+
+        window.setTimeout(() => {
+          if (ride.mode === "ground" && !leaving) status.style.opacity = ".24";
+        }, 1200);
+      }
+
+      function beginBoarding() {
+        if (
+          ride.mode !== "ground" ||
+          leaving ||
+          performance.now() < ride.reboardLockedUntil
+        ) return;
+
+        ride.x = PAD_HOME.x;
+        ride.y = PAD_HOME.y;
+        ride.lift = 0;
+        ride.progress = 0;
+        ride.fromX = player.x;
+        ride.fromY = player.y;
+        ride.homeArmed = false;
+        clearTarget();
+        setRideMode("boarding");
+      }
+
+      function beginLanding() {
+        if (ride.mode !== "flying") return;
+        ride.progress = 0;
+        ride.landFromX = ride.x;
+        ride.landFromY = ride.y;
+        ride.landFromLift = ride.lift;
+        clearTarget();
+        setRideMode("landing");
+      }
+
+      function finishLanding() {
+        finishArrival();
       }
 
       function leaveForGarden() {
         if (leaving) return;
         leaving = true;
-        player.target = null;
-        targetRing.classList.remove("active");
+        clearTarget();
         document.body.classList.add("leaving");
-        status.textContent = "星門庭園へ…";
         status.style.opacity = "1";
+        status.textContent = "星門庭園へ…";
+        guide.hidden = true;
         window.setTimeout(() => {
-          location.href = "./index.html?from=landing&v=pad-route-v1";
-        }, 780);
+          location.href = "./index.html?from=landing&v=star-landing-ground-v1";
+        }, 760);
+      }
+
+      function setTarget(clientX, clientY) {
+        if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
+
+        let point = screenToWorld(clientX, clientY);
+        point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
+        point.y = clamp(point.y, 90, WORLD_H - WORLD_MARGIN);
+
+        if (ride.mode === "ground") {
+          point = nearestGroundPoint(point);
+          if (!point) return;
+        }
+
+        player.target = point;
+        showTarget(point);
+        guide.hidden = true;
       }
 
       const keys = new Set();
       const stick = { active:false, id:null, ox:0, oy:0, x:0, y:0 };
-      const RADIUS = 42;
+      const STICK_RADIUS = 42;
       let pointer = null;
 
       function updateStick(x, y) {
         const dx = x - stick.ox;
         const dy = y - stick.oy;
         const len = Math.hypot(dx, dy);
-        const ratio = len > RADIUS ? RADIUS / len : 1;
+        const ratio = len > STICK_RADIUS ? STICK_RADIUS / len : 1;
         const kx = dx * ratio;
         const ky = dy * ratio;
-        stick.x = kx / RADIUS;
-        stick.y = ky / RADIUS;
+        stick.x = kx / STICK_RADIUS;
+        stick.y = ky / STICK_RADIUS;
         knob.style.transform = `translate(${kx}px,${ky}px)`;
       }
 
       viewport.addEventListener("pointerdown", (event) => {
-        if (!arrived || leaving) return;
+        if (collisionMode) return;
+        if (event.target.closest?.("#pad-editor, #pad-editor-toggle")) return;
+        if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
         if (event.button != null && event.button !== 0) return;
         event.preventDefault();
-        pointer = { id:event.pointerId, x:event.clientX, y:event.clientY, time:performance.now() };
+        pointer = {
+          id:event.pointerId,
+          x:event.clientX,
+          y:event.clientY,
+          time:performance.now(),
+        };
         viewport.setPointerCapture?.(event.pointerId);
       }, { passive:false });
 
       viewport.addEventListener("pointermove", (event) => {
         if (!pointer || pointer.id !== event.pointerId) return;
         event.preventDefault();
+
         if (stick.active) {
           updateStick(event.clientX, event.clientY);
           return;
         }
+
         const dist = Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y);
         if (dist >= 12) {
           stick.active = true;
@@ -511,9 +1948,11 @@
       function endPointer(event) {
         if (!pointer || pointer.id !== event.pointerId) return;
         event.preventDefault();
+
         const wasStick = stick.active;
         const elapsed = performance.now() - pointer.time;
         const dist = Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y);
+
         if (wasStick) {
           stick.active = false;
           stick.id = null;
@@ -524,7 +1963,10 @@
         } else if (elapsed < 650 && dist < 12) {
           setTarget(event.clientX, event.clientY);
         }
-        if (viewport.hasPointerCapture?.(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+
+        if (viewport.hasPointerCapture?.(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
         pointer = null;
       }
 
@@ -532,16 +1974,17 @@
       viewport.addEventListener("pointercancel", endPointer, { passive:false });
 
       addEventListener("keydown", (event) => {
-        if (!arrived || leaving) return;
+        if (collisionMode) return;
+        if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
         if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
           keys.add(key);
-          player.target = null;
-          targetRing.classList.remove("active");
+          clearTarget();
           guide.hidden = true;
           event.preventDefault();
         }
       }, { passive:false });
+
       addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
 
       function keyVector() {
@@ -555,28 +1998,73 @@
       }
 
       let last = performance.now();
+
       function loop(now) {
         const dt = Math.min((now - last) / 1000, .05);
         last = now;
 
-        if (!arrived) {
-          arrivalAge += dt;
-          const t = Math.min(1, arrivalAge / 1.25);
-          const eased = 1 - Math.pow(1 - t, 3);
-          const y = 820 + (900 - 820) * eased;
-          pad.style.top = y + "px";
-          padGlow.style.top = y + "px";
-          beam.style.top = y + "px";
-          player.x = 724;
-          player.y = y - 2;
-          player.dir = "up";
+        if (collisionMode) {
           player.moving = false;
-          if (t >= 1) {
-            arrived = true;
-            document.body.classList.add("arrived");
-            status.textContent = "着陸完了";
-            guide.hidden = false;
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        if (ride.mode === "arriving") {
+          ride.progress = Math.min(1, ride.progress + dt / 1.35);
+          const t = easeOutCubic(ride.progress);
+          ride.x = PAD_HOME.x;
+                    const arrivalStartY = Math.min(WORLD_H + 20, PAD_HOME.y + 148);
+          ride.y = arrivalStartY + (PAD_HOME.y - arrivalStartY) * t;
+          ride.lift = 48 * (1 - t);
+          syncRideVisual(now);
+
+          if (ride.progress >= 1) finishArrival();
+
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        if (ride.mode === "boarding") {
+          ride.progress = Math.min(1, ride.progress + dt / PAD_BOARD_DURATION);
+          const t = easeOutCubic(ride.progress);
+          ride.lift = PAD_LIFT * t;
+          player.x = ride.fromX + (ride.x - ride.fromX) * t;
+          player.y = ride.fromY + ((ride.y - PAD_LIFT - 2) - ride.fromY) * t;
+          player.dir = "down";
+          player.moving = false;
+
+          if (ride.progress >= 1) {
+            ride.mode = "flying";
+            ride.lift = PAD_LIFT;
+            document.body.classList.remove("pad-boarding");
+            document.body.classList.add("pad-riding");
+            setRideMode("flying");
           }
+
+          syncRideVisual(now);
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        if (ride.mode === "landing") {
+          ride.progress = Math.min(1, ride.progress + dt / PAD_LAND_DURATION);
+          const t = easeOutCubic(ride.progress);
+          ride.x = ride.landFromX + (PAD_HOME.x - ride.landFromX) * t;
+          ride.y = ride.landFromY + (PAD_HOME.y - ride.landFromY) * t;
+          ride.lift = ride.landFromLift * (1 - t);
+          syncRideVisual(now);
+
+          if (ride.progress >= 1) finishLanding();
+
           setActorPosition();
           setActorVisual();
           syncCamera();
@@ -595,15 +2083,23 @@
           manual = Math.hypot(vx,vy) > .08;
         }
 
+        const originX = ride.mode === "flying" ? ride.x : player.x;
+        const originY = ride.mode === "flying" ? ride.y : player.y;
+
         if (!manual && player.target) {
-          const dx = player.target.x - player.x;
-          const dy = player.target.y - player.y;
+          const dx = player.target.x - originX;
+          const dy = player.target.y - originY;
           const dist = Math.hypot(dx,dy);
+
           if (dist <= 3.5) {
-            player.x = player.target.x;
-            player.y = player.target.y;
-            player.target = null;
-            targetRing.classList.remove("active");
+            if (ride.mode === "flying") {
+              ride.x = player.target.x;
+              ride.y = player.target.y;
+            } else if (isGroundWalkable(player.target.x, player.target.y)) {
+              player.x = player.target.x;
+              player.y = player.target.y;
+            }
+            clearTarget();
           } else {
             vx = dx / dist;
             vy = dy / dist;
@@ -611,21 +2107,75 @@
         }
 
         const moving = !leaving && (manual || !!player.target) && Math.hypot(vx,vy) > .001;
+
         if (moving) {
           player.dir = direction(vx,vy);
-          const speed = SPEED_SCREEN / worldScale;
-          player.x = clamp(player.x + vx * speed * dt, WALK_X_MIN, WALK_X_MAX);
-          player.y = clamp(player.y + vy * speed * dt, WALK_Y_MIN, WALK_Y_MAX);
-          player.anim += dt * 8.5;
-          player.frame = Math.floor(player.anim) % 4;
-          player.moving = true;
+
+          if (ride.mode === "flying") {
+            const speed = PAD_SPEED_SCREEN / worldScale;
+            ride.x = clamp(ride.x + vx * speed * dt, 70, WORLD_W - 70);
+            ride.y = clamp(ride.y + vy * speed * dt, 100, WORLD_H - 30);
+            ride.lift = PAD_LIFT;
+            player.moving = false;
+          } else {
+            const speed = SHION_SPEED_SCREEN / worldScale;
+            const stepX = vx * speed * dt;
+            const stepY = vy * speed * dt;
+
+            const next = {
+              x: clamp(player.x + stepX, WORLD_MARGIN, WORLD_W - WORLD_MARGIN),
+              y: clamp(player.y + stepY, 120, WORLD_H - WORLD_MARGIN),
+            };
+            const xOnly = { x:next.x, y:player.y };
+            const yOnly = { x:player.x, y:next.y };
+
+            let moved = false;
+            if (isGroundWalkable(next.x,next.y)) {
+              player.x = next.x;
+              player.y = next.y;
+              moved = true;
+            } else if (isGroundWalkable(xOnly.x,xOnly.y)) {
+              player.x = xOnly.x;
+              moved = true;
+            } else if (isGroundWalkable(yOnly.x,yOnly.y)) {
+              player.y = yOnly.y;
+              moved = true;
+            }
+
+            player.moving = moved;
+            if (moved) {
+              player.anim += dt * 8.5;
+              player.frame = Math.floor(player.anim) % 4;
+            }
+          }
         } else {
           player.moving = false;
           player.anim = 0;
           player.frame = 0;
         }
 
-        if (player.y <= EXIT_Y) leaveForGarden();
+        if (ride.mode === "flying") {
+          const homeDistance = Math.hypot(ride.x - PAD_HOME.x, ride.y - PAD_HOME.y);
+          if (homeDistance >= PAD_HOME_ARM_DISTANCE) ride.homeArmed = true;
+          if (ride.homeArmed && homeDistance <= PAD_HOME_LAND_RADIUS) beginLanding();
+          syncRideVisual(now);
+        } else {
+          const padDistance = Math.hypot(player.x - PAD_HOME.x, player.y - PAD_HOME.y);
+          if (
+            padDistance <= PAD_TOUCH_RADIUS &&
+            performance.now() >= ride.reboardLockedUntil
+          ) {
+            beginBoarding();
+          }
+
+          if (
+            player.y <= GARDEN_EXIT_Y &&
+            player.x >= GARDEN_EXIT_X_MIN &&
+            player.x <= GARDEN_EXIT_X_MAX
+          ) {
+            leaveForGarden();
+          }
+        }
 
         setActorPosition();
         setActorVisual();
@@ -633,12 +2183,45 @@
         requestAnimationFrame(loop);
       }
 
-      fitWorld();
-      setActorPosition();
-      setActorVisual();
-      addEventListener("resize", fitWorld, { passive:true });
-      addEventListener("orientationchange", fitWorld, { passive:true });
-      requestAnimationFrame((now) => { last = now; loop(now); });
+      async function boot() {
+        await Promise.all([
+          loadLandingCollision(),
+          loadLandingDepth(),
+        ]);
+        await renderLandingForeground();
+
+        if (collisionMode) {
+          ride.mode = "ground";
+          ride.x = PAD_HOME.x;
+          ride.y = PAD_HOME.y;
+          ride.lift = 0;
+          player.x = PAD_HOME.x;
+          player.y = PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y;
+        }
+
+        initPadEditor();
+        applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
+        fitWorld();
+        initCollisionEditor();
+        setActorPosition();
+        setActorVisual();
+        setRideMode(ride.mode);
+
+        if (!arrivingFromAlenon) {
+          status.textContent = "星門庭園へ続く道";
+          guide.hidden = false;
+        }
+
+        addEventListener("resize", fitWorld, { passive:true });
+        addEventListener("orientationchange", fitWorld, { passive:true });
+
+        requestAnimationFrame((now) => {
+          last = now;
+          loop(now);
+        });
+      }
+
+      boot();
     })();
   </script>
 </body>
