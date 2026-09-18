@@ -1726,6 +1726,113 @@
       text-wrap: pretty;
     }
 
+    #orb-interaction-choice {
+      position: fixed;
+      left: 50%;
+      bottom: max(26px, calc(env(safe-area-inset-bottom) + 20px));
+      z-index: 2380;
+      width: min(92vw, 720px);
+      box-sizing: border-box;
+      transform: translate(-50%, 10px);
+      padding: 16px 18px 17px;
+      border: 1px solid rgba(217, 190, 128, .48);
+      border-radius: 10px;
+      background:
+        linear-gradient(180deg, rgba(11, 18, 46, .96), rgba(5, 10, 29, .94));
+      box-shadow:
+        0 14px 38px rgba(0, 0, 0, .40),
+        inset 0 1px 0 rgba(255, 243, 207, .06);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .22s ease;
+    }
+
+    #orb-interaction-choice[hidden] {
+      display: none;
+    }
+
+    #orb-interaction-choice.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+      pointer-events: auto;
+    }
+
+    #orb-interaction-text {
+      margin-bottom: 13px;
+      color: rgba(249, 250, 255, .98);
+      font-size: clamp(17px, 4.4vw, 20px);
+      font-weight: 500;
+      line-height: 1.55;
+      letter-spacing: .015em;
+    }
+
+    .orb-interaction-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .orb-interaction-actions button {
+      min-height: 44px;
+      border: 1px solid rgba(226, 207, 158, .34);
+      border-radius: 8px;
+      color: rgba(247, 249, 255, .96);
+      background: rgba(255, 255, 255, .055);
+      font: 650 14px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: .03em;
+    }
+
+    .orb-interaction-actions button:active {
+      background: rgba(226, 207, 158, .16);
+      transform: translateY(1px);
+    }
+
+    body.orb-inspect-shimmer .orb-core {
+      animation: orb-core-inspect-shimmer 1.05s ease-in-out 1 !important;
+    }
+
+    body.orb-inspect-shimmer .orb-aura {
+      animation: orb-aura-inspect-shimmer 1.05s ease-in-out 1 !important;
+    }
+
+    @keyframes orb-core-inspect-shimmer {
+      0%, 100% {
+        opacity: .94;
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 18px rgba(118,220,255,.58));
+      }
+      28% {
+        opacity: 1;
+        transform: translate(calc(-50% - 2px), calc(-50% + 1px)) scale(1.055);
+        filter: brightness(1.18) drop-shadow(0 0 34px rgba(166,235,255,.90));
+      }
+      58% {
+        opacity: .78;
+        transform: translate(calc(-50% + 3px), calc(-50% - 1px)) scale(.985);
+        filter: brightness(.94) drop-shadow(0 0 20px rgba(118,220,255,.64));
+      }
+      78% {
+        opacity: 1;
+        transform: translate(calc(-50% - 1px), -50%) scale(1.035);
+        filter: brightness(1.10) drop-shadow(0 0 30px rgba(155,230,255,.82));
+      }
+    }
+
+    @keyframes orb-aura-inspect-shimmer {
+      0%, 100% {
+        opacity: .72;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      35% {
+        opacity: .96;
+        transform: translate(-50%, -50%) scale(1.12);
+      }
+      68% {
+        opacity: .42;
+        transform: translate(-50%, -50%) scale(.94);
+      }
+    }
+
     #story-objective {
       position: fixed;
       left: 50%;
@@ -1828,6 +1935,15 @@
         font-size: clamp(18px, 4.7vw, 20px);
         line-height: 1.62;
       }
+
+      #orb-interaction-choice {
+        width: min(92vw, 460px);
+        padding: 15px 16px 16px;
+      }
+
+      #orb-interaction-text {
+        font-size: clamp(17px, 4.5vw, 19px);
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1842,7 +1958,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="jrpg-dialogue-ui-v29">
+<body data-alenon-drift-revision="orb-free-inspect-v30">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1917,6 +2033,14 @@
       <span id="prologue-speaker">シオン</span>
       <div id="prologue-line"></div>
     </div>
+
+    <aside id="orb-interaction-choice" hidden aria-label="アレノンの光を調べる">
+      <div id="orb-interaction-text">アレノンの光が揺らいでいる。</div>
+      <div class="orb-interaction-actions">
+        <button id="orb-interaction-inspect" type="button">光を調べる</button>
+        <button id="orb-interaction-leave" type="button">離れる</button>
+      </div>
+    </aside>
 
     <aside id="story-objective" aria-live="polite">
       <strong>OBJECTIVE — 星門庭園へ向かう</strong>
@@ -2058,6 +2182,8 @@
       const SHION_SPEED_SCREEN = 155;
       const PAD_SPEED_SCREEN = 175;
       const PAD_TOUCH_RADIUS = 64;
+      const ORB_INTERACT_RADIUS = 118;
+      const ORB_INTERACT_REARM_RADIUS = 154;
       const PAD_LIFT = 18;
       const PAD_BOARD_DURATION = .92;
       const PAD_LAND_DURATION = .78;
@@ -2108,6 +2234,9 @@
       const alenonWind = document.getElementById("alenon-wind");
       const prologueDialogue = document.getElementById("prologue-dialogue");
       const prologueLine = document.getElementById("prologue-line");
+      const orbInteractionChoice = document.getElementById("orb-interaction-choice");
+      const orbInteractionInspect = document.getElementById("orb-interaction-inspect");
+      const orbInteractionLeave = document.getElementById("orb-interaction-leave");
       const storyObjective = document.getElementById("story-objective");
 
       const story = {
@@ -2116,6 +2245,14 @@
         started: false,
         completed: storyBypass,
       };
+
+      const orbInteraction = {
+        promptOpen: false,
+        inspecting: false,
+        hasInspected: false,
+        armed: true,
+      };
+
       let storyAudioContext = null;
       tarotFront.src = PROLOGUE_TAROT_CARD;
 
@@ -2274,6 +2411,89 @@
           if (story.completed) storyObjective.classList.remove("visible");
         }, 5200);
       }
+
+      function hideOrbInteractionChoice() {
+        orbInteractionChoice.classList.remove("visible");
+        window.setTimeout(() => {
+          if (!orbInteractionChoice.classList.contains("visible")) {
+            orbInteractionChoice.hidden = true;
+          }
+        }, 220);
+      }
+
+      function finishOrbInteraction() {
+        orbInteraction.promptOpen = false;
+        orbInteraction.inspecting = false;
+        story.locked = false;
+        document.body.classList.remove("story-running");
+        hideOrbInteractionChoice();
+      }
+
+      function openOrbInteractionChoice() {
+        if (
+          !story.completed ||
+          story.locked ||
+          ride.mode !== "ground" ||
+          orbInteraction.promptOpen ||
+          orbInteraction.inspecting ||
+          !orbInteraction.armed
+        ) return;
+
+        orbInteraction.promptOpen = true;
+        orbInteraction.armed = false;
+        story.locked = true;
+        document.body.classList.add("story-running");
+        storyObjective.classList.remove("visible");
+        player.target = null;
+        clearTargetRing();
+        turnShion(directionFromVector(layout.orb.x - player.x, layout.orb.y - player.y));
+
+        orbInteractionChoice.hidden = false;
+        requestAnimationFrame(() => {
+          orbInteractionChoice.classList.add("visible");
+        });
+      }
+
+      async function inspectAlenonLight() {
+        if (!orbInteraction.promptOpen || orbInteraction.inspecting) return;
+
+        orbInteraction.inspecting = true;
+        orbInteraction.promptOpen = false;
+        hideOrbInteractionChoice();
+        turnShion(directionFromVector(layout.orb.x - player.x, layout.orb.y - player.y));
+
+        // The light itself answers the player's action before Shion speaks.
+        document.body.classList.add("orb-inspect-shimmer");
+        playWindGust(.95, .24);
+        await sleep(1080);
+        document.body.classList.remove("orb-inspect-shimmer");
+        await sleep(260);
+
+        if (!orbInteraction.hasInspected) {
+          await sayStory("アレノンが揺らいでる……。", 1850, 620);
+          await sayStory("星門に早く行かないと。", 1750, 540);
+          orbInteraction.hasInspected = true;
+        } else {
+          await sayStory("……まだ揺らいでる。", 1550, 460);
+        }
+
+        finishOrbInteraction();
+      }
+
+      function leaveAlenonLight() {
+        if (!orbInteraction.promptOpen || orbInteraction.inspecting) return;
+        finishOrbInteraction();
+      }
+
+      orbInteractionInspect.addEventListener("click", (event) => {
+        event.preventDefault();
+        inspectAlenonLight();
+      });
+
+      orbInteractionLeave.addEventListener("click", (event) => {
+        event.preventDefault();
+        leaveAlenonLight();
+      });
 
       async function ensureStoryAudio() {
         if (storyAudioContext) {
@@ -3580,6 +3800,29 @@
         moveTargetRing.classList.remove("active");
       }
 
+      function updateOrbInteractionRange() {
+        if (!story.completed || ride.mode !== "ground") return;
+
+        const distance = Math.hypot(
+          player.x - layout.orb.x,
+          player.y - layout.orb.y,
+        );
+
+        if (distance >= ORB_INTERACT_REARM_RADIUS) {
+          orbInteraction.armed = true;
+        }
+
+        if (
+          distance <= ORB_INTERACT_RADIUS &&
+          orbInteraction.armed &&
+          !story.locked &&
+          !orbInteraction.promptOpen &&
+          !orbInteraction.inspecting
+        ) {
+          openOrbInteractionChoice();
+        }
+      }
+
       function resetPlayer() {
         resetRide();
         player.x = SHION_SPAWN.x;
@@ -3589,6 +3832,13 @@
         player.frame = 0;
         player.anim = 0;
         player.target = null;
+        orbInteraction.armed = true;
+        if (orbInteraction.promptOpen || orbInteraction.inspecting) {
+          orbInteraction.promptOpen = false;
+          orbInteraction.inspecting = false;
+          hideOrbInteractionChoice();
+          document.body.classList.remove("orb-inspect-shimmer");
+        }
         clearTargetRing();
         setActorPosition();
         setActorVisual();
@@ -3977,6 +4227,8 @@
               beginPadExit();
             }
           } else if (ride.mode === "ground") {
+            updateOrbInteractionRange();
+
             const padDistance = Math.hypot(
               player.x - layout.pad.x,
               player.y - layout.pad.y,
