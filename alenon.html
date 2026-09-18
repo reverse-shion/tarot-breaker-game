@@ -788,6 +788,176 @@
     }
 
 
+    /* Alenon walk-area collision editor: open alenon.html?collision=1 */
+    #collision-toggle {
+      position: fixed;
+      top: max(60px, calc(env(safe-area-inset-top) + 56px));
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      z-index: 1160;
+      min-width: 104px;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid rgba(128,235,204,.34);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(5,32,30,.76);
+      box-shadow: 0 8px 22px rgba(0,0,0,.20);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      touch-action: manipulation;
+    }
+
+    body.collision-mode #collision-toggle {
+      background: rgba(40,154,126,.34);
+      border-color: rgba(127,242,205,.76);
+    }
+
+    body.edit-mode #collision-toggle,
+    body.pad-boarding #collision-toggle,
+    body.pad-riding #collision-toggle,
+    body.pad-landing #collision-toggle,
+    body.pad-exiting #collision-toggle {
+      display: none !important;
+    }
+
+    #collision-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 75;
+      width: 1448px;
+      height: 1086px;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    body.collision-mode #collision-overlay { display: block; }
+
+    #collision-overlay .collision-area {
+      fill: rgba(70, 232, 166, .22);
+      stroke: rgba(133, 255, 210, .95);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-current {
+      fill: rgba(255, 208, 88, .14);
+      stroke: rgba(255, 223, 116, .98);
+      stroke-width: 3;
+      stroke-dasharray: 9 7;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-point {
+      fill: #fff3a8;
+      stroke: rgba(45,31,0,.9);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-overlay .collision-start {
+      fill: #ffb94a;
+      stroke: #fff4c7;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #collision-panel {
+      display: none;
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 1250;
+      padding: 10px;
+      color: #fff;
+      background: rgba(4, 21, 27, .94);
+      border: 1px solid rgba(132,239,207,.36);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.40);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      touch-action: auto;
+    }
+
+    body.collision-mode #collision-panel { display: block; }
+
+    body.collision-mode #move-guide,
+    body.collision-mode #move-reset,
+    body.collision-mode #move-joystick,
+    body.collision-mode #object-toggle,
+    body.collision-mode #deadpad-toggle,
+    body.collision-mode .move-target-ring {
+      display: none !important;
+    }
+
+    body.collision-mode .shion-actor,
+    body.collision-mode .shion-shadow {
+      opacity: .38;
+    }
+
+    .collision-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .collision-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    #collision-status {
+      font-size: 11px;
+      opacity: .78;
+      white-space: nowrap;
+    }
+
+    .collision-help {
+      margin-bottom: 8px;
+      font-size: 11px;
+      line-height: 1.45;
+      opacity: .78;
+    }
+
+    .collision-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .collision-actions button {
+      appearance: none;
+      min-height: 37px;
+      padding: 6px 7px;
+      border: 1px solid rgba(168,235,220,.24);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(255,255,255,.075);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    #collision-finish {
+      background: rgba(63,184,143,.28);
+      border-color: rgba(115,235,195,.48);
+    }
+
+    #collision-copy {
+      background: rgba(65,140,255,.24);
+      border-color: rgba(125,185,255,.42);
+    }
+
+    #collision-clear {
+      background: rgba(223,104,82,.16);
+    }
+
     /* PAD / ORB position adjuster: open alenon.html?objects=1 */
     #object-panel {
       display: none;
@@ -1114,7 +1284,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="left-ruin-muted-v19">
+<body data-alenon-drift-revision="collision-editor-v20">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1154,6 +1324,8 @@
       <div class="shion-shadow" aria-hidden="true"></div>
       <div class="shion-actor" role="img" aria-label="シオン"></div>
 
+      <svg id="collision-overlay" viewBox="0 0 1448 1086" aria-hidden="true"></svg>
+
       <div class="vignette" aria-hidden="true"></div>
     </section>
 
@@ -1164,7 +1336,26 @@
     </div>
     <button id="object-toggle" type="button" aria-pressed="false">PAD / ORB</button>
     <button id="deadpad-toggle" type="button" aria-pressed="false">左PAD暗部</button>
+    <button id="collision-toggle" type="button" aria-pressed="false">当たり判定</button>
     <button id="move-reset" type="button" aria-label="開始地点へ戻る">↺</button>
+
+    <aside id="collision-panel" aria-label="アレノン歩行エリア当たり判定エディタ">
+      <div class="collision-top">
+        <div class="collision-title">アレノン 当たり判定</div>
+        <div id="collision-status">範囲 0 / 点 0</div>
+      </div>
+      <div class="collision-help">
+        タップ＝歩ける範囲の頂点 / ドラッグ＝画面移動 / 始点付近をタップ＝範囲確定
+      </div>
+      <div class="collision-actions">
+        <button id="collision-undo-point" type="button">1点戻す</button>
+        <button id="collision-finish" type="button">範囲を確定</button>
+        <button id="collision-undo-area" type="button">1範囲戻す</button>
+        <button id="collision-center" type="button">シオンへ戻る</button>
+        <button id="collision-clear" type="button">全消去</button>
+        <button id="collision-copy" type="button">JSONコピー</button>
+      </div>
+    </aside>
 
     <aside id="deadpad-panel" aria-label="左遺跡PAD暗部の位置調整">
       <div class="deadpad-top">
@@ -1286,9 +1477,12 @@
       const params = new URLSearchParams(location.search);
       const editMode = params.get("edit") === "1";
       const objectMode = params.get("objects") === "1";
+      const collisionMode = params.get("collision") === "1";
       let worldScale = 1;
       let cameraTx = 0;
       let cameraTy = 0;
+      let collisionPanX = 0;
+      let collisionPanY = 0;
 
       const shionActor = document.querySelector(".shion-actor");
       const shionShadow = document.querySelector(".shion-shadow");
@@ -1299,6 +1493,8 @@
       const moveJoystickKnob = document.getElementById("move-joystick-knob");
       const objectToggle = document.getElementById("object-toggle");
       const deadpadToggle = document.getElementById("deadpad-toggle");
+      const collisionToggle = document.getElementById("collision-toggle");
+      const collisionOverlay = document.getElementById("collision-overlay");
       const flightStatus = document.getElementById("flight-status");
       const mapTransition = document.getElementById("map-transition");
 
@@ -1441,8 +1637,17 @@
         const minY = Math.min(halfH, WORLD_H / 2);
         const maxY = Math.max(minY, WORLD_H - halfH);
 
-        const focusX = clamp(player.x, minX, maxX);
-        const focusY = clamp(player.y - CAMERA_LOOK_AHEAD_Y, minY, maxY);
+        const focusX = clamp(
+          player.x + (document.body.classList.contains("collision-mode") ? collisionPanX : 0),
+          minX,
+          maxX,
+        );
+        const focusY = clamp(
+          player.y - CAMERA_LOOK_AHEAD_Y +
+            (document.body.classList.contains("collision-mode") ? collisionPanY : 0),
+          minY,
+          maxY,
+        );
 
         cameraTx = vw / 2 - focusX * worldScale;
         cameraTy = vh / 2 - focusY * worldScale;
@@ -1769,6 +1974,270 @@
         viewport.addEventListener("pointercancel", endDrag, { passive: false });
 
         refresh();
+      }
+
+      function initCollisionEditor() {
+        const NS = "http://www.w3.org/2000/svg";
+        const STORAGE_KEY_COLLISION = "tarot-breaker-alenon-collision-draft-v1";
+        const status = document.getElementById("collision-status");
+        const undoPointButton = document.getElementById("collision-undo-point");
+        const finishButton = document.getElementById("collision-finish");
+        const undoAreaButton = document.getElementById("collision-undo-area");
+        const centerButton = document.getElementById("collision-center");
+        const clearButton = document.getElementById("collision-clear");
+        const copyButton = document.getElementById("collision-copy");
+
+        let areas = [];
+        let current = [];
+        let gesture = null;
+
+        const saved = localStorage.getItem(STORAGE_KEY_COLLISION);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed.walkAreas)) {
+              areas = parsed.walkAreas
+                .filter((area) => area?.type === "poly" && Array.isArray(area.points))
+                .map((area) => ({
+                  type: "poly",
+                  points: area.points
+                    .filter((p) => Array.isArray(p) && p.length === 2)
+                    .map((p) => [Number(p[0]), Number(p[1])]),
+                }))
+                .filter((area) => area.points.length >= 3);
+            }
+          } catch (_) {}
+        }
+
+        function pointString(points) {
+          return points.map((p) => p.join(",")).join(" ");
+        }
+
+        function addSvg(tag, attrs, className) {
+          const node = document.createElementNS(NS, tag);
+          if (className) node.setAttribute("class", className);
+          for (const [key, value] of Object.entries(attrs || {})) {
+            node.setAttribute(key, String(value));
+          }
+          collisionOverlay.appendChild(node);
+          return node;
+        }
+
+        function saveDraft() {
+          localStorage.setItem(STORAGE_KEY_COLLISION, JSON.stringify({
+            version: 1,
+            map: "alenon",
+            referenceSize: { width: WORLD_W, height: WORLD_H },
+            walkAreas: areas,
+          }));
+        }
+
+        function render() {
+          collisionOverlay.replaceChildren();
+
+          for (const area of areas) {
+            addSvg("polygon", { points: pointString(area.points) }, "collision-area");
+          }
+
+          if (current.length) {
+            const tag = current.length >= 3 ? "polygon" : "polyline";
+            addSvg(tag, {
+              points: pointString(current),
+              fill: current.length >= 3 ? undefined : "none",
+            }, "collision-current");
+
+            current.forEach((point, index) => {
+              addSvg("circle", {
+                cx: point[0],
+                cy: point[1],
+                r: index === 0 ? 9 : 6,
+              }, index === 0 ? "collision-start" : "collision-point");
+            });
+          }
+
+          status.textContent = `範囲 ${areas.length} / 点 ${current.length}`;
+        }
+
+        function payload() {
+          return {
+            version: 1,
+            map: "alenon",
+            referenceSize: { width: WORLD_W, height: WORLD_H },
+            walkAreas: areas,
+            blockedAreas: [],
+          };
+        }
+
+        function finishCurrent() {
+          if (current.length < 3) return false;
+          areas.push({
+            type: "poly",
+            points: current.map((p) => [Math.round(p[0]), Math.round(p[1])]),
+          });
+          current = [];
+          saveDraft();
+          render();
+          return true;
+        }
+
+        function setMode(open) {
+          document.body.classList.toggle("collision-mode", open);
+          collisionToggle.setAttribute("aria-pressed", open ? "true" : "false");
+          collisionToggle.textContent = open ? "編集完了" : "当たり判定";
+
+          if (open) {
+            document.body.classList.remove("object-mode", "deadpad-mode");
+            objectToggle.setAttribute("aria-pressed", "false");
+            deadpadToggle.setAttribute("aria-pressed", "false");
+            objectToggle.textContent = "PAD / ORB";
+            deadpadToggle.textContent = "左PAD暗部";
+            player.target = null;
+            clearTargetRing();
+            render();
+            syncCamera();
+          } else {
+            gesture = null;
+            collisionPanX = 0;
+            collisionPanY = 0;
+            syncCamera();
+          }
+        }
+
+        collisionToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          setMode(!document.body.classList.contains("collision-mode"));
+        });
+
+        undoPointButton.addEventListener("click", () => {
+          current.pop();
+          render();
+        });
+
+        finishButton.addEventListener("click", () => {
+          if (!finishCurrent()) {
+            finishButton.textContent = "3点以上必要";
+            setTimeout(() => finishButton.textContent = "範囲を確定", 1100);
+          }
+        });
+
+        undoAreaButton.addEventListener("click", () => {
+          if (current.length) {
+            current = [];
+          } else {
+            areas.pop();
+            saveDraft();
+          }
+          render();
+        });
+
+        centerButton.addEventListener("click", () => {
+          collisionPanX = 0;
+          collisionPanY = 0;
+          syncCamera();
+        });
+
+        clearButton.addEventListener("click", () => {
+          if (!areas.length && !current.length) return;
+          if (!window.confirm("作成中の当たり判定をすべて消しますか？")) return;
+          areas = [];
+          current = [];
+          saveDraft();
+          render();
+        });
+
+        copyButton.addEventListener("click", async () => {
+          if (current.length >= 3) finishCurrent();
+          const text = JSON.stringify(payload(), null, 2);
+          try {
+            await navigator.clipboard.writeText(text);
+            copyButton.textContent = "コピーしました";
+            setTimeout(() => copyButton.textContent = "JSONコピー", 1300);
+          } catch (_) {
+            window.prompt("当たり判定JSONをコピーしてください", text);
+          }
+        });
+
+        viewport.addEventListener("pointerdown", (event) => {
+          if (!document.body.classList.contains("collision-mode")) return;
+          if (
+            event.target.closest?.("#collision-panel") ||
+            event.target.closest?.("#collision-toggle")
+          ) return;
+          if (event.button != null && event.button !== 0) return;
+
+          event.preventDefault();
+          gesture = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            panX: collisionPanX,
+            panY: collisionPanY,
+            moved: false,
+            time: performance.now(),
+          };
+          viewport.setPointerCapture?.(event.pointerId);
+        }, { passive: false });
+
+        viewport.addEventListener("pointermove", (event) => {
+          if (!gesture || gesture.id !== event.pointerId) return;
+          if (!document.body.classList.contains("collision-mode")) return;
+          event.preventDefault();
+
+          const dx = event.clientX - gesture.x;
+          const dy = event.clientY - gesture.y;
+          if (!gesture.moved && Math.hypot(dx, dy) >= 10) {
+            gesture.moved = true;
+          }
+
+          if (gesture.moved) {
+            collisionPanX = gesture.panX - dx / worldScale;
+            collisionPanY = gesture.panY - dy / worldScale;
+            syncCamera();
+          }
+        }, { passive: false });
+
+        function finishGesture(event) {
+          if (!gesture || gesture.id !== event.pointerId) return;
+          event.preventDefault();
+
+          const wasMoved = gesture.moved;
+          const elapsed = performance.now() - gesture.time;
+
+          if (!wasMoved && elapsed < 650) {
+            const p = screenToWorld(event.clientX, event.clientY);
+            const point = [
+              Math.round(clamp(p.x, 0, WORLD_W)),
+              Math.round(clamp(p.y, 0, WORLD_H)),
+            ];
+
+            if (current.length >= 3) {
+              const first = current[0];
+              const close = Math.hypot(point[0] - first[0], point[1] - first[1]);
+              if (close <= 28) {
+                finishCurrent();
+              } else {
+                current.push(point);
+                render();
+              }
+            } else {
+              current.push(point);
+              render();
+            }
+          }
+
+          if (viewport.hasPointerCapture?.(event.pointerId)) {
+            viewport.releasePointerCapture(event.pointerId);
+          }
+          gesture = null;
+        }
+
+        viewport.addEventListener("pointerup", finishGesture, { passive: false });
+        viewport.addEventListener("pointercancel", (event) => {
+          if (gesture?.id === event.pointerId) gesture = null;
+        }, { passive: false });
+
+        render();
+        setMode(collisionMode);
       }
 
       function initRuinDrift() {
@@ -2107,8 +2576,8 @@
         }
 
         viewport.addEventListener("pointerdown", (event) => {
-          if (document.body.classList.contains("object-mode") || document.body.classList.contains("deadpad-mode")) return;
-          if (event.target.closest?.("#move-reset") || event.target.closest?.("#object-toggle") || event.target.closest?.("#deadpad-toggle")) return;
+          if (document.body.classList.contains("object-mode") || document.body.classList.contains("deadpad-mode") || document.body.classList.contains("collision-mode")) return;
+          if (event.target.closest?.("#move-reset") || event.target.closest?.("#object-toggle") || event.target.closest?.("#deadpad-toggle") || event.target.closest?.("#collision-toggle")) return;
           if (event.button != null && event.button !== 0) return;
           event.preventDefault();
           pointerStart = {
@@ -2166,7 +2635,7 @@
         }, { passive: false });
 
         window.addEventListener("keydown", (event) => {
-          if (document.body.classList.contains("object-mode") || document.body.classList.contains("deadpad-mode")) return;
+          if (document.body.classList.contains("object-mode") || document.body.classList.contains("deadpad-mode") || document.body.classList.contains("collision-mode")) return;
           const key = event.key.toLowerCase();
           if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
             keys.add(key);
@@ -2363,6 +2832,7 @@
       if (!editMode) {
         initObjectAdjust();
         initDeadPadAdjust();
+        initCollisionEditor();
         initMovement();
         return;
       }
