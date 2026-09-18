@@ -593,7 +593,7 @@
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v7-collision-editor" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v8-free-collision-pan" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -640,7 +640,7 @@
         <div id="collision-status">範囲 0 / 点 0</div>
       </div>
       <div class="collision-help">
-        タップ＝歩ける範囲の頂点 / ドラッグ＝画面移動 / 始点付近をタップ＝範囲確定
+        タップ＝歩ける範囲の頂点 / 画面をドラッグ＝マップ移動 / 始点付近をタップ＝範囲確定
       </div>
       <div class="collision-actions">
         <button id="collision-undo-point" type="button">1点戻す</button>
@@ -1525,13 +1525,19 @@
         const minY = Math.min(halfH, WORLD_H / 2);
         const maxY = Math.max(minY, WORLD_H - halfH);
 
-        const baseFocusX = player.x + collisionPanX;
-        const baseFocusY = player.y - 85 + collisionPanY;
-        const focusX = clamp(baseFocusX, minX, maxX);
-        const focusY = clamp(baseFocusY, minY, maxY);
+        const focusX = clamp(player.x, minX, maxX);
+        const focusY = clamp(player.y - 85, minY, maxY);
 
         cameraTx = innerWidth / 2 - focusX * worldScale;
         cameraTy = innerHeight / 2 - focusY * worldScale;
+
+        // Collision editor needs free canvas panning even beyond the normal
+        // gameplay camera limits. Apply its pan after clamping the gameplay
+        // focus so dragging always moves the map on mobile.
+        if (collisionMode) {
+          cameraTx -= collisionPanX * worldScale;
+          cameraTy -= collisionPanY * worldScale;
+        }
         world.style.transform =
           `translate3d(${cameraTx}px,${cameraTy}px,0) scale(${worldScale})`;
       }
