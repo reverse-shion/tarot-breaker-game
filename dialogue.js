@@ -346,7 +346,6 @@
     lumiereDone: false,
     joined: false,
     player: { x: 724, y: 1015 },
-    objective: "",
   };
 
   let playbackToken = 0;
@@ -375,13 +374,6 @@
       });
     }
 
-    if (!document.getElementById("story-objective")) {
-      const objective = document.createElement("aside");
-      objective.id = "story-objective";
-      objective.className = "story-objective";
-      objective.hidden = true;
-      shell.appendChild(objective);
-    }
   }
 
   function setUiState(next) {
@@ -393,14 +385,6 @@
         next === "acting" ? "会話演出を早送りする" : "会話を進める",
       );
     }
-  }
-
-  function showObjective(text) {
-    story.objective = text;
-    const el = document.getElementById("story-objective");
-    if (!el) return;
-    el.textContent = text;
-    el.hidden = !text;
   }
 
   function makeTimerAction(duration) {
@@ -522,11 +506,9 @@
       window.dispatchEvent(new Event("tarot-breaker:shiopon-recover"));
       story.shioponDone = true;
       story.joined = true;
-      showObjective("星門へ向かう");
       window.dispatchEvent(new Event("tarot-breaker:shiopon-follow-start"));
     } else if (completed === "lumiereGate") {
       story.lumiereDone = true;
-      showObjective("星門の様子を確かめる");
     }
 
     window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
@@ -605,14 +587,11 @@
     story.lumiereDone = false;
     story.joined = false;
     story.player = { x: 724, y: 1015 };
-    story.objective = "";
     const layer = document.getElementById("dialogue-layer");
-    const objective = document.getElementById("story-objective");
     if (layer) {
       layer.hidden = true;
       layer.dataset.state = "idle";
     }
-    if (objective) objective.hidden = true;
   }
 
   installControlsObserver();
