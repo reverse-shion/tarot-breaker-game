@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "defaultMap": "star-landing",
+  "maps": [
+    {
+      "id": "star-landing",
+      "label": "PAD離着陸場",
+      "referenceSize": {
+        "width": 1448,
+        "height": 1086
+      },
+      "collisionUrl": "../assets/maps/star-landing/collision.json",
+      "depthUrl": "../assets/maps/star-landing/depth.json",
+      "layers": [
+        {
+          "src": "../assets/maps/star-country-farthest-sky-background.webp",
+          "fit": "cover",
+          "z": 0
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-star-sky.webp",
+          "fit": "cover",
+          "opacity": 0.3,
+          "blend": "screen",
+          "z": 1
+        },
+        {
+          "src": "../assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "fit": "cover",
+          "opacity": 0.94,
+          "z": 2
+        },
+        {
+          "src": "../assets/maps/star-landing/ground.webp?v=star-landing-ground-v1",
+          "fit": "contain",
+          "z": 10
+        }
+      ]
+    },
+    {
+      "id": "alenon",
+      "label": "アレノンの遺跡",
+      "referenceSize": {
+        "width": 1448,
+        "height": 1086
+      },
+      "collisionUrl": "../assets/maps/alenon-collision.json",
+      "depthUrl": "../assets/maps/alenon-depth.json",
+      "layers": [
+        {
+          "src": "../assets/maps/alenon/bg.webp",
+          "fit": "cover",
+          "z": 0
+        },
+        {
+          "src": "../assets/maps/alenon/ground_l.webp",
+          "fit": "contain",
+          "transform": "translate3d(-403.9px,-16.7px,0) scale(.533)",
+          "transformOrigin": "50% 50%",
+          "z": 10,
+          "opacity": 0.86
+        },
+        {
+          "src": "../assets/maps/alenon/ground_r.webp",
+          "fit": "contain",
+          "transform": "translate3d(236.9px,-63.4px,0) scale(.592)",
+          "transformOrigin": "50% 50%",
+          "z": 10
+        },
+        {
+          "src": "../assets/maps/alenon/ground_s.webp",
+          "fit": "contain",
+          "transform": "translate3d(0px,-12px,0) scale(.86)",
+          "transformOrigin": "50% 50%",
+          "z": 12
+        },
+        {
+          "src": "../assets/maps/alenon/pad.webp",
+          "x": 660.9,
+          "y": 787.3,
+          "w": 140,
+          "h": 140,
+          "fit": "contain",
+          "z": 20,
+          "opacity": 0.72
+        },
+        {
+          "src": "../assets/maps/alenon/orb-outer.webp",
+          "x": 491.5,
+          "y": 29.6,
+          "w": 449,
+          "h": 449,
+          "fit": "contain",
+          "z": 22,
+          "opacity": 0.72
+        },
+        {
+          "src": "../assets/maps/alenon/orb-inner.webp",
+          "x": 491.5,
+          "y": 29.6,
+          "w": 449,
+          "h": 449,
+          "fit": "contain",
+          "z": 23,
+          "opacity": 0.72
+        },
+        {
+          "src": "../assets/maps/alenon/orb-core.webp",
+          "x": 491.5,
+          "y": 29.6,
+          "w": 449,
+          "h": 449,
+          "fit": "contain",
+          "z": 24
+        }
+      ]
+    },
+    {
+      "id": "star-country-gate-garden",
+      "label": "星門庭園",
+      "referenceSize": {
+        "width": 1448,
+        "height": 1086
+      },
+      "collisionUrl": "../assets/maps/star-country-gate-garden-collision.json",
+      "depthUrl": "../assets/maps/star-country-gate-garden-depth.json",
+      "layers": [
+        {
+          "src": "../assets/maps/star-country-farthest-sky-background.webp",
+          "fit": "cover",
+          "z": 0
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-star-sky.webp",
+          "fit": "cover",
+          "z": 1
+        },
+        {
+          "src": "../assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "fit": "cover",
+          "z": 2
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "fit": "contain",
+          "z": 10
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-fountain-base.webp",
+          "x": 613,
+          "y": 380,
+          "w": 406,
+          "h": 284,
+          "fit": "contain",
+          "z": 20
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-fountain-water.webp",
+          "x": 642,
+          "y": 404,
+          "w": 348,
+          "h": 204,
+          "fit": "contain",
+          "z": 21,
+          "opacity": 0.9
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "x": 709,
+          "y": 316,
+          "w": 213,
+          "h": 267,
+          "fit": "contain",
+          "z": 22
+        },
+        {
+          "src": "../assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-native-foreground-v6",
+          "x": 520,
+          "y": -163.33,
+          "w": 560,
+          "h": 373.33,
+          "fit": "contain",
+          "z": 23
+        }
+      ]
+    }
+  ]
+}
