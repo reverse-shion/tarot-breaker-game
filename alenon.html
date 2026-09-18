@@ -1107,7 +1107,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="pad-backside-depth-v16">
+<body data-alenon-drift-revision="pad-closer-dismount-v17">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1269,7 +1269,8 @@
       const PAD_LAND_DURATION = .78;
       const PAD_HOME_ARM_DISTANCE = 110;
       const PAD_HOME_LAND_RADIUS = 60;
-      const PAD_DISMOUNT_OFFSET_Y = 86;
+      const PAD_DISMOUNT_OFFSET_Y = 68;
+      const PAD_REBOARD_COOLDOWN_MS = 900;
       const PAD_EXIT_Y = 1038;
       const CAMERA_LOOK_AHEAD_Y = 110;
       const WORLD_MARGIN = 34;
@@ -1317,6 +1318,7 @@
         landFromX: 0,
         landFromY: 0,
         landFromLift: 0,
+        reboardLockedUntil: 0,
       };
 
       const defaults = Object.freeze({
@@ -1872,6 +1874,7 @@
         ride.progress = 0;
         ride.homeArmed = false;
         ride.exitStarted = false;
+        ride.reboardLockedUntil = performance.now() + PAD_REBOARD_COOLDOWN_MS;
 
         document.body.classList.remove(
           "pad-boarding",
@@ -1925,6 +1928,7 @@
         ride.progress = 0;
         ride.exitStarted = false;
         ride.homeArmed = false;
+        ride.reboardLockedUntil = 0;
         document.body.classList.remove("pad-boarding", "pad-riding", "pad-landing", "pad-exiting");
         refs.pad.style.left = layout.pad.x + "px";
         refs.pad.style.top = layout.pad.y + "px";
@@ -2326,7 +2330,12 @@
               player.x - layout.pad.x,
               player.y - layout.pad.y,
             );
-            if (padDistance <= PAD_TOUCH_RADIUS) beginBoarding();
+            if (
+              performance.now() >= ride.reboardLockedUntil &&
+              padDistance <= PAD_TOUCH_RADIUS
+            ) {
+              beginBoarding();
+            }
           }
 
           setActorPosition();
