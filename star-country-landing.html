@@ -10,7 +10,7 @@
     :root {
       --world-w: 1448;
       --world-h: 1086;
-      --pad-x: 726px;
+      --pad-x: 725.5px;
       --pad-y: 788px;
       --pad-size: 146px;
     }
@@ -435,7 +435,7 @@
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v4-pad-fixed" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v5-half-pixel" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -482,12 +482,12 @@
       <div class="pad-editor__grid">
         <label class="pad-editor__field">
           <span class="pad-editor__label">X <span id="pad-edit-x-value" class="pad-editor__value"></span></span>
-          <input id="pad-edit-x" class="pad-editor__range" type="range" min="420" max="1028" step="1" />
+          <input id="pad-edit-x" class="pad-editor__range" type="range" min="420" max="1028" step="0.5" />
         </label>
 
         <label class="pad-editor__field">
           <span class="pad-editor__label">Y <span id="pad-edit-y-value" class="pad-editor__value"></span></span>
-          <input id="pad-edit-y" class="pad-editor__range" type="range" min="520" max="1040" step="1" />
+          <input id="pad-edit-y" class="pad-editor__range" type="range" min="520" max="1040" step="0.5" />
         </label>
 
         <label class="pad-editor__field">
@@ -524,7 +524,7 @@
       const PAD_SPEED_SCREEN = 175;
 
       const PAD_DEFAULTS = Object.freeze({
-        x: 726,
+        x: 725.5,
         y: 788,
         size: 146,
         dismountOffsetY: 72,
@@ -717,8 +717,8 @@
         padEditY.value = String(PAD_HOME.y);
         padEditSize.value = String(PAD_SIZE);
         padEditOffset.value = String(PAD_DISMOUNT_OFFSET_Y);
-        padEditXValue.textContent = Math.round(PAD_HOME.x) + " px";
-        padEditYValue.textContent = Math.round(PAD_HOME.y) + " px";
+        padEditXValue.textContent = PAD_HOME.x + " px";
+        padEditYValue.textContent = PAD_HOME.y + " px";
         padEditSizeValue.textContent = Math.round(PAD_SIZE) + " px";
         padEditOffsetValue.textContent = Math.round(PAD_DISMOUNT_OFFSET_Y) + " px";
       }
@@ -754,7 +754,7 @@
 
       async function copyPadEditorValues() {
         const value =
-          `PAD_HOME = { x: ${Math.round(PAD_HOME.x)}, y: ${Math.round(PAD_HOME.y)} };\n` +
+          `PAD_HOME = { x: ${PAD_HOME.x}, y: ${PAD_HOME.y} };\n` +
           `PAD_SIZE = ${Math.round(PAD_SIZE)};\n` +
           `PAD_DISMOUNT_OFFSET_Y = ${Math.round(PAD_DISMOUNT_OFFSET_Y)};`;
         try {
