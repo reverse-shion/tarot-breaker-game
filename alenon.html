@@ -1818,7 +1818,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="orb-wind-restore-v27">
+<body data-alenon-drift-revision="devil-choice-prologue-v28">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -2469,10 +2469,15 @@
         tarotDrawn.classList.add("is-flipped");
         playTarotResonance();
 
-        // Let the player actually look at the card.
-        await sleep(1700);
+        // Let the player read the Devil card first, then let Shion interpret it.
+        await sleep(1250);
+        await sayStory("……悪魔か。", 1550, 700);
+        await sayStory("自分は何に縛られ、何を失うことに怯えている？", 3100, 900);
+        await sayStory("その鎖を外した先に、本当に別の選択はないのだろうか？", 3450, 1000);
+        await sayStory("本当に、選べる道はひとつしかないのだろうか……。", 3250, 1050);
+        await sayStory("選択……か……。", 1850, 950);
 
-        // 2) Reveal Alenon, then give the environment time to exist.
+        // 2) Reveal Alenon only after the tarot question has had time to settle.
         document.body.classList.add("prologue-revealing");
         await sleep(1150);
         prologueOverlay.hidden = true;
