@@ -81,26 +81,57 @@
 <div><label class="small">間隔 px</label><input id="gap" type="number" value="0" min="0"></div>
 </div>
 <div style="margin-top:10px"><label class="small">ベース名</label><input id="spriteBase" type="text" placeholder="shion_walk_down"></div>
-<div class="row" style="margin-top:10px"><button id="splitBtn" class="btn">分割する</button><button id="shareFrames" class="btn secondary" disabled>全フレーム共有</button></div>
+<div class="row" style="margin-top:10px">
+<button id="splitBtn" class="btn">分割する</button>
+<button id="shareFrames" class="btn secondary" disabled>全フレーム共有</button>
+<button id="manifestDownload" class="btn secondary" disabled>manifest.json保存</button>
 </div>
-<div class="card"><h2>分割結果</h2><div id="frames" class="frames"></div></div>
+</div>
+<div class="card">
+<h2>分割結果</h2>
+<div id="manifestInfo" class="status">分割すると、ゲーム側で使えるフレーム情報manifest.jsonも自動生成します。</div>
+<div id="frames" class="frames" style="margin-top:10px"></div>
+</div>
 </section>
 
 <section id="github" class="panel">
 <div class="card">
 <h2>GitHubへ直接送信</h2>
-<p class="muted">トークンはこの画面内だけで使用し、保存しません。</p>
+<p class="muted">Fine-grained tokenはこのページのメモリ内だけで使用し、localStorage / Cookieには保存しません。ページを閉じると消えます。</p>
 <div class="grid">
-<div><label class="small">Repository</label><input id="repo" type="text" value="reverse-shion/tarot-breaker-game"></div>
-<div><label class="small">Branch</label><input id="branch" type="text" value="main"></div>
+<div><label class="small">Repository</label><input id="repo" type="text" value="reverse-shion/tarot-breaker-game" autocapitalize="off" spellcheck="false"></div>
+<div><label class="small">Branch</label><input id="branch" type="text" value="main" autocapitalize="off" spellcheck="false"></div>
 </div>
-<div style="margin-top:10px"><label class="small">Fine-grained token（Contents: Read and write）</label><input id="token" type="password" autocomplete="off" placeholder="github_pat_..."></div>
+<div style="margin-top:10px">
+<label class="small">Fine-grained token（このRepositoryのみ / Contents: Read and write 推奨）</label>
+<input id="token" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" placeholder="github_pat_...">
+</div>
 <div class="row" style="margin-top:10px">
-<button id="uploadOne" class="btn" disabled>変換画像をGitHubへ送信</button>
+<button id="testGitHub" class="btn secondary">接続確認</button>
+<button id="clearToken" class="btn secondary">トークン消去</button>
 </div>
-<div style="margin-top:12px"><label class="small">スプライト配置先</label><input id="framesDir" type="text" value="assets/sprites/shion"></div>
-<div class="row" style="margin-top:10px"><button id="uploadFrames" class="btn" disabled>分割フレームを送信</button></div>
-<div id="ghStatus" class="status">未送信</div>
+<div style="margin-top:12px">
+<label class="small">同名ファイルが存在する場合</label>
+<select id="overwriteMode">
+<option value="ask" selected>毎回確認してから上書き</option>
+<option value="never">上書きしない</option>
+<option value="always">確認せず上書き</option>
+</select>
+</div>
+<div class="card" style="margin-top:12px;background:#081725">
+<label class="small">変換画像の送信先</label>
+<div id="ghTarget" class="path">—</div>
+<div class="row" style="margin-top:10px"><button id="uploadOne" class="btn" disabled>この画像をGitHubへ送信</button></div>
+</div>
+<div class="card" style="margin-top:12px;background:#081725">
+<label class="small">スプライト配置先</label>
+<input id="framesDir" type="text" value="assets/sprites/shion" autocapitalize="off" spellcheck="false">
+<div style="margin-top:8px"><label><input id="uploadManifest" type="checkbox" checked> manifest.jsonも一緒に送信</label></div>
+<div id="spriteTarget" class="path" style="margin-top:8px">—</div>
+<div class="row" style="margin-top:10px"><button id="uploadFrames" class="btn" disabled>分割フレームをGitHubへ送信</button></div>
+</div>
+<div id="ghStatus" class="status">未接続</div>
+<div id="ghResult" class="status" style="display:none"></div>
 </div>
 </section>
 </div>
@@ -108,12 +139,14 @@
 <script>
 (function(){
 "use strict";
-var state={sources:[],active:-1,output:null,sprite:null,frames:[]};
+var state={sources:[],active:-1,output:null,sprite:null,frames:[],manifest:null,lastUpload:null};
 function el(id){return document.getElementById(id)}
 function fmt(n){if(!isFinite(n))return "—";var u=["B","KB","MB","GB"],i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i&&n<10?2:1)+" "+u[i]}
 function clean(s){return (s||"asset").toLowerCase().normalize("NFKC").replace(/\.[^.]+$/,"").replace(/[^a-z0-9_-]+/g,"-").replace(/[-_]{2,}/g,"-").replace(/^[-_]+|[-_]+$/g,"")||"asset"}
 function webpName(s){return clean(s)+".webp"}
-function joinPath(){var p=[el("cat").value,clean(el("subdir").value||"") ,webpName(el("filename").value||"asset")].filter(Boolean).join("/");el("path").textContent=p;return p}
+function joinPath(){var p=[el("cat").value,clean(el("subdir").value||"") ,webpName(el("filename").value||"asset")].filter(Boolean).join("/");el("path").textContent=p;updateGhTarget();return p}
+function updateGhTarget(){var repo=el("repo")?el("repo").value.trim():"",branch=el("branch")?el("branch").value.trim():"main",p=el("path")?el("path").textContent:"—";if(el("ghTarget"))el("ghTarget").textContent=(repo||"repository")+" @ "+(branch||"main")+" / "+p;var dir=el("framesDir")?el("framesDir").value.trim().replace(/^\\/+|\\/+$/g,""):"";if(el("spriteTarget"))el("spriteTarget").textContent=(repo||"repository")+" @ "+(branch||"main")+" / "+(dir||"assets/sprites")+" / [frames + manifest]"}
+function manifestFile(){if(!state.manifest)return null;var text=JSON.stringify(state.manifest,null,2),name=(state.manifest.name||"sprite")+"_manifest.json";return new File([text],name,{type:"application/json"})}
 function dataURL(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onerror=function(){reject(new Error("FileReaderで読み込めません"))};r.onload=function(){resolve(r.result)};r.readAsDataURL(file)})}
 function imageFromFile(file){return dataURL(file).then(function(src){return new Promise(function(resolve,reject){var im=new Image();im.onload=function(){resolve({img:im,src:src})};im.onerror=function(){reject(new Error("この画像形式をSafariで表示できません"))};im.src=src})})}
 function alphaCheck(im){try{var max=700,scale=Math.min(1,max/im.naturalWidth,max/im.naturalHeight),c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.naturalWidth*scale));c.height=Math.max(1,Math.round(im.naturalHeight*scale));var x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,c.width,c.height);var d=x.getImageData(0,0,c.width,c.height).data,zero=0,partial=0;for(var i=3;i<d.length;i+=4){if(d[i]===0)zero++;else if(d[i]<255)partial++}return{has:(zero+partial)>0,zero:zero,partial:partial,total:d.length/4}}catch(e){return{has:null,zero:0,partial:0,total:0}}}
@@ -144,23 +177,33 @@ async function shareFiles(files){try{if(navigator.share&&navigator.canShare&&nav
 async function splitSprite(){
 if(!state.sprite){el("spriteStatus").textContent="先にスプライトシートを選択してください。";return}
 var im=state.sprite.img,cols=Math.max(1,parseInt(el("cols").value)||1),rows=Math.max(1,parseInt(el("rows").value)||1),m=Math.max(0,parseInt(el("margin").value)||0),g=Math.max(0,parseInt(el("gap").value)||0),uw=im.naturalWidth-m*2-g*(cols-1),uh=im.naturalHeight-m*2-g*(rows-1),fw=uw/cols,fh=uh/rows,base=clean(el("spriteBase").value||"frame").replace(/-/g,"_");if(fw<=0||fh<=0)return;
-state.frames=[];el("frames").innerHTML="";
-var n=0;
-for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){var cv=document.createElement("canvas");cv.width=Math.round(fw);cv.height=Math.round(fh);var x=cv.getContext("2d");x.imageSmoothingEnabled=false;x.drawImage(im,m+c*(fw+g),m+r*(fh+g),fw,fh,0,0,cv.width,cv.height);var b=await canvasBlob(cv,1),name=base+"_"+String(n).padStart(2,"0")+".webp",url=URL.createObjectURL(b);state.frames.push({blob:b,name:name,url:url});var card=document.createElement("div");card.className="frame";card.innerHTML="<img src='"+url+"'><div>"+name+"<br>"+cv.width+"×"+cv.height+"</div>";(function(blob,nm,node){node.onclick=function(){download(blob,nm)}})(b,name,card);el("frames").appendChild(card);n++}
-el("shareFrames").disabled=false;el("uploadFrames").disabled=false;el("spriteStatus").className="status ok";el("spriteStatus").textContent=state.frames.length+"フレームに分割しました。"}
+state.frames=[];state.manifest=null;el("frames").innerHTML="";
+var n=0,manifestFrames=[];
+for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){var sx=m+c*(fw+g),sy=m+r*(fh+g),cv=document.createElement("canvas");cv.width=Math.round(fw);cv.height=Math.round(fh);var x=cv.getContext("2d");x.imageSmoothingEnabled=false;x.drawImage(im,sx,sy,fw,fh,0,0,cv.width,cv.height);var b=await canvasBlob(cv,1),name=base+"_"+String(n).padStart(2,"0")+".webp",url=URL.createObjectURL(b);state.frames.push({blob:b,name:name,url:url,width:cv.width,height:cv.height,row:r,col:c});manifestFrames.push({index:n,file:name,row:r,col:c,sourceX:Math.round(sx),sourceY:Math.round(sy),width:cv.width,height:cv.height});var card=document.createElement("div");card.className="frame";card.innerHTML="<img src='"+url+"'><div>"+name+"<br>"+cv.width+"×"+cv.height+"</div>";(function(blob,nm,node){node.onclick=function(){download(blob,nm)}})(b,name,card);el("frames").appendChild(card);n++}
+state.manifest={version:1,type:"sprite-frames",name:base,source:{file:state.sprite.file.name,width:im.naturalWidth,height:im.naturalHeight},grid:{columns:cols,rows:rows,margin:m,gap:g,frameWidth:Math.round(fw),frameHeight:Math.round(fh)},frames:manifestFrames};
+el("manifestInfo").className="status ok";el("manifestInfo").textContent="manifest生成完了: "+base+"_manifest.json / "+state.frames.length+" frames";
+el("shareFrames").disabled=false;el("manifestDownload").disabled=false;el("uploadFrames").disabled=false;el("spriteStatus").className="status ok";el("spriteStatus").textContent=state.frames.length+"フレームに分割しました。";updateGhTarget()}
 function b64(blob){return blob.arrayBuffer().then(function(ab){var u=new Uint8Array(ab),bin="",chunk=0x8000;for(var i=0;i<u.length;i+=chunk)bin+=String.fromCharCode.apply(null,u.subarray(i,i+chunk));return btoa(bin)})}
+function ghConfig(){var repo=el("repo").value.trim(),branch=el("branch").value.trim()||"main",token=el("token").value.trim();if(!repo.includes("/"))throw new Error("Repository は owner/repo 形式で入力してください");if(!token)throw new Error("GitHub token を入力してください");return{repo:repo,branch:branch,token:token,headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"}}}
+async function testGitHub(){try{var c=ghConfig(),res=await fetch("https://api.github.com/repos/"+c.repo,{headers:c.headers});if(!res.ok)throw new Error("接続できませんでした ("+res.status+")");var j=await res.json(),perm=j.permissions||{};el("ghStatus").className="status ok";el("ghStatus").textContent="接続OK: "+j.full_name+" / branch: "+c.branch+(perm.push===false?"\n注意: 書き込み権限が確認できません。Fine-grained tokenのContents: Read and writeを確認してください。":"");updateGhTarget()}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}}
 async function ghPut(path,blob){
-var repo=el("repo").value.trim(),branch=el("branch").value.trim()||"main",token=el("token").value.trim();if(!repo.includes("/")||!token)throw new Error("Repository と token を確認してください");
-var ep="https://api.github.com/repos/"+repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/"),headers={"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"},sha=null,get=await fetch(ep+"?ref="+encodeURIComponent(branch),{headers:headers});if(get.ok){var gj=await get.json();sha=gj.sha}else if(get.status!==404)throw new Error("GitHub確認エラー "+get.status);
-var body={message:"Add/update asset: "+path,content:await b64(blob),branch:branch};if(sha)body.sha=sha;var put=await fetch(ep,{method:"PUT",headers:headers,body:JSON.stringify(body)});if(!put.ok){var j=await put.json().catch(function(){return{}});throw new Error(j.message||("GitHub送信エラー "+put.status))}}
+var c=ghConfig(),ep="https://api.github.com/repos/"+c.repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/"),sha=null,existing=null,get=await fetch(ep+"?ref="+encodeURIComponent(c.branch),{headers:c.headers});
+if(get.ok){existing=await get.json();sha=existing.sha}else if(get.status!==404)throw new Error("GitHub確認エラー "+get.status);
+if(existing){var mode=el("overwriteMode").value;if(mode==="never")throw new Error("同名ファイルが存在するため送信を停止しました: "+path);if(mode==="ask"){var ok=confirm("同名ファイルがGitHubに存在します。\n\n"+path+"\n現在: "+fmt(existing.size||0)+"\n新規: "+fmt(blob.size)+"\n\n上書きしますか？");if(!ok)throw new Error("上書きをキャンセルしました")}}
+var body={message:(sha?"Update asset: ":"Add asset: ")+path,content:await b64(blob),branch:c.branch};if(sha)body.sha=sha;var put=await fetch(ep,{method:"PUT",headers:c.headers,body:JSON.stringify(body)}),j=await put.json().catch(function(){return{}});if(!put.ok)throw new Error(j.message||("GitHub送信エラー "+put.status));var content=j.content||{};return{path:path,html_url:content.html_url||("https://github.com/"+c.repo+"/blob/"+encodeURIComponent(c.branch)+"/"+path),download_url:content.download_url||"",sha:content.sha||""}}
+function showGhResult(results){state.lastUpload=results;el("ghResult").style.display="block";el("ghResult").className="status ok";el("ghResult").innerHTML="<b>アップロード完了</b><br>"+results.map(function(r){return "✓ <a href='"+r.html_url+"' target='_blank' rel='noopener' style='color:#9fd3ff'>"+r.path+"</a>"}).join("<br>")}
 el("fileInput").addEventListener("change",function(e){loadFiles(Array.from(e.target.files||[]));e.target.value=""});
 el("spriteInput").addEventListener("change",async function(e){var f=e.target.files&&e.target.files[0];if(!f)return;try{var r=await imageFromFile(f);state.sprite={file:f,img:r.img,src:r.src};el("spriteBase").value=clean(f.name).replace(/-/g,"_");el("spriteStatus").className="status ok";el("spriteStatus").textContent=f.name+" / "+r.img.naturalWidth+"×"+r.img.naturalHeight}catch(err){el("spriteStatus").className="status err";el("spriteStatus").textContent=err.message}e.target.value=""});
 document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("active",x===b)});document.querySelectorAll(".panel").forEach(function(p){p.classList.toggle("active",p.id===b.dataset.tab)})}});
 var ratioBusy=false;el("w").addEventListener("input",function(){var s=state.sources[state.active];if(!s)return;if(el("lock").checked&&!ratioBusy){ratioBusy=true;el("h").value=Math.round((parseInt(el("w").value)||s.img.naturalWidth)*s.img.naturalHeight/s.img.naturalWidth);ratioBusy=false}});el("h").addEventListener("input",function(){var s=state.sources[state.active];if(!s)return;if(el("lock").checked&&!ratioBusy){ratioBusy=true;el("w").value=Math.round((parseInt(el("h").value)||s.img.naturalHeight)*s.img.naturalWidth/s.img.naturalHeight);ratioBusy=false}});
 ["w","h","filename","subdir"].forEach(function(id){el(id).addEventListener("change",function(){joinPath();convert()})});el("cat").addEventListener("change",joinPath);el("q").addEventListener("input",function(){el("qLabel").textContent=el("q").value});el("q").addEventListener("change",convert);el("convertBtn").onclick=convert;el("downloadBtn").onclick=function(){if(state.output)download(state.output.blob,state.output.name)};el("shareBtn").onclick=function(){if(state.output)shareFiles([new File([state.output.blob],state.output.name,{type:"image/webp"})])};el("splitBtn").onclick=splitSprite;el("shareFrames").onclick=function(){shareFiles(state.frames.map(function(f){return new File([f.blob],f.name,{type:"image/webp"})}))};
-el("uploadOne").onclick=async function(){if(!state.output)return;try{el("ghStatus").textContent="送信中…";await ghPut(joinPath(),state.output.blob);el("ghStatus").className="status ok";el("ghStatus").textContent="GitHub送信完了: "+joinPath()}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
-el("uploadFrames").onclick=async function(){try{var dir=el("framesDir").value.trim().replace(/^\/+|\/+$/g,"");for(var i=0;i<state.frames.length;i++){el("ghStatus").textContent=(i+1)+"/"+state.frames.length+" 送信中…";await ghPut(dir+"/"+state.frames[i].name,state.frames[i].blob)}el("ghStatus").className="status ok";el("ghStatus").textContent="全フレーム送信完了"}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
-joinPath();
+el("manifestDownload").onclick=function(){var f=manifestFile();if(f)download(f,f.name)};
+el("testGitHub").onclick=testGitHub;el("clearToken").onclick=function(){el("token").value="";el("ghStatus").className="status";el("ghStatus").textContent="トークンを消去しました。"};
+["repo","branch","framesDir"].forEach(function(id){el(id).addEventListener("input",updateGhTarget)});
+el("uploadOne").onclick=async function(){if(!state.output)return;try{el("ghResult").style.display="none";el("ghStatus").className="status";el("ghStatus").textContent="送信中…";var r=await ghPut(joinPath(),state.output.blob);el("ghStatus").className="status ok";el("ghStatus").textContent="GitHub送信完了";showGhResult([r])}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
+el("uploadFrames").onclick=async function(){try{el("ghResult").style.display="none";var dir=el("framesDir").value.trim().replace(/^\/+|\/+$/g,""),results=[];for(var i=0;i<state.frames.length;i++){el("ghStatus").className="status";el("ghStatus").textContent=(i+1)+"/"+state.frames.length+" 送信中…";results.push(await ghPut(dir+"/"+state.frames[i].name,state.frames[i].blob))}if(el("uploadManifest").checked){var mf=manifestFile();if(mf){el("ghStatus").textContent="manifest送信中…";results.push(await ghPut(dir+"/"+mf.name,mf))}}el("ghStatus").className="status ok";el("ghStatus").textContent="スプライト一式の送信完了";showGhResult(results)}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
+window.addEventListener("pagehide",function(){if(el("token"))el("token").value=""});
+joinPath();updateGhTarget();
 })();
 </script>
 </body>
