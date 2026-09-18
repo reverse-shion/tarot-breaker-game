@@ -1961,7 +1961,7 @@
   </style>
   <link rel="stylesheet" href="./shared-dialogue.css?v=1.0.0" />
 </head>
-<body data-alenon-drift-revision="no-objective-v34">
+<body data-alenon-drift-revision="no-objective-v35">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -2746,7 +2746,6 @@
         document.body.classList.add("story-running");
         prologueStart.hidden = true;
         moveGuide.hidden = true;
-        storyObjective.classList.remove("visible");
         await ensureStoryAudio();
 
         // 1) Darkness / tarot. Keep the first seconds almost empty.
@@ -3618,7 +3617,6 @@
         if (ride.mode !== "ground" || !story.completed) return;
         story.locked = true;
         document.body.classList.add("story-running");
-        storyObjective.classList.remove("visible");
         moveGuide.hidden = true;
         ride.x = layout.pad.x;
         ride.y = layout.pad.y;
