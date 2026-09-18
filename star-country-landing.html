@@ -12,6 +12,7 @@
       --world-h: 1086;
       --pad-x: 724px;
       --pad-y: 900px;
+      --pad-size: 146px;
     }
 
     * { box-sizing: border-box; }
@@ -169,8 +170,8 @@
       z-index: 22;
       left: var(--pad-x);
       top: var(--pad-y);
-      width: 146px;
-      height: 146px;
+      width: var(--pad-size);
+      height: var(--pad-size);
       transform: translate(-50%,-50%);
       object-fit: contain;
       pointer-events: none;
@@ -290,6 +291,133 @@
       background: rgba(147,204,255,.43);
     }
 
+
+    #pad-editor-toggle {
+      position: fixed;
+      z-index: 4100;
+      right: max(12px, calc(env(safe-area-inset-right) + 8px));
+      bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px));
+      min-width: 88px;
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid rgba(219,235,255,.34);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(7,18,43,.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font: 700 12px/1 system-ui, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #pad-editor {
+      position: fixed;
+      z-index: 4200;
+      left: 10px;
+      right: 10px;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 10px 12px 12px;
+      border: 1px solid rgba(219,235,255,.26);
+      border-radius: 16px;
+      color: #fff;
+      background: rgba(5,14,34,.88);
+      box-shadow: 0 14px 40px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font: 12px/1.35 system-ui, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #pad-editor[hidden],
+    #pad-editor-toggle[hidden] {
+      display: none;
+    }
+
+    .pad-editor__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .pad-editor__title {
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .pad-editor__close {
+      width: 34px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid rgba(219,235,255,.24);
+      border-radius: 9px;
+      color: #fff;
+      background: rgba(255,255,255,.07);
+      font-size: 18px;
+    }
+
+    .pad-editor__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 10px;
+    }
+
+    .pad-editor__field {
+      min-width: 0;
+    }
+
+    .pad-editor__label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 2px;
+      color: rgba(238,247,255,.94);
+    }
+
+    .pad-editor__value {
+      color: #bde8ff;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .pad-editor__range {
+      width: 100%;
+      margin: 0;
+      accent-color: #8fdcff;
+    }
+
+    .pad-editor__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .pad-editor__actions button {
+      min-height: 36px;
+      padding: 7px 8px;
+      border: 1px solid rgba(219,235,255,.24);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(43,81,136,.66);
+      font: 700 11px/1.15 system-ui, sans-serif;
+    }
+
+    .pad-editor__note {
+      margin-top: 7px;
+      color: rgba(219,235,255,.68);
+      font-size: 10px;
+    }
+
+    body.pad-editing #guide,
+    body.pad-editing #flight-status {
+      opacity: .25;
+    }
+
     #fade {
       position: fixed;
       inset: 0;
@@ -307,7 +435,7 @@
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v2-audio" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v3-pad-editor" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -343,6 +471,44 @@
       <div id="joy-knob"></div>
     </div>
 
+
+    <button id="pad-editor-toggle" type="button" hidden>PAD調整</button>
+    <aside id="pad-editor" hidden aria-label="PAD離着陸位置調整">
+      <div class="pad-editor__head">
+        <div class="pad-editor__title">PAD 離着陸位置調整</div>
+        <button id="pad-editor-close" class="pad-editor__close" type="button" aria-label="調整パネルを閉じる">×</button>
+      </div>
+
+      <div class="pad-editor__grid">
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">X <span id="pad-edit-x-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-x" class="pad-editor__range" type="range" min="420" max="1028" step="1" />
+        </label>
+
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">Y <span id="pad-edit-y-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-y" class="pad-editor__range" type="range" min="520" max="1040" step="1" />
+        </label>
+
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">大きさ <span id="pad-edit-size-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-size" class="pad-editor__range" type="range" min="80" max="230" step="1" />
+        </label>
+
+        <label class="pad-editor__field">
+          <span class="pad-editor__label">降機位置 <span id="pad-edit-offset-value" class="pad-editor__value"></span></span>
+          <input id="pad-edit-offset" class="pad-editor__range" type="range" min="20" max="140" step="1" />
+        </label>
+      </div>
+
+      <div class="pad-editor__actions">
+        <button id="pad-edit-preview" type="button">着陸を再生</button>
+        <button id="pad-edit-copy" type="button">値をコピー</button>
+        <button id="pad-edit-reset" type="button">初期値</button>
+      </div>
+      <div class="pad-editor__note">URLに ?padEdit=1 を付けた時だけ表示。調整値はこの端末に自動保存されます。</div>
+    </aside>
+
     <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
     <div id="fade" aria-hidden="true"></div>
   </main>
@@ -357,15 +523,21 @@
       const SHION_SPEED_SCREEN = 155;
       const PAD_SPEED_SCREEN = 175;
 
-      const PAD_HOME = Object.freeze({ x: 724, y: 900 });
-      const PAD_SIZE = 146;
+      const PAD_DEFAULTS = Object.freeze({
+        x: 724,
+        y: 900,
+        size: 146,
+        dismountOffsetY: 72,
+      });
+      let PAD_HOME = { x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y };
+      let PAD_SIZE = PAD_DEFAULTS.size;
       const PAD_TOUCH_RADIUS = 66;
       const PAD_LIFT = 18;
       const PAD_BOARD_DURATION = .92;
       const PAD_LAND_DURATION = .80;
       const PAD_HOME_ARM_DISTANCE = 112;
       const PAD_HOME_LAND_RADIUS = 62;
-      const PAD_DISMOUNT_OFFSET_Y = 72;
+      let PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
       const PAD_REBOARD_COOLDOWN_MS = 900;
 
       const GARDEN_EXIT_Y = 215;
@@ -388,6 +560,23 @@
 
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
+      const padEditMode = params.get("padEdit") === "1" || params.get("debug") === "1";
+      const PAD_EDIT_STORAGE_KEY = "tarot-breaker:star-landing-pad-layout-v1";
+
+      const padEditorToggle = document.getElementById("pad-editor-toggle");
+      const padEditor = document.getElementById("pad-editor");
+      const padEditorClose = document.getElementById("pad-editor-close");
+      const padEditX = document.getElementById("pad-edit-x");
+      const padEditY = document.getElementById("pad-edit-y");
+      const padEditSize = document.getElementById("pad-edit-size");
+      const padEditOffset = document.getElementById("pad-edit-offset");
+      const padEditXValue = document.getElementById("pad-edit-x-value");
+      const padEditYValue = document.getElementById("pad-edit-y-value");
+      const padEditSizeValue = document.getElementById("pad-edit-size-value");
+      const padEditOffsetValue = document.getElementById("pad-edit-offset-value");
+      const padEditPreview = document.getElementById("pad-edit-preview");
+      const padEditCopy = document.getElementById("pad-edit-copy");
+      const padEditReset = document.getElementById("pad-edit-reset");
 
       let worldScale = 1;
       let cameraTx = 0;
@@ -407,7 +596,7 @@
       const ride = {
         mode: arrivingFromAlenon ? "arriving" : "ground",
         x: PAD_HOME.x,
-        y: arrivingFromAlenon ? 1048 : PAD_HOME.y,
+        y: arrivingFromAlenon ? Math.min(WORLD_H + 20, PAD_HOME.y + 148) : PAD_HOME.y,
         lift: arrivingFromAlenon ? 48 : 0,
         progress: 0,
         fromX: PAD_HOME.x,
@@ -469,6 +658,163 @@
         "./assets/maps/alenon/pad.webp",
         "./assets/maps/star-landing/ground.webp",
       ].map(preloadImage)).catch(() => {});
+
+
+      function readPadDraft() {
+        if (!padEditMode) return;
+        try {
+          const saved = JSON.parse(localStorage.getItem(PAD_EDIT_STORAGE_KEY) || "null");
+          if (!saved) return;
+          if (Number.isFinite(saved.x)) PAD_HOME.x = clamp(saved.x, 420, 1028);
+          if (Number.isFinite(saved.y)) PAD_HOME.y = clamp(saved.y, 520, 1040);
+          if (Number.isFinite(saved.size)) PAD_SIZE = clamp(saved.size, 80, 230);
+          if (Number.isFinite(saved.dismountOffsetY)) {
+            PAD_DISMOUNT_OFFSET_Y = clamp(saved.dismountOffsetY, 20, 140);
+          }
+        } catch (_) {}
+      }
+
+      function savePadDraft() {
+        if (!padEditMode) return;
+        try {
+          localStorage.setItem(PAD_EDIT_STORAGE_KEY, JSON.stringify({
+            x: PAD_HOME.x,
+            y: PAD_HOME.y,
+            size: PAD_SIZE,
+            dismountOffsetY: PAD_DISMOUNT_OFFSET_Y,
+          }));
+        } catch (_) {}
+      }
+
+      function applyPadEditorLayout({ movePlayer = false } = {}) {
+        document.documentElement.style.setProperty("--pad-x", PAD_HOME.x + "px");
+        document.documentElement.style.setProperty("--pad-y", PAD_HOME.y + "px");
+        document.documentElement.style.setProperty("--pad-size", PAD_SIZE + "px");
+
+        if (ride.mode === "ground") {
+          pad.style.left = PAD_HOME.x + "px";
+          pad.style.top = PAD_HOME.y + "px";
+          padGlow.style.left = PAD_HOME.x + "px";
+          padGlow.style.top = PAD_HOME.y + "px";
+          padTrail.style.left = PAD_HOME.x + "px";
+          padTrail.style.top = PAD_HOME.y + "px";
+
+          if (movePlayer) {
+            player.x = PAD_HOME.x;
+            player.y = PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y;
+            player.dir = "up";
+            player.target = null;
+            setActorPosition();
+            setActorVisual();
+            syncCamera();
+          }
+        }
+      }
+
+      function renderPadEditor() {
+        if (!padEditMode) return;
+        padEditX.value = String(PAD_HOME.x);
+        padEditY.value = String(PAD_HOME.y);
+        padEditSize.value = String(PAD_SIZE);
+        padEditOffset.value = String(PAD_DISMOUNT_OFFSET_Y);
+        padEditXValue.textContent = Math.round(PAD_HOME.x) + " px";
+        padEditYValue.textContent = Math.round(PAD_HOME.y) + " px";
+        padEditSizeValue.textContent = Math.round(PAD_SIZE) + " px";
+        padEditOffsetValue.textContent = Math.round(PAD_DISMOUNT_OFFSET_Y) + " px";
+      }
+
+      function updatePadFromEditor(movePlayer = true) {
+        PAD_HOME.x = Number(padEditX.value);
+        PAD_HOME.y = Number(padEditY.value);
+        PAD_SIZE = Number(padEditSize.value);
+        PAD_DISMOUNT_OFFSET_Y = Number(padEditOffset.value);
+        applyPadEditorLayout({ movePlayer });
+        renderPadEditor();
+        savePadDraft();
+      }
+
+      function previewPadArrival() {
+        if (!padEditMode || leaving) return;
+        clearTarget();
+        ride.mode = "arriving";
+        ride.x = PAD_HOME.x;
+        ride.y = Math.min(WORLD_H + 20, PAD_HOME.y + 148);
+        ride.lift = 48;
+        ride.progress = 0;
+        ride.homeArmed = false;
+        player.x = ride.x;
+        player.y = ride.y - ride.lift - 2;
+        player.dir = "up";
+        setRideMode("arriving");
+        status.style.opacity = "1";
+        setActorPosition();
+        setActorVisual();
+        syncCamera();
+      }
+
+      async function copyPadEditorValues() {
+        const value =
+          `PAD_HOME = { x: ${Math.round(PAD_HOME.x)}, y: ${Math.round(PAD_HOME.y)} };\n` +
+          `PAD_SIZE = ${Math.round(PAD_SIZE)};\n` +
+          `PAD_DISMOUNT_OFFSET_Y = ${Math.round(PAD_DISMOUNT_OFFSET_Y)};`;
+        try {
+          await navigator.clipboard.writeText(value);
+          padEditCopy.textContent = "コピー済み";
+        } catch (_) {
+          padEditCopy.textContent = "コピー不可";
+          console.log(value);
+        }
+        window.setTimeout(() => {
+          padEditCopy.textContent = "値をコピー";
+        }, 1100);
+      }
+
+      function resetPadEditor() {
+        PAD_HOME = { x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y };
+        PAD_SIZE = PAD_DEFAULTS.size;
+        PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
+        try { localStorage.removeItem(PAD_EDIT_STORAGE_KEY); } catch (_) {}
+        applyPadEditorLayout({ movePlayer: true });
+        renderPadEditor();
+      }
+
+      function initPadEditor() {
+        if (!padEditMode) return;
+
+        document.body.classList.add("pad-editing");
+        padEditor.hidden = false;
+        padEditorToggle.hidden = true;
+
+        readPadDraft();
+        applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
+        renderPadEditor();
+
+        for (const input of [padEditX, padEditY, padEditSize, padEditOffset]) {
+          input.addEventListener("input", () => updatePadFromEditor(true));
+          input.addEventListener("pointerdown", (event) => event.stopPropagation());
+          input.addEventListener("touchstart", (event) => event.stopPropagation(), { passive:true });
+        }
+
+        for (const element of [padEditor, padEditorToggle]) {
+          element.addEventListener("pointerdown", (event) => event.stopPropagation());
+          element.addEventListener("pointermove", (event) => event.stopPropagation());
+          element.addEventListener("pointerup", (event) => event.stopPropagation());
+        }
+
+        padEditorClose.addEventListener("click", () => {
+          padEditor.hidden = true;
+          padEditorToggle.hidden = false;
+        });
+
+        padEditorToggle.addEventListener("click", () => {
+          padEditor.hidden = false;
+          padEditorToggle.hidden = true;
+        });
+
+        padEditPreview.addEventListener("click", previewPadArrival);
+        padEditCopy.addEventListener("click", copyPadEditorValues);
+        padEditReset.addEventListener("click", resetPadEditor);
+      }
 
       function pointInPoly(x, y, points) {
         let inside = false;
@@ -745,6 +1091,7 @@
       }
 
       viewport.addEventListener("pointerdown", (event) => {
+        if (event.target.closest?.("#pad-editor, #pad-editor-toggle")) return;
         if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
         if (event.button != null && event.button !== 0) return;
         event.preventDefault();
@@ -843,7 +1190,8 @@
           ride.progress = Math.min(1, ride.progress + dt / 1.35);
           const t = easeOutCubic(ride.progress);
           ride.x = PAD_HOME.x;
-          ride.y = 1048 + (PAD_HOME.y - 1048) * t;
+                    const arrivalStartY = Math.min(WORLD_H + 20, PAD_HOME.y + 148);
+          ride.y = arrivalStartY + (PAD_HOME.y - arrivalStartY) * t;
           ride.lift = 48 * (1 - t);
           syncRideVisual(now);
 
@@ -1010,6 +1358,8 @@
       }
 
       function boot() {
+        initPadEditor();
+        applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
         fitWorld();
         setActorPosition();
         setActorVisual();
