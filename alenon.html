@@ -377,6 +377,169 @@
       animation: orb-aura 4.2s ease-in-out infinite;
     }
 
+
+    /* --- Prologue ORB anomaly / wind --- */
+    #alenon-wind {
+      position: absolute;
+      z-index: 50;
+      left: var(--orb-x);
+      top: var(--orb-y);
+      width: 360px;
+      height: 190px;
+      transform: translate(-50%, -50%) scale(.15);
+      transform-origin: 50% 50%;
+      opacity: 0;
+      pointer-events: none;
+      filter:
+        drop-shadow(0 0 12px rgba(171, 225, 255, .35))
+        blur(.15px);
+      transition:
+        transform .86s cubic-bezier(.22,.61,.36,1),
+        opacity .56s ease,
+        top 1.25s cubic-bezier(.22,.61,.36,1);
+    }
+
+    .alenon-wind-streak {
+      position: absolute;
+      left: 50%;
+      height: 42px;
+      border-top: 3px solid rgba(219, 242, 255, .78);
+      border-radius: 50%;
+      transform-origin: 50% 50%;
+      opacity: .82;
+    }
+
+    .alenon-wind-streak:nth-child(1) {
+      top: 38px;
+      width: 250px;
+      margin-left: -128px;
+      transform: rotate(4deg);
+    }
+
+    .alenon-wind-streak:nth-child(2) {
+      top: 78px;
+      width: 305px;
+      margin-left: -152px;
+      border-top-width: 2px;
+      opacity: .60;
+      transform: rotate(-5deg);
+    }
+
+    .alenon-wind-streak:nth-child(3) {
+      top: 111px;
+      width: 215px;
+      margin-left: -92px;
+      border-top-width: 2px;
+      opacity: .72;
+      transform: rotate(7deg);
+    }
+
+    .alenon-wind-streak:nth-child(4) {
+      top: 142px;
+      width: 155px;
+      margin-left: -116px;
+      border-top-width: 1px;
+      opacity: .48;
+      transform: rotate(-3deg);
+    }
+
+    body.orb-anomaly .orb-outer {
+      animation: orb-anomaly-outer .92s cubic-bezier(.18,.72,.18,1) forwards !important;
+    }
+
+    body.orb-anomaly .orb-inner {
+      animation: orb-anomaly-inner .92s cubic-bezier(.18,.72,.18,1) forwards !important;
+    }
+
+    body.orb-anomaly .orb-particle {
+      animation: orb-anomaly-particle .92s cubic-bezier(.18,.72,.18,1) forwards !important;
+    }
+
+    body.orb-anomaly .orb-aura {
+      animation: orb-anomaly-aura .92s cubic-bezier(.18,.72,.18,1) forwards !important;
+    }
+
+    body.orb-anomaly .orb-core {
+      z-index: 51;
+      animation: orb-core-event-idle 2.8s ease-in-out infinite !important;
+    }
+
+    body.orb-core-pulse .orb-core {
+      animation: orb-core-event-pulse .72s ease-in-out 1 !important;
+    }
+
+    body.orb-wind-born #alenon-wind {
+      opacity: .94;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    body.orb-wind-flow #alenon-wind {
+      top: calc(var(--orb-y) + 185px);
+      opacity: .80;
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    body.orb-wind-flow .alenon-wind-streak {
+      animation: alenon-wind-breathe 1.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes orb-anomaly-outer {
+      0% { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      45% { opacity: .82; transform: translate(-50%, -50%) rotate(10deg) scale(1.42); }
+      100% { opacity: 0; transform: translate(-50%, -50%) rotate(24deg) scale(2.18); }
+    }
+
+    @keyframes orb-anomaly-inner {
+      0% { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      48% { opacity: .78; transform: translate(-50%, -50%) rotate(-14deg) scale(1.38); }
+      100% { opacity: 0; transform: translate(-50%, -50%) rotate(-30deg) scale(2.04); }
+    }
+
+    @keyframes orb-anomaly-particle {
+      0% { opacity: .88; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      58% { opacity: .54; transform: translate(-50%, -50%) rotate(16deg) scale(1.55); }
+      100% { opacity: 0; transform: translate(-50%, -50%) rotate(38deg) scale(2.24); }
+    }
+
+    @keyframes orb-anomaly-aura {
+      0% { opacity: .75; transform: translate(-50%, -50%) scale(1); }
+      60% { opacity: .48; transform: translate(-50%, -50%) scale(1.62); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(2.30); }
+    }
+
+    @keyframes orb-core-event-idle {
+      0%, 100% {
+        opacity: .90;
+        transform: translate(-50%, -50%) scale(.98);
+        filter: drop-shadow(0 0 18px rgba(118,220,255,.58));
+      }
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.035);
+        filter: drop-shadow(0 0 30px rgba(145,229,255,.84));
+      }
+    }
+
+    @keyframes orb-core-event-pulse {
+      0%, 100% {
+        opacity: .94;
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 20px rgba(118,220,255,.64));
+      }
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.085);
+        filter:
+          brightness(1.22)
+          drop-shadow(0 0 42px rgba(176,239,255,.96));
+      }
+    }
+
+    @keyframes alenon-wind-breathe {
+      from { filter: brightness(.94); }
+      to { filter: brightness(1.18); }
+    }
+
     /* Shion keeps the Star Gate Garden on-screen draw height: 78px.
        The map/camera zooms independently; inverse scale prevents Shion from growing. */
     .shion-shadow {
@@ -1552,7 +1715,7 @@
     }
   </style>
 </head>
-<body data-alenon-drift-revision="tarot-prologue-v25">
+<body data-alenon-drift-revision="orb-wind-prologue-v26">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -1587,6 +1750,13 @@
       <img class="orb orb-core" src="./assets/maps/alenon/orb-core.webp" alt="" aria-hidden="true" draggable="false" />
       <img class="orb orb-particle" src="./assets/maps/alenon/orb-particle.webp" alt="" aria-hidden="true" draggable="false" />
 
+      <div id="alenon-wind" aria-hidden="true">
+        <span class="alenon-wind-streak"></span>
+        <span class="alenon-wind-streak"></span>
+        <span class="alenon-wind-streak"></span>
+        <span class="alenon-wind-streak"></span>
+      </div>
+
       <!-- Prologue spawn: same visual size as Shion in Star Gate Garden. -->
       <div class="move-target-ring" aria-hidden="true"></div>
       <div class="shion-shadow" aria-hidden="true"></div>
@@ -1610,7 +1780,7 @@
         <div id="tarot-drawn">
           <div class="tarot-card-inner">
             <img class="tarot-face tarot-face-back" src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
-            <img class="tarot-face tarot-face-front" src="./assets/tarot/major/15-the-devil.webp?v=20260918-prologue-v2" alt="XV THE DEVIL 悪魔" draggable="false" />
+            <img id="prologue-tarot-front" class="tarot-face tarot-face-front" src="./assets/tarot/major/15-the-devil.webp?v=20260918-prologue-v3" alt="プロローグで引かれたタロットカード" draggable="false" />
           </div>
         </div>
       </div>
@@ -1756,6 +1926,8 @@
       const WORLD_H = 1086;
       const SHION_SCREEN_HEIGHT = 78;
       const SHION_SPAWN = Object.freeze({ x: 716, y: 330 });
+      // Prologue card asset: keep this as a single explicit switch point.
+      const PROLOGUE_TAROT_CARD = "./assets/tarot/major/15-the-devil.webp?v=20260918-prologue-v3";
       const SHION_SPEED_SCREEN = 155;
       const PAD_SPEED_SCREEN = 175;
       const PAD_TOUCH_RADIUS = 64;
@@ -1805,6 +1977,8 @@
       const tarotStage = document.getElementById("tarot-stage");
       const tarotStack = document.getElementById("tarot-stack");
       const tarotDrawn = document.getElementById("tarot-drawn");
+      const tarotFront = document.getElementById("prologue-tarot-front");
+      const alenonWind = document.getElementById("alenon-wind");
       const prologueDialogue = document.getElementById("prologue-dialogue");
       const prologueLine = document.getElementById("prologue-line");
       const storyObjective = document.getElementById("story-objective");
@@ -1816,6 +1990,7 @@
         completed: storyBypass,
       };
       let storyAudioContext = null;
+      tarotFront.src = PROLOGUE_TAROT_CARD;
 
       const player = {
         x: SHION_SPAWN.x,
@@ -1928,6 +2103,8 @@
         refs.orbAura.style.top = orb.y + "px";
         refs.orbAura.style.width = orb.size * .60 + "px";
         refs.orbAura.style.height = orb.size * .60 + "px";
+        alenonWind.style.left = orb.x + "px";
+        alenonWind.style.top = orb.y + "px";
 
         refs.groundL.style.setProperty("--left-pad-dead-x", deadMask.x + "px");
         refs.groundL.style.setProperty("--left-pad-dead-y", deadMask.y + "px");
@@ -1955,6 +2132,13 @@
 
       function hideStoryLine() {
         prologueDialogue.classList.remove("visible");
+      }
+
+      async function sayStory(text, visibleMs, gapMs = 520) {
+        showStoryLine(text);
+        await sleep(visibleMs);
+        hideStoryLine();
+        await sleep(gapMs);
       }
 
       function showStoryObjective() {
@@ -2026,6 +2210,35 @@
         }
       }
 
+
+      function playWindGust(duration = 1.7, strength = 1) {
+        const ctx = storyAudioContext;
+        if (!ctx || ctx.state !== "running") return;
+        const frameCount = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const buffer = ctx.createBuffer(1, frameCount, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < frameCount; i++) {
+          const t = i / frameCount;
+          const envelope = Math.sin(Math.PI * Math.min(1, t * 1.35)) * (1 - t * .34);
+          data[i] = (Math.random() * 2 - 1) * envelope;
+        }
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        const highpass = ctx.createBiquadFilter();
+        highpass.type = "highpass";
+        highpass.frequency.value = 260;
+        const lowpass = ctx.createBiquadFilter();
+        lowpass.type = "lowpass";
+        lowpass.frequency.value = 1650;
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.065 * strength, now + .24);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+        source.connect(highpass).connect(lowpass).connect(gain).connect(ctx.destination);
+        source.start(now);
+      }
+
       function turnShion(dir) {
         player.dir = dir;
         player.moving = false;
@@ -2052,15 +2265,26 @@
         });
       }
 
-      function scriptedWalkTo(targetX, targetY, duration = 460) {
+      function scriptedWalkTo(targetX, targetY, minimumDuration = 0) {
         const nearest = alenonCollisionReady
           ? nearestGroundPoint({ x: targetX, y: targetY })
           : { x: targetX, y: targetY };
         if (!nearest) return Promise.resolve();
+
         const fromX = player.x;
         const fromY = player.y;
         const dx = nearest.x - fromX;
         const dy = nearest.y - fromY;
+        const distance = Math.hypot(dx, dy);
+        if (distance < .5) return Promise.resolve();
+
+        // Use the same on-screen speed as normal walking. Never "jump" coordinates.
+        const speedWorld = SHION_SPEED_SCREEN / Math.max(worldScale, .001);
+        const duration = Math.max(
+          minimumDuration,
+          (distance / speedWorld) * 1000,
+          620,
+        );
         const startedAt = performance.now();
         story.scripted = true;
         player.dir = directionFromVector(dx, dy);
@@ -2070,18 +2294,19 @@
         return new Promise((resolve) => {
           function frame(now) {
             const t = Math.min(1, (now - startedAt) / duration);
-            const eased = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-            player.x = fromX + dx * eased;
-            player.y = fromY + dy * eased;
-            player.anim += .13;
-            player.frame = Math.floor(player.anim * 4) % 4;
+            player.x = fromX + dx * t;
+            player.y = fromY + dy * t;
+            player.frame = Math.floor((now - startedAt) / 118) % 4;
+            player.moving = t < 1;
             setActorPosition();
             setActorVisual();
             syncCamera();
+
             if (t < 1) {
               requestAnimationFrame(frame);
               return;
             }
+
             player.x = nearest.x;
             player.y = nearest.y;
             player.moving = false;
@@ -2090,6 +2315,7 @@
             story.scripted = false;
             setActorPosition();
             setActorVisual();
+            syncCamera();
             resolve();
           }
           requestAnimationFrame(frame);
@@ -2098,90 +2324,117 @@
 
       async function runPrologue() {
         if (story.started || storyBypass) return;
+
         story.started = true;
         story.locked = true;
+        story.completed = false;
         document.body.classList.add("story-running");
         prologueStart.hidden = true;
         moveGuide.hidden = true;
         storyObjective.classList.remove("visible");
         await ensureStoryAudio();
 
-        await sleep(420);
-        playPaperShuffle(.95);
-        await sleep(390);
-        playPaperShuffle(.82);
-        await sleep(260);
-        playPaperShuffle(.88);
+        // 1) Darkness / tarot. Keep the first seconds almost empty.
+        await sleep(700);
+        playPaperShuffle(.92);
         await sleep(520);
+        playPaperShuffle(.78);
+        await sleep(360);
+        playPaperShuffle(.88);
+        await sleep(620);
 
-        showStoryLine("タロット展開……");
-        await sleep(880);
-        hideStoryLine();
+        await sayStory("タロット展開……", 1150, 520);
 
         tarotStage.classList.add("visible");
+        await sleep(380);
         tarotStack.classList.add("is-shuffling");
-        playPaperShuffle(.82);
-        await sleep(470);
+        playPaperShuffle(.86);
+        await sleep(520);
         tarotStack.classList.remove("is-shuffling");
-        await sleep(260);
+        await sleep(460);
 
         tarotDrawn.classList.add("is-drawn");
-        playPaperShuffle(.58);
-        await sleep(650);
+        playPaperShuffle(.56);
+        await sleep(720);
 
-        // iOS/Safariでも確実に表面へ切り替える。
+        // Safari/iOS-safe reveal: squash -> swap face -> expand.
         tarotDrawn.classList.add("is-flipping");
-        await sleep(280);
+        await sleep(290);
         tarotDrawn.classList.add("show-front");
         tarotDrawn.classList.remove("is-flipping");
-        await sleep(24);
+        await sleep(40);
         tarotDrawn.classList.add("is-flipped");
         playTarotResonance();
-        await sleep(760);
 
-        showStoryLine("悪魔か……");
-        await sleep(1500);
-        hideStoryLine();
-        await sleep(220);
+        // Let the player actually look at the card.
+        await sleep(1700);
 
+        // 2) Reveal Alenon, then give the environment time to exist.
         document.body.classList.add("prologue-revealing");
-        await sleep(1050);
+        await sleep(1150);
         prologueOverlay.hidden = true;
         document.body.classList.remove("prologue-revealing");
         tarotStage.classList.remove("visible");
 
-        await sleep(520);
-        turnShion("up");
-        await sleep(420);
+        await sleep(1750);
 
-        await scriptedWalkTo(player.x, player.y + 14, 260);
-        showStoryLine("……？");
-        await sleep(720);
-        hideStoryLine();
+        // 3) Shion walks naturally before anything happens.
+        turnShion("down");
+        await scriptedWalkTo(player.x, player.y + 72, 1150);
+        await sleep(520);
+
+        // 4) ORB anomaly. Shion notices first; the player then sees the change.
+        turnShion("up");
+        await animateStoryCamera(0, -34, 420);
+        await sayStory("……？", 900, 360);
+
+        document.body.classList.add("orb-anomaly");
+        playTarotResonance();
+        await sleep(980);
+
+        // Outer ORB is gone; core remains.
+        await sayStory("こんな挙動、見たことない。", 1800, 650);
+
+        document.body.classList.add("orb-core-pulse");
+        await sleep(760);
+        document.body.classList.remove("orb-core-pulse");
+        await sleep(360);
+
+        // 5) Wind is born from the remaining light.
+        document.body.classList.add("orb-wind-born");
+        playWindGust(1.9, .92);
+        await sleep(980);
+
+        turnShion("up");
+        await sayStory("……風の温度が変だ", 1650, 720);
+
+        await sayStory("温度じゃない……。", 1450, 780);
+
+        // He does not 'observe'; he judges from the physical phenomenon he feels.
+        await sayStory("アレノンの共鳴がずれ始めてる。", 2200, 900);
 
         turnShion("left");
-        await sleep(280);
-        turnShion("right");
         await sleep(360);
         turnShion("up");
-        await sleep(520);
+        await sayStory("星の国を守るパメラ……。", 2000, 820);
 
-        turnShion("down");
-        await animateStoryCamera(0, 34, 330);
-        showStoryLine("……星門。");
-        await sleep(820);
-        hideStoryLine();
-
-        turnShion("up");
-        await sleep(350);
-        turnShion("down");
+        turnShion("right");
         await sleep(420);
-        showStoryLine("一度、見ておくか。");
-        await sleep(920);
-        hideStoryLine();
+        await sayStory("……そのパメラ達が？", 1800, 920);
 
-        await scriptedWalkTo(player.x, player.y + 34, 520);
-        await animateStoryCamera(0, 0, 280);
+        // 6) Wind begins to point toward the PAD / Star Gate Garden.
+        document.body.classList.add("orb-wind-flow");
+        playWindGust(2.1, .78);
+        turnShion("down");
+        await animateStoryCamera(0, 58, 680);
+        await sleep(1050);
+
+        await sayStory("星門庭園へ急がないと。", 2100, 700);
+
+        // 7) Shion himself starts moving before control is handed over.
+        await scriptedWalkTo(player.x, player.y + 92, 1250);
+        await animateStoryCamera(0, 0, 420);
+        await sleep(420);
 
         story.completed = true;
         story.locked = false;
@@ -2993,7 +3246,7 @@
         setRideMode("exiting");
 
         window.setTimeout(() => {
-          location.href = "./star-country-landing.html?from=alenon&v=tarot-prologue-v1";
+          location.href = "./star-country-landing.html?from=alenon&v=orb-wind-prologue-v2";
         }, 820);
       }
 
