@@ -1687,7 +1687,7 @@
       min-height: 132px;
       box-sizing: border-box;
       transform: translate(-50%, 10px);
-      padding: 16px 20px 18px;
+      padding: 16px 20px 27px;
       border: 1px solid rgba(217, 190, 128, .48);
       border-radius: 10px;
       color: rgba(249, 250, 255, .98);
@@ -1706,6 +1706,9 @@
     #prologue-dialogue.visible {
       opacity: 1;
       transform: translate(-50%, 0);
+      pointer-events: auto;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #prologue-speaker {
@@ -1724,6 +1727,29 @@
       line-height: 1.6;
       letter-spacing: .015em;
       text-wrap: pretty;
+    }
+
+    #dialogue-next {
+      position: absolute;
+      right: 18px;
+      bottom: 9px;
+      color: rgba(226, 207, 158, .92);
+      font-size: 15px;
+      line-height: 1;
+      opacity: 0;
+      transform: translateY(-2px);
+      pointer-events: none;
+      transition: opacity .15s ease;
+    }
+
+    #dialogue-next.visible {
+      opacity: .96;
+      animation: dialogue-next-bob .9s ease-in-out infinite;
+    }
+
+    @keyframes dialogue-next-bob {
+      0%, 100% { transform: translateY(-2px); }
+      50% { transform: translateY(2px); }
     }
 
     #orb-interaction-choice {
@@ -1924,7 +1950,7 @@
       #prologue-dialogue {
         width: min(92vw, 460px);
         min-height: 138px;
-        padding: 15px 18px 17px;
+        padding: 15px 18px 27px;
       }
 
       #prologue-speaker {
@@ -1952,13 +1978,14 @@
       .orb-inner,
       .orb-core,
       .orb-particle,
-      .orb-aura {
+      .orb-aura,
+      #dialogue-next {
         animation: none !important;
       }
     }
   </style>
 </head>
-<body data-alenon-drift-revision="orb-free-inspect-v30">
+<body data-alenon-drift-revision="tap-dialogue-v31">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -2029,9 +2056,10 @@
       </div>
     </section>
 
-    <div id="prologue-dialogue" role="status" aria-live="polite">
+    <div id="prologue-dialogue" role="status" aria-live="polite" aria-label="会話。タップで進む">
       <span id="prologue-speaker">シオン</span>
       <div id="prologue-line"></div>
+      <span id="dialogue-next" aria-hidden="true">▼</span>
     </div>
 
     <aside id="orb-interaction-choice" hidden aria-label="アレノンの光を調べる">
@@ -2234,6 +2262,7 @@
       const alenonWind = document.getElementById("alenon-wind");
       const prologueDialogue = document.getElementById("prologue-dialogue");
       const prologueLine = document.getElementById("prologue-line");
+      const dialogueNext = document.getElementById("dialogue-next");
       const orbInteractionChoice = document.getElementById("orb-interaction-choice");
       const orbInteractionInspect = document.getElementById("orb-interaction-inspect");
       const orbInteractionLeave = document.getElementById("orb-interaction-leave");
@@ -2251,6 +2280,14 @@
         inspecting: false,
         hasInspected: false,
         armed: true,
+      };
+
+      const dialogueState = {
+        active: false,
+        complete: false,
+        fullText: "",
+        token: 0,
+        advanceResolve: null,
       };
 
       let storyAudioContext = null;
@@ -2390,20 +2427,101 @@
       const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
       function showStoryLine(text) {
-        prologueLine.textContent = text;
+        dialogueState.fullText = text;
+        dialogueState.complete = false;
+        dialogueState.active = true;
+        prologueLine.textContent = "";
+        dialogueNext.classList.remove("visible");
         prologueDialogue.classList.add("visible");
       }
 
       function hideStoryLine() {
+        dialogueState.token += 1;
+        dialogueState.active = false;
+        dialogueState.complete = false;
+        dialogueState.fullText = "";
+        dialogueState.advanceResolve = null;
+        dialogueNext.classList.remove("visible");
         prologueDialogue.classList.remove("visible");
       }
 
-      async function sayStory(text, visibleMs, gapMs = 520) {
-        showStoryLine(text);
-        await sleep(visibleMs);
-        hideStoryLine();
-        await sleep(gapMs);
+      async function typeStoryLine(text) {
+        const token = ++dialogueState.token;
+        const characters = [...text];
+        const instant = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+        if (instant) {
+          prologueLine.textContent = text;
+          dialogueState.complete = true;
+          dialogueNext.classList.add("visible");
+          return;
+        }
+
+        for (let i = 0; i < characters.length; i++) {
+          if (token !== dialogueState.token || dialogueState.complete) return;
+          prologueLine.textContent += characters[i];
+
+          const ch = characters[i];
+          const pause =
+            /[。！？!?]/.test(ch) ? 120 :
+            /[、，,…]/.test(ch) ? 72 :
+            34;
+          await sleep(pause);
+        }
+
+        if (token !== dialogueState.token) return;
+        prologueLine.textContent = text;
+        dialogueState.complete = true;
+        dialogueNext.classList.add("visible");
       }
+
+      function advanceStoryDialogue() {
+        if (!dialogueState.active) return false;
+
+        // First tap while text is appearing: reveal the whole line.
+        if (!dialogueState.complete) {
+          dialogueState.token += 1;
+          prologueLine.textContent = dialogueState.fullText;
+          dialogueState.complete = true;
+          dialogueNext.classList.add("visible");
+          return true;
+        }
+
+        // Next tap: advance to the following line / event.
+        const resolve = dialogueState.advanceResolve;
+        dialogueState.advanceResolve = null;
+        dialogueState.active = false;
+        dialogueNext.classList.remove("visible");
+        if (resolve) resolve();
+        return true;
+      }
+
+      async function sayStory(text, _visibleMs, gapMs = 180) {
+        showStoryLine(text);
+        typeStoryLine(text);
+
+        await new Promise((resolve) => {
+          dialogueState.advanceResolve = resolve;
+        });
+
+        hideStoryLine();
+        // Keep only a short cinematic beat; the reading speed is controlled by the player.
+        await sleep(Math.min(gapMs, 260));
+      }
+
+      prologueDialogue.addEventListener("pointerup", (event) => {
+        if (!dialogueState.active) return;
+        event.preventDefault();
+        event.stopPropagation();
+        advanceStoryDialogue();
+      }, { passive: false });
+
+      window.addEventListener("keydown", (event) => {
+        if (!dialogueState.active) return;
+        if (!["Enter", " ", "Spacebar"].includes(event.key)) return;
+        event.preventDefault();
+        advanceStoryDialogue();
+      }, { passive: false });
 
       function showStoryObjective() {
         storyObjective.classList.add("visible");
