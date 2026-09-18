@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TAROT BREAKER Asset Studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#07111f;color:#eef6ff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:980px;margin:auto;padding:14px}.top{padding:10px 2px 16px}.top h1{margin:0 0 6px;font-size:28px}.top p{margin:0;color:#a9bfd4}.card{background:#0d1d31;border:1px solid #294c70;border-radius:16px;padding:14px;margin-bottom:14px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px;position:sticky;top:0;padding:8px 0;background:#07111f;z-index:5}.tab,.btn{border:1px solid #416d98;background:#15385b;color:#fff;border-radius:11px;padding:10px 13px;font-weight:700}.tab.active{background:#285887}.panel{display:none}.panel.active{display:block}.drop{position:relative;display:block;border:2px dashed #5285b4;background:#09192b;border-radius:15px;padding:28px 14px;text-align:center;overflow:hidden}.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:.001;font-size:100px;cursor:pointer}.drop strong{display:block;font-size:18px}.drop span{display:block;color:#a9bfd4;font-size:13px;margin-top:6px}.status{margin-top:10px;padding:10px;border:1px solid #31587f;border-radius:10px;background:#081725;white-space:pre-wrap;word-break:break-word}.ok{color:#8ee6bb}.err{color:#ff9d9d}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.grid{grid-template-columns:1fr}}label.small{display:block;font-size:12px;color:#bdd0e3;margin-bottom:5px}input[type=text],input[type=number],input[type=password],select{width:100%;padding:10px;border-radius:10px;border:1px solid #355f86;background:#071525;color:#fff;font:inherit}.preview{background:#a4a4a4;background-image:linear-gradient(45deg,#c7c7c7 25%,transparent 25%),linear-gradient(-45deg,#c7c7c7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#c7c7c7 75%),linear-gradient(-45deg,transparent 75%,#c7c7c7 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;border-radius:12px;overflow:hidden;min-height:180px;display:flex;align-items:center;justify-content:center}.preview img,.preview canvas{display:block;max-width:100%;height:auto}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}@media(max-width:620px){.stats{grid-template-columns:repeat(2,1fr)}}.stat{background:#081725;border:1px solid #2b5074;border-radius:10px;padding:9px}.stat small{display:block;color:#9fb3c8}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row .btn{flex:0 0 auto}.btn.secondary{background:#0b2036}.btn:disabled{opacity:.45}.list{display:grid;gap:8px;margin-top:10px}.item{display:flex;justify-content:space-between;gap:8px;align-items:center;background:#081725;border:1px solid #2c5072;border-radius:10px;padding:9px}.item small{color:#9fb3c8;display:block}.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}.frame{background:#081725;border:1px solid #31587f;border-radius:10px;overflow:hidden}.frame img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#aaa}.frame div{font-size:11px;padding:6px;word-break:break-all}.muted{color:#9fb3c8;font-size:12px}.path{font-family:ui-monospace,monospace;background:#071525;border:1px solid #355f86;border-radius:10px;padding:10px;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><h1>TAROT BREAKER Asset Studio</h1><p>iPhone / iPad向け・画像をGitHubへ置く前の変換ツール</p></header>
+<nav class="tabs">
+<button class="tab active" data-tab="convert">画像変換</button>
+<button class="tab" data-tab="sprite">スプライト分割</button>
+<button class="tab" data-tab="github">GitHub送信</button>
+</nav>
+
+<section id="convert" class="panel active">
+<div class="card">
+<h2>1. 画像を読み込む</h2>
+<label class="drop">
+<input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+<strong>ここをタップして画像を選択</strong>
+<span>PNG / JPEG / WebP / GIF対応。HEIC/HEIFはPNG/JPEGへ変換してから使用してください。</span>
+</label>
+<div id="loadStatus" class="status">画像を選択してください。</div>
+<div id="sourceList" class="list"></div>
+</div>
+
+<div class="grid">
+<div class="card">
+<h2>2. 確認</h2>
+<div class="preview"><img id="preview" alt=""></div>
+<div class="stats">
+<div class="stat"><small>サイズ</small><b id="dim">—</b></div>
+<div class="stat"><small>容量</small><b id="bytes">—</b></div>
+<div class="stat"><small>透過</small><b id="alpha">—</b></div>
+<div class="stat"><small>出力</small><b id="outInfo">—</b></div>
+</div>
+<div id="alphaInfo" class="muted" style="margin-top:8px">—</div>
+</div>
+
+<div class="card">
+<h2>3. WebP設定</h2>
+<div class="grid">
+<div><label class="small">幅 px</label><input id="w" type="number" min="1"></div>
+<div><label class="small">高さ px</label><input id="h" type="number" min="1"></div>
+</div>
+<div style="margin:8px 0"><label><input id="lock" type="checkbox" checked> 縦横比を固定</label></div>
+<div><label class="small">品質 <span id="qLabel">92</span>%</label><input id="q" type="range" min="40" max="100" value="92" style="width:100%"></div>
+<div style="margin-top:10px"><label class="small">ファイル名</label><input id="filename" type="text" placeholder="star-country-world-clouds.webp"></div>
+<div class="grid" style="margin-top:10px">
+<div><label class="small">カテゴリ</label><select id="cat"><option>assets/maps</option><option>assets/sprites</option><option>assets/backgrounds</option><option>assets/effects</option><option>assets/ui</option><option>assets/tarot</option><option>assets</option></select></div>
+<div><label class="small">サブフォルダ</label><input id="subdir" type="text" placeholder="star-country"></div>
+</div>
+<div id="path" class="path" style="margin-top:10px">assets/maps/asset.webp</div>
+<div class="row" style="margin-top:10px">
+<button id="convertBtn" class="btn">WebP更新</button>
+<button id="downloadBtn" class="btn secondary" disabled>保存</button>
+<button id="shareBtn" class="btn secondary" disabled>Dropbox / 共有</button>
+</div>
+</div>
+</div>
+</section>
+
+<section id="sprite" class="panel">
+<div class="card">
+<h2>スプライトシート分割</h2>
+<label class="drop">
+<input id="spriteInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+<strong>スプライトシートを選択</strong>
+<span>PNG / JPEG / WebP / GIF</span>
+</label>
+<div id="spriteStatus" class="status">画像を選択してください。</div>
+<div class="grid" style="margin-top:10px">
+<div><label class="small">列</label><input id="cols" type="number" value="4" min="1"></div>
+<div><label class="small">行</label><input id="rows" type="number" value="1" min="1"></div>
+<div><label class="small">余白 px</label><input id="margin" type="number" value="0" min="0"></div>
+<div><label class="small">間隔 px</label><input id="gap" type="number" value="0" min="0"></div>
+</div>
+<div style="margin-top:10px"><label class="small">ベース名</label><input id="spriteBase" type="text" placeholder="shion_walk_down"></div>
+<div class="row" style="margin-top:10px"><button id="splitBtn" class="btn">分割する</button><button id="shareFrames" class="btn secondary" disabled>全フレーム共有</button></div>
+</div>
+<div class="card"><h2>分割結果</h2><div id="frames" class="frames"></div></div>
+</section>
+
+<section id="github" class="panel">
+<div class="card">
+<h2>GitHubへ直接送信</h2>
+<p class="muted">トークンはこの画面内だけで使用し、保存しません。</p>
+<div class="grid">
+<div><label class="small">Repository</label><input id="repo" type="text" value="reverse-shion/tarot-breaker-game"></div>
+<div><label class="small">Branch</label><input id="branch" type="text" value="main"></div>
+</div>
+<div style="margin-top:10px"><label class="small">Fine-grained token（Contents: Read and write）</label><input id="token" type="password" autocomplete="off" placeholder="github_pat_..."></div>
+<div class="row" style="margin-top:10px">
+<button id="uploadOne" class="btn" disabled>変換画像をGitHubへ送信</button>
+</div>
+<div style="margin-top:12px"><label class="small">スプライト配置先</label><input id="framesDir" type="text" value="assets/sprites/shion"></div>
+<div class="row" style="margin-top:10px"><button id="uploadFrames" class="btn" disabled>分割フレームを送信</button></div>
+<div id="ghStatus" class="status">未送信</div>
+</div>
+</section>
+</div>
+
+<script>
+(function(){
+"use strict";
+var state={sources:[],active:-1,output:null,sprite:null,frames:[]};
+function el(id){return document.getElementById(id)}
+function fmt(n){if(!isFinite(n))return "—";var u=["B","KB","MB","GB"],i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i&&n<10?2:1)+" "+u[i]}
+function clean(s){return (s||"asset").toLowerCase().normalize("NFKC").replace(/\.[^.]+$/,"").replace(/[^a-z0-9_-]+/g,"-").replace(/[-_]{2,}/g,"-").replace(/^[-_]+|[-_]+$/g,"")||"asset"}
+function webpName(s){return clean(s)+".webp"}
+function joinPath(){var p=[el("cat").value,clean(el("subdir").value||"") ,webpName(el("filename").value||"asset")].filter(Boolean).join("/");el("path").textContent=p;return p}
+function dataURL(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onerror=function(){reject(new Error("FileReaderで読み込めません"))};r.onload=function(){resolve(r.result)};r.readAsDataURL(file)})}
+function imageFromFile(file){return dataURL(file).then(function(src){return new Promise(function(resolve,reject){var im=new Image();im.onload=function(){resolve({img:im,src:src})};im.onerror=function(){reject(new Error("この画像形式をSafariで表示できません"))};im.src=src})})}
+function alphaCheck(im){try{var max=700,scale=Math.min(1,max/im.naturalWidth,max/im.naturalHeight),c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.naturalWidth*scale));c.height=Math.max(1,Math.round(im.naturalHeight*scale));var x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,c.width,c.height);var d=x.getImageData(0,0,c.width,c.height).data,zero=0,partial=0;for(var i=3;i<d.length;i+=4){if(d[i]===0)zero++;else if(d[i]<255)partial++}return{has:(zero+partial)>0,zero:zero,partial:partial,total:d.length/4}}catch(e){return{has:null,zero:0,partial:0,total:0}}}
+function canvasBlob(canvas,q){return new Promise(function(resolve,reject){canvas.toBlob(function(b){if(b)resolve(b);else reject(new Error("このブラウザではWebP書き出しに失敗しました"))},"image/webp",q)})}
+async function loadFiles(files){
+state.sources=[];state.active=-1;el("sourceList").innerHTML="";
+if(!files.length)return;
+el("loadStatus").textContent="読み込み中…";
+for(var i=0;i<files.length;i++){
+var f=files[i];
+if(/heic|heif/i.test(f.name)||/heic|heif/i.test(f.type)){el("loadStatus").className="status err";el("loadStatus").textContent="HEIC/HEIFは直接変換できません。写真アプリからJPEG/PNGとして保存して選び直してください。";continue}
+try{
+var r=await imageFromFile(f),a=alphaCheck(r.img);
+state.sources.push({file:f,img:r.img,src:r.src,alpha:a});
+}catch(e){el("loadStatus").className="status err";el("loadStatus").textContent=f.name+"\n"+e.message}
+}
+state.sources.forEach(function(s,idx){var d=document.createElement("div");d.className="item";d.innerHTML="<div><b>"+s.file.name+"</b><small>"+s.img.naturalWidth+"×"+s.img.naturalHeight+" / "+fmt(s.file.size)+"</small></div><button class='btn secondary'>選択</button>";d.querySelector("button").onclick=function(){selectSource(idx)};el("sourceList").appendChild(d)});
+if(state.sources.length){await selectSource(0);el("loadStatus").className="status ok";el("loadStatus").textContent=state.sources.length+"枚 読み込み成功"}}
+async function selectSource(i){
+var s=state.sources[i];if(!s)return;state.active=i;el("preview").src=s.src;el("dim").textContent=s.img.naturalWidth+"×"+s.img.naturalHeight;el("bytes").textContent=fmt(s.file.size);el("alpha").textContent=s.alpha.has===null?"確認不可":(s.alpha.has?"あり":"なし");el("alphaInfo").textContent=s.alpha.has===null?"透過チェックはブラウザ制限で実行できませんでした。":("完全透明 "+s.alpha.zero.toLocaleString()+" / 半透明 "+s.alpha.partial.toLocaleString());el("w").value=s.img.naturalWidth;el("h").value=s.img.naturalHeight;el("filename").value=webpName(s.file.name);joinPath();await convert()}
+async function convert(){
+var s=state.sources[state.active];if(!s)return;
+try{
+var w=Math.max(1,parseInt(el("w").value)||s.img.naturalWidth),h=Math.max(1,parseInt(el("h").value)||s.img.naturalHeight),c=document.createElement("canvas");c.width=w;c.height=h;var x=c.getContext("2d");x.clearRect(0,0,w,h);x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(s.img,0,0,w,h);var b=await canvasBlob(c,parseInt(el("q").value)/100);state.output={blob:b,name:webpName(el("filename").value),width:w,height:h};el("filename").value=state.output.name;el("outInfo").textContent=w+"×"+h+" / "+fmt(b.size);el("downloadBtn").disabled=false;el("shareBtn").disabled=false;el("uploadOne").disabled=false;joinPath()
+}catch(e){el("loadStatus").className="status err";el("loadStatus").textContent="画像は読み込めましたがWebP変換に失敗しました。\n"+e.message}}
+function download(blob,name){var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},2000)}
+async function shareFiles(files){try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:files})){await navigator.share({files:files,title:"TAROT BREAKER Asset"})}else{files.forEach(function(f){download(f,f.name)});alert("共有シート非対応のため通常保存しました。")}}catch(e){}}
+async function splitSprite(){
+if(!state.sprite){el("spriteStatus").textContent="先にスプライトシートを選択してください。";return}
+var im=state.sprite.img,cols=Math.max(1,parseInt(el("cols").value)||1),rows=Math.max(1,parseInt(el("rows").value)||1),m=Math.max(0,parseInt(el("margin").value)||0),g=Math.max(0,parseInt(el("gap").value)||0),uw=im.naturalWidth-m*2-g*(cols-1),uh=im.naturalHeight-m*2-g*(rows-1),fw=uw/cols,fh=uh/rows,base=clean(el("spriteBase").value||"frame").replace(/-/g,"_");if(fw<=0||fh<=0)return;
+state.frames=[];el("frames").innerHTML="";
+var n=0;
+for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){var cv=document.createElement("canvas");cv.width=Math.round(fw);cv.height=Math.round(fh);var x=cv.getContext("2d");x.imageSmoothingEnabled=false;x.drawImage(im,m+c*(fw+g),m+r*(fh+g),fw,fh,0,0,cv.width,cv.height);var b=await canvasBlob(cv,1),name=base+"_"+String(n).padStart(2,"0")+".webp",url=URL.createObjectURL(b);state.frames.push({blob:b,name:name,url:url});var card=document.createElement("div");card.className="frame";card.innerHTML="<img src='"+url+"'><div>"+name+"<br>"+cv.width+"×"+cv.height+"</div>";(function(blob,nm,node){node.onclick=function(){download(blob,nm)}})(b,name,card);el("frames").appendChild(card);n++}
+el("shareFrames").disabled=false;el("uploadFrames").disabled=false;el("spriteStatus").className="status ok";el("spriteStatus").textContent=state.frames.length+"フレームに分割しました。"}
+function b64(blob){return blob.arrayBuffer().then(function(ab){var u=new Uint8Array(ab),bin="",chunk=0x8000;for(var i=0;i<u.length;i+=chunk)bin+=String.fromCharCode.apply(null,u.subarray(i,i+chunk));return btoa(bin)})}
+async function ghPut(path,blob){
+var repo=el("repo").value.trim(),branch=el("branch").value.trim()||"main",token=el("token").value.trim();if(!repo.includes("/")||!token)throw new Error("Repository と token を確認してください");
+var ep="https://api.github.com/repos/"+repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/"),headers={"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"},sha=null,get=await fetch(ep+"?ref="+encodeURIComponent(branch),{headers:headers});if(get.ok){var gj=await get.json();sha=gj.sha}else if(get.status!==404)throw new Error("GitHub確認エラー "+get.status);
+var body={message:"Add/update asset: "+path,content:await b64(blob),branch:branch};if(sha)body.sha=sha;var put=await fetch(ep,{method:"PUT",headers:headers,body:JSON.stringify(body)});if(!put.ok){var j=await put.json().catch(function(){return{}});throw new Error(j.message||("GitHub送信エラー "+put.status))}}
+el("fileInput").addEventListener("change",function(e){loadFiles(Array.from(e.target.files||[]));e.target.value=""});
+el("spriteInput").addEventListener("change",async function(e){var f=e.target.files&&e.target.files[0];if(!f)return;try{var r=await imageFromFile(f);state.sprite={file:f,img:r.img,src:r.src};el("spriteBase").value=clean(f.name).replace(/-/g,"_");el("spriteStatus").className="status ok";el("spriteStatus").textContent=f.name+" / "+r.img.naturalWidth+"×"+r.img.naturalHeight}catch(err){el("spriteStatus").className="status err";el("spriteStatus").textContent=err.message}e.target.value=""});
+document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("active",x===b)});document.querySelectorAll(".panel").forEach(function(p){p.classList.toggle("active",p.id===b.dataset.tab)})}});
+var ratioBusy=false;el("w").addEventListener("input",function(){var s=state.sources[state.active];if(!s)return;if(el("lock").checked&&!ratioBusy){ratioBusy=true;el("h").value=Math.round((parseInt(el("w").value)||s.img.naturalWidth)*s.img.naturalHeight/s.img.naturalWidth);ratioBusy=false}});el("h").addEventListener("input",function(){var s=state.sources[state.active];if(!s)return;if(el("lock").checked&&!ratioBusy){ratioBusy=true;el("w").value=Math.round((parseInt(el("h").value)||s.img.naturalHeight)*s.img.naturalWidth/s.img.naturalHeight);ratioBusy=false}});
+["w","h","filename","subdir"].forEach(function(id){el(id).addEventListener("change",function(){joinPath();convert()})});el("cat").addEventListener("change",joinPath);el("q").addEventListener("input",function(){el("qLabel").textContent=el("q").value});el("q").addEventListener("change",convert);el("convertBtn").onclick=convert;el("downloadBtn").onclick=function(){if(state.output)download(state.output.blob,state.output.name)};el("shareBtn").onclick=function(){if(state.output)shareFiles([new File([state.output.blob],state.output.name,{type:"image/webp"})])};el("splitBtn").onclick=splitSprite;el("shareFrames").onclick=function(){shareFiles(state.frames.map(function(f){return new File([f.blob],f.name,{type:"image/webp"})}))};
+el("uploadOne").onclick=async function(){if(!state.output)return;try{el("ghStatus").textContent="送信中…";await ghPut(joinPath(),state.output.blob);el("ghStatus").className="status ok";el("ghStatus").textContent="GitHub送信完了: "+joinPath()}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
+el("uploadFrames").onclick=async function(){try{var dir=el("framesDir").value.trim().replace(/^\/+|\/+$/g,"");for(var i=0;i<state.frames.length;i++){el("ghStatus").textContent=(i+1)+"/"+state.frames.length+" 送信中…";await ghPut(dir+"/"+state.frames[i].name,state.frames[i].blob)}el("ghStatus").className="status ok";el("ghStatus").textContent="全フレーム送信完了"}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
+joinPath();
+})();
+</script>
+</body>
+</html>
