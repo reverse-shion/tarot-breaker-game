@@ -2017,6 +2017,7 @@
           const node = document.createElementNS(NS, tag);
           if (className) node.setAttribute("class", className);
           for (const [key, value] of Object.entries(attrs || {})) {
+            if (value == null) continue;
             node.setAttribute(key, String(value));
           }
           collisionOverlay.appendChild(node);
