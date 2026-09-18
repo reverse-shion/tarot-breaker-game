@@ -112,6 +112,17 @@
       to { transform: translate3d(-1448px,0,0); }
     }
 
+    @keyframes pad-breathe {
+      0%, 100% {
+        opacity: .56;
+        transform: translate(-50%, -50%) scale(.96);
+      }
+      50% {
+        opacity: .90;
+        transform: translate(-50%, -50%) scale(1.08);
+      }
+    }
+
     .atmosphere {
       position: absolute;
       inset: 0;
@@ -141,13 +152,19 @@
       z-index: 19;
       left: var(--pad-x);
       top: var(--pad-y);
-      width: 96px;
-      height: 38px;
-      transform: translate(-50%,-50%);
+      width: calc(var(--pad-size) * .50);
+      height: calc(var(--pad-size) * .25);
+      transform: translate(-50%, -50%);
       border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(161,235,255,.60), rgba(91,160,255,.18) 52%, transparent 76%);
-      filter: blur(8px);
       pointer-events: none;
+      background: radial-gradient(
+        ellipse,
+        rgba(112,220,255,.24),
+        rgba(84,161,255,.08) 46%,
+        transparent 74%
+      );
+      filter: blur(11px);
+      animation: pad-breathe 4.8s ease-in-out infinite;
     }
 
     .pad-flight-trail {
@@ -178,16 +195,35 @@
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
-      filter:
-        brightness(1.10)
-        drop-shadow(0 0 15px rgba(120,219,255,.46))
-        drop-shadow(0 11px 20px rgba(0,0,0,.23));
+      filter: drop-shadow(0 0 12px rgba(107,206,255,.20));
+      transition: filter .28s ease;
     }
 
-    body.pad-riding .pad-flight-trail,
+    body.pad-arriving .pad,
+    body.pad-boarding .pad,
+    body.pad-riding .pad,
+    body.pad-landing .pad {
+      z-index: 42;
+      filter:
+        brightness(1.22)
+        drop-shadow(0 0 15px rgba(126,224,255,.78))
+        drop-shadow(0 0 30px rgba(95,157,255,.38));
+    }
+
+    body.pad-arriving .pad-glow,
+    body.pad-boarding .pad-glow,
+    body.pad-riding .pad-glow,
+    body.pad-landing .pad-glow {
+      z-index: 41;
+      opacity: 1;
+      filter: blur(7px);
+    }
+
     body.pad-arriving .pad-flight-trail,
-    body.pad-boarding .pad-flight-trail {
-      opacity: .70;
+    body.pad-boarding .pad-flight-trail,
+    body.pad-riding .pad-flight-trail,
+    body.pad-landing .pad-flight-trail {
+      opacity: .82;
     }
 
     .shion-shadow {
@@ -594,7 +630,7 @@
     }
   </style>
 </head>
-<body data-star-landing-revision="ground-pad-v10-no-waterfall" data-audio-autostart="true">
+<body data-star-landing-revision="ground-pad-v11-dim-after-dismount" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
     <section id="world">
       <img class="sky-farthest world-layer" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" aria-hidden="true" draggable="false" />
@@ -1651,8 +1687,15 @@
         ride.homeArmed = false;
         ride.reboardLockedUntil = performance.now() + PAD_REBOARD_COOLDOWN_MS;
 
-        document.body.classList.remove("pad-arriving", "pad-riding", "pad-landing", "pad-boarding");
+        document.body.classList.remove(
+          "pad-arriving",
+          "pad-riding",
+          "pad-landing",
+          "pad-boarding",
+        );
 
+        // Same behavior as Alenon: once Shion gets off, the PAD settles back
+        // to its weak, inactive ground-state light.
         pad.style.left = PAD_HOME.x + "px";
         pad.style.top = PAD_HOME.y + "px";
         padGlow.style.left = PAD_HOME.x + "px";
