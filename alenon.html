@@ -2319,9 +2319,12 @@
       alenonOrbResonance.preload = "auto";
       alenonOrbResonance.volume = 0;
       const ALENON_ORB_MAX_VOLUME = 0.24;
-      const ALENON_ORB_NEAR_RADIUS = 82;
-      const ALENON_ORB_FAR_RADIUS = 430;
-      const ALENON_ORB_VOLUME_SMOOTHING = 7.5;
+      // Keep the resonance genuinely local to the visible Orb. The previous
+      // 430px radius covered much of Alenon's practical walking area, so the
+      // volume difference was hard to perceive on-device.
+      const ALENON_ORB_NEAR_RADIUS = 105;
+      const ALENON_ORB_FAR_RADIUS = 245;
+      const ALENON_ORB_VOLUME_SMOOTHING = 9;
       let alenonOrbWanted = false;
       let alenonOrbVolume = 0;
 
