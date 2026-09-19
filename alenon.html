@@ -3678,8 +3678,36 @@
 
       const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
+      // Shared PAD audio — use the same three assets on every map.
+      const padActivateAudio = new Audio("./assets/audio/sfx/pad-activate.wav");
+      const padMoveAudio = new Audio("./assets/audio/sfx/pad-move-loop.flac");
+      const padLandAudio = new Audio("./assets/audio/sfx/pad-land.wav");
+      padActivateAudio.preload = "auto";
+      padMoveAudio.preload = "auto";
+      padLandAudio.preload = "auto";
+      padActivateAudio.volume = .72;
+      padMoveAudio.volume = .42;
+      padLandAudio.volume = .76;
+      padMoveAudio.loop = true;
+
+      function playPadOneShot(audio) {
+        try { audio.pause(); audio.currentTime = 0; audio.play().catch(() => {}); } catch (_) {}
+      }
+      function startPadMoveAudio() {
+        try { if (padMoveAudio.paused) { padMoveAudio.currentTime = 0; padMoveAudio.play().catch(() => {}); } } catch (_) {}
+      }
+      function stopPadMoveAudio() {
+        try { padMoveAudio.pause(); padMoveAudio.currentTime = 0; } catch (_) {}
+      }
+
       function setRideMode(mode) {
+        const previousMode = ride.mode;
         ride.mode = mode;
+        if (mode !== previousMode) {
+          if (mode === "boarding") playPadOneShot(padActivateAudio);
+          if (mode === "flying" || mode === "exiting" || mode === "arriving") startPadMoveAudio();
+          if (mode === "landing") stopPadMoveAudio();
+        }
         document.body.classList.toggle("pad-boarding", mode === "boarding");
         document.body.classList.toggle("pad-riding", mode === "flying");
         document.body.classList.toggle("pad-landing", mode === "landing");
@@ -3752,6 +3780,8 @@
       }
 
       function finishPadLanding() {
+        stopPadMoveAudio();
+        playPadOneShot(padLandAudio);
         ride.x = layout.pad.x;
         ride.y = layout.pad.y;
         ride.lift = 0;
