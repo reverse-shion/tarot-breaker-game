@@ -1932,7 +1932,6 @@
 
       if (start) {
         start.disabled = false;
-        start.textContent = "星の国へ";
       }
       note.textContent =
         params.get("from") === "landing"
