@@ -2277,11 +2277,13 @@
 
       let tarotShuffleStopTimer = 0;
 
-      function playTarotShuffleAudio(duration = 520) {
+      function playTarotShuffleAudio(duration = 2000) {
         try {
           clearTimeout(tarotShuffleStopTimer);
           tarotShuffleAudio.pause();
-          tarotShuffleAudio.currentTime = 0;
+          // The uploaded MP3 has roughly two seconds of silence at the head.
+          // Skip that dead air while keeping the audible shuffle itself ~2s.
+          tarotShuffleAudio.currentTime = 2;
           tarotShuffleAudio.play().catch(() => {});
           tarotShuffleStopTimer = window.setTimeout(() => {
             tarotShuffleAudio.pause();
