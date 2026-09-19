@@ -2015,7 +2015,7 @@
 
 
     <section id="prologue-overlay" aria-label="プロローグ">
-      <button id="prologue-start" type="button">TOUCH TO BEGIN</button>
+      <button id="prologue-start" type="button" hidden>TOUCH TO BEGIN</button>
       <div id="tarot-stage" aria-hidden="true">
         <div id="tarot-stack">
           <img src="./assets/tarot/backs/tarot-card-back.webp?v=20260918-prologue-v2" alt="" draggable="false" />
@@ -2892,6 +2892,10 @@
       }
 
       function preparePrologue() {
+        objectToggle.hidden = true;
+        deadpadToggle.hidden = true;
+        collisionToggle.hidden = true;
+        moveReset.hidden = true;
         if (storyBypass) {
           prologueOverlay.hidden = true;
           story.locked = false;
@@ -2900,9 +2904,16 @@
         }
         document.body.classList.add("story-running");
         prologueOverlay.hidden = false;
-        prologueStart.hidden = false;
+        prologueStart.hidden = true;
         moveGuide.hidden = true;
-        prologueStart.addEventListener("click", runPrologue, { once: true });
+        // Title screen already supplies the required user gesture. Entering from
+        // the official flow starts the prologue immediately without a second tap.
+        if (params.get("from") === "title") {
+          window.setTimeout(runPrologue, 120);
+        } else {
+          prologueStart.hidden = false;
+          prologueStart.addEventListener("click", runPrologue, { once: true });
+        }
       }
 
       function syncCamera() {
