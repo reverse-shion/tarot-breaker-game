@@ -2383,6 +2383,13 @@
           player.x - layout.orb.x,
           player.y - layout.orb.y,
         );
+        // Hard cutoff: outside the local Orb radius there must be no residual
+        // resonance at all. Smoothing is used only while Shion is inside range.
+        if (distance >= ALENON_ORB_FAR_RADIUS) {
+          alenonOrbVolume = 0;
+          alenonOrbResonance.volume = 0;
+          return;
+        }
         const range = ALENON_ORB_FAR_RADIUS - ALENON_ORB_NEAR_RADIUS;
         const proximity = 1 - Math.min(1, Math.max(0, (distance - ALENON_ORB_NEAR_RADIUS) / range));
         const targetVolume = ALENON_ORB_MAX_VOLUME * proximity * proximity;
@@ -3954,6 +3961,9 @@
         player.target = null;
         clearTargetRing();
         setRideMode("exiting");
+        // The Orb is local to Alenon; stop it before the cross-map transition
+        // instead of waiting for pagehide so no resonance can leak into landing.
+        stopAlenonOrbResonance();
 
         window.setTimeout(() => {
           location.href = "./star-country-landing.html?from=alenon";
