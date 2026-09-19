@@ -873,7 +873,7 @@
         player.dir="up";setActorVisual();await wait(650);
         await showStoryLine("……いや。考えるのは後だ。");
         await showStoryLine("今は……星門が先だ");
-        devilEventActive=false;guide.textContent="星門庭園へ向かう";guide.hidden=false;
+        devilEventActive=false;guide.hidden=true;
       }
 
       const player = {
@@ -1709,7 +1709,7 @@
           guide.hidden = true;
         } else {
           status.textContent = "星門庭園へ続く道";
-          guide.textContent = "星門庭園へ向かう";
+          guide.hidden = true;
           guide.hidden = false;
         }
       }
@@ -1769,7 +1769,7 @@
         clearTarget();
 
         status.textContent = "PAD着陸完了";
-        guide.textContent = "星門庭園へ向かう";
+        guide.hidden = true;
         guide.hidden = false;
 
         setActorPosition();
