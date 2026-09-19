@@ -2316,8 +2316,31 @@
         startAlenonWind({ fade: 500 });
       }
 
-      document.addEventListener("pointerdown", unlockAlenonWind, { passive: true });
-      document.addEventListener("touchstart", unlockAlenonWind, { passive: true });
+      // Safari/iOS: prime the real OGG element on the first user gesture, even
+      // while the prologue still wants silence. This preserves later play permission.
+      async function primeAlenonWindAudio() {
+        if (alenonWindAmbience.dataset.primed === "1") {
+          unlockAlenonWind();
+          return;
+        }
+        try {
+          const wanted = alenonWindWanted;
+          const previousVolume = alenonWindAmbience.volume;
+          alenonWindAmbience.volume = 0;
+          await alenonWindAmbience.play();
+          alenonWindAmbience.dataset.primed = "1";
+          if (!wanted) {
+            alenonWindAmbience.pause();
+            alenonWindAmbience.currentTime = 0;
+            alenonWindAmbience.volume = previousVolume;
+          } else {
+            fadeAlenonWind(ALENON_WIND_VOLUME, 500);
+          }
+        } catch (_) {}
+      }
+
+      document.addEventListener("pointerdown", primeAlenonWindAudio, { passive: true });
+      document.addEventListener("touchstart", primeAlenonWindAudio, { passive: true });
       tarotFront.src = PROLOGUE_TAROT_CARD;
 
       const player = {
