@@ -669,6 +669,22 @@
 
     player.x = next.x * scale.x;
     player.y = next.y * scale.y;
+
+    // South edge of Star Gate Garden returns to the PAD landing map.
+    // Keep a small x window around the entrance path so ordinary movement near
+    // the lower corners cannot trigger a map transition.
+    const gardenPos = { x: next.x, y: next.y };
+    if (
+      enteringFromLanding &&
+      gardenPos.y >= 1028 &&
+      gardenPos.x >= 610 &&
+      gardenPos.x <= 838
+    ) {
+      controls.cancel("map-return");
+      location.href = "./star-country-landing.html?from=garden";
+      return;
+    }
+
     player.moving = next.moving;
     if (!player.moving) {
       player.frame = 0;
