@@ -1780,7 +1780,12 @@
     landmarks: STAGE_LANDMARKS,
   });
 
-  start.addEventListener("click", begin);
+  // The public title has one route only. Do not attach the garden's begin()
+  // handler there; this prevents the old ./alenon.html/main route from competing.
+  const enteringFromLanding = new URLSearchParams(location.search).get("from") === "landing";
+  if (enteringFromLanding) {
+    start.addEventListener("click", begin);
+  }
   resetButton.addEventListener("pointerdown", () => clearInput("reset"));
   resetButton.addEventListener("click", reset);
   canvas.addEventListener("pointerdown", pointerDown, { passive: false });
