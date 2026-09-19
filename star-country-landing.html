@@ -297,6 +297,55 @@
       transition: opacity .75s ease;
     }
     body.leaving #fade { opacity: 1; }
+
+    /* Devil card memory flash — one-time story event before the gate */
+    #devil-memory {
+      position: fixed;
+      inset: 0;
+      z-index: 1500;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      opacity: 0;
+      background: rgba(2,6,18,.12);
+      transition: opacity .12s ease;
+    }
+    #devil-memory.flash { opacity: 1; }
+    #devil-memory-card {
+      width: min(38vw, 220px);
+      max-height: 58vh;
+      object-fit: contain;
+      opacity: .88;
+      filter: drop-shadow(0 0 24px rgba(8,10,28,.78));
+    }
+    #landing-dialogue {
+      position: fixed;
+      left: 50%;
+      bottom: max(28px, calc(env(safe-area-inset-bottom) + 22px));
+      z-index: 1600;
+      width: min(88vw, 680px);
+      transform: translateX(-50%);
+      padding: 14px 18px 16px;
+      border: 1px solid rgba(218,232,255,.38);
+      border-radius: 10px;
+      color: #fff;
+      background: rgba(5,13,35,.88);
+      box-shadow: 0 12px 36px rgba(0,0,0,.32);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: clamp(15px, 2.8vw, 19px);
+      line-height: 1.65;
+      letter-spacing: .02em;
+    }
+    #landing-dialogue[hidden] { display: none; }
+    #landing-dialogue-name {
+      margin-bottom: 4px;
+      color: rgba(224,237,255,.78);
+      font-size: .78em;
+      font-weight: 700;
+      letter-spacing: .12em;
+    }
+    #landing-dialogue-text { min-height: 1.65em; }
     @media (prefers-reduced-motion: reduce) {
       .cloud-track { animation: none; }
     }
@@ -332,6 +381,13 @@
       <div class="joy-ring"></div>
       <div id="joy-knob"></div>
     </div>
+    <div id="devil-memory" aria-hidden="true">
+      <img id="devil-memory-card" src="./assets/cards/15-the-devil.webp" alt="" draggable="false" />
+    </div>
+    <div id="landing-dialogue" hidden role="dialog" aria-live="polite">
+      <div id="landing-dialogue-name">シオン</div>
+      <div id="landing-dialogue-text"></div>
+    </div>
     <div id="fade" aria-hidden="true"></div>
   </main>
 
@@ -360,6 +416,9 @@
       const guide = document.getElementById("guide");
       const status = document.getElementById("arrival-status");
       const joystick = document.getElementById("joystick");
+      const devilMemory = document.getElementById("devil-memory");
+      const landingDialogue = document.getElementById("landing-dialogue");
+      const landingDialogueText = document.getElementById("landing-dialogue-text");
       const knob = document.getElementById("joy-knob");
 
       let worldScale = 1;
@@ -368,6 +427,53 @@
       let arrived = false;
       let leaving = false;
       let arrivalAge = 0;
+      let devilEventStarted = false;
+      let devilEventActive = false;
+      const DEVIL_EVENT_Y = 390;
+
+      const wait = (ms) => new Promise(resolve => window.setTimeout(resolve, ms));
+
+      async function flashDevil() {
+        devilMemory.classList.add("flash");
+        await wait(150);
+        devilMemory.classList.remove("flash");
+        await wait(200);
+        devilMemory.classList.add("flash");
+        await wait(100);
+        devilMemory.classList.remove("flash");
+      }
+
+      async function showLandingLine(text, ms = 1500) {
+        landingDialogueText.textContent = text;
+        landingDialogue.hidden = false;
+        await wait(ms);
+      }
+
+      async function runDevilMemoryEvent() {
+        if (devilEventStarted || leaving) return;
+        devilEventStarted = true;
+        devilEventActive = true;
+        player.target = null;
+        player.moving = false;
+        targetRing.classList.remove("active");
+        guide.hidden = true;
+        keys.clear();
+
+        await flashDevil();
+        await showLandingLine("……くっ、あのカードが頭から離れない", 1800);
+        await wait(350);
+        await showLandingLine("何かを伝えようとしてる……？", 1700);
+        await showLandingLine("それとも――", 1250);
+
+        player.dir = "up";
+        setActorVisual();
+        await wait(650);
+
+        await showLandingLine("……いや。考えるのは後だ。", 1550);
+        await showLandingLine("今は……星門が先だ", 1550);
+        landingDialogue.hidden = true;
+        devilEventActive = false;
+      }
 
       const player = {
         x: SPAWN.x,
@@ -436,7 +542,7 @@
       }
 
       function setTarget(clientX, clientY) {
-        if (!arrived || leaving) return;
+        if (!arrived || leaving || devilEventActive) return;
         const point = screenToWorld(clientX, clientY);
         point.x = clamp(point.x, WALK_X_MIN, WALK_X_MAX);
         point.y = clamp(point.y, WALK_Y_MIN, WALK_Y_MAX);
@@ -478,7 +584,7 @@
       }
 
       viewport.addEventListener("pointerdown", (event) => {
-        if (!arrived || leaving) return;
+        if (!arrived || leaving || devilEventActive) return;
         if (event.button != null && event.button !== 0) return;
         event.preventDefault();
         pointer = { id:event.pointerId, x:event.clientX, y:event.clientY, time:performance.now() };
@@ -532,7 +638,7 @@
       viewport.addEventListener("pointercancel", endPointer, { passive:false });
 
       addEventListener("keydown", (event) => {
-        if (!arrived || leaving) return;
+        if (!arrived || leaving || devilEventActive) return;
         const key = event.key.toLowerCase();
         if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
           keys.add(key);
@@ -577,6 +683,19 @@
             status.textContent = "着陸完了";
             guide.hidden = false;
           }
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        if (!devilEventStarted && player.y <= DEVIL_EVENT_Y) {
+          runDevilMemoryEvent();
+        }
+
+        if (devilEventActive) {
+          player.moving = false;
           setActorPosition();
           setActorVisual();
           syncCamera();
