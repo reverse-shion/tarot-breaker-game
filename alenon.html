@@ -2169,7 +2169,7 @@
       </div>
     </aside>
     <div id="editor-toast" role="status" aria-live="polite"></div>
-    <div id="flight-status" role="status" aria-live="polite">PADが共鳴している…</div>
+    <div id="flight-status" role="status" aria-live="polite" hidden></div>
     <div id="map-transition" aria-hidden="true"></div>
 
   </main>
@@ -2996,8 +2996,7 @@
         story.completed = true;
         story.locked = false;
         document.body.classList.remove("story-running");
-        moveGuide.textContent = "水晶PADまで歩いてみよう";
-        moveGuide.hidden = false;
+        moveGuide.hidden = true;
       }
 
       function preparePrologue() {
@@ -3786,19 +3785,9 @@
         document.body.classList.toggle("pad-landing", mode === "landing");
         document.body.classList.toggle("pad-exiting", mode === "exiting");
 
-        if (mode === "boarding") {
-          flightStatus.textContent = "PADが共鳴している…";
-        } else if (mode === "flying") {
-          flightStatus.textContent = "PAD起動中 — 元の場所に戻ると降りられる";
-          moveGuide.hidden = false;
-          moveGuide.textContent = "PADで移動中 / 元の位置で着陸 / 下へ進むと次の場所へ";
-        } else if (mode === "landing") {
-          flightStatus.textContent = "PAD着陸中…";
-          moveGuide.hidden = true;
-        } else if (mode === "exiting") {
-          flightStatus.textContent = "星門庭園方面へ移動中…";
-          moveGuide.hidden = true;
-        }
+        // Objective/PAD operation text is intentionally disabled.
+        flightStatus.hidden = true;
+        moveGuide.hidden = true;
       }
 
       function syncRideVisual(now = performance.now()) {
@@ -3888,9 +3877,8 @@
         player.anim = 0;
         player.target = null;
 
-        flightStatus.textContent = "PAD着陸完了";
-        moveGuide.textContent = "行きたい場所をタップ / ドラッグで自由移動";
-        moveGuide.hidden = false;
+        flightStatus.hidden = true;
+        moveGuide.hidden = true;
         setActorPosition();
         setActorVisual();
       }
@@ -3925,8 +3913,8 @@
         refs.padGlow.style.top = layout.pad.y + "px";
         refs.padTrail.style.left = layout.pad.x + "px";
         refs.padTrail.style.top = layout.pad.y + "px";
-        flightStatus.textContent = "PADが共鳴している…";
-        moveGuide.textContent = "行きたい場所をタップ / ドラッグで自由移動";
+        flightStatus.hidden = true;
+        moveGuide.hidden = true;
       }
 
       function setActorPosition() {
@@ -4135,8 +4123,24 @@
 
       function resetPlayer() {
         resetRide();
-        player.x = returningFromLanding ? layout.pad.x : SHION_SPAWN.x;
-        player.y = returningFromLanding ? layout.pad.y - PAD_DISMOUNT_OFFSET_Y : SHION_SPAWN.y;
+        if (returningFromLanding) {
+          // Return handoff: arrive mounted at Alenon's committed lower PAD point,
+          // then reuse the existing landing/dismount routine.
+          ride.mode = "landing";
+          ride.x = layout.pad.x;
+          ride.y = layout.pad.y;
+          ride.lift = PAD_LIFT;
+          ride.progress = 0;
+          ride.landFromX = layout.pad.x;
+          ride.landFromY = layout.pad.y;
+          ride.landFromLift = PAD_LIFT;
+          player.x = layout.pad.x;
+          player.y = layout.pad.y - PAD_LIFT - 2;
+          document.body.classList.add("pad-landing");
+        } else {
+          player.x = SHION_SPAWN.x;
+          player.y = SHION_SPAWN.y;
+        }
         player.dir = "up";
         player.moving = false;
         player.frame = 0;
