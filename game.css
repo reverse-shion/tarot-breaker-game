@@ -170,9 +170,12 @@ body {
 .start-card button {
   position:absolute; left:50%; bottom:max(8vh,calc(env(safe-area-inset-bottom) + 28px));
   transform:translateX(-50%); min-width:220px; min-height:48px; padding:0 24px;
-  border:0; border-radius:0; background:transparent; color:#f3e7c6;
-  font:500 13px/1 system-ui,sans-serif; letter-spacing:.28em; text-indent:.28em;
-  text-shadow:0 1px 8px rgba(0,0,0,.9),0 0 14px rgba(236,207,143,.38);
+  border:1px solid rgba(246,222,166,.72); border-radius:999px;
+  background:rgba(4,7,20,.42); color:#fff1c9;
+  box-shadow:0 0 18px rgba(232,194,111,.18), inset 0 0 14px rgba(255,240,196,.05);
+  backdrop-filter:blur(3px);
+  font:600 14px/1 system-ui,sans-serif; letter-spacing:.28em; text-indent:.28em;
+  text-shadow:0 2px 6px rgba(0,0,0,1),0 0 10px rgba(255,229,164,.72);
   touch-action:manipulation; cursor:pointer; animation:title-start-pulse 2.2s ease-in-out infinite;
 }
 .start-card button:disabled { opacity:.35; animation:none; }
@@ -186,7 +189,10 @@ body {
   from { opacity:0; transform:translate(-50%,calc(-50% + 10px)) scale(.985); filter:blur(4px) drop-shadow(0 0 0 transparent); }
   to { opacity:1; transform:translate(-50%,-50%) scale(1); }
 }
-@keyframes title-start-pulse { 0%,100%{opacity:.62} 50%{opacity:1} }
+@keyframes title-start-pulse {
+  0%,100% { opacity:.78; box-shadow:0 0 14px rgba(232,194,111,.14),inset 0 0 12px rgba(255,240,196,.04); }
+  50% { opacity:1; box-shadow:0 0 26px rgba(232,194,111,.34),inset 0 0 16px rgba(255,240,196,.08); }
+}
 @media (orientation:portrait) {
   .start-screen { background-position:center center; }
   .title-logo { left:50%; top:38%; width:min(94vw,940px); max-height:34vh; transform:translate(-50%,-50%) scale(1); }
