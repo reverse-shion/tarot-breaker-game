@@ -2323,10 +2323,14 @@
       }
 
       async function unlockAlenonAudio() {
-        // Record the gesture during the prologue, but keep the wind file fully
-        // stopped until the Alenon ruins are actually revealed.
+        // Record a user gesture for the existing Alenon ambience element.
+        // On a PAD return, retry the same ambience if cross-page autoplay was blocked.
         alenonWindUnlocked = true;
-        alenonWindAmbience.volume = 0;
+        if (alenonWindWanted) {
+          await startAlenonWind({ fade: 700 });
+        } else {
+          alenonWindAmbience.volume = 0;
+        }
         return true;
       }
 
@@ -4579,6 +4583,16 @@
         // the opaque prologue overlay on screen forever.
         initMovement();
         preparePrologue();
+        if (returningFromLanding) {
+          // PAD return bypasses the prologue, so restore Alenon's normal ambience
+          // immediately using the same audio element/playback path as the prologue.
+          startAlenonWind({ fade: 900 });
+          const resumeReturnedAmbience = () => {
+            unlockAlenonAudio().catch(() => {});
+          };
+          window.addEventListener("pointerdown", resumeReturnedAmbience, { once: true, passive: true });
+          window.addEventListener("keydown", resumeReturnedAmbience, { once: true });
+        }
         loadAlenonCollision().catch((error) => {
           console.error(error);
           // Keep the story playable. Collision remains disabled until a reload
