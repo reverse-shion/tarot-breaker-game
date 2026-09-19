@@ -369,20 +369,7 @@ body {
   background: rgba(236, 225, 211, 0.34);
   box-shadow: 0 0 18px rgba(163, 184, 255, 0.22);
 }
-.reset {
-  position: absolute;
-  z-index: 12;
-  right: max(12px, env(safe-area-inset-right));
-  top: max(12px, env(safe-area-inset-top));
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  color: #f4e7c7;
-  background: rgba(15, 18, 43, 0.48);
-  font-size: 22px;
-  backdrop-filter: blur(8px);
-}
+.reset { display: none !important; }
 
 /* Preview 31: two-copy, one-way cloud flow. */
 @keyframes cloud-scroll-left {
