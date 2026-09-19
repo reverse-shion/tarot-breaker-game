@@ -6,6 +6,9 @@
   const map = document.getElementById("map-layer");
   const start = document.getElementById("start");
   const startScreen = document.getElementById("start-screen");
+  const routeParams = new URLSearchParams(location.search);
+  const enteringFromLandingAtBoot = routeParams.get("from") === "landing";
+  if (enteringFromLandingAtBoot && startScreen) startScreen.hidden = true;
   const note = document.getElementById("load-note");
   const guide = document.getElementById("guide");
   const joystick = document.getElementById("joystick");
@@ -1637,8 +1640,7 @@
     event?.preventDefault();
     if (!ready || running) return;
 
-    const params = new URLSearchParams(location.search);
-    const enteringFromLanding = params.get("from") === "landing";
+    const enteringFromLanding = routeParams.get("from") === "landing";
 
     // The repository root is the official title entry. Starting there always
     // begins the story at the Alenon prologue; arriving from the PAD keeps the
@@ -1941,7 +1943,7 @@
       note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
 
       // Seamless arrival from the PAD landing area.
-      if (params.get("from") === "landing") {
+      if (routeParams.get("from") === "landing") {
         note.textContent = "PAD離着陸場から星門庭園へ到着";
         window.setTimeout(() => begin(), 120);
       }
