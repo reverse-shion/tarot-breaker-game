@@ -5,14 +5,20 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
     <meta name="theme-color" content="#0b1029" />
     <title>TAROT BREAKER — 1000年前の星の国</title>
-    <link rel="stylesheet" href="./game.css?v=20260919-fullscreen-v3" />
+    <link rel="preload" as="image" href="./assets/maps/star-country-farthest-sky-background.webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="./assets/maps/star-country-world-islands.webp?asset=34856728cf2b" fetchpriority="high" />
+    <link rel="preload" as="image" href="./assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9" fetchpriority="high" />
+    <link rel="preload" as="image" href="./assets/maps/star-country-gate-garden-star-sky.webp" />
+    <link rel="preload" as="image" href="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" />
+    <link rel="stylesheet" href="./game.css?v=1.2.1" />
     <link rel="stylesheet" href="./fountain-polish.css?v=1.0.0" />
     <link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0" />
     <link rel="stylesheet" href="./cloud-motion-fix.css?v=1.7.0" />
-    <link rel="stylesheet" href="./audio.css?v=0.7.1" />
-    <link rel="stylesheet" href="./dialogue.css?v=1.0.0" />
+    <link rel="stylesheet" href="./audio.css?v=0.8.0" />
+    <link rel="stylesheet" href="./dialogue.css?v=1.1.0-no-objective" />
+    <link rel="stylesheet" href="./shared-dialogue.css?v=1.0.0" />
   </head>
-  <body>
+  <body class="scene-booting" data-audio-autostart="true">
     <main id="game-shell" data-gate-state="normal" aria-label="TAROT BREAKER 1000年前の星の国">
       <img id="map-layer" class="map-layer scene-map-base" src="./assets/maps/star-country-world-islands.webp?asset=34856728cf2b" alt="" aria-hidden="true" draggable="false" />
       <div class="scene-world-layer scene-back scene-farthest-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" draggable="false" /></div>
@@ -35,25 +41,27 @@
       <div class="scene-object scene-back scene-star-gate" data-scene-object data-world-x="520" data-world-y="-163.33333333333331" data-world-w="560" data-world-h="373.3333333333333" data-gate-position-revision="native-foreground-v6" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-native-foreground-v6" alt="" draggable="false" style="opacity:1;filter:none;mix-blend-mode:normal;animation:none" /></div>
       <div class="scene-object scene-back scene-gate-particle" data-scene-object data-world-x="590" data-world-y="-110" data-world-w="420" data-world-h="320" aria-hidden="true" hidden style="display:none !important"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-front scene-gate-event" data-scene-object data-world-x="560" data-world-y="-140" data-world-w="480" data-world-h="350" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-event-fx.webp" alt="" draggable="false" /></div>
-      <section id="start-screen" class="start-screen title-screen" aria-live="polite"><img class="title-screen__background" src="./assets/ui/title/title-background.webp?v=20260919" alt="" aria-hidden="true" draggable="false" /><img class="title-screen__logo" src="./assets/ui/title/tarot-breaker-logo.webp" alt="TAROT BREAKER" draggable="false" /><div class="title-screen__start-wrap"><button id="start" class="title-screen__start" type="button" disabled aria-label="ゲームを開始"><span class="title-screen__ornament title-screen__ornament--top" aria-hidden="true"><i></i><b>✦</b><i></i></span><span class="title-screen__label">TOUCH TO START</span><span class="title-screen__ornament title-screen__ornament--bottom" aria-hidden="true"><i></i><b>✦</b><i></i></span></button><small id="load-note" class="title-screen__load-note" aria-live="polite"></small></div></section>
+      <section id="start-screen" class="start-screen" aria-live="polite" hidden><div class="start-card"><div class="eyebrow">TAROT BREAKER</div><h1>1000年前の星の国</h1><p>星門庭園</p><button id="start" type="button" disabled>起動準備中…</button><small id="load-note">動的星門庭園とキャラクターを読み込んでいます</small></div></section>
       <div id="guide" class="guide" hidden>行きたい場所をタップするとシオンが歩きます<br />左側をドラッグすると自由に移動できます</div>
       <div id="joystick" class="joystick" hidden aria-hidden="true"><div class="joystick__ring"></div><div id="joystick-knob" class="joystick__knob"></div></div>
       <button id="reset" class="reset" type="button" aria-label="開始地点へ戻る" hidden>↺</button>
       <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
+      <div id="load-error" class="load-error" hidden role="alert">読み込みに失敗しました。再読み込みしてください。</div>
     </main>
     <script src="./navigation.js?v=0.7.1" defer></script>
     <script src="./blocked-collision.js?v=0.9.0" defer></script>
     <script src="./controls.js?v=0.7.1" defer></script>
-    <script src="./audio.js?v=0.7.1" defer></script>
+    <script src="./audio.js?v=0.8.0" defer></script>
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
-    <script src="./dialogue.js?v=20260919-dialogue-current" defer></script>
-    <script src="./story-event-guard.js?v=20260919-story-current" defer></script>
+    <script src="./shared-dialogue.js?v=1.0.0" defer></script>
+    <script src="./dialogue.js?v=1.3.0-no-objective" defer></script>
+    <script src="./story-event-guard.js?v=mandatory-story-v5-approved-dialogue" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
     <script src="./scene-preview41-fix.js?v=native-foreground-v7" defer></script>
     <script src="./single-map-occlusion.js?v=latest-assets-v9-waterfall-final" defer></script>
-    <script src="./scene-effects.js?v=fountain-editor-v2" defer></script>
-    <script src="./game.js?v=20260919-official-flow-v2" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
+    <script src="./scene-effects.js?v=scene-ready-decode-v1" defer></script>
+    <script src="./game.js?v=1.3.2-auto-entry" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
     <script src="./fountain-position-editor.js?v=3.0.0" defer></script>
     <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>
-</body>
+  </body>
 </html>
