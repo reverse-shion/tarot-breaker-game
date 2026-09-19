@@ -2337,11 +2337,15 @@
         fadeAlenonWind(ALENON_WIND_VOLUME, fade);
       }
 
-      function stopAlenonWind({ fade = 500 } = {}) {
+      function stopAlenonWind() {
         alenonWindWanted = false;
-        // Keep the iPhone audio stream alive and silence it by volume, matching
-        // the previously working event implementation.
-        fadeAlenonWind(0, fade);
+        // The visual wind has stopped, so the ambience must be physically
+        // stopped as well. Resume from the same file when the wind returns.
+        ++alenonWindFadeToken;
+        try {
+          alenonWindAmbience.pause();
+          alenonWindAmbience.volume = 0;
+        } catch (_) {}
       }
 
       tarotFront.src = PROLOGUE_TAROT_CARD;
@@ -2909,7 +2913,7 @@
         // 5) First wind: born from the core, then runs toward the Star Gate Garden.
         // Working timing: silence the environmental wind exactly when the
         // anomaly wind leaves the ORB. Keep the stream alive for iPhone resume.
-        stopAlenonWind({ fade: 120 });
+        stopAlenonWind();
         document.body.classList.add("orb-wind-born");
         await sleep(820);
 
