@@ -2343,12 +2343,6 @@
         fadeAlenonWind(0, fade);
       }
 
-      function handleAlenonAudioGesture() {
-        unlockAlenonAudio();
-      }
-      document.addEventListener("pointerdown", handleAlenonAudioGesture, { passive: true });
-      document.addEventListener("touchend", handleAlenonAudioGesture, { passive: true });
-
       tarotFront.src = PROLOGUE_TAROT_CARD;
 
       const player = {
@@ -2833,6 +2827,12 @@
         // Audio initialization may fail after cross-page navigation even though
         // the title received the original user gesture.
         ensureStoryAudio().catch(() => {});
+        stopTarotShuffleAudio();
+        ++alenonWindFadeToken;
+        alenonWindWanted = false;
+        alenonWindAmbience.pause();
+        alenonWindAmbience.currentTime = 0;
+        alenonWindAmbience.volume = 0;
 
         // 1) Darkness / tarot. Keep the first seconds almost empty.
         await sleep(700);
@@ -2842,8 +2842,8 @@
         tarotStack.classList.add("is-shuffling");
         playTarotShuffleAudio(2000);
         await sleep(2000);
-        tarotStack.classList.remove("is-shuffling");
         stopTarotShuffleAudio();
+        tarotStack.classList.remove("is-shuffling");
         await sleep(460);
 
         tarotDrawn.classList.add("is-drawn");
@@ -2877,7 +2877,9 @@
         document.body.classList.remove("prologue-revealing");
         tarotStage.classList.remove("visible");
 
-        // The ruins themselves have no music: only the natural wind ambience.
+        // Only now, after the prologue overlay is gone and Alenon is visible,
+        // may the ruins ambience begin.
+        stopTarotShuffleAudio();
         startAlenonWind({ fade: 1100 });
         await sleep(1750);
 
