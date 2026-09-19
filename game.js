@@ -1643,7 +1643,7 @@
     // Star Gate Garden directly.
     if (!enteringFromLanding) {
       if (start) start.disabled = true;
-      location.href = "./alenon.html?from=title";
+      location.href = "./alenon.html?from=title&build=8462bfec";
       return;
     }
 
