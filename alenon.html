@@ -2320,24 +2320,17 @@
       }
 
       async function unlockAlenonAudio() {
-        if (alenonWindUnlocked) return true;
-        try {
-          // Start the loop muted on a real user gesture and DO NOT pause it.
-          // iOS then allows later volume changes during the scripted sequence.
-          alenonWindAmbience.volume = 0;
-          await alenonWindAmbience.play();
-          alenonWindUnlocked = true;
-          if (alenonWindWanted) fadeAlenonWind(ALENON_WIND_VOLUME, 500);
-          return true;
-        } catch (_) {
-          return false;
-        }
+        // Record the gesture during the prologue, but keep the wind file fully
+        // stopped until the Alenon ruins are actually revealed.
+        alenonWindUnlocked = true;
+        alenonWindAmbience.volume = 0;
+        return true;
       }
 
       async function startAlenonWind({ fade = 900 } = {}) {
         alenonWindWanted = true;
-        if (!alenonWindUnlocked) return;
         if (alenonWindAmbience.paused) {
+          alenonWindAmbience.volume = 0;
           try { await alenonWindAmbience.play(); } catch (_) { return; }
         }
         fadeAlenonWind(ALENON_WIND_VOLUME, fade);
@@ -2846,10 +2839,9 @@
         await sayStory("タロット展開……", 1150, 520);
 
         tarotStage.classList.add("visible");
-        await sleep(380);
         tarotStack.classList.add("is-shuffling");
-        playTarotShuffleAudio(520);
-        await sleep(520);
+        playTarotShuffleAudio(2000);
+        await sleep(2000);
         tarotStack.classList.remove("is-shuffling");
         stopTarotShuffleAudio();
         await sleep(460);
