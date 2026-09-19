@@ -2337,26 +2337,15 @@
         fadeAlenonWind(ALENON_WIND_VOLUME, fade);
       }
 
-      function stopAlenonWind({ fade = 0 } = {}) {
+      function stopAlenonWind() {
         alenonWindWanted = false;
-        // Visual wind gone means audible wind gone. Cancel any in-flight fade
-        // immediately so an older fade cannot leave ambience audible.
+        // Hard stop: when the normal wind disappears visually, its ambience
+        // must be physically paused as well — not merely muted.
         ++alenonWindFadeToken;
-        if (fade > 0) {
-          const startVolume = alenonWindAmbience.volume;
-          const startedAt = performance.now();
-          const token = alenonWindFadeToken;
-          const step = (now) => {
-            if (token !== alenonWindFadeToken) return;
-            const t = Math.min(1, (now - startedAt) / Math.max(1, fade));
-            alenonWindAmbience.volume = startVolume * (1 - t);
-            if (t < 1) requestAnimationFrame(step);
-            else alenonWindAmbience.volume = 0;
-          };
-          requestAnimationFrame(step);
-        } else {
+        try {
+          alenonWindAmbience.pause();
           alenonWindAmbience.volume = 0;
-        }
+        } catch (_) {}
       }
 
       tarotFront.src = PROLOGUE_TAROT_CARD;
@@ -2914,10 +2903,12 @@
         await sayStory("……？", 900, 360);
 
         // The normal Alenon wind vanishes with the ORB outer layer here.
-        stopAlenonWind({ fade: 0 });
         document.body.classList.add("orb-anomaly");
+        // Match the actual disappearance animation: outer wind fades out over .92s.
+        await sleep(920);
+        stopAlenonWind();
         playTarotResonance();
-        await sleep(980);
+        await sleep(60);
 
         // Outer ORB is gone; core remains.
         await sayStory("こんな挙動、見たことない。", 1800, 650);
@@ -2948,11 +2939,12 @@
         await sleep(260);
 
         document.body.classList.add("orb-restore-wind");
-        // Resume ambience at the same moment the normal wind visually returns.
-        startAlenonWind({ fade: 350 });
         await sleep(150);
         document.body.classList.add("orb-restoring");
         await sleep(1080);
+        // The travelling restoration effect is not the normal ambient wind.
+        // Resume the ambience only after the ORB/wind has fully returned.
+        startAlenonWind({ fade: 350 });
 
         // Restoration is complete: return every ORB layer to its normal animation.
         document.body.classList.remove(
