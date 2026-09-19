@@ -145,6 +145,7 @@
 
     lumiereGate: [
       { type: "approach", actor: "shion", target: "lumiere", distance: 54, duration: 700 },
+      { type: "approach", actor: "shiopon", target: "shion", distance: 48, duration: 360 },
       face("shiopon", "lumiere"),
       bounce(7, 320),
       say("shiopon", "リュミエール〜！"),
