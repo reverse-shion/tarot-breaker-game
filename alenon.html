@@ -2275,11 +2275,25 @@
       tarotShuffleAudio.preload = "auto";
       tarotShuffleAudio.volume = 0.62;
 
-      function playTarotShuffleAudio() {
+      let tarotShuffleStopTimer = 0;
+
+      function playTarotShuffleAudio(duration = 520) {
         try {
+          clearTimeout(tarotShuffleStopTimer);
+          tarotShuffleAudio.pause();
           tarotShuffleAudio.currentTime = 0;
           tarotShuffleAudio.play().catch(() => {});
+          tarotShuffleStopTimer = window.setTimeout(() => {
+            tarotShuffleAudio.pause();
+            tarotShuffleAudio.currentTime = 0;
+          }, duration);
         } catch (_) {}
+      }
+
+      function stopTarotShuffleAudio() {
+        clearTimeout(tarotShuffleStopTimer);
+        tarotShuffleAudio.pause();
+        tarotShuffleAudio.currentTime = 0;
       }
 
       // Alenon ambience: keep one HTMLAudioElement alive for the whole map.
@@ -2834,9 +2848,10 @@
         tarotStage.classList.add("visible");
         await sleep(380);
         tarotStack.classList.add("is-shuffling");
-        playTarotShuffleAudio();
+        playTarotShuffleAudio(520);
         await sleep(520);
         tarotStack.classList.remove("is-shuffling");
+        stopTarotShuffleAudio();
         await sleep(460);
 
         tarotDrawn.classList.add("is-drawn");
