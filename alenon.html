@@ -2910,8 +2910,10 @@
         await animateStoryCamera(0, -34, 420);
         await sayStory("……？", 900, 360);
 
-        // The normal Alenon wind vanishes with the ORB outer layer here.
+        // The normal Alenon wind ambience disappears at the same moment
+        // the ORB outer layer starts disappearing.
         document.body.classList.add("orb-anomaly");
+        stopAlenonWind({ fade: 180 });
         playTarotResonance();
         await sleep(980);
 
@@ -2928,10 +2930,8 @@
         // Keep the ambience while the wind is still visible, then fade it at the
         // tail of the 1.58s escape so sound and artwork disappear together.
         document.body.classList.add("orb-wind-escape");
-        // The escape animation is 1.58s. Keep the ambience unchanged while the
-        // wind crosses the screen, then fade it during the final 0.50s so the
-        // sound reaches zero at the same moment the artwork disappears.
-        window.setTimeout(() => stopAlenonWind({ fade: 500 }), 1080);
+        // The environmental ambience is already silent from the ORB outer-layer
+        // disappearance above. The travelling wind has no ambience of its own.
         // No travelling-wind SFX here yet.
         turnShion("down");
         const followWind = animateStoryCamera(0, 48, 760);
