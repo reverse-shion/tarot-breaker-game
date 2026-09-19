@@ -75,6 +75,8 @@
     right: Object.freeze({ x: 1, y: 0 }),
   });
   const params = new URLSearchParams(location.search);
+  const enteringFromLanding = params.get("from") === "landing";
+  if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
 
@@ -1636,6 +1638,15 @@
   function begin(event) {
     event?.preventDefault();
     if (!ready || running) return;
+
+    // Root URL is the official title entry. Only a PAD handoff may enter the
+    // Star Gate Garden directly.
+    if (!enteringFromLanding) {
+      if (start) start.disabled = true;
+      location.href = "./alenon.html?from=title";
+      return;
+    }
+
     running = true;
     startScreen.hidden = true;
     window.dispatchEvent(new CustomEvent("tarot-breaker:world-enter"));
