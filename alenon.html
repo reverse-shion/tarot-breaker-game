@@ -2281,9 +2281,8 @@
         try {
           clearTimeout(tarotShuffleStopTimer);
           tarotShuffleAudio.pause();
-          // The uploaded MP3 has roughly four seconds of silence at the head.
-          // Skip that dead air while keeping the audible shuffle itself ~2s.
-          tarotShuffleAudio.currentTime = 4;
+          // The game-ready asset is already trimmed: play from its first frame.
+          tarotShuffleAudio.currentTime = 0;
           tarotShuffleAudio.play().catch(() => {});
           tarotShuffleStopTimer = window.setTimeout(() => {
             tarotShuffleAudio.pause();
@@ -2842,8 +2841,8 @@
 
         tarotStage.classList.add("visible");
         tarotStack.classList.add("is-shuffling");
-        playTarotShuffleAudio(2000);
-        await sleep(2000);
+        playTarotShuffleAudio(2200);
+        await sleep(2200);
         stopTarotShuffleAudio();
         tarotStack.classList.remove("is-shuffling");
         await sleep(460);
