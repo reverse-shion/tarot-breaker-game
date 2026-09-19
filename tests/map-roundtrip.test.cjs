@@ -131,3 +131,48 @@ test('journey progress survives a new page and title reset clears only this jour
   t.run('delete window.TarotJourney');t.run(fs.readFileSync('map-journey.js','utf8'));
   assert.equal(t.h.TarotJourney.get('gardenStory').lumiereDone,true);t.h.TarotJourney.reset();assert.equal(t.h.TarotJourney.get('gardenStory'),undefined);assert.equal(t.h.localStorage.getItem('unrelated'),'keep');
 });
+
+function garden(saved = {}) {
+  const t=harness('?from=landing',saved);
+  t.h.TarotDialogueUI.create=()=>({hide(){},setState(){},show(){},isTyping:()=>false});
+  for(const f of ['navigation.js','blocked-collision.js','controls.js','dialogue.js','story-event-guard.js']) t.run(fs.readFileSync(f,'utf8'));
+  let source=fs.readFileSync('game.js','utf8');
+  source=source.slice(0,source.indexOf('  (async () => {'))+`
+    window.testMap = {player, shiopon, updatePlayer, startShioponFollow,
+      init(data){ rebuildCollision(data); spawnRef=findNearestSpawnRef(); gardenExitRef={...spawnRef};
+        spawnRef=collision.nearestWalkable({x:spawnRef.x,y:spawnRef.y-16});
+        player.x=spawnRef.x;player.y=spawnRef.y;ready=true;running=true; },
+      get controls(){return controls}, get entrance(){return gardenExitRef},
+    };
+  })();`;
+  // Keep production navigation and input; expose only the closure to the test.
+  source=source.replace('rebuildCollision(data);','collision=createCollision(data);walkAreas=collision.areas;navigation=createNavigator(collision,16);controls=createControls(collision,navigation);');
+  t.run(source);t.h.testMap.init(JSON.parse(fs.readFileSync('assets/maps/star-country-gate-garden-collision.json')));return t;
+}
+
+test('garden uses real controls to return through its reachable entrance exactly once',()=>{
+  const t=garden({gardenStory:{shioponDone:true,lumiereDone:true,joined:true}});const m=t.h.testMap;
+  m.startShioponFollow();for(let i=0;i<5;i++)m.updatePlayer(.016);
+  assert.equal(t.h.location.href,'');assert.equal(t.h.TarotDialogue.getState().active,false);
+  m.controls.keyDown('ArrowDown');for(let i=0;i<30;i++)m.updatePlayer(.016);
+  assert.equal(t.h.location.href,'./star-country-landing.html?from=garden');
+  assert.equal(t.h.TarotJourney.get('companion').mode,'following');
+  const atExit=m.player.y;m.updatePlayer(.05);assert.equal(m.player.y,atExit);
+});
+
+test('new garden arrival can turn back without triggering the first event; revisits retain completed events',()=>{
+  const first=garden();const m=first.h.testMap;m.updatePlayer(.016);
+  assert.equal(first.h.TarotDialogue.getState().active,false);
+  m.controls.keyDown('ArrowDown');for(let i=0;i<30;i++)m.updatePlayer(.016);
+  assert.equal(first.h.location.href,'./star-country-landing.html?from=garden');
+  const returned=garden({gardenStory:{shioponDone:true,lumiereDone:true,joined:true}});
+  const r=returned.h.testMap;r.player.x=810;r.player.y=800;r.updatePlayer(.016);
+  assert.equal(returned.h.TarotDialogue.getState().active,false);
+  r.player.y=212;r.updatePlayer(.016);assert.equal(returned.h.TarotDialogue.getState().active,false);
+});
+
+test('garden keyboard movement starts the same looping BGM without a title click',async()=>{
+  const t=garden();t.run(fs.readFileSync('audio.js','utf8'));const bgm=t.audio[0];
+  assert.equal(bgm.playCalls,0);t.listeners.keydown[0](event({key:'ArrowDown'}));assert.equal(bgm.playCalls,1);
+  await t.flush();bgm.currentTime=24;t.listeners.keydown[0](event({key:'ArrowDown'}));assert.equal(bgm.playCalls,1);assert.equal(bgm.currentTime,24);
+});
