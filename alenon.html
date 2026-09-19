@@ -2309,6 +2309,22 @@
       let alenonWindWanted = false;
       let alenonWindUnlocked = false;
 
+      // Local Alenon sound layers reuse this map's existing user-gesture unlock state.
+      const alenonWindGust = new Audio("./assets/audio/ambience/alenon-wind-gust.mp3");
+      alenonWindGust.preload = "auto";
+      alenonWindGust.volume = 0.34;
+
+      const alenonOrbResonance = new Audio("./assets/audio/ambience/alenon-orb-resonance.mp3");
+      alenonOrbResonance.loop = true;
+      alenonOrbResonance.preload = "auto";
+      alenonOrbResonance.volume = 0;
+      const ALENON_ORB_MAX_VOLUME = 0.24;
+      const ALENON_ORB_NEAR_RADIUS = 82;
+      const ALENON_ORB_FAR_RADIUS = 430;
+      const ALENON_ORB_VOLUME_SMOOTHING = 7.5;
+      let alenonOrbWanted = false;
+      let alenonOrbVolume = 0;
+
       function fadeAlenonWind(target, duration = 650) {
         const token = ++alenonWindFadeToken;
         const startVolume = alenonWindAmbience.volume;
@@ -2323,15 +2339,56 @@
       }
 
       async function unlockAlenonAudio() {
-        // Record a user gesture for the existing Alenon ambience element.
-        // On a PAD return, retry the same ambience if cross-page autoplay was blocked.
+        // Record a user gesture for Alenon's ambience and local sound layers.
+        // On a PAD return, retry the same playback paths if cross-page autoplay was blocked.
         alenonWindUnlocked = true;
         if (alenonWindWanted) {
           await startAlenonWind({ fade: 700 });
         } else {
           alenonWindAmbience.volume = 0;
         }
+        if (alenonOrbWanted) {
+          await startAlenonOrbResonance();
+        }
         return true;
+      }
+
+      function playAlenonWindGust() {
+        if (!alenonWindUnlocked) return;
+        try {
+          alenonWindGust.pause();
+          alenonWindGust.currentTime = 0;
+          alenonWindGust.play().catch(() => {});
+        } catch (_) {}
+      }
+
+      async function startAlenonOrbResonance() {
+        alenonOrbWanted = true;
+        if (!alenonWindUnlocked || !alenonOrbResonance.paused) return;
+        alenonOrbResonance.volume = alenonOrbVolume;
+        try { await alenonOrbResonance.play(); } catch (_) {}
+      }
+
+      function stopAlenonOrbResonance() {
+        alenonOrbWanted = false;
+        try { alenonOrbResonance.pause(); } catch (_) {}
+        alenonOrbResonance.currentTime = 0;
+        alenonOrbResonance.volume = 0;
+        alenonOrbVolume = 0;
+      }
+
+      function updateAlenonOrbResonance(dt) {
+        if (!alenonOrbWanted) return;
+        const distance = Math.hypot(
+          player.x - layout.orb.x,
+          player.y - layout.orb.y,
+        );
+        const range = ALENON_ORB_FAR_RADIUS - ALENON_ORB_NEAR_RADIUS;
+        const proximity = 1 - Math.min(1, Math.max(0, (distance - ALENON_ORB_NEAR_RADIUS) / range));
+        const targetVolume = ALENON_ORB_MAX_VOLUME * proximity * proximity;
+        const blend = 1 - Math.exp(-ALENON_ORB_VOLUME_SMOOTHING * Math.max(0, dt));
+        alenonOrbVolume += (targetVolume - alenonOrbVolume) * blend;
+        alenonOrbResonance.volume = Math.min(ALENON_ORB_MAX_VOLUME, Math.max(0, alenonOrbVolume));
       }
 
       async function startAlenonWind({ fade = 900 } = {}) {
@@ -2900,6 +2957,7 @@
         // may the ruins ambience begin.
         stopTarotShuffleAudio();
         startAlenonWind({ fade: 1100 });
+        startAlenonOrbResonance();
         await sleep(1750);
 
         // 3) Shion walks naturally before anything happens.
@@ -2938,9 +2996,10 @@
         // Keep the ambience while the wind is still visible, then fade it at the
         // tail of the 1.58s escape so sound and artwork disappear together.
         document.body.classList.add("orb-wind-escape");
+        // Fire once on the same frame the existing downward wind animation begins.
+        playAlenonWindGust();
         // The environmental ambience is already silent from the ORB outer-layer
-        // disappearance above. The travelling wind has no ambience of its own.
-        // No travelling-wind SFX here yet.
+        // disappearance above. The travelling gust is an independent one-shot SFX.
         turnShion("down");
         const followWind = animateStoryCamera(0, 48, 760);
         await Promise.all([sleep(1650), followWind]);
@@ -4398,6 +4457,8 @@
             return;
           }
 
+          updateAlenonOrbResonance(dt);
+
           if (story.locked) {
             if (!story.scripted) {
               player.moving = false;
@@ -4583,16 +4644,30 @@
         // the opaque prologue overlay on screen forever.
         initMovement();
         preparePrologue();
+        const unlockLocalAlenonAudio = () => {
+          unlockAlenonAudio().catch(() => {});
+        };
+        window.addEventListener("pointerdown", unlockLocalAlenonAudio, { once: true, passive: true });
+        window.addEventListener("keydown", unlockLocalAlenonAudio, { once: true });
         if (returningFromLanding) {
           // PAD return bypasses the prologue, so restore Alenon's normal ambience
           // immediately using the same audio element/playback path as the prologue.
           startAlenonWind({ fade: 900 });
+          startAlenonOrbResonance();
           const resumeReturnedAmbience = () => {
             unlockAlenonAudio().catch(() => {});
           };
           window.addEventListener("pointerdown", resumeReturnedAmbience, { once: true, passive: true });
           window.addEventListener("keydown", resumeReturnedAmbience, { once: true });
         }
+        window.addEventListener("pagehide", () => {
+          stopAlenonOrbResonance();
+          try {
+            alenonWindGust.pause();
+            alenonWindGust.currentTime = 0;
+          } catch (_) {}
+        });
+
         loadAlenonCollision().catch((error) => {
           console.error(error);
           // Keep the story playable. Collision remains disabled until a reload
