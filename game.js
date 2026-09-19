@@ -1679,7 +1679,10 @@
     guide.hidden = true;
     resize();
     reset();
-    if (window.TarotDialogue?.getState().joined) startShioponFollow();
+    if (window.TarotDialogue?.getState().joined) {
+      startShioponFollow();
+      if (enteringFromLanding) placeShioponBesidePlayer();
+    }
     last = performance.now();
     draw();
     requestAnimationFrame(loop);
@@ -1751,6 +1754,25 @@
   function clearInput(reason) {
     controls?.clearInput(reason);
     syncStick();
+  }
+
+  function placeShioponBesidePlayer() {
+    const playerNow = playerRef();
+    const sideGap = SHIOPON_FOLLOW_DISTANCE;
+    const candidates = [
+      { x: playerNow.x - sideGap, y: playerNow.y },
+      { x: playerNow.x + sideGap, y: playerNow.y },
+      shioponFollowTarget(),
+    ];
+    const safe = candidates.find(
+      (candidate) =>
+        isWalkableRef(candidate.x, candidate.y) &&
+        refDistance(candidate, playerNow) >= SHIOPON_FOLLOW_MIN_GAP,
+    );
+    if (!safe) return false;
+    shiopon.x = safe.x * scale.x;
+    shiopon.y = safe.y * scale.y;
+    return true;
   }
 
   function startShioponFollow() {
