@@ -1636,6 +1636,22 @@
   function begin(event) {
     event?.preventDefault();
     if (!ready || running) return;
+
+    const params = new URLSearchParams(location.search);
+    const enteringFromLanding = params.get("from") === "landing";
+
+    // The repository root is the official title entry. Starting there always
+    // begins the story at the Alenon prologue; arriving from the PAD keeps the
+    // existing seamless Star Gate Garden entry.
+    if (!enteringFromLanding) {
+      start.disabled = true;
+      startScreen.classList.add("leaving");
+      window.setTimeout(() => {
+        location.href = "./alenon.html?from=title";
+      }, 420);
+      return;
+    }
+
     running = true;
     startScreen.hidden = true;
     guide.hidden = false;
