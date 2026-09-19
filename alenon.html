@@ -54,7 +54,11 @@
 
     #viewport {
       position: fixed;
-      inset: 0;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       background:
         radial-gradient(circle at 50% 45%, rgba(63,139,255,.14), transparent 55%),
@@ -2919,9 +2923,16 @@
         }
       }
 
+      function viewportSize() {
+        const vv = window.visualViewport;
+        return {
+          width: vv?.width || document.documentElement.clientWidth || window.innerWidth,
+          height: vv?.height || document.documentElement.clientHeight || window.innerHeight,
+        };
+      }
+
       function syncCamera() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
+        const { width: vw, height: vh } = viewportSize();
         const halfW = vw / (2 * worldScale);
         const halfH = vh / (2 * worldScale);
 
@@ -2950,8 +2961,12 @@
       }
 
       function fitWorld() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
+        const { width: vw, height: vh } = viewportSize();
+
+        // iOS in-app Safari changes the visible viewport when its browser chrome
+        // appears/disappears. Keep the game viewport locked to that visible area.
+        viewport.style.width = `${vw}px`;
+        viewport.style.height = `${vh}px`;
 
         // Keep Shion at the Star Gate Garden size and enlarge the map instead.
         worldScale = Math.max(1, vw / WORLD_W, vh / WORLD_H);
@@ -2969,6 +2984,8 @@
 
       window.addEventListener("resize", fitWorld, { passive: true });
       window.addEventListener("orientationchange", fitWorld, { passive: true });
+      window.visualViewport?.addEventListener("resize", fitWorld, { passive: true });
+      window.visualViewport?.addEventListener("scroll", fitWorld, { passive: true });
 
       if (params.get("debug") === "1") {
         document.body.classList.add("debug");
