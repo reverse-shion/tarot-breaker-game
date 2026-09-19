@@ -2337,11 +2337,26 @@
         fadeAlenonWind(ALENON_WIND_VOLUME, fade);
       }
 
-      function stopAlenonWind({ fade = 500 } = {}) {
+      function stopAlenonWind({ fade = 0 } = {}) {
         alenonWindWanted = false;
-        // Keep the media element playing at volume 0 instead of pause().
-        // This is important on iPhone: restarting later may otherwise require another gesture.
-        fadeAlenonWind(0, fade);
+        // Visual wind gone means audible wind gone. Cancel any in-flight fade
+        // immediately so an older fade cannot leave ambience audible.
+        ++alenonWindFadeToken;
+        if (fade > 0) {
+          const startVolume = alenonWindAmbience.volume;
+          const startedAt = performance.now();
+          const token = alenonWindFadeToken;
+          const step = (now) => {
+            if (token !== alenonWindFadeToken) return;
+            const t = Math.min(1, (now - startedAt) / Math.max(1, fade));
+            alenonWindAmbience.volume = startVolume * (1 - t);
+            if (t < 1) requestAnimationFrame(step);
+            else alenonWindAmbience.volume = 0;
+          };
+          requestAnimationFrame(step);
+        } else {
+          alenonWindAmbience.volume = 0;
+        }
       }
 
       tarotFront.src = PROLOGUE_TAROT_CARD;
@@ -2908,7 +2923,8 @@
         // 5) First wind: born from the core, then runs toward the Star Gate Garden.
         // The ambient wind itself vanishes here. The travelling stream will
         // receive its own dedicated SFX later, so keep that motion silent for now.
-        stopAlenonWind({ fade: 120 });
+        // The ambient wind disappears exactly when the anomaly wind appears.
+        stopAlenonWind({ fade: 0 });
         document.body.classList.add("orb-wind-born");
         await sleep(820);
 
@@ -3701,12 +3717,16 @@
       }
 
       function setRideMode(mode) {
-        const previousMode = ride.mode;
         ride.mode = mode;
-        if (mode !== previousMode) {
-          if (mode === "boarding") playPadOneShot(padActivateAudio);
-          if (mode === "flying" || mode === "exiting" || mode === "arriving") startPadMoveAudio();
-          if (mode === "landing") stopPadMoveAudio();
+        // Callers may assign ride.mode immediately before this function, so audio
+        // must follow the requested mode rather than comparing the old value.
+        if (mode === "boarding") {
+          stopPadMoveAudio();
+          playPadOneShot(padActivateAudio);
+        } else if (mode === "flying" || mode === "exiting" || mode === "arriving") {
+          startPadMoveAudio();
+        } else if (mode === "landing" || mode === "ground") {
+          stopPadMoveAudio();
         }
         document.body.classList.toggle("pad-boarding", mode === "boarding");
         document.body.classList.toggle("pad-riding", mode === "flying");
