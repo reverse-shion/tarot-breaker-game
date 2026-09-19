@@ -6,9 +6,6 @@
   const map = document.getElementById("map-layer");
   const start = document.getElementById("start");
   const startScreen = document.getElementById("start-screen");
-  const routeParams = new URLSearchParams(location.search);
-  const enteringFromLandingAtBoot = routeParams.get("from") === "landing";
-  if (enteringFromLandingAtBoot && startScreen) startScreen.hidden = true;
   const note = document.getElementById("load-note");
   const guide = document.getElementById("guide");
   const joystick = document.getElementById("joystick");
@@ -1639,23 +1636,9 @@
   function begin(event) {
     event?.preventDefault();
     if (!ready || running) return;
-
-    const enteringFromLanding = routeParams.get("from") === "landing";
-
-    // The repository root is the official title entry. Starting there always
-    // begins the story at the Alenon prologue; arriving from the PAD keeps the
-    // existing seamless Star Gate Garden entry.
-    if (!enteringFromLanding) {
-      start.disabled = true;
-      startScreen.classList.add("leaving");
-      window.setTimeout(() => {
-        location.href = "./alenon.html?from=title";
-      }, 420);
-      return;
-    }
-
     running = true;
     startScreen.hidden = true;
+    window.dispatchEvent(new CustomEvent("tarot-breaker:world-enter"));
     guide.hidden = false;
     resetButton.hidden = false;
     resize();
@@ -1788,7 +1771,7 @@
     landmarks: STAGE_LANDMARKS,
   });
 
-  start.addEventListener("click", begin);
+  start?.addEventListener("click", begin);
   resetButton.addEventListener("pointerdown", () => clearInput("reset"));
   resetButton.addEventListener("click", reset);
   canvas.addEventListener("pointerdown", pointerDown, { passive: false });
@@ -1938,20 +1921,38 @@
       resize();
       reset();
       draw();
-      start.disabled = false;
-      start.disabled = false;
-      note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
 
-      // Seamless arrival from the PAD landing area.
-      if (routeParams.get("from") === "landing") {
-        note.textContent = "PAD離着陸場から星門庭園へ到着";
-        window.setTimeout(() => begin(), 120);
+      if (start) {
+        start.disabled = false;
+        start.textContent = "星の国へ";
       }
+      note.textContent =
+        params.get("from") === "landing"
+          ? "PAD離着陸場から星門庭園へ到着"
+          : "星門庭園の読み込み完了";
+
+      // Never expose half-loaded layers. scene-effects.ready above already
+      // waits for every authored map image; reveal the whole scene only now.
+      document.body.classList.remove("scene-booting", "scene-load-error");
+      document.body.classList.add("scene-ready");
+
+      // The old title/start card is intentionally skipped. Enter the garden
+      // automatically once the complete scene is ready.
+      requestAnimationFrame(() => requestAnimationFrame(() => begin()));
     } catch (error) {
       console.error(error);
-      start.disabled = true;
-      start.textContent = "起動できません";
+      if (start) {
+        start.disabled = true;
+        start.textContent = "起動できません";
+      }
       note.textContent = error.message;
+      document.body.classList.remove("scene-booting", "scene-ready");
+      document.body.classList.add("scene-load-error");
+      const loadError = document.getElementById("load-error");
+      if (loadError) {
+        loadError.textContent = "読み込みに失敗しました。再読み込みしてください。";
+        loadError.hidden = false;
+      }
     }
   })();
 })();
