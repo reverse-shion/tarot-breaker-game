@@ -2281,9 +2281,9 @@
         try {
           clearTimeout(tarotShuffleStopTimer);
           tarotShuffleAudio.pause();
-          // The uploaded MP3 has roughly two seconds of silence at the head.
+          // The uploaded MP3 has roughly four seconds of silence at the head.
           // Skip that dead air while keeping the audible shuffle itself ~2s.
-          tarotShuffleAudio.currentTime = 2;
+          tarotShuffleAudio.currentTime = 4;
           tarotShuffleAudio.play().catch(() => {});
           tarotShuffleStopTimer = window.setTimeout(() => {
             tarotShuffleAudio.pause();
