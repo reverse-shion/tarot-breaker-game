@@ -2271,76 +2271,66 @@
 
       let storyAudioContext = null;
 
-      // Alenon uses environmental wind only (no BGM).
-      // Keep this separate from the short synthesized story SFX.
+      // Alenon ambience: keep one HTMLAudioElement alive for the whole map.
       const alenonWindAmbience = new Audio("./assets/audio/ambience/alenon-wind-ambience.ogg");
       alenonWindAmbience.loop = true;
       alenonWindAmbience.preload = "auto";
       alenonWindAmbience.volume = 0;
-      const ALENON_WIND_VOLUME = 0.34;
+      const ALENON_WIND_VOLUME = 0.55;
       let alenonWindFadeToken = 0;
       let alenonWindWanted = false;
+      let alenonWindUnlocked = false;
 
       function fadeAlenonWind(target, duration = 650) {
         const token = ++alenonWindFadeToken;
-        const start = alenonWindAmbience.volume;
+        const startVolume = alenonWindAmbience.volume;
         const startedAt = performance.now();
         const step = (now) => {
           if (token !== alenonWindFadeToken) return;
           const t = Math.min(1, (now - startedAt) / Math.max(1, duration));
-          alenonWindAmbience.volume = start + (target - start) * t;
+          alenonWindAmbience.volume = startVolume + (target - startVolume) * t;
           if (t < 1) requestAnimationFrame(step);
-          else if (target <= 0.001) alenonWindAmbience.pause();
         };
         requestAnimationFrame(step);
       }
 
+      async function unlockAlenonAudio() {
+        if (alenonWindUnlocked) return true;
+        try {
+          // Start the loop muted on a real user gesture and DO NOT pause it.
+          // iOS then allows later volume changes during the scripted sequence.
+          alenonWindAmbience.volume = 0;
+          await alenonWindAmbience.play();
+          alenonWindUnlocked = true;
+          if (alenonWindWanted) fadeAlenonWind(ALENON_WIND_VOLUME, 500);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
       async function startAlenonWind({ fade = 900 } = {}) {
         alenonWindWanted = true;
-        try {
-          await alenonWindAmbience.play();
-          fadeAlenonWind(ALENON_WIND_VOLUME, fade);
-        } catch (_) {
-          // iOS may require a fresh gesture after page navigation.
-          // The next player tap will unlock the ambience without interrupting play.
+        if (!alenonWindUnlocked) return;
+        if (alenonWindAmbience.paused) {
+          try { await alenonWindAmbience.play(); } catch (_) { return; }
         }
+        fadeAlenonWind(ALENON_WIND_VOLUME, fade);
       }
 
       function stopAlenonWind({ fade = 500 } = {}) {
         alenonWindWanted = false;
+        // Keep the media element playing at volume 0 instead of pause().
+        // This is important on iPhone: restarting later may otherwise require another gesture.
         fadeAlenonWind(0, fade);
       }
 
-      function unlockAlenonWind() {
-        if (!alenonWindWanted || !alenonWindAmbience.paused) return;
-        startAlenonWind({ fade: 500 });
+      function handleAlenonAudioGesture() {
+        unlockAlenonAudio();
       }
+      document.addEventListener("pointerdown", handleAlenonAudioGesture, { passive: true });
+      document.addEventListener("touchend", handleAlenonAudioGesture, { passive: true });
 
-      // Safari/iOS: prime the real OGG element on the first user gesture, even
-      // while the prologue still wants silence. This preserves later play permission.
-      async function primeAlenonWindAudio() {
-        if (alenonWindAmbience.dataset.primed === "1") {
-          unlockAlenonWind();
-          return;
-        }
-        try {
-          const wanted = alenonWindWanted;
-          const previousVolume = alenonWindAmbience.volume;
-          alenonWindAmbience.volume = 0;
-          await alenonWindAmbience.play();
-          alenonWindAmbience.dataset.primed = "1";
-          if (!wanted) {
-            alenonWindAmbience.pause();
-            alenonWindAmbience.currentTime = 0;
-            alenonWindAmbience.volume = previousVolume;
-          } else {
-            fadeAlenonWind(ALENON_WIND_VOLUME, 500);
-          }
-        } catch (_) {}
-      }
-
-      document.addEventListener("pointerdown", primeAlenonWindAudio, { passive: true });
-      document.addEventListener("touchstart", primeAlenonWindAudio, { passive: true });
       tarotFront.src = PROLOGUE_TAROT_CARD;
 
       const player = {
