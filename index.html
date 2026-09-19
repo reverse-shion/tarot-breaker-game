@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
     <meta name="theme-color" content="#0b1029" />
     <title>TAROT BREAKER — 1000年前の星の国</title>
-    <link rel="stylesheet" href="./game.css?v=1.4.1-title-fix" />
+    <link rel="stylesheet" href="./game.css?v=1.5.0-title-editor" />
     <link rel="stylesheet" href="./fountain-polish.css?v=1.0.0" />
     <link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0" />
     <link rel="stylesheet" href="./cloud-motion-fix.css?v=1.7.0" />
@@ -55,5 +55,24 @@
     <script src="./game.js?v=1.3.2-title-fix" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
     <script src="./fountain-position-editor.js?v=3.0.0" defer></script>
     <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>
-  </body>
+    <script>
+    (() => {
+      const logo = document.querySelector('.title-screen__logo');
+      const screen = document.querySelector('.title-screen');
+      if (!logo || !screen) return;
+      const panel = document.createElement('div');
+      panel.className = 'title-editor';
+      panel.innerHTML = '<strong>TITLE EDITOR</strong><label>logo x <input data-k="x" type="range" min="0" max="100" step=".1" value="50"></label><label>logo y <input data-k="y" type="range" min="0" max="100" step=".1" value="38"></label><label>scale <input data-k="s" type="range" min=".5" max="1.5" step=".01" value="1"></label><output></output>';
+      screen.appendChild(panel);
+      const out = panel.querySelector('output');
+      const inputs = Object.fromEntries([...panel.querySelectorAll('input')].map(i => [i.dataset.k,i]));
+      function apply(){
+        const x=+inputs.x.value,y=+inputs.y.value,s=+inputs.s.value;
+        logo.style.left=x+'%'; logo.style.top=y+'%'; logo.style.transform='translate(-50%,-50%) scale('+s+')';
+        out.textContent='logo: x='+x.toFixed(1)+'%, y='+y.toFixed(1)+'%, scale='+s.toFixed(2);
+      }
+      panel.addEventListener('input',apply); apply();
+    })();
+  </script>
+</body>
 </html>
