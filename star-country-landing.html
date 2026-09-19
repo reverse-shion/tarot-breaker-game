@@ -624,6 +624,8 @@
     }
 
     body.leaving #fade { opacity: 1; }
+    #devil-memory{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;pointer-events:none;opacity:0;background:rgba(2,6,18,.18);transition:opacity .10s ease}#devil-memory.flash{opacity:1}#devil-memory img{width:min(34vw,210px);max-height:56vh;object-fit:contain;opacity:.90;filter:drop-shadow(0 0 26px rgba(0,0,0,.78))}
+    #landing-story-dialogue{position:fixed;left:50%;bottom:max(28px,calc(env(safe-area-inset-bottom) + 22px));z-index:1600;width:min(88vw,680px);transform:translateX(-50%);padding:14px 18px 16px;border:1px solid rgba(218,232,255,.38);border-radius:10px;color:#fff;background:rgba(5,13,35,.90);box-shadow:0 12px 36px rgba(0,0,0,.32);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:clamp(15px,2.8vw,19px);line-height:1.65;letter-spacing:.02em;pointer-events:none}#landing-story-dialogue[hidden]{display:none}#landing-story-name{margin-bottom:4px;color:rgba(224,237,255,.78);font-size:.78em;font-weight:700;letter-spacing:.12em}
 
     @media (prefers-reduced-motion: reduce) {
       .cloud-track { animation: none; }
@@ -727,6 +729,8 @@
     </aside>
 
     <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
+    <div id="devil-memory" aria-hidden="true"><img src="./assets/tarot/major/15-the-devil.webp" alt="" draggable="false" /></div>
+    <div id="landing-story-dialogue" hidden role="dialog" aria-live="polite"><div id="landing-story-name">シオン</div><div id="landing-story-text"></div></div>
     <div id="fade" aria-hidden="true"></div>
   </main>
 
@@ -758,6 +762,7 @@
       const PAD_REBOARD_COOLDOWN_MS = 900;
 
       const GARDEN_EXIT_Y = 215;
+      const DEVIL_EVENT_Y = 355;
       const GARDEN_EXIT_X_MIN = 540;
       const GARDEN_EXIT_X_MAX = 908;
       const WORLD_MARGIN = 34;
@@ -774,6 +779,9 @@
       const status = document.getElementById("flight-status");
       const joystick = document.getElementById("joystick");
       const knob = document.getElementById("joy-knob");
+      const devilMemory = document.getElementById("devil-memory");
+      const storyDialogue = document.getElementById("landing-story-dialogue");
+      const storyText = document.getElementById("landing-story-text");
 
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
@@ -818,6 +826,24 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
+      let devilEventStarted = false;
+      let devilEventActive = false;
+      const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
+      async function flashDevilMemory(){devilMemory.classList.add("flash");await wait(150);devilMemory.classList.remove("flash");await wait(200);devilMemory.classList.add("flash");await wait(100);devilMemory.classList.remove("flash")}
+      async function showStoryLine(text,duration){storyText.textContent=text;storyDialogue.hidden=false;await wait(duration)}
+      async function runDevilMemoryEvent(){
+        if(devilEventStarted||leaving||ride.mode!=="ground")return;
+        devilEventStarted=true;devilEventActive=true;clearTarget();keys.clear();stick.active=false;stick.id=null;stick.x=0;stick.y=0;joystick.hidden=true;knob.style.transform="translate(0,0)";player.moving=false;player.anim=0;player.frame=0;guide.hidden=true;
+        await flashDevilMemory();
+        await showStoryLine("……くっ、あのカードが頭から離れない",1850);
+        await wait(350);
+        await showStoryLine("何かを伝えようとしてる……？",1750);
+        await showStoryLine("それとも――",1250);
+        player.dir="up";setActorVisual();await wait(650);
+        await showStoryLine("……いや。考えるのは後だ。",1600);
+        await showStoryLine("今は……星門が先だ",1600);
+        storyDialogue.hidden=true;devilEventActive=false;guide.textContent="星門庭園へ向かう";guide.hidden=false;
+      }
 
       const player = {
         x: PAD_HOME.x,
@@ -1769,7 +1795,7 @@
       }
 
       function setTarget(clientX, clientY) {
-        if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
+        if (leaving || devilEventActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
 
         let point = screenToWorld(clientX, clientY);
         point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
@@ -1805,7 +1831,7 @@
       viewport.addEventListener("pointerdown", (event) => {
         if (collisionMode) return;
         if (event.target.closest?.("#pad-editor, #pad-editor-toggle")) return;
-        if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
+        if (leaving || devilEventActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         if (event.button != null && event.button !== 0) return;
         event.preventDefault();
         pointer = {
@@ -1872,7 +1898,7 @@
 
       addEventListener("keydown", (event) => {
         if (collisionMode) return;
-        if (leaving || ["arriving","boarding","landing"].includes(ride.mode)) return;
+        if (leaving || devilEventActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
         if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
           keys.add(key);
@@ -1968,6 +1994,9 @@
           requestAnimationFrame(loop);
           return;
         }
+
+        if(!devilEventStarted&&ride.mode==="ground"&&player.y<=DEVIL_EVENT_Y&&player.x>=GARDEN_EXIT_X_MIN&&player.x<=GARDEN_EXIT_X_MAX){runDevilMemoryEvent()}
+        if(devilEventActive){player.moving=false;setActorPosition();setActorVisual();syncCamera();requestAnimationFrame(loop);return}
 
         const keyboard = keyVector();
         let vx = keyboard.x;
