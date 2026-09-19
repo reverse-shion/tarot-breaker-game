@@ -2746,7 +2746,10 @@
         document.body.classList.add("story-running");
         prologueStart.hidden = true;
         moveGuide.hidden = true;
-        await ensureStoryAudio();
+        // Do not block the visual story on iOS audio permission/resume.
+        // Audio initialization may fail after cross-page navigation even though
+        // the title received the original user gesture.
+        ensureStoryAudio().catch(() => {});
 
         // 1) Darkness / tarot. Keep the first seconds almost empty.
         await sleep(700);
@@ -2906,10 +2909,10 @@
         prologueOverlay.hidden = false;
         prologueStart.hidden = true;
         moveGuide.hidden = true;
-        // Title screen already supplies the required user gesture. Entering from
-        // the official flow starts the prologue immediately without a second tap.
+        // Start immediately when entering from the official title route.
+        // requestAnimationFrame ensures the overlay has painted before the story starts.
         if (params.get("from") === "title") {
-          window.setTimeout(runPrologue, 120);
+          requestAnimationFrame(() => requestAnimationFrame(() => runPrologue()));
         } else {
           prologueStart.hidden = false;
           prologueStart.addEventListener("click", runPrologue, { once: true });
