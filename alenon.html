@@ -2174,6 +2174,7 @@
 
   </main>
 
+  <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
   <script src="./shared-dialogue.js?v=1.0.0"></script>
   <script>
     (() => {
@@ -2206,7 +2207,8 @@
       const editMode = params.get("edit") === "1";
       const objectMode = params.get("objects") === "1";
       const collisionMode = params.get("collision") === "1";
-      const storyBypass = editMode || objectMode || collisionMode || params.get("skipPrologue") === "1";
+      const returningFromLanding = params.get("from") === "landing-return";
+      const storyBypass = returningFromLanding || editMode || objectMode || collisionMode || params.get("skipPrologue") === "1";
       const COLLISION_URL = "./assets/maps/alenon-collision.json?v=2";
       let alenonWalkAreas = [];
       let alenonCollisionReady = false;
@@ -4133,8 +4135,8 @@
 
       function resetPlayer() {
         resetRide();
-        player.x = SHION_SPAWN.x;
-        player.y = SHION_SPAWN.y;
+        player.x = returningFromLanding ? layout.pad.x : SHION_SPAWN.x;
+        player.y = returningFromLanding ? layout.pad.y - PAD_DISMOUNT_OFFSET_Y : SHION_SPAWN.y;
         player.dir = "up";
         player.moving = false;
         player.frame = 0;

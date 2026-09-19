@@ -348,6 +348,20 @@
     player: { x: 724, y: 1015 },
   };
 
+  const savedStory = window.TarotJourney?.get("gardenStory");
+  if (savedStory) {
+    story.shioponDone = savedStory.shioponDone === true;
+    story.lumiereDone = savedStory.lumiereDone === true;
+    story.joined = savedStory.joined === true;
+  }
+  function saveStory() {
+    window.TarotJourney?.set("gardenStory", {
+      shioponDone: story.shioponDone,
+      lumiereDone: story.lumiereDone,
+      joined: story.joined,
+    });
+  }
+
   let playbackToken = 0;
   let currentAction = null;
   let dialogueUi = null;
@@ -511,6 +525,7 @@
       story.lumiereDone = true;
     }
 
+    saveStory();
     window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
     document.getElementById("game")?.focus?.({ preventScroll: true });
   }
@@ -586,6 +601,7 @@
     story.shioponDone = false;
     story.lumiereDone = false;
     story.joined = false;
+    saveStory();
     story.player = { x: 724, y: 1015 };
     const layer = document.getElementById("dialogue-layer");
     if (layer) {

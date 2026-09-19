@@ -1,9 +1,9 @@
 (() => {
   "use strict";
 
-  const startButton = document.getElementById("start");
   const toggleButton = document.getElementById("audio-toggle");
-  if (!startButton || !toggleButton || typeof Audio !== "function") return;
+  if (window.TarotAudio || typeof Audio !== "function") return;
+  if (toggleButton) toggleButton.hidden = true;
 
   const STORAGE_KEY = "tarot-breaker:bgm-enabled";
   const NORMAL_VOLUME = 0.35;
@@ -18,6 +18,7 @@
   bgm.setAttribute("playsinline", "");
 
   let enteredWorld = false;
+  let playPending = false;
   let enabled = readPreference();
   let targetVolume = NORMAL_VOLUME;
   let fadeFrame = 0;
@@ -40,6 +41,8 @@
   }
 
   function renderToggle() {
+    if (!toggleButton) return;
+    toggleButton.hidden = true;
     toggleButton.dataset.enabled = String(enabled);
     toggleButton.setAttribute("aria-pressed", String(enabled));
     toggleButton.setAttribute(
@@ -85,7 +88,8 @@
   }
 
   async function resumeBgm() {
-    if (!enteredWorld || !enabled || document.hidden) return;
+    if (!enteredWorld || !enabled || document.hidden || playPending || !bgm.paused) return;
+    playPending = true;
     try {
       const playResult = bgm.play();
       if (playResult?.then) await playResult;
@@ -96,6 +100,8 @@
       fadeTo(targetVolume);
     } catch (error) {
       console.warn("BGMを再生できませんでした", error);
+    } finally {
+      playPending = false;
     }
   }
 
@@ -118,22 +124,16 @@
     else pauseBgm();
   }
 
-  function enterWorld() {
-    if (enteredWorld) return;
-    enteredWorld = true;
-    toggleButton.hidden = false;
-    if (enabled) resumeBgm();
+  // Called synchronously by each map's accepted movement gesture. A hidden
+  // legacy toggle preference must not prevent the requested map music starting.
+  function startFromMovement() {
+    if (!enteredWorld) {
+      enteredWorld = true;
+      enabled = true;
+      renderToggle();
+    }
+    resumeBgm();
   }
-
-  startButton.addEventListener("click", enterWorld, { capture: true });
-  toggleButton.addEventListener("pointerdown", (event) => {
-    event.stopPropagation();
-  });
-  toggleButton.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setEnabled(!enabled);
-  });
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
     targetVolume = INTERACTION_VOLUME;
@@ -153,9 +153,11 @@
 
   bgm.addEventListener("error", () => {
     cancelFade();
-    toggleButton.disabled = true;
-    toggleButton.textContent = "♪!";
-    toggleButton.setAttribute("aria-label", "BGMを読み込めません");
+    if (toggleButton) {
+      toggleButton.disabled = true;
+      toggleButton.textContent = "♪!";
+      toggleButton.setAttribute("aria-label", "BGMを読み込めません");
+    }
     console.warn("BGMファイルを読み込めません", BGM_SRC);
   });
 
@@ -169,5 +171,6 @@
       return enteredWorld;
     },
     setEnabled,
+    startFromMovement,
   });
 })();

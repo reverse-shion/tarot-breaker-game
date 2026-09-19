@@ -254,6 +254,11 @@
       pointer-events: none;
     }
 
+    .shiopon-actor {
+      background-image: url("./assets/sprites/shiopon/shiopon_idle.png");
+    }
+    .shiopon-actor[hidden], .shiopon-shadow[hidden] { display: none; }
+
     .move-target {
       position: absolute;
       z-index: 41;
@@ -661,6 +666,8 @@
       <div class="move-target" aria-hidden="true"></div>
       <div class="shion-shadow" aria-hidden="true"></div>
       <div class="shion-actor" role="img" aria-label="シオン"></div>
+      <div class="shion-shadow shiopon-shadow" hidden aria-hidden="true"></div>
+      <div class="shion-actor shiopon-actor" hidden role="img" aria-label="しおぽん"></div>
     </section>
 
     <div id="flight-status" role="status" aria-live="polite">PAD着陸中…</div>
@@ -735,7 +742,8 @@
     <div id="fade" aria-hidden="true"></div>
   </main>
 
-  <script src="./audio.js?v=20260919-main-sync-1" defer></script>
+  <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
+  <script src="./audio.js?v=20260919-roundtrip-1" defer></script>
   <script src="./shared-dialogue.js?v=20260919-main-sync-1"></script>
   <script>
     (() => {
@@ -831,7 +839,9 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
-      let devilEventStarted = false;
+      let devilEventStarted = returningFromGarden || window.TarotJourney?.get("landingMemoryDone") === true;
+      let farewellActive = false;
+      let gardenExitArmed = !returningFromGarden;
       let devilEventActive = false;
       const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
       let storyAdvanceResolve = null;
@@ -858,8 +868,8 @@
         devilMemory.classList.remove("flash");
         await wait(180);
       }
-      async function showStoryLine(text){
-        storyDialogueUi.show({speaker:"シオン",text,actor:"shion"});
+      async function showStoryLine(text, speaker = "シオン", actor = "shion"){
+        storyDialogueUi.show({speaker,text,actor});
         await new Promise(resolve=>{storyAdvanceResolve=resolve});
         storyDialogueUi.hide();
         await wait(120);
@@ -874,6 +884,7 @@
         player.dir="up";setActorVisual();await wait(650);
         await showStoryLine("……いや。考えるのは後だ。");
         await showStoryLine("今は……星門が先だ");
+        window.TarotJourney?.set("landingMemoryDone", true);
         devilEventActive=false;guide.hidden=true;
       }
 
@@ -901,6 +912,63 @@
         landFromLift: 0,
         reboardLockedUntil: 0,
       };
+
+      // One companion on foot. Only player is ever attached to ride.
+      const savedCompanion = window.TarotJourney?.get("companion");
+      const companion = {
+        visible: (returningFromGarden && savedCompanion?.mode === "following") || savedCompanion?.mode === "waiting",
+        following: returningFromGarden && savedCompanion?.mode === "following",
+        x: savedCompanion?.x ?? PAD_HOME.x,
+        y: savedCompanion?.y ?? PAD_HOME.y - PAD_DISMOUNT_OFFSET_Y - 56,
+        dir: "down", frame: 0, anim: 0, trail: [],
+      };
+      const companionActor = document.querySelector(".shiopon-actor");
+      const companionShadow = document.querySelector(".shiopon-shadow");
+      function renderCompanion(moving = false) {
+        companionActor.hidden = companionShadow.hidden = !companion.visible;
+        if (!companion.visible) return;
+        for (const el of [companionActor, companionShadow]) {
+          el.style.left = companion.x + "px";
+          el.style.top = companion.y + "px";
+          el.style.zIndex = companion.y < PAD_HOME.y - 6 ? "21" : "44";
+        }
+        const frame = moving ? companion.frame : idleFrame[companion.dir];
+        const sheet = moving ? "shiopon_walk_" + companion.dir : "shiopon_idle";
+        companionActor.style.backgroundImage = `url("./assets/sprites/shiopon/${sheet}.png")`;
+        companionActor.style.backgroundPosition = (-58.5 * frame) + "px 0";
+      }
+      function updateCompanion(dt) {
+        let moving = false;
+        if (companion.visible && companion.following && ride.mode === "ground" && !farewellActive && !devilEventActive && !leaving) {
+          // Retrace Shion's actual walkable footsteps rather than cutting corners.
+          const tail = companion.trail[companion.trail.length - 1] || companion;
+          if (Math.hypot(player.x - tail.x, player.y - tail.y) >= 4)
+            companion.trail.push({x: player.x, y: player.y});
+          let length = 0, previous = companion;
+          for (const point of companion.trail) { length += Math.hypot(point.x - previous.x, point.y - previous.y); previous = point; }
+          let travel = Math.min(Math.max(0, length - 56), (SHION_SPEED_SCREEN / worldScale) * 1.3 * dt);
+          while (travel > 0 && companion.trail.length) {
+            const target = companion.trail[0];
+            const dx = target.x - companion.x, dy = target.y - companion.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < .01) { companion.trail.shift(); continue; }
+            const step = Math.min(travel, distance);
+            const next = {x: companion.x + dx / distance * step, y: companion.y + dy / distance * step};
+            if (!isGroundWalkable(next.x, next.y)) break;
+            companion.x = next.x; companion.y = next.y;
+            companion.dir = direction(dx, dy); moving = true; travel -= step;
+            if (step >= distance) companion.trail.shift();
+          }
+          if (moving) { companion.anim += dt * 8.5; companion.frame = Math.floor(companion.anim) % 4; }
+        }
+        renderCompanion(moving);
+      }
+      function rejoinCompanion() {
+        if (!companion.visible || companion.following) return;
+        companion.following = true;
+        companion.trail = [];
+        window.TarotJourney?.set("companion", {mode: "following"});
+      }
 
       const idleFrame = { down:0, up:1, left:2, right:3 };
       const walkSheet = Object.freeze({
@@ -1850,6 +1918,7 @@
         player.anim = 0;
         clearTarget();
 
+        rejoinCompanion();
         status.textContent = "PAD着陸完了";
         guide.hidden = true;
         guide.hidden = false;
@@ -1862,13 +1931,27 @@
         }, 1200);
       }
 
-      function beginBoarding() {
+      async function beginBoarding() {
         if (
           ride.mode !== "ground" ||
-          leaving ||
+          leaving || farewellActive || devilEventActive ||
           performance.now() < ride.reboardLockedUntil
         ) return;
 
+        if (companion.visible && companion.following) {
+          farewellActive = true;
+          companion.following = false;
+          companion.trail = [];
+          clearTarget(); keys.clear(); pointer = null;
+          stick.active = false; stick.x = stick.y = 0; joystick.hidden = true;
+          player.moving = false; player.frame = 0; player.anim = 0;
+          companion.dir = direction(player.x - companion.x, player.y - companion.y);
+          renderCompanion();
+          window.TarotJourney?.set("companion", {mode: "waiting", x: companion.x, y: companion.y});
+          await showStoryLine("しおぽんはここで待ってるぴょん！", "しおぽん", "shiopon");
+          await showStoryLine("シオンさん、いってらっしゃい", "しおぽん", "shiopon");
+          farewellActive = false;
+        }
         ride.x = PAD_HOME.x;
         ride.y = PAD_HOME.y;
         ride.lift = 0;
@@ -1894,9 +1977,20 @@
         finishArrival();
       }
 
+      function leaveForAlenon() {
+        if (leaving || ride.mode !== "flying") return;
+        leaving = true;
+        clearTarget(); keys.clear();
+        document.body.classList.add("leaving");
+        window.setTimeout(() => {
+          location.href = "./alenon.html?from=landing-return";
+        }, 760);
+      }
+
       function leaveForGarden() {
         if (leaving) return;
         leaving = true;
+        window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
         document.body.classList.add("leaving");
         status.style.opacity = "1";
@@ -1908,7 +2002,7 @@
       }
 
       function setTarget(clientX, clientY) {
-        if (leaving || devilEventActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
+        if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
 
         let point = screenToWorld(clientX, clientY);
         point.x = clamp(point.x, WORLD_MARGIN, WORLD_W - WORLD_MARGIN);
@@ -1943,10 +2037,11 @@
 
       viewport.addEventListener("pointerdown", (event) => {
         if (collisionMode) return;
-        if (event.target.closest?.("#pad-editor, #pad-editor-toggle")) return;
-        if (leaving || devilEventActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
+        if (event.target.closest?.("#pad-editor, #pad-editor-toggle, .tb-dialogue-layer")) return;
+        if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         if (event.button != null && event.button !== 0) return;
         event.preventDefault();
+        window.TarotAudio?.startFromMovement();
         pointer = {
           id:event.pointerId,
           x:event.clientX,
@@ -1985,6 +2080,7 @@
         if (!pointer || pointer.id !== event.pointerId) return;
         event.preventDefault();
 
+        if (event.type === "pointerup") window.TarotAudio?.startFromMovement();
         const wasStick = stick.active;
         const elapsed = performance.now() - pointer.time;
         const dist = Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y);
@@ -2011,9 +2107,10 @@
 
       addEventListener("keydown", (event) => {
         if (collisionMode) return;
-        if (leaving || devilEventActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
+        if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
         if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
+          window.TarotAudio?.startFromMovement();
           keys.add(key);
           clearTarget();
           guide.hidden = true;
@@ -2108,23 +2205,8 @@
           return;
         }
 
-        // South edge returns to Alenon. This is available after either forward
-        // arrival or a return from the Garden, so the world is bidirectional.
-        if (
-          ride.mode === "ground" &&
-          !leaving &&
-          player.y >= WORLD_H - 38 &&
-          player.x >= 540 &&
-          player.x <= 908
-        ) {
-          leaving = true;
-          clearTarget();
-          location.href = "./alenon.html?from=landing-return&build=6bc2a38e";
-          return;
-        }
-
         if(!devilEventStarted&&ride.mode==="ground"&&player.y<=DEVIL_EVENT_Y&&player.x>=GARDEN_EXIT_X_MIN&&player.x<=GARDEN_EXIT_X_MAX){runDevilMemoryEvent()}
-        if(devilEventActive){player.moving=false;setActorPosition();setActorVisual();syncCamera();requestAnimationFrame(loop);return}
+        if(devilEventActive || farewellActive){player.moving=false;setActorPosition();setActorVisual();syncCamera();requestAnimationFrame(loop);return}
 
         const keyboard = keyVector();
         let vx = keyboard.x;
@@ -2212,6 +2294,7 @@
           const homeDistance = Math.hypot(ride.x - PAD_HOME.x, ride.y - PAD_HOME.y);
           if (homeDistance >= PAD_HOME_ARM_DISTANCE) ride.homeArmed = true;
           if (ride.homeArmed && homeDistance <= PAD_HOME_LAND_RADIUS) beginLanding();
+          else if (ride.y >= 1038 && ride.x >= GARDEN_EXIT_X_MIN && ride.x <= GARDEN_EXIT_X_MAX) leaveForAlenon();
           syncRideVisual(now);
         } else {
           const padDistance = Math.hypot(player.x - PAD_HOME.x, player.y - PAD_HOME.y);
@@ -2222,7 +2305,9 @@
             beginBoarding();
           }
 
+          if (player.y > GARDEN_EXIT_Y + 30) gardenExitArmed = true;
           if (
+            gardenExitArmed && player.moving && !farewellActive &&
             player.y <= GARDEN_EXIT_Y &&
             player.x >= GARDEN_EXIT_X_MIN &&
             player.x <= GARDEN_EXIT_X_MAX
@@ -2231,6 +2316,7 @@
           }
         }
 
+        updateCompanion(dt);
         setActorPosition();
         setActorVisual();
         syncCamera();
@@ -2251,6 +2337,15 @@
 
         initPadEditor();
         applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
+        if (returningFromGarden && !collisionMode && !padEditMode) {
+          const entrance = nearestGroundPoint({x: 724, y: GARDEN_EXIT_Y + 42});
+          player.x = entrance.x; player.y = entrance.y; player.dir = "down";
+          if (companion.following) {
+            const behind = nearestGroundPoint({x: player.x, y: player.y - 56});
+            companion.x = behind.x; companion.y = behind.y;
+          }
+        }
+        renderCompanion();
         fitWorld();
         initCollisionEditor();
         setActorPosition();

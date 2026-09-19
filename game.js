@@ -111,6 +111,9 @@
   let dpr = 1;
   let ready = false;
   let running = false;
+  let leavingMap = false;
+  let gardenExitArmed = false;
+  let gardenExitRef = { ...DEFAULT_SPAWN };
   let last = 0;
   let anim = 0;
   let lumiereFrame = { ...FRAME };
@@ -633,6 +636,7 @@
   }
 
   function updatePlayer(dt) {
+    if (leavingMap) return;
     if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
@@ -670,16 +674,21 @@
     player.x = next.x * scale.x;
     player.y = next.y * scale.y;
 
+    if (next.y < gardenExitRef.y - 8) gardenExitArmed = true;
+
     // South edge of Star Gate Garden returns to the PAD landing map.
     // Keep a small x window around the entrance path so ordinary movement near
     // the lower corners cannot trigger a map transition.
     const gardenPos = { x: next.x, y: next.y };
     if (
-      enteringFromLanding &&
-      gardenPos.y >= 1028 &&
+      enteringFromLanding && gardenExitArmed && !leavingMap && next.moving &&
+      !window.TarotDialogue?.getState().active &&
+      next.dy > 0 && gardenPos.y >= gardenExitRef.y - 4 &&
       gardenPos.x >= 610 &&
       gardenPos.x <= 838
     ) {
+      leavingMap = true;
+      window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
       controls.cancel("map-return");
       location.href = "./star-country-landing.html?from=garden";
       return;
@@ -1659,6 +1668,7 @@
     // Star Gate Garden directly.
     if (!enteringFromLanding) {
       if (start) start.disabled = true;
+      window.TarotJourney?.reset();
       location.href = "./alenon.html?from=title&build=6bc2a38e";
       return;
     }
@@ -1669,6 +1679,7 @@
     guide.hidden = false;
     resize();
     reset();
+    if (window.TarotDialogue?.getState().joined) startShioponFollow();
     last = performance.now();
     draw();
     requestAnimationFrame(loop);
@@ -1710,6 +1721,7 @@
     if (!running) return;
     event.preventDefault();
     if (!controls.pointerDown(pointerInfo(event))) return;
+    window.TarotAudio?.startFromMovement();
     canvas.setPointerCapture?.(event.pointerId);
     guide.hidden = true;
   }
@@ -1728,6 +1740,8 @@
       { ...pointerInfo(event), cancelled: event.type !== "pointerup" },
       playerRef(),
     );
+    if (event.type === "pointerup" && !window.TarotDialogue?.getState().active)
+      window.TarotAudio?.startFromMovement();
     if (action) tapEffect = { ...action.point, age: 0 };
     if (canvas.hasPointerCapture?.(event.pointerId))
       canvas.releasePointerCapture(event.pointerId);
@@ -1824,6 +1838,7 @@
     "keydown",
     (event) => {
       if (running && controls.keyDown(event.key)) {
+        window.TarotAudio?.startFromMovement();
         guide.hidden = true;
         event.preventDefault();
       }
@@ -1874,6 +1889,9 @@
 
       await loadCollision();
       spawnRef = findNearestSpawnRef();
+      gardenExitRef = { ...spawnRef };
+      if (enteringFromLanding)
+        spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
 
       const loaded = await Promise.all([
         waitForMap(),
