@@ -1947,9 +1947,11 @@
       document.body.classList.remove("scene-booting", "scene-load-error");
       document.body.classList.add("scene-ready");
 
-      // The old title/start card is intentionally skipped. Enter the garden
-      // automatically once the complete scene is ready.
-      requestAnimationFrame(() => requestAnimationFrame(() => begin()));
+      // The repository root is the title entry. Only the PAD handoff may
+      // auto-enter the garden; otherwise wait for TOUCH TO START.
+      if (enteringFromLanding) {
+        requestAnimationFrame(() => requestAnimationFrame(() => begin()));
+      }
     } catch (error) {
       console.error(error);
       if (start) {
