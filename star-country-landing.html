@@ -1972,7 +1972,8 @@
           companion.dir = direction(player.x - companion.x, player.y - companion.y);
           renderCompanion();
           window.TarotJourney?.set("companion", {mode: "waiting", x: companion.x, y: companion.y});
-          await showStoryLine("しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！\nいってらっしゃい、ぴょん！", "しおぽん", "shiopon");
+          await showStoryLine("しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！", "しおぽん", "shiopon");
+          await showStoryLine("いってらっしゃい、ぴょん！", "しおぽん", "shiopon");
           farewellActive = false;
         }
         ride.x = PAD_HOME.x;
