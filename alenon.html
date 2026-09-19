@@ -2893,15 +2893,16 @@
         await sayStory("こんな挙動、見たことない。", 1800, 650);
 
         // 5) First wind: born from the core, then runs toward the Star Gate Garden.
+        // The ambient wind itself vanishes here. The travelling stream will
+        // receive its own dedicated SFX later, so keep that motion silent for now.
+        stopAlenonWind({ fade: 120 });
         document.body.classList.add("orb-wind-born");
-        playWindGust(1.9, .92);
         await sleep(820);
 
         // Let the player clearly see the wind cross the lower side of the screen
         // and disappear completely outside the frame.
         document.body.classList.add("orb-wind-escape");
-        // The wind has left Alenon. Let the sound fall away to complete silence.
-        stopAlenonWind({ fade: 620 });
+        // No ambience and no travelling-wind SFX here yet.
         turnShion("down");
         const followWind = animateStoryCamera(0, 48, 760);
         await Promise.all([sleep(1650), followWind]);
@@ -2917,9 +2918,9 @@
         await sleep(260);
 
         document.body.classList.add("orb-restore-wind");
-        // As the wind returns to Alenon, restore the same environmental loop.
+        // The returning stream will get a separate SFX later. Restore the
+        // ambient loop only when the wind has actually returned to Alenon.
         startAlenonWind({ fade: 900 });
-        playWindGust(1.45, .68);
         await sleep(150);
         document.body.classList.add("orb-restoring");
         await sleep(1080);
