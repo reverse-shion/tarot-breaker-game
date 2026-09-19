@@ -2913,9 +2913,13 @@
         // 5) First wind: born from the core, then runs toward the Star Gate Garden.
         // Working timing: silence the environmental wind exactly when the
         // anomaly wind leaves the ORB. Keep the stream alive for iPhone resume.
+        // Cut the ambience slightly before the visible wind leaves the ORB.
+        // This makes the sound disappear just ahead of the artwork instead of
+        // feeling one beat late on iPhone.
         stopAlenonWind();
+        await sleep(180);
         document.body.classList.add("orb-wind-born");
-        await sleep(820);
+        await sleep(640);
 
         // Let the player clearly see the wind cross the lower side of the screen
         // and disappear completely outside the frame.
