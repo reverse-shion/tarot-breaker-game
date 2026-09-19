@@ -629,6 +629,13 @@
     }
 
     body.leaving #fade { opacity: 1; }
+    body.leaving-garden #fade {
+      opacity: 1;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(236,252,255,.98) 0 5%, rgba(114,210,255,.96) 14%, rgba(38,126,255,.76) 30%, rgba(12,65,180,.34) 48%, rgba(3,20,66,0) 70%),
+        rgba(5,25,74,.18);
+      transition: opacity .34s cubic-bezier(.2,.72,.2,1);
+    }
     #devil-memory{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;pointer-events:none;opacity:0;background:rgba(1,4,14,.32);transition:opacity .18s ease}#devil-memory.flash{opacity:1}#devil-memory img{width:min(34vw,210px);max-height:56vh;object-fit:contain;opacity:.90;filter:drop-shadow(0 0 26px rgba(0,0,0,.78))}
 
 
@@ -1795,14 +1802,17 @@
       const padMoveAudioA = new Audio("./assets/audio/sfx/pad-move-loop.flac");
       const padMoveAudioB = new Audio("./assets/audio/sfx/pad-move-loop.flac");
       const padLandAudio = new Audio("./assets/audio/sfx/pad-land.wav");
+      const starGateAudio = new Audio("./assets/audio/sfx/star-gate-resonance.mp3");
       padActivateAudio.preload = "auto";
       padMoveAudioA.preload = "auto";
       padMoveAudioB.preload = "auto";
       padLandAudio.preload = "auto";
+      starGateAudio.preload = "auto";
       padActivateAudio.volume = .72;
       padMoveAudioA.volume = .42;
       padMoveAudioB.volume = .42;
       padLandAudio.volume = .76;
+      starGateAudio.volume = .78;
       let padMoveLoopTimer = 0;
       let padMoveActive = false;
       let padMoveCurrent = padMoveAudioA;
@@ -2016,13 +2026,39 @@
         leaving = true;
         window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
-        document.body.classList.add("leaving");
+        keys.clear();
+        document.body.classList.add("leaving", "leaving-garden");
         status.style.opacity = "1";
         status.textContent = "星門庭園へ…";
         guide.hidden = true;
+
+        // Gate resonance and the blue flash start together. Do not wait for
+        // the source file to finish: this transition is intentionally brief.
+        try {
+          starGateAudio.pause();
+          starGateAudio.currentTime = 0;
+          starGateAudio.volume = .78;
+          starGateAudio.play().catch(() => {});
+        } catch (_) {}
+
+        const transitionMs = 820;
+        const audioFadeMs = 180;
+        window.setTimeout(() => {
+          const started = performance.now();
+          const fadeGateAudio = (now) => {
+            const t = Math.min(1, (now - started) / audioFadeMs);
+            starGateAudio.volume = .78 * (1 - t);
+            if (t < 1 && leaving) requestAnimationFrame(fadeGateAudio);
+            else {
+              try { starGateAudio.pause(); starGateAudio.currentTime = 0; starGateAudio.volume = .78; } catch (_) {}
+            }
+          };
+          requestAnimationFrame(fadeGateAudio);
+        }, transitionMs - audioFadeMs);
+
         window.setTimeout(() => {
           location.href = "./index.html?from=landing";
-        }, 760);
+        }, transitionMs);
       }
 
       function setTarget(clientX, clientY) {
