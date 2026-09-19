@@ -1812,7 +1812,7 @@
       padMoveAudioA.volume = .42;
       padMoveAudioB.volume = .42;
       padLandAudio.volume = .76;
-      starGateAudio.volume = .78;
+      starGateAudio.volume = .45;
       let padMoveLoopTimer = 0;
       let padMoveActive = false;
       let padMoveCurrent = padMoveAudioA;
@@ -2037,7 +2037,7 @@
         try {
           starGateAudio.pause();
           starGateAudio.currentTime = 0;
-          starGateAudio.volume = .78;
+          starGateAudio.volume = .45;
           starGateAudio.play().catch(() => {});
         } catch (_) {}
 
@@ -2047,10 +2047,10 @@
           const started = performance.now();
           const fadeGateAudio = (now) => {
             const t = Math.min(1, (now - started) / audioFadeMs);
-            starGateAudio.volume = .78 * (1 - t);
+            starGateAudio.volume = .45 * (1 - t);
             if (t < 1 && leaving) requestAnimationFrame(fadeGateAudio);
             else {
-              try { starGateAudio.pause(); starGateAudio.currentTime = 0; starGateAudio.volume = .78; } catch (_) {}
+              try { starGateAudio.pause(); starGateAudio.currentTime = 0; starGateAudio.volume = .45; } catch (_) {}
             }
           };
           requestAnimationFrame(fadeGateAudio);
