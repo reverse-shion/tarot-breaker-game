@@ -2928,19 +2928,10 @@
         // Keep the ambience while the wind is still visible, then fade it at the
         // tail of the 1.58s escape so sound and artwork disappear together.
         document.body.classList.add("orb-wind-escape");
-        // Tie audio to the actual CSS animation instead of a guessed timer.
-        // The artwork starts fading at 72% of the 1.58s escape; fade ambience
-        // across the same final 28%, then stop it when the animation ends.
-        let windExitAudioHandled = false;
-        const fadeWithWindExit = () => {
-          if (windExitAudioHandled) return;
-          windExitAudioHandled = true;
-          stopAlenonWind({ fade: 440 });
-        };
-        alenonWind.addEventListener("animationend", () => {
-          if (!windExitAudioHandled) stopAlenonWind({ fade: 1 });
-        }, { once: true });
-        window.setTimeout(fadeWithWindExit, 1135);
+        // The escape animation is 1.58s. Keep the ambience unchanged while the
+        // wind crosses the screen, then fade it during the final 0.50s so the
+        // sound reaches zero at the same moment the artwork disappears.
+        window.setTimeout(() => stopAlenonWind({ fade: 500 }), 1080);
         // No travelling-wind SFX here yet.
         turnShion("down");
         const followWind = animateStoryCamera(0, 48, 760);
