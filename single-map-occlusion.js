@@ -213,8 +213,7 @@
         return;
       } catch (_) {}
     }
-    precisePolys = [];
-    repaintForeground();
+    throw new Error("庭園の前後関係データを読み込めません");
   }
 
   layout.paintBackground = function paintBackgroundFromSingleMap(ctx, background) {
@@ -257,7 +256,10 @@
   }
 
   source?.addEventListener("load", repaintForeground);
-  loadPrecisePolys();
+  // The foreground is incomplete until these polygons arrive, even when its
+  // source image has loaded. Join the existing scene readiness barrier.
+  layout.foregroundReady = loadPrecisePolys();
+  layout.foregroundReady.catch(() => {}); // consumed by TarotSceneEffects.ready
 
   layout.artworkPlacement = Object.freeze({
     ...(layout.artworkPlacement || {}),

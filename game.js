@@ -286,25 +286,13 @@
   }
 
   function loadImage(src) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () =>
-        reject(new Error("画像を読み込めません: " + src.split("/").pop()));
-      image.src = src;
-    });
+    const image = new Image();
+    image.src = src;
+    return window.TarotSceneEffects.waitImage(image);
   }
 
   function waitForMap() {
-    return new Promise((resolve, reject) => {
-      if (map.complete && map.naturalWidth) return resolve(map);
-      map.addEventListener("load", () => resolve(map), { once: true });
-      map.addEventListener(
-        "error",
-        () => reject(new Error("星門庭園マップを読み込めません")),
-        { once: true },
-      );
-    });
+    return window.TarotSceneEffects.waitImage(map);
   }
 
   function resize() {
@@ -1917,7 +1905,7 @@
 
       const loaded = await Promise.all([
         waitForMap(),
-        window.TarotSceneEffects?.ready,
+        window.TarotSceneEffects.ready,
         ...Object.entries(files).map(async ([key, src]) => {
           images[key] = await loadImage(src);
         }),
@@ -1981,6 +1969,7 @@
         count: FRAME.count,
       };
 
+      if (document.body.classList.contains("scene-load-error")) return;
       ready = true;
       resize();
       reset();
@@ -1994,17 +1983,21 @@
           ? "PAD離着陸場から星門庭園へ到着"
           : "星門庭園の読み込み完了";
 
-      // Never expose half-loaded layers. scene-effects.ready above already
-      // waits for every authored map image; reveal the whole scene only now.
-      document.body.classList.remove("scene-booting", "scene-load-error");
-      document.body.classList.add("scene-ready");
-
-      // The repository root is the title entry. Only the PAD handoff may
-      // auto-enter the garden; otherwise wait for TOUCH TO START.
+      // begin() applies the existing PAD spawn/companion handoff and draws
+      // again. Keep that final frame behind the gate light, not the earlier reset.
       if (enteringFromLanding) {
-        requestAnimationFrame(() => requestAnimationFrame(() => begin()));
+        begin();
+        document.body.classList.add("scene-rendered");
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        if (document.body.classList.contains("scene-load-error")) return;
+        clearTimeout(window.gardenArrivalTimeout);
       }
+      document.body.classList.remove("scene-booting", "scene-load-error", "scene-rendered");
+      document.body.classList.add("scene-ready");
     } catch (error) {
+      if (enteringFromLanding) window.failGardenArrival?.();
+      running = false;
+      ready = false;
       console.error(error);
       if (start) {
         start.disabled = true;

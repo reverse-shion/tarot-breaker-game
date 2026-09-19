@@ -10,11 +10,41 @@ function drawDebug(ctx,actors,scale,zoom){if(!debug)return;ctx.save();ctx.scale(
 function setGateState(next="normal"){const s=validGateStates.has(next)?next:"normal";gateState=s;shell.dataset.gateState=s;return s}
 function syncCamera({world,origin,zoom}){lastCameraArgs={world:{...world},origin:{...origin},zoom};const sig=[world.w,world.h,origin.x,origin.y,zoom].join(",");if(sig===lastCamera)return;lastCamera=sig;const transform=`translate3d(${-origin.x*zoom}px,${-origin.y*zoom}px,0) scale(${zoom})`;for(const l of worldLayers){l.style.width=`${world.w}px`;l.style.height=`${world.h}px`;l.style.transform=transform}const sx=world.w/REF.w,sy=world.h/REF.h;for(const l of objectLayers){const{worldX:x,worldY:y,worldW:w,worldH:h}=l.dataset;l.style.left="0px";l.style.top="0px";l.style.width=`${Number(w)*sx}px`;l.style.height=`${Number(h)*sy}px`;l.style.transform=`translate3d(${(Number(x)*sx-origin.x)*zoom}px,${(Number(y)*sy-origin.y)*zoom}px,0) scale(${zoom})`}}
 function refreshCamera(){if(!lastCameraArgs)return false;lastCamera="";syncCamera(lastCameraArgs);return true}
-function waitImage(img){if(img.complete&&img.naturalWidth)return Promise.resolve(img);return new Promise((res,rej)=>{img.addEventListener("load",()=>res(img),{once:true});img.addEventListener("error",()=>rej(new Error("庭園レイヤーを読み込めません")),{once:true})})}
-const ready=Promise.all([loadDepthZones(),...[map,...document.querySelectorAll(".scene-world-layer img, .scene-object img")].map(waitImage)]).then(()=>{const bg=document.querySelector(".scene-background canvas"),fg=document.querySelector(".scene-foreground canvas");layout.paintBackground(bg.getContext("2d"),map,document.querySelector(".scene-star-sky img"));layout.paintForeground(fg.getContext("2d"),document.querySelector(".scene-foreground img"));foregroundSurface=fg;for(const l of document.querySelectorAll(".scene-waterfall")){const img=l.querySelector("img"),p=l.querySelector("canvas").getContext("2d");p.drawImage(img,0,0,REF.w,REF.h);layout.removeLegacyGate(p);l.style.maskImage=`url("${img.src}")`;l.style.webkitMaskImage=`url("${img.src}")`}layout.splitCrystal(document.querySelector(".scene-crystal-core").getContext("2d"),document.querySelector(".scene-crystal-ring").getContext("2d"),document.querySelector(".scene-fountain-crystal img"));shell.dataset.sceneReady="true"});ready.catch(()=>{});
+async function waitImage(img) {
+  await new Promise((resolve, reject) => {
+    const failed = () => reject(new Error("庭園画像を読み込めません: " + img.src.split("/").pop()));
+    // A failed image may already be complete before this deferred script runs.
+    if (img.complete) return img.naturalWidth ? resolve() : failed();
+    const loaded = () => { cleanup(); img.naturalWidth ? resolve() : failed(); };
+    const errored = () => { cleanup(); failed(); };
+    const cleanup = () => {
+      img.removeEventListener("load", loaded);
+      img.removeEventListener("error", errored);
+    };
+    img.addEventListener("load", loaded, {once:true});
+    img.addEventListener("error", errored, {once:true});
+  });
+  if (typeof img.decode === "function") {
+    try { await img.decode(); }
+    catch (error) {
+      // Safari can reject decode() for an otherwise loaded image. Require a
+      // successful synchronous draw before accepting that compatibility path.
+      if (!img.complete || !img.naturalWidth) throw error;
+      const probe = document.createElement("canvas");
+      probe.width = probe.height = 1;
+      probe.getContext("2d").drawImage(img, 0, 0, 1, 1);
+    }
+  }
+  return img;
+}
+// Event-only art is not part of the normal arrival frame. Its existing DOM
+// image still loads for the event; do not make it a boot dependency.
+const initialImages = [map, ...document.querySelectorAll(".scene-world-layer img, .scene-object img")]
+  .filter(img => !img.closest(".scene-gate-event") || params.get("gateState") === "event");
+const ready=Promise.all([loadDepthZones(),layout.foregroundReady,...initialImages.map(waitImage)]).then(()=>{const bg=document.querySelector(".scene-background canvas"),fg=document.querySelector(".scene-foreground canvas");layout.paintBackground(bg.getContext("2d"),map,document.querySelector(".scene-star-sky img"));layout.paintForeground(fg.getContext("2d"),document.querySelector(".scene-foreground img"));foregroundSurface=fg;for(const l of document.querySelectorAll(".scene-waterfall")){const img=l.querySelector("img"),p=l.querySelector("canvas").getContext("2d");p.drawImage(img,0,0,REF.w,REF.h);layout.removeLegacyGate(p);l.style.maskImage=`url("${img.src}")`;l.style.webkitMaskImage=`url("${img.src}")`}layout.splitCrystal(document.querySelector(".scene-crystal-core").getContext("2d"),document.querySelector(".scene-crystal-ring").getContext("2d"),document.querySelector(".scene-fountain-crystal img"));shell.dataset.sceneReady="true"});ready.catch(()=>{});
 window.addEventListener("tarot-breaker:gate-state",e=>setGateState((typeof e.detail==="string"?e.detail:e.detail?.state)||"normal"));
 if(debug){shell.classList.add("scene-debug");debugOutput=document.createElement("output");debugOutput.id="scene-status";debugOutput.className="scene-status";shell.appendChild(debugOutput)}
 setGateState(params.get("gateState")||"normal");
-window.TarotSceneEffects=Object.freeze({ready,syncCamera,refreshCamera,drawMaskedActor,drawDebug,setGateState,getGateState:()=>gateState,getDepthZones:()=>({behindForegroundAreas:[...depthZones.behindForegroundAreas]}),referenceSize:Object.freeze({...REF})});
+window.TarotSceneEffects=Object.freeze({ready,waitImage,syncCamera,refreshCamera,drawMaskedActor,drawDebug,setGateState,getGateState:()=>gateState,getDepthZones:()=>({behindForegroundAreas:[...depthZones.behindForegroundAreas]}),referenceSize:Object.freeze({...REF})});
 window.dispatchEvent(new CustomEvent("tarot-breaker:scene-ready",{detail:{gateState}}));
 })();

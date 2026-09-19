@@ -17,6 +17,28 @@
     <link rel="stylesheet" href="./audio.css?v=0.8.0" />
     <link rel="stylesheet" href="./dialogue.css?v=1.1.0-no-objective" />
     <link rel="stylesheet" href="./shared-dialogue.css?v=1.0.0" />
+    <!-- These existing styles must settle before the first scene frame. -->
+    <link rel="stylesheet" href="./gate-polish.css?v=20260916-gate-polish-v2" data-gate-polish="v2" />
+    <link rel="stylesheet" href="./layer-order-fix.css?v=20260917-v6" data-layer-order="v6" />
+    <style id="garden-arrival-guard">
+      /* Gate-only handoff: guard the composite, including inline/!important
+         visible descendants, from the first HTML paint. Keep layout measurable. */
+      body[data-entering-from-landing="true"] #start-screen { display:none !important; }
+      body[data-entering-from-landing="true"].scene-booting:not(.scene-rendered) #game-shell { opacity:0; }
+      body[data-entering-from-landing="true"].scene-booting #game-shell { pointer-events:none; }
+      body[data-entering-from-landing="true"]::after {
+        content:""; position:fixed; inset:0; z-index:2000; opacity:1;
+        background:radial-gradient(circle at 50% 42%, #ecfcff 0 5%, #72d2ff 14%, #74afff 30%, #afccf2 48%, #d5efff 70%);
+        transition:opacity .3s ease-out;
+      }
+      body[data-entering-from-landing="true"].scene-ready::after { opacity:0; pointer-events:none; }
+      body[data-entering-from-landing="true"].scene-load-error::after { display:none; }
+      body[data-entering-from-landing="true"].scene-load-error #game-shell > :not(#load-error) { display:none !important; }
+      body[data-entering-from-landing="true"] #load-error:not([hidden]) {
+        position:fixed; inset:0; z-index:2001; display:grid; place-items:center;
+        padding:24px; background:#090c20; color:#f7f3eb; text-align:center;
+      }
+    </style>
     <style id="official-title-boot-fix">
       /* The title is the official root entry and must be visible before any
          Star Gate Garden assets/scripts finish loading. */
@@ -32,6 +54,18 @@
       (function () {
         var fromLanding = new URLSearchParams(location.search).get("from") === "landing";
         document.body.dataset.enteringFromLanding = fromLanding ? "true" : "false";
+        if (fromLanding) {
+          // A stalled asset or failed deferred script must reach the existing
+          // error state too. A late completion must not reveal that failed boot.
+          window.failGardenArrival = function () {
+            clearTimeout(window.gardenArrivalTimeout);
+            document.body.classList.remove("scene-booting", "scene-ready", "scene-rendered");
+            document.body.classList.add("scene-load-error");
+            var error = document.getElementById("load-error");
+            if (error) error.hidden = false;
+          };
+          window.gardenArrivalTimeout = setTimeout(window.failGardenArrival, 45000);
+        }
       })();
     </script>
     <main id="game-shell" data-gate-state="normal" aria-label="TAROT BREAKER 1000年前の星の国">
@@ -73,9 +107,9 @@
     <script src="./story-event-guard.js?v=mandatory-story-v5-approved-dialogue" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
     <script src="./scene-preview41-fix.js?v=native-foreground-v7" defer></script>
-    <script src="./single-map-occlusion.js?v=latest-assets-v9-waterfall-final" defer></script>
-    <script src="./scene-effects.js?v=scene-ready-decode-v1" defer></script>
-    <script src="./game.js?v=20260919-roundtrip-1" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
+    <script src="./single-map-occlusion.js?v=garden-arrival-v1" defer></script>
+    <script src="./scene-effects.js?v=garden-arrival-v1" defer></script>
+    <script src="./game.js?v=garden-arrival-v1" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
     <script src="./fountain-position-editor.js?v=3.0.0" defer></script>
     <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>
   </body>
