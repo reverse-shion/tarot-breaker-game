@@ -55,5 +55,19 @@
     <script src="./game.js?v=20260919-title-to-prologue-v1" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
     <script src="./fountain-position-editor.js?v=3.0.0" defer></script>
     <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>
+<script>
+  // Official entry routing guard. Keep this independent from the garden runtime:
+  // tapping the title can only enter the Alenon prologue.
+  (function () {
+    var start = document.getElementById("start");
+    if (!start) return;
+    start.addEventListener("click", function (event) {
+      if (new URLSearchParams(location.search).get("from") === "landing") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      location.assign("./alenon.html?from=title");
+    }, true);
+  })();
+</script>
 </body>
 </html>
