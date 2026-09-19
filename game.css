@@ -161,11 +161,10 @@ body {
   text-align:center; padding:0; border:0; background:transparent; box-shadow:none; color:var(--ink);
 }
 .title-logo {
-  display:block; position:absolute; left:50%; top:38%;
+  display:block; position:absolute; z-index:2; left:50%; top:38%;
   width:min(91vw,940px); max-height:43vh; object-fit:contain;
-  transform:translate(-50%,-50%) scale(1);
+  transform:translate(-50%,-50%) scale(1); transform-origin:center;
   filter:drop-shadow(0 8px 24px rgba(0,0,0,.72)) drop-shadow(0 0 16px rgba(237,191,93,.18));
-  animation:title-logo-enter 1.1s cubic-bezier(.2,.72,.2,1) both;
   user-select:none; -webkit-user-drag:none;
 }
 .start-card button {
