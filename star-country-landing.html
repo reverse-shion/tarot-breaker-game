@@ -670,8 +670,8 @@
       <div class="shion-actor shiopon-actor" hidden role="img" aria-label="しおぽん"></div>
     </section>
 
-    <div id="flight-status" role="status" aria-live="polite">PAD着陸中…</div>
-    <div id="guide">星門庭園へ向かう</div>
+    <div id="flight-status" role="status" aria-live="polite" hidden></div>
+    <div id="guide" hidden></div>
 
     <div id="joystick" hidden aria-hidden="true">
       <div class="joy-ring"></div>
@@ -930,7 +930,8 @@
         for (const el of [companionActor, companionShadow]) {
           el.style.left = companion.x + "px";
           el.style.top = companion.y + "px";
-          el.style.zIndex = companion.y < PAD_HOME.y - 6 ? "21" : "44";
+          // Landing-map invariant: Shion always renders above Shiopon.
+          el.style.zIndex = companion.y < PAD_HOME.y - 6 ? "20" : "43";
         }
         const frame = moving ? companion.frame : idleFrame[companion.dir];
         const sheet = moving ? "shiopon_walk_" + companion.dir : "shiopon_idle";
@@ -953,7 +954,20 @@
             const distance = Math.hypot(dx, dy);
             if (distance < .01) { companion.trail.shift(); continue; }
             const step = Math.min(travel, distance);
-            const next = {x: companion.x + dx / distance * step, y: companion.y + dy / distance * step};
+            let next = {x: companion.x + dx / distance * step, y: companion.y + dy / distance * step};
+            // Reuse the Garden follow-gap rule: never enter Shion's foot-point radius.
+            const minGap = 44;
+            const playerGap = Math.hypot(next.x - player.x, next.y - player.y);
+            if (playerGap < minGap) {
+              const awayX = next.x - player.x;
+              const awayY = next.y - player.y;
+              const awayLength = Math.hypot(awayX, awayY);
+              if (awayLength < .001) break;
+              next = {
+                x: player.x + awayX / awayLength * minGap,
+                y: player.y + awayY / awayLength * minGap,
+              };
+            }
             if (!isGroundWalkable(next.x, next.y)) break;
             companion.x = next.x; companion.y = next.y;
             companion.dir = direction(dx, dy); moving = true; travel -= step;
@@ -1842,24 +1856,9 @@
         document.body.classList.toggle("pad-riding", mode === "flying");
         document.body.classList.toggle("pad-landing", mode === "landing");
 
-        if (mode === "arriving") {
-          status.textContent = "PAD着陸中…";
-          guide.hidden = true;
-        } else if (mode === "boarding") {
-          status.textContent = "PADが共鳴している…";
-          guide.hidden = true;
-        } else if (mode === "flying") {
-          status.textContent = "PAD起動中";
-          guide.textContent = "PADで移動 / 離着陸場へ戻ると着陸";
-          guide.hidden = false;
-        } else if (mode === "landing") {
-          status.textContent = "PAD着陸中…";
-          guide.hidden = true;
-        } else {
-          status.textContent = "星門庭園へ続く道";
-          guide.hidden = true;
-          guide.hidden = false;
-        }
+        // Destination/operation guidance is intentionally disabled.
+        status.hidden = true;
+        guide.hidden = true;
       }
 
       function syncRideVisual(now = performance.now()) {
@@ -2341,8 +2340,19 @@
           const entrance = nearestGroundPoint({x: 724, y: GARDEN_EXIT_Y + 42});
           player.x = entrance.x; player.y = entrance.y; player.dir = "down";
           if (companion.following) {
-            const behind = nearestGroundPoint({x: player.x, y: player.y - 56});
-            companion.x = behind.x; companion.y = behind.y;
+            const candidates = [
+              {x: player.x, y: player.y - 64},
+              {x: player.x - 64, y: player.y},
+              {x: player.x + 64, y: player.y},
+              {x: player.x, y: player.y + 64},
+            ];
+            const separated = candidates
+              .map(nearestGroundPoint)
+              .find(point => point && Math.hypot(point.x - player.x, point.y - player.y) >= 44);
+            if (separated) {
+              companion.x = separated.x;
+              companion.y = separated.y;
+            }
           }
         }
         renderCompanion();
@@ -2352,10 +2362,8 @@
         setActorVisual();
         setRideMode(ride.mode);
 
-        if (!arrivingFromAlenon) {
-          status.textContent = "星門庭園へ続く道";
-          guide.hidden = false;
-        }
+        status.hidden = true;
+        guide.hidden = true;
 
         addEventListener("resize", fitWorld, { passive:true });
         addEventListener("orientationchange", fitWorld, { passive:true });
