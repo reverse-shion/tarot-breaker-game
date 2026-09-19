@@ -4371,16 +4371,16 @@
         initObjectAdjust();
         initDeadPadAdjust();
         initCollisionEditor();
-        loadAlenonCollision()
-          .then(() => {
-            initMovement();
-            preparePrologue();
-          })
-          .catch((error) => {
-            console.error(error);
-            moveGuide.hidden = false;
-            moveGuide.textContent = "当たり判定の読み込みに失敗しました";
-          });
+        // The prologue must never depend on collision JSON finishing first.
+        // Safari/raw.githack can delay or reject that fetch; previously this left
+        // the opaque prologue overlay on screen forever.
+        initMovement();
+        preparePrologue();
+        loadAlenonCollision().catch((error) => {
+          console.error(error);
+          // Keep the story playable. Collision remains disabled until a reload
+          // succeeds instead of blocking the entire prologue on a black screen.
+        });
         return;
       }
       document.body.classList.add("edit-mode");
