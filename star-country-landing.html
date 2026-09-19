@@ -1710,12 +1710,14 @@
       }
 
       function setRideMode(mode) {
-        const previousMode = ride.mode;
         ride.mode = mode;
-        if (mode !== previousMode) {
-          if (mode === "boarding") playPadOneShot(padActivateAudio);
-          if (mode === "flying" || mode === "exiting" || mode === "arriving") startPadMoveAudio();
-          if (mode === "landing") stopPadMoveAudio();
+        if (mode === "boarding") {
+          stopPadMoveAudio();
+          playPadOneShot(padActivateAudio);
+        } else if (mode === "flying" || mode === "exiting" || mode === "arriving") {
+          startPadMoveAudio();
+        } else if (mode === "landing" || mode === "ground") {
+          stopPadMoveAudio();
         }
         document.body.classList.toggle("pad-arriving", mode === "arriving");
         document.body.classList.toggle("pad-boarding", mode === "boarding");
