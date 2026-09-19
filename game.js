@@ -1676,7 +1676,7 @@
     running = true;
     startScreen.hidden = true;
     window.dispatchEvent(new CustomEvent("tarot-breaker:world-enter"));
-    guide.hidden = false;
+    guide.hidden = true;
     resize();
     reset();
     if (window.TarotDialogue?.getState().joined) startShioponFollow();
