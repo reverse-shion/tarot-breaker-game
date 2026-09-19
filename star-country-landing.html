@@ -841,6 +841,7 @@
       let landingWalkAreas = [];
       let devilEventStarted = window.TarotJourney?.get("landingMemoryDone") === true;
       let farewellActive = false;
+      let returnGreetingPlayed = false;
       let gardenExitArmed = !returningFromGarden;
       let devilEventActive = false;
       const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
@@ -982,6 +983,25 @@
         companion.following = true;
         companion.trail = [];
         window.TarotJourney?.set("companion", {mode: "following"});
+      }
+      async function runReturnGreeting() {
+        if (
+          returnGreetingPlayed ||
+          !arrivingFromAlenon ||
+          savedCompanion?.mode !== "waiting" ||
+          !companion.visible
+        ) return;
+        returnGreetingPlayed = true;
+        farewellActive = true;
+        clearTarget(); keys.clear(); pointer = null;
+        stick.active = false; stick.x = stick.y = 0; joystick.hidden = true;
+        player.moving = false; player.frame = 0; player.anim = 0;
+        companion.dir = direction(player.x - companion.x, player.y - companion.y);
+        renderCompanion();
+        await showStoryLine("シオンさん！ おかえりなの！", "しおぽん", "shiopon");
+        await showStoryLine("ただいま。", "シオン", "shion");
+        await showStoryLine("えへへ。ちゃんと戻ってきたぴょん！", "しおぽん", "shiopon");
+        farewellActive = false;
       }
 
       const idleFrame = { down:0, up:1, left:2, right:3 };
@@ -1917,7 +1937,12 @@
         player.anim = 0;
         clearTarget();
 
+        const shouldGreetOnReturn =
+          arrivingFromAlenon &&
+          savedCompanion?.mode === "waiting" &&
+          companion.visible;
         rejoinCompanion();
+        if (shouldGreetOnReturn) void runReturnGreeting();
         status.textContent = "PAD着陸完了";
         guide.hidden = true;
         guide.hidden = false;
@@ -1947,8 +1972,7 @@
           companion.dir = direction(player.x - companion.x, player.y - companion.y);
           renderCompanion();
           window.TarotJourney?.set("companion", {mode: "waiting", x: companion.x, y: companion.y});
-          await showStoryLine("しおぽんはここで待ってるぴょん！", "しおぽん", "shiopon");
-          await showStoryLine("シオンさん、いってらっしゃい", "しおぽん", "shiopon");
+          await showStoryLine("しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！\nいってらっしゃい、ぴょん！", "しおぽん", "shiopon");
           farewellActive = false;
         }
         ride.x = PAD_HOME.x;
