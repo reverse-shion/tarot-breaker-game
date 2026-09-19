@@ -2910,10 +2910,12 @@
         await animateStoryCamera(0, -34, 420);
         await sayStory("……？", 900, 360);
 
-        // The normal Alenon wind ambience disappears at the same moment
-        // the ORB outer layer starts disappearing.
+        // Start the ORB anomaly first. The outer ring expands for .92s and
+        // reaches opacity 0 at the end. Keep the wind audible during that swell,
+        // then fade it only across the final part so it reaches silence exactly
+        // when the enlarged outer ring disappears, before the wind blade leaves.
         document.body.classList.add("orb-anomaly");
-        stopAlenonWind({ fade: 180 });
+        window.setTimeout(() => stopAlenonWind({ fade: 300 }), 620);
         playTarotResonance();
         await sleep(980);
 
