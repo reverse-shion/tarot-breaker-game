@@ -789,6 +789,7 @@
 
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
+      const returningFromGarden = params.get("from") === "garden";
       const collisionMode = params.get("collision") === "1";
       const padEditMode =
         !collisionMode &&
@@ -2104,6 +2105,21 @@
           setActorVisual();
           syncCamera();
           requestAnimationFrame(loop);
+          return;
+        }
+
+        // South edge returns to Alenon. This is available after either forward
+        // arrival or a return from the Garden, so the world is bidirectional.
+        if (
+          ride.mode === "ground" &&
+          !leaving &&
+          player.y >= WORLD_H - 38 &&
+          player.x >= 540 &&
+          player.x <= 908
+        ) {
+          leaving = true;
+          clearTarget();
+          location.href = "./alenon.html?from=landing-return&build=6bc2a38e";
           return;
         }
 
