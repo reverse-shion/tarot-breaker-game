@@ -1932,7 +1932,7 @@
 
       if (start) {
         start.disabled = false;
-        // Keep the authored title label. Garden runtime must never rewrite it.
+        start.textContent = "星の国へ";
       }
       note.textContent =
         params.get("from") === "landing"
