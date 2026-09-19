@@ -2913,6 +2913,8 @@
         await animateStoryCamera(0, -34, 420);
         await sayStory("……？", 900, 360);
 
+        // The normal Alenon wind vanishes with the ORB outer layer here.
+        stopAlenonWind({ fade: 0 });
         document.body.classList.add("orb-anomaly");
         playTarotResonance();
         await sleep(980);
@@ -2924,7 +2926,6 @@
         // The ambient wind itself vanishes here. The travelling stream will
         // receive its own dedicated SFX later, so keep that motion silent for now.
         // The ambient wind disappears exactly when the anomaly wind appears.
-        stopAlenonWind({ fade: 0 });
         document.body.classList.add("orb-wind-born");
         await sleep(820);
 
@@ -2947,9 +2948,8 @@
         await sleep(260);
 
         document.body.classList.add("orb-restore-wind");
-        // The returning stream will get a separate SFX later. Restore the
-        // ambient loop only when the wind has actually returned to Alenon.
-        startAlenonWind({ fade: 900 });
+        // Resume ambience at the same moment the normal wind visually returns.
+        startAlenonWind({ fade: 350 });
         await sleep(150);
         document.body.classList.add("orb-restoring");
         await sleep(1080);
@@ -3696,24 +3696,72 @@
 
       // Shared PAD audio — use the same three assets on every map.
       const padActivateAudio = new Audio("./assets/audio/sfx/pad-activate.wav");
-      const padMoveAudio = new Audio("./assets/audio/sfx/pad-move-loop.flac");
+      const padMoveAudioA = new Audio("./assets/audio/sfx/pad-move-loop.flac");
+      const padMoveAudioB = new Audio("./assets/audio/sfx/pad-move-loop.flac");
       const padLandAudio = new Audio("./assets/audio/sfx/pad-land.wav");
       padActivateAudio.preload = "auto";
-      padMoveAudio.preload = "auto";
+      padMoveAudioA.preload = "auto";
+      padMoveAudioB.preload = "auto";
       padLandAudio.preload = "auto";
       padActivateAudio.volume = .72;
-      padMoveAudio.volume = .42;
+      padMoveAudioA.volume = .42;
+      padMoveAudioB.volume = .42;
       padLandAudio.volume = .76;
-      padMoveAudio.loop = true;
+      let padMoveLoopTimer = 0;
+      let padMoveActive = false;
+      let padMoveCurrent = padMoveAudioA;
+      let padMoveNext = padMoveAudioB;
 
       function playPadOneShot(audio) {
         try { audio.pause(); audio.currentTime = 0; audio.play().catch(() => {}); } catch (_) {}
       }
+      function schedulePadMoveSeamlessLoop() {
+        clearTimeout(padMoveLoopTimer);
+        if (!padMoveActive || !Number.isFinite(padMoveCurrent.duration)) return;
+        // Start the second copy just before the first reaches its tail. This
+        // crossfades over the file boundary so the FLAC never drops to silence.
+        const remaining = Math.max(0, padMoveCurrent.duration - padMoveCurrent.currentTime);
+        const overlap = Math.min(.18, Math.max(.06, padMoveCurrent.duration * .08));
+        padMoveLoopTimer = window.setTimeout(() => {
+          if (!padMoveActive) return;
+          const outgoing = padMoveCurrent;
+          const incoming = padMoveNext;
+          try {
+            incoming.currentTime = 0;
+            incoming.volume = 0;
+            incoming.play().catch(() => {});
+            const started = performance.now();
+            const fade = (now) => {
+              if (!padMoveActive) return;
+              const t = Math.min(1, (now - started) / (overlap * 1000));
+              outgoing.volume = .42 * (1 - t);
+              incoming.volume = .42 * t;
+              if (t < 1) requestAnimationFrame(fade);
+              else {
+                outgoing.pause(); outgoing.currentTime = 0; outgoing.volume = .42;
+                padMoveCurrent = incoming; padMoveNext = outgoing;
+                schedulePadMoveSeamlessLoop();
+              }
+            };
+            requestAnimationFrame(fade);
+          } catch (_) {}
+        }, Math.max(0, (remaining - overlap) * 1000));
+      }
       function startPadMoveAudio() {
-        try { if (padMoveAudio.paused) { padMoveAudio.currentTime = 0; padMoveAudio.play().catch(() => {}); } } catch (_) {}
+        if (padMoveActive) return;
+        padMoveActive = true;
+        try {
+          padMoveCurrent.currentTime = 0;
+          padMoveCurrent.volume = .42;
+          padMoveCurrent.play().then(schedulePadMoveSeamlessLoop).catch(() => {});
+        } catch (_) {}
       }
       function stopPadMoveAudio() {
-        try { padMoveAudio.pause(); padMoveAudio.currentTime = 0; } catch (_) {}
+        padMoveActive = false;
+        clearTimeout(padMoveLoopTimer);
+        for (const audio of [padMoveAudioA, padMoveAudioB]) {
+          try { audio.pause(); audio.currentTime = 0; audio.volume = .42; } catch (_) {}
+        }
       }
 
       function setRideMode(mode) {
