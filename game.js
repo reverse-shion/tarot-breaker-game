@@ -10,7 +10,7 @@
   const guide = document.getElementById("guide");
   const joystick = document.getElementById("joystick");
   const knob = document.getElementById("joystick-knob");
-  const resetButton = document.getElementById("reset");
+
 
   const REF = { w: 1448, h: 1086 };
   const DEFAULT_SPAWN = { x: 724, y: 1015 };
@@ -1651,7 +1651,6 @@
     startScreen.hidden = true;
     window.dispatchEvent(new CustomEvent("tarot-breaker:world-enter"));
     guide.hidden = false;
-    resetButton.hidden = false;
     resize();
     reset();
     last = performance.now();
@@ -1783,8 +1782,6 @@
   });
 
   start?.addEventListener("click", begin);
-  resetButton.addEventListener("pointerdown", () => clearInput("reset"));
-  resetButton.addEventListener("click", reset);
   canvas.addEventListener("pointerdown", pointerDown, { passive: false });
   canvas.addEventListener("pointermove", pointerMove, { passive: false });
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
