@@ -1636,6 +1636,16 @@
   function begin(event) {
     event?.preventDefault();
     if (!ready || running) return;
+
+    // Official title entry: TOUCH TO START goes to the Alenon prologue.
+    // Star Gate Garden is no longer entered directly from the title.
+    const params = new URLSearchParams(location.search);
+    if (params.get("from") !== "landing") {
+      if (start) start.disabled = true;
+      location.href = "./alenon.html?from=title";
+      return;
+    }
+
     running = true;
     startScreen.hidden = true;
     guide.hidden = false;
