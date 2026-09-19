@@ -2270,6 +2270,54 @@
       };
 
       let storyAudioContext = null;
+
+      // Alenon uses environmental wind only (no BGM).
+      // Keep this separate from the short synthesized story SFX.
+      const alenonWindAmbience = new Audio("./assets/audio/ambience/alenon-wind-ambience.ogg");
+      alenonWindAmbience.loop = true;
+      alenonWindAmbience.preload = "auto";
+      alenonWindAmbience.volume = 0;
+      const ALENON_WIND_VOLUME = 0.34;
+      let alenonWindFadeToken = 0;
+      let alenonWindWanted = false;
+
+      function fadeAlenonWind(target, duration = 650) {
+        const token = ++alenonWindFadeToken;
+        const start = alenonWindAmbience.volume;
+        const startedAt = performance.now();
+        const step = (now) => {
+          if (token !== alenonWindFadeToken) return;
+          const t = Math.min(1, (now - startedAt) / Math.max(1, duration));
+          alenonWindAmbience.volume = start + (target - start) * t;
+          if (t < 1) requestAnimationFrame(step);
+          else if (target <= 0.001) alenonWindAmbience.pause();
+        };
+        requestAnimationFrame(step);
+      }
+
+      async function startAlenonWind({ fade = 900 } = {}) {
+        alenonWindWanted = true;
+        try {
+          await alenonWindAmbience.play();
+          fadeAlenonWind(ALENON_WIND_VOLUME, fade);
+        } catch (_) {
+          // iOS may require a fresh gesture after page navigation.
+          // The next player tap will unlock the ambience without interrupting play.
+        }
+      }
+
+      function stopAlenonWind({ fade = 500 } = {}) {
+        alenonWindWanted = false;
+        fadeAlenonWind(0, fade);
+      }
+
+      function unlockAlenonWind() {
+        if (!alenonWindWanted || !alenonWindAmbience.paused) return;
+        startAlenonWind({ fade: 500 });
+      }
+
+      document.addEventListener("pointerdown", unlockAlenonWind, { passive: true });
+      document.addEventListener("touchstart", unlockAlenonWind, { passive: true });
       tarotFront.src = PROLOGUE_TAROT_CARD;
 
       const player = {
@@ -2806,6 +2854,8 @@
         document.body.classList.remove("prologue-revealing");
         tarotStage.classList.remove("visible");
 
+        // The ruins themselves have no music: only the natural wind ambience.
+        startAlenonWind({ fade: 1100 });
         await sleep(1750);
 
         // 3) Shion walks naturally before anything happens.
@@ -2837,6 +2887,8 @@
         // Let the player clearly see the wind cross the lower side of the screen
         // and disappear completely outside the frame.
         document.body.classList.add("orb-wind-escape");
+        // The wind has left Alenon. Let the sound fall away to complete silence.
+        stopAlenonWind({ fade: 620 });
         turnShion("down");
         const followWind = animateStoryCamera(0, 48, 760);
         await Promise.all([sleep(1650), followWind]);
@@ -2852,6 +2904,8 @@
         await sleep(260);
 
         document.body.classList.add("orb-restore-wind");
+        // As the wind returns to Alenon, restore the same environmental loop.
+        startAlenonWind({ fade: 900 });
         playWindGust(1.45, .68);
         await sleep(150);
         document.body.classList.add("orb-restoring");
