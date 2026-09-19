@@ -151,17 +151,26 @@ body {
   background:#050817 url("./assets/ui/title/title-background.webp?v=20260919") center center / cover no-repeat;
 }
 .title-screen__shade {
-  position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(180deg,rgba(1,4,15,.16),rgba(2,5,18,.04) 46%,rgba(1,3,12,.34)),
-             radial-gradient(ellipse at 50% 42%,transparent 10%,rgba(2,5,18,.08) 50%,rgba(1,3,12,.30) 100%);
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(1,3,12,.34) 0%,rgba(2,5,18,.12) 28%,rgba(2,5,18,.04) 50%,rgba(2,5,18,.12) 72%,rgba(1,3,12,.34) 100%),
+    linear-gradient(180deg,rgba(1,4,15,.18) 0%,rgba(2,5,18,.06) 42%,rgba(1,3,12,.22) 100%),
+    radial-gradient(ellipse at 50% 58%,transparent 0 14%,rgba(1,3,12,.08) 38%,rgba(1,3,12,.38) 100%);
+}
+.title-screen__throne-light {
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(ellipse 25% 34% at 50% 73%,rgba(230,238,255,.12) 0%,rgba(149,180,255,.055) 38%,transparent 72%),
+    linear-gradient(180deg,transparent 45%,rgba(207,221,255,.025) 58%,transparent 86%);
+  mix-blend-mode:screen;
 }
 .start-card {
-  position:absolute; inset:0; z-index:1;
+  position:absolute; inset:0; z-index:4;
   display:block;
   text-align:center; padding:0; border:0; background:transparent; box-shadow:none; color:var(--ink);
 }
 .title-logo {
-  display:block; position:absolute; z-index:2; left:50%; top:38%;
+  display:block; position:absolute; z-index:3; left:50%; top:38%;
   width:min(91vw,940px); max-height:43vh; object-fit:contain;
   transform:translate(-50%,-50%) scale(1); transform-origin:center;
   filter:drop-shadow(0 8px 24px rgba(0,0,0,.72)) drop-shadow(0 0 16px rgba(237,191,93,.18));
