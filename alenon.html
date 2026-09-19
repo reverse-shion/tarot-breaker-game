@@ -2271,6 +2271,17 @@
 
       let storyAudioContext = null;
 
+      const tarotShuffleAudio = new Audio("./assets/audio/sfx/tarot-card-shuffle.mp3");
+      tarotShuffleAudio.preload = "auto";
+      tarotShuffleAudio.volume = 0.62;
+
+      function playTarotShuffleAudio() {
+        try {
+          tarotShuffleAudio.currentTime = 0;
+          tarotShuffleAudio.play().catch(() => {});
+        } catch (_) {}
+      }
+
       // Alenon ambience: keep one HTMLAudioElement alive for the whole map.
       const alenonWindAmbience = new Audio("./assets/audio/ambience/alenon-wind-ambience.ogg");
       alenonWindAmbience.loop = true;
@@ -2818,25 +2829,17 @@
 
         // 1) Darkness / tarot. Keep the first seconds almost empty.
         await sleep(700);
-        playPaperShuffle(.92);
-        await sleep(520);
-        playPaperShuffle(.78);
-        await sleep(360);
-        playPaperShuffle(.88);
-        await sleep(620);
-
         await sayStory("タロット展開……", 1150, 520);
 
         tarotStage.classList.add("visible");
         await sleep(380);
         tarotStack.classList.add("is-shuffling");
-        playPaperShuffle(.86);
+        playTarotShuffleAudio();
         await sleep(520);
         tarotStack.classList.remove("is-shuffling");
         await sleep(460);
 
         tarotDrawn.classList.add("is-drawn");
-        playPaperShuffle(.56);
         await sleep(720);
 
         // Safari/iOS-safe reveal: squash -> swap face -> expand.
