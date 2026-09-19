@@ -10,7 +10,7 @@
   const guide = document.getElementById("guide");
   const joystick = document.getElementById("joystick");
   const knob = document.getElementById("joystick-knob");
-  const resetButton = document.getElementById("reset");
+
 
   const REF = { w: 1448, h: 1086 };
   const DEFAULT_SPAWN = { x: 724, y: 1015 };
@@ -75,6 +75,8 @@
     right: Object.freeze({ x: 1, y: 0 }),
   });
   const params = new URLSearchParams(location.search);
+  const enteringFromLanding = params.get("from") === "landing";
+  if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
 
@@ -1637,10 +1639,9 @@
     event?.preventDefault();
     if (!ready || running) return;
 
-    // Official title entry: TOUCH TO START goes to the Alenon prologue.
-    // Star Gate Garden is no longer entered directly from the title.
-    const params = new URLSearchParams(location.search);
-    if (params.get("from") !== "landing") {
+    // Root URL is the official title entry. Only a PAD handoff may enter the
+    // Star Gate Garden directly.
+    if (!enteringFromLanding) {
       if (start) start.disabled = true;
       location.href = "./alenon.html?from=title";
       return;
@@ -1648,8 +1649,8 @@
 
     running = true;
     startScreen.hidden = true;
+    window.dispatchEvent(new CustomEvent("tarot-breaker:world-enter"));
     guide.hidden = false;
-    resetButton.hidden = false;
     resize();
     reset();
     last = performance.now();
@@ -1780,14 +1781,7 @@
     landmarks: STAGE_LANDMARKS,
   });
 
-  // The public title has one route only. Do not attach the garden's begin()
-  // handler there; this prevents the old ./alenon.html/main route from competing.
-  const enteringFromLanding = new URLSearchParams(location.search).get("from") === "landing";
-  if (enteringFromLanding) {
-    start.addEventListener("click", begin);
-  }
-  resetButton.addEventListener("pointerdown", () => clearInput("reset"));
-  resetButton.addEventListener("click", reset);
+  start?.addEventListener("click", begin);
   canvas.addEventListener("pointerdown", pointerDown, { passive: false });
   canvas.addEventListener("pointermove", pointerMove, { passive: false });
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
@@ -1935,20 +1929,40 @@
       resize();
       reset();
       draw();
-      start.disabled = false;
-      start.disabled = false;
-      note.textContent = "しおぽんとリュミエールが待つ星門庭園を歩いてみよう";
 
-      // Seamless arrival from the PAD landing area.
-      if (params.get("from") === "landing") {
-        note.textContent = "PAD離着陸場から星門庭園へ到着";
-        window.setTimeout(() => begin(), 120);
+      if (start) {
+        start.disabled = false;
+        start.textContent = "星の国へ";
+      }
+      note.textContent =
+        params.get("from") === "landing"
+          ? "PAD離着陸場から星門庭園へ到着"
+          : "星門庭園の読み込み完了";
+
+      // Never expose half-loaded layers. scene-effects.ready above already
+      // waits for every authored map image; reveal the whole scene only now.
+      document.body.classList.remove("scene-booting", "scene-load-error");
+      document.body.classList.add("scene-ready");
+
+      // The repository root is the title entry. Only the PAD handoff may
+      // auto-enter the garden; otherwise wait for TOUCH TO START.
+      if (enteringFromLanding) {
+        requestAnimationFrame(() => requestAnimationFrame(() => begin()));
       }
     } catch (error) {
       console.error(error);
-      start.disabled = true;
-      start.textContent = "起動できません";
+      if (start) {
+        start.disabled = true;
+        start.textContent = "起動できません";
+      }
       note.textContent = error.message;
+      document.body.classList.remove("scene-booting", "scene-ready");
+      document.body.classList.add("scene-load-error");
+      const loadError = document.getElementById("load-error");
+      if (loadError) {
+        loadError.textContent = "読み込みに失敗しました。再読み込みしてください。";
+        loadError.hidden = false;
+      }
     }
   })();
 })();
