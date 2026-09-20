@@ -2322,10 +2322,12 @@
       // is an ellipse centred at (716,264), with radii (170,82). The lower
       // stair starts below y=346. Match the image's 50% transform origin.
       const ALENON_ORB_HALL = Object.freeze({ x: 716, y: 264, rx: 170, ry: 82 });
-      const ALENON_ORB_FADE_START = 0.70;
+      // Use most of the hall for the spatial fade: just inside the perimeter is
+      // barely audible, then presence rises smoothly toward the Orb.
+      const ALENON_ORB_FADE_START = 0.20;
       // Measured source loudness: wind -23.4 LUFS, Orb -25.0 LUFS.
-      // At .55 / .10 the Orb is ~16.4 dB below wind integrated loudness.
-      const ALENON_ORB_MAX_VOLUME = 0.10;
+      // Keep the Orb a subordinate local layer under the .55 wind ambience.
+      const ALENON_ORB_MAX_VOLUME = 0.14;
       const ALENON_ORB_VOLUME_SMOOTHING = 9; // dt is seconds
       const ALENON_ORB_WIND_RATIO = 0.25; // additional ~12 dB RMS ceiling
       let alenonOrbWanted = false;
