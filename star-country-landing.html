@@ -675,7 +675,13 @@
       <div class="shion-actor" role="img" aria-label="シオン"></div>
       <div class="shion-shadow shiopon-shadow" hidden aria-hidden="true"></div>
       <div class="shion-actor shiopon-actor" hidden role="img" aria-label="しおぽん"></div>
+    <svg id="passage-overlay" viewBox="0 0 1448 1086" aria-hidden="true" style="display:none;position:absolute;inset:0;z-index:60;width:1448px;height:1086px;pointer-events:none"></svg>
     </section>
+
+    <aside id="passage-panel" hidden style="position:fixed;left:10px;right:10px;bottom:10px;z-index:5000;margin:auto;max-width:560px;padding:10px;border-radius:16px;background:rgba(4,21,27,.94);color:#fff;font:12px system-ui;touch-action:auto">
+      <b>PAD 通路・背景裏側エディタ</b><div style="margin:6px 0;opacity:.8">タップ＝裏側を通る範囲の頂点 / 3点以上で「範囲を確定」</div>
+      <div id="passage-status">範囲 0 / 点 0</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px"><button id="passage-undo">1点戻す</button><button id="passage-finish">範囲を確定</button><button id="passage-undo-area">1範囲戻す</button><button id="passage-clear">全消去</button><button id="passage-copy">JSONコピー</button></div>
+    </aside>
 
     <div id="flight-status" role="status" aria-live="polite" hidden></div>
     <div id="guide" hidden></div>
@@ -806,12 +812,15 @@
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
       const collisionMode = params.get("collision") === "1";
+      const passageMode = params.get("passage") === "1";
       const padEditMode =
         !collisionMode &&
         (params.get("padEdit") === "1" || params.get("debug") === "1");
       const PAD_EDIT_STORAGE_KEY = "tarot-breaker:star-landing-pad-layout-v1";
       const COLLISION_URL = "./assets/maps/star-landing/collision.json?v=20260920-collision-2";
       const COLLISION_DRAFT_KEY = "tarot-breaker:star-landing-collision-v2";
+      const PASSAGE_DRAFT_KEY = "tarot-breaker:star-landing-passage-v1";
+      let passageAreas = [];
 
       const padEditorToggle = document.getElementById("pad-editor-toggle");
       const padEditor = document.getElementById("pad-editor");
@@ -1746,6 +1755,27 @@
           `translate3d(${cameraTx}px,${cameraTy}px,0) scale(${worldScale})`;
       }
 
+      function pointInPassage(x, y) {
+        return passageAreas.some(area => pointInPoly(x, y, area.points));
+      }
+
+      function initPassageEditor() {
+        if (!passageMode) return;
+        const panel=document.getElementById("passage-panel"), overlay=document.getElementById("passage-overlay"), status=document.getElementById("passage-status");
+        panel.hidden=false; overlay.style.display="block"; ride.mode="ground"; let current=[];
+        try { const d=JSON.parse(localStorage.getItem(PASSAGE_DRAFT_KEY)||"null"); if(Array.isArray(d?.passageAreas)) passageAreas=d.passageAreas; } catch(_) {}
+        const ns="http://www.w3.org/2000/svg";
+        const save=()=>localStorage.setItem(PASSAGE_DRAFT_KEY,JSON.stringify({version:1,map:"star-landing",referenceSize:{width:WORLD_W,height:WORLD_H},passageAreas}));
+        const render=()=>{ overlay.innerHTML=""; passageAreas.forEach(a=>{const p=document.createElementNS(ns,"polygon");p.setAttribute("points",a.points.map(v=>v.join(",")).join(" "));p.setAttribute("fill","rgba(80,170,255,.25)");p.setAttribute("stroke","#8ee7ff");p.setAttribute("stroke-width","3");overlay.appendChild(p)}); if(current.length){const p=document.createElementNS(ns,"polyline");p.setAttribute("points",current.map(v=>v.join(",")).join(" "));p.setAttribute("fill","rgba(255,210,80,.12)");p.setAttribute("stroke","#ffd66b");p.setAttribute("stroke-width","3");overlay.appendChild(p)} status.textContent="範囲 "+passageAreas.length+" / 点 "+current.length; };
+        viewport.addEventListener("pointerup",e=>{ if(e.target.closest("#passage-panel")) return; const p=screenToWorld(e.clientX,e.clientY); current.push([Math.round(p.x),Math.round(p.y)]); render(); },true);
+        document.getElementById("passage-undo").onclick=()=>{current.pop();render()};
+        document.getElementById("passage-finish").onclick=()=>{if(current.length>=3){passageAreas.push({type:"poly",points:current});current=[];save();render()}};
+        document.getElementById("passage-undo-area").onclick=()=>{passageAreas.pop();save();render()};
+        document.getElementById("passage-clear").onclick=()=>{passageAreas=[];current=[];save();render()};
+        document.getElementById("passage-copy").onclick=async()=>{const s=JSON.stringify({version:1,map:"star-landing",referenceSize:{width:WORLD_W,height:WORLD_H},passageAreas},null,2);try{await navigator.clipboard.writeText(s);status.textContent="JSONをコピーしました"}catch(_){prompt("JSON",s)}};
+        render();
+      }
+
       function setActorPosition() {
         actor.style.left = player.x + "px";
         actor.style.top = player.y + "px";
@@ -1756,8 +1786,9 @@
           const behindPad =
             Math.abs(player.x - PAD_HOME.x) <= PAD_SIZE * .62 &&
             player.y < PAD_HOME.y - 6;
-          actor.style.zIndex = behindPad ? "21" : "44";
-          shadow.style.zIndex = behindPad ? "20" : "43";
+          const behindBackground = pointInPassage(player.x, player.y);
+          actor.style.zIndex = behindBackground ? "9" : (behindPad ? "21" : "44");
+          shadow.style.zIndex = behindBackground ? "8" : (behindPad ? "20" : "43");
         } else {
           actor.style.zIndex = "45";
           shadow.style.zIndex = "43";
@@ -2396,6 +2427,7 @@
         }
 
         initPadEditor();
+        initPassageEditor();
         applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
         if (returningFromGarden && !collisionMode && !padEditMode) {
           const entrance = nearestGroundPoint({x: 724, y: GARDEN_EXIT_Y + 42});
