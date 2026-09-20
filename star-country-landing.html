@@ -571,6 +571,7 @@
 
     body.passage-mode #collision-overlay,
     body.passage-mode #passage-overlay { display:block !important; }
+    body.passage-mode #passage-occlusion { display:none !important; }
     body.passage-mode .shion-actor,
     body.passage-mode .shion-shadow,
     body.passage-mode .shiopon-actor,
@@ -732,9 +733,13 @@
 
     <aside id="passage-panel" hidden style="position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:5000;margin:auto;max-width:560px;padding:10px;border:1px solid rgba(255,194,92,.40);border-radius:16px;background:rgba(30,20,5,.92);color:#fff;font:12px system-ui;touch-action:auto">
       <b>PAD 統合当たり判定エディタ</b>
-      <div style="margin:6px 0;line-height:1.45;opacity:.82">水色＝通常の歩行可能範囲（参照のみ） / オレンジ＝背景裏通路（編集対象）<br>タップ＝頂点追加 / ドラッグ＝マップ移動 / ピンチ＝拡大縮小</div>
-      <div id="passage-status">背景裏 0範囲 / 作成中 0点</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px"><button id="passage-undo">1点戻す</button><button id="passage-finish">範囲を確定</button><button id="passage-undo-area">1範囲戻す</button><button id="passage-center">全体表示</button><button id="passage-clear">背景裏だけ全消去</button><button id="passage-copy">JSONコピー</button></div>
+      <div style="margin:6px 0;line-height:1.45;opacity:.82">水色＝歩ける通路 / オレンジ＝背景より後ろを通る範囲<br>編集したい種類を選択 → タップ＝頂点追加 / ドラッグ＝マップ移動 / ピンチ＝拡大縮小</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0">
+        <button id="edit-walk" type="button" style="min-height:38px">通路を修正</button>
+        <button id="edit-passage" type="button" style="min-height:38px">背景裏を修正</button>
+      </div>
+      <div id="passage-status">編集準備中</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px"><button id="passage-undo">1点戻す</button><button id="passage-finish">範囲を確定</button><button id="passage-undo-area">1範囲戻す</button><button id="passage-center">全体表示</button><button id="passage-clear">選択中を全消去</button><button id="passage-copy">両方JSONコピー</button></div>
     </aside>
 
     <div id="flight-status" role="status" aria-live="polite" hidden></div>
@@ -866,8 +871,9 @@
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
-      const collisionMode = params.get("collision") === "1";
-      const passageMode = params.get("passage") === "1" || params.get("layerEdit") === "1";
+      const unifiedEditorMode = params.get("editor") === "1" || params.get("collision") === "1" || params.get("passage") === "1" || params.get("layerEdit") === "1";
+      const collisionMode = false;
+      const passageMode = unifiedEditorMode;
       const padEditMode =
         !collisionMode &&
         (params.get("padEdit") === "1" || params.get("debug") === "1");
@@ -1461,7 +1467,7 @@
             points: area.points.map((p) => [Number(p[0]), Number(p[1])]),
           }));
 
-        if (collisionMode) {
+        if (collisionMode || passageMode) {
           try {
             const saved = JSON.parse(localStorage.getItem(COLLISION_DRAFT_KEY) || "null");
             if (Array.isArray(saved?.walkAreas)) {
@@ -1875,6 +1881,8 @@
         const panel = document.getElementById("passage-panel");
         const overlay = document.getElementById("passage-overlay");
         const statusEl = document.getElementById("passage-status");
+        const walkButton = document.getElementById("edit-walk");
+        const passageButton = document.getElementById("edit-passage");
         panel.hidden = false;
         document.body.classList.add("passage-mode");
         ride.mode = "ground";
@@ -1884,144 +1892,148 @@
         joystick.hidden = true;
 
         const ns = "http://www.w3.org/2000/svg";
+        let activeLayer = "walk";
         let current = [];
         let gesture = null;
         const pointers = new Map();
         let pinchStart = null;
 
-        const payload = () => ({
-          version: 1,
-          map: "star-landing",
-          referenceSize: {width: WORLD_W, height: WORLD_H},
-          passageAreas: passageAreas.map(a => ({
-            type: "poly",
-            points: a.points.map(p => [Math.round(p[0]), Math.round(p[1])])
-          }))
+        const cloneAreas = areas => areas.map(a => ({
+          type:"poly", points:a.points.map(p => [Number(p[0]), Number(p[1])])
+        }));
+        const walkPayload = () => ({
+          version:1, map:"star-landing",
+          referenceSize:{width:WORLD_W,height:WORLD_H},
+          walkAreas: cloneAreas(landingWalkAreas).map(a => ({type:"poly",points:a.points.map(p=>[Math.round(p[0]),Math.round(p[1])])}))
+        });
+        const passagePayload = () => ({
+          version:1, map:"star-landing",
+          referenceSize:{width:WORLD_W,height:WORLD_H},
+          passageAreas: cloneAreas(passageAreas).map(a => ({type:"poly",points:a.points.map(p=>[Math.round(p[0]),Math.round(p[1])])}))
         });
         const save = () => {
-          try { localStorage.setItem(PASSAGE_DRAFT_KEY, JSON.stringify(payload())); } catch (_) {}
+          try {
+            localStorage.setItem(COLLISION_DRAFT_KEY, JSON.stringify(walkPayload()));
+            localStorage.setItem(PASSAGE_DRAFT_KEY, JSON.stringify(passagePayload()));
+          } catch (_) {}
         };
         const poly = (points, className) => {
-          const p = document.createElementNS(ns, "polygon");
-          p.setAttribute("class", className);
-          p.setAttribute("points", points.map(v => v.join(",")).join(" "));
+          const p=document.createElementNS(ns,"polygon");
+          p.setAttribute("class",className);
+          p.setAttribute("points",points.map(v=>v.join(",")).join(" "));
           return p;
         };
-        const renderWalk = () => {
-          collisionOverlay.replaceChildren();
-          landingWalkAreas.forEach(a => collisionOverlay.appendChild(poly(a.points, "collision-area")));
+        const dot = (pt, className) => {
+          const c=document.createElementNS(ns,"circle");
+          c.setAttribute("class",className);
+          c.setAttribute("cx",pt[0]); c.setAttribute("cy",pt[1]); c.setAttribute("r","5");
+          return c;
         };
         const render = () => {
+          collisionOverlay.replaceChildren();
+          landingWalkAreas.forEach(a => collisionOverlay.appendChild(poly(a.points,"collision-area")));
           overlay.replaceChildren();
-          passageAreas.forEach(a => overlay.appendChild(poly(a.points, "passage-area")));
-          renderPassageOcclusion();
+          passageAreas.forEach(a => overlay.appendChild(poly(a.points,"passage-area")));
           if (current.length) {
-            overlay.appendChild(poly(current, "passage-current"));
-            current.forEach(pt => {
-              const c = document.createElementNS(ns, "circle");
-              c.setAttribute("class", "passage-point");
-              c.setAttribute("cx", pt[0]); c.setAttribute("cy", pt[1]); c.setAttribute("r", "5");
-              overlay.appendChild(c);
-            });
+            const target = activeLayer === "walk" ? collisionOverlay : overlay;
+            target.appendChild(poly(current, activeLayer === "walk" ? "collision-current" : "passage-current"));
+            current.forEach(pt => target.appendChild(dot(pt, activeLayer === "walk" ? "collision-point" : "passage-point")));
           }
-          statusEl.textContent = `背景裏 ${passageAreas.length}範囲 / 作成中 ${current.length}点`;
+          renderPassageOcclusion();
+          walkButton.style.background = activeLayer === "walk" ? "rgba(62,167,255,.42)" : "rgba(255,255,255,.075)";
+          passageButton.style.background = activeLayer === "passage" ? "rgba(255,171,58,.42)" : "rgba(255,255,255,.075)";
+          statusEl.textContent = (activeLayer === "walk" ? "通路を編集中" : "背景裏を編集中") +
+            ` / 通路 ${landingWalkAreas.length}範囲 / 背景裏 ${passageAreas.length}範囲 / 作成中 ${current.length}点`;
         };
         const finishCurrent = () => {
           if (current.length < 3) return false;
-          passageAreas.push({type:"poly", points:current.map(p => [Math.round(p[0]),Math.round(p[1])])});
-          current = []; save(); render(); return true;
+          const area={type:"poly",points:current.map(p=>[Math.round(p[0]),Math.round(p[1])])};
+          if (activeLayer === "walk") landingWalkAreas.push(area); else passageAreas.push(area);
+          current=[]; save(); render(); return true;
         };
+        const switchLayer = layer => { current=[]; activeLayer=layer; render(); };
         const fitEditorWorld = () => {
-          editorScale = Math.min(innerWidth / WORLD_W, innerHeight / WORLD_H);
-          worldScale = Math.max(.25, Math.min(2.5, editorScale));
-          collisionPanX = WORLD_W / 2 - innerWidth / (2 * worldScale);
-          collisionPanY = WORLD_H / 2 - innerHeight / (2 * worldScale);
-          world.style.setProperty("--actor-inverse-scale", String(1 / worldScale));
+          editorScale=Math.min(innerWidth/WORLD_W,innerHeight/WORLD_H);
+          worldScale=Math.max(.25,Math.min(2.5,editorScale));
+          collisionPanX=WORLD_W/2-innerWidth/(2*worldScale);
+          collisionPanY=WORLD_H/2-innerHeight/(2*worldScale);
+          world.style.setProperty("--actor-inverse-scale",String(1/worldScale));
           syncCamera();
         };
 
-        document.getElementById("passage-undo").onclick = () => { current.pop(); render(); };
-        document.getElementById("passage-finish").onclick = () => {
-          if (!finishCurrent()) {
-            statusEl.textContent = "3点以上で範囲を確定できます";
-            setTimeout(render, 900);
-          }
+        walkButton.onclick=()=>switchLayer("walk");
+        passageButton.onclick=()=>switchLayer("passage");
+        document.getElementById("passage-undo").onclick=()=>{current.pop();render();};
+        document.getElementById("passage-finish").onclick=()=>{
+          if(!finishCurrent()){statusEl.textContent="3点以上で範囲を確定できます";setTimeout(render,900);}
         };
-        document.getElementById("passage-undo-area").onclick = () => {
-          if (current.length) current = [];
+        document.getElementById("passage-undo-area").onclick=()=>{
+          if(current.length) current=[];
+          else if(activeLayer==="walk") landingWalkAreas.pop();
           else passageAreas.pop();
-          save(); render();
+          save();render();
         };
-        document.getElementById("passage-center").onclick = fitEditorWorld;
-        document.getElementById("passage-clear").onclick = () => {
-          if (!passageAreas.length && !current.length) return;
-          if (!confirm("背景裏通路だけを全消去しますか？\n通常の歩行可能範囲は変更されません。")) return;
-          passageAreas = []; current = []; save(); render();
+        document.getElementById("passage-center").onclick=fitEditorWorld;
+        document.getElementById("passage-clear").onclick=()=>{
+          const label=activeLayer==="walk"?"通路":"背景裏";
+          if(!confirm(label+"の範囲だけを全消去しますか？\nもう一方のデータは変更しません。")) return;
+          current=[];
+          if(activeLayer==="walk") landingWalkAreas=[]; else passageAreas=[];
+          save();render();
         };
-        document.getElementById("passage-copy").onclick = async () => {
-          if (current.length >= 3) finishCurrent();
-          const out = JSON.stringify(payload(), null, 2);
-          try { await navigator.clipboard.writeText(out); statusEl.textContent = "背景裏通路JSONをコピーしました"; setTimeout(render,1100); }
-          catch (_) { prompt("passage-layers.json", out); }
+        document.getElementById("passage-copy").onclick=async()=>{
+          if(current.length>=3) finishCurrent();
+          const out=JSON.stringify({collision:walkPayload(),passageLayers:passagePayload()},null,2);
+          try{await navigator.clipboard.writeText(out);statusEl.textContent="通路＋背景裏JSONをコピーしました";setTimeout(render,1100);}
+          catch(_){prompt("collision.json + passage-layers.json",out);}
         };
 
-        viewport.addEventListener("pointerdown", e => {
-          if (!document.body.classList.contains("passage-mode") || e.target.closest?.("#passage-panel")) return;
-          if (e.button != null && e.button !== 0) return;
-          e.preventDefault(); e.stopImmediatePropagation();
-          pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
+        viewport.addEventListener("pointerdown",e=>{
+          if(!document.body.classList.contains("passage-mode")||e.target.closest?.("#passage-panel"))return;
+          if(e.button!=null&&e.button!==0)return;
+          e.preventDefault();e.stopImmediatePropagation();
+          pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
           viewport.setPointerCapture?.(e.pointerId);
-          if (pointers.size === 2) {
+          if(pointers.size===2){
             const pts=[...pointers.values()];
             pinchStart={distance:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y),scale:worldScale};
-            gesture=null; return;
+            gesture=null;return;
           }
           gesture={id:e.pointerId,x:e.clientX,y:e.clientY,panX:collisionPanX,panY:collisionPanY,moved:false,time:performance.now()};
-        }, {passive:false,capture:true});
-
-        viewport.addEventListener("pointermove", e => {
-          if (!pointers.has(e.pointerId) || !document.body.classList.contains("passage-mode")) return;
-          e.preventDefault(); e.stopImmediatePropagation();
+        },{passive:false,capture:true});
+        viewport.addEventListener("pointermove",e=>{
+          if(!pointers.has(e.pointerId)||!document.body.classList.contains("passage-mode"))return;
+          e.preventDefault();e.stopImmediatePropagation();
           pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-          if (pointers.size >= 2 && pinchStart) {
+          if(pointers.size>=2&&pinchStart){
             const pts=[...pointers.values()];
             const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
             worldScale=Math.max(.25,Math.min(2.5,pinchStart.scale*(d/Math.max(1,pinchStart.distance))));
-            world.style.setProperty("--actor-inverse-scale",String(1/worldScale));
-            syncCamera(); return;
+            world.style.setProperty("--actor-inverse-scale",String(1/worldScale));syncCamera();return;
           }
-          if (!gesture || gesture.id !== e.pointerId) return;
-          const dx=e.clientX-gesture.x, dy=e.clientY-gesture.y;
-          if (!gesture.moved && Math.hypot(dx,dy)>=9) gesture.moved=true;
-          if (gesture.moved) {
-            collisionPanX=gesture.panX-dx/worldScale;
-            collisionPanY=gesture.panY-dy/worldScale;
-            syncCamera();
-          }
-        }, {passive:false,capture:true});
-
-        const endGesture = e => {
-          if (!pointers.has(e.pointerId)) return;
-          e.preventDefault(); e.stopImmediatePropagation();
+          if(!gesture||gesture.id!==e.pointerId)return;
+          const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;
+          if(!gesture.moved&&Math.hypot(dx,dy)>=9)gesture.moved=true;
+          if(gesture.moved){collisionPanX=gesture.panX-dx/worldScale;collisionPanY=gesture.panY-dy/worldScale;syncCamera();}
+        },{passive:false,capture:true});
+        const endGesture=e=>{
+          if(!pointers.has(e.pointerId))return;
+          e.preventDefault();e.stopImmediatePropagation();
           pointers.delete(e.pointerId);
-          if (pinchStart) {
-            if (pointers.size < 2) pinchStart=null;
-            gesture=null;
-          } else if (gesture && gesture.id === e.pointerId) {
+          if(pinchStart){if(pointers.size<2)pinchStart=null;gesture=null;}
+          else if(gesture&&gesture.id===e.pointerId){
             const elapsed=performance.now()-gesture.time;
-            if (!gesture.moved && elapsed<650) {
+            if(!gesture.moved&&elapsed<650){
               const p=screenToWorld(e.clientX,e.clientY);
-              current.push([Math.round(clamp(p.x,0,WORLD_W)),Math.round(clamp(p.y,0,WORLD_H))]);
-              render();
+              current.push([Math.round(clamp(p.x,0,WORLD_W)),Math.round(clamp(p.y,0,WORLD_H))]);render();
             }
             gesture=null;
           }
-          if (viewport.hasPointerCapture?.(e.pointerId)) viewport.releasePointerCapture(e.pointerId);
+          if(viewport.hasPointerCapture?.(e.pointerId))viewport.releasePointerCapture(e.pointerId);
         };
-        viewport.addEventListener("pointerup", endGesture, {passive:false,capture:true});
-        viewport.addEventListener("pointercancel", endGesture, {passive:false,capture:true});
-
-        renderWalk(); render(); fitEditorWorld();
+        viewport.addEventListener("pointerup",endGesture,{passive:false,capture:true});
+        viewport.addEventListener("pointercancel",endGesture,{passive:false,capture:true});
+        render();fitEditorWorld();
       }
 
       function setActorPosition() {
