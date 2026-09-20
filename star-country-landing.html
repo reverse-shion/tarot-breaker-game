@@ -1995,7 +1995,7 @@
         document.getElementById("passage-center").onclick=fitEditorWorld;
         document.getElementById("passage-clear").onclick=()=>{
           const label=activeLayer==="walk"?"通路":"背景裏";
-          if(!confirm(label+"の範囲だけを全消去しますか？\nもう一方のデータは変更しません。")) return;
+          if(!confirm(label+"の範囲だけを全消去しますか？\\nもう一方のデータは変更しません。")) return;
           current=[];
           if(activeLayer==="walk") landingWalkAreas=[]; else passageAreas=[];
           save();render();
