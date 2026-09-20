@@ -110,12 +110,26 @@
   animation: none;
 }
 
+/* Character name colors — official TAROT BREAKER UI palette */
 .tb-dialogue-layer[data-speaker="しおぽん"] .tb-dialogue-speaker {
-  color: rgba(226, 207, 243, .96);
+  color: #FFCA7A;
+}
+
+.tb-dialogue-layer[data-speaker="シオリエル"] .tb-dialogue-speaker {
+  color: #6E5AFF;
+}
+
+.tb-dialogue-layer[data-speaker="セレフィアス"] .tb-dialogue-speaker {
+  color: #EAF3FF;
+  text-shadow: 0 0 7px rgba(167, 210, 255, .55);
 }
 
 .tb-dialogue-layer[data-speaker="リュミエール"] .tb-dialogue-speaker {
-  color: rgba(211, 233, 255, .96);
+  color: #F5E08C;
+}
+
+.tb-dialogue-layer[data-speaker="シオン"] .tb-dialogue-speaker {
+  color: #4A6BFF;
 }
 
 @keyframes tb-dialogue-next-bob {
