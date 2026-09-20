@@ -2198,6 +2198,7 @@
       alenonWindAmbience.loop = true;
       alenonWindAmbience.preload = "auto";
       alenonWindAmbience.volume = 0;
+      alenonWindAmbience.muted = true;
       const ALENON_WIND_VOLUME = 0.65;
       let alenonWindFadeToken = 0;
       let alenonWindWanted = false;
@@ -2233,13 +2234,88 @@
       let alenonMix = null;
       alenonOrbResonance.muted = true;
 
+      // On the tested iPhone, Orb's MediaElementSource graph played silently
+      // while the same element's native output was audible. Keep the old graph
+      // accessible only as an explicit device diagnostic comparison.
+      const alenonNativeOrbPlayback = typeof location === "undefined" || (() => {
+        const query = new URLSearchParams(location.search);
+        return query.get("audioDebug") !== "1" || query.get("orbOutput") !== "webAudio";
+      })();
+
+      // Opt-in device diagnostics. Detached audio elements cannot be inspected
+      // from the DOM on an iPhone without a desktop Safari Web Inspector.
+      const alenonAudioDiagnostic = typeof location !== "undefined" &&
+        new URLSearchParams(location.search).get("audioDebug") === "1" ? {
+          context: null,
+          contextError: "-",
+          windRoute: false,
+          orbRoute: false,
+          resumeAttempts: 0,
+          resumeResult: "not attempted",
+          resumeError: "-",
+          windPlayResult: "not attempted",
+          windPlayError: "-",
+          orbPlayResult: "not attempted",
+          orbPlayError: "-",
+          lastGesture: "-",
+          activationAtGesture: "-",
+        } : null;
+
+      function alenonAudioError(error) {
+        if (!error) return "-";
+        return String(error.name || "Error") + (error.message ? ": " + String(error.message).slice(0, 100) : "");
+      }
+
+      function observeAlenonPlay(audio, which) {
+        // Call play() synchronously in the original gesture stack.
+        try {
+          const play = audio.play();
+          if (alenonAudioDiagnostic) {
+            const result = which + "PlayResult";
+            const failure = which + "PlayError";
+            alenonAudioDiagnostic[result] = "pending";
+            Promise.resolve(play).then(
+              () => { alenonAudioDiagnostic[result] = "fulfilled"; alenonAudioDiagnostic[failure] = "-"; },
+              (error) => { alenonAudioDiagnostic[result] = "rejected"; alenonAudioDiagnostic[failure] = alenonAudioError(error); },
+            );
+          }
+          return play;
+        } catch (error) {
+          if (alenonAudioDiagnostic) {
+            alenonAudioDiagnostic[which + "PlayResult"] = "threw";
+            alenonAudioDiagnostic[which + "PlayError"] = alenonAudioError(error);
+          }
+          throw error;
+        }
+      }
+
+      function observeAlenonResume(context) {
+        if (!alenonAudioDiagnostic) return context.resume();
+        alenonAudioDiagnostic.resumeAttempts++;
+        alenonAudioDiagnostic.resumeResult = "pending";
+        try {
+          const resume = context.resume();
+          Promise.resolve(resume).then(
+            () => { alenonAudioDiagnostic.resumeResult = "fulfilled"; alenonAudioDiagnostic.resumeError = "-"; },
+            (error) => { alenonAudioDiagnostic.resumeResult = "rejected"; alenonAudioDiagnostic.resumeError = alenonAudioError(error); },
+          );
+          return resume;
+        } catch (error) {
+          alenonAudioDiagnostic.resumeResult = "threw";
+          alenonAudioDiagnostic.resumeError = alenonAudioError(error);
+          throw error;
+        }
+      }
+
       function ensureAlenonMix() {
+        if (alenonNativeOrbPlayback) return null;
         if (alenonMix) return alenonMix;
         const Context = window.AudioContext || window.webkitAudioContext;
         if (!Context) return null;
         try {
           const context = new Context();
-          const channel = (audio) => {
+          if (alenonAudioDiagnostic) alenonAudioDiagnostic.context = context;
+          const channel = (audio, which) => {
             const source = context.createMediaElementSource(audio);
             const meter = context.createAnalyser();
             meter.fftSize = 2048;
@@ -2249,13 +2325,16 @@
             source.connect(meter);
             meter.connect(gain);
             gain.connect(context.destination);
+            if (alenonAudioDiagnostic) alenonAudioDiagnostic[which + "Route"] = true;
             return { source, meter, gain, samples: new Float32Array(meter.fftSize) };
           };
-          alenonMix = { context, wind: channel(alenonWindAmbience), orb: channel(alenonOrbResonance) };
-          setAlenonWindVolume(alenonWindVolume);
+          // The wind keeps the browser's native media output. A failed or
+          // inaudible Web Audio graph must never silence the base ambience.
+          alenonMix = { context, orb: channel(alenonOrbResonance, "orb") };
           setAlenonOrbVolume(0);
           return alenonMix;
-        } catch (_) {
+        } catch (error) {
+          if (alenonAudioDiagnostic) alenonAudioDiagnostic.contextError = alenonAudioError(error);
           // Never expose an uncontrolled full-volume Orb on unsupported devices.
           alenonOrbResonance.muted = true;
           return null;
@@ -2264,20 +2343,16 @@
 
       function setAlenonWindVolume(value) {
         alenonWindVolume = Math.max(0, Math.min(ALENON_WIND_VOLUME, value));
-        if (alenonMix) {
-          alenonWindAmbience.volume = 1;
-          alenonMix.wind.gain.gain.value = alenonWindVolume;
-        } else {
-          alenonWindAmbience.volume = alenonWindVolume;
-        }
+        alenonWindAmbience.volume = alenonWindVolume;
       }
 
       function setAlenonOrbVolume(value) {
-        alenonOrbVolume = alenonMix ? Math.max(0, Math.min(ALENON_ORB_MAX_VOLUME, value)) : 0;
+        alenonOrbVolume = alenonMix || alenonNativeOrbPlayback
+          ? Math.max(0, Math.min(ALENON_ORB_MAX_VOLUME, value)) : 0;
         if (alenonMix) alenonMix.orb.gain.gain.value = alenonOrbVolume;
-        // iOS may ignore media.volume writes. GainNode is authoritative and
-        // muted is a second hard stop outside the hall. Do not double attenuate.
-        alenonOrbResonance.volume = alenonOrbVolume > 0 ? 1 : 0;
+        // Native playback restored Orb output on the tested iPhone. iOS may
+        // ignore media volume writes, so muted is the hard hall boundary.
+        alenonOrbResonance.volume = alenonNativeOrbPlayback ? alenonOrbVolume : (alenonOrbVolume > 0 ? 1 : 0);
         alenonOrbResonance.muted = alenonOrbVolume === 0;
       }
 
@@ -2319,18 +2394,21 @@
         // Invoke resume and BOTH play calls in the user gesture stack. Awaiting
         // wind.play first can lose Safari's activation before Orb.play is called.
         const pending = [];
-        if (mix && mix.context.state !== "running") pending.push(mix.context.resume());
+        if (mix && mix.context.state !== "running") pending.push(observeAlenonResume(mix.context));
         if (alenonWindWanted) pending.push(startAlenonWind({ fade: 700 }));
         else {
           setAlenonWindVolume(0);
+          // Some iOS browsers ignore media.volume. A hard mute keeps the
+          // gesture-primed native transport silent throughout the prologue.
+          alenonWindAmbience.muted = true;
           // Prime this same element silently during the first gesture. The
           // prologue starts its audible transport later, after async dialogue.
-          pending.push(alenonWindAmbience.play());
+          pending.push(observeAlenonPlay(alenonWindAmbience, "wind"));
         }
         if (alenonOrbWanted) pending.push(startAlenonOrbResonance());
-        else if (mix) {
+        else if (mix || alenonNativeOrbPlayback) {
           setAlenonOrbVolume(0);
-          pending.push(alenonOrbResonance.play());
+          pending.push(observeAlenonPlay(alenonOrbResonance, "orb"));
         }
         await Promise.allSettled(pending);
         return true;
@@ -2349,8 +2427,9 @@
         alenonOrbWanted = true;
         // Always recompute position before attempting playback, including return.
         updateAlenonOrbResonance(0);
-        if (!alenonWindUnlocked || !ensureAlenonMix() || !alenonOrbResonance.paused) return;
-        try { await alenonOrbResonance.play(); } catch (_) {}
+        if (!alenonWindUnlocked || (!alenonNativeOrbPlayback && !ensureAlenonMix()) ||
+            !alenonOrbResonance.paused) return;
+        try { await observeAlenonPlay(alenonOrbResonance, "orb"); } catch (_) {}
       }
 
       function stopAlenonOrbResonance() {
@@ -2362,7 +2441,7 @@
 
       function updateAlenonOrbResonance(dt) {
         const area = alenonOrbWanted ? alenonOrbAreaLevel() : 0;
-        if (!area || !alenonMix || alenonMix.context.state !== "running" ||
+        if (!area || (!alenonNativeOrbPlayback && (!alenonMix || alenonMix.context.state !== "running")) ||
             alenonWindAmbience.paused || !alenonWindWanted) {
           setAlenonOrbVolume(0);
           return;
@@ -2379,11 +2458,11 @@
 
       async function startAlenonWind({ fade = 900 } = {}) {
         alenonWindWanted = true;
-        ensureAlenonMix();
-        if (alenonWindAmbience.paused) {
-          setAlenonWindVolume(0);
-          try { await alenonWindAmbience.play(); } catch (_) { return; }
-        }
+        alenonWindAmbience.muted = false;
+        if (alenonWindAmbience.paused) setAlenonWindVolume(0);
+        // Reaffirm playback after unmuting a transport primed during the
+        // prologue. play() on a playing element does not seek.
+        try { await observeAlenonPlay(alenonWindAmbience, "wind"); } catch (_) { return; }
         if (alenonWindWanted) fadeAlenonWind(ALENON_WIND_VOLUME, fade);
       }
 
@@ -2400,10 +2479,79 @@
           if (t < 1) requestAnimationFrame(step);
           else {
             try { alenonWindAmbience.pause(); } catch (_) {}
+            alenonWindAmbience.muted = true;
             setAlenonWindVolume(0);
           }
         };
         requestAnimationFrame(step);
+      }
+
+      function classifyAlenonAudio() {
+        const debug = alenonAudioDiagnostic;
+        const context = debug.context;
+        if (alenonWindAmbience.error || alenonOrbResonance.error) return "CASE F — MEDIA LOAD / DECODE ERROR";
+        if (debug.windPlayResult === "rejected" || debug.windPlayResult === "threw" ||
+            debug.orbPlayResult === "rejected" || debug.orbPlayResult === "threw") return "CASE E — PLAYBACK ERROR";
+        if (debug.contextError !== "-") return "AUDIO GRAPH SETUP ERROR";
+        if (!alenonWindWanted) return "WAIT — WIND NOT REQUESTED YET";
+        if (alenonWindAmbience.paused) return "CASE B — WIND TRANSPORT NOT PLAYING";
+        if (alenonWindAmbience.muted || alenonWindVolume <= 0) return "CASE C — WIND MUTED / VOLUME ZERO";
+        if (alenonNativeOrbPlayback) return "NATIVE WIND + ORB — CHECK DEVICE OUTPUT";
+        if (!context || context.state !== "running") return "NATIVE WIND ACTIVE; ORB CONTEXT NOT RUNNING";
+        return "NATIVE WIND ACTIVE — IF SILENT, CHECK DEVICE OUTPUT";
+      }
+
+      function initAlenonAudioDiagnostic() {
+        if (!alenonAudioDiagnostic) return;
+        const panel = document.createElement("aside");
+        panel.setAttribute("aria-label", "Alenon audio diagnostic");
+        panel.style.cssText = "position:fixed;z-index:2147483647;right:env(safe-area-inset-right,0px);" +
+          "top:env(safe-area-inset-top,0px);width:min(86vw,310px);max-height:58vh;" +
+          "overflow:auto;touch-action:pan-y;overscroll-behavior:contain;padding:8px;" +
+          "background:rgba(4,13,32,.94);color:#f1f5ff;border:1px solid #8aacdd;" +
+          "border-radius:4px;font:10px/1.35 ui-monospace,monospace;white-space:pre-wrap;" +
+          "overflow-wrap:anywhere;-webkit-user-select:text;user-select:text;";
+        document.body.appendChild(panel);
+        const bool = (value) => value ? "YES" : "NO";
+        const value = (number) => typeof number === "number" && Number.isFinite(number)
+          ? number.toFixed(2) : "-";
+        const media = (name, audio, result, error, route, gain) => [
+          name + ": wanted=" + bool(name === "Wind" ? alenonWindWanted : alenonOrbWanted) +
+            (name === "Wind" ? " unlocked=" + bool(alenonWindUnlocked) : ""),
+          "  paused=" + bool(audio.paused) + " muted=" + bool(audio.muted) +
+            " volume=" + value(audio.volume),
+          "  readyState=" + audio.readyState + " networkState=" + audio.networkState +
+            " time=" + value(audio.currentTime) + " ended=" + bool(audio.ended),
+          "  error.code=" + (audio.error?.code ?? "-") +
+            " play=" + result + " / " + error,
+          "  playback=" + (name === "Wind" || alenonNativeOrbPlayback ? "native" : "Web Audio") +
+            " route=" + bool(route) + " gain=" + (gain == null ? "-" : value(gain)),
+        ];
+        const render = () => {
+          const debug = alenonAudioDiagnostic;
+          const activation = typeof navigator !== "undefined" ? navigator.userActivation : null;
+          panel.textContent = [
+            "ALENON AUDIO — " + classifyAlenonAudio(),
+            "AudioContext available=" + bool(!!(window.AudioContext || window.webkitAudioContext)) +
+              " created=" + bool(!!debug.context) + " state=" + (debug.context?.state ?? "-"),
+            "  resume attempts=" + debug.resumeAttempts + " result=" + debug.resumeResult +
+              " / " + debug.resumeError,
+            "  setup error=" + debug.contextError,
+            ...media("Wind", alenonWindAmbience, debug.windPlayResult, debug.windPlayError,
+              debug.windRoute, null),
+            ...media("Orb", alenonOrbResonance, debug.orbPlayResult, debug.orbPlayError,
+              debug.orbRoute, alenonMix?.orb.gain.gain.value),
+            "  spatial target=" + value(alenonOrbWanted ? ALENON_ORB_MAX_VOLUME * alenonOrbAreaLevel() : 0),
+            ...(alenonNativeOrbPlayback ? ["  Native Orb: iOS may ignore volume fade; muted outside hall"] : []),
+            "Gesture pointerdown=" + debug.lastGesture +
+              " active-at-tap=" + debug.activationAtGesture,
+            "  active=" + (activation?.isActive ?? "-") +
+              " ever=" + (activation?.hasBeenActive ?? "-"),
+          ].join("\n");
+        };
+        render();
+        const timer = window.setInterval(render, 400);
+        window.addEventListener("pagehide", () => window.clearInterval(timer), { once: true });
       }
 
       tarotFront.src = PROLOGUE_TAROT_CARD;
@@ -2876,6 +3024,7 @@
         ++alenonWindFadeToken;
         alenonWindWanted = false;
         alenonWindAmbience.pause();
+        alenonWindAmbience.muted = true;
         alenonWindAmbience.currentTime = 0;
         setAlenonWindVolume(0);
 
@@ -4617,6 +4766,7 @@
       initRuinDrift();
 
       if (!editMode) {
+        initAlenonAudioDiagnostic();
         initObjectAdjust();
         initDeadPadAdjust();
         initCollisionEditor();
@@ -4625,11 +4775,20 @@
         // the opaque prologue overlay on screen forever.
         initMovement();
         preparePrologue();
-        const unlockLocalAlenonAudio = () => {
-          if (!alenonWindUnlocked || alenonMix?.context.state !== "running" ||
+        const unlockLocalAlenonAudio = (event) => {
+          if (alenonAudioDiagnostic && event?.type === "pointerdown") {
+            alenonAudioDiagnostic.lastGesture = new Date().toLocaleTimeString();
+            alenonAudioDiagnostic.activationAtGesture =
+              typeof navigator !== "undefined" ? (navigator.userActivation?.isActive ?? "-") : "-";
+          }
+          if (!alenonWindUnlocked || (!alenonNativeOrbPlayback && alenonMix?.context.state !== "running") ||
               (alenonWindWanted && alenonWindAmbience.paused) ||
               (alenonOrbWanted && alenonOrbResonance.paused)) {
             unlockAlenonAudio().catch(() => {});
+          } else if (alenonWindWanted) {
+            // Retain a gesture-local retry for native media even when its
+            // transport reports "playing" but iOS did not produce output.
+            try { observeAlenonPlay(alenonWindAmbience, "wind")?.catch(() => {}); } catch (_) {}
           }
         };
         window.addEventListener("pointerdown", unlockLocalAlenonAudio, { passive: true });
