@@ -2329,7 +2329,10 @@
       // Keep the Orb a subordinate local layer under the .55 wind ambience.
       const ALENON_ORB_MAX_VOLUME = 0.14;
       const ALENON_ORB_VOLUME_SMOOTHING = 9; // dt is seconds
-      const ALENON_ORB_WIND_RATIO = 0.25; // additional ~12 dB RMS ceiling
+      // Spatial gain already keeps the Orb subordinate. Do not dynamically
+      // re-attenuate it from instantaneous wind/orb RMS, because that makes the
+      // requested .14 maximum and hall-wide fade inaudible in real playback.
+      const ALENON_ORB_WIND_RATIO = 0.25; // retained as the mix-design reference
       let alenonOrbWanted = false;
       let alenonOrbVolume = 0;
       let alenonWindVolume = 0;
@@ -2470,14 +2473,11 @@
           setAlenonOrbVolume(0);
           return;
         }
-        // The wind file has a quiet loop tail. Follow its actual signal so the
-        // Orb cannot take over there or while wind is buffering/fading in.
-        const windRms = alenonChannelRms(alenonMix.wind) * alenonWindVolume;
-        const orbRms = alenonChannelRms(alenonMix.orb);
-        const balanceCap = windRms > 0.00001
-          ? Math.min(ALENON_ORB_MAX_VOLUME, windRms * ALENON_ORB_WIND_RATIO / Math.max(orbRms, 0.00001))
-          : 0;
-        const target = Math.min(ALENON_ORB_MAX_VOLUME * area, balanceCap);
+        // The spatial curve is authoritative for Orb loudness. The previous
+        // instantaneous RMS cap often reduced .14 back toward the old perceived
+        // level, so changing MAX_VOLUME/FADE_START barely changed what users heard.
+        // Wind remains the dominant bed at .55 while Orb tops out at .14.
+        const target = ALENON_ORB_MAX_VOLUME * area;
         const blend = 1 - Math.exp(-ALENON_ORB_VOLUME_SMOOTHING * Math.max(0, dt));
         // Smooth entry; descending levels never trail behind the spatial limit.
         setAlenonOrbVolume(Math.min(target, alenonOrbVolume + (target - alenonOrbVolume) * blend));
