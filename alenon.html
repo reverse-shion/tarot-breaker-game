@@ -1688,92 +1688,6 @@
     #tarot-drawn.show-front .tarot-face-back { opacity: 0; }
     #tarot-drawn.show-front .tarot-face-front { opacity: 1; }
 
-    /* Dialogue UI: classic JRPG readability with TAROT BREAKER styling.
-       The window itself identifies speech, so dialogue text does not use Japanese quote marks. */
-    #prologue-dialogue {
-      position: fixed;
-      left: 50%;
-      bottom: max(26px, calc(env(safe-area-inset-bottom) + 20px));
-      z-index: 2300;
-      width: min(92vw, 720px);
-      min-height: 132px;
-      box-sizing: border-box;
-      transform: translate(-50%, 10px);
-      padding: 16px 20px 27px;
-      border: 1px solid rgba(217, 190, 128, .48);
-      border-radius: 10px;
-      color: rgba(249, 250, 255, .98);
-      background:
-        linear-gradient(180deg, rgba(11, 18, 46, .94), rgba(5, 10, 29, .91));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow:
-        0 14px 38px rgba(0, 0, 0, .38),
-        inset 0 1px 0 rgba(255, 243, 207, .06);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s ease, transform .25s ease;
-    }
-
-    #prologue-dialogue.visible {
-      opacity: 1;
-      transform: translate(-50%, 0);
-      pointer-events: auto;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    #prologue-speaker {
-      display: block;
-      margin-bottom: 7px;
-      font-size: clamp(11px, 2.8vw, 13px);
-      font-weight: 700;
-      letter-spacing: .08em;
-    }
-
-    #prologue-line {
-      min-height: 3.15em;
-      font-size: clamp(18px, 4.6vw, 21px);
-      font-weight: 500;
-      line-height: 1.6;
-      letter-spacing: .015em;
-      text-wrap: pretty;
-      overflow-wrap: anywhere;
-    }
-
-    /* Keep the full sentence in layout while revealing characters.
-       This fixes the one-frame "snap" when a long line reaches the right edge. */
-    #prologue-line .dialogue-char {
-      visibility: hidden;
-    }
-
-    #prologue-line .dialogue-char.revealed {
-      visibility: visible;
-    }
-
-    #dialogue-next {
-      position: absolute;
-      right: 18px;
-      bottom: 9px;
-      color: rgba(226, 207, 158, .92);
-      font-size: 15px;
-      line-height: 1;
-      opacity: 0;
-      transform: translateY(-2px);
-      pointer-events: none;
-      transition: opacity .15s ease;
-    }
-
-    #dialogue-next.visible {
-      opacity: .96;
-      animation: dialogue-next-bob .9s ease-in-out infinite;
-    }
-
-    @keyframes dialogue-next-bob {
-      0%, 100% { transform: translateY(-2px); }
-      50% { transform: translateY(2px); }
-    }
-
     #orb-interaction-choice {
       position: fixed;
       left: 50%;
@@ -1925,21 +1839,6 @@
       .editor-controls { grid-template-columns: 68px 68px 1fr; }
       #editor-toast { bottom: calc(214px + env(safe-area-inset-bottom)); }
 
-      #prologue-dialogue {
-        width: min(92vw, 460px);
-        min-height: 138px;
-        padding: 15px 18px 27px;
-      }
-
-      #prologue-speaker {
-        margin-bottom: 6px;
-      }
-
-      #prologue-line {
-        font-size: clamp(18px, 4.7vw, 20px);
-        line-height: 1.62;
-      }
-
       #orb-interaction-choice {
         width: min(92vw, 460px);
         padding: 15px 16px 16px;
@@ -1956,21 +1855,13 @@
       .orb-inner,
       .orb-core,
       .orb-particle,
-      .orb-aura,
-      #dialogue-next {
+      .orb-aura {
         animation: none !important;
       }
     }
   
-    /* Character name colors: page-local fallback, independent of shared CSS cache. */
-    .tb-dialogue-layer[data-speaker="しおぽん"] .tb-dialogue-speaker { color:#FFCA7A !important; }
-    .tb-dialogue-layer[data-speaker="シオリエル"] .tb-dialogue-speaker { color:#6E5AFF !important; }
-    .tb-dialogue-layer[data-speaker="セレフィアス"] .tb-dialogue-speaker { color:#EAF3FF !important; text-shadow:0 0 7px rgba(167,210,255,.55); }
-    .tb-dialogue-layer[data-speaker="リュミエール"] .tb-dialogue-speaker { color:#F5E08C !important; }
-    .tb-dialogue-layer[data-speaker="シオン"] .tb-dialogue-speaker { color:#4A6BFF !important; }
-
   </style>
-  <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-speaker-colors-1" />
+  <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-dialogue-ui-v2" />
 </head>
 <body data-alenon-drift-revision="no-objective-v35">
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
@@ -2182,7 +2073,7 @@
   </main>
 
   <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
-  <script src="./shared-dialogue.js?v=1.0.0"></script>
+  <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v2"></script>
   <script>
     (() => {
       "use strict";
@@ -2271,10 +2162,6 @@
 
       const dialogueState = {
         active: false,
-        complete: false,
-        fullText: "",
-        characters: [],
-        token: 0,
         advanceResolve: null,
       };
 
@@ -2669,41 +2556,23 @@
         },
       });
 
-      function showStoryLine(text) {
-        dialogueState.fullText = text;
-        dialogueState.complete = false;
+      function showStoryLine(text, speaker = "シオン", actor = "shion") {
         dialogueState.active = true;
         storyDialogueUi.show({
-          speaker: "シオン",
+          speaker,
           text,
-          actor: "shion",
+          actor,
         });
       }
 
       function hideStoryLine() {
-        dialogueState.token += 1;
         dialogueState.active = false;
-        dialogueState.complete = false;
-        dialogueState.fullText = "";
-        dialogueState.characters = [];
         dialogueState.advanceResolve = null;
         storyDialogueUi.hide();
       }
 
-      async function typeStoryLine(_text) {
-        // Character reveal is owned by shared-dialogue.js.
-      }
-
-      function advanceStoryDialogue() {
-        if (!dialogueState.active) return false;
-        const handled = storyDialogueUi.handleAdvance();
-        dialogueState.complete = storyDialogueUi.isComplete();
-        return handled;
-      }
-
       async function sayStory(text, _visibleMs, gapMs = 180) {
         showStoryLine(text);
-        typeStoryLine(text);
 
         await new Promise((resolve) => {
           dialogueState.advanceResolve = resolve;

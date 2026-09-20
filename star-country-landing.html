@@ -709,15 +709,8 @@
       .cloud-track { animation: none; }
     }
   
-    /* Character name colors: page-local fallback, independent of shared CSS cache. */
-    .tb-dialogue-layer[data-speaker="しおぽん"] .tb-dialogue-speaker { color:#FFCA7A !important; }
-    .tb-dialogue-layer[data-speaker="シオリエル"] .tb-dialogue-speaker { color:#6E5AFF !important; }
-    .tb-dialogue-layer[data-speaker="セレフィアス"] .tb-dialogue-speaker { color:#EAF3FF !important; text-shadow:0 0 7px rgba(167,210,255,.55); }
-    .tb-dialogue-layer[data-speaker="リュミエール"] .tb-dialogue-speaker { color:#F5E08C !important; }
-    .tb-dialogue-layer[data-speaker="シオン"] .tb-dialogue-speaker { color:#4A6BFF !important; }
-
   </style>
-  <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-speaker-colors-1" />
+  <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-dialogue-ui-v2" />
 </head>
 <body data-star-landing-revision="ground-pad-v11-dim-after-dismount" data-audio-autostart="true">
   <main id="viewport" aria-label="星門庭園 PAD離着陸場">
@@ -838,7 +831,7 @@
 
   <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
   <script src="./audio.js?v=20260919-roundtrip-1" defer></script>
-  <script src="./shared-dialogue.js?v=20260919-main-sync-1"></script>
+  <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v2"></script>
   <script>
     (() => {
       "use strict";

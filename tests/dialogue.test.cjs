@@ -238,14 +238,21 @@ test('event data combines multiline dialogue, looks, waits, steps and Shiopon bo
   assert.ok(events.lumiereGate.filter(command => command.type === 'dialogue').length < 36);
 });
 
-test('dialogue UI stays lightweight, multiline and safe-area aware', () => {
-  const css = fs.readFileSync('dialogue.css', 'utf8');
-  assert.match(css, /rgba\(24, 38, 82, 0\.87\)/);
-  assert.match(css, /white-space:\s*pre-line/);
+test('dialogue UI is shared, multiline and safe-area aware', () => {
+  const css = fs.readFileSync('shared-dialogue.css', 'utf8');
+  assert.match(css, /white-space:\s*pre-wrap/);
   assert.match(css, /safe-area-inset-bottom/);
-  assert.match(css, /max-height:\s*min\(34vh, 206px\)/);
+  assert.match(css, /safe-area-inset-left/);
   assert.match(css, /data-state="acting"/);
-  assert.doesNotMatch(css, /rgba\(11, 15, 39, 0\.94\)/);
+  assert.doesNotMatch(css, /!important|#prologue/);
+  for (const file of ['alenon.html', 'star-country-landing.html', 'star-country-landing-editor.html', 'index.html']) {
+    const html = fs.readFileSync(file, 'utf8');
+    assert.match(html, /shared-dialogue.css\?v=20260920-dialogue-ui-v2/);
+    assert.match(html, /shared-dialogue.js\?v=20260920-dialogue-ui-v2/);
+    for (const style of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) {
+      assert.doesNotMatch(style[1], /tb-dialogue-|#prologue-(?:dialogue|speaker|line)|#dialogue-next/);
+    }
+  }
 });
 
 test('tap during wait or actor motion finishes only that action and playback stays ordered', async () => {

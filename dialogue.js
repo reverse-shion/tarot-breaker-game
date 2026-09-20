@@ -393,13 +393,7 @@
 
   function setUiState(next) {
     dialogueUi?.setState(next);
-    const button = document.getElementById("dialogue-advance");
-    if (button) {
-      button.setAttribute(
-        "aria-label",
-        next === "acting" ? "会話演出を早送りする" : "会話を進める",
-      );
-    }
+
   }
 
   function makeTimerAction(duration) {
@@ -604,11 +598,7 @@
     story.joined = false;
     saveStory();
     story.player = { x: 724, y: 1015 };
-    const layer = document.getElementById("dialogue-layer");
-    if (layer) {
-      layer.hidden = true;
-      layer.dataset.state = "idle";
-    }
+    dialogueUi?.hide();
   }
 
   installControlsObserver();

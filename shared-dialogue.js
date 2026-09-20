@@ -130,12 +130,13 @@
       layer.dataset.actor = actor || "";
       layer.hidden = false;
 
+      const currentToken = token;
       requestAnimationFrame(() => {
+        if (!active || destroyed || currentToken !== token) return;
         layer.classList.add("visible");
         button.classList.add("visible");
       });
 
-      const currentToken = token;
       typeLine(String(fullText), currentToken);
       return currentToken;
     }
@@ -154,6 +155,7 @@
 
     function setState(state = "dialogue") {
       layer.dataset.state = state;
+      button.setAttribute("aria-label", state === "acting" ? "会話演出を早送りする" : "会話を進める");
       if (state === "acting") next.classList.remove("visible");
     }
 
@@ -229,7 +231,7 @@
   }
 
   window.TarotDialogueUI = Object.freeze({
-    version: "1.0.0",
+    version: "1.1.0",
     create,
     bind,
   });

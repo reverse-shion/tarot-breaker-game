@@ -2,6 +2,7 @@
    Canonical appearance/behavior source: Alenon prologue dialogue. */
 
 .tb-dialogue-layer {
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
   z-index: 2300;
@@ -16,7 +17,7 @@
 }
 
 .tb-dialogue-layer[hidden] {
-  display: none !important;
+  display: none;
 }
 
 .tb-dialogue-window {
@@ -39,6 +40,8 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity .2s ease, transform .25s ease;
+  font-family: Arial, sans-serif;
+  margin: 0;
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -60,7 +63,9 @@
 .tb-dialogue-speaker {
   display: block;
   margin-bottom: 7px;
-  color: rgba(226, 207, 158, .92);
+  color: var(--speaker-color, rgba(226, 207, 158, .92));
+  text-shadow: 0 0 2px var(--speaker-glow-near, transparent),
+    0 0 6px var(--speaker-glow-far, transparent);
   font-size: clamp(11px, 2.8vw, 13px);
   font-weight: 700;
   line-height: 1.2;
@@ -110,26 +115,35 @@
   animation: none;
 }
 
-/* Character name colors — official TAROT BREAKER UI palette */
-.tb-dialogue-layer[data-speaker="しおぽん"] .tb-dialogue-speaker {
-  color: #FFCA7A;
+/* Official name colors and static resonance light. Body text remains white. */
+.tb-dialogue-layer[data-speaker="シオン"] {
+  --speaker-color: #4A6BFF;
+  --speaker-glow-near: rgba(174, 199, 255, .80);
+  --speaker-glow-far: rgba(74, 107, 255, .24);
 }
 
-.tb-dialogue-layer[data-speaker="シオリエル"] .tb-dialogue-speaker {
-  color: #6E5AFF;
+.tb-dialogue-layer[data-speaker="しおぽん"] {
+  --speaker-color: #FFCA7A;
+  --speaker-glow-near: rgba(255, 231, 191, .30);
+  --speaker-glow-far: rgba(255, 202, 122, .10);
 }
 
-.tb-dialogue-layer[data-speaker="セレフィアス"] .tb-dialogue-speaker {
-  color: #EAF3FF;
-  text-shadow: 0 0 7px rgba(167, 210, 255, .55);
+.tb-dialogue-layer[data-speaker="シオリエル"] {
+  --speaker-color: #6E5AFF;
+  --speaker-glow-near: rgba(211, 192, 255, .75);
+  --speaker-glow-far: rgba(110, 90, 255, .22);
 }
 
-.tb-dialogue-layer[data-speaker="リュミエール"] .tb-dialogue-speaker {
-  color: #F5E08C;
+.tb-dialogue-layer[data-speaker="リュミエール"] {
+  --speaker-color: #F5E08C;
+  --speaker-glow-near: rgba(255, 244, 202, .28);
+  --speaker-glow-far: rgba(245, 224, 140, .09);
 }
 
-.tb-dialogue-layer[data-speaker="シオン"] .tb-dialogue-speaker {
-  color: #4A6BFF;
+.tb-dialogue-layer[data-speaker="セレフィアス"] {
+  --speaker-color: #EAF3FF;
+  --speaker-glow-near: rgba(167, 210, 255, .45);
+  --speaker-glow-far: rgba(167, 210, 255, .16);
 }
 
 @keyframes tb-dialogue-next-bob {
@@ -139,8 +153,8 @@
 
 @media (max-width: 520px) {
   .tb-dialogue-layer {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
     padding-bottom: max(26px, calc(env(safe-area-inset-bottom) + 20px));
   }
 
@@ -167,30 +181,5 @@
 
   .tb-dialogue-next.visible {
     animation: none;
-  }
-}
-
-
-/* Alenon compatibility: its original dialogue window keeps the historical ID,
-   but layout/behavior now comes from the shared wrapper. */
-#prologue-dialogue.tb-dialogue-window {
-  position: relative;
-  left: auto;
-  bottom: auto;
-  z-index: auto;
-  width: min(92vw, 720px);
-  transform: translateY(10px);
-  margin: 0;
-}
-
-.tb-dialogue-layer.visible #prologue-dialogue.tb-dialogue-window {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-@media (max-width: 520px) {
-  #prologue-dialogue.tb-dialogue-window {
-    width: min(92vw, 460px);
   }
 }
