@@ -1657,7 +1657,8 @@
     if (!enteringFromLanding) {
       if (start) start.disabled = true;
       window.TarotJourney?.reset();
-      location.href = "./alenon.html?from=title&build=6bc2a38e";
+      const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
+      location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}`;
       return;
     }
 
