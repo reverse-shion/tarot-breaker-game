@@ -2304,7 +2304,7 @@
       alenonWindAmbience.loop = true;
       alenonWindAmbience.preload = "auto";
       alenonWindAmbience.volume = 0;
-      const ALENON_WIND_VOLUME = 0.55;
+      const ALENON_WIND_VOLUME = 0.65;
       let alenonWindFadeToken = 0;
       let alenonWindWanted = false;
       let alenonWindUnlocked = false;
@@ -2326,8 +2326,8 @@
       // barely audible, then presence rises smoothly toward the Orb.
       const ALENON_ORB_FADE_START = 0.20;
       // Measured source loudness: wind -23.4 LUFS, Orb -25.0 LUFS.
-      // Keep the Orb a subordinate local layer under the .55 wind ambience.
-      const ALENON_ORB_MAX_VOLUME = 0.20;
+      // Keep the Orb a subordinate local layer under the .65 wind ambience.
+      const ALENON_ORB_MAX_VOLUME = 0.30;
       const ALENON_ORB_VOLUME_SMOOTHING = 9; // dt is seconds
       // Spatial gain already keeps the Orb subordinate. Do not dynamically
       // re-attenuate it from instantaneous wind/orb RMS, because that makes the
@@ -2476,7 +2476,7 @@
         // The spatial curve is authoritative for Orb loudness. The previous
         // instantaneous RMS cap often reduced .14 back toward the old perceived
         // level, so changing MAX_VOLUME/FADE_START barely changed what users heard.
-        // Wind remains the dominant bed at .55 while Orb tops out at .20.
+        // Wind remains the dominant bed at .65 while Orb tops out at .30.
         const target = ALENON_ORB_MAX_VOLUME * area;
         const blend = 1 - Math.exp(-ALENON_ORB_VOLUME_SMOOTHING * Math.max(0, dt));
         // Smooth entry; descending levels never trail behind the spatial limit.
