@@ -1961,6 +1961,14 @@
         animation: none !important;
       }
     }
+  
+    /* Character name colors: page-local fallback, independent of shared CSS cache. */
+    .tb-dialogue-layer[data-speaker="しおぽん"] .tb-dialogue-speaker { color:#FFCA7A !important; }
+    .tb-dialogue-layer[data-speaker="シオリエル"] .tb-dialogue-speaker { color:#6E5AFF !important; }
+    .tb-dialogue-layer[data-speaker="セレフィアス"] .tb-dialogue-speaker { color:#EAF3FF !important; text-shadow:0 0 7px rgba(167,210,255,.55); }
+    .tb-dialogue-layer[data-speaker="リュミエール"] .tb-dialogue-speaker { color:#F5E08C !important; }
+    .tb-dialogue-layer[data-speaker="シオン"] .tb-dialogue-speaker { color:#4A6BFF !important; }
+
   </style>
   <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-speaker-colors-1" />
 </head>
