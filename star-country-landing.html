@@ -885,14 +885,11 @@
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
-      const unifiedEditorMode =
-        params.get("editor") === "1" ||
-        params.get("collision") === "1" ||
-        params.get("passage") === "1" ||
-        params.get("layerEdit") === "1" ||
-        location.hash === "#editor";
+      // Production page is always normal gameplay.
+      // Map editing is intentionally disabled on this main HTML.
+      const unifiedEditorMode = false;
       const collisionMode = false;
-      const passageMode = unifiedEditorMode;
+      const passageMode = false;
       const padEditMode =
         !collisionMode &&
         (params.get("padEdit") === "1" || params.get("debug") === "1");
