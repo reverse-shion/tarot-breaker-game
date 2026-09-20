@@ -559,6 +559,47 @@
       opacity: .30;
     }
 
+    body.passage-mode #collision-overlay,
+    body.passage-mode #passage-overlay { display:block !important; }
+    body.passage-mode .shion-actor,
+    body.passage-mode .shion-shadow,
+    body.passage-mode .shiopon-actor,
+    body.passage-mode .shiopon-shadow,
+    body.passage-mode #joystick,
+    body.passage-mode #guide,
+    body.passage-mode #flight-status,
+    body.passage-mode #pad-editor,
+    body.passage-mode #pad-editor-toggle,
+    body.passage-mode #collision-toggle,
+    body.passage-mode #collision-panel,
+    body.passage-mode #audio-toggle,
+    body.passage-mode .move-target { display:none !important; }
+    body.passage-mode #collision-overlay .collision-area {
+      fill:rgba(62,167,255,.20);
+      stroke:rgba(115,211,255,.96);
+      stroke-width:3;
+      vector-effect:non-scaling-stroke;
+    }
+    body.passage-mode #passage-overlay .passage-area {
+      fill:rgba(255,171,58,.24);
+      stroke:rgba(255,195,92,.98);
+      stroke-width:3;
+      vector-effect:non-scaling-stroke;
+    }
+    body.passage-mode #passage-overlay .passage-current {
+      fill:rgba(255,211,92,.12);
+      stroke:#ffe08a;
+      stroke-width:3;
+      stroke-dasharray:9 7;
+      vector-effect:non-scaling-stroke;
+    }
+    body.passage-mode #passage-overlay .passage-point {
+      fill:#fff1a6;
+      stroke:#7a4d00;
+      stroke-width:2;
+      vector-effect:non-scaling-stroke;
+    }
+
     .collision-top {
       display: flex;
       align-items: center;
@@ -678,9 +719,11 @@
     <svg id="passage-overlay" viewBox="0 0 1448 1086" aria-hidden="true" style="display:none;position:absolute;inset:0;z-index:60;width:1448px;height:1086px;pointer-events:none"></svg>
     </section>
 
-    <aside id="passage-panel" hidden style="position:fixed;left:10px;right:10px;bottom:10px;z-index:5000;margin:auto;max-width:560px;padding:10px;border-radius:16px;background:rgba(4,21,27,.94);color:#fff;font:12px system-ui;touch-action:auto">
-      <b>PAD 通路・背景裏側エディタ</b><div style="margin:6px 0;opacity:.8">タップ＝裏側を通る範囲の頂点 / 3点以上で「範囲を確定」</div>
-      <div id="passage-status">範囲 0 / 点 0</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px"><button id="passage-undo">1点戻す</button><button id="passage-finish">範囲を確定</button><button id="passage-undo-area">1範囲戻す</button><button id="passage-clear">全消去</button><button id="passage-copy">JSONコピー</button></div>
+    <aside id="passage-panel" hidden style="position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:5000;margin:auto;max-width:560px;padding:10px;border:1px solid rgba(255,194,92,.40);border-radius:16px;background:rgba(30,20,5,.92);color:#fff;font:12px system-ui;touch-action:auto">
+      <b>PAD 統合当たり判定エディタ</b>
+      <div style="margin:6px 0;line-height:1.45;opacity:.82">水色＝通常の歩行可能範囲（参照のみ） / オレンジ＝背景裏通路（編集対象）<br>タップ＝頂点追加 / ドラッグ＝マップ移動 / ピンチ＝拡大縮小</div>
+      <div id="passage-status">背景裏 0範囲 / 作成中 0点</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px"><button id="passage-undo">1点戻す</button><button id="passage-finish">範囲を確定</button><button id="passage-undo-area">1範囲戻す</button><button id="passage-center">全体表示</button><button id="passage-clear">背景裏だけ全消去</button><button id="passage-copy">JSONコピー</button></div>
     </aside>
 
     <div id="flight-status" role="status" aria-live="polite" hidden></div>
@@ -819,8 +862,10 @@
       const PAD_EDIT_STORAGE_KEY = "tarot-breaker:star-landing-pad-layout-v1";
       const COLLISION_URL = "./assets/maps/star-landing/collision.json?v=20260920-collision-2";
       const COLLISION_DRAFT_KEY = "tarot-breaker:star-landing-collision-v2";
-      const PASSAGE_DRAFT_KEY = "tarot-breaker:star-landing-passage-v1";
+      const PASSAGE_URL = "./assets/maps/star-landing/passage-layers.json?v=20260920-integrated-editor-1";
+      const PASSAGE_DRAFT_KEY = "tarot-breaker:star-landing-passage-v2";
       let passageAreas = [];
+      let editorScale = 1;
 
       const padEditorToggle = document.getElementById("pad-editor-toggle");
       const padEditor = document.getElementById("pad-editor");
@@ -1747,7 +1792,7 @@
         // Collision editor needs free canvas panning even beyond the normal
         // gameplay camera limits. Apply its pan after clamping the gameplay
         // focus so dragging always moves the map on mobile.
-        if (collisionMode) {
+        if (collisionMode || passageMode) {
           cameraTx -= collisionPanX * worldScale;
           cameraTy -= collisionPanY * worldScale;
         }
@@ -1759,21 +1804,181 @@
         return passageAreas.some(area => pointInPoly(x, y, area.points));
       }
 
+      async function loadPassageLayers() {
+        try {
+          const response = await fetch(PASSAGE_URL, { cache: "no-store" });
+          if (response.ok) {
+            const data = await response.json();
+            if (data?.map === "star-landing" && Array.isArray(data?.passageAreas)) {
+              passageAreas = data.passageAreas
+                .filter(a => a?.type === "poly" && Array.isArray(a.points) && a.points.length >= 3)
+                .map(a => ({type:"poly", points:a.points.map(p => [Number(p[0]), Number(p[1])])}));
+            }
+          }
+        } catch (_) {}
+        if (passageMode) {
+          try {
+            const draft = JSON.parse(localStorage.getItem(PASSAGE_DRAFT_KEY) || "null");
+            if (Array.isArray(draft?.passageAreas)) {
+              passageAreas = draft.passageAreas
+                .filter(a => a?.type === "poly" && Array.isArray(a.points) && a.points.length >= 3)
+                .map(a => ({type:"poly", points:a.points.map(p => [Number(p[0]), Number(p[1])])}));
+            }
+          } catch (_) {}
+        }
+      }
+
       function initPassageEditor() {
         if (!passageMode) return;
-        const panel=document.getElementById("passage-panel"), overlay=document.getElementById("passage-overlay"), status=document.getElementById("passage-status");
-        panel.hidden=false; panel.style.display="block"; overlay.style.display="block"; document.body.classList.add("passage-mode"); actor.style.display="none"; shadow.style.display="none"; if (shioponActor) shioponActor.style.display="none"; if (shioponShadow) shioponShadow.style.display="none"; ride.mode="ground"; let current=[];
-        try { const d=JSON.parse(localStorage.getItem(PASSAGE_DRAFT_KEY)||"null"); if(Array.isArray(d?.passageAreas)) passageAreas=d.passageAreas; } catch(_) {}
-        const ns="http://www.w3.org/2000/svg";
-        const save=()=>localStorage.setItem(PASSAGE_DRAFT_KEY,JSON.stringify({version:1,map:"star-landing",referenceSize:{width:WORLD_W,height:WORLD_H},passageAreas}));
-        const render=()=>{ overlay.innerHTML=""; passageAreas.forEach(a=>{const p=document.createElementNS(ns,"polygon");p.setAttribute("points",a.points.map(v=>v.join(",")).join(" "));p.setAttribute("fill","rgba(80,170,255,.25)");p.setAttribute("stroke","#8ee7ff");p.setAttribute("stroke-width","3");overlay.appendChild(p)}); if(current.length){const p=document.createElementNS(ns,"polyline");p.setAttribute("points",current.map(v=>v.join(",")).join(" "));p.setAttribute("fill","rgba(255,210,80,.12)");p.setAttribute("stroke","#ffd66b");p.setAttribute("stroke-width","3");overlay.appendChild(p)} status.textContent="範囲 "+passageAreas.length+" / 点 "+current.length; };
-        viewport.addEventListener("pointerup",e=>{ if(e.target.closest("#passage-panel")) return; e.preventDefault(); e.stopImmediatePropagation(); const p=screenToWorld(e.clientX,e.clientY); current.push([Math.round(p.x),Math.round(p.y)]); render(); },true);
-        document.getElementById("passage-undo").onclick=()=>{current.pop();render()};
-        document.getElementById("passage-finish").onclick=()=>{if(current.length>=3){passageAreas.push({type:"poly",points:current});current=[];save();render()}};
-        document.getElementById("passage-undo-area").onclick=()=>{passageAreas.pop();save();render()};
-        document.getElementById("passage-clear").onclick=()=>{passageAreas=[];current=[];save();render()};
-        document.getElementById("passage-copy").onclick=async()=>{const s=JSON.stringify({version:1,map:"star-landing",referenceSize:{width:WORLD_W,height:WORLD_H},passageAreas},null,2);try{await navigator.clipboard.writeText(s);status.textContent="JSONをコピーしました"}catch(_){prompt("JSON",s)}};
-        render();
+        const panel = document.getElementById("passage-panel");
+        const overlay = document.getElementById("passage-overlay");
+        const statusEl = document.getElementById("passage-status");
+        panel.hidden = false;
+        document.body.classList.add("passage-mode");
+        ride.mode = "ground";
+        clearTarget();
+        keys.clear();
+        stick.active = false;
+        joystick.hidden = true;
+
+        const ns = "http://www.w3.org/2000/svg";
+        let current = [];
+        let gesture = null;
+        const pointers = new Map();
+        let pinchStart = null;
+
+        const payload = () => ({
+          version: 1,
+          map: "star-landing",
+          referenceSize: {width: WORLD_W, height: WORLD_H},
+          passageAreas: passageAreas.map(a => ({
+            type: "poly",
+            points: a.points.map(p => [Math.round(p[0]), Math.round(p[1])])
+          }))
+        });
+        const save = () => {
+          try { localStorage.setItem(PASSAGE_DRAFT_KEY, JSON.stringify(payload())); } catch (_) {}
+        };
+        const poly = (points, className) => {
+          const p = document.createElementNS(ns, "polygon");
+          p.setAttribute("class", className);
+          p.setAttribute("points", points.map(v => v.join(",")).join(" "));
+          return p;
+        };
+        const renderWalk = () => {
+          collisionOverlay.replaceChildren();
+          landingWalkAreas.forEach(a => collisionOverlay.appendChild(poly(a.points, "collision-area")));
+        };
+        const render = () => {
+          overlay.replaceChildren();
+          passageAreas.forEach(a => overlay.appendChild(poly(a.points, "passage-area")));
+          if (current.length) {
+            overlay.appendChild(poly(current, "passage-current"));
+            current.forEach(pt => {
+              const c = document.createElementNS(ns, "circle");
+              c.setAttribute("class", "passage-point");
+              c.setAttribute("cx", pt[0]); c.setAttribute("cy", pt[1]); c.setAttribute("r", "5");
+              overlay.appendChild(c);
+            });
+          }
+          statusEl.textContent = `背景裏 ${passageAreas.length}範囲 / 作成中 ${current.length}点`;
+        };
+        const finishCurrent = () => {
+          if (current.length < 3) return false;
+          passageAreas.push({type:"poly", points:current.map(p => [Math.round(p[0]),Math.round(p[1])])});
+          current = []; save(); render(); return true;
+        };
+        const fitEditorWorld = () => {
+          editorScale = Math.min(innerWidth / WORLD_W, innerHeight / WORLD_H);
+          worldScale = Math.max(.25, Math.min(2.5, editorScale));
+          collisionPanX = WORLD_W / 2 - innerWidth / (2 * worldScale);
+          collisionPanY = WORLD_H / 2 - innerHeight / (2 * worldScale);
+          world.style.setProperty("--actor-inverse-scale", String(1 / worldScale));
+          syncCamera();
+        };
+
+        document.getElementById("passage-undo").onclick = () => { current.pop(); render(); };
+        document.getElementById("passage-finish").onclick = () => {
+          if (!finishCurrent()) {
+            statusEl.textContent = "3点以上で範囲を確定できます";
+            setTimeout(render, 900);
+          }
+        };
+        document.getElementById("passage-undo-area").onclick = () => {
+          if (current.length) current = [];
+          else passageAreas.pop();
+          save(); render();
+        };
+        document.getElementById("passage-center").onclick = fitEditorWorld;
+        document.getElementById("passage-clear").onclick = () => {
+          if (!passageAreas.length && !current.length) return;
+          if (!confirm("背景裏通路だけを全消去しますか？\n通常の歩行可能範囲は変更されません。")) return;
+          passageAreas = []; current = []; save(); render();
+        };
+        document.getElementById("passage-copy").onclick = async () => {
+          if (current.length >= 3) finishCurrent();
+          const out = JSON.stringify(payload(), null, 2);
+          try { await navigator.clipboard.writeText(out); statusEl.textContent = "背景裏通路JSONをコピーしました"; setTimeout(render,1100); }
+          catch (_) { prompt("passage-layers.json", out); }
+        };
+
+        viewport.addEventListener("pointerdown", e => {
+          if (!document.body.classList.contains("passage-mode") || e.target.closest?.("#passage-panel")) return;
+          if (e.button != null && e.button !== 0) return;
+          e.preventDefault(); e.stopImmediatePropagation();
+          pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
+          viewport.setPointerCapture?.(e.pointerId);
+          if (pointers.size === 2) {
+            const pts=[...pointers.values()];
+            pinchStart={distance:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y),scale:worldScale};
+            gesture=null; return;
+          }
+          gesture={id:e.pointerId,x:e.clientX,y:e.clientY,panX:collisionPanX,panY:collisionPanY,moved:false,time:performance.now()};
+        }, {passive:false,capture:true});
+
+        viewport.addEventListener("pointermove", e => {
+          if (!pointers.has(e.pointerId) || !document.body.classList.contains("passage-mode")) return;
+          e.preventDefault(); e.stopImmediatePropagation();
+          pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+          if (pointers.size >= 2 && pinchStart) {
+            const pts=[...pointers.values()];
+            const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+            worldScale=Math.max(.25,Math.min(2.5,pinchStart.scale*(d/Math.max(1,pinchStart.distance))));
+            world.style.setProperty("--actor-inverse-scale",String(1/worldScale));
+            syncCamera(); return;
+          }
+          if (!gesture || gesture.id !== e.pointerId) return;
+          const dx=e.clientX-gesture.x, dy=e.clientY-gesture.y;
+          if (!gesture.moved && Math.hypot(dx,dy)>=9) gesture.moved=true;
+          if (gesture.moved) {
+            collisionPanX=gesture.panX-dx/worldScale;
+            collisionPanY=gesture.panY-dy/worldScale;
+            syncCamera();
+          }
+        }, {passive:false,capture:true});
+
+        const endGesture = e => {
+          if (!pointers.has(e.pointerId)) return;
+          e.preventDefault(); e.stopImmediatePropagation();
+          pointers.delete(e.pointerId);
+          if (pinchStart) {
+            if (pointers.size < 2) pinchStart=null;
+            gesture=null;
+          } else if (gesture && gesture.id === e.pointerId) {
+            const elapsed=performance.now()-gesture.time;
+            if (!gesture.moved && elapsed<650) {
+              const p=screenToWorld(e.clientX,e.clientY);
+              current.push([Math.round(clamp(p.x,0,WORLD_W)),Math.round(clamp(p.y,0,WORLD_H))]);
+              render();
+            }
+            gesture=null;
+          }
+          if (viewport.hasPointerCapture?.(e.pointerId)) viewport.releasePointerCapture(e.pointerId);
+        };
+        viewport.addEventListener("pointerup", endGesture, {passive:false,capture:true});
+        viewport.addEventListener("pointercancel", endGesture, {passive:false,capture:true});
+
+        renderWalk(); render(); fitEditorWorld();
       }
 
       function setActorPosition() {
@@ -2127,7 +2332,7 @@
       }
 
       viewport.addEventListener("pointerdown", (event) => {
-        if (collisionMode) return;
+        if (collisionMode || passageMode) return;
         if (event.target.closest?.("#pad-editor, #pad-editor-toggle, .tb-dialogue-layer")) return;
         if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         if (event.button != null && event.button !== 0) return;
@@ -2197,7 +2402,7 @@
       viewport.addEventListener("pointercancel", endPointer, { passive:false });
 
       addEventListener("keydown", (event) => {
-        if (collisionMode) return;
+        if (collisionMode || passageMode) return;
         if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
         if (["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(key)) {
@@ -2227,7 +2432,7 @@
         const dt = Math.min((now - last) / 1000, .05);
         last = now;
 
-        if (collisionMode) {
+        if (collisionMode || passageMode) {
           player.moving = false;
           setActorPosition();
           setActorVisual();
@@ -2416,8 +2621,9 @@
 
       async function boot() {
         await loadLandingCollision();
+        await loadPassageLayers();
 
-        if (collisionMode) {
+        if (collisionMode || passageMode) {
           ride.mode = "ground";
           ride.x = PAD_HOME.x;
           ride.y = PAD_HOME.y;
@@ -2429,7 +2635,7 @@
         initPadEditor();
         initPassageEditor();
         if (passageMode) { clearTarget(); keys.clear(); joystick.hidden = true; }
-        applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
+        applyPadEditorLayout({ movePlayer: ride.mode === "ground" && !passageMode });
         if (returningFromGarden && !collisionMode && !padEditMode) {
           const entrance = nearestGroundPoint({x: 724, y: GARDEN_EXIT_Y + 42});
           player.x = entrance.x; player.y = entrance.y; player.dir = "down";
