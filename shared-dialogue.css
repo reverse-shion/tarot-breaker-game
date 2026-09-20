@@ -115,35 +115,36 @@
   animation: none;
 }
 
-/* Official name colors and static resonance light. Body text remains white. */
+/* Official speaker-name rule: keep the glyph core readable in soft white,
+   and express each character through a restrained resonance glow. */
 .tb-dialogue-layer[data-speaker="シオン"] {
-  --speaker-color: #4A6BFF;
-  --speaker-glow-near: rgba(174, 199, 255, .80);
-  --speaker-glow-far: rgba(74, 107, 255, .24);
+  --speaker-color: #F7FAFF;
+  --speaker-glow-near: rgba(74, 107, 255, .88);
+  --speaker-glow-far: rgba(74, 107, 255, .34);
 }
 
 .tb-dialogue-layer[data-speaker="しおぽん"] {
-  --speaker-color: #FFCA7A;
-  --speaker-glow-near: rgba(255, 231, 191, .30);
-  --speaker-glow-far: rgba(255, 202, 122, .10);
+  --speaker-color: #FFF9EF;
+  --speaker-glow-near: rgba(255, 202, 122, .82);
+  --speaker-glow-far: rgba(255, 202, 122, .30);
 }
 
 .tb-dialogue-layer[data-speaker="シオリエル"] {
-  --speaker-color: #6E5AFF;
-  --speaker-glow-near: rgba(211, 192, 255, .75);
-  --speaker-glow-far: rgba(110, 90, 255, .22);
+  --speaker-color: #FBF9FF;
+  --speaker-glow-near: rgba(110, 90, 255, .86);
+  --speaker-glow-far: rgba(110, 90, 255, .32);
 }
 
 .tb-dialogue-layer[data-speaker="リュミエール"] {
-  --speaker-color: #F5E08C;
-  --speaker-glow-near: rgba(255, 244, 202, .28);
-  --speaker-glow-far: rgba(245, 224, 140, .09);
+  --speaker-color: #FFFDF5;
+  --speaker-glow-near: rgba(245, 224, 140, .80);
+  --speaker-glow-far: rgba(245, 224, 140, .28);
 }
 
 .tb-dialogue-layer[data-speaker="セレフィアス"] {
-  --speaker-color: #EAF3FF;
-  --speaker-glow-near: rgba(167, 210, 255, .45);
-  --speaker-glow-far: rgba(167, 210, 255, .16);
+  --speaker-color: #FFFFFF;
+  --speaker-glow-near: rgba(167, 210, 255, .82);
+  --speaker-glow-far: rgba(167, 210, 255, .30);
 }
 
 @keyframes tb-dialogue-next-bob {
