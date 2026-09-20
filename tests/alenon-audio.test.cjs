@@ -37,13 +37,14 @@ function harness(ignoreVolume = false) {
 
 test('A-F: hall centre audible, perimeter fades, stairs/outside exactly zero, re-entry fades', async () => {
   const h=harness(); await h.start(); const orb=h.audios.find(a=>a.src.includes('orb-resonance'));
-  h.point(716,264);h.tick();assert.ok(h.api.volume>.099 && h.api.volume<=.1);
+  h.point(716,264);h.tick();assert.ok(h.api.volume>.137 && h.api.volume<=.14);
   const levels=[];
-  for(const r of [.7,.85,.95,.99,1,1.2,3]) {h.point(716,264+82*r);h.tick();levels.push(h.api.volume);}
-  assert.ok(levels[0]>levels[1] && levels[1]>levels[2] && levels[2]>levels[3]);
-  assert.deepEqual(levels.slice(4),[0,0,0]);assert.equal(orb.volume,0);assert.equal(orb.muted,true);assert.equal(orb.paused,false);
+  for(const r of [.2,.5,.7,.8,.9,.95,.99,1,1.2,3]) {h.point(716,264+82*r);h.tick();levels.push(h.api.volume);}
+  assert.ok(levels[0]>levels[1] && levels[1]>levels[2] && levels[2]>levels[3] &&
+    levels[3]>levels[4] && levels[4]>levels[5] && levels[5]>levels[6]);
+  assert.deepEqual(levels.slice(7),[0,0,0]);assert.equal(orb.volume,0);assert.equal(orb.muted,true);assert.equal(orb.paused,false);
   assert.equal(h.api.mix.orb.gain.gain.value,0);
-  h.point(716,264);h.tick(1);assert.ok(h.api.volume>0 && h.api.volume<.02);h.tick();assert.ok(h.api.volume>.099);
+  h.point(716,264);h.tick(1);assert.ok(h.api.volume>0 && h.api.volume<.02);h.tick();assert.ok(h.api.volume>.137);
 });
 
 test('all ellipse directions and map scaling use ground coordinates; camera cannot change boundary', async () => {
@@ -52,7 +53,7 @@ test('all ellipse directions and map scaling use ground coordinates; camera cann
     h.layout.groundS={x:13,y:-12,scale};h.worldScale=viewport/390;
     for(let angle=0;angle<Math.PI*2;angle+=Math.PI/8) {
       h.point(716+170*Math.cos(angle)*1.001,264+82*Math.sin(angle)*1.001);h.tick(1);assert.equal(h.api.volume,0);
-      h.point(716+170*Math.cos(angle)*.5,264+82*Math.sin(angle)*.5);h.tick();assert.ok(h.api.volume>.099);
+      h.point(716+170*Math.cos(angle)*.5,264+82*Math.sin(angle)*.5);h.tick();assert.ok(h.api.volume>.09);
     }
   }
 });
