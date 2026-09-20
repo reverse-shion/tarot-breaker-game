@@ -1,0 +1,104 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const html = fs.readFileSync('alenon.html', 'utf8');
+const audioCode = html.slice(html.indexOf('      // Alenon ambience:'), html.indexOf('      tarotFront.src ='));
+function harness(ignoreVolume = false) {
+  const audios = [], frames = [], contexts = [];
+  class Audio {
+    constructor(src) { this.src = src; this.paused = true; this.muted = false; this._volume = 1; this.playCalls = 0; audios.push(this); }
+    get volume() { return ignoreVolume ? 1 : this._volume; }
+    set volume(v) { if (!ignoreVolume) this._volume = v; }
+    play() { this.playCalls++; this.paused = false; return Promise.resolve(); }
+    pause() { this.paused = true; }
+  }
+  class Context {
+    constructor() { this.state = 'suspended'; this.destination = {}; this.sources = []; this.meters = []; contexts.push(this); }
+    resume() { this.state = 'running'; return Promise.resolve(); }
+    createMediaElementSource(audio) {
+      assert.ok(!this.sources.some(s => s.audio === audio), 'one source per audio');
+      const source = {audio, connect(node) { this.output = node; }}; this.sources.push(source); return source;
+    }
+    createAnalyser() { const meter = {level: 0.1, connect(node) { this.output = node; }, getFloatTimeDomainData(a) { a.fill(this.level); }}; this.meters.push(meter); return meter; }
+    createGain() { return {gain: {value: 1}, connect(node) { this.output = node; }}; }
+  }
+  const sandbox = { Audio, Float32Array, Math, Promise, performance:{now:()=>0}, requestAnimationFrame:f=>frames.push(f),
+    WORLD_W:1448, WORLD_H:1086, player:{x:716,y:254.1}, layout:{groundS:{x:0,y:-12,scale:.86}}, AudioContext:Context };
+  sandbox.window = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(audioCode + '\nthis.api={unlockAlenonAudio,startAlenonWind,startAlenonOrbResonance,stopAlenonOrbResonance,updateAlenonOrbResonance,alenonOrbAreaLevel,setAlenonWindVolume,get mix(){return alenonMix},get volume(){return alenonOrbVolume}};', sandbox);
+  const h = { ...sandbox, api:sandbox.api, audios, frames, contexts };
+  h.point = (x,y) => {const g=h.layout.groundS; h.player.x=724+g.x+(x-724)*g.scale; h.player.y=543+g.y+(y-543)*g.scale;};
+  h.tick = (n=60, dt=1/60) => {for(let i=0;i<n;i++) h.api.updateAlenonOrbResonance(dt);};
+  h.start = async () => {await h.api.startAlenonWind();await h.api.startAlenonOrbResonance();await h.api.unlockAlenonAudio();h.api.setAlenonWindVolume(.55);};
+  return h;
+}
+
+test('A-F: hall centre audible, perimeter fades, stairs/outside exactly zero, re-entry fades', async () => {
+  const h=harness(); await h.start(); const orb=h.audios.find(a=>a.src.includes('orb-resonance'));
+  h.point(716,264);h.tick();assert.ok(h.api.volume>.099 && h.api.volume<=.1);
+  const levels=[];
+  for(const r of [.7,.85,.95,.99,1,1.2,3]) {h.point(716,264+82*r);h.tick();levels.push(h.api.volume);}
+  assert.ok(levels[0]>levels[1] && levels[1]>levels[2] && levels[2]>levels[3]);
+  assert.deepEqual(levels.slice(4),[0,0,0]);assert.equal(orb.volume,0);assert.equal(orb.muted,true);assert.equal(orb.paused,false);
+  assert.equal(h.api.mix.orb.gain.gain.value,0);
+  h.point(716,264);h.tick(1);assert.ok(h.api.volume>0 && h.api.volume<.02);h.tick();assert.ok(h.api.volume>.099);
+});
+
+test('all ellipse directions and map scaling use ground coordinates; camera cannot change boundary', async () => {
+  const h=harness();await h.start();
+  for(const scale of [.86,1,1.5]) for(const viewport of [390,844,1448]) {
+    h.layout.groundS={x:13,y:-12,scale};h.worldScale=viewport/390;
+    for(let angle=0;angle<Math.PI*2;angle+=Math.PI/8) {
+      h.point(716+170*Math.cos(angle)*1.001,264+82*Math.sin(angle)*1.001);h.tick(1);assert.equal(h.api.volume,0);
+      h.point(716+170*Math.cos(angle)*.5,264+82*Math.sin(angle)*.5);h.tick();assert.ok(h.api.volume>.099);
+    }
+  }
+});
+
+test('iOS-style ignored volume writes still have exact zero output through gain + mute', async () => {
+  const h=harness(true);await h.start();h.point(716,264);h.tick();assert.ok(h.api.volume>0);
+  h.point(716,400);h.tick(1);assert.equal(h.api.mix.orb.gain.gain.value,0);
+  assert.equal(h.audios.find(a=>a.src.includes('orb-resonance')).muted,true);
+});
+
+test('wind quiet tail, fade-in and interrupted playback cannot leave Orb in front', async () => {
+  const h=harness();await h.start();h.point(716,264);h.tick();
+  h.api.mix.wind.meter.level=.002;h.api.mix.orb.meter.level=.1;h.tick(1);
+  assert.ok(h.api.volume*.1 <= .002*.55*.25 + 1e-10);
+  h.api.mix.wind.meter.level=0;h.tick(1);assert.equal(h.api.volume,0);
+  h.api.mix.wind.meter.level=.1;h.api.setAlenonWindVolume(0);h.tick();assert.equal(h.api.volume,0);
+  h.api.setAlenonWindVolume(.55);h.audios[0].pause();h.tick();assert.equal(h.api.volume,0);
+});
+
+test('G: return outside hall resumes wind, stays silent and never duplicates sources', async () => {
+  const h=harness();h.player.x=730.9;h.player.y=837.3;await h.start();h.tick();assert.equal(h.api.volume,0);assert.equal(h.audios[0].paused,false);
+  for(let i=0;i<4;i++) await h.api.unlockAlenonAudio();
+  assert.equal(h.contexts.length,1);assert.equal(h.api.mix.context.sources.length,2);
+  assert.equal(h.audios.filter(a=>a.src.includes('orb-resonance')).length,1);
+  assert.equal(h.api.mix.orb.source.output,h.api.mix.orb.meter);
+  assert.equal(h.api.mix.orb.meter.output,h.api.mix.orb.gain);
+});
+
+test('seconds-based entry smoothing behaves the same at 30/60/120 fps', async () => {
+  const levels=[];
+  for(const fps of [30,60,120]) {const h=harness();await h.start();h.point(716,264);h.tick(fps/2,1/fps);levels.push(h.api.volume);}
+  assert.ok(Math.max(...levels)-Math.min(...levels)<1e-12);
+});
+
+test('every movement-loop branch updates audio after movement before scheduling next frame', () => {
+  const loop=html.slice(html.indexOf('        function loop(now)'),html.indexOf('\n        resetPlayer();',html.indexOf('        function loop(now)')));
+  const branches=loop.split('requestAnimationFrame(loop);').slice(0,-1);
+  assert.equal(branches.length,5);
+  for(const branch of branches) assert.match(branch,/updateAlenonOrbResonance\(dt\);\s+setActorPosition\(\)/);
+  assert.match(loop,/\(now - last\) \/ 1000/);
+});
+
+
+test('first gesture primes both silent transports before asynchronous prologue playback', async () => {
+  const h=harness();await h.api.unlockAlenonAudio();
+  assert.equal(h.audios[0].paused,false);assert.equal(h.api.mix.wind.gain.gain.value,0);
+  const orb=h.audios.find(a=>a.src.includes('orb-resonance'));
+  assert.equal(orb.paused,false);assert.equal(orb.muted,true);assert.equal(h.api.mix.orb.gain.gain.value,0);
+});
