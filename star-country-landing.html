@@ -885,9 +885,12 @@
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
-      // Temporary map-editing state: this published landing page opens
-      // directly in the unified collision/background-passage editor.
-      const unifiedEditorMode = true;
+      const unifiedEditorMode =
+        params.get("editor") === "1" ||
+        params.get("collision") === "1" ||
+        params.get("passage") === "1" ||
+        params.get("layerEdit") === "1" ||
+        location.hash === "#editor";
       const collisionMode = false;
       const passageMode = unifiedEditorMode;
       const padEditMode =
