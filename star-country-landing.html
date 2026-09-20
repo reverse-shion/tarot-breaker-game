@@ -812,7 +812,7 @@
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
       const collisionMode = params.get("collision") === "1";
-      const passageMode = params.get("passage") === "1";
+      const passageMode = params.get("passage") === "1" || params.get("layerEdit") === "1";
       const padEditMode =
         !collisionMode &&
         (params.get("padEdit") === "1" || params.get("debug") === "1");
@@ -1762,12 +1762,12 @@
       function initPassageEditor() {
         if (!passageMode) return;
         const panel=document.getElementById("passage-panel"), overlay=document.getElementById("passage-overlay"), status=document.getElementById("passage-status");
-        panel.hidden=false; overlay.style.display="block"; ride.mode="ground"; let current=[];
+        panel.hidden=false; panel.style.display="block"; overlay.style.display="block"; document.body.classList.add("passage-mode"); ride.mode="ground"; let current=[];
         try { const d=JSON.parse(localStorage.getItem(PASSAGE_DRAFT_KEY)||"null"); if(Array.isArray(d?.passageAreas)) passageAreas=d.passageAreas; } catch(_) {}
         const ns="http://www.w3.org/2000/svg";
         const save=()=>localStorage.setItem(PASSAGE_DRAFT_KEY,JSON.stringify({version:1,map:"star-landing",referenceSize:{width:WORLD_W,height:WORLD_H},passageAreas}));
         const render=()=>{ overlay.innerHTML=""; passageAreas.forEach(a=>{const p=document.createElementNS(ns,"polygon");p.setAttribute("points",a.points.map(v=>v.join(",")).join(" "));p.setAttribute("fill","rgba(80,170,255,.25)");p.setAttribute("stroke","#8ee7ff");p.setAttribute("stroke-width","3");overlay.appendChild(p)}); if(current.length){const p=document.createElementNS(ns,"polyline");p.setAttribute("points",current.map(v=>v.join(",")).join(" "));p.setAttribute("fill","rgba(255,210,80,.12)");p.setAttribute("stroke","#ffd66b");p.setAttribute("stroke-width","3");overlay.appendChild(p)} status.textContent="範囲 "+passageAreas.length+" / 点 "+current.length; };
-        viewport.addEventListener("pointerup",e=>{ if(e.target.closest("#passage-panel")) return; const p=screenToWorld(e.clientX,e.clientY); current.push([Math.round(p.x),Math.round(p.y)]); render(); },true);
+        viewport.addEventListener("pointerup",e=>{ if(e.target.closest("#passage-panel")) return; e.preventDefault(); e.stopImmediatePropagation(); const p=screenToWorld(e.clientX,e.clientY); current.push([Math.round(p.x),Math.round(p.y)]); render(); },true);
         document.getElementById("passage-undo").onclick=()=>{current.pop();render()};
         document.getElementById("passage-finish").onclick=()=>{if(current.length>=3){passageAreas.push({type:"poly",points:current});current=[];save();render()}};
         document.getElementById("passage-undo-area").onclick=()=>{passageAreas.pop();save();render()};
@@ -2428,6 +2428,7 @@
 
         initPadEditor();
         initPassageEditor();
+        if (passageMode) { clearTarget(); keys.clear(); joystick.hidden = true; }
         applyPadEditorLayout({ movePlayer: ride.mode === "ground" });
         if (returningFromGarden && !collisionMode && !padEditMode) {
           const entrance = nearestGroundPoint({x: 724, y: GARDEN_EXIT_Y + 42});
