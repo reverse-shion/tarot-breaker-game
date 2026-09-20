@@ -9,12 +9,13 @@ const audioCode = html.slice(html.indexOf('      // Alenon ambience:'), html.ind
 function harness(search = '', {
   playReject = false, resumeStaysSuspended = false, resumeReject = false, sourceThrows = false,
 } = {}) {
-  const panels = [], intervals = [], listeners = new Map();
+  const panels = [], intervals = [], audios = [], listeners = new Map();
   class Audio {
     constructor(src) {
       this.src = src; this.paused = true; this.volume = 1; this.muted = false;
       this.readyState = 4; this.networkState = 1; this.currentTime = 0; this.ended = false;
       this.error = null;
+      audios.push(this);
     }
     play() {
       if (playReject && this.src.includes('wind-ambience')) {
@@ -63,9 +64,9 @@ function harness(search = '', {
   sandbox.addEventListener = (name, callback) => { listeners.set(name, callback); };
   vm.createContext(sandbox);
   vm.runInContext(audioCode + '\nthis.api={initAlenonAudioDiagnostic,unlockAlenonAudio,startAlenonWind,' +
-    'startAlenonOrbResonance,setAlenonWindVolume,classifyAlenonAudio,ensureAlenonMix,' +
+    'startAlenonOrbResonance,updateAlenonOrbResonance,setAlenonWindVolume,classifyAlenonAudio,ensureAlenonMix,' +
     'get debug(){return alenonAudioDiagnostic},get mix(){return alenonMix}};', sandbox);
-  return { ...sandbox, api: sandbox.api, panels, intervals, listeners };
+  return { ...sandbox, api: sandbox.api, panels, intervals, listeners, audios };
 }
 
 test('normal route creates no panel or diagnostic timer and still starts wind', async () => {
@@ -160,6 +161,36 @@ test('Orb Web Audio setup failure cannot prevent native wind transport', async (
   assert.match(h.panels[0].textContent, /playback=native route=NO gain=-/);
 });
 
+test('native Orb trial bypasses media source graph, stays muted outside hall and reports uncertain balance', async () => {
+  const h = harness('?audioDebug=1&orbOutput=native', { sourceThrows: true });
+  h.api.initAlenonAudioDiagnostic();
+  await h.api.unlockAlenonAudio();
+  await h.api.startAlenonWind();
+  h.api.setAlenonWindVolume(0.65);
+  await h.api.startAlenonOrbResonance();
+  const orb = h.audios.find(audio => audio.src.includes('orb-resonance'));
+  assert.equal(h.api.mix, null);
+  assert.equal(orb.paused, false);
+  assert.equal(orb.muted, true);
+  h.api.updateAlenonOrbResonance(1);
+  assert.equal(orb.muted, false);
+  assert.ok(orb.volume > 0 && orb.volume <= .30);
+  h.player.y = 500;
+  h.api.updateAlenonOrbResonance(1);
+  assert.equal(orb.muted, true);
+  assert.equal(orb.volume, 0);
+  h.intervals[0].callback();
+  assert.match(h.panels[0].textContent, /ORB NATIVE TRIAL — CHECK AUDIBILITY AND BALANCE/);
+  assert.match(h.panels[0].textContent, /Orb: wanted=YES[\s\S]*playback=native route=NO gain=-/);
+});
+
+test('native Orb request alone has no authority without audioDebug=1', async () => {
+  const h = harness('?orbOutput=native');
+  await h.api.unlockAlenonAudio();
+  assert.ok(h.api.mix?.orb);
+  assert.equal(h.api.debug, null);
+});
+
 test('title forwards audioDebug only when opt-in; normal destination remains unchanged', () => {
   const game = fs.readFileSync('game.js', 'utf8');
   const start = game.indexOf('    if (!enteringFromLanding) {', game.indexOf('  function begin(event) {'));
@@ -167,6 +198,8 @@ test('title forwards audioDebug only when opt-in; normal destination remains unc
   for (const [search, expected] of [
     ['', './alenon.html?from=title&build=6bc2a38e'],
     ['?audioDebug=1', './alenon.html?from=title&build=6bc2a38e&audioDebug=1'],
+    ['?orbOutput=native', './alenon.html?from=title&build=6bc2a38e'],
+    ['?audioDebug=1&orbOutput=native', './alenon.html?from=title&build=6bc2a38e&audioDebug=1&orbOutput=native'],
   ]) {
     const sandbox = {
       enteringFromLanding: false, start: { disabled: false }, URLSearchParams,
