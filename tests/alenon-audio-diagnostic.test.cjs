@@ -79,15 +79,16 @@ test('normal route creates no panel or diagnostic timer and still starts wind', 
   assert.equal(h.api.mix.context.state, 'running');
 });
 
-test('debug parameter works alongside existing route parameters and reports suspended context', async () => {
+test('debug parameter shows suspended Orb context while native wind is independent', async () => {
   const h = harness('?from=title&audioDebug=1', { resumeStaysSuspended: true });
   h.api.initAlenonAudioDiagnostic();
   await h.api.startAlenonWind();
   await h.api.unlockAlenonAudio();
+  h.api.setAlenonWindVolume(0.65);
   h.intervals[0].callback();
   assert.equal(h.panels.length, 1);
   assert.equal(h.intervals[0].delay, 400);
-  assert.match(h.panels[0].textContent, /CASE A — AUDIO CONTEXT NOT RUNNING/);
+  assert.match(h.panels[0].textContent, /NATIVE WIND ACTIVE; ORB CONTEXT NOT RUNNING/);
   assert.match(h.panels[0].textContent, /resume attempts=1 result=fulfilled/);
   assert.match(h.panels[0].textContent, /state=suspended/);
 });
@@ -107,8 +108,9 @@ test('resume rejection is visible without implying that the context is running',
   h.api.initAlenonAudioDiagnostic();
   await h.api.startAlenonWind();
   await h.api.unlockAlenonAudio();
+  h.api.setAlenonWindVolume(0.65);
   h.intervals[0].callback();
-  assert.match(h.panels[0].textContent, /CASE A — AUDIO CONTEXT NOT RUNNING/);
+  assert.match(h.panels[0].textContent, /NATIVE WIND ACTIVE; ORB CONTEXT NOT RUNNING/);
   assert.match(h.panels[0].textContent, /result=rejected \/ NotAllowedError: gesture denied/);
 });
 
@@ -122,25 +124,40 @@ test('graph construction error is displayed without granting a fictional route',
   assert.match(h.panels[0].textContent, /route=NO gain=-/);
 });
 
-test('healthy-looking graph is a candidate only: panel cannot assert actual sound', async () => {
+test('native wind transport and Orb graph are distinguished without claiming audible output', async () => {
   const h = harness('?audioDebug=1');
   h.api.initAlenonAudioDiagnostic();
   await h.api.unlockAlenonAudio();
   await h.api.startAlenonWind();
   h.api.setAlenonWindVolume(0.65);
   h.intervals[0].callback();
-  assert.match(h.panels[0].textContent, /CASE D CANDIDATE — IF SILENT/);
+  assert.match(h.panels[0].textContent, /NATIVE WIND ACTIVE — IF SILENT, CHECK DEVICE OUTPUT/);
   assert.match(h.panels[0].textContent, /Wind: wanted=YES unlocked=YES/);
-  assert.match(h.panels[0].textContent, /gain=0.65/);
+  assert.match(h.panels[0].textContent, /playback=native route=NO gain=-/);
+  assert.match(h.panels[0].textContent, /playback=Web Audio route=YES gain=0.00/);
 });
 
-test('running transport with zero wind gain is classified separately', async () => {
+test('running native transport with zero requested wind volume is classified separately', async () => {
   const h = harness('?audioDebug=1');
   h.api.initAlenonAudioDiagnostic();
   await h.api.unlockAlenonAudio();
   await h.api.startAlenonWind();
   h.intervals[0].callback();
-  assert.match(h.panels[0].textContent, /CASE C — WIND GAIN ZERO/);
+  assert.match(h.panels[0].textContent, /CASE C — WIND MUTED \/ VOLUME ZERO/);
+});
+
+test('Orb Web Audio setup failure cannot prevent native wind transport', async () => {
+  const h = harness('?audioDebug=1', { sourceThrows: true });
+  h.api.initAlenonAudioDiagnostic();
+  assert.equal(h.api.ensureAlenonMix(), null);
+  await h.api.startAlenonWind();
+  h.api.setAlenonWindVolume(0.65);
+  h.intervals[0].callback();
+  assert.equal(h.api.mix, null);
+  assert.match(h.panels[0].textContent, /AUDIO GRAPH SETUP ERROR/);
+  assert.match(h.panels[0].textContent, /Wind: wanted=YES unlocked=NO/);
+  assert.match(h.panels[0].textContent, /paused=NO muted=NO volume=0.65/);
+  assert.match(h.panels[0].textContent, /playback=native route=NO gain=-/);
 });
 
 test('title forwards audioDebug only when opt-in; normal destination remains unchanged', () => {
