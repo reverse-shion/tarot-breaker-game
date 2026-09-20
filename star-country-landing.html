@@ -259,6 +259,16 @@
     }
     .shiopon-actor[hidden], .shiopon-shadow[hidden] { display: none; }
 
+    #passage-occlusion {
+      position: absolute;
+      inset: 0;
+      z-index: 45;
+      width: 1448px;
+      height: 1086px;
+      pointer-events: none;
+      overflow: visible;
+    }
+
     .move-target {
       position: absolute;
       z-index: 41;
@@ -716,6 +726,7 @@
       <div class="shion-actor" role="img" aria-label="シオン"></div>
       <div class="shion-shadow shiopon-shadow" hidden aria-hidden="true"></div>
       <div class="shion-actor shiopon-actor" hidden role="img" aria-label="しおぽん"></div>
+      <svg id="passage-occlusion" viewBox="0 0 1448 1086" aria-hidden="true"></svg>
     <svg id="passage-overlay" viewBox="0 0 1448 1086" aria-hidden="true" style="display:none;position:absolute;inset:0;z-index:60;width:1448px;height:1086px;pointer-events:none"></svg>
     </section>
 
@@ -838,6 +849,7 @@
       const actor = document.querySelector(".shion-actor");
       const shadow = document.querySelector(".shion-shadow");
       const targetRing = document.querySelector(".move-target");
+      const passageOcclusion = document.getElementById("passage-occlusion");
       const pad = document.querySelector(".pad");
       const padGlow = document.querySelector(".pad-glow");
       const padTrail = document.querySelector(".pad-flight-trail");
@@ -1804,6 +1816,35 @@
         return passageAreas.some(area => pointInPoly(x, y, area.points));
       }
 
+      function renderPassageOcclusion() {
+        if (!passageOcclusion) return;
+        const ns = "http://www.w3.org/2000/svg";
+        passageOcclusion.replaceChildren();
+        if (!passageAreas.length) return;
+
+        const defs = document.createElementNS(ns, "defs");
+        const clip = document.createElementNS(ns, "clipPath");
+        clip.setAttribute("id", "passage-occlusion-clip");
+        clip.setAttribute("clipPathUnits", "userSpaceOnUse");
+        passageAreas.forEach(area => {
+          const polygon = document.createElementNS(ns, "polygon");
+          polygon.setAttribute("points", area.points.map(p => p.join(",")).join(" "));
+          clip.appendChild(polygon);
+        });
+        defs.appendChild(clip);
+        passageOcclusion.appendChild(defs);
+
+        const image = document.createElementNS(ns, "image");
+        image.setAttribute("href", "./assets/maps/star-landing/ground.webp?v=20260919-main-sync-1");
+        image.setAttribute("x", "0");
+        image.setAttribute("y", "0");
+        image.setAttribute("width", String(WORLD_W));
+        image.setAttribute("height", String(WORLD_H));
+        image.setAttribute("preserveAspectRatio", "none");
+        image.setAttribute("clip-path", "url(#passage-occlusion-clip)");
+        passageOcclusion.appendChild(image);
+      }
+
       async function loadPassageLayers() {
         try {
           const response = await fetch(PASSAGE_URL, { cache: "no-store" });
@@ -1826,6 +1867,7 @@
             }
           } catch (_) {}
         }
+        renderPassageOcclusion();
       }
 
       function initPassageEditor() {
@@ -1872,6 +1914,7 @@
         const render = () => {
           overlay.replaceChildren();
           passageAreas.forEach(a => overlay.appendChild(poly(a.points, "passage-area")));
+          renderPassageOcclusion();
           if (current.length) {
             overlay.appendChild(poly(current, "passage-current"));
             current.forEach(pt => {
@@ -1991,9 +2034,11 @@
           const behindPad =
             Math.abs(player.x - PAD_HOME.x) <= PAD_SIZE * .62 &&
             player.y < PAD_HOME.y - 6;
-          const behindBackground = pointInPassage(player.x, player.y);
-          actor.style.zIndex = behindBackground ? "9" : (behindPad ? "21" : "44");
-          shadow.style.zIndex = behindBackground ? "8" : (behindPad ? "20" : "43");
+          // Background-behind passages use a polygon-clipped copy of the
+          // ground above the actor. Never lower the whole actor beneath the
+          // full-size ground image, otherwise Shion disappears completely.
+          actor.style.zIndex = behindPad ? "21" : "44";
+          shadow.style.zIndex = behindPad ? "20" : "43";
         } else {
           actor.style.zIndex = "45";
           shadow.style.zIndex = "43";
