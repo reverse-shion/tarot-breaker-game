@@ -569,6 +569,20 @@
       opacity: .30;
     }
 
+    body.passage-mode::before {
+      content:"EDITOR MODE";
+      position:fixed;
+      top:max(8px,env(safe-area-inset-top));
+      left:50%;
+      transform:translateX(-50%);
+      z-index:6000;
+      padding:6px 12px;
+      border-radius:999px;
+      background:rgba(5,20,32,.92);
+      color:#fff;
+      font:800 11px/1 system-ui,sans-serif;
+      pointer-events:none;
+    }
     body.passage-mode #collision-overlay,
     body.passage-mode #passage-overlay { display:block !important; }
     body.passage-mode #passage-occlusion { display:none !important; }
@@ -871,7 +885,12 @@
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
-      const unifiedEditorMode = params.get("editor") === "1" || params.get("collision") === "1" || params.get("passage") === "1" || params.get("layerEdit") === "1";
+      const unifiedEditorMode =
+        params.get("editor") === "1" ||
+        params.get("collision") === "1" ||
+        params.get("passage") === "1" ||
+        params.get("layerEdit") === "1" ||
+        location.hash === "#editor";
       const collisionMode = false;
       const passageMode = unifiedEditorMode;
       const padEditMode =
