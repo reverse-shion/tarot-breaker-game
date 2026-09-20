@@ -233,10 +233,21 @@ test('arrival commits checkpoint only; source and Devil memory prerequisite are 
   fails(() => q.commitArrival(Registry.routes[3]), 'route-source-mismatch');
   const result = q.commitArrival(Registry.routes[2]);
   assert.equal(result.committed, true);
+  assert.equal(ready.writes, 1);
   assert.deepEqual(q.getCheckpoint(), { mapId: 'star_gate_garden', spawnId: 'south_gate' });
   assert.deepEqual(JSON.parse(ready.raw()).completedEvents, memory);
   assert.equal(q.isEventCompleted('garden_shiopon_meet'), false);
-  fails(() => q.commitArrival(Registry.routes[2]), 'route-source-mismatch');
+  const bytes = ready.raw();
+  const duplicate = q.commitArrival(Registry.routes[2]);
+  assert.deepEqual({committed:duplicate.committed,persisted:duplicate.persisted,alreadyCommitted:duplicate.alreadyCommitted},
+    {committed:true,persisted:true,alreadyCommitted:true});
+  assert.equal(ready.writes, 1);
+  assert.equal(ready.raw(), bytes);
+  assert.deepEqual(duplicate.state.completedEvents, memory);
+  assert.equal(duplicate.state.companion, 'not_joined');
+  fails(() => q.commitArrival({...Registry.routes[2], reason:'forged'}), 'unknown-route');
+  const inconsistent = harness(JSONOf(withHistory('star_gate_garden','south_gate',alenon)));
+  assert.equal(inconsistent.create().load().status, 'invalid');
 });
 
 test('companion transitions require meet, approved reason and landing checkpoint', () => {
@@ -265,16 +276,19 @@ test('failed write preserves confirmed record and reports volatile candidate sep
   assert.equal(failed.completed, false);
   assert.equal(failed.reason, 'quota-exceeded');
   assert.deepEqual(failed.candidate.completedEvents, alenon);
-  assert.equal(p.isEventCompleted('alenon_prologue'), false);
+  assert.equal(p.isEventCompleted('alenon_prologue'), true); // current run only, not durable
+  assert.equal(p.getCurrentState().persisted, false);
   assert.equal(h.raw(), before);
   assert.deepEqual(p.getCheckpoint(), initial().checkpoint);
   assert.equal(h.diagnostics.at(-1).code, 'quota-exceeded');
   h.storage.setItem = () => { throw new Error('blocked'); };
-  const reset = p.resetGame();
+  const reset = p.resetGame('user-selected-new-game');
   assert.equal(reset.persisted, false);
-  assert.equal(reset.started, false);
+  assert.equal(reset.started, true);
   assert.equal(h.raw(), before);
   assert.equal(h.diagnostics.at(-1).code, 'write-unavailable');
+  assert.deepEqual(p.getCurrentState(), {state:initial(),persisted:false});
+  assert.equal(p.isEventCompleted('alenon_prologue'), false);
 });
 
 test('storage read failures and unavailable storage never import legacy or crash', () => {
@@ -287,7 +301,9 @@ test('storage read failures and unavailable storage never import legacy or crash
   assert.deepEqual(p.getCheckpoint(), null);
   const missing = createProgress({storage:null,diagnostic:()=>{}});
   assert.equal(missing.load().status, 'unavailable');
-  assert.equal(missing.resetGame().persisted, false);
+  assert.deepEqual({started:missing.resetGame('offline-new-game').started,persisted:missing.getCurrentState().persisted},
+    {started:true,persisted:false});
+  assert.deepEqual(missing.getCurrentState().state, initial());
   assert.equal(h.map.has(STORAGE_KEY), false);
   assert.ok(h.map.has('tarot-breaker:map-journey-v1'));
   assert.equal(h.map.get('tarot-breaker:bgm-enabled'), '0');
@@ -299,7 +315,7 @@ test('reset writes the exact clean schema once and never deletes other keys', ()
   h.map.set('tarot-breaker:map-editor-v8', 'draft');
   h.map.set('tarot-breaker:map-journey-v1', 'old');
   const p = h.create(); p.load();
-  const result = p.resetGame();
+  const result = p.resetGame('deliberate-new-game');
   assert.equal(result.persisted, true);
   assert.equal(result.started, true);
   assert.equal(h.writes, 1);
@@ -308,4 +324,64 @@ test('reset writes the exact clean schema once and never deletes other keys', ()
   assert.equal(h.map.get('tarot-breaker:bgm-enabled'), '0');
   assert.equal(h.map.get('tarot-breaker:map-editor-v8'), 'draft');
   assert.equal(h.map.get('tarot-breaker:map-journey-v1'), 'old');
+});
+
+test('New Game token suppresses repeats without rewinding later progress; distinct token replaces it', () => {
+  const h = harness(JSONOf(initial()));
+  const p = h.create(); p.load();
+  fails(() => p.resetGame(), 'invalid-new-game-action-token');
+  fails(() => p.resetGame(''), 'invalid-new-game-action-token');
+  assert.equal(h.writes, 0);
+  const first = p.resetGame('new-game-action-1');
+  assert.equal(first.started, true);
+  assert.equal(first.persisted, true);
+  assert.equal(h.writes, 1);
+  p.completeEvent('alenon_prologue', initial().checkpoint);
+  const bytes = h.raw();
+  const duplicate = p.resetGame('new-game-action-1');
+  assert.equal(duplicate.alreadyStarted, true);
+  assert.equal(duplicate.persisted, true);
+  assert.equal(h.writes, 2);
+  assert.equal(h.raw(), bytes);
+  assert.equal(p.isEventCompleted('alenon_prologue'), true);
+  assert.equal(p.resetGame('new-game-action-2').persisted, true);
+  assert.equal(h.writes, 3);
+  assert.deepEqual(JSON.parse(h.raw()), initial());
+  assert.equal(p.resetGame('new-game-action-1').alreadyStarted, true); // stale action cannot reset again
+  assert.equal(h.writes, 3);
+});
+
+test('offline New Game and subsequent event/arrival remain playable without overwriting old save', () => {
+  const old = withHistory('star_gate_garden','south_gate',all,'joined_with_shion');
+  const h = harness(JSONOf(old));
+  const p = h.create(); p.load();
+  h.storage.setItem = () => { throw new Error('blocked'); };
+  const reset = p.resetGame('explicit-offline-new-game');
+  assert.equal(reset.started, true);
+  assert.equal(reset.persisted, false);
+  assert.deepEqual(p.getCheckpoint(), old.checkpoint); // last confirmed durable record
+  assert.deepEqual(p.getCurrentState(), {state:initial(),persisted:false});
+  assert.equal(p.resetGame('explicit-offline-new-game').alreadyStarted, true);
+  const event = p.completeEvent('alenon_prologue', initial().checkpoint);
+  assert.deepEqual({completed:event.completed,persisted:event.persisted}, {completed:false,persisted:false});
+  assert.equal(p.isEventCompleted('alenon_prologue'), true); // current nonpersistent history
+  assert.deepEqual(p.getCurrentState().state.completedEvents, alenon);
+  const external = p.getCurrentState();
+  external.state.completedEvents.push('garden_shiopon_meet');
+  assert.deepEqual(p.getCurrentState().state.completedEvents, alenon);
+  const arrival = p.commitArrival(Registry.routes[1]);
+  assert.deepEqual({committed:arrival.committed,persisted:arrival.persisted}, {committed:false,persisted:false});
+  assert.deepEqual(p.getCurrentState().state.checkpoint, {mapId:'star_country_landing',spawnId:'pad_ground'});
+  const repeatedAction = p.resetGame('explicit-offline-new-game');
+  assert.equal(repeatedAction.alreadyStarted, true);
+  assert.equal(repeatedAction.persisted, false);
+  assert.deepEqual(p.getCurrentState().state.checkpoint, {mapId:'star_country_landing',spawnId:'pad_ground'});
+  assert.deepEqual(JSON.parse(h.raw()), old);
+  assert.deepEqual(p.getCheckpoint(), old.checkpoint);
+  assert.equal(p.commitArrival(Registry.routes[1]).persisted, false);
+  h.storage.setItem = (key,value) => h.map.set(key,value);
+  const saved = p.completeEvent('landing_devil_memory', {mapId:'star_country_landing',spawnId:'pad_ground'});
+  assert.equal(saved.persisted, true); // whole volatile history saved in a single record
+  assert.deepEqual(JSON.parse(h.raw()), withHistory('star_country_landing','pad_ground',memory));
+  assert.equal(p.getCurrentState().persisted, true);
 });
