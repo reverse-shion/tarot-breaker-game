@@ -247,8 +247,8 @@ test('dialogue UI is shared, multiline and safe-area aware', () => {
   assert.doesNotMatch(css, /!important|#prologue/);
   for (const file of ['alenon.html', 'star-country-landing.html', 'star-country-landing-editor.html', 'index.html']) {
     const html = fs.readFileSync(file, 'utf8');
-    assert.match(html, /shared-dialogue.css\?v=20260920-dialogue-ui-v2/);
-    assert.match(html, /shared-dialogue.js\?v=20260920-dialogue-ui-v2/);
+    assert.match(html, /shared-dialogue.css\?v=20260920-dialogue-ui-v3/);
+    assert.match(html, /shared-dialogue.js\?v=20260920-dialogue-ui-v3/);
     for (const style of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) {
       assert.doesNotMatch(style[1], /tb-dialogue-|#prologue-(?:dialogue|speaker|line)|#dialogue-next/);
     }
