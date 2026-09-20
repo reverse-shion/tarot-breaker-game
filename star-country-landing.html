@@ -1762,7 +1762,7 @@
       function initPassageEditor() {
         if (!passageMode) return;
         const panel=document.getElementById("passage-panel"), overlay=document.getElementById("passage-overlay"), status=document.getElementById("passage-status");
-        panel.hidden=false; panel.style.display="block"; overlay.style.display="block"; document.body.classList.add("passage-mode"); ride.mode="ground"; let current=[];
+        panel.hidden=false; panel.style.display="block"; overlay.style.display="block"; document.body.classList.add("passage-mode"); actor.style.display="none"; shadow.style.display="none"; if (shioponActor) shioponActor.style.display="none"; if (shioponShadow) shioponShadow.style.display="none"; ride.mode="ground"; let current=[];
         try { const d=JSON.parse(localStorage.getItem(PASSAGE_DRAFT_KEY)||"null"); if(Array.isArray(d?.passageAreas)) passageAreas=d.passageAreas; } catch(_) {}
         const ns="http://www.w3.org/2000/svg";
         const save=()=>localStorage.setItem(PASSAGE_DRAFT_KEY,JSON.stringify({version:1,map:"star-landing",referenceSize:{width:WORLD_W,height:WORLD_H},passageAreas}));
