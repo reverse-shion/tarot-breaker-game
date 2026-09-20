@@ -2234,11 +2234,12 @@
       let alenonMix = null;
       alenonOrbResonance.muted = true;
 
-      // Device comparison only: native media output is never mixed with the
-      // Web Audio output. Keep the established spatial graph for normal play.
-      const alenonNativeOrbTrial = typeof location !== "undefined" && (() => {
+      // On the tested iPhone, Orb's MediaElementSource graph played silently
+      // while the same element's native output was audible. Keep the old graph
+      // accessible only as an explicit device diagnostic comparison.
+      const alenonNativeOrbPlayback = typeof location === "undefined" || (() => {
         const query = new URLSearchParams(location.search);
-        return query.get("audioDebug") === "1" && query.get("orbOutput") === "native";
+        return query.get("audioDebug") !== "1" || query.get("orbOutput") !== "webAudio";
       })();
 
       // Opt-in device diagnostics. Detached audio elements cannot be inspected
@@ -2307,7 +2308,7 @@
       }
 
       function ensureAlenonMix() {
-        if (alenonNativeOrbTrial) return null;
+        if (alenonNativeOrbPlayback) return null;
         if (alenonMix) return alenonMix;
         const Context = window.AudioContext || window.webkitAudioContext;
         if (!Context) return null;
@@ -2346,13 +2347,12 @@
       }
 
       function setAlenonOrbVolume(value) {
-        alenonOrbVolume = alenonMix || alenonNativeOrbTrial
+        alenonOrbVolume = alenonMix || alenonNativeOrbPlayback
           ? Math.max(0, Math.min(ALENON_ORB_MAX_VOLUME, value)) : 0;
         if (alenonMix) alenonMix.orb.gain.gain.value = alenonOrbVolume;
-        // The device-only native trial probes whether Safari can output this
-        // source. iOS may ignore volume writes, so it cannot prove the final
-        // balance or smooth fade; muted remains the hard hall boundary.
-        alenonOrbResonance.volume = alenonNativeOrbTrial ? alenonOrbVolume : (alenonOrbVolume > 0 ? 1 : 0);
+        // Native playback restored Orb output on the tested iPhone. iOS may
+        // ignore media volume writes, so muted is the hard hall boundary.
+        alenonOrbResonance.volume = alenonNativeOrbPlayback ? alenonOrbVolume : (alenonOrbVolume > 0 ? 1 : 0);
         alenonOrbResonance.muted = alenonOrbVolume === 0;
       }
 
@@ -2406,7 +2406,7 @@
           pending.push(observeAlenonPlay(alenonWindAmbience, "wind"));
         }
         if (alenonOrbWanted) pending.push(startAlenonOrbResonance());
-        else if (mix || alenonNativeOrbTrial) {
+        else if (mix || alenonNativeOrbPlayback) {
           setAlenonOrbVolume(0);
           pending.push(observeAlenonPlay(alenonOrbResonance, "orb"));
         }
@@ -2427,7 +2427,7 @@
         alenonOrbWanted = true;
         // Always recompute position before attempting playback, including return.
         updateAlenonOrbResonance(0);
-        if (!alenonWindUnlocked || (!alenonNativeOrbTrial && !ensureAlenonMix()) ||
+        if (!alenonWindUnlocked || (!alenonNativeOrbPlayback && !ensureAlenonMix()) ||
             !alenonOrbResonance.paused) return;
         try { await observeAlenonPlay(alenonOrbResonance, "orb"); } catch (_) {}
       }
@@ -2441,7 +2441,7 @@
 
       function updateAlenonOrbResonance(dt) {
         const area = alenonOrbWanted ? alenonOrbAreaLevel() : 0;
-        if (!area || (!alenonNativeOrbTrial && (!alenonMix || alenonMix.context.state !== "running")) ||
+        if (!area || (!alenonNativeOrbPlayback && (!alenonMix || alenonMix.context.state !== "running")) ||
             alenonWindAmbience.paused || !alenonWindWanted) {
           setAlenonOrbVolume(0);
           return;
@@ -2496,7 +2496,7 @@
         if (!alenonWindWanted) return "WAIT — WIND NOT REQUESTED YET";
         if (alenonWindAmbience.paused) return "CASE B — WIND TRANSPORT NOT PLAYING";
         if (alenonWindAmbience.muted || alenonWindVolume <= 0) return "CASE C — WIND MUTED / VOLUME ZERO";
-        if (alenonNativeOrbTrial) return "ORB NATIVE TRIAL — CHECK AUDIBILITY AND BALANCE";
+        if (alenonNativeOrbPlayback) return "NATIVE WIND + ORB — CHECK DEVICE OUTPUT";
         if (!context || context.state !== "running") return "NATIVE WIND ACTIVE; ORB CONTEXT NOT RUNNING";
         return "NATIVE WIND ACTIVE — IF SILENT, CHECK DEVICE OUTPUT";
       }
@@ -2524,7 +2524,7 @@
             " time=" + value(audio.currentTime) + " ended=" + bool(audio.ended),
           "  error.code=" + (audio.error?.code ?? "-") +
             " play=" + result + " / " + error,
-          "  playback=" + (name === "Wind" || alenonNativeOrbTrial ? "native" : "Web Audio") +
+          "  playback=" + (name === "Wind" || alenonNativeOrbPlayback ? "native" : "Web Audio") +
             " route=" + bool(route) + " gain=" + (gain == null ? "-" : value(gain)),
         ];
         const render = () => {
@@ -2542,7 +2542,7 @@
             ...media("Orb", alenonOrbResonance, debug.orbPlayResult, debug.orbPlayError,
               debug.orbRoute, alenonMix?.orb.gain.gain.value),
             "  spatial target=" + value(alenonOrbWanted ? ALENON_ORB_MAX_VOLUME * alenonOrbAreaLevel() : 0),
-            ...(alenonNativeOrbTrial ? ["  NATIVE TRIAL: iOS may ignore volume fade; check balance vs Wind"] : []),
+            ...(alenonNativeOrbPlayback ? ["  Native Orb: iOS may ignore volume fade; muted outside hall"] : []),
             "Gesture pointerdown=" + debug.lastGesture +
               " active-at-tap=" + debug.activationAtGesture,
             "  active=" + (activation?.isActive ?? "-") +
@@ -4775,7 +4775,7 @@
             alenonAudioDiagnostic.activationAtGesture =
               typeof navigator !== "undefined" ? (navigator.userActivation?.isActive ?? "-") : "-";
           }
-          if (!alenonWindUnlocked || (!alenonNativeOrbTrial && alenonMix?.context.state !== "running") ||
+          if (!alenonWindUnlocked || (!alenonNativeOrbPlayback && alenonMix?.context.state !== "running") ||
               (alenonWindWanted && alenonWindAmbience.paused) ||
               (alenonOrbWanted && alenonOrbResonance.paused)) {
             unlockAlenonAudio().catch(() => {});

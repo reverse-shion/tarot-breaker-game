@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const html = fs.readFileSync('alenon.html', 'utf8');
 const audioCode = html.slice(html.indexOf('      // Alenon ambience:'), html.indexOf('      tarotFront.src ='));
-function harness(ignoreVolume = false) {
+function harness(ignoreVolume = false, search = '?audioDebug=1&orbOutput=webAudio') {
   const audios = [], frames = [], contexts = [];
   class Audio {
     constructor(src) { this.src = src; this.paused = true; this.muted = false; this._volume = 1; this.playCalls = 0; audios.push(this); }
@@ -23,7 +23,7 @@ function harness(ignoreVolume = false) {
     createAnalyser() { const meter = {level: 0.1, connect(node) { this.output = node; }, getFloatTimeDomainData(a) { a.fill(this.level); }}; this.meters.push(meter); return meter; }
     createGain() { return {gain: {value: 1}, connect(node) { this.output = node; }}; }
   }
-  const sandbox = { Audio, Float32Array, Math, Promise, performance:{now:()=>0}, requestAnimationFrame:f=>frames.push(f),
+  const sandbox = { Audio, Float32Array, Math, Promise, URLSearchParams, location:{search}, performance:{now:()=>0}, requestAnimationFrame:f=>frames.push(f),
     WORLD_W:1448, WORLD_H:1086, player:{x:716,y:254.1}, layout:{groundS:{x:0,y:-12,scale:.86}}, AudioContext:Context };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
@@ -126,4 +126,16 @@ test('native wind stays hard-muted through prologue and restarts after scripted 
   assert.equal(wind.paused,false);
   assert.equal(wind.muted,false);
   assert.equal(h.audios.filter(a=>a.src.includes('wind-ambience')).length,1);
+});
+
+test('normal entry plays Orb natively and hard-mutes it beyond the hall', async () => {
+  const h=harness(false,''); await h.start();
+  const orb=h.audios.find(a=>a.src.includes('orb-resonance'));
+  assert.equal(h.contexts.length,0);
+  h.point(716,264);h.tick();
+  assert.equal(orb.paused,false);assert.equal(orb.muted,false);
+  assert.ok(orb.volume>0 && orb.volume<=.30);
+  h.point(716,400);h.tick(1);
+  assert.equal(orb.muted,true);assert.equal(orb.volume,0);
+  assert.equal(h.audios[0].muted,false);
 });

@@ -77,11 +77,11 @@ test('normal route creates no panel or diagnostic timer and still starts wind', 
   assert.equal(h.api.debug, null);
   assert.equal(h.panels.length, 0);
   assert.equal(h.intervals.length, 0);
-  assert.equal(h.api.mix.context.state, 'running');
+  assert.equal(h.api.mix, null);
 });
 
 test('debug parameter shows suspended Orb context while native wind is independent', async () => {
-  const h = harness('?from=title&audioDebug=1', { resumeStaysSuspended: true });
+  const h = harness('?from=title&audioDebug=1&orbOutput=webAudio', { resumeStaysSuspended: true });
   h.api.initAlenonAudioDiagnostic();
   await h.api.startAlenonWind();
   await h.api.unlockAlenonAudio();
@@ -105,7 +105,7 @@ test('wind play rejection is visible even when original unlock uses allSettled',
 });
 
 test('resume rejection is visible without implying that the context is running', async () => {
-  const h = harness('?audioDebug=1', { resumeReject: true });
+  const h = harness('?audioDebug=1&orbOutput=webAudio', { resumeReject: true });
   h.api.initAlenonAudioDiagnostic();
   await h.api.startAlenonWind();
   await h.api.unlockAlenonAudio();
@@ -116,7 +116,7 @@ test('resume rejection is visible without implying that the context is running',
 });
 
 test('graph construction error is displayed without granting a fictional route', () => {
-  const h = harness('?audioDebug=1', { sourceThrows: true });
+  const h = harness('?audioDebug=1&orbOutput=webAudio', { sourceThrows: true });
   h.api.initAlenonAudioDiagnostic();
   assert.equal(h.api.ensureAlenonMix(), null);
   h.intervals[0].callback();
@@ -125,8 +125,8 @@ test('graph construction error is displayed without granting a fictional route',
   assert.match(h.panels[0].textContent, /route=NO gain=-/);
 });
 
-test('native wind transport and Orb graph are distinguished without claiming audible output', async () => {
-  const h = harness('?audioDebug=1');
+test('native wind transport and opt-in Orb graph are distinguished without claiming audible output', async () => {
+  const h = harness('?audioDebug=1&orbOutput=webAudio');
   h.api.initAlenonAudioDiagnostic();
   await h.api.unlockAlenonAudio();
   await h.api.startAlenonWind();
@@ -148,7 +148,7 @@ test('running native transport with zero requested wind volume is classified sep
 });
 
 test('Orb Web Audio setup failure cannot prevent native wind transport', async () => {
-  const h = harness('?audioDebug=1', { sourceThrows: true });
+  const h = harness('?audioDebug=1&orbOutput=webAudio', { sourceThrows: true });
   h.api.initAlenonAudioDiagnostic();
   assert.equal(h.api.ensureAlenonMix(), null);
   await h.api.startAlenonWind();
@@ -161,8 +161,8 @@ test('Orb Web Audio setup failure cannot prevent native wind transport', async (
   assert.match(h.panels[0].textContent, /playback=native route=NO gain=-/);
 });
 
-test('native Orb trial bypasses media source graph, stays muted outside hall and reports uncertain balance', async () => {
-  const h = harness('?audioDebug=1&orbOutput=native', { sourceThrows: true });
+test('default native Orb bypasses media source graph, stays muted outside hall and reports output', async () => {
+  const h = harness('?audioDebug=1', { sourceThrows: true });
   h.api.initAlenonAudioDiagnostic();
   await h.api.unlockAlenonAudio();
   await h.api.startAlenonWind();
@@ -180,14 +180,14 @@ test('native Orb trial bypasses media source graph, stays muted outside hall and
   assert.equal(orb.muted, true);
   assert.equal(orb.volume, 0);
   h.intervals[0].callback();
-  assert.match(h.panels[0].textContent, /ORB NATIVE TRIAL — CHECK AUDIBILITY AND BALANCE/);
+  assert.match(h.panels[0].textContent, /NATIVE WIND \+ ORB — CHECK DEVICE OUTPUT/);
   assert.match(h.panels[0].textContent, /Orb: wanted=YES[\s\S]*playback=native route=NO gain=-/);
 });
 
-test('native Orb request alone has no authority without audioDebug=1', async () => {
-  const h = harness('?orbOutput=native');
+test('Web Audio Orb request alone has no authority without audioDebug=1', async () => {
+  const h = harness('?orbOutput=webAudio');
   await h.api.unlockAlenonAudio();
-  assert.ok(h.api.mix?.orb);
+  assert.equal(h.api.mix,null);
   assert.equal(h.api.debug, null);
 });
 
@@ -198,8 +198,8 @@ test('title forwards audioDebug only when opt-in; normal destination remains unc
   for (const [search, expected] of [
     ['', './alenon.html?from=title&build=6bc2a38e'],
     ['?audioDebug=1', './alenon.html?from=title&build=6bc2a38e&audioDebug=1'],
-    ['?orbOutput=native', './alenon.html?from=title&build=6bc2a38e'],
-    ['?audioDebug=1&orbOutput=native', './alenon.html?from=title&build=6bc2a38e&audioDebug=1&orbOutput=native'],
+    ['?orbOutput=webAudio', './alenon.html?from=title&build=6bc2a38e'],
+    ['?audioDebug=1&orbOutput=webAudio', './alenon.html?from=title&build=6bc2a38e&audioDebug=1&orbOutput=webAudio'],
   ]) {
     const sandbox = {
       enteringFromLanding: false, start: { disabled: false }, URLSearchParams,

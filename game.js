@@ -1658,9 +1658,9 @@
       if (start) start.disabled = true;
       window.TarotJourney?.reset();
       const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
-      const orbTrial = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "native"
-        ? "&orbOutput=native" : "";
-      location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbTrial}`;
+      const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
+        ? "&orbOutput=webAudio" : "";
+      location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
       return;
     }
 
