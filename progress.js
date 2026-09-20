@@ -91,6 +91,9 @@
 
   function createProgress({ storage, diagnostic } = {}) {
     let confirmed = null; // Last successfully read or written durable v1 record only.
+    let volatile = null; // Current nonpersistent playthrough; never mistaken for a durable save.
+    const resetActions = new Set(); // Action tokens are runtime-only, never added to schema v1.
+    const current = () => volatile || confirmed;
     function note(failureClass, code, details) {
       const safe = { failureClass, code };
       if (Number.isInteger(details?.version)) safe.version = details.version;
@@ -107,6 +110,7 @@
     }
     function load() {
       confirmed = null;
+      volatile = null;
       let raw;
       try {
         const store = backend();
@@ -143,82 +147,103 @@
         reason = error?.name === "QuotaExceededError" || error?.code === 22 || error?.code === 1014
           ? "quota-exceeded" : "write-unavailable";
         note("storage", reason);
-        // Candidate is a volatile result for the caller; confirmed remains unchanged.
+        // Continue this run in memory; confirmed and the old durable bytes stay unchanged.
+        volatile = result.value;
         return { persisted: false, reason, candidate: copy(result.value) };
       }
       confirmed = result.value;
+      volatile = null;
       return { persisted: true, state: copy(confirmed) };
     }
-    function requireConfirmed() {
-      if (!confirmed) throw new ProgressValidationError("no-confirmed-progress");
-      return confirmed;
+    function requireCurrent() {
+      if (!current()) throw new ProgressValidationError("no-current-progress");
+      return current();
     }
+    // Durable checkpoint only; a temporary New Game may instead have a different current state.
     function getCheckpoint() {
       return confirmed ? { ...confirmed.checkpoint } : null;
     }
+    // Consumers of temporary play use this copy and must check persisted before offering Continue.
+    function getCurrentState() {
+      const state = current();
+      return state ? { state: copy(state), persisted: !volatile } : null;
+    }
+    // Answers for the current playthrough, which may be explicitly nonpersistent.
     function isEventCompleted(eventId) {
       if (!registry.isEventId(eventId)) throw new ProgressValidationError("unknown-event");
-      return confirmed ? confirmed.completedEvents.includes(eventId) : false;
+      return current() ? current().completedEvents.includes(eventId) : false;
     }
     function completeEvent(eventId, checkpoint) {
       if (!registry.isEventId(eventId)) throw new ProgressValidationError("unknown-event");
-      const current = requireConfirmed();
-      if (current.completedEvents.includes(eventId))
-        return { completed: true, persisted: true, alreadyCompleted: true, state: copy(current) };
+      const existing = requireCurrent();
+      if (existing.completedEvents.includes(eventId))
+        return { completed: !volatile, persisted: !volatile, alreadyCompleted: true, state: copy(existing) };
       const event = registry.events[eventId];
       if (!validCheckpoint(checkpoint) || checkpoint.mapId !== event.mapId ||
           checkpoint.spawnId !== event.checkpointSpawnId)
         throw new ProgressValidationError("invalid-event-checkpoint");
-      if (event.requires.some(required => !current.completedEvents.includes(required)))
+      if (event.requires.some(required => !existing.completedEvents.includes(required)))
         throw new ProgressValidationError("missing-prerequisite");
-      if (current.checkpoint.mapId !== event.mapId)
+      if (existing.checkpoint.mapId !== event.mapId)
         throw new ProgressValidationError("event-map-mismatch");
       const candidate = {
-        ...current, checkpoint: { ...checkpoint },
-        completedEvents: [...current.completedEvents, eventId],
-        companion: event.joinsCompanion ? "joined_with_shion" : current.companion,
+        ...existing, checkpoint: { ...checkpoint },
+        completedEvents: [...existing.completedEvents, eventId],
+        companion: event.joinsCompanion ? "joined_with_shion" : existing.companion,
       };
       const outcome = persist(candidate);
       return { completed: outcome.persisted, ...outcome };
     }
     function commitArrival(edge) {
-      const current = requireConfirmed();
-      const match = registry.validateRoute(edge, current.completedEvents);
+      const existing = requireCurrent();
+      const match = registry.validateRoute(edge, existing.completedEvents);
       if (!match.ok) throw new ProgressValidationError(match.reason);
       const route = match.route;
+      const destination = { mapId: route.destinationMapId, spawnId: route.spawnId };
       if (route.sourceMapId === "title") {
-        if (current.checkpoint.mapId !== "alenon" || current.checkpoint.spawnId !== "intro" ||
-            current.completedEvents.length || current.companion !== "not_joined")
+        if (existing.checkpoint.mapId !== "alenon" || existing.checkpoint.spawnId !== "intro" ||
+            existing.completedEvents.length || existing.companion !== "not_joined")
           throw new ProgressValidationError("title-start-requires-new-game");
-      } else if (route.sourceMapId !== current.checkpoint.mapId) {
+      }
+      // The full edge and its prerequisites were checked above. A completed destination
+      // is safe to acknowledge without advancing the checkpoint or touching storage.
+      if (existing.checkpoint.mapId === destination.mapId &&
+          existing.checkpoint.spawnId === destination.spawnId)
+        return { committed: !volatile, persisted: !volatile, alreadyCommitted: true, state: copy(existing) };
+      if (route.sourceMapId !== "title" && route.sourceMapId !== existing.checkpoint.mapId) {
         throw new ProgressValidationError("route-source-mismatch");
       }
-      const destination = { mapId: route.destinationMapId, spawnId: route.spawnId };
-      if (current.checkpoint.mapId === destination.mapId &&
-          current.checkpoint.spawnId === destination.spawnId)
-        return { committed: true, persisted: true, alreadyCommitted: true, state: copy(current) };
-      const outcome = persist({ ...current, checkpoint: destination });
+      const outcome = persist({ ...existing, checkpoint: destination });
       return { committed: outcome.persisted, ...outcome };
     }
     function setCompanion(status, checkpoint, reason) {
-      const current = requireConfirmed();
+      const existing = requireCurrent();
       if (!registry.companionStates.includes(status))
         throw new ProgressValidationError("invalid-companion");
-      if (status === current.companion)
-        return { committed: true, persisted: true, alreadyCommitted: true, state: copy(current) };
-      const transition = registry.matchCompanionTransition(current.companion, status, reason, checkpoint);
-      if (!transition || current.checkpoint.mapId !== transition.mapId ||
-          !current.completedEvents.includes("garden_shiopon_meet"))
+      if (status === existing.companion)
+        return { committed: !volatile, persisted: !volatile, alreadyCommitted: true, state: copy(existing) };
+      const transition = registry.matchCompanionTransition(existing.companion, status, reason, checkpoint);
+      if (!transition || existing.checkpoint.mapId !== transition.mapId ||
+          !existing.completedEvents.includes("garden_shiopon_meet"))
         throw new ProgressValidationError("unapproved-companion-transition");
-      const outcome = persist({ ...current, companion: status, checkpoint: { ...checkpoint } });
+      const outcome = persist({ ...existing, companion: status, checkpoint: { ...checkpoint } });
       return { committed: outcome.persisted, ...outcome };
     }
-    function resetGame() {
+    // Caller supplies one opaque token per deliberate New Game action, reused on duplicate calls.
+    // Tokens live only in this instance: entry/navigation policy belongs to later phases.
+    function resetGame(actionToken) {
+      if (typeof actionToken !== "string" || !actionToken.length || actionToken.length > 128)
+        throw new ProgressValidationError("invalid-new-game-action-token");
+      if (resetActions.has(actionToken)) {
+        const state = requireCurrent();
+        return { started: true, persisted: !volatile, alreadyStarted: true, state: copy(state) };
+      }
       const outcome = persist(INITIAL);
-      return { started: outcome.persisted, ...outcome };
+      resetActions.add(actionToken);
+      return { started: true, ...outcome };
     }
     return Object.freeze({
-      load, getCheckpoint, isEventCompleted, completeEvent, commitArrival, setCompanion, resetGame,
+      load, getCheckpoint, getCurrentState, isEventCompleted, completeEvent, commitArrival, setCompanion, resetGame,
     });
   }
 
