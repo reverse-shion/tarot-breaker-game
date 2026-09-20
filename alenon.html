@@ -4181,7 +4181,13 @@
         player.frame = 0;
         player.anim = 0;
         player.target = null;
-        orbInteraction.armed = true;
+        // A scene reset inside the Orb must wait for an actual exit before
+        // proximity can open its prompt. The existing outer radius provides
+        // hysteresis; the prologue walk naturally exits it before control returns.
+        orbInteraction.armed = Math.hypot(
+          player.x - layout.orb.x,
+          player.y - layout.orb.y,
+        ) >= ORB_INTERACT_REARM_RADIUS;
         if (orbInteraction.promptOpen || orbInteraction.inspecting) {
           orbInteraction.promptOpen = false;
           orbInteraction.inspecting = false;

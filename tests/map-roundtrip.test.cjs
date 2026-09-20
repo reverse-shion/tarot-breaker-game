@@ -120,6 +120,75 @@ test('Alenon return bypasses prologue and spawns behind its authored PAD; title 
   }
 });
 
+function alenonOrb(search) {
+  const t=harness(search);
+  t.run(inline('alenon.html').replace('      initRuinDrift();',
+    '      window.testOrb = {player, story, ride, layout, orbInteraction, resetPlayer, preparePrologue, updateOrbInteractionRange, finishPadLanding}; return;'));
+  const m=t.h.testOrb;
+  m.resetPlayer();
+  m.preparePrologue();
+  return {t,m};
+}
+
+test('completed intro resume stays silent until leaving the Orb outer radius and re-entering',()=>{
+  const {t,m}=alenonOrb('?skipPrologue=1'); // Existing runtime bypass, never a durable completion.
+  assert.deepEqual([m.player.x,m.player.y],[716,330]);
+  assert.equal(m.story.completed,true);
+  assert.equal(m.orbInteraction.armed,false);
+  for(let frame=0;frame<240;frame++) m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.promptOpen,false,'waiting in place never opens the Orb');
+
+  m.player.y=m.layout.orb.y+130; // Outside enter radius, still inside re-arm radius.
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.armed,false);
+  m.player.y=m.layout.orb.y+155;
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.armed,true);
+  assert.equal(m.orbInteraction.promptOpen,false);
+  m.player.y=m.layout.orb.y+140;
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.promptOpen,false,'hysteresis avoids boundary chatter');
+  m.player.y=m.layout.orb.y+117;
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.promptOpen,true,'intentional re-entry opens the Orb');
+  assert.equal(m.orbInteraction.armed,false);
+  assert.equal(t.e('orb-interaction-choice').hidden,false);
+});
+
+test('title prologue can re-arm the Orb after its existing final walk without changing control release',()=>{
+  const {m}=alenonOrb('?from=title');
+  assert.equal(m.story.completed,false);
+  assert.equal(m.story.locked,true);
+  assert.equal(m.orbInteraction.armed,false);
+  // The authored prologue moves from y=330 to y=494 before releasing control.
+  m.player.y=494;
+  m.story.completed=true;
+  m.story.locked=false;
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.armed,true);
+  m.player.y=m.layout.orb.y+117;
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.promptOpen,true);
+});
+
+test('PAD return retains landing, dismount, and Orb suppression without an immediate reboard',()=>{
+  const {m}=alenonOrb('?from=landing-return');
+  assert.equal(m.ride.mode,'landing');
+  assert.equal(m.story.completed,true);
+  assert.equal(m.story.locked,false);
+  assert.equal(m.orbInteraction.armed,true,'landing starts outside Orb');
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.promptOpen,false);
+  m.finishPadLanding();
+  assert.equal(m.ride.mode,'ground');
+  assert.equal(m.player.x,m.layout.pad.x);
+  assert.equal(m.player.y,m.layout.pad.y-68);
+  assert.ok(Math.hypot(m.player.x-m.layout.pad.x,m.player.y-m.layout.pad.y)>64);
+  assert.ok(m.ride.reboardLockedUntil>10000);
+  m.updateOrbInteractionRange();
+  assert.equal(m.orbInteraction.promptOpen,false);
+});
+
 test('garden return trigger lies on the current collision path and has spawn clearance',()=>{
   const c=Nav.createCollision(JSON.parse(fs.readFileSync('assets/maps/star-country-gate-garden-collision.json')));
   const exit=c.nearestWalkable({x:724,y:1015});const spawn=c.nearestWalkable({x:exit.x,y:exit.y-16});
