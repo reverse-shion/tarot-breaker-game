@@ -20,14 +20,17 @@
   }
   function ensurePrompt() {
     if (prompt) return prompt;
-    prompt = document.createElement("button");
-    prompt.id = "star-gate-interact";
-    prompt.type = "button";
-    prompt.textContent = "調べる";
+    prompt = document.createElement("aside");
+    prompt.id = "star-gate-interaction-choice";
     prompt.hidden = true;
     prompt.setAttribute("aria-label", "星門を調べる");
+    prompt.innerHTML = '<div id="star-gate-interaction-text">星門の共鳴が揺らいでいる。</div><div class="star-gate-interaction-actions"><button id="star-gate-interaction-inspect" type="button">星門を調べる</button><button id="star-gate-interaction-leave" type="button">離れる</button></div>';
     document.getElementById("game-shell")?.appendChild(prompt);
-    prompt.addEventListener("click", start);
+    prompt.querySelector("#star-gate-interaction-inspect")?.addEventListener("click", start);
+    prompt.querySelector("#star-gate-interaction-leave")?.addEventListener("click", () => {
+      prompt.classList.remove("visible");
+      prompt.hidden = true;
+    });
     return prompt;
   }
   function canInteract() {
@@ -40,12 +43,13 @@
     const el = ensurePrompt();
     active = canInteract();
     el.hidden = !active;
-    el.disabled = !active;
+    el.classList.toggle("visible", active);
   }
   function start(event) {
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (!canInteract()) return false;
+    ensurePrompt().classList.remove("visible");
     ensurePrompt().hidden = true;
     active = false;
     window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-investigate", {
