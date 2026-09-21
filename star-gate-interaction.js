@@ -41,7 +41,7 @@
     const stage = window.TarotStage?.getState?.();
     const shion = stage?.actors?.shion;
     if (shion && distance(shion, GATE) >= 154) armed = true;
-    return Boolean(progressReady() && state?.lumiereDone && !state.active && shion && armed && distance(shion, GATE) <= ACTIVE_RADIUS);
+    return Boolean(progressReady() && !state?.active && shion && armed && distance(shion, GATE) <= ACTIVE_RADIUS);
   }
   function render() {
     const el = ensurePrompt();
