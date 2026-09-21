@@ -906,6 +906,17 @@
         } catch (error) {
           console.warn("[Landing Progress] arrival observation was not persisted", error);
         }
+      } else if (landingProgressValid && returningFromGarden) {
+        try {
+          landingProgress.commitArrival({
+            sourceMapId: "star_gate_garden",
+            destinationMapId: "star_country_landing",
+            spawnId: "garden_entrance",
+            reason: "garden_to_landing",
+          });
+        } catch (error) {
+          console.warn("[Landing Progress] Garden return observation was not persisted", error);
+        }
       }
       // Production page is always normal gameplay.
       // Map editing is intentionally disabled on this main HTML.
@@ -1110,6 +1121,17 @@
         companion.following = true;
         companion.trail = [];
         window.TarotJourney?.set("companion", {mode: "following"});
+        if (landingProgressValid) {
+          try {
+            landingProgress.setCompanion(
+              "joined_with_shion",
+              { mapId: "star_country_landing", spawnId: "pad_ground" },
+              "rejoin_after_arrival"
+            );
+          } catch (error) {
+            console.warn("[Landing Progress] companion rejoin observation was not persisted", error);
+          }
+        }
       }
       async function runReturnGreeting() {
         if (
@@ -2323,6 +2345,17 @@
           companion.dir = direction(player.x - companion.x, player.y - companion.y);
           renderCompanion();
           window.TarotJourney?.set("companion", {mode: "waiting", x: companion.x, y: companion.y});
+          if (landingProgressValid) {
+            try {
+              landingProgress.setCompanion(
+                "waiting_at_landing",
+                { mapId: "star_country_landing", spawnId: "pad_ground" },
+                "board_pad"
+              );
+            } catch (error) {
+              console.warn("[Landing Progress] companion wait observation was not persisted", error);
+            }
+          }
           await showStoryLine("しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！", "しおぽん", "shiopon");
           await showStoryLine("いってらっしゃい、ぴょん！", "しおぽん", "shiopon");
           farewellActive = false;
