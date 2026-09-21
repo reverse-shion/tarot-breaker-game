@@ -52,7 +52,14 @@ test('v1 registry contains exactly the contracted semantic IDs and immutable met
   assert.deepEqual(Object.keys(Registry.maps), ['alenon', 'star_country_landing', 'star_gate_garden']);
   assert.deepEqual(Object.keys(Registry.events), [
     'alenon_prologue', 'landing_devil_memory', 'garden_shiopon_meet', 'garden_lumiere_gate',
+    'garden_star_gate_anomaly',
   ]);
+  assert.deepEqual(Registry.events.garden_star_gate_anomaly, {
+    eventId: 'garden_star_gate_anomaly',
+    mapId: 'star_gate_garden',
+    checkpointSpawnId: 'south_gate',
+    requires: ['garden_lumiere_gate'],
+  });
   assert.deepEqual(Registry.companionStates, ['not_joined', 'joined_with_shion', 'waiting_at_landing']);
   assert.deepEqual(Registry.maps.alenon.spawnIds, ['intro', 'pad_return']);
   assert.deepEqual(Registry.maps.star_country_landing.spawnIds, ['pad_ground', 'garden_entrance']);
