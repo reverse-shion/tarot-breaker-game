@@ -2074,6 +2074,8 @@
 
   <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
   <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v3"></script>
+  <script src="./route-registry.js?v=20260921-progress-v1"></script>
+  <script src="./progress.js?v=20260921-progress-v1"></script>
   <script>
     (() => {
       "use strict";
@@ -2106,7 +2108,30 @@
       const objectMode = params.get("objects") === "1";
       const collisionMode = params.get("collision") === "1";
       const returningFromLanding = params.get("from") === "landing-return";
-      const storyBypass = returningFromLanding || editMode || objectMode || collisionMode || params.get("skipPrologue") === "1";
+      const debugStoryBypass = params.get("skipPrologue") === "1";
+      const legacyStoryBypass = returningFromLanding || editMode || objectMode || collisionMode || debugStoryBypass;
+
+      // Phase 2A-4a: Progress v1 is authoritative only for a normal Alenon entry.
+      // Existing return/tool/debug bypasses remain runtime-only and never prove completion.
+      const alenonProgress = window.TarotProgressCore?.createProgress();
+      let alenonProgressLoad = null;
+      let progressResume = false;
+      if (!legacyStoryBypass && alenonProgress) {
+        alenonProgressLoad = alenonProgress.load();
+        if (alenonProgressLoad.status === "none" || alenonProgressLoad.status === "unavailable") {
+          // First play (or storage-unavailable play) starts from the existing Progress v1 INITIAL state.
+          // resetGame is used only when no durable authority was loaded; it is never called on every load.
+          alenonProgress.resetGame("phase-2a-4a-alenon-first-play");
+        } else if (alenonProgressLoad.status === "valid") {
+          const checkpoint = alenonProgress.getCheckpoint();
+          progressResume =
+            alenonProgress.isEventCompleted("alenon_prologue") &&
+            checkpoint?.mapId === "alenon" &&
+            checkpoint?.spawnId === "intro";
+        }
+        // Invalid/unsupported bytes are deliberately left untouched and are not completion authority.
+      }
+      const storyBypass = legacyStoryBypass || progressResume;
       const COLLISION_URL = "./assets/maps/alenon-collision.json?v=2";
       let alenonWalkAreas = [];
       let alenonCollisionReady = false;
@@ -3178,6 +3203,16 @@
         story.locked = false;
         document.body.classList.remove("story-running");
         moveGuide.hidden = true;
+
+        // The authored end of the prologue is the only Phase 2A-4a completion boundary.
+        // Persistence failure degrades inside Progress Core and must never block gameplay.
+        if (alenonProgress && !legacyStoryBypass) {
+          try {
+            alenonProgress.completeEvent("alenon_prologue", { mapId: "alenon", spawnId: "intro" });
+          } catch (error) {
+            console.warn("[Alenon Progress] completion was not persisted", error);
+          }
+        }
       }
 
       function preparePrologue() {
@@ -4793,9 +4828,9 @@
         };
         window.addEventListener("pointerdown", unlockLocalAlenonAudio, { passive: true });
         window.addEventListener("keydown", unlockLocalAlenonAudio);
-        if (returningFromLanding) {
-          // PAD return bypasses the prologue, so restore Alenon's normal ambience
-          // immediately using the same audio element/playback path as the prologue.
+        if (returningFromLanding || progressResume) {
+          // PAD return and a completed Progress resume both bypass the prologue.
+          // Restore normal ambience through the existing validated playback functions.
           startAlenonWind({ fade: 900 });
           startAlenonOrbResonance();
           const resumeReturnedAmbience = () => {
