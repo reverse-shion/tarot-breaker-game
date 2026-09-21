@@ -521,6 +521,20 @@
     }
 
     saveStory();
+
+    // Progress handoff contract: authored runtime declares the semantic fact only
+    // after its own completion state is committed. Progress remains the durable
+    // authority; observers may persist this fact but never start/suppress story.
+    const semanticEventId = completed === "shioponMeet"
+      ? "garden_shiopon_meet"
+      : completed === "lumiereGate"
+        ? "garden_lumiere_gate"
+        : null;
+    if (semanticEventId) {
+      window.dispatchEvent(new CustomEvent("tarot-breaker:story-event-complete", {
+        detail: Object.freeze({ eventId: semanticEventId, mapId: "star_gate_garden", spawnId: "south_gate" }),
+      }));
+    }
     window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
     document.getElementById("game")?.focus?.({ preventScroll: true });
   }
