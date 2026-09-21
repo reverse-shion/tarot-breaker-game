@@ -2362,18 +2362,6 @@
 
       function leaveForGarden() {
         if (leaving) return;
-        if (landingProgressValid) {
-          try {
-            landingProgress.commitArrival({
-              sourceMapId: "star_country_landing",
-              destinationMapId: "star_gate_garden",
-              spawnId: "south_gate",
-              reason: "gate_to_garden",
-            });
-          } catch (error) {
-            console.warn("[Landing Progress] garden arrival observation was not persisted", error);
-          }
-        }
         leaving = true;
         window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
