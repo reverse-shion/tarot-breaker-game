@@ -137,6 +137,7 @@ test('unknown events and impossible prerequisites are rejected, not repaired', (
   assert.deepEqual(Registry.events.landing_devil_memory.requires, alenon);
   assert.deepEqual(Registry.events.garden_shiopon_meet.requires, memory);
   assert.deepEqual(Registry.events.garden_lumiere_gate.requires, ['garden_shiopon_meet']);
+  assert.deepEqual(Registry.events.garden_star_gate_anomaly.requires, ['garden_lumiere_gate']);
 });
 
 test('known event duplicates normalize only in memory; unknown events never disappear', () => {
@@ -195,7 +196,7 @@ test('registered event completions are one-key atomic, ordered and idempotent', 
   assert.equal(h.map.get('tarot-breaker:map-journey-v1'), '{"gardenStory":{"shioponDone":true}}');
 });
 
-test('all four events complete only at their registered map and spawn; meet joins in same record', () => {
+test('all five events complete only at their registered map and spawn; anomaly requires Lumiere and remains idempotent', () => {
   const h = harness(JSONOf(initial()));
   const p = h.create(); p.load();
   p.completeEvent('alenon_prologue', { mapId: 'alenon', spawnId: 'intro' });
@@ -206,9 +207,15 @@ test('all four events complete only at their registered map and spawn; meet join
   p.completeEvent('garden_shiopon_meet', { mapId: 'star_gate_garden', spawnId: 'south_gate' });
   assert.equal(p.isEventCompleted('garden_shiopon_meet'), true);
   assert.equal(JSON.parse(h.raw()).companion, 'joined_with_shion');
+  fails(() => p.completeEvent('garden_star_gate_anomaly', { mapId: 'star_gate_garden', spawnId: 'south_gate' }), 'missing-prerequisite');
   p.completeEvent('garden_lumiere_gate', { mapId: 'star_gate_garden', spawnId: 'south_gate' });
-  assert.deepEqual(JSON.parse(h.raw()).completedEvents, all);
-  assert.equal(h.writes, 6); // Four event commits + two arrival commits.
+  const anomaly = p.completeEvent('garden_star_gate_anomaly', { mapId: 'star_gate_garden', spawnId: 'south_gate' });
+  assert.equal(anomaly.completed, true);
+  assert.equal(p.isEventCompleted('garden_star_gate_anomaly'), true);
+  assert.deepEqual(JSON.parse(h.raw()).completedEvents, [...all, 'garden_star_gate_anomaly']);
+  const again = p.completeEvent('garden_star_gate_anomaly', { mapId: 'star_gate_garden', spawnId: 'south_gate' });
+  assert.equal(again.alreadyCompleted, true);
+  assert.equal(h.writes, 7); // Five event commits + two arrival commits; repeat is write-free.
 });
 
 test('route registry accepts five exact edges; it never creates an event', () => {
