@@ -11,9 +11,12 @@
 
 `main`
 
-基準HEAD：
+保護対象のゲームプレイ基準HEAD：
 
 `ec4ea501a1a572310f76d04204e0ee4f5a24518b`
+
+このSHAはRegression Lock作成時点の「正常動作を確認済みのゲームプレイ基準」です。
+文書のみのcommitでmain HEADが進んでも、このゲームプレイ基準自体が変わったことを意味しません。
 
 ---
 
@@ -63,13 +66,13 @@ TAROT BREAKERでは今後、
 
 # 2. SOURCE OF TRUTH
 
-現在のRegression Lock基準：
-
-`main`
-
-HEAD：
+現在のRegression Lockのゲームプレイ基準：
 
 `ec4ea501a1a572310f76d04204e0ee4f5a24518b`
+
+実作業時のSource of Truthは常に最新の `main` です。
+
+上記SHAは「Regression Lock作成時点でPASS済みだったゲームプレイ挙動」の参照点として保持します。
 
 今後mainが更新された場合、Regression Lockを通過したmainのみを新しい基準とします。
 
