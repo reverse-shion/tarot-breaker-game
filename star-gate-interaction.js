@@ -7,6 +7,7 @@
   let active = false;
   let completed = false;
   let prompt = null;
+  let armed = true;
 
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function progressReady() {
@@ -28,8 +29,10 @@
     document.getElementById("game-shell")?.appendChild(prompt);
     prompt.querySelector("#star-gate-interaction-inspect")?.addEventListener("click", start);
     prompt.querySelector("#star-gate-interaction-leave")?.addEventListener("click", () => {
+      armed = false;
+      active = false;
       prompt.classList.remove("visible");
-      prompt.hidden = true;
+      window.setTimeout(() => { if (!prompt.classList.contains("visible")) prompt.hidden = true; }, 220);
     });
     return prompt;
   }
@@ -37,7 +40,8 @@
     const state = window.TarotDialogue?.getState?.();
     const stage = window.TarotStage?.getState?.();
     const shion = stage?.actors?.shion;
-    return Boolean(progressReady() && state?.lumiereDone && !state.active && shion && distance(shion, GATE) <= ACTIVE_RADIUS);
+    if (shion && distance(shion, GATE) >= 154) armed = true;
+    return Boolean(progressReady() && state?.lumiereDone && !state.active && shion && armed && distance(shion, GATE) <= ACTIVE_RADIUS);
   }
   function render() {
     const el = ensurePrompt();
@@ -49,6 +53,7 @@
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (!canInteract()) return false;
+    armed = false;
     ensurePrompt().classList.remove("visible");
     ensurePrompt().hidden = true;
     active = false;
@@ -63,7 +68,7 @@
     completed = true; render();
   });
   window.setInterval(render, 180);
-  window.TarotStarGateInteraction = Object.freeze({ canInteract, start, getState: () => ({ active, completed }) });
+  window.TarotStarGateInteraction = Object.freeze({ canInteract, start, getState: () => ({ active, completed, armed }) });
   ensurePrompt();
   render();
 })();
