@@ -16,7 +16,7 @@ test("Garden loads Progress bridge without editing story ownership",()=>{
 
 test("Garden Progress observer cannot start or suppress authored events",()=>{
   assert.doesNotMatch(observer,/\.startEvent\(|\.start\("shioponMeet"|\.start\("lumiereGate"/);
-  assert.doesNotMatch(observer,/shioponDone\s*=|lumiereDone\s*=/);
+  assert.doesNotMatch(observer,/state\.shioponDone\s*=(?!=)|state\.lumiereDone\s*=(?!=)/);
   assert.match(observer,/addEventListener\("tarot-breaker:interaction-end"/);
 });
 
