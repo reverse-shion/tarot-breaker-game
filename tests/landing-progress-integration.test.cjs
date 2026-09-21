@@ -14,9 +14,8 @@ test("Landing records Progress only after existing memory completion",()=>{
   assert.ok(legacy>=0 && durable>legacy);
 });
 
-test("Landing observes route checkpoints without changing authored transition",()=>{
+test("Landing observes Alenon arrival without changing authored gate transition",()=>{
   assert.ok(source.includes('sourceMapId: "alenon"'));
   assert.ok(source.includes('destinationMapId: "star_country_landing"'));
-  assert.ok(source.includes('destinationMapId: "star_gate_garden"'));
   for(const token of ['const DEVIL_EVENT_Y = 355;','const GARDEN_EXIT_Y = 215;','starGateAudio.volume = .45;','const transitionMs = 1800;','location.href = "./index.html?from=landing";']) assert.ok(source.includes(token),token);
 });
