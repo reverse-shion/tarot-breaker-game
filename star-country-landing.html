@@ -832,8 +832,6 @@
   <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
   <script src="./audio.js?v=20260919-roundtrip-1" defer></script>
   <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v3"></script>
-  <script src="./route-registry.js?v=20260921-progress-v1"></script>
-  <script src="./progress.js?v=20260921-progress-v1"></script>
   <script>
     (() => {
       "use strict";
@@ -888,38 +886,6 @@
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
-
-      // Phase 2A-4b: Landing reads/writes only the existing Progress v1 contract.
-      // Existing URL route parameters still own presentation/spawn for this atomic phase.
-      const landingProgress = window.TarotProgressCore?.createProgress();
-      const landingProgressLoad = landingProgress?.load() || null;
-      const landingProgressValid = landingProgressLoad?.status === "valid";
-
-      // Alenon 2A-4a leaves the durable checkpoint at alenon/intro. On the real
-      // Alenon -> Landing route, commit Landing arrival before this map attempts
-      // to complete its own event. Otherwise completeEvent() correctly rejects
-      // landing_devil_memory with event-map-mismatch and it would replay on reload.
-      if (landingProgressValid && arrivingFromAlenon) {
-        const checkpoint = landingProgress.getCheckpoint();
-        if (checkpoint?.mapId === "alenon" && checkpoint?.spawnId === "intro") {
-          try {
-            landingProgress.commitArrival({
-              sourceMapId: "alenon",
-              destinationMapId: "star_country_landing",
-              spawnId: "pad_ground",
-              reason: "pad_to_landing",
-            });
-          } catch (error) {
-            console.warn("[Landing Progress] Alenon arrival was not persisted", error);
-          }
-        }
-      }
-
-      const landingProgressCheckpoint = landingProgressValid ? landingProgress.getCheckpoint() : null;
-      const landingMemoryCompleted =
-        landingProgressValid &&
-        landingProgress.isEventCompleted("landing_devil_memory");
-
       // Production page is always normal gameplay.
       // Map editing is intentionally disabled on this main HTML.
       const unifiedEditorMode = false;
@@ -969,11 +935,7 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
-      // Durable Progress v1 is authoritative when valid. Legacy Journey remains only
-      // a fallback for old/no-save sessions and must never write Progress by itself.
-      let devilEventStarted = landingProgressValid
-        ? landingMemoryCompleted
-        : window.TarotJourney?.get("landingMemoryDone") === true;
+      let devilEventStarted = window.TarotJourney?.get("landingMemoryDone") === true;
       let farewellActive = false;
       let returnGreetingPlayed = false;
       let gardenExitArmed = !returningFromGarden;
@@ -1020,16 +982,6 @@
         await showStoryLine("……いや。考えるのは後だ。");
         await showStoryLine("今は……星門が先だ");
         window.TarotJourney?.set("landingMemoryDone", true);
-        if (landingProgressValid) {
-          try {
-            landingProgress.completeEvent("landing_devil_memory", {
-              mapId: "star_country_landing",
-              spawnId: "pad_ground",
-            });
-          } catch (error) {
-            console.warn("[Landing Progress] devil memory completion was not persisted", error);
-          }
-        }
         devilEventActive=false;guide.hidden=true;
       }
 
@@ -2381,20 +2333,6 @@
 
       function leaveForGarden() {
         if (leaving) return;
-        // Progress v1 records the semantic route only after its prerequisite event
-        // is complete. Navigation itself remains on the existing validated URL path.
-        if (landingProgressValid) {
-          try {
-            landingProgress.commitArrival({
-              sourceMapId: "star_country_landing",
-              destinationMapId: "star_gate_garden",
-              spawnId: "south_gate",
-              reason: "gate_to_garden",
-            });
-          } catch (error) {
-            console.warn("[Landing Progress] garden arrival was not persisted", error);
-          }
-        }
         leaving = true;
         window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
