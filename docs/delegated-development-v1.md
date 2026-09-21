@@ -15,6 +15,15 @@ The user remains the authority for:
 
 Technical implementation choices may be delegated when they stay inside an already-approved intent and Scope.
 
+Architect must classify the change as LOW, NORMAL, or HIGH using `docs/change-risk-device-gate-v1.md`. The classification controls validation depth; it must not be lowered merely to speed up delivery.
+
+## Proportional gate
+LOW documentation/process-only changes use branch → adversarial review → applicable CI → PR → merge.
+
+NORMAL changes use the full role flow and automated regression checks; device validation is conditional on the actual diff.
+
+HIGH changes use the full role flow plus the applicable device smoke checklist before merge.
+
 ## Standard pipeline
 
 Human intent
@@ -34,11 +43,11 @@ A task may be merged without a second human approval only when ALL conditions be
 2. Architect found no unresolved product decision.
 3. Work is on a dedicated branch and PR.
 4. Reviewer returns PASS.
-5. Required CI is successful under the repository's current regression-baseline policy.
+5. Required CI is successful under the repository's current regression-baseline policy, at the validation depth required by the assigned risk level.
 6. No new test failure exists relative to current main.
 7. No Regression Lock is changed, weakened, removed, or reinterpreted.
 8. No test/validator/baseline is weakened merely to make CI pass.
-9. Any required device validation has PASS evidence. If device validation cannot be performed by the agent, merge waits for the human result.
+9. Any required device validation from `docs/change-risk-device-gate-v1.md` has PASS evidence. If device validation cannot be performed by the agent, merge waits for the human result.
 10. Candidate is still based on/compatible with current main at merge time; if main moved materially, re-review first.
 
 ## Mandatory human escalation
