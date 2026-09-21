@@ -25,7 +25,7 @@ Source of truth for protected behavior:
 
 ## Delegated Development Workflow
 
-For implementation tasks, also read `docs/delegated-development-v1.md` and follow the role contracts under `docs/agents/`.
+For implementation tasks, also read `docs/delegated-development-v1.md`, `docs/change-risk-device-gate-v1.md`, and the applicable role contracts under `docs/agents/`.
 
 Default delegated pipeline:
 `Architect → Implementer → Reviewer / QA → CI → required device validation → PR → merge`.
