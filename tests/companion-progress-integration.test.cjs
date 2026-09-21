@@ -1,4 +1,5 @@
 "use strict";
+// Phase 2A-4d CI validation revision 1.
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
