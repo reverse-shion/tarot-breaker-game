@@ -33,6 +33,7 @@ jobs:
           node --check dialogue.js
           node --check navigation.js
           node --check controls.js
+          node --check scripts/test-regression-baseline.mjs
 
       - name: Validate game assets and manifest
         run: |
@@ -41,4 +42,4 @@ jobs:
           node scripts/validate-audio.mjs
 
       - name: Test collision, navigation, input and game integration
-        run: node --test tests/*.test.cjs
+        run: node scripts/test-regression-baseline.mjs
