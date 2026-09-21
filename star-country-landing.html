@@ -895,13 +895,6 @@
       const landingProgress = window.TarotProgressCore?.createProgress();
       const landingProgressLoad = landingProgress?.load() || null;
       const landingProgressValid = landingProgressLoad?.status === "valid";
-      if (
-        landingProgressValid &&
-        landingProgress.isEventCompleted("landing_devil_memory") &&
-        window.TarotJourney?.get("landingMemoryDone") !== true
-      ) {
-        window.TarotJourney?.set("landingMemoryDone", true);
-      }
       if (landingProgressValid && arrivingFromAlenon) {
         try {
           landingProgress.commitArrival({
