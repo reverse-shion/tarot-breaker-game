@@ -21,3 +21,17 @@ For Progress / Save work specifically:
 
 Source of truth for protected behavior:
 `docs/regression-lock-v1.md`
+
+
+## Delegated Development Workflow
+
+For implementation tasks, also read `docs/delegated-development-v1.md` and follow the role contracts under `docs/agents/`.
+
+Default delegated pipeline:
+`Architect → Implementer → Reviewer / QA → CI → required device validation → PR → merge`.
+
+Routine technical execution may proceed through merge without a second human approval only when every automatic-merge condition in `docs/delegated-development-v1.md` is satisfied.
+
+Human decisions are not delegated. If product intent, gameplay/UX/story choice, Regression Lock modification, destructive behavior, or required device evidence is unresolved, STOP and return the decision to the user.
+
+Reviewer independence is mandatory: review must inspect the actual diff/evidence and must not silently repair the candidate while reviewing.
