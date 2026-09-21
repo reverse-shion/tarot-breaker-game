@@ -1,4 +1,4 @@
-/* Phase 2A-4c: observer-only Garden Progress bridge.
+/* Phase 2A-4c: observer-only Garden Progress bridge (CI contract revision 1).
  * It never starts, suppresses, restores, or mutates Garden story runtime.
  */
 (function (root) {
