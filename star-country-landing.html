@@ -832,6 +832,8 @@
   <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
   <script src="./audio.js?v=20260919-roundtrip-1" defer></script>
   <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v3"></script>
+  <script src="./route-registry.js?v=20260921-progress-v1"></script>
+  <script src="./progress.js?v=20260921-progress-v1"></script>
   <script>
     (() => {
       "use strict";
@@ -886,6 +888,23 @@
       const params = new URLSearchParams(location.search);
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
+
+      // Observer-only: Progress records facts; existing Landing runtime remains authoritative.
+      const landingProgress = window.TarotProgressCore?.createProgress();
+      const landingProgressLoad = landingProgress?.load() || null;
+      const landingProgressValid = landingProgressLoad?.status === "valid";
+      if (landingProgressValid && arrivingFromAlenon) {
+        try {
+          landingProgress.commitArrival({
+            sourceMapId: "alenon",
+            destinationMapId: "star_country_landing",
+            spawnId: "pad_ground",
+            reason: "pad_to_landing",
+          });
+        } catch (error) {
+          console.warn("[Landing Progress] arrival observation was not persisted", error);
+        }
+      }
       // Production page is always normal gameplay.
       // Map editing is intentionally disabled on this main HTML.
       const unifiedEditorMode = false;
@@ -982,6 +1001,16 @@
         await showStoryLine("……いや。考えるのは後だ。");
         await showStoryLine("今は……星門が先だ");
         window.TarotJourney?.set("landingMemoryDone", true);
+        if (landingProgressValid) {
+          try {
+            landingProgress.completeEvent("landing_devil_memory", {
+              mapId: "star_country_landing",
+              spawnId: "pad_ground",
+            });
+          } catch (error) {
+            console.warn("[Landing Progress] memory observation was not persisted", error);
+          }
+        }
         devilEventActive=false;guide.hidden=true;
       }
 
@@ -2333,6 +2362,18 @@
 
       function leaveForGarden() {
         if (leaving) return;
+        if (landingProgressValid) {
+          try {
+            landingProgress.commitArrival({
+              sourceMapId: "star_country_landing",
+              destinationMapId: "star_gate_garden",
+              spawnId: "south_gate",
+              reason: "gate_to_garden",
+            });
+          } catch (error) {
+            console.warn("[Landing Progress] garden arrival observation was not persisted", error);
+          }
+        }
         leaving = true;
         window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
