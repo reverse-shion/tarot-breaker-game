@@ -14,6 +14,21 @@ test("Landing loads Route Registry before Progress Core", () => {
   assert.ok(progress > registry);
 });
 
+
+test("real Alenon arrival is committed before Landing event completion can run", () => {
+  const arrival = source.indexOf('landingProgress.commitArrival({');
+  const memoryRead = source.indexOf('landingProgress.isEventCompleted("landing_devil_memory")');
+  const completion = source.indexOf('landingProgress.completeEvent("landing_devil_memory"');
+  assert.ok(arrival >= 0);
+  assert.ok(arrival < memoryRead);
+  assert.ok(memoryRead < completion);
+  const arrivalBlock = source.slice(arrival, memoryRead);
+  assert.match(arrivalBlock, /sourceMapId: "alenon"/);
+  assert.match(arrivalBlock, /destinationMapId: "star_country_landing"/);
+  assert.match(arrivalBlock, /spawnId: "pad_ground"/);
+  assert.match(arrivalBlock, /reason: "pad_to_landing"/);
+});
+
 test("valid Progress v1 is authoritative for landing memory completion", () => {
   assert.match(source, /const landingProgressValid = landingProgressLoad\?\.status === "valid";/);
   assert.match(source, /landingProgress\.isEventCompleted\("landing_devil_memory"\)/);
