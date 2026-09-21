@@ -2,10 +2,10 @@
 const fs=require("node:fs"),path=require("node:path"),test=require("node:test"),assert=require("node:assert/strict");
 const source=fs.readFileSync(path.join(__dirname,"..","star-country-landing.html"),"utf8");
 
-test("Landing Progress is observer-only and legacy replay guard stays authoritative",()=>{
+test("Landing restore bridge preserves the legacy replay guard as runtime authority",()=>{
   assert.match(source,/let devilEventStarted = window\.TarotJourney\?\.get\("landingMemoryDone"\) === true;/);
   assert.doesNotMatch(source,/devilEventStarted\s*=\s*landingProgress/);
-  assert.equal(source.match(/TarotJourney\?\.set\("landingMemoryDone", true\)/g)?.length,1);
+  assert.equal(source.match(/TarotJourney\?\.set\("landingMemoryDone", true\)/g)?.length,2);
 });
 
 test("Landing records Progress only after existing memory completion",()=>{
