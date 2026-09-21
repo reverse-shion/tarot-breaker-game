@@ -889,10 +889,19 @@
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
 
-      // Observer-only: Progress records facts; existing Landing runtime remains authoritative.
+      // Restore bridge: Progress may restore an already-completed fact into the
+      // legacy Journey mirror before the existing trigger guard is evaluated.
+      // It never clears the legacy flag and never starts an event.
       const landingProgress = window.TarotProgressCore?.createProgress();
       const landingProgressLoad = landingProgress?.load() || null;
       const landingProgressValid = landingProgressLoad?.status === "valid";
+      if (
+        landingProgressValid &&
+        landingProgress.isEventCompleted("landing_devil_memory") &&
+        window.TarotJourney?.get("landingMemoryDone") !== true
+      ) {
+        window.TarotJourney?.set("landingMemoryDone", true);
+      }
       if (landingProgressValid && arrivingFromAlenon) {
         try {
           landingProgress.commitArrival({
