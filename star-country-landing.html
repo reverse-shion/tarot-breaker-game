@@ -894,6 +894,27 @@
       const landingProgress = window.TarotProgressCore?.createProgress();
       const landingProgressLoad = landingProgress?.load() || null;
       const landingProgressValid = landingProgressLoad?.status === "valid";
+
+      // Alenon 2A-4a leaves the durable checkpoint at alenon/intro. On the real
+      // Alenon -> Landing route, commit Landing arrival before this map attempts
+      // to complete its own event. Otherwise completeEvent() correctly rejects
+      // landing_devil_memory with event-map-mismatch and it would replay on reload.
+      if (landingProgressValid && arrivingFromAlenon) {
+        const checkpoint = landingProgress.getCheckpoint();
+        if (checkpoint?.mapId === "alenon" && checkpoint?.spawnId === "intro") {
+          try {
+            landingProgress.commitArrival({
+              sourceMapId: "alenon",
+              destinationMapId: "star_country_landing",
+              spawnId: "pad_ground",
+              reason: "pad_to_landing",
+            });
+          } catch (error) {
+            console.warn("[Landing Progress] Alenon arrival was not persisted", error);
+          }
+        }
+      }
+
       const landingProgressCheckpoint = landingProgressValid ? landingProgress.getCheckpoint() : null;
       const landingMemoryCompleted =
         landingProgressValid &&
