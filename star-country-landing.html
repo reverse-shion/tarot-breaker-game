@@ -967,6 +967,17 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
+      // Progress v1 is the durable authority. Restore only the already-completed
+      // fact into the legacy Journey mirror before the unchanged trigger guard runs.
+      if (landingProgressValid) {
+        try {
+          if (landingProgress.isEventCompleted("landing_devil_memory")) {
+            window.TarotJourney?.set("landingMemoryDone", true);
+          }
+        } catch (error) {
+          console.warn("[Landing Progress] memory completion restore failed", error);
+        }
+      }
       let devilEventStarted = window.TarotJourney?.get("landingMemoryDone") === true;
       let farewellActive = false;
       let returnGreetingPlayed = false;
