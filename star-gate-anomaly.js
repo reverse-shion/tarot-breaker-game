@@ -57,7 +57,15 @@ function overscanCoversViewport(state){
 }
 async function resonance(){
  const camera=window.TarotCinematicCamera;if(!camera)throw new Error("Cinematic camera unavailable");
- const shionStart=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
+ const stage=window.TarotStage;
+ const shionStart=stage?.getState?.().actors?.shion||camera.getState().player;
+ const lumiereStart=stage?.getState?.().actors?.lumiere;
+ if(!stage||!lumiereStart)throw new Error("Lumiere stage state unavailable");
+ const faceGate=stage.perform({type:"face",actor:"lumiere",target:"gate"});
+ const faced=await faceGate.promise;
+ const lumiereFaced=stage.getState().actors.lumiere;
+ if(!faced?.completed||!samePoint(lumiereStart,lumiereFaced))throw new Error("Lumiere moved while facing Star Gate");
+ await pause(220);
  gateShell()?.classList.add("sga-sequence-active");
  setGateState(null);
  const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:14,minZoom:.48});
@@ -70,6 +78,8 @@ async function resonance(){
  await say("shion","……星門は、特におかしくないな。");
  await pause(400);
  setGateState("sga-anomaly-flicker");await pause(720);
+ const lumiereDuringAnomaly=stage.getState().actors.lumiere;
+ if(!samePoint(lumiereStart,lumiereDuringAnomaly))throw new Error("Lumiere moved during Star Gate anomaly");
  setGateState("sga-anomaly");await pause(480);
  setGateState("sga-reverse-gate");await pause(1100);
  setGateState("sga-reverse-flow");await pause(1050);
