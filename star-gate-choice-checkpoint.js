@@ -29,8 +29,8 @@
       await addScript("./star-gate-interaction.js?v=choice-sandbox-1");
       if (id === "star-gate-camera") await addScript("./star-gate-camera-checkpoint.js?v=camera-sandbox-1");
       if (id === "star-gate-full") {
-        addStyle("./star-gate-anomaly.css?v=full-sandbox-1");
-        await addScript("./star-gate-anomaly.js?v=full-sandbox-1");
+        addCss("./star-gate-anomaly.css?v=full-sandbox-2");
+        await addScript("./star-gate-anomaly.js?v=full-sandbox-2");
       }
     } catch (error) {
       console.error("[Star Gate Choice Checkpoint] runtime load failed", error);
