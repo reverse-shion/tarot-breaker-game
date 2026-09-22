@@ -31,3 +31,9 @@ jobs:
         run: node --test tests/integration-contracts.test.cjs
       - name: Main merge gate contract
         run: node --test tests/merge-gate.test.cjs
+      - name: Star Gate choice checkpoint
+        run: node --test tests/star-gate-choice-checkpoint.test.cjs
+      - name: Star Gate camera checkpoint
+        run: node --test tests/star-gate-camera-checkpoint.test.cjs
+      - name: Star Gate full sequence checkpoint
+        run: node --test tests/star-gate-full-checkpoint.test.cjs

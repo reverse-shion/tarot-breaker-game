@@ -18,7 +18,7 @@ Existing production gameplay contracts VGC-002 through VGC-007 are governed by d
 
 | Event / checkpoint | Commit SHA | Device result | Locked observable behavior | Notes |
 |---|---|---|---|---|
-| _No new checkpoint recorded yet_ | — | — | — | Add only after explicit device confirmation |
+| star-gate-choice | d39bf2f849a48c79abe60b73c26e267c1e6cf8b9 | PASS | Direct checkpoint opens at the Star Gate and the `星門を調べる / 離れる` choice UI is displayed normally. | Product owner explicitly confirmed on real device 2026-09-22. This locks the choice-display behavior only; downstream anomaly runtime is not yet verified. |
 
 ## Integration verification records
 

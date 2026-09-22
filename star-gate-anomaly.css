@@ -1,0 +1,500 @@
+.sga-sky-flow { z-index: 1.5 !important; }
+.sga-gate-fx {
+  z-index: 6 !important;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.sga-sky-flow {
+  overflow: visible;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
+.sga-sky-flow i {
+  position: absolute;
+  left: calc(50% + var(--drift, 0px));
+  top: -8%;
+  width: var(--particle-size, 1.5px);
+  height: var(--particle-length, 7px);
+  border-radius: 50%;
+  opacity: 0;
+  background: rgba(235, 250, 255, .96);
+  box-shadow: 0 0 4px rgba(188, 232, 255, .78);
+  transform: translate3d(-50%, 0, 0);
+  will-change: transform, opacity;
+}
+
+.sga-sky-flow i:nth-of-type(1) { --drift:-110px; --particle-size:0.8px; --particle-length:3px; animation-delay:0s !important; animation-duration:0.78s !important; }
+.sga-sky-flow i:nth-of-type(2) { --drift:-63px; --particle-size:1.5px; --particle-length:6px; animation-delay:-0.17s !important; animation-duration:0.91s !important; }
+.sga-sky-flow i:nth-of-type(3) { --drift:-16px; --particle-size:2.2px; --particle-length:9px; animation-delay:-0.34s !important; animation-duration:1.04s !important; }
+.sga-sky-flow i:nth-of-type(4) { --drift:31px; --particle-size:1.3px; --particle-length:4px; animation-delay:-0.51s !important; animation-duration:1.17s !important; }
+.sga-sky-flow i:nth-of-type(5) { --drift:78px; --particle-size:2.0px; --particle-length:7px; animation-delay:-0.68s !important; animation-duration:0.85s !important; }
+.sga-sky-flow i:nth-of-type(6) { --drift:-95px; --particle-size:1.1px; --particle-length:10px; animation-delay:-0.85s !important; animation-duration:0.98s !important; }
+.sga-sky-flow i:nth-of-type(7) { --drift:-48px; --particle-size:1.8px; --particle-length:5px; animation-delay:-0.02s !important; animation-duration:1.11s !important; }
+.sga-sky-flow i:nth-of-type(8) { --drift:-1px; --particle-size:0.9px; --particle-length:8px; animation-delay:-0.19s !important; animation-duration:0.79s !important; }
+.sga-sky-flow i:nth-of-type(9) { --drift:46px; --particle-size:1.6px; --particle-length:3px; animation-delay:-0.36s !important; animation-duration:0.92s !important; }
+.sga-sky-flow i:nth-of-type(10) { --drift:93px; --particle-size:2.3px; --particle-length:6px; animation-delay:-0.53s !important; animation-duration:1.05s !important; }
+.sga-sky-flow i:nth-of-type(11) { --drift:-80px; --particle-size:1.4px; --particle-length:9px; animation-delay:-0.7s !important; animation-duration:1.18s !important; }
+.sga-sky-flow i:nth-of-type(12) { --drift:-33px; --particle-size:2.1px; --particle-length:4px; animation-delay:-0.87s !important; animation-duration:0.86s !important; }
+.sga-sky-flow i:nth-of-type(13) { --drift:14px; --particle-size:1.2px; --particle-length:7px; animation-delay:-0.04s !important; animation-duration:0.99s !important; }
+.sga-sky-flow i:nth-of-type(14) { --drift:61px; --particle-size:1.9px; --particle-length:10px; animation-delay:-0.21s !important; animation-duration:1.12s !important; }
+.sga-sky-flow i:nth-of-type(15) { --drift:108px; --particle-size:1.0px; --particle-length:5px; animation-delay:-0.38s !important; animation-duration:0.80s !important; }
+.sga-sky-flow i:nth-of-type(16) { --drift:-65px; --particle-size:1.7px; --particle-length:8px; animation-delay:-0.55s !important; animation-duration:0.93s !important; }
+.sga-sky-flow i:nth-of-type(17) { --drift:-18px; --particle-size:0.8px; --particle-length:3px; animation-delay:-0.72s !important; animation-duration:1.06s !important; }
+.sga-sky-flow i:nth-of-type(18) { --drift:29px; --particle-size:1.5px; --particle-length:6px; animation-delay:-0.89s !important; animation-duration:1.19s !important; }
+.sga-sky-flow i:nth-of-type(19) { --drift:76px; --particle-size:2.2px; --particle-length:9px; animation-delay:-0.06s !important; animation-duration:0.87s !important; }
+.sga-sky-flow i:nth-of-type(20) { --drift:-97px; --particle-size:1.3px; --particle-length:4px; animation-delay:-0.23s !important; animation-duration:1.00s !important; }
+.sga-sky-flow i:nth-of-type(21) { --drift:-50px; --particle-size:2.0px; --particle-length:7px; animation-delay:-0.4s !important; animation-duration:1.13s !important; }
+.sga-sky-flow i:nth-of-type(22) { --drift:-3px; --particle-size:1.1px; --particle-length:10px; animation-delay:-0.57s !important; animation-duration:0.81s !important; }
+.sga-sky-flow i:nth-of-type(23) { --drift:44px; --particle-size:1.8px; --particle-length:5px; animation-delay:-0.74s !important; animation-duration:0.94s !important; }
+.sga-sky-flow i:nth-of-type(24) { --drift:91px; --particle-size:0.9px; --particle-length:8px; animation-delay:-0.91s !important; animation-duration:1.07s !important; }
+
+#game-shell.sga-sky-descent .sga-sky-flow,
+#game-shell.sga-normal-flow .sga-sky-flow,
+#game-shell.sga-reverse-flow .sga-sky-flow { opacity: 1; }
+#game-shell.sga-sky-descent .sga-sky-flow i,
+#game-shell.sga-normal-flow .sga-sky-flow i { animation: sgaSkyDown 1.05s ease-in infinite; }
+#game-shell.sga-reverse-flow .sga-sky-flow i {
+  height: 18%;
+  background: linear-gradient(to top, transparent, rgba(199, 207, 255, .78), rgba(78, 91, 191, .12));
+  box-shadow: 0 0 7px rgba(110, 129, 226, .62);
+  animation: sgaSkyUp 1.08s ease-out infinite;
+}
+
+
+.sga-energy-column {
+  position: absolute;
+  left: 50%;
+  bottom: -10%;
+  width: 112px;
+  height: 126%;
+  border-radius: 48% 48% 40% 40%;
+  opacity: 0;
+  transform: translate3d(-50%, 22%, 0) scaleY(.04) scaleX(.62);
+  transform-origin: 50% 100%;
+  background:
+    radial-gradient(ellipse at 50% 86%, rgba(255,255,255,.98) 0 7%, rgba(210,242,255,.88) 18%, rgba(151,205,255,.54) 42%, rgba(106,137,235,.22) 68%, transparent 82%),
+    linear-gradient(to top, rgba(228,249,255,.96), rgba(170,222,255,.76) 34%, rgba(126,157,241,.40) 72%, transparent 100%);
+  box-shadow:
+    0 0 20px rgba(214,243,255,.92),
+    0 0 52px rgba(139,190,250,.64),
+    0 0 104px rgba(91,111,220,.38);
+  filter: blur(.2px);
+  will-change: transform, opacity, filter;
+}
+#game-shell.sga-reverse-flow .sga-energy-column {
+  animation: sgaColumnRise 1.05s cubic-bezier(.18,.68,.22,1) both;
+}
+#game-shell.sga-skyward-release .sga-sky-flow { opacity: 1; }
+#game-shell.sga-skyward-release .sga-energy-column {
+  animation: sgaColumnRelease 1.05s ease-out both;
+}
+#game-shell.sga-skyward-release .sga-sky-flow i {
+  height: 24%;
+  background: linear-gradient(to top, transparent, rgba(224,241,255,.88), rgba(104,126,224,.14));
+  box-shadow: 0 0 10px rgba(148,184,245,.72);
+  animation: sgaSkyUp .78s ease-out infinite;
+}
+
+.sga-gate-fx { overflow: visible; }
+.sga-sephirot-network,
+.sga-gate-sparkles { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sga-sephirot-network { overflow: visible; }
+
+.sga-sephirot-paths path {
+  fill: none;
+  stroke: rgba(208, 241, 255, .82);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 18 44;
+  opacity: 0;
+}
+
+#game-shell.sga-normal-flow .sga-sephirot-paths path {
+  opacity: .76;
+  animation: sgaPathDown .72s linear infinite;
+}
+#game-shell.sga-reverse-gate .sga-sephirot-paths path,
+#game-shell.sga-reverse-flow .sga-sephirot-paths path {
+  stroke: rgba(126, 145, 230, .74);
+  opacity: .72;
+  animation: sgaPathUp .78s linear infinite;
+}
+
+.sga-sephirot-nodes circle {
+  --normal-delay: 0s;
+  --reverse-delay: .70s;
+  fill: rgba(226, 248, 255, .05);
+  stroke: rgba(228, 249, 255, .96);
+  stroke-width: 13;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.sga-sephirot-nodes circle[data-order="1"] { --normal-delay: .12s; --reverse-delay: .56s; }
+.sga-sephirot-nodes circle[data-order="2"] { --normal-delay: .24s; --reverse-delay: .42s; }
+.sga-sephirot-nodes circle[data-order="3"] { --normal-delay: .36s; --reverse-delay: .28s; }
+.sga-sephirot-nodes circle[data-order="4"] { --normal-delay: .48s; --reverse-delay: .14s; }
+.sga-sephirot-nodes circle[data-order="5"] { --normal-delay: .60s; --reverse-delay: 0s; }
+
+#game-shell.sga-normal-flow .sga-sephirot-nodes circle {
+  animation: sgaNodeCharge .58s ease-out var(--normal-delay) both;
+}
+#game-shell.sga-resonance-complete .sga-sephirot-nodes circle {
+  opacity: .86;
+  transform: scale(1.045);
+}
+#game-shell.sga-anomaly-flicker .sga-sephirot-nodes circle {
+  opacity: .72;
+  animation: sgaNodeFlicker 1.18s steps(1, end) both;
+}
+#game-shell.sga-anomaly .sga-sephirot-nodes circle,
+#game-shell.sga-anomaly-rest .sga-sephirot-nodes circle {
+  stroke: rgba(132, 151, 224, .62);
+  fill: rgba(54, 57, 132, .08);
+  opacity: .32;
+  transform: scale(.97);
+}
+#game-shell.sga-reverse-gate .sga-sephirot-nodes circle {
+  stroke: rgba(150, 165, 235, .76);
+  fill: rgba(60, 67, 153, .10);
+  animation: sgaNodeReverse .52s ease-out var(--reverse-delay) both;
+}
+#game-shell.sga-reverse-flow .sga-sephirot-nodes circle {
+  stroke: rgba(132, 151, 224, .64);
+  fill: rgba(54, 57, 132, .08);
+  opacity: .36;
+  transform: scale(.98);
+}
+
+.sga-gate-sparkles i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(239, 253, 255, .96);
+  box-shadow: 0 0 5px rgba(224, 248, 255, .94), 0 0 10px rgba(131, 207, 255, .66);
+  opacity: .16;
+  transform: translate3d(-50%, -50%, 0) scale(.72);
+  animation: sgaSparkle 3.1s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.sga-gate-sparkles i:nth-child(1) { left: 45%; top: 18%; animation-delay: -.4s; animation-duration: 2.7s; }
+.sga-gate-sparkles i:nth-child(2) { left: 56%; top: 25%; animation-delay: -1.8s; animation-duration: 3.4s; }
+.sga-gate-sparkles i:nth-child(3) { left: 47%; top: 34%; animation-delay: -.9s; animation-duration: 3.8s; }
+.sga-gate-sparkles i:nth-child(4) { left: 54%; top: 43%; animation-delay: -2.5s; animation-duration: 3.2s; }
+.sga-gate-sparkles i:nth-child(5) { left: 44%; top: 52%; animation-delay: -1.3s; animation-duration: 4.1s; }
+.sga-gate-sparkles i:nth-child(6) { left: 57%; top: 58%; animation-delay: -3.1s; animation-duration: 3.6s; }
+.sga-gate-sparkles i:nth-child(7) { left: 49%; top: 67%; animation-delay: -2.1s; animation-duration: 3.9s; }
+.sga-gate-sparkles i:nth-child(8) { left: 53%; top: 73%; animation-delay: -.2s; animation-duration: 4.3s; }
+
+#game-shell.sga-anomaly-flicker .sga-gate-sparkles,
+#game-shell.sga-anomaly .sga-gate-sparkles,
+#game-shell.sga-reverse-gate .sga-gate-sparkles,
+#game-shell.sga-reverse-flow .sga-gate-sparkles,
+#game-shell.sga-anomaly-rest .sga-gate-sparkles { filter: hue-rotate(28deg) saturate(.72); }
+#game-shell.sga-anomaly .sga-gate-sparkles i,
+#game-shell.sga-reverse-gate .sga-gate-sparkles i,
+#game-shell.sga-reverse-flow .sga-gate-sparkles i,
+#game-shell.sga-anomaly-rest .sga-gate-sparkles i {
+  animation-duration: 6.8s;
+  background: rgba(157, 176, 232, .78);
+  box-shadow: 0 0 5px rgba(93, 119, 216, .58);
+}
+#game-shell.sga-anomaly .sga-gate-sparkles i:nth-child(3),
+#game-shell.sga-anomaly .sga-gate-sparkles i:nth-child(6),
+#game-shell.sga-anomaly .sga-gate-sparkles i:nth-child(8),
+#game-shell.sga-reverse-gate .sga-gate-sparkles i:nth-child(3),
+#game-shell.sga-reverse-gate .sga-gate-sparkles i:nth-child(6),
+#game-shell.sga-reverse-gate .sga-gate-sparkles i:nth-child(8),
+#game-shell.sga-reverse-flow .sga-gate-sparkles i:nth-child(3),
+#game-shell.sga-reverse-flow .sga-gate-sparkles i:nth-child(6),
+#game-shell.sga-reverse-flow .sga-gate-sparkles i:nth-child(8),
+#game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(3),
+#game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(6),
+#game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(8) { opacity: 0; animation: none; }
+
+.scene-gate-inner-light { overflow: hidden; clip-path: polygon(50% 0%, 67% 4%, 82% 15%, 93% 31%, 100% 54%, 100% 100%, 0% 100%, 0% 54%, 7% 31%, 18% 15%, 33% 4%); }\n.scene-gate-inner-light > img { width:100%; height:100%; object-fit:cover; transform-origin:50% 0% !important; transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
+#game-shell.sga-normal-flow .scene-gate-inner-light > img {
+  animation: sgaInnerReceive 1.35s ease-out both !important;
+}
+#game-shell.sga-resonance-complete .scene-gate-inner-light > img {
+  animation: none !important;
+  opacity: 1 !important;
+  filter: brightness(1.18) saturate(1.06) drop-shadow(0 0 12px rgba(192, 231, 255, .46)) !important;
+  transform: scaleX(1.025) scaleY(1.01) !important;
+}
+#game-shell.sga-anomaly-flicker .scene-gate-inner-light > img {
+  animation: sgaInnerFlicker 1.18s steps(1, end) both !important;
+}
+#game-shell.sga-anomaly .scene-gate-inner-light > img,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light > img {
+  animation: sgaAnomalyBreathe 7.2s ease-in-out infinite !important;
+  opacity: 1 !important;
+  filter: brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90, 108, 205, .32)) !important;
+  transform: scaleX(1) scaleY(1) !important;
+}
+#game-shell.sga-reverse-gate .scene-gate-inner-light > img {
+  animation: sgaGateSourceCharge 1.05s ease-out both !important;
+}
+#game-shell.sga-reverse-flow .scene-gate-inner-light > img,
+#game-shell.sga-skyward-release .scene-gate-inner-light > img {
+  animation: sgaGateSourceRelease 1.05s ease-out both !important;
+}
+#game-shell.sga-anomaly .scene-gate-inner-light::before,
+#game-shell.sga-anomaly .scene-gate-inner-light::after,
+#game-shell.sga-reverse-gate .scene-gate-inner-light::before,
+#game-shell.sga-reverse-gate .scene-gate-inner-light::after,
+#game-shell.sga-reverse-flow .scene-gate-inner-light::before,
+#game-shell.sga-reverse-flow .scene-gate-inner-light::after,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light::before,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light::after { opacity: .28 !important; }
+
+#star-gate-anomaly {
+  position: fixed;
+  inset: 0;
+  z-index: 2300;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .28s ease;
+}
+#star-gate-anomaly.active { opacity: 1; pointer-events: auto; }
+.sga-dim { position:absolute; inset:0; background:#05030b; opacity:0; transition:opacity .65s ease; pointer-events:none; }
+.sga-darken .sga-dim { opacity:.72; }
+.sga-vision { position:absolute; inset:0; overflow:hidden; background:#05030b; opacity:0; transition:opacity .55s ease; }
+.sga-vision.visible { opacity:1; }
+.sga-pan { position:absolute; inset:-14% -8%; transform:translate3d(0,12%,0) scale(1.12); transition:transform 1.55s cubic-bezier(.2,.72,.22,1); }
+.sga-pan.survey-fountain { transform:translate3d(0,5%,0) scale(1.1); }
+.sga-pan.survey-upper { transform:translate3d(-2%,-5%,0) scale(1.08); }
+.sga-pan.survey-gate { transform:translate3d(0,-13%,0) scale(1.06); }
+.sga-ruins { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.sga-smoke { position:absolute; inset:-8%; width:116%; height:116%; object-fit:cover; opacity:.34; animation:sgaSmoke 9s ease-in-out infinite alternate; }
+.sga-smoke.second { opacity:.2; transform:scaleX(-1); animation-duration:12s; }
+.sga-void { position:absolute; left:50%; top:10%; width:min(30vw,210px); height:min(38vh,310px); object-fit:contain; transform:translate3d(-50%,0,0); opacity:.72; animation:sgaVoid 3.4s ease-in-out infinite; }
+.sga-shion { position:absolute; left:50%; bottom:14%; width:clamp(54px,11vw,82px); height:auto; transform:translate3d(-50%,0,0); opacity:0; transition:opacity .25s ease; }
+.sga-card-phase .sga-shion.visible { opacity:1; }
+.sga-card { position:absolute; left:50%; bottom:29%; width:clamp(42px,9vw,66px); aspect-ratio:1/1; transform:translate3d(-50%,0,0) scale(.74); opacity:0; }
+.sga-card.visible { opacity:1; }
+.sga-card.ascend { animation:sgaAscend 3.5s cubic-bezier(.22,.61,.36,1) forwards; }
+.sga-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transition:opacity .28s ease; }
+.sga-card .aura2 { opacity:0; }
+.sga-card.transformed .aura1 { opacity:0; }
+.sga-card.transformed .aura2 { opacity:1; }
+.sga-card.floating,
+.sga-card.ascend.floating { animation:sgaFloat 2.4s ease-in-out infinite alternate; }
+.sga-cut { position:absolute; inset:0; background:#08040d; opacity:0; pointer-events:none; }
+.sga-cut.show { animation:sgaCut .42s steps(2,end) both; }
+.sga-impurity { position:absolute; left:50%; top:12%; width:58px; height:86px; transform:translateX(-50%); border-radius:50%; background:radial-gradient(ellipse,rgba(3,0,10,.82),rgba(21,5,35,.38) 52%,transparent 72%); opacity:0; filter:blur(2px); transition:opacity .5s ease; }
+.sga-impurity.visible { opacity:.72; }
+
+@keyframes sgaSkyDown {
+  0% { transform: translate3d(-50%, -10%, 0) scaleY(.72); opacity: 0; }
+  24% { opacity: .88; }
+  100% { transform: translate3d(-50%, 430%, 0) scaleY(1.08); opacity: 0; }
+}
+@keyframes sgaSkyUp {
+  0% { transform: translate3d(-50%, 430%, 0) scaleY(.78); opacity: 0; }
+  24% { opacity: .72; }
+  100% { transform: translate3d(-50%, -12%, 0) scaleY(1.02); opacity: 0; }
+}
+@keyframes sgaColumnRise {
+  0% { opacity:0; transform:translate3d(-50%,20%,0) scaleY(.06) scaleX(.72); filter:brightness(1); }
+  22% { opacity:.92; }
+  100% { opacity:1; transform:translate3d(-50%,-2%,0) scaleY(1) scaleX(1); filter:brightness(1.16); }
+}
+@keyframes sgaColumnRelease {
+  0% { opacity:1; transform:translate3d(-50%,-2%,0) scaleY(1) scaleX(1); filter:brightness(1.16); }
+  58% { opacity:.72; transform:translate3d(-50%,-18%,0) scaleY(1.18) scaleX(1.18); filter:brightness(1.04); }
+  100% { opacity:0; transform:translate3d(-50%,-42%,0) scaleY(1.34) scaleX(1.5); filter:brightness(.78); }
+}
+@keyframes sgaPathDown { from { stroke-dashoffset: 62; } to { stroke-dashoffset: 0; } }
+@keyframes sgaPathUp { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 62; } }
+@keyframes sgaNodeCharge {
+  0% { opacity: 0; transform: scale(.72); }
+  62% { opacity: 1; transform: scale(1.13); }
+  100% { opacity: .86; transform: scale(1.045); }
+}
+@keyframes sgaNodeReverse {
+  0% { opacity: .30; transform: scale(.96); }
+  56% { opacity: .82; transform: scale(1.10); }
+  100% { opacity: .38; transform: scale(.98); }
+}
+@keyframes sgaNodeFlicker {
+  0%, 13% { opacity: .78; }
+  19%, 31% { opacity: .24; }
+  38%, 53% { opacity: .70; }
+  61%, 76% { opacity: .18; }
+  84% { opacity: .56; }
+  100% { opacity: .32; }
+}
+@keyframes sgaSparkle {
+  0%, 66%, 100% { opacity: .12; transform:translate3d(-50%,-50%,0) scale(.68); }
+  76% { opacity: .92; transform:translate3d(-50%,-50%,0) scale(1.26); }
+  86% { opacity: .24; transform:translate3d(-50%,-50%,0) scale(.82); }
+}
+@keyframes sgaGateSourceCharge {
+  0% { opacity:.52; filter:brightness(.72) saturate(.78) hue-rotate(24deg); transform:scale(1); }
+  62% { opacity:1; filter:brightness(1.32) saturate(1.08) hue-rotate(14deg) drop-shadow(0 0 20px rgba(178,224,255,.78)); transform:scaleX(1.035) scaleY(1.015); }
+  100% { opacity:.96; filter:brightness(1.18) saturate(1.02) hue-rotate(18deg) drop-shadow(0 0 16px rgba(151,202,255,.64)); transform:scale(1); }
+}
+@keyframes sgaGateSourceRelease {
+  0% { opacity:1; filter:brightness(1.28) saturate(1.06) hue-rotate(14deg) drop-shadow(0 0 22px rgba(188,230,255,.82)); transform:scaleX(1.025) scaleY(1.01); }
+  58% { opacity:.76; filter:brightness(.94) saturate(.88) hue-rotate(22deg) drop-shadow(0 0 12px rgba(111,143,224,.52)); transform:scale(1); }
+  100% { opacity:.54; filter:brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90,108,205,.32)); transform:scale(1); }
+}
+@keyframes sgaInnerReceive {
+  0% { opacity: .92; filter: brightness(1) saturate(1); transform:scale(1); }
+  72%, 100% { opacity:1; filter:brightness(1.18) saturate(1.06) drop-shadow(0 0 12px rgba(192,231,255,.46)); transform:scaleX(1.025) scaleY(1.01); }
+}
+@keyframes sgaInnerFlicker {
+  0%, 13% { opacity: 1; filter: brightness(1.16) saturate(1.04); }
+  19%, 31% { opacity: .58; filter: brightness(.76) saturate(.82) hue-rotate(12deg); }
+  38%, 53% { opacity: .94; filter: brightness(1.08) saturate(.96); }
+  61%, 76% { opacity: .46; filter: brightness(.68) saturate(.78) hue-rotate(22deg); }
+  84% { opacity: .78; filter: brightness(.88) saturate(.86) hue-rotate(18deg); }
+  100% { opacity: .52; filter: brightness(.72) saturate(.78) hue-rotate(24deg); }
+}
+@keyframes sgaAnomalyBreathe {
+  0%, 100% { opacity:.46; filter:brightness(.68) saturate(.74) hue-rotate(24deg); }
+  54% { opacity:.57; filter:brightness(.77) saturate(.82) hue-rotate(20deg); }
+}
+@keyframes sgaSmoke { to { transform:translate3d(2.5%,-1.5%,0) scale(1.035); opacity:.42; } }
+@keyframes sgaVoid { 50% { transform:translate3d(-50%,0,0) scale(1.035); opacity:.86; } }
+@keyframes sgaAscend { 0% { transform:translate3d(-50%,0,0) scale(.74) rotate(0deg); } 100% { transform:translate3d(-50%,-38vh,0) scale(.9) rotate(1.2deg); } }
+@keyframes sgaFloat { from { transform:translate3d(-50%,-38vh,0) scale(.9) rotate(1.2deg); } to { transform:translate3d(-50%,-39vh,0) scale(.92) rotate(-.8deg); } }
+@keyframes sgaCut { 0% { opacity:0; } 35% { opacity:.92; } 70% { opacity:.68; } 100% { opacity:0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sga-smoke,
+  .sga-void,
+  .sga-card { animation-duration:.01ms !important; animation-iteration-count:1 !important; }
+  .sga-sky-flow i,
+  .sga-energy-column,
+  .sga-sephirot-paths path,
+  .sga-sephirot-nodes circle,
+  .sga-gate-sparkles i { animation-duration:.7s !important; animation-iteration-count:1 !important; }
+  .sga-pan { transition-duration:.3s; }
+}
+
+/* Extended sky: keep the garden's normal world transform unchanged.
+   Move only the taller raster upward so its original lower 1086px stays aligned
+   exactly where the old 1448x1086 sky was, while the extra 514px exists above. */
+.scene-farthest-sky--extended {
+  overflow: visible !important;
+}
+.scene-farthest-sky--extended > img {
+  position: absolute !important;
+  left: 0 !important;
+  top: -514px !important;
+  width: 1448px !important;
+  height: 1600px !important;
+  max-width: none !important;
+}
+
+/* Inner-light raster must be allowed to extend beyond its original 100% box. */
+#game-shell .scene-gate-inner-light { overflow: visible !important; clip-path: none !important; }
+#game-shell .scene-gate-inner-light > img { transform-origin: 50% 0% !important; }
+
+#game-shell.sga-sky-descent .sga-sky-flow,#game-shell.sga-normal-flow .sga-sky-flow{height:720px!important;overflow:visible!important;opacity:1!important}
+#game-shell.sga-sky-descent .sga-sky-flow i,#game-shell.sga-normal-flow .sga-sky-flow i{animation-name:sgaFineSkyDown!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important}
+@keyframes sgaFineSkyDown{0%{transform:translate3d(-50%,0,0);opacity:0}8%{opacity:.9}82%{opacity:.72}100%{transform:translate3d(-50%,680px,0);opacity:0}}
+
+/* False-safety / reverse-anomaly contract.
+   Geometry is intentionally untouched. */
+#game-shell.sga-resonance-complete .sga-sephirot-paths path{
+  opacity:.82;
+  stroke:rgba(218,246,255,.92);
+  animation:none!important;
+}
+#game-shell.sga-resonance-complete .scene-gate-inner-light>img{
+  opacity:1!important;
+  filter:brightness(1.32) saturate(1.08) drop-shadow(0 0 15px rgba(201,238,255,.68))!important;
+}
+#game-shell.sga-anomaly-flicker .scene-gate-inner-light>img{
+  filter:brightness(.72) saturate(.78) hue-rotate(28deg) drop-shadow(0 0 9px rgba(76,82,166,.45))!important;
+}
+#game-shell.sga-anomaly .scene-gate-inner-light>img,
+#game-shell.sga-reverse-gate .scene-gate-inner-light>img,
+#game-shell.sga-reverse-flow .scene-gate-inner-light>img,
+#game-shell.sga-skyward-release .scene-gate-inner-light>img{
+  filter:brightness(.58) saturate(.72) hue-rotate(32deg) drop-shadow(0 0 8px rgba(63,67,145,.48))!important;
+}
+#game-shell.sga-reverse-flow .sga-sky-flow i,
+#game-shell.sga-skyward-release .sga-sky-flow i{
+  background:rgba(91,88,158,.86);
+  box-shadow:0 0 4px rgba(111,116,198,.52);
+}
+
+/* Purple-black reverse energy: dark core with a restrained violet-blue edge glow. */
+#game-shell.sga-reverse-gate .sga-sephirot-paths path,
+#game-shell.sga-reverse-flow .sga-sephirot-paths path{
+  stroke:rgba(74,45,112,.90)!important;
+  filter:drop-shadow(0 0 5px rgba(105,82,166,.55));
+}
+#game-shell.sga-reverse-gate .sga-sephirot-nodes circle,
+#game-shell.sga-reverse-flow .sga-sephirot-nodes circle{
+  stroke:rgba(91,59,137,.88)!important;
+  fill:rgba(27,13,48,.42)!important;
+  filter:drop-shadow(0 0 5px rgba(108,83,171,.48));
+}
+#game-shell.sga-reverse-flow .sga-sky-flow i,
+#game-shell.sga-skyward-release .sga-sky-flow i{
+  background:rgba(48,25,75,.94)!important;
+  box-shadow:0 0 3px rgba(122,91,177,.72),0 0 7px rgba(73,53,127,.48)!important;
+}
+#game-shell.sga-reverse-flow .sga-energy-column,
+#game-shell.sga-skyward-release .sga-energy-column{
+  filter:hue-rotate(54deg) saturate(1.55) brightness(.58)!important;
+}
+
+/* Inner gate light must remain opaque in every anomaly phase.
+   Darkness/color comes from filters, never transparency. */
+#game-shell.sga-anomaly-flicker .scene-gate-inner-light>img,
+#game-shell.sga-anomaly .scene-gate-inner-light>img,
+#game-shell.sga-reverse-gate .scene-gate-inner-light>img,
+#game-shell.sga-reverse-flow .scene-gate-inner-light>img,
+#game-shell.sga-skyward-release .scene-gate-inner-light>img,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  opacity:1!important;
+}
+
+/* Cloud bleed-through fix.
+   This opaque backing shares the established inner-light geometry and blocks
+   moving cloud/sky pixels wherever the WEBP itself is transparent. */
+#game-shell .scene-gate-inner-light{
+  isolation:isolate!important;
+}
+#game-shell .scene-gate-inner-backing{
+  position:absolute;
+  left:12%;
+  top:8%;
+  width:76%;
+  height:88%;
+  z-index:0;
+  display:block;
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+  pointer-events:none;
+  background:linear-gradient(180deg,#071326 0%,#0a1930 58%,#0b1d38 100%);
+  clip-path:polygon(50% 0%,67% 4%,82% 15%,93% 31%,100% 54%,100% 100%,0% 100%,0% 54%,7% 31%,18% 15%,33% 4%);
+}
+#game-shell .scene-gate-inner-light>img{
+  position:relative;
+  z-index:1;
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+}
+#game-shell.sga-normal-flow .scene-gate-inner-backing,
+#game-shell.sga-resonance-complete .scene-gate-inner-backing,
+#game-shell.sga-anomaly-flicker .scene-gate-inner-backing,
+#game-shell.sga-anomaly .scene-gate-inner-backing,
+#game-shell.sga-reverse-gate .scene-gate-inner-backing,
+#game-shell.sga-reverse-flow .scene-gate-inner-backing,
+#game-shell.sga-skyward-release .scene-gate-inner-backing,
+#game-shell.sga-anomaly-rest .scene-gate-inner-backing{
+  opacity:1!important;
+}

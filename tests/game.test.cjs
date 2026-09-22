@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 
-async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, search = '?navDebug=1' } = {}) {
   let raf, now = 1000;
   const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
   class Element {
@@ -60,7 +60,8 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const fetched = [];
   const deterministicMath = Object.create(Math);
   deterministicMath.random = () => 0.5;
-  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location: { search: '?navDebug=1' },
+  const location = { search, href: '' };
+  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location,
     performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,

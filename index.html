@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
     <meta name="theme-color" content="#0b1029" />
     <title>TAROT BREAKER — 1000年前の星の国</title>
-    <link rel="preload" as="image" href="./assets/maps/star-country-farthest-sky-background.webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/maps/star-country-farthest-sky-background-extended.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="./assets/maps/star-country-world-islands.webp?asset=34856728cf2b" fetchpriority="high" />
     <link rel="preload" as="image" href="./assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9" fetchpriority="high" />
     <link rel="preload" as="image" href="./assets/maps/star-country-gate-garden-star-sky.webp" />
@@ -70,8 +70,8 @@
     </script>
     <main id="game-shell" data-gate-state="normal" aria-label="TAROT BREAKER 1000年前の星の国">
       <img id="map-layer" class="map-layer scene-map-base" src="./assets/maps/star-country-world-islands.webp?asset=34856728cf2b" alt="" aria-hidden="true" draggable="false" />
-      <div class="scene-world-layer scene-back scene-farthest-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" draggable="false" /></div>
-      <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" /></div>
+      <div class="scene-world-layer scene-back scene-farthest-sky scene-farthest-sky--extended" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/maps/star-country-farthest-sky-background-extended.webp" alt="" draggable="false" /></div>
+            <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-sun-light" data-scene-object data-world-x="100" data-world-y="130" data-world-w="340" data-world-h="340" aria-hidden="true"></div>
       <div class="scene-world-layer scene-back scene-cloud scene-cloud-main" data-scene-world aria-hidden="true"><div class="scene-cloud-track scene-cloud-main-track"><img class="scene-cloud-copy" crossorigin="anonymous" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false" /><img class="scene-cloud-copy" crossorigin="anonymous" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false" /><img class="scene-cloud-copy" crossorigin="anonymous" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false" /></div></div>
       <div class="scene-world-layer scene-back scene-background" data-scene-world aria-hidden="true"><canvas width="1448" height="1086"></canvas></div>
@@ -86,8 +86,34 @@
       <canvas id="game" aria-label="星の国を探索するゲーム画面"></canvas>
       <div class="scene-object scene-front scene-fountain-glow" data-scene-object data-world-x="650" data-world-y="318" data-world-w="300" data-world-h="250" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-crystal-glow.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-front scene-fountain-sparkle" data-scene-object data-world-x="640" data-world-y="358" data-world-w="320" data-world-h="220" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" /></div>
-      <div class="scene-object scene-back scene-gate-inner-light" data-scene-object data-world-x="688" data-world-y="-118" data-world-w="224" data-world-h="328" data-gate-position-revision="native-foreground-v6" aria-hidden="true" style="mix-blend-mode:normal;opacity:1;filter:none"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6" alt="" draggable="false" style="opacity:1;mix-blend-mode:normal" /></div>
+      <div class="scene-object scene-back scene-gate-inner-light" data-scene-object data-world-x="684.57" data-world-y="-136.06455078124998" data-world-w="230.85999999999999" data-world-h="346.06455078125" data-gate-position-revision="inner-light-gate-frame-v3" aria-hidden="true" style="mix-blend-mode:normal;opacity:1;filter:none"><span class="scene-gate-inner-backing" aria-hidden="true"></span><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6" alt="" draggable="false" style="opacity:1;mix-blend-mode:normal" /></div>
+
+      <div class="scene-object scene-back sga-sky-flow" data-scene-object data-world-x="640" data-world-y="-430" data-world-w="320" data-world-h="270" aria-hidden="true"><div class="sga-energy-column" aria-hidden="true"></div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
       <div class="scene-object scene-back scene-star-gate" data-scene-object data-world-x="520" data-world-y="-163.33333333333331" data-world-w="560" data-world-h="373.3333333333333" data-gate-position-revision="native-foreground-v6" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-native-foreground-v6" alt="" draggable="false" style="opacity:1;filter:none;mix-blend-mode:normal;animation:none" /></div>
+      <div class="scene-object scene-front sga-gate-fx" data-scene-object data-world-x="520" data-world-y="-163.33333333333331" data-world-w="560" data-world-h="373.3333333333333" aria-hidden="true">
+        <svg class="sga-sephirot-network" viewBox="0 0 1536 1024" preserveAspectRatio="none" aria-hidden="true">
+          <g class="sga-sephirot-paths">
+            <path d="M768 0 L768 162 L665 234 L665 331 L665 462 L768 543 L768 630" />
+            <path d="M768 162 L871 234 L871 331 L871 462 L768 543" />
+            <path d="M768 162 L768 331 L768 543" />
+          </g>
+          <g class="sga-sephirot-nodes">
+            <circle data-order="0" cx="768" cy="162" r="45" />
+            <circle data-order="1" cx="665" cy="234" r="45" />
+            <circle data-order="1" cx="871" cy="234" r="45" />
+            <circle data-order="2" cx="665" cy="331" r="45" />
+            <circle data-order="2" cx="768" cy="331" r="45" />
+            <circle data-order="2" cx="871" cy="331" r="45" />
+            <circle data-order="3" cx="665" cy="462" r="45" />
+            <circle data-order="3" cx="871" cy="462" r="45" />
+            <circle data-order="4" cx="768" cy="543" r="45" />
+            <circle data-order="5" cx="768" cy="630" r="45" />
+          </g>
+        </svg>
+        <div class="sga-gate-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="scene-object scene-back scene-gate-particle" data-scene-object data-world-x="590" data-world-y="-110" data-world-w="420" data-world-h="320" aria-hidden="true" hidden style="display:none !important"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-gate-particle" data-scene-object data-world-x="590" data-world-y="-110" data-world-w="420" data-world-h="320" aria-hidden="true" hidden style="display:none !important"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-particle.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-front scene-gate-event" data-scene-object data-world-x="560" data-world-y="-140" data-world-w="480" data-world-h="350" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-event-fx.webp" alt="" draggable="false" /></div>
       <section id="start-screen" class="start-screen title-screen" aria-live="polite"><img class="title-screen__background" src="./assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014" alt="" aria-hidden="true" draggable="false" /><img class="title-screen__logo" src="./assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f" alt="TAROT BREAKER" draggable="false" /><div class="title-screen__start-wrap"><button id="start" class="title-screen__start" type="button" disabled aria-label="ゲームを開始"><span class="title-screen__ornament title-screen__ornament--top" aria-hidden="true"><i></i><b>✦</b><i></i></span><span class="title-screen__label">TOUCH TO START</span><span class="title-screen__ornament title-screen__ornament--bottom" aria-hidden="true"><i></i><b>✦</b><i></i></span></button><small id="load-note" class="title-screen__load-note" aria-live="polite"></small></div></section>
@@ -97,6 +123,7 @@
       <div id="load-error" class="load-error" hidden role="alert">読み込みに失敗しました。再読み込みしてください。</div>
     </main>
     <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
+    <script src="./star-gate-choice-checkpoint.js?v=choice-sandbox-1"></script>
     <script src="./route-registry.js?v=20260921-progress-v1"></script>
     <script src="./progress.js?v=20260921-progress-v1"></script>
     <script src="./garden-progress-observer.js?v=phase-2a-4c-1" defer></script>
@@ -109,11 +136,10 @@
     <script src="./dialogue.js?v=20260920-dialogue-ui-v3" defer></script>
     <script src="./story-event-guard.js?v=mandatory-story-v5-approved-dialogue" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
-    <script src="./scene-preview41-fix.js?v=native-foreground-v7" defer></script>
-    <script src="./single-map-occlusion.js?v=garden-arrival-v1" defer></script>
-    <script src="./scene-effects.js?v=garden-arrival-v1" defer></script>
+    <script src="./scene-preview41-fix.js?v=inner-light-size-23086-v1" defer></script>
+    <script src="./single-map-occlusion.js?v=inner-light-size-23086-v1" defer></script>
+    <script src="./scene-effects.js?v=inner-light-image-scale-v1" defer></script>
     <script src="./game.js?v=garden-arrival-v1" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
     <script src="./fountain-position-editor.js?v=3.0.0" defer></script>
-    <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>
-  </body>
+    <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>  </body>
 </html>
