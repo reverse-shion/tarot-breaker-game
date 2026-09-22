@@ -34,10 +34,14 @@
 
 .sga-sky-flow,
 .sga-gate-fx {
-  z-index: 6 !important;
   pointer-events: none;
   mix-blend-mode: screen;
 }
+
+/* Energy rain belongs behind the authored gate and scenery. Sephirot remains
+   a gate-local overlay so its paths/nodes stay legible. */
+.sga-sky-flow { z-index: 1 !important; }
+.sga-gate-fx { z-index: 6 !important; }
 
 .sga-sky-flow {
   overflow: visible;
@@ -47,36 +51,41 @@
 
 .sga-sky-flow i {
   position: absolute;
-  left: calc(50% + var(--drift, 0px));
-  top: -8%;
-  width: 3px;
-  height: 22%;
+  left: var(--x, 50%);
+  top: -5%;
+  width: var(--size, 3px);
+  height: var(--size, 3px);
   border-radius: 50%;
   opacity: 0;
-  background: linear-gradient(to bottom, transparent, rgba(239, 252, 255, .92), rgba(178, 225, 255, .16));
-  box-shadow: 0 0 8px rgba(188, 232, 255, .72);
+  background: rgba(239, 252, 255, .94);
+  box-shadow: 0 0 5px rgba(221, 246, 255, .88), 0 0 10px rgba(154, 215, 255, .48);
   transform: translate3d(-50%, 0, 0);
   will-change: transform, opacity;
 }
 
-.sga-sky-flow i:nth-child(1) { --drift: -24px; animation-delay: -.08s !important; }
-.sga-sky-flow i:nth-child(2) { --drift: -10px; animation-delay: .17s !important; }
-.sga-sky-flow i:nth-child(3) { --drift: 0px; animation-delay: .38s !important; }
-.sga-sky-flow i:nth-child(4) { --drift: 12px; animation-delay: .04s !important; }
-.sga-sky-flow i:nth-child(5) { --drift: 26px; animation-delay: .29s !important; }
+.sga-sky-flow i:nth-child(6n+1) { --x: 18%; --size: 2px; --dur: .94s; --delay: -.18s; }
+.sga-sky-flow i:nth-child(6n+2) { --x: 33%; --size: 3px; --dur: 1.12s; --delay: -.61s; }
+.sga-sky-flow i:nth-child(6n+3) { --x: 47%; --size: 2px; --dur: 1.03s; --delay: -.36s; }
+.sga-sky-flow i:nth-child(6n+4) { --x: 58%; --size: 4px; --dur: 1.20s; --delay: -.77s; }
+.sga-sky-flow i:nth-child(6n+5) { --x: 71%; --size: 2px; --dur: 1.08s; --delay: -.49s; }
+.sga-sky-flow i:nth-child(6n)   { --x: 84%; --size: 3px; --dur: .99s; --delay: -.27s; }
+.sga-sky-flow i:nth-child(4n+2) { margin-left: -11px; }
+.sga-sky-flow i:nth-child(5n+1) { margin-left: 8px; }
+.sga-sky-flow i:nth-child(7n+3) { margin-left: 15px; }
 
 #game-shell.sga-sky-descent .sga-sky-flow,
 #game-shell.sga-normal-flow .sga-sky-flow,
 #game-shell.sga-reverse-flow .sga-sky-flow { opacity: 1; }
 #game-shell.sga-sky-descent .sga-sky-flow i,
-#game-shell.sga-normal-flow .sga-sky-flow i { animation: sgaSkyDown 1.05s ease-in infinite; }
-#game-shell.sga-reverse-flow .sga-sky-flow i {
-  height: 18%;
-  background: linear-gradient(to top, transparent, rgba(199, 207, 255, .78), rgba(78, 91, 191, .12));
-  box-shadow: 0 0 7px rgba(110, 129, 226, .62);
-  animation: sgaSkyUp 1.08s ease-out infinite;
+#game-shell.sga-normal-flow .sga-sky-flow i {
+  animation: sgaSkyDown var(--dur, 1.05s) linear var(--delay, 0s) infinite;
 }
-
+#game-shell.sga-reverse-flow .sga-sky-flow i,
+#game-shell.sga-skyward-release .sga-sky-flow i {
+  background: rgba(104, 90, 178, .82);
+  box-shadow: 0 0 5px rgba(119, 111, 205, .62), 0 0 9px rgba(55, 45, 119, .44);
+  animation: sgaSkyUp var(--dur, 1.08s) ease-out var(--delay, 0s) infinite;
+}
 
 .sga-energy-column {
   position: absolute;
@@ -157,7 +166,10 @@
 #game-shell.sga-normal-flow .sga-sephirot-nodes circle {
   animation: sgaNodeCharge .58s ease-out var(--normal-delay) both;
 }
-#game-shell.sga-resonance-complete .sga-sephirot-nodes circle {
+#game-shell.sga-resonance-complete .sga-sephirot-nodes circle,
+#game-shell.sga-normal-hold .sga-sephirot-nodes circle,
+#game-shell.sga-shion-confirmation .sga-sephirot-nodes circle,
+#game-shell.sga-false-safety-pause .sga-sephirot-nodes circle {
   opacity: .86;
   transform: scale(1.045);
 }
@@ -235,7 +247,10 @@
 #game-shell.sga-normal-flow .scene-gate-inner-light > img {
   animation: sgaInnerReceive 1.35s ease-out both !important;
 }
-#game-shell.sga-resonance-complete .scene-gate-inner-light > img {
+#game-shell.sga-resonance-complete .scene-gate-inner-light > img,
+#game-shell.sga-normal-hold .scene-gate-inner-light > img,
+#game-shell.sga-shion-confirmation .scene-gate-inner-light > img,
+#game-shell.sga-false-safety-pause .scene-gate-inner-light > img {
   animation: none !important;
   opacity: 1 !important;
   filter: brightness(1.18) saturate(1.06) drop-shadow(0 0 12px rgba(192, 231, 255, .46)) !important;
@@ -307,14 +322,16 @@
 .sga-impurity.visible { opacity:.72; }
 
 @keyframes sgaSkyDown {
-  0% { transform: translate3d(-50%, -10%, 0) scaleY(.72); opacity: 0; }
-  24% { opacity: .88; }
-  100% { transform: translate3d(-50%, 430%, 0) scaleY(1.08); opacity: 0; }
+  0% { transform: translate3d(-50%, -12px, 0) scale(.72); opacity: 0; }
+  18% { opacity: .92; }
+  82% { opacity: .72; }
+  100% { transform: translate3d(-50%, 270px, 0) scale(1.08); opacity: 0; }
 }
 @keyframes sgaSkyUp {
-  0% { transform: translate3d(-50%, 430%, 0) scaleY(.78); opacity: 0; }
-  24% { opacity: .72; }
-  100% { transform: translate3d(-50%, -12%, 0) scaleY(1.02); opacity: 0; }
+  0% { transform: translate3d(-50%, 270px, 0) scale(.78); opacity: 0; }
+  18% { opacity: .76; }
+  82% { opacity: .58; }
+  100% { transform: translate3d(-50%, -18px, 0) scale(1.02); opacity: 0; }
 }
 @keyframes sgaColumnRise {
   0% { opacity:0; transform:translate3d(-50%,20%,0) scaleY(.06) scaleX(.72); filter:brightness(1); }
