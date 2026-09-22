@@ -205,7 +205,7 @@
   animation: none !important;
   opacity: 1 !important;
   filter: brightness(1.18) saturate(1.06) drop-shadow(0 0 12px rgba(192, 231, 255, .46)) !important;
-  transform: scaleX(1.025) scaleY(1.515) !important;
+  transform: scaleX(1.025) scaleY(1.01) !important;
 }
 #game-shell.sga-anomaly-flicker .scene-gate-inner-light > img {
   animation: sgaInnerFlicker 1.18s steps(1, end) both !important;
@@ -215,7 +215,7 @@
   animation: sgaAnomalyBreathe 7.2s ease-in-out infinite !important;
   opacity: .54 !important;
   filter: brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90, 108, 205, .32)) !important;
-  transform: scaleX(1) scaleY(1.5) !important;
+  transform: scaleX(1) scaleY(1) !important;
 }
 #game-shell.sga-reverse-gate .scene-gate-inner-light > img {
   animation: sgaGateSourceCharge 1.05s ease-out both !important;
