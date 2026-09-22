@@ -233,6 +233,8 @@
   };
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
+  const cinematicCamera = { active: false, x: 0, y: 0, startX: 0, startY: 0, targetX: 0, targetY: 0, elapsed: 0, duration: 0, resolve: null };
+  const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomDirection = () =>
@@ -1125,6 +1127,20 @@
   }
 
   function updateCamera(dt) {
+    if (cinematicCamera.active) {
+      cinematicCamera.elapsed += dt;
+      const t = cinematicCamera.duration > 0 ? Math.min(1, cinematicCamera.elapsed / cinematicCamera.duration) : 1;
+      const eased = t * t * (3 - 2 * t);
+      camera.x = cinematicCamera.startX + (cinematicCamera.targetX - cinematicCamera.startX) * eased;
+      camera.y = cinematicCamera.startY + (cinematicCamera.targetY - cinematicCamera.startY) * eased;
+      if (t >= 1) {
+        cinematicCamera.active = false;
+        const done = cinematicCamera.resolve;
+        cinematicCamera.resolve = null;
+        done?.({ completed: true });
+      }
+      return;
+    }
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     const halfW = viewW / 2;
@@ -1372,9 +1388,9 @@
   }
 
   function drawActors() {
-    drawGroundShadowAt(lumiere, 18, 0.2);
-    drawGroundShadowAt(shiopon, 17, 0.36);
-    drawGroundShadowAt(player, 20, 0.46);
+    if (actorVisibility.lumiere > 0) { ctx.save(); ctx.globalAlpha *= actorVisibility.lumiere; drawGroundShadowAt(lumiere, 18, 0.2); ctx.restore(); }
+    if (actorVisibility.shiopon > 0) { ctx.save(); ctx.globalAlpha *= actorVisibility.shiopon; drawGroundShadowAt(shiopon, 17, 0.36); ctx.restore(); }
+    if (actorVisibility.shion > 0) { ctx.save(); ctx.globalAlpha *= actorVisibility.shion; drawGroundShadowAt(player, 20, 0.46); ctx.restore(); }
 
     const actors = [
       {
@@ -1417,13 +1433,17 @@
     });
 
     for (const entry of actors) {
+      const actorId = entry.actor === player ? "shion" : entry.actor === shiopon ? "shiopon" : "lumiere";
+      if (actorVisibility[actorId] <= 0) continue;
       const paint = (target) => {
+        target.save();
+        target.globalAlpha *= actorVisibility[actorId];
         const original = ctx;
         ctx = target;
         try {
           drawActor(entry.actor, entry.actorImages, entry.drawHeight,
             entry.glowColor, entry.options);
-        } finally { ctx = original; }
+        } finally { ctx = original; target.restore(); }
       };
       if (window.TarotSceneEffects) {
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
@@ -1803,6 +1823,32 @@
     shiopon.anim = 0;
     shiopon.wait = 0.9 + Math.random() * 1.4;
   }
+
+  window.TarotCinematicCamera = Object.freeze({
+    panTo(target = {}, duration = 1200) {
+      const ref = stageTargetRef(target);
+      if (!ref) return Promise.resolve({ completed: false });
+      if (cinematicCamera.resolve) cinematicCamera.resolve({ completed: false, interrupted: true });
+      cinematicCamera.active = true;
+      cinematicCamera.startX = camera.x; cinematicCamera.startY = camera.y;
+      cinematicCamera.targetX = ref.x * scale.x; cinematicCamera.targetY = ref.y * scale.y;
+      cinematicCamera.elapsed = 0; cinematicCamera.duration = Math.max(0, duration / 1000);
+      return new Promise(resolve => { cinematicCamera.resolve = resolve; });
+    },
+    returnToPlayer(duration = 1200) {
+      return this.panTo(playerRef(), duration);
+    },
+    release() {
+      if (cinematicCamera.resolve) cinematicCamera.resolve({ completed: false, interrupted: true });
+      cinematicCamera.active = false; cinematicCamera.resolve = null;
+    },
+    getState: () => ({ active: cinematicCamera.active, camera: { ...camera }, player: playerRef() }),
+  });
+  window.TarotActorVisibility = Object.freeze({
+    set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
+    reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
+    getState: () => ({ ...actorVisibility }),
+  });
 
   window.TarotStage = Object.freeze({
     perform: performStageCommand,
