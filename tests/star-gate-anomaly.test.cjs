@@ -81,17 +81,18 @@ test("next-event unlock uses durable Progress after explicit Lumiere completion 
   assert.ok(!interaction.includes("state?.lumiereDone"));
 });
 
-test("direct gate investigation replaces the old two-choice screen and owns the movement lock", () => {
+test("gate contact offers investigate or leave and safely hands the movement lock to anomaly", () => {
   assert.match(interaction, /const ACTIVE_RADIUS = 46;/);
-  assert.match(interaction, /const TAP_RADIUS = 150;/);
-  assert.match(interaction, /tarot-breaker:world-tap/);
-  assert.match(interaction, /garden_star_gate_direct/);
+  assert.match(interaction, /star-gate-interaction-choice/);
+  assert.match(interaction, /星門を調べる/);
+  assert.match(interaction, /離れる/);
+  assert.match(interaction, /garden_star_gate_prompt/);
   assert.match(interaction, /tarot-breaker:interaction-start/);
+  assert.match(interaction, /hidePrompt\(\{ unlock: false \}\)/);
+  assert.match(interaction, /if \(!active \|\| !promptLock \|\| !progressReady\(\)\) return false/);
+  assert.doesNotMatch(interaction, /if \(!canInteract\(\)\) return false/);
   assert.match(interaction, /tarot-breaker:interaction-end/);
-  assert.doesNotMatch(interaction, /star-gate-interaction-choice/);
-  assert.doesNotMatch(interaction, /星門を調べる/);
-  assert.doesNotMatch(interaction, /離れる/);
-  assert.match(game, /tarot-breaker:world-tap/);
+  assert.match(html, /star-gate-interaction\.css\?v=star-gate-anomaly-v1-3/);
 });
 
 test("anomaly validates durable Progress before starting and keeps one continuous interaction lock", () => {
