@@ -14,8 +14,7 @@
    * second CSS sky here: the previous gradient produced a visible horizontal
    * colour discontinuity on iPad.
    */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,.92) 58%, rgba(0,0,0,.62) 72%, rgba(0,0,0,.24) 84%, transparent 96%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,.92) 58%, rgba(0,0,0,.62) 72%, rgba(0,0,0,.24) 84%, transparent 96%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 58%, rgba(0,0,0,.96) 66%, rgba(0,0,0,.78) 76%, rgba(0,0,0,.48) 86%, rgba(0,0,0,.18) 94%, transparent 100%);\n  mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 58%, rgba(0,0,0,.96) 66%, rgba(0,0,0,.78) 76%, rgba(0,0,0,.48) 86%, rgba(0,0,0,.18) 94%, transparent 100%);
 }
 .sga-cinematic-sky-overscan > img {
   width: 100%;
@@ -23,8 +22,7 @@
   display: block;
   object-fit: cover;
   object-position: 50% 0%;
-  transform: scale(1.012);
-  filter: brightness(.98) saturate(.99);
+  transform: scale(1.025);\n  filter: brightness(1.01) saturate(.98) blur(.65px);
 }
 
 #game-shell.sga-sequence-active .sga-cinematic-sky-overscan {
@@ -231,7 +229,7 @@
 #game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(6),
 #game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(8) { opacity: 0; animation: none; }
 
-.scene-gate-inner-light > img { transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
+.scene-gate-inner-light { overflow: hidden; clip-path: polygon(50% 0%, 67% 4%, 82% 15%, 93% 31%, 100% 54%, 100% 100%, 0% 100%, 0% 54%, 7% 31%, 18% 15%, 33% 4%); }\n.scene-gate-inner-light > img { width:100%; height:100%; object-fit:cover; transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
 #game-shell.sga-normal-flow .scene-gate-inner-light > img {
   animation: sgaInnerReceive 1.35s ease-out both !important;
 }
