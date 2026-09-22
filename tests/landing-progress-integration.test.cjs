@@ -5,7 +5,11 @@ const source=fs.readFileSync(path.join(__dirname,"..","star-country-landing.html
 test("Landing Progress is observer-only and legacy replay guard stays authoritative",()=>{
   assert.match(source,/let devilEventStarted = window\.TarotJourney\?\.get\("landingMemoryDone"\) === true;/);
   assert.doesNotMatch(source,/devilEventStarted\s*=\s*landingProgress/);
-  assert.equal(source.match(/TarotJourney\?\.set\("landingMemoryDone", true\)/g)?.length,1);
+  const writes=[...source.matchAll(/TarotJourney\?\.set\("landingMemoryDone", true\)/g)];
+  assert.equal(writes.length,2,"only restore + normal completion may mirror landingMemoryDone");
+  const restoreCheck=source.indexOf('landingProgress.isEventCompleted("landing_devil_memory")');
+  const triggerGuard=source.indexOf('let devilEventStarted = window.TarotJourney?.get("landingMemoryDone") === true');
+  assert.ok(restoreCheck>=0 && writes[0].index>restoreCheck && writes[0].index<triggerGuard,"durable completion must restore Journey before the unchanged trigger guard");
 });
 
 test("Landing records Progress only after existing memory completion",()=>{

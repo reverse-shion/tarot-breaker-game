@@ -75,7 +75,8 @@
     right: Object.freeze({ x: 1, y: 0 }),
   });
   const params = new URLSearchParams(location.search);
-  const enteringFromLanding = params.get("from") === "landing";
+  const DEV_STAR_GATE = params.get("dev") === "star-gate-anomaly";
+  const enteringFromLanding = params.get("from") === "landing" || DEV_STAR_GATE;
   if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
@@ -101,6 +102,7 @@
   let tapEffect = null;
   let debugStatus = null;
   let npcSuspended = false;
+  let interactionLocked = false;
   let walkAreas = [];
   let collisionVersion = 0;
   let spawnRef = { ...DEFAULT_SPAWN };
@@ -109,6 +111,7 @@
   let cssWidth = 1;
   let cssHeight = 1;
   let dpr = 1;
+  let normalCameraZoom = 1;
   let ready = false;
   let running = false;
   let leavingMap = false;
@@ -233,6 +236,21 @@
   };
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
+  const cinematicCamera = {
+    active: false,
+    owned: false,
+    allowOverscan: false,
+    startX: 0,
+    startY: 0,
+    startZoom: 1,
+    targetX: 0,
+    targetY: 0,
+    targetZoom: 1,
+    elapsed: 0,
+    duration: 0,
+    resolve: null,
+  };
+  const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomDirection = () =>
@@ -303,11 +321,12 @@
     canvas.width = Math.round(cssWidth * dpr);
     canvas.height = Math.round(cssHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    camera.zoom = clamp(
+    normalCameraZoom = clamp(
       Math.min(cssWidth / 620, cssHeight / 560),
       CAMERA_MIN_ZOOM,
       CAMERA_MAX_ZOOM,
     );
+    if (!cinematicCamera.owned) camera.zoom = normalCameraZoom;
   }
 
   function resetShiopon() {
@@ -624,7 +643,12 @@
   }
 
   function updatePlayer(dt) {
-    if (leavingMap) return;
+    if (leavingMap || interactionLocked) {
+      player.moving = false;
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
     if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
@@ -1125,6 +1149,22 @@
   }
 
   function updateCamera(dt) {
+    if (cinematicCamera.active) {
+      cinematicCamera.elapsed += dt;
+      const t = cinematicCamera.duration > 0 ? Math.min(1, cinematicCamera.elapsed / cinematicCamera.duration) : 1;
+      const eased = t * t * (3 - 2 * t);
+      camera.x = cinematicCamera.startX + (cinematicCamera.targetX - cinematicCamera.startX) * eased;
+      camera.y = cinematicCamera.startY + (cinematicCamera.targetY - cinematicCamera.startY) * eased;
+      camera.zoom = cinematicCamera.startZoom + (cinematicCamera.targetZoom - cinematicCamera.startZoom) * eased;
+      if (t >= 1) {
+        cinematicCamera.active = false;
+        const done = cinematicCamera.resolve;
+        cinematicCamera.resolve = null;
+        done?.({ completed: true });
+      }
+      return;
+    }
+    if (cinematicCamera.owned) return;
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     const halfW = viewW / 2;
@@ -1147,6 +1187,12 @@
   function viewportOrigin() {
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
+    if (cinematicCamera.owned && cinematicCamera.allowOverscan) {
+      return {
+        x: camera.x - viewW / 2,
+        y: camera.y - viewH / 2,
+      };
+    }
     return {
       x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
       y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
@@ -1372,9 +1418,9 @@
   }
 
   function drawActors() {
-    drawGroundShadowAt(lumiere, 18, 0.2);
-    drawGroundShadowAt(shiopon, 17, 0.36);
-    drawGroundShadowAt(player, 20, 0.46);
+    if (actorVisibility.lumiere > 0) { ctx.save(); ctx.globalAlpha *= actorVisibility.lumiere; drawGroundShadowAt(lumiere, 18, 0.2); ctx.restore(); }
+    if (actorVisibility.shiopon > 0) { ctx.save(); ctx.globalAlpha *= actorVisibility.shiopon; drawGroundShadowAt(shiopon, 17, 0.36); ctx.restore(); }
+    if (actorVisibility.shion > 0) { ctx.save(); ctx.globalAlpha *= actorVisibility.shion; drawGroundShadowAt(player, 20, 0.46); ctx.restore(); }
 
     const actors = [
       {
@@ -1417,13 +1463,17 @@
     });
 
     for (const entry of actors) {
+      const actorId = entry.actor === player ? "shion" : entry.actor === shiopon ? "shiopon" : "lumiere";
+      if (actorVisibility[actorId] <= 0) continue;
       const paint = (target) => {
+        target.save();
+        target.globalAlpha *= actorVisibility[actorId];
         const original = ctx;
         ctx = target;
         try {
           drawActor(entry.actor, entry.actorImages, entry.drawHeight,
             entry.glowColor, entry.options);
-        } finally { ctx = original; }
+        } finally { ctx = original; target.restore(); }
       };
       if (window.TarotSceneEffects) {
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
@@ -1656,6 +1706,20 @@
     // Star Gate Garden directly.
     if (!enteringFromLanding) {
       if (start) start.disabled = true;
+
+      // TOUCH TO START is the only shipped title action today, so it is an
+      // explicit New Game action. Reset both persistence layers together before
+      // entering Alenon; otherwise Progress v1 can restore completed downstream
+      // events while the legacy Journey/prologue starts from the beginning.
+      try {
+        const titleProgress = window.TarotProgressCore?.createProgress();
+        if (titleProgress) {
+          titleProgress.load();
+          titleProgress.resetGame("title-touch-to-start");
+        }
+      } catch (error) {
+        console.warn("[Title Progress] New Game reset was not persisted", error);
+      }
       window.TarotJourney?.reset();
       const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
       const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
@@ -1712,7 +1776,7 @@
   }
 
   function pointerDown(event) {
-    if (!running) return;
+    if (!running || interactionLocked) return;
     event.preventDefault();
     if (!controls.pointerDown(pointerInfo(event))) return;
     window.TarotAudio?.startFromMovement();
@@ -1721,14 +1785,14 @@
   }
 
   function pointerMove(event) {
-    if (!running) return;
+    if (!running || interactionLocked) return;
     event.preventDefault();
     controls.pointerMove(pointerInfo(event));
     syncStick();
   }
 
   function pointerEnd(event) {
-    if (!running) return;
+    if (!running || interactionLocked) return;
     event.preventDefault();
     const action = controls.pointerEnd(
       { ...pointerInfo(event), cancelled: event.type !== "pointerup" },
@@ -1804,6 +1868,116 @@
     shiopon.wait = 0.9 + Math.random() * 1.4;
   }
 
+  function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
+    if (cinematicCamera.resolve)
+      cinematicCamera.resolve({ completed: false, interrupted: true });
+    cinematicCamera.active = true;
+    cinematicCamera.owned = true;
+    cinematicCamera.allowOverscan = allowOverscan;
+    cinematicCamera.startX = camera.x;
+    cinematicCamera.startY = camera.y;
+    cinematicCamera.startZoom = camera.zoom;
+    cinematicCamera.targetX = targetX;
+    cinematicCamera.targetY = targetY;
+    cinematicCamera.targetZoom = targetZoom;
+    cinematicCamera.elapsed = 0;
+    cinematicCamera.duration = Math.max(0, duration / 1000);
+    return new Promise(resolve => { cinematicCamera.resolve = resolve; });
+  }
+
+  function normalCameraTarget() {
+    const viewW = cssWidth / normalCameraZoom;
+    const viewH = cssHeight / normalCameraZoom;
+    const halfW = viewW / 2;
+    const halfH = viewH / 2;
+    return {
+      x: clamp(player.x, halfW, Math.max(halfW, world.w - halfW)),
+      y: clamp(player.y - cameraOffsetY(), halfH, Math.max(halfH, world.h - halfH)),
+    };
+  }
+
+  window.TarotCinematicCamera = Object.freeze({
+    panTo(target = {}, duration = 1200, options = {}) {
+      const ref = stageTargetRef(target);
+      if (!ref) return Promise.resolve({ completed: false });
+      const zoom = Number.isFinite(options.zoom) && options.zoom > 0
+        ? options.zoom
+        : camera.zoom;
+      return beginCinematicPan(
+        ref.x * scale.x,
+        ref.y * scale.y,
+        zoom,
+        duration,
+        options.allowOverscan === true,
+      );
+    },
+    frameBounds(bounds = {}, duration = 1200, options = {}) {
+      const left = Number(bounds.left);
+      const top = Number(bounds.top);
+      const right = Number(bounds.right);
+      const bottom = Number(bounds.bottom);
+      if (![left, top, right, bottom].every(Number.isFinite) || right <= left || bottom <= top)
+        return Promise.resolve({ completed: false });
+      const padding = clamp(Number(options.padding) || 16, 0, Math.min(cssWidth, cssHeight) / 3);
+      const boundsW = (right - left) * scale.x;
+      const boundsH = (bottom - top) * scale.y;
+      const fitZoom = Math.min(
+        (cssWidth - padding * 2) / boundsW,
+        (cssHeight - padding * 2) / boundsH,
+        normalCameraZoom,
+      );
+      const minZoom = Number.isFinite(options.minZoom) ? options.minZoom : 0.55;
+      const zoom = clamp(fitZoom, Math.min(minZoom, normalCameraZoom), normalCameraZoom);
+      const renderedHeight = boundsH * zoom;
+      const topInset = clamp(
+        Number(options.topInset) || (cssHeight - renderedHeight) * 0.12,
+        padding,
+        Math.max(padding, cssHeight * 0.12),
+      );
+      const originX = ((left + right) * 0.5) * scale.x - cssWidth / zoom / 2;
+      const originY = top * scale.y - topInset / zoom;
+      return beginCinematicPan(
+        originX + cssWidth / zoom / 2,
+        originY + cssHeight / zoom / 2,
+        zoom,
+        duration,
+        true,
+      );
+    },
+    returnToPlayer(duration = 1200) {
+      const target = normalCameraTarget();
+      return beginCinematicPan(target.x, target.y, normalCameraZoom, duration, true);
+    },
+    release() {
+      if (cinematicCamera.resolve)
+        cinematicCamera.resolve({ completed: false, interrupted: true });
+      cinematicCamera.active = false;
+      cinematicCamera.owned = false;
+      cinematicCamera.allowOverscan = false;
+      cinematicCamera.resolve = null;
+      camera.zoom = normalCameraZoom;
+      const target = normalCameraTarget();
+      camera.x = target.x;
+      camera.y = target.y;
+    },
+    getState: () => ({
+      active: cinematicCamera.active,
+      owned: cinematicCamera.owned,
+      allowOverscan: cinematicCamera.allowOverscan,
+      camera: { ...camera },
+      origin: viewportOrigin(),
+      viewport: { width: cssWidth, height: cssHeight, normalZoom: normalCameraZoom },
+      world: { ...world },
+      scale: { ...scale },
+      player: playerRef(),
+    }),
+  });
+  window.TarotActorVisibility = Object.freeze({
+    set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
+    reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
+    getState: () => ({ ...actorVisibility }),
+  });
+
   window.TarotStage = Object.freeze({
     perform: performStageCommand,
     finishAll: () => cancelAllStageMotions(true),
@@ -1867,11 +2041,14 @@
   });
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
+    interactionLocked = true;
+    controls?.clearInput("interaction-start");
     controls?.suspend();
     npcSuspended = true;
     syncStick();
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
+    interactionLocked = false;
     cancelAllStageMotions(true);
     controls?.resume();
     npcSuspended = false;
@@ -1904,7 +2081,9 @@
       spawnRef = findNearestSpawnRef();
       gardenExitRef = { ...spawnRef };
       if (enteringFromLanding)
-        spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
+        spawnRef = DEV_STAR_GATE
+          ? collision.nearestWalkable({ x: STAGE_LANDMARKS.gate.x, y: STAGE_LANDMARKS.gate.y + 72 })
+          : collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
 
       const loaded = await Promise.all([
         waitForMap(),
