@@ -361,18 +361,20 @@
   .sga-pan { transition-duration:.3s; }
 }
 
-/* Extended sky keeps the original 1448x1086 scene aligned to the bottom.
-   Only the added upper pixels live at negative world Y for the cinematic pan. */
+/* Extended sky occupies its real authored world height.
+   The original 1448x1086 region is the bottom of the image; the added sky sits above y=0. */
 .scene-farthest-sky--extended {
-  overflow: visible;
+  left: 0 !important;
+  top: -514px !important;
+  width: 1448px !important;
+  height: 1600px !important;
+  overflow: visible !important;
 }
 .scene-farthest-sky--extended > img {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 1448px;
-  height: auto;
-  max-width: none;
-  object-fit: initial;
-  object-position: initial;
+  position: static !important;
+  display: block;
+  width: 1448px !important;
+  height: 1600px !important;
+  max-width: none !important;
+  object-fit: fill !important;
 }
