@@ -11,6 +11,7 @@ const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
 const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest"]);
 class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const DEV_HARNESS = ["star-gate-full","star-gate-camera"].includes(new URLSearchParams(location.search).get("dev"));
 let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
 async function preload(){await Promise.all(Object.values(ASSETS).flat().map(image))}
@@ -115,17 +116,18 @@ function complete(){
 async function run(){
  if(running)return;running=true;let success=false;
  try{
-  const p=window.TarotProgressCore?.createProgress?.();if(!p)throw new Error("Progress unavailable");
-  const loaded=p.load();
-  if(loaded.status!=="valid")throw new Error("Progress invalid at Star Gate start");
-  if(p.isEventCompleted("garden_star_gate_anomaly"))return;
-  if(!p.isEventCompleted("garden_lumiere_gate")&&!DEV_HARNESS)throw new Error("Lumiere gate prerequisite missing at Star Gate start");
-  // The choice prompt already owns the interaction lock. Keep one continuous
-  // lock across prompt -> cinematic; direct/debug starts acquire it here.
+  if(!DEV_HARNESS){
+   const p=window.TarotProgressCore?.createProgress?.();if(!p)throw new Error("Progress unavailable");
+   const loaded=p.load();if(loaded.status!=="valid")throw new Error("Progress invalid at Star Gate start");
+   if(p.isEventCompleted("garden_star_gate_anomaly"))return;
+   if(!p.isEventCompleted("garden_lumiere_gate"))throw new Error("Lumiere gate prerequisite missing at Star Gate start");
+  }
   const promptLocked=window.TarotStarGateInteraction?.getState?.().promptLock===true;
   if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
-  await resonance();await vision();await aftermath();complete();success=true;
+  await resonance();
+  if(DEV_HARNESS){success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true}}));return;}
+  await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
  finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
 }
