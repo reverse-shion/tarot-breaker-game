@@ -75,7 +75,7 @@
     right: Object.freeze({ x: 1, y: 0 }),
   });
   const params = new URLSearchParams(location.search);
-  const DEV_STAR_GATE = params.get("dev") === "star-gate-anomaly";
+  const DEV_STAR_GATE = ["star-gate-anomaly", "star-gate-full"].includes(params.get("dev"));
   const enteringFromLanding = params.get("from") === "landing" || DEV_STAR_GATE;
   if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
