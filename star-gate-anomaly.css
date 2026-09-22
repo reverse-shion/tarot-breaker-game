@@ -197,7 +197,7 @@
 #game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(6),
 #game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(8) { opacity: 0; animation: none; }
 
-.scene-gate-inner-light { overflow: hidden; clip-path: polygon(50% 0%, 67% 4%, 82% 15%, 93% 31%, 100% 54%, 100% 100%, 0% 100%, 0% 54%, 7% 31%, 18% 15%, 33% 4%); }\n.scene-gate-inner-light > img { width:100%; height:100%; object-fit:cover; transform-origin:50% 0% !important; transform:scaleY(1.5) !important; transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
+.scene-gate-inner-light { overflow: hidden; clip-path: polygon(50% 0%, 67% 4%, 82% 15%, 93% 31%, 100% 54%, 100% 100%, 0% 100%, 0% 54%, 7% 31%, 18% 15%, 33% 4%); }\n.scene-gate-inner-light > img { width:100%; height:100%; object-fit:cover; transform-origin:50% 0% !important; transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
 #game-shell.sga-normal-flow .scene-gate-inner-light > img {
   animation: sgaInnerReceive 1.35s ease-out both !important;
 }
@@ -205,7 +205,7 @@
   animation: none !important;
   opacity: 1 !important;
   filter: brightness(1.18) saturate(1.06) drop-shadow(0 0 12px rgba(192, 231, 255, .46)) !important;
-  transform: scaleX(1.025) scaleY(1.01) !important;
+  transform: scaleX(1.025) scaleY(1.515) !important;
 }
 #game-shell.sga-anomaly-flicker .scene-gate-inner-light > img {
   animation: sgaInnerFlicker 1.18s steps(1, end) both !important;
@@ -215,7 +215,7 @@
   animation: sgaAnomalyBreathe 7.2s ease-in-out infinite !important;
   opacity: .54 !important;
   filter: brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90, 108, 205, .32)) !important;
-  transform: scaleX(1) scaleY(1) !important;
+  transform: scaleX(1) scaleY(1.5) !important;
 }
 #game-shell.sga-reverse-gate .scene-gate-inner-light > img {
   animation: sgaGateSourceCharge 1.05s ease-out both !important;
@@ -375,3 +375,7 @@
   height: 1600px !important;
   max-width: none !important;
 }
+
+/* Inner-light raster must be allowed to extend beyond its original 100% box. */
+#game-shell .scene-gate-inner-light { overflow: visible !important; clip-path: none !important; }
+#game-shell .scene-gate-inner-light > img { transform-origin: 50% 0% !important; }
