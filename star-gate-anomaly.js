@@ -59,7 +59,7 @@ async function resonance(){
  const shionStart=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
  gateShell()?.classList.add("sga-sequence-active");
  setGateState(null);
- const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:14,minZoom:.48});
+ const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:18,minZoom:.54,topInset:44});
  const framedState=camera.getState();
  if(!framed?.completed||!gateIsFramed(framedState)||!overscanCoversViewport(framedState))throw new StarGateOverscanCoverageError();
  await pause(800);
