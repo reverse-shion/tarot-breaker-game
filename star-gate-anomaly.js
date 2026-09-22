@@ -66,18 +66,20 @@ async function resonance(){
  await pause(800);
  setGateState("sga-sky-descent");await pause(1050);
  setGateState("sga-normal-flow");await pause(1320);
- setGateState("sga-resonance-complete");await pause(700);
- setGateState("sga-anomaly-flicker");await pause(1180);
+ setGateState("sga-resonance-complete");await pause(1200);
+ await say("shion","……星門は、特におかしくないな。");
+ await pause(400);
+ setGateState("sga-anomaly-flicker");await pause(720);
  setGateState("sga-anomaly");await pause(480);
  setGateState("sga-reverse-gate");await pause(1100);
  setGateState("sga-reverse-flow");await pause(1050);
  setGateState("sga-skyward-release");await pause(1050);
- setGateState("sga-anomaly-rest");await pause(500);
+ setGateState("sga-anomaly-rest");await pause(700);
+ await say("lumiere","……？");
  const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
  camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
  const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
  if(!samePoint(shionStart,shionEnd))throw new Error("Shion moved during Star Gate cinematic");
- await say("lumiere","……？");
 }
 async function fadeNpc(actorId,duration=360){
  const vis=window.TarotActorVisibility;if(!vis)return;
