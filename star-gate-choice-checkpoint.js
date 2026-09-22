@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const id = new URLSearchParams(location.search).get("dev");
-  if (id !== "star-gate-choice") return;
+  if (id !== "star-gate-choice" && id !== "star-gate-camera") return;
   window.__TAROT_DEV_STAR_GATE_ANOMALY__ = true;
   window.__TAROT_DEV_STAR_GATE_CHOICE__ = true;
   document.documentElement.dataset.devHarness = id;
@@ -27,6 +27,7 @@
   window.addEventListener("DOMContentLoaded", async () => {
     try {
       await addScript("./star-gate-interaction.js?v=choice-sandbox-1");
+      if (id === "star-gate-camera") await addScript("./star-gate-camera-checkpoint.js?v=camera-sandbox-1");
     } catch (error) {
       console.error("[Star Gate Choice Checkpoint] runtime load failed", error);
     }
