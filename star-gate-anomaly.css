@@ -1,4 +1,4 @@
-.sga-sky-flow,
+.sga-sky-flow { z-index: 0 !important; }
 .sga-gate-fx {
   z-index: 6 !important;
   pointer-events: none;
@@ -15,21 +15,40 @@
   position: absolute;
   left: calc(50% + var(--drift, 0px));
   top: -8%;
-  width: 3px;
-  height: 22%;
+  width: var(--particle-size, 1.5px);
+  height: var(--particle-length, 7px);
   border-radius: 50%;
   opacity: 0;
-  background: linear-gradient(to bottom, transparent, rgba(239, 252, 255, .92), rgba(178, 225, 255, .16));
-  box-shadow: 0 0 8px rgba(188, 232, 255, .72);
+  background: rgba(235, 250, 255, .96);
+  box-shadow: 0 0 4px rgba(188, 232, 255, .78);
   transform: translate3d(-50%, 0, 0);
   will-change: transform, opacity;
 }
 
-.sga-sky-flow i:nth-child(1) { --drift: -24px; animation-delay: -.08s !important; }
-.sga-sky-flow i:nth-child(2) { --drift: -10px; animation-delay: .17s !important; }
-.sga-sky-flow i:nth-child(3) { --drift: 0px; animation-delay: .38s !important; }
-.sga-sky-flow i:nth-child(4) { --drift: 12px; animation-delay: .04s !important; }
-.sga-sky-flow i:nth-child(5) { --drift: 26px; animation-delay: .29s !important; }
+.sga-sky-flow i:nth-of-type(1) { --drift:-110px; --particle-size:0.8px; --particle-length:3px; animation-delay:0s !important; animation-duration:0.78s !important; }
+.sga-sky-flow i:nth-of-type(2) { --drift:-63px; --particle-size:1.5px; --particle-length:6px; animation-delay:-0.17s !important; animation-duration:0.91s !important; }
+.sga-sky-flow i:nth-of-type(3) { --drift:-16px; --particle-size:2.2px; --particle-length:9px; animation-delay:-0.34s !important; animation-duration:1.04s !important; }
+.sga-sky-flow i:nth-of-type(4) { --drift:31px; --particle-size:1.3px; --particle-length:4px; animation-delay:-0.51s !important; animation-duration:1.17s !important; }
+.sga-sky-flow i:nth-of-type(5) { --drift:78px; --particle-size:2.0px; --particle-length:7px; animation-delay:-0.68s !important; animation-duration:0.85s !important; }
+.sga-sky-flow i:nth-of-type(6) { --drift:-95px; --particle-size:1.1px; --particle-length:10px; animation-delay:-0.85s !important; animation-duration:0.98s !important; }
+.sga-sky-flow i:nth-of-type(7) { --drift:-48px; --particle-size:1.8px; --particle-length:5px; animation-delay:-0.02s !important; animation-duration:1.11s !important; }
+.sga-sky-flow i:nth-of-type(8) { --drift:-1px; --particle-size:0.9px; --particle-length:8px; animation-delay:-0.19s !important; animation-duration:0.79s !important; }
+.sga-sky-flow i:nth-of-type(9) { --drift:46px; --particle-size:1.6px; --particle-length:3px; animation-delay:-0.36s !important; animation-duration:0.92s !important; }
+.sga-sky-flow i:nth-of-type(10) { --drift:93px; --particle-size:2.3px; --particle-length:6px; animation-delay:-0.53s !important; animation-duration:1.05s !important; }
+.sga-sky-flow i:nth-of-type(11) { --drift:-80px; --particle-size:1.4px; --particle-length:9px; animation-delay:-0.7s !important; animation-duration:1.18s !important; }
+.sga-sky-flow i:nth-of-type(12) { --drift:-33px; --particle-size:2.1px; --particle-length:4px; animation-delay:-0.87s !important; animation-duration:0.86s !important; }
+.sga-sky-flow i:nth-of-type(13) { --drift:14px; --particle-size:1.2px; --particle-length:7px; animation-delay:-0.04s !important; animation-duration:0.99s !important; }
+.sga-sky-flow i:nth-of-type(14) { --drift:61px; --particle-size:1.9px; --particle-length:10px; animation-delay:-0.21s !important; animation-duration:1.12s !important; }
+.sga-sky-flow i:nth-of-type(15) { --drift:108px; --particle-size:1.0px; --particle-length:5px; animation-delay:-0.38s !important; animation-duration:0.80s !important; }
+.sga-sky-flow i:nth-of-type(16) { --drift:-65px; --particle-size:1.7px; --particle-length:8px; animation-delay:-0.55s !important; animation-duration:0.93s !important; }
+.sga-sky-flow i:nth-of-type(17) { --drift:-18px; --particle-size:0.8px; --particle-length:3px; animation-delay:-0.72s !important; animation-duration:1.06s !important; }
+.sga-sky-flow i:nth-of-type(18) { --drift:29px; --particle-size:1.5px; --particle-length:6px; animation-delay:-0.89s !important; animation-duration:1.19s !important; }
+.sga-sky-flow i:nth-of-type(19) { --drift:76px; --particle-size:2.2px; --particle-length:9px; animation-delay:-0.06s !important; animation-duration:0.87s !important; }
+.sga-sky-flow i:nth-of-type(20) { --drift:-97px; --particle-size:1.3px; --particle-length:4px; animation-delay:-0.23s !important; animation-duration:1.00s !important; }
+.sga-sky-flow i:nth-of-type(21) { --drift:-50px; --particle-size:2.0px; --particle-length:7px; animation-delay:-0.4s !important; animation-duration:1.13s !important; }
+.sga-sky-flow i:nth-of-type(22) { --drift:-3px; --particle-size:1.1px; --particle-length:10px; animation-delay:-0.57s !important; animation-duration:0.81s !important; }
+.sga-sky-flow i:nth-of-type(23) { --drift:44px; --particle-size:1.8px; --particle-length:5px; animation-delay:-0.74s !important; animation-duration:0.94s !important; }
+.sga-sky-flow i:nth-of-type(24) { --drift:91px; --particle-size:0.9px; --particle-length:8px; animation-delay:-0.91s !important; animation-duration:1.07s !important; }
 
 #game-shell.sga-sky-descent .sga-sky-flow,
 #game-shell.sga-normal-flow .sga-sky-flow,
