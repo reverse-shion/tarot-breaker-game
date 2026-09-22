@@ -14,8 +14,8 @@
    * second CSS sky here: the previous gradient produced a visible horizontal
    * colour discontinuity on iPad.
    */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.72) 82%, rgba(0,0,0,.30) 93%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 58%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.72) 82%, rgba(0,0,0,.30) 93%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,.92) 58%, rgba(0,0,0,.62) 72%, rgba(0,0,0,.24) 84%, transparent 96%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,.92) 58%, rgba(0,0,0,.62) 72%, rgba(0,0,0,.24) 84%, transparent 96%);
 }
 .sga-cinematic-sky-overscan > img {
   width: 100%;
