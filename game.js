@@ -1906,7 +1906,7 @@
       gardenExitRef = { ...spawnRef };
       if (enteringFromLanding)
         spawnRef = DEV_STAR_GATE_CHOICE
-          ? collision.nearestWalkable({ x: STAGE_LANDMARKS.gate.x, y: STAGE_LANDMARKS.gate.y + 40 })
+          ? collision.nearestWalkable({ x: STAGE_LANDMARKS.gate.x, y: STAGE_LANDMARKS.gate.y + 72 })
           : collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
 
       const loaded = await Promise.all([
