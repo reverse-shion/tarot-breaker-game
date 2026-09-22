@@ -22,43 +22,33 @@ A behavior is not CONTRACT LOCKED until:
 - A PR that fails a verified gameplay contract is BLOCKED.
 - Device-only behavior that cannot yet be automated remains a mandatory Device Gate and must be recorded as such.
 
-## Contract VGC-001 — Star Gate interaction handoff
-Status: RECOVERY PENDING — becomes ACTIVE only in the recovery PR that restores the verified runtime.
+## Contract VGC-001 — Star Gate unfinished-event suppression
+Status: ACTIVE — current product decision until the Star Gate event is explicitly approved as complete.
 
 Preconditions:
 - map: Star Gate Garden
-- garden_lumiere_gate = completed
-- garden_star_gate_anomaly = incomplete
-- no dialogue/event currently owns input
+- Star Gate Anomaly is not yet approved as complete/released
 
 Observable contract:
-1. Shion enters the Star Gate interaction radius.
-2. The choice UI becomes visible: "星門を調べる" / "離れる".
-3. The moment the choice UI opens, player movement is locked.
-4. Tap, stick, keyboard, route/autowalk, or already-held movement must not change Shion's position while the prompt owns interaction.
-5. Choosing "星門を調べる" hides the prompt without releasing player movement.
-6. The prompt lock transfers continuously to the Star Gate Anomaly runtime.
-7. tarot-breaker:star-gate-investigate is dispatched exactly once.
-8. StarGateAnomaly enters running state and cinematic camera ownership begins.
-9. Player control is returned only after successful completion or explicit abort cleanup.
+1. Approaching or touching the Star Gate does NOT display the "星門を調べる / 離れる" choice UI.
+2. Normal gameplay movement remains unaffected by a hidden/incomplete Star Gate interaction.
+3. The unfinished Star Gate anomaly must not start from normal gameplay.
+4. Development/test harnesses may exercise the event only through an explicit developer-only path that cannot activate during the normal route.
 
 Forbidden regressions:
-- prompt visible while Shion can move;
-- an input frame between prompt and cinematic where movement is restored;
-- inspect button does nothing;
-- event start silently returns;
-- stale progress prerequisites suppress a valid verified route without a visible failure;
-- tests pass only because the contract assertion was removed or weakened.
+- normal gameplay loads or creates #star-gate-interaction-choice;
+- normal gameplay loads star-gate-interaction.js or star-gate-anomaly.js before release approval;
+- touching/approaching the gate exposes unfinished interaction UI;
+- a feature branch re-enables the old PR #36 interaction foundation merely because the code still exists in history.
+
+Activation change rule:
+This contract may be replaced by the completed Star Gate interaction contract only after an explicit product decision that the full event is complete, automated tests pass, and the Device Gate passes. The replacement must happen in the same reviewed PR that enables the completed event.
 
 ## Device Gate for VGC-001
-On iPhone/iPad Safari-compatible runtime verify:
-- approach gate -> prompt appears;
-- continuously drag/tap movement while prompt is visible -> Shion remains stationary;
-- press "星門を調べる" -> prompt closes and Shion remains stationary;
-- cinematic begins;
-- no duplicate prompt/event;
-- controls return at the defined event exit only.
+On iPhone/iPad normal gameplay route verify:
+- approach/touch the Star Gate -> no choice prompt appears;
+- unfinished anomaly does not start;
+- ordinary movement remains available;
+- no Star Gate development UI leaks into the normal route.
 
-Activation rule: VGC-001 MUST NOT be marked ACTIVE until the recovered runtime passes automated checks and the Device Gate. Once ACTIVE on main, it may never be demoted to PENDING to make CI pass.
-
-Record the verified commit SHA in this file after PASS.
+Record the verified commit SHA after PASS.
