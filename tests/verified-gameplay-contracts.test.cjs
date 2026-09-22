@@ -7,18 +7,24 @@ function read(path) { return fs.readFileSync(path, "utf8"); }
 test("verified gameplay contract registry exists and forbids weakening active contracts", () => {
   const registry = read("docs/VERIFIED_GAMEPLAY_CONTRACTS.md");
   assert.match(registry, /A PR that fails a verified gameplay contract is BLOCKED/);
-  assert.match(registry, /must not be marked ACTIVE until/i);
-  assert.match(registry, /may never be demoted to PENDING/i);
+  assert.match(registry, /Contract VGC-001 — Star Gate unfinished-event suppression/);
+  assert.match(registry, /Status: ACTIVE/);
 });
 
-test("VGC-001 recovery contract records the complete Star Gate handoff before implementation recovery", () => {
+test("VGC-001: unfinished Star Gate interaction is absent from normal main route", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /star-gate-interaction\.js/);
+  assert.doesNotMatch(html, /star-gate-anomaly\.js/);
+  assert.doesNotMatch(html, /star-gate-interaction\.css/);
+  assert.doesNotMatch(html, /star-gate-anomaly\.css/);
+  assert.doesNotMatch(html, /star-gate-interaction-choice/);
+});
+
+test("VGC-001 records the explicit completion gate before Star Gate UI can be enabled", () => {
   const registry = read("docs/VERIFIED_GAMEPLAY_CONTRACTS.md");
-  assert.match(registry, /Contract VGC-001 — Star Gate interaction handoff/);
-  assert.match(registry, /choice UI becomes visible/);
-  assert.match(registry, /player movement is locked/);
-  assert.match(registry, /tarot-breaker:star-gate-investigate is dispatched exactly once/);
-  assert.match(registry, /StarGateAnomaly enters running state/);
-  assert.match(registry, /Status: RECOVERY PENDING/);
+  assert.match(registry, /does NOT display the "星門を調べる \/ 離れる" choice UI/);
+  assert.match(registry, /explicit product decision that the full event is complete/);
+  assert.match(registry, /same reviewed PR that enables the completed event/);
 });
 
 test("AI safety requires causal regression analysis and preserves verified assertions", () => {
