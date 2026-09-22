@@ -361,10 +361,18 @@
   .sga-pan { transition-duration:.3s; }
 }
 
-/* Seamless single-image sky: preserve the authored 1448x1086 lower region and expose only the added top during cinematic camera travel. */
+/* Extended sky keeps the original 1448x1086 scene aligned to the bottom.
+   Only the added upper pixels live at negative world Y for the cinematic pan. */
+.scene-farthest-sky--extended {
+  overflow: visible;
+}
 .scene-farthest-sky--extended > img {
-  width: 100%;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1448px;
   height: auto;
-  object-fit: contain;
-  object-position: 50% 100%;
+  max-width: none;
+  object-fit: initial;
+  object-position: initial;
 }
