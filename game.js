@@ -111,6 +111,7 @@
   let cssWidth = 1;
   let cssHeight = 1;
   let dpr = 1;
+  let normalCameraZoom = 1;
   let ready = false;
   let running = false;
   let leavingMap = false;
@@ -322,11 +323,12 @@
     canvas.width = Math.round(cssWidth * dpr);
     canvas.height = Math.round(cssHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    camera.zoom = clamp(
+    normalCameraZoom = clamp(
       Math.min(cssWidth / 620, cssHeight / 560),
       CAMERA_MIN_ZOOM,
       CAMERA_MAX_ZOOM,
     );
+    if (!cinematicCamera.owned) camera.zoom = normalCameraZoom;
   }
 
   function resetShiopon() {
@@ -1183,10 +1185,11 @@
   }
 
   function viewportOrigin() {
-    if (cinematicCamera.owned && cinematicCamera.allowOverscan) {
-  
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
+    if (cinematicCamera.owned && cinematicCamera.allowOverscan) {
+      return { x: camera.x - viewW / 2, y: camera.y - viewH / 2 };
+    }
     return {
       x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
       y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
