@@ -428,3 +428,25 @@
   background:rgba(91,88,158,.86);
   box-shadow:0 0 4px rgba(111,116,198,.52);
 }
+
+/* Purple-black reverse energy: dark core with a restrained violet-blue edge glow. */
+#game-shell.sga-reverse-gate .sga-sephirot-paths path,
+#game-shell.sga-reverse-flow .sga-sephirot-paths path{
+  stroke:rgba(74,45,112,.90)!important;
+  filter:drop-shadow(0 0 5px rgba(105,82,166,.55));
+}
+#game-shell.sga-reverse-gate .sga-sephirot-nodes circle,
+#game-shell.sga-reverse-flow .sga-sephirot-nodes circle{
+  stroke:rgba(91,59,137,.88)!important;
+  fill:rgba(27,13,48,.42)!important;
+  filter:drop-shadow(0 0 5px rgba(108,83,171,.48));
+}
+#game-shell.sga-reverse-flow .sga-sky-flow i,
+#game-shell.sga-skyward-release .sga-sky-flow i{
+  background:rgba(48,25,75,.94)!important;
+  box-shadow:0 0 3px rgba(122,91,177,.72),0 0 7px rgba(73,53,127,.48)!important;
+}
+#game-shell.sga-reverse-flow .sga-energy-column,
+#game-shell.sga-skyward-release .sga-energy-column{
+  filter:hue-rotate(54deg) saturate(1.55) brightness(.58)!important;
+}
