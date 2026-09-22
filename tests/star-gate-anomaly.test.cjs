@@ -152,8 +152,8 @@ test("cinematic sky overscan reuses authored sky and overlaps the main scene", (
 
 test("gate inner light is fitted to the portal opening and is not squeezed during anomaly", () => {
   const preview = fs.readFileSync("scene-preview41-fix.js", "utf8");
-  assert.match(preview, /const INNER_LIGHT_W = 260;/);
-  assert.match(preview, /const INNER_LIGHT_H = 348;/);
+  assert.match(preview, /const INNER_LIGHT_W = 224;/);
+  assert.match(preview, /const INNER_LIGHT_H = 318;/);
   assert.doesNotMatch(css, /scaleX\(\.84\)/);
   assert.match(css, /@keyframes sgaGateSourceCharge/);
   assert.match(css, /@keyframes sgaGateSourceRelease/);
