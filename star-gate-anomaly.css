@@ -361,20 +361,17 @@
   .sga-pan { transition-duration:.3s; }
 }
 
-/* Extended sky occupies its real authored world height.
-   The original 1448x1086 region is the bottom of the image; the added sky sits above y=0. */
+/* Extended sky: keep the garden's normal world transform unchanged.
+   Move only the taller raster upward so its original lower 1086px stays aligned
+   exactly where the old 1448x1086 sky was, while the extra 514px exists above. */
 .scene-farthest-sky--extended {
+  overflow: visible !important;
+}
+.scene-farthest-sky--extended > img {
+  position: absolute !important;
   left: 0 !important;
   top: -514px !important;
   width: 1448px !important;
   height: 1600px !important;
-  overflow: visible !important;
-}
-.scene-farthest-sky--extended > img {
-  position: static !important;
-  display: block;
-  width: 1448px !important;
-  height: 1600px !important;
   max-width: none !important;
-  object-fit: fill !important;
 }
