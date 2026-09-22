@@ -4,7 +4,7 @@
   const GATE = Object.freeze({ x: 810, y: 105 });
   const ACTIVE_RADIUS = 46;
   const REARM_RADIUS = 96;
-  const DEV_HARNESS = window.__TAROT_DEV_STAR_GATE_ANOMALY__ === true;
+  const DEV_HARNESS = window.__TAROT_DEV_STAR_GATE_ANOMALY__ === true || window.__TAROT_DEV_STAR_GATE_CHOICE__ === true;
   const progress = DEV_HARNESS ? null : window.TarotProgressCore?.createProgress?.();
   let active = false;
   let completed = false;
