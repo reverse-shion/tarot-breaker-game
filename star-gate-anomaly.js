@@ -8,7 +8,7 @@ const ASSETS={
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:528});
 const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
-const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-anomaly-rest"]);
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest"]);
 class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
@@ -69,8 +69,9 @@ async function resonance(){
  setGateState("sga-anomaly-flicker");await pause(1180);
  setGateState("sga-anomaly");await pause(480);
  setGateState("sga-reverse-gate");await pause(1100);
- setGateState("sga-reverse-flow");await pause(1150);
- setGateState("sga-anomaly-rest");await pause(650);
+ setGateState("sga-reverse-flow");await pause(1050);
+ setGateState("sga-skyward-release");await pause(1050);
+ setGateState("sga-anomaly-rest");await pause(500);
  const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
  camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
  const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
