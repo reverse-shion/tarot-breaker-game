@@ -8,10 +8,12 @@ const ASSETS={
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
 const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
-const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest"]);
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-normal-hold","sga-shion-confirmation","sga-false-safety-pause","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest"]);
 class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
+const DEV_HARNESS=window.__TAROT_DEV_STAR_GATE_ANOMALY__===true;
+let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false,currentGateState="idle";
+const stateHistory=[];
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
 async function preload(){await Promise.all(Object.values(ASSETS).flat().map(image))}
 function mount(){
@@ -33,7 +35,7 @@ async function say(actor,text){
 async function pause(ms){await sleep(ms)}
 function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
 function gateShell(){return document.getElementById("game-shell")}
-function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
+function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);currentGateState=state||"idle";stateHistory.push(currentGateState);if(state)shell.classList.add(state);window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-state",{detail:Object.freeze({state:currentGateState})}))}
 function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
 function samePoint(a,b){return Math.abs(a.x-b.x)<.001&&Math.abs(a.y-b.y)<.001}
 function gateIsFramed(state){
@@ -65,13 +67,17 @@ async function resonance(){
  await pause(800);
  setGateState("sga-sky-descent");await pause(1050);
  setGateState("sga-normal-flow");await pause(1320);
- setGateState("sga-resonance-complete");await pause(700);
+ setGateState("sga-resonance-complete");await pause(320);
+ setGateState("sga-normal-hold");await pause(1200);
+ setGateState("sga-shion-confirmation");
+ await say("shion","……星門は、特におかしくないな。");
+ setGateState("sga-false-safety-pause");await pause(400);
  setGateState("sga-anomaly-flicker");await pause(1180);
  setGateState("sga-anomaly");await pause(480);
  setGateState("sga-reverse-gate");await pause(1100);
  setGateState("sga-reverse-flow");await pause(1050);
  setGateState("sga-skyward-release");await pause(1050);
- setGateState("sga-anomaly-rest");await pause(500);
+ setGateState("sga-anomaly-rest");await pause(700);
  const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
  camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
  const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
@@ -107,6 +113,7 @@ async function aftermath(){
  await say("lumiere","……アリエット様のところへ。");await say("shion","アリエット？");await say("lumiere","星界の声について、私より深く聞き取れる方です。");
 }
 function complete(){
+ if(DEV_HARNESS){window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-complete"));return}
  const p=window.TarotProgressCore?.createProgress?.();if(!p)throw new Error("Progress unavailable");
  const out=p.completeEvent("garden_star_gate_anomaly",{mapId:"star_gate_garden",spawnId:"south_gate"});
  if(!out.state)throw new Error("Progress completion failed");
@@ -115,11 +122,14 @@ function complete(){
 async function run(){
  if(running)return;running=true;let success=false;
  try{
-  const p=window.TarotProgressCore?.createProgress?.();if(!p)throw new Error("Progress unavailable");
-  const loaded=p.load();
-  if(loaded.status!=="valid")throw new Error("Progress invalid at Star Gate start");
-  if(p.isEventCompleted("garden_star_gate_anomaly"))return;
-  if(!p.isEventCompleted("garden_lumiere_gate")&&!DEV_HARNESS)throw new Error("Lumiere gate prerequisite missing at Star Gate start");
+  const p=DEV_HARNESS?null:window.TarotProgressCore?.createProgress?.();
+  if(!DEV_HARNESS){
+   if(!p)throw new Error("Progress unavailable");
+   const loaded=p.load();
+   if(loaded.status!=="valid")throw new Error("Progress invalid at Star Gate start");
+   if(p.isEventCompleted("garden_star_gate_anomaly"))return;
+   if(!p.isEventCompleted("garden_lumiere_gate"))throw new Error("Lumiere gate prerequisite missing at Star Gate start");
+  }
   // The choice prompt already owns the interaction lock. Keep one continuous
   // lock across prompt -> cinematic; direct/debug starts acquire it here.
   const promptLocked=window.TarotStarGateInteraction?.getState?.().promptLock===true;
@@ -130,5 +140,5 @@ async function run(){
  finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
 }
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
-window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running})});
+window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running,state:currentGateState,history:[...stateHistory]})});
 })();
