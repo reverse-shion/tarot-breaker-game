@@ -23,7 +23,7 @@ A behavior is not CONTRACT LOCKED until:
 - Device-only behavior that cannot yet be automated remains a mandatory Device Gate and must be recorded as such.
 
 ## Contract VGC-001 — Star Gate interaction handoff
-Status: VERIFIED SPECIFICATION / automation required before feature integration.
+Status: RECOVERY PENDING — becomes ACTIVE only in the recovery PR that restores the verified runtime.
 
 Preconditions:
 - map: Star Gate Garden
@@ -58,5 +58,7 @@ On iPhone/iPad Safari-compatible runtime verify:
 - cinematic begins;
 - no duplicate prompt/event;
 - controls return at the defined event exit only.
+
+Activation rule: VGC-001 MUST NOT be marked ACTIVE until the recovered runtime passes automated checks and the Device Gate. Once ACTIVE on main, it may never be demoted to PENDING to make CI pass.
 
 Record the verified commit SHA in this file after PASS.
