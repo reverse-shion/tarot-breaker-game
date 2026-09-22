@@ -9,14 +9,14 @@
   opacity: 0;
   visibility: hidden;
   background:
-    radial-gradient(ellipse at 50% 86%, rgba(105, 119, 205, .24) 0%, rgba(62, 74, 151, .12) 38%, transparent 72%),
-    radial-gradient(circle at 16% 30%, rgba(181, 202, 255, .16) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 76% 18%, rgba(220, 229, 255, .13) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 43% 56%, rgba(171, 188, 242, .10) 0 1px, transparent 1.5px),
-    linear-gradient(to bottom, #080d2b 0%, #111944 46%, #29356f 82%, rgba(71, 80, 149, .72) 100%);
+    radial-gradient(ellipse at 50% 78%, rgba(111, 125, 205, .18) 0%, rgba(68, 80, 155, .10) 42%, transparent 76%),
+    radial-gradient(circle at 16% 30%, rgba(181, 202, 255, .12) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 76% 18%, rgba(220, 229, 255, .10) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 43% 56%, rgba(171, 188, 242, .07) 0 1px, transparent 1.5px),
+    linear-gradient(to bottom, #080d2b 0%, #111944 40%, #29356f 70%, rgba(75, 86, 158, .58) 100%);
   background-size: auto, 263px 227px, 337px 293px, 419px 367px, auto;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 48px), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 48px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 210px), rgba(0,0,0,.92) calc(100% - 160px), rgba(0,0,0,.56) calc(100% - 80px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 210px), rgba(0,0,0,.92) calc(100% - 160px), rgba(0,0,0,.56) calc(100% - 80px), transparent 100%);
   pointer-events: none;
 }
 
@@ -68,6 +68,40 @@
   background: linear-gradient(to top, transparent, rgba(199, 207, 255, .78), rgba(78, 91, 191, .12));
   box-shadow: 0 0 7px rgba(110, 129, 226, .62);
   animation: sgaSkyUp 1.08s ease-out infinite;
+}
+
+
+.sga-energy-column {
+  position: absolute;
+  left: 50%;
+  bottom: -8%;
+  width: 78px;
+  height: 116%;
+  border-radius: 50% 50% 42% 42%;
+  opacity: 0;
+  transform: translate3d(-50%, 20%, 0) scaleY(.06) scaleX(.72);
+  transform-origin: 50% 100%;
+  background:
+    linear-gradient(to top, rgba(221,246,255,.96), rgba(166,216,255,.72) 34%, rgba(123,151,239,.36) 72%, transparent 100%);
+  box-shadow:
+    0 0 18px rgba(198,235,255,.86),
+    0 0 46px rgba(124,169,245,.60),
+    0 0 88px rgba(87,105,215,.34);
+  filter: blur(.25px);
+  will-change: transform, opacity, filter;
+}
+#game-shell.sga-reverse-flow .sga-energy-column {
+  animation: sgaColumnRise 1.05s cubic-bezier(.18,.68,.22,1) both;
+}
+#game-shell.sga-skyward-release .sga-sky-flow { opacity: 1; }
+#game-shell.sga-skyward-release .sga-energy-column {
+  animation: sgaColumnRelease 1.05s ease-out both;
+}
+#game-shell.sga-skyward-release .sga-sky-flow i {
+  height: 24%;
+  background: linear-gradient(to top, transparent, rgba(224,241,255,.88), rgba(104,126,224,.14));
+  box-shadow: 0 0 10px rgba(148,184,245,.72);
+  animation: sgaSkyUp .78s ease-out infinite;
 }
 
 .sga-gate-fx { overflow: visible; }
@@ -269,6 +303,16 @@
   24% { opacity: .72; }
   100% { transform: translate3d(-50%, -12%, 0) scaleY(1.02); opacity: 0; }
 }
+@keyframes sgaColumnRise {
+  0% { opacity:0; transform:translate3d(-50%,20%,0) scaleY(.06) scaleX(.72); filter:brightness(1); }
+  22% { opacity:.92; }
+  100% { opacity:1; transform:translate3d(-50%,-2%,0) scaleY(1) scaleX(1); filter:brightness(1.16); }
+}
+@keyframes sgaColumnRelease {
+  0% { opacity:1; transform:translate3d(-50%,-2%,0) scaleY(1) scaleX(1); filter:brightness(1.16); }
+  58% { opacity:.72; transform:translate3d(-50%,-18%,0) scaleY(1.18) scaleX(1.18); filter:brightness(1.04); }
+  100% { opacity:0; transform:translate3d(-50%,-42%,0) scaleY(1.34) scaleX(1.5); filter:brightness(.78); }
+}
 @keyframes sgaPathDown { from { stroke-dashoffset: 62; } to { stroke-dashoffset: 0; } }
 @keyframes sgaPathUp { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 62; } }
 @keyframes sgaNodeCharge {
@@ -321,6 +365,7 @@
   .sga-void,
   .sga-card { animation-duration:.01ms !important; animation-iteration-count:1 !important; }
   .sga-sky-flow i,
+  .sga-energy-column,
   .sga-sephirot-paths path,
   .sga-sephirot-nodes circle,
   .sga-gate-sparkles i { animation-duration:.7s !important; animation-iteration-count:1 !important; }
