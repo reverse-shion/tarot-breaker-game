@@ -12,7 +12,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-resonance"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div><img class="sga-shion" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-energy"><i></i><i></i><i></i></div><div class="sga-sephirot"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div><img class="sga-shion" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -28,19 +28,34 @@ async function say(actor,text){
 async function pause(ms){await sleep(ms)}
 function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
 async function resonance(){
- root.classList.add("sga-normal");await pause(700);root.classList.remove("sga-normal");root.classList.add("sga-reversal");
- // No synthetic low-pitched reuse: the existing resonance asset has no authored
- // low/distorted variant, so reversal is expressed visually + by a short silence.
- await pause(760);
+ const camera=window.TarotCinematicCamera;if(!camera)throw new Error("Cinematic camera unavailable");
+ const start=camera.getState().player;
+ await camera.panTo({x:810,y:105},1500);await pause(650);
+ root.classList.add("sga-flow-down");await pause(900);
+ root.classList.add("sga-sephirot-lit");await pause(650);
+ root.classList.remove("sga-flow-down");root.classList.add("sga-flow-up");await pause(950);
+ root.classList.remove("sga-flow-up","sga-sephirot-lit");
+ await camera.panTo(start,1300);camera.release();await pause(220);
  await say("lumiere","……？");
+}
+async function fadeNpc(actorId,duration=360){
+ const vis=window.TarotActorVisibility;if(!vis)return;
+ const steps=12;for(let i=1;i<=steps;i++){vis.set(actorId,1-i/steps);await pause(duration/steps)}
 }
 async function vision(){
  const v=root.querySelector(".sga-vision"),pan=root.querySelector(".sga-pan"),card=root.querySelector(".sga-card");
- v.classList.add("visible");await pause(1000);pan.classList.add("reveal");await pause(2600);
- setShion(1);await pause(520);setShion(2);await pause(500);setShion(3);await pause(900);setShion(4);await pause(520);setShion(5);await pause(120);
+ await Promise.all([fadeNpc("shiopon"),fadeNpc("lumiere")]);
+ root.classList.add("sga-darken");await pause(650);
+ v.classList.add("visible");root.classList.add("sga-vision-mode");await pause(850);
+ pan.classList.add("survey-fountain");await pause(1300);
+ pan.classList.add("survey-upper");await pause(1600);
+ pan.classList.add("survey-gate");await pause(1700);
+ // Only now transition from the normal-size world Shion to the cinematic pose layer.
+ window.TarotActorVisibility?.set("shion",0);
+ root.classList.add("sga-card-phase");setShion(1);await pause(520);setShion(2);await pause(500);setShion(3);await pause(900);setShion(4);await pause(520);setShion(5);await pause(120);
  card.classList.add("visible");await pause(480);card.classList.add("ascend");await pause(1650);card.classList.add("transformed");await pause(1500);card.classList.add("floating");await pause(700);
  await say(null,"――選べ。");await pause(600);
- root.querySelector(".sga-cut").classList.add("show");await pause(260);v.classList.remove("visible");await pause(300);
+ root.querySelector(".sga-cut").classList.add("show");await pause(260);v.classList.remove("visible");root.classList.remove("sga-vision-mode","sga-darken");window.TarotActorVisibility?.reset();await pause(300);
 }
 async function aftermath(){
  root.querySelector(".sga-impurity").classList.add("visible");
@@ -69,7 +84,7 @@ async function run(){
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
   await resonance();await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
- finally{resolveAdvance=null;ui?.hide();if(root){root.classList.remove("active","sga-normal","sga-reversal");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
+ finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
 }
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running})});
