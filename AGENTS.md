@@ -35,3 +35,12 @@ Routine technical execution may proceed through merge without a second human app
 Human decisions are not delegated. If product intent, gameplay/UX/story choice, Regression Lock modification, destructive behavior, or required device evidence is unresolved, STOP and return the decision to the user.
 
 Reviewer independence is mandatory: review must inspect the actual diff/evidence and must not silently repair the candidate while reviewing.
+
+
+## Event Development System — Mandatory Entry Gate
+
+Before gameplay/event work, read `docs/EVENT_DEVELOPMENT_SYSTEM.md`, `docs/VERIFIED_GAMEPLAY_CONTRACTS.md`, `docs/EVENT_CONTRACTS.md`, `docs/DEVICE_VERIFICATION_REGISTRY.md`, and `docs/AI_CHANGE_SAFETY.md`; then run `node scripts/event-preflight.cjs --target <event-or-segment>`.
+
+Declare WORKING and LOCKED scope before editing. Never treat CI PASS as DEVICE VERIFIED. Never weaken a locked contract/test merely to pass CI. If DEVICE VERIFIED behavior regresses: STOP, report it, identify the causal commit range, and repair the regression before feature work continues.
+
+Never implement event work directly on main. Never merge event work before isolated and integration Device Gates have explicit human PASS records. Repository contracts outrank conversation memory and AI assumptions.
