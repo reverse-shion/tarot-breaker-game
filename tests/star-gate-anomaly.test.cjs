@@ -144,10 +144,14 @@ test("overscan is hidden normally and uses a static cinematic-only gradient blen
   assert.match(rule, /opacity:\s*0/);
   assert.match(rule, /visibility:\s*hidden/);
   assert.match(rule, /linear-gradient/);
-  assert.match(rule, /radial-gradient/);
+  assert.match(rule, /radial-gradient\(ellipse/); // subtle nebula field
+  assert.match(rule, /radial-gradient\(circle[^\n]*0 1px/); // subtle star points
   assert.match(rule, /background-size:/);
   assert.match(rule, /-webkit-mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\(100% - 48px\)/);
   assert.match(rule, /(?:^|\n)\s*mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\(100% - 48px\)/);
+  const blendPixels = Number(rule.match(/calc\(100% - (\d+)px\)/)?.[1]);
+  assert.ok(blendPixels >= 40, blendPixels);
+  assert.doesNotMatch(rule, /mask-image:[^;]*to right/);
   assert.doesNotMatch(rule, /animation:/);
   assert.match(css, /#game-shell\.sga-sequence-active \.sga-cinematic-sky-overscan \{[\s\S]*?opacity:\s*1;[\s\S]*?visibility:\s*visible/);
   assert.doesNotMatch(css, /#game-shell(?!\.sga-sequence-active)[^{]*\.sga-cinematic-sky-overscan[^}]*visibility:\s*visible/);
