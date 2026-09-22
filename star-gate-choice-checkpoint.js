@@ -29,7 +29,7 @@
       await addScript("./star-gate-interaction.js?v=choice-sandbox-1");
       if (id === "star-gate-camera") await addScript("./star-gate-camera-checkpoint.js?v=camera-sandbox-1");
       if (id === "star-gate-full") {
-        addCss("./star-gate-anomaly.css?v=full-sandbox-2");
+        addCss("./star-gate-anomaly.css?v=inner-light-image-scale-150-v1");
         await addScript("./star-gate-anomaly.js?v=full-sandbox-2");
       }
     } catch (error) {
