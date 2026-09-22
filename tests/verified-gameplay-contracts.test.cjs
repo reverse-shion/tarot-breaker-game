@@ -37,3 +37,52 @@ test("Verified contracts cannot be omitted from CI workflow", () => {
   const workflow = read(".github/workflows/verified-gameplay-contracts.yml");
   assert.match(workflow, /node --test tests\/verified-gameplay-contracts\.test\.cjs/);
 });
+
+
+test("VGC-002: Alenon prologue keeps the Devil card baseline", () => {
+  const html = read("alenon.html");
+  assert.match(html, /assets\/tarot\/major\/15-the-devil\.webp/);
+  assert.match(html, /PROLOGUE_TAROT_CARD\s*=\s*["'][^"']*15-the-devil\.webp/);
+});
+
+test("VGC-003: Alenon keeps ORB interaction/anomaly implementation markers", () => {
+  const html = read("alenon.html");
+  assert.match(html, /id=["']orb-interaction-choice["']/);
+  assert.match(html, /ORB_INTERACT_RADIUS/);
+  assert.match(html, /orb-anomaly/);
+});
+
+test("VGC-004: Landing Devil memory remains one-time and Progress-observed", () => {
+  const html = read("star-country-landing.html");
+  assert.match(html, /landingMemoryDone/);
+  assert.match(html, /runDevilMemoryEvent/);
+  assert.match(html, /completeEvent\(["']landing_devil_memory["']/);
+  assert.match(html, /returningFromGarden/);
+});
+
+test("VGC-005: Landing preserves Shiopon return state and greeting guard", () => {
+  const html = read("star-country-landing.html");
+  assert.match(html, /savedCompanion/);
+  assert.match(html, /returnGreetingPlayed/);
+  assert.match(html, /runReturnGreeting/);
+  assert.match(html, /シオンさん！ おかえりなの！/);
+});
+
+test("VGC-006: Garden Progress remains observer-only for Shiopon and Lumiere", () => {
+  const observer = read("garden-progress-observer.js");
+  const dialogue = read("dialogue.js");
+  assert.match(observer, /state\.shioponDone === true/);
+  assert.match(observer, /completeEvent\(["']garden_shiopon_meet["']/);
+  assert.match(observer, /state\.lumiereDone === true/);
+  assert.match(observer, /completeEvent\(["']garden_lumiere_gate["']/);
+  assert.match(dialogue, /shioponMeet/);
+  assert.match(dialogue, /lumiereGate/);
+});
+
+test("VGC-007: Progress validates verified route prerequisites instead of owning them", () => {
+  const progress = read("progress.js");
+  const observer = read("garden-progress-observer.js");
+  assert.match(progress, /mapId === ["']star_gate_garden["'][\s\S]{0,180}landing_devil_memory/);
+  assert.match(progress, /spawnId === ["']garden_entrance["'][\s\S]{0,180}landing_devil_memory/);
+  assert.match(observer, /only observes/i);
+});
