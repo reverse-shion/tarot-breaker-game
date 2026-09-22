@@ -102,6 +102,7 @@
   let tapEffect = null;
   let debugStatus = null;
   let npcSuspended = false;
+  let interactionLocked = false;
   let walkAreas = [];
   let collisionVersion = 0;
   let spawnRef = { ...DEFAULT_SPAWN };
@@ -642,7 +643,12 @@
   }
 
   function updatePlayer(dt) {
-    if (leavingMap) return;
+    if (leavingMap || interactionLocked) {
+      player.moving = false;
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
     if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
@@ -1770,7 +1776,7 @@
   }
 
   function pointerDown(event) {
-    if (!running) return;
+    if (!running || interactionLocked) return;
     event.preventDefault();
     if (!controls.pointerDown(pointerInfo(event))) return;
     window.TarotAudio?.startFromMovement();
@@ -1779,14 +1785,14 @@
   }
 
   function pointerMove(event) {
-    if (!running) return;
+    if (!running || interactionLocked) return;
     event.preventDefault();
     controls.pointerMove(pointerInfo(event));
     syncStick();
   }
 
   function pointerEnd(event) {
-    if (!running) return;
+    if (!running || interactionLocked) return;
     event.preventDefault();
     const action = controls.pointerEnd(
       { ...pointerInfo(event), cancelled: event.type !== "pointerup" },
@@ -2035,11 +2041,14 @@
   });
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
+    interactionLocked = true;
+    controls?.clearInput("interaction-start");
     controls?.suspend();
     npcSuspended = true;
     syncStick();
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
+    interactionLocked = false;
     cancelAllStageMotions(true);
     controls?.resume();
     npcSuspended = false;
