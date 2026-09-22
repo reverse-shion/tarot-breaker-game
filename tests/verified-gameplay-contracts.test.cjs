@@ -84,5 +84,5 @@ test("VGC-007: Progress validates verified route prerequisites instead of owning
   const observer = read("garden-progress-observer.js");
   assert.match(progress, /mapId === ["']star_gate_garden["'][\s\S]{0,180}landing_devil_memory/);
   assert.match(progress, /spawnId === ["']garden_entrance["'][\s\S]{0,180}landing_devil_memory/);
-  assert.match(observer, /only acknowledges that the unchanged URL arrival actually reached this scene/i);
+  assert.match(observer, /Garden only acknowledges that the[\s\S]{0,100}unchanged URL arrival actually reached this scene/i);
 });
