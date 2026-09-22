@@ -147,10 +147,10 @@ test("overscan is hidden normally and uses a static cinematic-only gradient blen
   assert.match(rule, /radial-gradient\(ellipse/); // subtle nebula field
   assert.match(rule, /radial-gradient\(circle[^\n]*0 1px/); // subtle star points
   assert.match(rule, /background-size:/);
-  assert.match(rule, /-webkit-mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\(100% - 48px\)/);
-  assert.match(rule, /(?:^|\n)\s*mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\(100% - 48px\)/);
+  assert.match(rule, /-webkit-mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\\(100% - 210px\\)/);
+  assert.match(rule, /(?:^|\n)\s*mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\\(100% - 210px\\)/);
   const blendPixels = Number(rule.match(/calc\(100% - (\d+)px\)/)?.[1]);
-  assert.ok(blendPixels >= 40, blendPixels);
+  assert.ok(blendPixels >= 160, blendPixels);
   assert.doesNotMatch(rule, /mask-image:[^;]*to right/);
   assert.doesNotMatch(rule, /animation:/);
   assert.match(css, /#game-shell\.sga-sequence-active \.sga-cinematic-sky-overscan \{[\s\S]*?opacity:\s*1;[\s\S]*?visibility:\s*visible/);
@@ -200,8 +200,9 @@ test("overscan preserves the authored cloud policy and anomaly timings", () => {
     'setGateState("sga-anomaly-flicker");await pause(1180)',
     'setGateState("sga-anomaly");await pause(480)',
     'setGateState("sga-reverse-gate");await pause(1100)',
-    'setGateState("sga-reverse-flow");await pause(1150)',
-    'setGateState("sga-anomaly-rest");await pause(650)',
+    'setGateState("sga-reverse-flow");await pause(1050)',
+    'setGateState("sga-skyward-release");await pause(1050)',
+    'setGateState("sga-anomaly-rest");await pause(500)',
     "camera.returnToPlayer(1350)",
   ]) assert.ok(anomaly.includes(token), token);
   assert.equal([...html.matchAll(/<circle data-order="[0-5]" cx="\d+" cy="\d+" r="45" \/>/g)].length, 10);
@@ -225,6 +226,7 @@ test("normal, anomaly, and reverse states are distinct and ordered before Lumier
     'setGateState("sga-anomaly")',
     'setGateState("sga-reverse-gate")',
     'setGateState("sga-reverse-flow")',
+    'setGateState("sga-skyward-release")',
     'setGateState("sga-anomaly-rest")',
     'say("lumiere","……？")',
   ].map(token => anomaly.indexOf(token, resonanceStart));
@@ -249,4 +251,18 @@ test("front-half never completes Progress and guards Shion coordinates", () => {
   assert.doesNotMatch(resonance, /completeEvent|complete\(\)/);
   assert.match(resonance, /samePoint\(shionStart,shionEnd\)/);
   assert.ok(anomaly.indexOf('say("lumiere","……？")') < anomaly.indexOf("await vision()"));
+});
+
+
+test("reverse energy grows from the gate into a dedicated skyward release before Shion POV return", () => {
+  assert.match(html, /class="sga-energy-column"/);
+  assert.match(css, /#game-shell\.sga-reverse-flow \.sga-energy-column[\s\S]*?sgaColumnRise/);
+  assert.match(css, /#game-shell\.sga-skyward-release \.sga-energy-column[\s\S]*?sgaColumnRelease/);
+  assert.match(css, /@keyframes sgaColumnRise/);
+  assert.match(css, /@keyframes sgaColumnRelease/);
+  const release = anomaly.indexOf('setGateState("sga-skyward-release")');
+  const rest = anomaly.indexOf('setGateState("sga-anomaly-rest")');
+  const cameraReturn = anomaly.indexOf("camera.returnToPlayer(1350)");
+  const reaction = anomaly.indexOf('say("lumiere","……？")');
+  assert.ok(release >= 0 && release < rest && rest < cameraReturn && cameraReturn < reaction);
 });
