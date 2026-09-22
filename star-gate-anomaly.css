@@ -1,15 +1,9 @@
-#game-shell.sga-sequence-active {
-  /* Keep the cinematic background in the same tonal family as the live garden.
-     The previous dark blue gradient made the overscan read as a separate scene. */
-  background: #172650;
-}
-
 .sga-cinematic-sky-overscan {
   z-index: 0;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  background: #172650;
+  background: transparent;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 64px), transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 64px), transparent 100%);
   pointer-events: none;
@@ -21,8 +15,8 @@
   height: 100%;
   object-fit: cover;
   object-position: 50% 100%;
-  opacity: .88;
-  filter: brightness(1.12) saturate(.84);
+  opacity: 1;
+  filter: none;
 }
 
 #game-shell.sga-sequence-active .sga-cinematic-sky-overscan {
