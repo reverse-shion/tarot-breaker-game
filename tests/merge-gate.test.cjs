@@ -1,0 +1,3 @@
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
+test("merge gate requires machine and human evidence",()=>{const d=fs.readFileSync("docs/MAIN_MERGE_GATE.md","utf8");assert.match(d,/isolated human device PASS/i);assert.match(d,/integrated-route human device PASS/i);assert.match(d,/explicit product-owner merge approval/i);assert.match(d,/cannot technically prevent/i);});
+test("AI entry requires preflight and forbids direct main event work",()=>{const a=fs.readFileSync("AGENTS.md","utf8");assert.match(a,/event-preflight\.cjs/);assert.match(a,/Never implement event work directly on main/);});
