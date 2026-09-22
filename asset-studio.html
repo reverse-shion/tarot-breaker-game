@@ -51,12 +51,17 @@
 <div style="margin:8px 0"><label><input id="lock" type="checkbox" checked> 縦横比を固定</label></div>
 <div><label class="small">品質 <span id="qLabel">92</span>%</label><input id="q" type="range" min="40" max="100" value="92" style="width:100%"></div>
 <div class="card" style="margin-top:10px;background:#081725">
-<label><input id="makeTransparent" type="checkbox"> 背景を透過化</label>
-<div class="grid" style="margin-top:8px">
+<label class="small">背景透過</label>
+<select id="transparencyMode">
+<option value="none" selected>透過しない</option>
+<option value="auto">自動透過（推奨）</option>
+<option value="manual">色を指定して透過</option>
+</select>
+<div id="manualTransparency" class="grid" style="margin-top:8px;display:none">
 <div><label class="small">透過する色</label><input id="transparentColor" type="color" value="#ffffff" style="width:100%;height:42px"></div>
 <div><label class="small">許容範囲 <span id="tolLabel">24</span></label><input id="transparentTolerance" type="range" min="0" max="120" value="24" style="width:100%"></div>
 </div>
-<p class="muted">白背景なら初期値のまま使用できます。指定色に近い画素だけを透明化し、境界は半透明にして縁をなじませます。</p>
+<div id="transparencyInfo" class="muted" style="margin-top:8px">透過処理を行いません。</div>
 </div>
 <div style="margin-top:10px"><label class="small">ファイル名</label><input id="filename" type="text" placeholder="star-country-world-clouds.webp"></div>
 <div class="grid" style="margin-top:10px">
@@ -180,11 +185,26 @@ async function convert(){
 var s=state.sources[state.active];if(!s)return;
 try{
 var w=Math.max(1,parseInt(el("w").value)||s.img.naturalWidth),h=Math.max(1,parseInt(el("h").value)||s.img.naturalHeight),c=document.createElement("canvas");c.width=w;c.height=h;var x=c.getContext("2d",{willReadFrequently:true});x.clearRect(0,0,w,h);x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(s.img,0,0,w,h);
-if(el("makeTransparent").checked){
- var hex=el("transparentColor").value||"#ffffff",tr=parseInt(hex.slice(1,3),16),tg=parseInt(hex.slice(3,5),16),tb=parseInt(hex.slice(5,7),16),tol=parseInt(el("transparentTolerance").value)||0,soft=Math.max(8,Math.round(tol*.55)),imgData=x.getImageData(0,0,w,h),d=imgData.data;
- for(var pi=0;pi<d.length;pi+=4){var dist=Math.sqrt((d[pi]-tr)*(d[pi]-tr)+(d[pi+1]-tg)*(d[pi+1]-tg)+(d[pi+2]-tb)*(d[pi+2]-tb));if(dist<=tol)d[pi+3]=0;else if(dist<tol+soft)d[pi+3]=Math.round(d[pi+3]*((dist-tol)/soft))}
+var tmode=el("transparencyMode").value;
+if(tmode!=="none"){
+ var imgData=x.getImageData(0,0,w,h),d=imgData.data,tol=parseInt(el("transparentTolerance").value)||24,soft=Math.max(8,Math.round(tol*.55)),tr=255,tg=255,tb=255;
+ if(tmode==="manual"){var hex=el("transparentColor").value||"#ffffff";tr=parseInt(hex.slice(1,3),16);tg=parseInt(hex.slice(3,5),16);tb=parseInt(hex.slice(5,7),16)}
+ else{
+  var samples=[],step=Math.max(1,Math.floor(Math.min(w,h)/80));
+  function sample(px,py){var si=(py*w+px)*4;if(d[si+3]>220)samples.push([d[si],d[si+1],d[si+2]])}
+  for(var sx=0;sx<w;sx+=step){sample(sx,0);sample(sx,h-1)}
+  for(var sy=step;sy<h-1;sy+=step){sample(0,sy);sample(w-1,sy)}
+  if(samples.length){samples.sort(function(a,b){return(a[0]+a[1]+a[2])-(b[0]+b[1]+b[2])});var mid=samples[Math.floor(samples.length/2)];tr=mid[0];tg=mid[1];tb=mid[2]}
+  tol=Math.max(18,Math.min(54,tol));
+ }
+ var seen=new Uint8Array(w*h),queue=new Int32Array(w*h),head=0,tail=0;
+ function distAt(idx){var p=idx*4,dr=d[p]-tr,dg=d[p+1]-tg,db=d[p+2]-tb;return Math.sqrt(dr*dr+dg*dg+db*db)}
+ function push(idx){if(idx<0||idx>=w*h||seen[idx])return;seen[idx]=1;if(distAt(idx)<=tol+soft)queue[tail++]=idx}
+ for(var xx=0;xx<w;xx++){push(xx);push((h-1)*w+xx)}for(var yy=1;yy<h-1;yy++){push(yy*w);push(yy*w+w-1)}
+ while(head<tail){var idx=queue[head++],p=idx*4,dist=distAt(idx);d[p+3]=dist<=tol?0:Math.round(d[p+3]*((dist-tol)/soft));var cx=idx%w,cy=(idx/w)|0;if(cx>0)push(idx-1);if(cx<w-1)push(idx+1);if(cy>0)push(idx-w);if(cy<h-1)push(idx+w)}
  x.putImageData(imgData,0,0);
-}
+ el("transparencyInfo").textContent=(tmode==="auto"?"自動検出: rgb("+tr+", "+tg+", "+tb+") / ":"指定色 / ")+"外周につながる背景だけを透過しました。";
+}else{el("transparencyInfo").textContent="透過処理を行いません。";}
 var b=await canvasBlob(c,parseInt(el("q").value)/100);state.output={blob:b,name:webpName(el("filename").value),width:w,height:h};el("filename").value=state.output.name;el("outInfo").textContent=w+"×"+h+" / "+fmt(b.size);el("downloadBtn").disabled=false;el("shareBtn").disabled=false;el("uploadOne").disabled=false;joinPath()
 }catch(e){el("loadStatus").className="status err";el("loadStatus").textContent="画像は読み込めましたがWebP変換に失敗しました。\n"+e.message}}
 function download(blob,name){var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},2000)}
@@ -211,7 +231,7 @@ el("fileInput").addEventListener("change",function(e){loadFiles(Array.from(e.tar
 el("spriteInput").addEventListener("change",async function(e){var f=e.target.files&&e.target.files[0];if(!f)return;try{var r=await imageFromFile(f);state.sprite={file:f,img:r.img,src:r.src};el("spriteBase").value=clean(f.name).replace(/-/g,"_");el("spriteStatus").className="status ok";el("spriteStatus").textContent=f.name+" / "+r.img.naturalWidth+"×"+r.img.naturalHeight}catch(err){el("spriteStatus").className="status err";el("spriteStatus").textContent=err.message}e.target.value=""});
 document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("active",x===b)});document.querySelectorAll(".panel").forEach(function(p){p.classList.toggle("active",p.id===b.dataset.tab)})}});
 var ratioBusy=false;el("w").addEventListener("input",function(){var s=state.sources[state.active];if(!s)return;if(el("lock").checked&&!ratioBusy){ratioBusy=true;el("h").value=Math.round((parseInt(el("w").value)||s.img.naturalWidth)*s.img.naturalHeight/s.img.naturalWidth);ratioBusy=false}});el("h").addEventListener("input",function(){var s=state.sources[state.active];if(!s)return;if(el("lock").checked&&!ratioBusy){ratioBusy=true;el("w").value=Math.round((parseInt(el("h").value)||s.img.naturalHeight)*s.img.naturalWidth/s.img.naturalHeight);ratioBusy=false}});
-["w","h","filename","subdir"].forEach(function(id){el(id).addEventListener("change",function(){joinPath();convert()})});el("cat").addEventListener("change",joinPath);el("q").addEventListener("input",function(){el("qLabel").textContent=el("q").value});el("q").addEventListener("change",convert);el("transparentTolerance").addEventListener("input",function(){el("tolLabel").textContent=el("transparentTolerance").value});["makeTransparent","transparentColor","transparentTolerance"].forEach(function(id){el(id).addEventListener("change",convert)});el("convertBtn").onclick=convert;el("downloadBtn").onclick=function(){if(state.output)download(state.output.blob,state.output.name)};el("shareBtn").onclick=function(){if(state.output)shareFiles([new File([state.output.blob],state.output.name,{type:"image/webp"})])};el("splitBtn").onclick=splitSprite;el("shareFrames").onclick=function(){shareFiles(state.frames.map(function(f){return new File([f.blob],f.name,{type:"image/webp"})}))};
+["w","h","filename","subdir"].forEach(function(id){el(id).addEventListener("change",function(){joinPath();convert()})});el("cat").addEventListener("change",joinPath);el("q").addEventListener("input",function(){el("qLabel").textContent=el("q").value});el("q").addEventListener("change",convert);el("transparentTolerance").addEventListener("input",function(){el("tolLabel").textContent=el("transparentTolerance").value});el("transparencyMode").addEventListener("change",function(){el("manualTransparency").style.display=el("transparencyMode").value==="manual"?"grid":"none";convert()});["transparentColor","transparentTolerance"].forEach(function(id){el(id).addEventListener("change",convert)});el("convertBtn").onclick=convert;el("downloadBtn").onclick=function(){if(state.output)download(state.output.blob,state.output.name)};el("shareBtn").onclick=function(){if(state.output)shareFiles([new File([state.output.blob],state.output.name,{type:"image/webp"})])};el("splitBtn").onclick=splitSprite;el("shareFrames").onclick=function(){shareFiles(state.frames.map(function(f){return new File([f.blob],f.name,{type:"image/webp"})}))};
 el("manifestDownload").onclick=function(){var f=manifestFile();if(f)download(f,f.name)};
 el("testGitHub").onclick=testGitHub;el("clearToken").onclick=function(){el("token").value="";el("ghStatus").className="status";el("ghStatus").textContent="トークンを消去しました。"};
 ["repo","branch","framesDir"].forEach(function(id){el(id).addEventListener("input",updateGhTarget)});
