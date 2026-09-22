@@ -33,3 +33,5 @@ jobs:
         run: node --test tests/merge-gate.test.cjs
       - name: Star Gate choice checkpoint
         run: node --test tests/star-gate-choice-checkpoint.test.cjs
+      - name: Star Gate camera checkpoint
+        run: node --test tests/star-gate-camera-checkpoint.test.cjs
