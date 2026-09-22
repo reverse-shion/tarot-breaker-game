@@ -121,6 +121,7 @@ test("gate framing uses measured artwork bounds and cinematic-only overscan zoom
   assert.match(anomaly, /camera\.frameBounds\(GATE_BOUNDS,1550/);
   assert.match(game, /frameBounds\(bounds = \{\}, duration = 1200/);
   assert.match(game, /cinematicCamera\.owned && cinematicCamera\.allowOverscan/);
+  assert.match(game, /if \(cinematicCamera\.owned\) return;/);
   assert.match(game, /normalCameraZoom/);
   assert.match(game, /camera\.zoom = normalCameraZoom/);
   assert.match(anomaly, /gateIsFramed\(camera\.getState\(\)\)/);

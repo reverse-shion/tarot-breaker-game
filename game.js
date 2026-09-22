@@ -1157,6 +1157,7 @@
       }
       return;
     }
+    if (cinematicCamera.owned) return;
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     const halfW = viewW / 2;
