@@ -1800,7 +1800,7 @@
     );
     if (event.type === "pointerup" && !window.TarotDialogue?.getState().active)
       window.TarotAudio?.startFromMovement();
-    if (action) {\n      tapEffect = { ...action.point, age: 0 };\n      window.dispatchEvent(new CustomEvent("tarot-breaker:world-tap", {\n        detail: Object.freeze({ point: Object.freeze({ ...action.point }) })\n      }));\n    }
+    if (action) tapEffect = { ...action.point, age: 0 };
     if (canvas.hasPointerCapture?.(event.pointerId))
       canvas.releasePointerCapture(event.pointerId);
     syncStick();
