@@ -54,9 +54,12 @@
   <body class="scene-booting" data-audio-autostart="true">
     <script>
       (function () {
-        var fromLanding = new URLSearchParams(location.search).get("from") === "landing";
-        document.body.dataset.enteringFromLanding = fromLanding ? "true" : "false";
-        if (fromLanding) {
+        var bootParams = new URLSearchParams(location.search);
+        var devStarGate = bootParams.get("dev") === "star-gate-anomaly";
+        var fromLanding = bootParams.get("from") === "landing";
+        var directGardenBoot = fromLanding || devStarGate;
+        document.body.dataset.enteringFromLanding = directGardenBoot ? "true" : "false";
+        if (directGardenBoot) {
           // A stalled asset or failed deferred script must reach the existing
           // error state too. A late completion must not reveal that failed boot.
           window.failGardenArrival = function () {
