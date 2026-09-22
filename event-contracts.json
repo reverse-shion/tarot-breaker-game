@@ -7,7 +7,7 @@
       "productionEnabled": false,
       "startEvent": "tarot-breaker:star-gate-investigate",
       "segments": {
-        "star-gate-choice": "IMPLEMENTED",
+        "star-gate-choice": "CONTRACT LOCKED",
         "star-gate-camera": "NOT TESTED",
         "star-gate-normal-resonance": "NOT TESTED",
         "star-gate-reverse-flow": "NOT TESTED",
