@@ -398,3 +398,7 @@
 /* Inner-light raster must be allowed to extend beyond its original 100% box. */
 #game-shell .scene-gate-inner-light { overflow: visible !important; clip-path: none !important; }
 #game-shell .scene-gate-inner-light > img { transform-origin: 50% 0% !important; }
+
+#game-shell.sga-sky-descent .sga-sky-flow,#game-shell.sga-normal-flow .sga-sky-flow{height:720px!important;overflow:visible!important;opacity:1!important}
+#game-shell.sga-sky-descent .sga-sky-flow i,#game-shell.sga-normal-flow .sga-sky-flow i{animation-name:sgaFineSkyDown!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important}
+@keyframes sgaFineSkyDown{0%{transform:translate3d(-50%,0,0);opacity:0}8%{opacity:.9}82%{opacity:.72}100%{transform:translate3d(-50%,680px,0);opacity:0}}
