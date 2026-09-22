@@ -1699,6 +1699,20 @@
     // Star Gate Garden directly.
     if (!enteringFromLanding) {
       if (start) start.disabled = true;
+
+      // TOUCH TO START is the only shipped title action today, so it is an
+      // explicit New Game action. Reset both persistence layers together before
+      // entering Alenon; otherwise Progress v1 can restore completed downstream
+      // events while the legacy Journey/prologue starts from the beginning.
+      try {
+        const titleProgress = window.TarotProgressCore?.createProgress();
+        if (titleProgress) {
+          titleProgress.load();
+          titleProgress.resetGame("title-touch-to-start");
+        }
+      } catch (error) {
+        console.warn("[Title Progress] New Game reset was not persisted", error);
+      }
       window.TarotJourney?.reset();
       const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
       const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
