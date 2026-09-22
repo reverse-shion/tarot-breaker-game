@@ -6,7 +6,7 @@ const ASSETS={
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp"
 };
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-let running=false,ui=null,root=null,resolveAdvance=null;
+let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
 async function preload(){await Promise.all(Object.values(ASSETS).flat().map(image))}
 function mount(){
@@ -29,14 +29,16 @@ async function pause(ms){await sleep(ms)}
 function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
 async function resonance(){
  root.classList.add("sga-normal");await pause(700);root.classList.remove("sga-normal");root.classList.add("sga-reversal");
- const se=new Audio("./assets/audio/sfx/star-gate-resonance.mp3");se.volume=.24;se.playbackRate=.72;try{await se.play()}catch{}await pause(760);
+ // No synthetic low-pitched reuse: the existing resonance asset has no authored
+ // low/distorted variant, so reversal is expressed visually + by a short silence.
+ await pause(760);
  await say("lumiere","……？");
 }
 async function vision(){
  const v=root.querySelector(".sga-vision"),pan=root.querySelector(".sga-pan"),card=root.querySelector(".sga-card");
  v.classList.add("visible");await pause(1000);pan.classList.add("reveal");await pause(2600);
  setShion(1);await pause(520);setShion(2);await pause(500);setShion(3);await pause(900);setShion(4);await pause(520);setShion(5);await pause(120);
- card.classList.add("visible");await pause(480);card.classList.add("ascend");await pause(1650);card.classList.add("transformed");await pause(1500);card.classList.remove("ascend");card.classList.add("floating");await pause(700);
+ card.classList.add("visible");await pause(480);card.classList.add("ascend");await pause(1650);card.classList.add("transformed");await pause(1500);card.classList.add("floating");await pause(700);
  await say(null,"――選べ。");await pause(600);
  root.querySelector(".sga-cut").classList.add("show");await pause(260);v.classList.remove("visible");await pause(300);
 }
@@ -58,11 +60,16 @@ function complete(){
 async function run(){
  if(running)return;running=true;let success=false;
  try{
-  const p=window.TarotProgressCore?.createProgress?.();if(!p||!p.isEventCompleted("garden_lumiere_gate")||p.isEventCompleted("garden_star_gate_anomaly"))return;
-  window.dispatchEvent(new Event("tarot-breaker:interaction-start"));await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
+  const p=window.TarotProgressCore?.createProgress?.();if(!p)return;
+  const loaded=p.load();if(loaded.status!=="valid"||!p.isEventCompleted("garden_lumiere_gate")||p.isEventCompleted("garden_star_gate_anomaly"))return;
+  // The choice prompt already owns the interaction lock. Keep one continuous
+  // lock across prompt -> cinematic; direct/debug starts acquire it here.
+  const promptLocked=window.TarotStarGateInteraction?.getState?.().promptLock===true;
+  if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
+  await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
   await resonance();await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
- finally{resolveAdvance=null;ui?.hide();if(root){root.classList.remove("active","sga-normal","sga-reversal");root.setAttribute("aria-hidden","true")}running=false;window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
+ finally{resolveAdvance=null;ui?.hide();if(root){root.classList.remove("active","sga-normal","sga-reversal");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
 }
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running})});
