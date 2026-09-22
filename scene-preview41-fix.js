@@ -121,6 +121,7 @@
   function placeObject(selector, x, y, width, height) {
     const node = document.querySelector(selector);
     if (!node) return;
+    if (node.dataset.lockAuthoredGeometry === "true") return;
     node.dataset.worldX = String(x);
     node.dataset.worldY = String(y);
     node.dataset.worldW = String(width);
