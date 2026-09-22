@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="./audio.css?v=0.8.0" />
     <link rel="stylesheet" href="./dialogue.css?v=20260920-dialogue-ui-v3" />
     <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-dialogue-ui-v3" />\n    <link rel="stylesheet" href="./star-gate-interaction.css?v=star-gate-anomaly-v1-3" />
-    <link rel="stylesheet" href="./star-gate-anomaly.css?v=star-gate-anomaly-v1-2" />
+    <link rel="stylesheet" href="./star-gate-anomaly.css?v=normal-resonance-v1" />
     <!-- These existing styles must settle before the first scene frame. -->
     <link rel="stylesheet" href="./gate-polish.css?v=20260916-gate-polish-v2" data-gate-polish="v2" />
     <link rel="stylesheet" href="./layer-order-fix.css?v=20260917-v6" data-layer-order="v6" />
@@ -54,7 +54,7 @@
     <script>
       (function () {
         var bootParams = new URLSearchParams(location.search);
-        var devStarGate = bootParams.get("dev") === "star-gate-anomaly";
+        var devStarGate = ["star-gate-anomaly","star-gate-full"].includes(bootParams.get("dev"));
         var fromLanding = bootParams.get("from") === "landing";
         var directGardenBoot = fromLanding || devStarGate;
         document.body.dataset.enteringFromLanding = directGardenBoot ? "true" : "false";
@@ -93,7 +93,7 @@
       <div class="scene-object scene-front scene-fountain-sparkle" data-scene-object data-world-x="640" data-world-y="358" data-world-w="320" data-world-h="220" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-sparkle.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-gate-inner-light" data-scene-object data-world-x="670" data-world-y="-138" data-world-w="260" data-world-h="348" data-gate-position-revision="native-foreground-v6" aria-hidden="true" style="mix-blend-mode:normal;opacity:1;filter:none"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6" alt="" draggable="false" style="opacity:1;mix-blend-mode:normal" /></div>
       <div class="scene-object scene-back scene-star-gate" data-scene-object data-world-x="520" data-world-y="-163.33333333333331" data-world-w="560" data-world-h="373.3333333333333" data-gate-position-revision="native-foreground-v6" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-native-foreground-v6" alt="" draggable="false" style="opacity:1;filter:none;mix-blend-mode:normal;animation:none" /></div>
-      <div class="scene-object scene-front sga-sky-flow" data-scene-object data-world-x="640" data-world-y="-430" data-world-w="320" data-world-h="270" aria-hidden="true"><div class="sga-energy-column" aria-hidden="true"></div><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="scene-object scene-front sga-sky-flow" data-scene-object data-world-x="640" data-world-y="-430" data-world-w="320" data-world-h="270" aria-hidden="true"><div class="sga-energy-column" aria-hidden="true"></div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="scene-object scene-front sga-gate-fx" data-scene-object data-world-x="520" data-world-y="-163.33333333333331" data-world-w="560" data-world-h="373.3333333333333" aria-hidden="true">
         <svg class="sga-sephirot-network" viewBox="0 0 1536 1024" preserveAspectRatio="none" aria-hidden="true">
           <g class="sga-sephirot-paths">
@@ -138,7 +138,7 @@
     <script src="./dialogue.js?v=20260920-dialogue-ui-v3" defer></script>
     <script src="./story-event-guard.js?v=mandatory-story-v5-approved-dialogue" defer></script>
     <script src="./star-gate-interaction.js?v=20260922-gate-contract-v2" defer></script>
-    <script src="./star-gate-anomaly.js?v=20260922-gate-contract-v2" defer></script>
+    <script src="./star-gate-anomaly.js?v=normal-resonance-v1" defer></script>
     <script src="./scene-layout.js?v=1.2.0" defer></script>
     <script src="./scene-preview41-fix.js?v=native-foreground-v7" defer></script>
     <script src="./single-map-occlusion.js?v=garden-arrival-v1" defer></script>
