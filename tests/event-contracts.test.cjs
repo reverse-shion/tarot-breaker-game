@@ -1,0 +1,3 @@
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
+test("Star Gate contract stays unreleased",()=>{const j=JSON.parse(fs.readFileSync("event-contracts.json","utf8"));const d=fs.readFileSync("docs/EVENT_CONTRACTS.md","utf8");const e=j.events["star-gate-anomaly"];assert.equal(e.productionEnabled,false);assert.equal(e.status,"NOT TESTED");assert.match(d,/No Star Gate segment is DEVICE VERIFIED/);for(const s of Object.keys(e.segments))assert.ok(d.includes(s));});
+test("machine registry does not invent locked Star Gate segments",()=>{const j=JSON.parse(fs.readFileSync("event-contracts.json","utf8"));for(const s of Object.values(j.events["star-gate-anomaly"].segments))assert.notEqual(s,"CONTRACT LOCKED");});
