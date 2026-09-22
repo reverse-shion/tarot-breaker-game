@@ -115,10 +115,9 @@
   animation: sgaColumnRelease 1.05s ease-out both;
 }
 #game-shell.sga-skyward-release .sga-sky-flow i {
-  height: 24%;
-  background: linear-gradient(to top, transparent, rgba(224,241,255,.88), rgba(104,126,224,.14));
-  box-shadow: 0 0 10px rgba(148,184,245,.72);
-  animation: sgaSkyUp .78s ease-out infinite;
+  background: rgba(94, 78, 168, .78);
+  box-shadow: 0 0 5px rgba(113, 102, 201, .58), 0 0 9px rgba(47, 38, 105, .40);
+  animation: sgaSkyUp calc(var(--dur, 1.08s) * .82) ease-out var(--delay, 0s) infinite;
 }
 
 .sga-gate-fx { overflow: visible; }
