@@ -109,6 +109,7 @@
   let cssWidth = 1;
   let cssHeight = 1;
   let dpr = 1;
+  let normalCameraZoom = 1;
   let ready = false;
   let running = false;
   let leavingMap = false;
@@ -233,7 +234,20 @@
   };
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
-  const cinematicCamera = { active: false, x: 0, y: 0, startX: 0, startY: 0, targetX: 0, targetY: 0, elapsed: 0, duration: 0, resolve: null };
+  const cinematicCamera = {
+    active: false,
+    owned: false,
+    allowOverscan: false,
+    startX: 0,
+    startY: 0,
+    startZoom: 1,
+    targetX: 0,
+    targetY: 0,
+    targetZoom: 1,
+    elapsed: 0,
+    duration: 0,
+    resolve: null,
+  };
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -305,11 +319,12 @@
     canvas.width = Math.round(cssWidth * dpr);
     canvas.height = Math.round(cssHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    camera.zoom = clamp(
+    normalCameraZoom = clamp(
       Math.min(cssWidth / 620, cssHeight / 560),
       CAMERA_MIN_ZOOM,
       CAMERA_MAX_ZOOM,
     );
+    if (!cinematicCamera.owned) camera.zoom = normalCameraZoom;
   }
 
   function resetShiopon() {
@@ -1133,6 +1148,7 @@
       const eased = t * t * (3 - 2 * t);
       camera.x = cinematicCamera.startX + (cinematicCamera.targetX - cinematicCamera.startX) * eased;
       camera.y = cinematicCamera.startY + (cinematicCamera.targetY - cinematicCamera.startY) * eased;
+      camera.zoom = cinematicCamera.startZoom + (cinematicCamera.targetZoom - cinematicCamera.startZoom) * eased;
       if (t >= 1) {
         cinematicCamera.active = false;
         const done = cinematicCamera.resolve;
@@ -1163,6 +1179,12 @@
   function viewportOrigin() {
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
+    if (cinematicCamera.owned && cinematicCamera.allowOverscan) {
+      return {
+        x: camera.x - viewW / 2,
+        y: camera.y - viewH / 2,
+      };
+    }
     return {
       x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
       y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
@@ -1824,25 +1846,109 @@
     shiopon.wait = 0.9 + Math.random() * 1.4;
   }
 
+  function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
+    if (cinematicCamera.resolve)
+      cinematicCamera.resolve({ completed: false, interrupted: true });
+    cinematicCamera.active = true;
+    cinematicCamera.owned = true;
+    cinematicCamera.allowOverscan = allowOverscan;
+    cinematicCamera.startX = camera.x;
+    cinematicCamera.startY = camera.y;
+    cinematicCamera.startZoom = camera.zoom;
+    cinematicCamera.targetX = targetX;
+    cinematicCamera.targetY = targetY;
+    cinematicCamera.targetZoom = targetZoom;
+    cinematicCamera.elapsed = 0;
+    cinematicCamera.duration = Math.max(0, duration / 1000);
+    return new Promise(resolve => { cinematicCamera.resolve = resolve; });
+  }
+
+  function normalCameraTarget() {
+    const viewW = cssWidth / normalCameraZoom;
+    const viewH = cssHeight / normalCameraZoom;
+    const halfW = viewW / 2;
+    const halfH = viewH / 2;
+    return {
+      x: clamp(player.x, halfW, Math.max(halfW, world.w - halfW)),
+      y: clamp(player.y - cameraOffsetY(), halfH, Math.max(halfH, world.h - halfH)),
+    };
+  }
+
   window.TarotCinematicCamera = Object.freeze({
-    panTo(target = {}, duration = 1200) {
+    panTo(target = {}, duration = 1200, options = {}) {
       const ref = stageTargetRef(target);
       if (!ref) return Promise.resolve({ completed: false });
-      if (cinematicCamera.resolve) cinematicCamera.resolve({ completed: false, interrupted: true });
-      cinematicCamera.active = true;
-      cinematicCamera.startX = camera.x; cinematicCamera.startY = camera.y;
-      cinematicCamera.targetX = ref.x * scale.x; cinematicCamera.targetY = ref.y * scale.y;
-      cinematicCamera.elapsed = 0; cinematicCamera.duration = Math.max(0, duration / 1000);
-      return new Promise(resolve => { cinematicCamera.resolve = resolve; });
+      const zoom = Number.isFinite(options.zoom) && options.zoom > 0
+        ? options.zoom
+        : camera.zoom;
+      return beginCinematicPan(
+        ref.x * scale.x,
+        ref.y * scale.y,
+        zoom,
+        duration,
+        options.allowOverscan === true,
+      );
+    },
+    frameBounds(bounds = {}, duration = 1200, options = {}) {
+      const left = Number(bounds.left);
+      const top = Number(bounds.top);
+      const right = Number(bounds.right);
+      const bottom = Number(bounds.bottom);
+      if (![left, top, right, bottom].every(Number.isFinite) || right <= left || bottom <= top)
+        return Promise.resolve({ completed: false });
+      const padding = clamp(Number(options.padding) || 16, 0, Math.min(cssWidth, cssHeight) / 3);
+      const boundsW = (right - left) * scale.x;
+      const boundsH = (bottom - top) * scale.y;
+      const fitZoom = Math.min(
+        (cssWidth - padding * 2) / boundsW,
+        (cssHeight - padding * 2) / boundsH,
+        normalCameraZoom,
+      );
+      const minZoom = Number.isFinite(options.minZoom) ? options.minZoom : 0.55;
+      const zoom = clamp(fitZoom, Math.min(minZoom, normalCameraZoom), normalCameraZoom);
+      const renderedHeight = boundsH * zoom;
+      const topInset = clamp(
+        Number(options.topInset) || (cssHeight - renderedHeight) * 0.12,
+        padding,
+        Math.max(padding, cssHeight * 0.12),
+      );
+      const originX = ((left + right) * 0.5) * scale.x - cssWidth / zoom / 2;
+      const originY = top * scale.y - topInset / zoom;
+      return beginCinematicPan(
+        originX + cssWidth / zoom / 2,
+        originY + cssHeight / zoom / 2,
+        zoom,
+        duration,
+        true,
+      );
     },
     returnToPlayer(duration = 1200) {
-      return this.panTo(playerRef(), duration);
+      const target = normalCameraTarget();
+      return beginCinematicPan(target.x, target.y, normalCameraZoom, duration, true);
     },
     release() {
-      if (cinematicCamera.resolve) cinematicCamera.resolve({ completed: false, interrupted: true });
-      cinematicCamera.active = false; cinematicCamera.resolve = null;
+      if (cinematicCamera.resolve)
+        cinematicCamera.resolve({ completed: false, interrupted: true });
+      cinematicCamera.active = false;
+      cinematicCamera.owned = false;
+      cinematicCamera.allowOverscan = false;
+      cinematicCamera.resolve = null;
+      camera.zoom = normalCameraZoom;
+      const target = normalCameraTarget();
+      camera.x = target.x;
+      camera.y = target.y;
     },
-    getState: () => ({ active: cinematicCamera.active, camera: { ...camera }, player: playerRef() }),
+    getState: () => ({
+      active: cinematicCamera.active,
+      owned: cinematicCamera.owned,
+      allowOverscan: cinematicCamera.allowOverscan,
+      camera: { ...camera },
+      origin: viewportOrigin(),
+      viewport: { width: cssWidth, height: cssHeight, normalZoom: normalCameraZoom },
+      world: { ...world },
+      scale: { ...scale },
+      player: playerRef(),
+    }),
   });
   window.TarotActorVisibility = Object.freeze({
     set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },

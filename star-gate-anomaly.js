@@ -5,6 +5,8 @@ const ASSETS={
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp"
 };
+const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-anomaly-rest"]);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
@@ -12,7 +14,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-energy"><i></i><i></i><i></i></div><div class="sga-sephirot"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div><img class="sga-shion" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div><img class="sga-shion" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -27,15 +29,38 @@ async function say(actor,text){
 }
 async function pause(ms){await sleep(ms)}
 function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
+function gateShell(){return document.getElementById("game-shell")}
+function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
+function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
+function samePoint(a,b){return Math.abs(a.x-b.x)<.001&&Math.abs(a.y-b.y)<.001}
+function gateIsFramed(state){
+ const {origin,camera,viewport,scale}=state||{};if(!origin||!camera||!viewport||!scale)return false;
+ const left=(GATE_BOUNDS.left*scale.x-origin.x)*camera.zoom;
+ const right=(GATE_BOUNDS.right*scale.x-origin.x)*camera.zoom;
+ const top=(GATE_BOUNDS.top*scale.y-origin.y)*camera.zoom;
+ const bottom=(GATE_BOUNDS.bottom*scale.y-origin.y)*camera.zoom;
+ return left>=-1&&right<=viewport.width+1&&top>=-1&&bottom<=viewport.height+1;
+}
 async function resonance(){
  const camera=window.TarotCinematicCamera;if(!camera)throw new Error("Cinematic camera unavailable");
- const start=camera.getState().player;
- await camera.panTo({x:810,y:105},1500);await pause(650);
- root.classList.add("sga-flow-down");await pause(900);
- root.classList.add("sga-sephirot-lit");await pause(650);
- root.classList.remove("sga-flow-down");root.classList.add("sga-flow-up");await pause(950);
- root.classList.remove("sga-flow-up","sga-sephirot-lit");
- await camera.panTo(start,1300);camera.release();await pause(220);
+ const shionStart=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
+ gateShell()?.classList.add("sga-sequence-active");
+ setGateState(null);
+ const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:14,minZoom:.48});
+ if(!framed?.completed||!gateIsFramed(camera.getState()))throw new Error("Star Gate cinematic framing failed");
+ await pause(800);
+ setGateState("sga-sky-descent");await pause(1050);
+ setGateState("sga-normal-flow");await pause(1320);
+ setGateState("sga-resonance-complete");await pause(700);
+ setGateState("sga-anomaly-flicker");await pause(1180);
+ setGateState("sga-anomaly");await pause(480);
+ setGateState("sga-reverse-gate");await pause(1100);
+ setGateState("sga-reverse-flow");await pause(1150);
+ setGateState("sga-anomaly-rest");await pause(650);
+ const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
+ camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
+ const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
+ if(!samePoint(shionStart,shionEnd))throw new Error("Shion moved during Star Gate cinematic");
  await say("lumiere","……？");
 }
 async function fadeNpc(actorId,duration=360){
@@ -84,7 +109,7 @@ async function run(){
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
   await resonance();await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
- finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
+ finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
 }
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running})});
