@@ -1,4 +1,4 @@
-.sga-sky-flow { z-index: 0 !important; }
+.sga-sky-flow { z-index: 1.5 !important; }
 .sga-gate-fx {
   z-index: 6 !important;
   pointer-events: none;
