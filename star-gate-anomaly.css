@@ -3,6 +3,28 @@
     radial-gradient(circle at 50% 14%, rgba(91, 101, 184, .92), rgba(32, 38, 93, .72) 46%, #090c20 100%);
 }
 
+.sga-cinematic-sky-overscan {
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(ellipse at 50% 86%, rgba(105, 119, 205, .24) 0%, rgba(62, 74, 151, .12) 38%, transparent 72%),
+    radial-gradient(circle at 16% 30%, rgba(181, 202, 255, .16) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 76% 18%, rgba(220, 229, 255, .13) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 43% 56%, rgba(171, 188, 242, .10) 0 1px, transparent 1.5px),
+    linear-gradient(to bottom, #080d2b 0%, #111944 46%, #29356f 82%, rgba(71, 80, 149, .72) 100%);
+  background-size: auto, 263px 227px, 337px 293px, 419px 367px, auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 48px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 48px), transparent 100%);
+  pointer-events: none;
+}
+
+#game-shell.sga-sequence-active .sga-cinematic-sky-overscan {
+  opacity: 1;
+  visibility: visible;
+}
+
 .sga-sky-flow,
 .sga-gate-fx {
   z-index: 6 !important;

@@ -6,7 +6,10 @@ const ASSETS={
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp"
 };
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
+const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:528});
+const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
 const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-anomaly-rest"]);
+class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
@@ -41,13 +44,24 @@ function gateIsFramed(state){
  const bottom=(GATE_BOUNDS.bottom*scale.y-origin.y)*camera.zoom;
  return left>=-1&&right<=viewport.width+1&&top>=-1&&bottom<=viewport.height+1;
 }
+function overscanCoversViewport(state){
+ const {origin,camera,viewport,scale}=state||{};
+ const values=[origin?.y,scale?.y,camera?.zoom,viewport?.height];
+ if(!values.every(Number.isFinite)||scale.y<=0||camera.zoom<=0||viewport.height<=0)return false;
+ const viewportTop=origin.y/scale.y;
+ const viewportBottom=(origin.y+viewport.height/camera.zoom)/scale.y;
+ const overscanBottom=CINEMATIC_SKY_OVERSCAN.y+CINEMATIC_SKY_OVERSCAN.h;
+ const topSafety=viewportTop-CINEMATIC_SKY_OVERSCAN.y;
+ return viewportTop>=CINEMATIC_SKY_OVERSCAN.y&&viewportTop<=overscanBottom&&topSafety>=OVERSCAN_COVERAGE.minimumTopSafety&&viewportBottom>=OVERSCAN_COVERAGE.mainSceneTop;
+}
 async function resonance(){
  const camera=window.TarotCinematicCamera;if(!camera)throw new Error("Cinematic camera unavailable");
  const shionStart=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
  gateShell()?.classList.add("sga-sequence-active");
  setGateState(null);
  const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:14,minZoom:.48});
- if(!framed?.completed||!gateIsFramed(camera.getState()))throw new Error("Star Gate cinematic framing failed");
+ const framedState=camera.getState();
+ if(!framed?.completed||!gateIsFramed(framedState)||!overscanCoversViewport(framedState))throw new StarGateOverscanCoverageError();
  await pause(800);
  setGateState("sga-sky-descent");await pause(1050);
  setGateState("sga-normal-flow");await pause(1320);

@@ -9,6 +9,7 @@ const registry = fs.readFileSync("route-registry.js", "utf8");
 const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("star-gate-anomaly.css", "utf8");
 const game = fs.readFileSync("game.js", "utf8");
+const cloudCss = fs.readFileSync("cloud-motion-fix.css", "utf8");
 
 test("anomaly is registered behind Lumiere completion", () => {
   assert.match(registry, /garden_star_gate_anomaly/);
@@ -124,7 +125,82 @@ test("gate framing uses measured artwork bounds and cinematic-only overscan zoom
   assert.match(game, /if \(cinematicCamera\.owned\) return;/);
   assert.match(game, /normalCameraZoom/);
   assert.match(game, /camera\.zoom = normalCameraZoom/);
-  assert.match(anomaly, /gateIsFramed\(camera\.getState\(\)\)/);
+  assert.match(anomaly, /const framedState=camera\.getState\(\)/);
+  assert.match(anomaly, /gateIsFramed\(framedState\)/);
+});
+
+test("cinematic sky overscan is an independent ordered scene object with exact reference geometry", () => {
+  const farthest = html.indexOf('class="scene-world-layer scene-back scene-farthest-sky"');
+  const overscan = html.indexOf('class="scene-object scene-back sga-cinematic-sky-overscan"');
+  const starSky = html.indexOf('class="scene-world-layer scene-back scene-star-sky"');
+  assert.ok(farthest >= 0 && overscan > farthest && starSky > overscan);
+  assert.match(html, /class="scene-object scene-back sga-cinematic-sky-overscan" data-scene-object data-world-x="0" data-world-y="-480" data-world-w="1448" data-world-h="528" aria-hidden="true"><\/div>/);
+  assert.doesNotMatch(html.slice(overscan, starSky), /<img|<canvas|scene-cloud/);
+  assert.match(anomaly, /CINEMATIC_SKY_OVERSCAN=Object\.freeze\(\{x:0,y:-480,w:1448,h:528\}\)/);
+});
+
+test("overscan is hidden normally and uses a static cinematic-only gradient blend", () => {
+  const rule = css.match(/\.sga-cinematic-sky-overscan \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.match(rule, /opacity:\s*0/);
+  assert.match(rule, /visibility:\s*hidden/);
+  assert.match(rule, /linear-gradient/);
+  assert.match(rule, /radial-gradient/);
+  assert.match(rule, /background-size:/);
+  assert.match(rule, /-webkit-mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\(100% - 48px\)/);
+  assert.match(rule, /(?:^|\n)\s*mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\(100% - 48px\)/);
+  assert.doesNotMatch(rule, /animation:/);
+  assert.match(css, /#game-shell\.sga-sequence-active \.sga-cinematic-sky-overscan \{[\s\S]*?opacity:\s*1;[\s\S]*?visibility:\s*visible/);
+  assert.doesNotMatch(css, /#game-shell(?!\.sga-sequence-active)[^{]*\.sga-cinematic-sky-overscan[^}]*visibility:\s*visible/);
+});
+
+test("framed camera state must satisfy the immutable 80px overscan coverage contract", () => {
+  assert.match(anomaly, /OVERSCAN_COVERAGE=Object\.freeze\(\{minimumTopSafety:80,mainSceneTop:0\}\)/);
+  for (const field of ["origin?.y", "scale?.y", "camera?.zoom", "viewport?.height"])
+    assert.ok(anomaly.includes(field), field);
+  assert.match(anomaly, /const viewportTop=origin\.y\/scale\.y/);
+  assert.match(anomaly, /const viewportBottom=\(origin\.y\+viewport\.height\/camera\.zoom\)\/scale\.y/);
+  assert.match(anomaly, /topSafety>=OVERSCAN_COVERAGE\.minimumTopSafety/);
+  assert.match(anomaly, /viewportBottom>=OVERSCAN_COVERAGE\.mainSceneTop/);
+  assert.match(anomaly, /!gateIsFramed\(framedState\)\|\|!overscanCoversViewport\(framedState\)/);
+  assert.match(anomaly, /throw new StarGateOverscanCoverageError\(\)/);
+  assert.match(anomaly, /this\.name="StarGateOverscanCoverageError"/);
+});
+
+test("supported viewport matrix keeps at least 204px above the framed viewport", () => {
+  const viewports = [[320, 568], [375, 812], [390, 844], [430, 932], [768, 1024], [1024, 768]];
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const origins = viewports.map(([width, height]) => {
+    const normalZoom = clamp(Math.min(width / 620, height / 560), 1, 1.22);
+    const fitZoom = Math.min((width - 28) / 560, (height - 28) / (210 - (-163.33333333333331)), normalZoom);
+    const zoom = clamp(fitZoom, Math.min(.48, normalZoom), normalZoom);
+    const renderedHeight = (210 - (-163.33333333333331)) * zoom;
+    const topInset = clamp((height - renderedHeight) * .12, 14, Math.max(14, height * .12));
+    return -163.33333333333331 - topInset / zoom;
+  });
+  const requiredTop = Math.min(...origins);
+  const margin = requiredTop - (-480);
+  assert.ok(Math.abs(requiredTop - (-275.78520653218055)) < 1e-9, requiredTop);
+  assert.ok(margin >= 204, margin);
+});
+
+test("overscan preserves the authored cloud policy and anomaly timings", () => {
+  assert.doesNotMatch(css, /\.scene-cloud-main/);
+  assert.match(cloudCss, /\.scene-cloud-main-track\s*\{[\s\S]*?64s linear infinite !important/);
+  assert.equal((html.match(/class="scene-cloud-copy"/g) || []).length, 3);
+  for (const token of [
+    "camera.frameBounds(GATE_BOUNDS,1550",
+    "await pause(800)",
+    'setGateState("sga-sky-descent");await pause(1050)',
+    'setGateState("sga-normal-flow");await pause(1320)',
+    'setGateState("sga-resonance-complete");await pause(700)',
+    'setGateState("sga-anomaly-flicker");await pause(1180)',
+    'setGateState("sga-anomaly");await pause(480)',
+    'setGateState("sga-reverse-gate");await pause(1100)',
+    'setGateState("sga-reverse-flow");await pause(1150)',
+    'setGateState("sga-anomaly-rest");await pause(650)',
+    "camera.returnToPlayer(1350)",
+  ]) assert.ok(anomaly.includes(token), token);
+  assert.equal([...html.matchAll(/<circle data-order="[0-5]" cx="\d+" cy="\d+" r="45" \/>/g)].length, 10);
 });
 
 test("Sephirot overlay aligns ten authored gate nodes instead of a synthetic center glow", () => {
