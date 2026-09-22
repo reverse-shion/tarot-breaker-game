@@ -1,0 +1,3 @@
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
+test("integration contract blocks unreleased Star Gate",()=>{const d=fs.readFileSync("docs/INTEGRATION_CONTRACTS.md","utf8");assert.match(d,/Status: BLOCKED until applicable Star Gate segments are DEVICE VERIFIED/);assert.match(d,/isolated Star Gate checkpoint PASS is never sufficient/i);});
+test("foundation preserves normal Star Gate suppression",()=>{const h=fs.readFileSync("index.html","utf8");assert.doesNotMatch(h,/star-gate-interaction\.js/);assert.doesNotMatch(h,/star-gate-anomaly\.js/);assert.doesNotMatch(h,/dev-checkpoints\.js/);});

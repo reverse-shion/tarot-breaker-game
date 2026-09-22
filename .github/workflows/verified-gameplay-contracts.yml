@@ -1,4 +1,4 @@
-name: Verified Gameplay Contracts
+name: Event Safety / Main Merge Gate
 
 on:
   push:
@@ -10,16 +10,24 @@ permissions:
   contents: read
 
 jobs:
-  verified-gameplay-contracts:
-    name: Verified Gameplay Contracts
+  event-safety:
+    name: Event Safety / Main Merge Gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Run verified gameplay contracts
+      - name: Verified gameplay regression contracts
         run: node --test tests/verified-gameplay-contracts.test.cjs
+      - name: Event development system contract
+        run: node --test tests/event-development-contract.test.cjs
+      - name: Event contracts
+        run: node --test tests/event-contracts.test.cjs
+      - name: Dev checkpoint contracts
+        run: node --test tests/dev-checkpoints.test.cjs
+      - name: Integration contracts
+        run: node --test tests/integration-contracts.test.cjs
+      - name: Main merge gate contract
+        run: node --test tests/merge-gate.test.cjs
