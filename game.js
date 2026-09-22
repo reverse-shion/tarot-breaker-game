@@ -75,7 +75,8 @@
     right: Object.freeze({ x: 1, y: 0 }),
   });
   const params = new URLSearchParams(location.search);
-  const enteringFromLanding = params.get("from") === "landing";
+  const DEV_STAR_GATE = params.get("dev") === "star-gate-anomaly";
+  const enteringFromLanding = params.get("from") === "landing" || DEV_STAR_GATE;
   if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
@@ -2071,7 +2072,9 @@
       spawnRef = findNearestSpawnRef();
       gardenExitRef = { ...spawnRef };
       if (enteringFromLanding)
-        spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
+        spawnRef = DEV_STAR_GATE
+          ? collision.nearestWalkable({ x: STAGE_LANDMARKS.gate.x, y: STAGE_LANDMARKS.gate.y + 72 })
+          : collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
 
       const loaded = await Promise.all([
         waitForMap(),
