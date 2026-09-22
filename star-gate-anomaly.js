@@ -115,8 +115,11 @@ function complete(){
 async function run(){
  if(running)return;running=true;let success=false;
  try{
-  const p=window.TarotProgressCore?.createProgress?.();if(!p)return;
-  const loaded=p.load();if(loaded.status!=="valid"||!p.isEventCompleted("garden_lumiere_gate")||p.isEventCompleted("garden_star_gate_anomaly"))return;
+  const p=window.TarotProgressCore?.createProgress?.();if(!p)throw new Error("Progress unavailable");
+  const loaded=p.load();
+  if(loaded.status!=="valid")throw new Error("Progress invalid at Star Gate start");
+  if(p.isEventCompleted("garden_star_gate_anomaly"))return;
+  if(!p.isEventCompleted("garden_lumiere_gate")&&!DEV_HARNESS)throw new Error("Lumiere gate prerequisite missing at Star Gate start");
   // The choice prompt already owns the interaction lock. Keep one continuous
   // lock across prompt -> cinematic; direct/debug starts acquire it here.
   const promptLocked=window.TarotStarGateInteraction?.getState?.().promptLock===true;
