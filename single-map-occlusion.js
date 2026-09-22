@@ -121,9 +121,9 @@
   const STAR_GATE_X = GATE_CENTER_X - STAR_GATE_W / 2;
   const STAR_GATE_Y = STAIR_TOP_Y - STAR_GATE_H - GATE_LIFT;
   const INNER_LIGHT_W = 190;
-  const INNER_LIGHT_H = INNER_LIGHT_W * (1535 / 1024);
+  const INNER_LIGHT_H = (INNER_LIGHT_W * (1535 / 1024)) * 1.5;
   const INNER_LIGHT_X = GATE_CENTER_X - INNER_LIGHT_W / 2;
-  const INNER_LIGHT_Y = STAIR_TOP_Y - INNER_LIGHT_H - GATE_LIFT;
+  const INNER_LIGHT_Y = STAIR_TOP_Y - (INNER_LIGHT_W * (1535 / 1024)) - GATE_LIFT; // keep original top coordinate
 
   function placeObject(node, x, y, w, h) {
     if (!node) return;
