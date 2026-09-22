@@ -52,7 +52,7 @@
   <body class="scene-booting" data-audio-autostart="true">
     <script>
       (function () {
-        var fromLanding = new URLSearchParams(location.search).get("from") === "landing";
+        var bootParams = new URLSearchParams(location.search);\n        var devStarGateAnomaly = bootParams.get("dev") === "star-gate-anomaly";\n        var fromLanding = bootParams.get("from") === "landing" || devStarGateAnomaly;
         document.body.dataset.enteringFromLanding = fromLanding ? "true" : "false";
         if (fromLanding) {
           // A stalled asset or failed deferred script must reach the existing
@@ -96,7 +96,7 @@
       <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
       <div id="load-error" class="load-error" hidden role="alert">読み込みに失敗しました。再読み込みしてください。</div>
     </main>
-    <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
+    <script src="./map-journey.js?v=20260919-roundtrip-1"></script>\n    <script>\n      (function () {\n        var dev = new URLSearchParams(location.search).get("dev");\n        if (dev !== "star-gate-anomaly") return;\n        // Development-only checkpoint: reproduce the runtime facts immediately\n        // after the Lumiere gate conversation without touching durable Progress.\n        window.TarotJourney?.set("gardenStory", {\n          shioponDone: true,\n          lumiereDone: true,\n          joined: true\n        });\n        window.TarotJourney?.set("companion", { mode: "following" });\n        document.body.dataset.devEntry = "star-gate-anomaly";\n      })();\n    </script>
     <script src="./route-registry.js?v=20260921-progress-v1"></script>
     <script src="./progress.js?v=20260921-progress-v1"></script>
     <script src="./garden-progress-observer.js?v=phase-2a-4c-1" defer></script>
