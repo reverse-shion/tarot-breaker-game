@@ -198,7 +198,11 @@ test("overscan preserves the authored cloud policy and anomaly timings", () => {
     "await pause(800)",
     'setGateState("sga-sky-descent");await pause(1050)',
     'setGateState("sga-normal-flow");await pause(1320)',
-    'setGateState("sga-resonance-complete");await pause(700)',
+    'setGateState("sga-resonance-complete");await pause(320)',
+    'setGateState("sga-normal-hold");await pause(1200)',
+    'setGateState("sga-shion-confirmation")',
+    'await say("shion","……星門は、特におかしくないな。")',
+    'setGateState("sga-false-safety-pause");await pause(400)',
     'setGateState("sga-anomaly-flicker");await pause(1180)',
     'setGateState("sga-anomaly");await pause(480)',
     'setGateState("sga-reverse-gate");await pause(1100)',
@@ -218,12 +222,49 @@ test("Sephirot overlay aligns ten authored gate nodes instead of a synthetic cen
   assert.doesNotMatch(anomaly, /class="sga-sephirot"/);
 });
 
+test("normal resonance holds through Shion confirmation before anomaly begins", () => {
+  const order = [
+    'setGateState("sga-sky-descent")',
+    'setGateState("sga-normal-flow")',
+    'setGateState("sga-resonance-complete")',
+    'setGateState("sga-normal-hold")',
+    'setGateState("sga-shion-confirmation")',
+    'await say("shion","……星門は、特におかしくないな。")',
+    'setGateState("sga-false-safety-pause")',
+    'setGateState("sga-anomaly-flicker")',
+    'setGateState("sga-anomaly")',
+  ].map(token => anomaly.indexOf(token));
+  for (const index of order) assert.ok(index >= 0);
+  for (let i = 1; i < order.length; i += 1) assert.ok(order[i] > order[i - 1]);
+  assert.match(anomaly, /await say\("shion","……星門は、特におかしくないな。"\)/);
+  assert.match(anomaly, /sga-false-safety-pause"\);await pause\(400\)/);
+});
+
+test("energy rain is dense, fine grained, and behind the authored gate", () => {
+  assert.equal((html.match(/<i><\/i>/g) || []).length >= 24, true);
+  assert.match(css, /\.sga-sky-flow \{ z-index: 1 !important; \}/);
+  assert.match(css, /\.sga-gate-fx \{ z-index: 6 !important; \}/);
+  assert.match(css, /width: var\(--size, 3px\)/);
+  assert.match(css, /animation: sgaSkyDown var\(--dur/);
+  assert.match(css, /background: rgba\(104, 90, 178, \.82\)/);
+});
+
+test("star-gate-full dev entry preserves the complete device-check route", () => {
+  const harness = fs.readFileSync("star-gate-dev-harness.js", "utf8");
+  assert.match(html, /"star-gate-anomaly","star-gate-full"/);
+  assert.match(game, /"star-gate-anomaly", "star-gate-full"/);
+  assert.match(harness, /"star-gate-anomaly", "star-gate-full"/);
+});
+
 test("normal, anomaly, and reverse states are distinct and ordered before Lumiere reaction", () => {
   const resonanceStart = anomaly.indexOf("async function resonance");
   const order = [
     'setGateState("sga-sky-descent")',
     'setGateState("sga-normal-flow")',
     'setGateState("sga-resonance-complete")',
+    'setGateState("sga-normal-hold")',
+    'setGateState("sga-shion-confirmation")',
+    'setGateState("sga-false-safety-pause")',
     'setGateState("sga-anomaly-flicker")',
     'setGateState("sga-anomaly")',
     'setGateState("sga-reverse-gate")',
