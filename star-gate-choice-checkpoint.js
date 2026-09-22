@@ -3,6 +3,7 @@
   const id = new URLSearchParams(location.search).get("dev");
   if (id !== "star-gate-choice") return;
   window.__TAROT_DEV_STAR_GATE_ANOMALY__ = true;
+  window.__TAROT_DEV_STAR_GATE_CHOICE__ = true;
   document.documentElement.dataset.devHarness = id;
   document.body.dataset.enteringFromLanding = "true";
   document.body.dataset.devEntry = id;
