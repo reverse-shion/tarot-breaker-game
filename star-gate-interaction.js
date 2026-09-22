@@ -3,7 +3,8 @@
 
   const GATE = Object.freeze({ x: 810, y: 105 });
   const ACTIVE_RADIUS = 46;
-  const progress = window.TarotProgressCore?.createProgress?.();
+  const DEV_HARNESS = window.__TAROT_DEV_STAR_GATE_ANOMALY__ === true;
+  const progress = DEV_HARNESS ? null : window.TarotProgressCore?.createProgress?.();
   let active = false;
   let completed = false;
   let prompt = null;
@@ -12,6 +13,7 @@
 
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function progressReady() {
+    if (DEV_HARNESS) { completed = false; return true; }
     if (!progress) return false;
     try {
       const loaded = progress.load();
