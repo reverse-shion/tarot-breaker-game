@@ -23,3 +23,5 @@ jobs:
           node-version: "22"
       - name: Run verified gameplay contracts
         run: node --test tests/verified-gameplay-contracts.test.cjs
+      - name: Run event development contracts
+        run: node --test tests/event-development-contract.test.cjs
