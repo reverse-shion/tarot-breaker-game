@@ -2,7 +2,7 @@
   "use strict";
 
   const GATE = Object.freeze({ x: 810, y: 105 });
-  const ACTIVE_RADIUS = 82;
+  const ACTIVE_RADIUS = 46;
   const progress = window.TarotProgressCore?.createProgress?.();
   let active = false;
   let completed = false;
@@ -39,7 +39,7 @@
     const state = window.TarotDialogue?.getState?.();
     const stage = window.TarotStage?.getState?.();
     const shion = stage?.actors?.shion;
-    if (shion && distance(shion, GATE) >= 154) armed = true;
+    if (shion && distance(shion, GATE) >= 96) armed = true;
     return Boolean(progressReady() && !state?.active && shion && armed && distance(shion, GATE) <= ACTIVE_RADIUS);
   }
   function lockPrompt() {
