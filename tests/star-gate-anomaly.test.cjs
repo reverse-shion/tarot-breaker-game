@@ -129,32 +129,28 @@ test("gate framing uses measured artwork bounds and cinematic-only overscan zoom
   assert.match(anomaly, /gateIsFramed\(framedState\)/);
 });
 
-test("cinematic sky overscan is an independent ordered scene object with exact reference geometry", () => {
+test("cinematic sky overscan reuses authored sky and overlaps the main scene", () => {
   const farthest = html.indexOf('class="scene-world-layer scene-back scene-farthest-sky"');
   const overscan = html.indexOf('class="scene-object scene-back sga-cinematic-sky-overscan"');
   const starSky = html.indexOf('class="scene-world-layer scene-back scene-star-sky"');
   assert.ok(farthest >= 0 && overscan > farthest && starSky > overscan);
-  assert.match(html, /class="scene-object scene-back sga-cinematic-sky-overscan" data-scene-object data-world-x="0" data-world-y="-480" data-world-w="1448" data-world-h="528" aria-hidden="true"><\/div>/);
-  assert.doesNotMatch(html.slice(overscan, starSky), /<img|<canvas|scene-cloud/);
-  assert.match(anomaly, /CINEMATIC_SKY_OVERSCAN=Object\.freeze\(\{x:0,y:-480,w:1448,h:528\}\)/);
+  assert.match(html, /sga-cinematic-sky-overscan[^>]*data-world-y="-480"[^>]*data-world-h="640"[^>]*>[\s\S]*?star-country-farthest-sky-background\.webp/);
+  assert.match(anomaly, /CINEMATIC_SKY_OVERSCAN=Object\.freeze\(\{x:0,y:-480,w:1448,h:640\}\)/);
+  const rule = css.match(/\.sga-cinematic-sky-overscan \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.doesNotMatch(rule, /background:\s*(?:radial|linear)-gradient/);
+  assert.match(css, /\.sga-cinematic-sky-overscan > img[\s\S]*?object-fit:\s*cover/);
+  assert.match(rule, /mask-image:\s*linear-gradient\(to bottom/);
+  assert.match(rule, /transparent 100%/);
+  assert.match(css, /#game-shell\.sga-sequence-active \.sga-cinematic-sky-overscan \{[\s\S]*?opacity:\s*1;[\s\S]*?visibility:\s*visible/);
 });
 
-test("overscan is hidden normally and uses a static cinematic-only gradient blend", () => {
-  const rule = css.match(/\.sga-cinematic-sky-overscan \{[\s\S]*?\n\}/)?.[0] || "";
-  assert.match(rule, /opacity:\s*0/);
-  assert.match(rule, /visibility:\s*hidden/);
-  assert.match(rule, /linear-gradient/);
-  assert.match(rule, /radial-gradient\(ellipse/); // subtle nebula field
-  assert.match(rule, /radial-gradient\(circle[^\n]*0 1px/); // subtle star points
-  assert.match(rule, /background-size:/);
-  assert.match(rule, /-webkit-mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\\(100% - 210px\\)/);
-  assert.match(rule, /(?:^|\n)\s*mask-image:\s*linear-gradient\(to bottom,[\s\S]*?calc\\(100% - 210px\\)/);
-  const blendPixels = Number(rule.match(/calc\(100% - (\d+)px\)/)?.[1]);
-  assert.ok(blendPixels >= 160, blendPixels);
-  assert.doesNotMatch(rule, /mask-image:[^;]*to right/);
-  assert.doesNotMatch(rule, /animation:/);
-  assert.match(css, /#game-shell\.sga-sequence-active \.sga-cinematic-sky-overscan \{[\s\S]*?opacity:\s*1;[\s\S]*?visibility:\s*visible/);
-  assert.doesNotMatch(css, /#game-shell(?!\.sga-sequence-active)[^{]*\.sga-cinematic-sky-overscan[^}]*visibility:\s*visible/);
+test("gate inner light is fitted to the portal opening and is not squeezed during anomaly", () => {
+  const preview = fs.readFileSync("scene-preview41-fix.js", "utf8");
+  assert.match(preview, /const INNER_LIGHT_W = 260;/);
+  assert.match(preview, /const INNER_LIGHT_H = 348;/);
+  assert.doesNotMatch(css, /scaleX\(\.84\)/);
+  assert.match(css, /@keyframes sgaGateSourceCharge/);
+  assert.match(css, /@keyframes sgaGateSourceRelease/);
 });
 
 test("framed camera state must satisfy the immutable 80px overscan coverage contract", () => {
