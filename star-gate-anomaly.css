@@ -461,3 +461,37 @@
 #game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
   opacity:1!important;
 }
+
+/* Cloud bleed-through fix.
+   This opaque backing shares the established inner-light geometry and blocks
+   moving cloud/sky pixels wherever the WEBP itself is transparent. */
+#game-shell .scene-gate-inner-light{
+  isolation:isolate!important;
+}
+#game-shell .scene-gate-inner-backing{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  display:block;
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+  pointer-events:none;
+  background:linear-gradient(180deg,#071326 0%,#0a1930 58%,#0b1d38 100%);
+  clip-path:polygon(50% 0%,67% 4%,82% 15%,93% 31%,100% 54%,100% 100%,0% 100%,0% 54%,7% 31%,18% 15%,33% 4%);
+}
+#game-shell .scene-gate-inner-light>img{
+  position:relative;
+  z-index:1;
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+}
+#game-shell.sga-normal-flow .scene-gate-inner-backing,
+#game-shell.sga-resonance-complete .scene-gate-inner-backing,
+#game-shell.sga-anomaly-flicker .scene-gate-inner-backing,
+#game-shell.sga-anomaly .scene-gate-inner-backing,
+#game-shell.sga-reverse-gate .scene-gate-inner-backing,
+#game-shell.sga-reverse-flow .scene-gate-inner-backing,
+#game-shell.sga-skyward-release .scene-gate-inner-backing,
+#game-shell.sga-anomaly-rest .scene-gate-inner-backing{
+  opacity:1!important;
+}
