@@ -232,7 +232,7 @@
 #game-shell.sga-anomaly .scene-gate-inner-light > img,
 #game-shell.sga-anomaly-rest .scene-gate-inner-light > img {
   animation: sgaAnomalyBreathe 7.2s ease-in-out infinite !important;
-  opacity: .54 !important;
+  opacity: 1 !important;
   filter: brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90, 108, 205, .32)) !important;
   transform: scaleX(1) scaleY(1) !important;
 }
@@ -449,4 +449,15 @@
 #game-shell.sga-reverse-flow .sga-energy-column,
 #game-shell.sga-skyward-release .sga-energy-column{
   filter:hue-rotate(54deg) saturate(1.55) brightness(.58)!important;
+}
+
+/* Inner gate light must remain opaque in every anomaly phase.
+   Darkness/color comes from filters, never transparency. */
+#game-shell.sga-anomaly-flicker .scene-gate-inner-light>img,
+#game-shell.sga-anomaly .scene-gate-inner-light>img,
+#game-shell.sga-reverse-gate .scene-gate-inner-light>img,
+#game-shell.sga-reverse-flow .scene-gate-inner-light>img,
+#game-shell.sga-skyward-release .scene-gate-inner-light>img,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  opacity:1!important;
 }
