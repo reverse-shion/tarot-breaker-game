@@ -1,4 +1,4 @@
-(()=>{const p=new URLSearchParams(location.search);if(p.get("dev")!=="star-gate-light-editor")return;
+(()=>{const p=new URLSearchParams(location.search);if(p.get("dev")!=="star-gate-full"||p.get("lightEditor")!=="1")return;
 const el=document.querySelector(".scene-gate-inner-light");if(!el)return;
 let x=+(el.dataset.worldX||620),y=+(el.dataset.worldY||-163.3333333333),w=+(el.dataset.worldW||360),h=+(el.dataset.worldH||373.3333333333);
 const panel=document.createElement("div");panel.style.cssText="position:fixed;z-index:99999;left:10px;top:10px;background:#080b18e8;color:white;padding:10px;border:1px solid #8fdcff;border-radius:8px;font:14px monospace;max-width:calc(100vw - 20px)";
