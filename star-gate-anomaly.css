@@ -470,7 +470,10 @@
 }
 #game-shell .scene-gate-inner-backing{
   position:absolute;
-  inset:0;
+  left:12%;
+  top:8%;
+  width:76%;
+  height:88%;
   z-index:0;
   display:block;
   opacity:1!important;
