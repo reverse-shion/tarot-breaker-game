@@ -8,16 +8,23 @@
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  background:
-    radial-gradient(ellipse at 50% 78%, rgba(111, 125, 205, .18) 0%, rgba(68, 80, 155, .10) 42%, transparent 76%),
-    radial-gradient(circle at 16% 30%, rgba(181, 202, 255, .12) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 76% 18%, rgba(220, 229, 255, .10) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 43% 56%, rgba(171, 188, 242, .07) 0 1px, transparent 1.5px),
-    linear-gradient(to bottom, #080d2b 0%, #111944 40%, #29356f 70%, rgba(75, 86, 158, .58) 100%);
-  background-size: auto, 263px 227px, 337px 293px, 419px 367px, auto;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 210px), rgba(0,0,0,.92) calc(100% - 160px), rgba(0,0,0,.56) calc(100% - 80px), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 210px), rgba(0,0,0,.92) calc(100% - 160px), rgba(0,0,0,.56) calc(100% - 80px), transparent 100%);
   pointer-events: none;
+  /*
+   * The extension reuses the authored farthest-sky image.  Do not synthesize a
+   * second CSS sky here: the previous gradient produced a visible horizontal
+   * colour discontinuity on iPad.
+   */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.72) 82%, rgba(0,0,0,.30) 93%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 58%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.72) 82%, rgba(0,0,0,.30) 93%, transparent 100%);
+}
+.sga-cinematic-sky-overscan > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: 50% 0%;
+  transform: scale(1.012);
+  filter: brightness(.98) saturate(.99);
 }
 
 #game-shell.sga-sequence-active .sga-cinematic-sky-overscan {
@@ -74,20 +81,21 @@
 .sga-energy-column {
   position: absolute;
   left: 50%;
-  bottom: -8%;
-  width: 78px;
-  height: 116%;
-  border-radius: 50% 50% 42% 42%;
+  bottom: -10%;
+  width: 112px;
+  height: 126%;
+  border-radius: 48% 48% 40% 40%;
   opacity: 0;
-  transform: translate3d(-50%, 20%, 0) scaleY(.06) scaleX(.72);
+  transform: translate3d(-50%, 22%, 0) scaleY(.04) scaleX(.62);
   transform-origin: 50% 100%;
   background:
-    linear-gradient(to top, rgba(221,246,255,.96), rgba(166,216,255,.72) 34%, rgba(123,151,239,.36) 72%, transparent 100%);
+    radial-gradient(ellipse at 50% 86%, rgba(255,255,255,.98) 0 7%, rgba(210,242,255,.88) 18%, rgba(151,205,255,.54) 42%, rgba(106,137,235,.22) 68%, transparent 82%),
+    linear-gradient(to top, rgba(228,249,255,.96), rgba(170,222,255,.76) 34%, rgba(126,157,241,.40) 72%, transparent 100%);
   box-shadow:
-    0 0 18px rgba(198,235,255,.86),
-    0 0 46px rgba(124,169,245,.60),
-    0 0 88px rgba(87,105,215,.34);
-  filter: blur(.25px);
+    0 0 20px rgba(214,243,255,.92),
+    0 0 52px rgba(139,190,250,.64),
+    0 0 104px rgba(91,111,220,.38);
+  filter: blur(.2px);
   will-change: transform, opacity, filter;
 }
 #game-shell.sga-reverse-flow .sga-energy-column {
@@ -237,13 +245,18 @@
   animation: sgaInnerFlicker 1.18s steps(1, end) both !important;
 }
 #game-shell.sga-anomaly .scene-gate-inner-light > img,
-#game-shell.sga-reverse-gate .scene-gate-inner-light > img,
-#game-shell.sga-reverse-flow .scene-gate-inner-light > img,
 #game-shell.sga-anomaly-rest .scene-gate-inner-light > img {
   animation: sgaAnomalyBreathe 7.2s ease-in-out infinite !important;
-  opacity: .52 !important;
-  filter: brightness(.72) saturate(.78) hue-rotate(24deg) drop-shadow(0 0 5px rgba(90, 108, 205, .28)) !important;
-  transform: scaleX(.84) scaleY(1.005) !important;
+  opacity: .54 !important;
+  filter: brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90, 108, 205, .32)) !important;
+  transform: scaleX(1) scaleY(1) !important;
+}
+#game-shell.sga-reverse-gate .scene-gate-inner-light > img {
+  animation: sgaGateSourceCharge 1.05s ease-out both !important;
+}
+#game-shell.sga-reverse-flow .scene-gate-inner-light > img,
+#game-shell.sga-skyward-release .scene-gate-inner-light > img {
+  animation: sgaGateSourceRelease 1.05s ease-out both !important;
 }
 #game-shell.sga-anomaly .scene-gate-inner-light::before,
 #game-shell.sga-anomaly .scene-gate-inner-light::after,
@@ -337,6 +350,16 @@
   0%, 66%, 100% { opacity: .12; transform:translate3d(-50%,-50%,0) scale(.68); }
   76% { opacity: .92; transform:translate3d(-50%,-50%,0) scale(1.26); }
   86% { opacity: .24; transform:translate3d(-50%,-50%,0) scale(.82); }
+}
+@keyframes sgaGateSourceCharge {
+  0% { opacity:.52; filter:brightness(.72) saturate(.78) hue-rotate(24deg); transform:scale(1); }
+  62% { opacity:1; filter:brightness(1.32) saturate(1.08) hue-rotate(14deg) drop-shadow(0 0 20px rgba(178,224,255,.78)); transform:scaleX(1.035) scaleY(1.015); }
+  100% { opacity:.96; filter:brightness(1.18) saturate(1.02) hue-rotate(18deg) drop-shadow(0 0 16px rgba(151,202,255,.64)); transform:scale(1); }
+}
+@keyframes sgaGateSourceRelease {
+  0% { opacity:1; filter:brightness(1.28) saturate(1.06) hue-rotate(14deg) drop-shadow(0 0 22px rgba(188,230,255,.82)); transform:scaleX(1.025) scaleY(1.01); }
+  58% { opacity:.76; filter:brightness(.94) saturate(.88) hue-rotate(22deg) drop-shadow(0 0 12px rgba(111,143,224,.52)); transform:scale(1); }
+  100% { opacity:.54; filter:brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90,108,205,.32)); transform:scale(1); }
 }
 @keyframes sgaInnerReceive {
   0% { opacity: .92; filter: brightness(1) saturate(1); transform:scale(1); }
