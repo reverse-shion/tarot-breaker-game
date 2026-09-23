@@ -43,3 +43,5 @@ jobs:
         run: node --test tests/main-lineage-guard.test.cjs
       - name: Device registry guard contract
         run: node --test tests/device-registry-guard.test.cjs
+      - name: Asset Studio auto-merge policy contract
+        run: node --test tests/asset-studio-auto-merge.test.cjs
