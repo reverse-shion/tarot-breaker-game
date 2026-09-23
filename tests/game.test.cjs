@@ -173,6 +173,27 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
   assert.ok(s.lumiereGap < s.lumiereCollisionDistance + 8, `gap=${s.lumiereGap} reason=${s.reason}`);
   assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
 });
+test('Garden pointer payload is accepted by the production controls contract', async () => {
+  const h = await boot();
+  const controls = h.window.TarotControls.create(
+    collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
+    h.window.TarotNavigation.create(
+      collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
+      { cell: 16 },
+    ),
+  );
+  const before = h.state();
+  const p = h.safeTarget({ x: 810, y: 700 });
+  const x = (p.x - before.origin.x) * before.camera.zoom;
+  const y = (p.y - before.origin.y) * before.camera.zoom;
+  const payload = { id: 1, x, y, time: 3000, width: before.cssWidth, primary: true, button: 0, world: { x: p.x, y: p.y } };
+  assert.equal(controls.pointerDown(payload), true);
+  assert.equal(controls.state.gesture.id, 1);
+  const action = controls.pointerEnd({ id: 1, x, y, time: 3080, cancelled: false }, { x: before.player.x, y: before.player.y });
+  assert.ok(action);
+  assert.ok(controls.state.requested);
+});
+
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
