@@ -16,7 +16,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
     emit(type, values = {}) {
-      const event = { type, timeStamp: now, preventDefault() { this.defaultPrevented = true; }, ...values };
+      const event = { type, timeStamp: now, ...values, preventDefault() { this.defaultPrevented = true; } };
       for (const fn of this.listeners.get(type) || []) fn(event);
       if (type.startsWith('pointer')) inputTrace.push({ type, timeStamp: event.timeStamp, pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY, captured: [...captured] });
       return event;
@@ -91,7 +91,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     await new Promise(setImmediate);
     if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
   }
-  assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
+  if (!badCollision) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
   const runtimeCollision = collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] });
