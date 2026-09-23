@@ -34,7 +34,12 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
   document.body = new Element('body');
-  document.body.classList = { contains() { return false; }, add() {}, remove() {} };
+  const bodyClasses = new Set(['scene-booting']);
+  document.body.classList = {
+    contains(name) { return bodyClasses.has(name); },
+    add(...names) { names.forEach(name => bodyClasses.add(name)); },
+    remove(...names) { names.forEach(name => bodyClasses.delete(name)); },
+  };
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
   document.getElementById = id => elements[id]; document.createElement = tag => {
     const element = new Element();
