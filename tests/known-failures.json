@@ -18,7 +18,6 @@
     "center path, both fountain sides and upper stairs remain connected",
     "companion farewell finishes before boarding, stays on ground during flight and rejoins on return",
     "desktop click uses the same input at camera zoom 1.22",
-    "dialogue text preserves approved speech and relationship constraints",
     "flowerbed/fountain taps project to the nearest legal boundary",
     "fountain, flowerbeds and far map edges remain blocked",
     "four directions use all four Shion walk frames then the matching idle frame",
