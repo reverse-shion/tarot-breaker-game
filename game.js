@@ -265,6 +265,14 @@
     collisionVersion = collision.version;
     navigation = createNavigator(collision, 16);
     controls = createControls(collision, navigation);
+    if (typeof window.__testControlsState === "undefined" && location.search.includes("navDebug=1"))
+      window.__testControlsState = () => ({
+        suspended: controls.state.suspended,
+        gesture: controls.state.gesture ? { ...controls.state.gesture } : null,
+        keys: [...controls.state.keys],
+        stickActive: controls.state.stick.active,
+        cancelReason: controls.state.cancelReason,
+      });
   }
 
   function findNearestSpawnRef() {
