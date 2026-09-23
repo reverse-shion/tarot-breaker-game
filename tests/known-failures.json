@@ -6,14 +6,12 @@
     "390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes",
     "Alenon return bypasses prologue and spawns behind its authored PAD; title still starts prologue",
     "Lumiere bobs as one body while slow wing frames change independently",
-    "Lumiere event requires Shiopon completion and updates the objective once",
     "Lumiere has solid collision while remaining fixed at the gate",
     "Lumiere replaces the old torso once and draws one cached silhouette per tick",
     "PAD accepted pointer and keyboard gestures invoke the shared manager",
     "PAD return enters the real north path, does not replay memory or immediately leave",
     "Preview 46 uses one three-copy buffered cloud track",
     "Shiopon bounce is visible mid-action and returns to its exact baseline",
-    "Shiopon proximity starts once, stages the opening, then joins the party",
     "all WASD/arrows cancel auto movement; unrelated keys do not",
     "authored east side passage stays walkable while the far map edge remains blocked",
     "canvas tap uses camera/zoom/element offset and does not jump the camera to the destination",
@@ -45,7 +43,6 @@
     "solo boarding has no farewell; walking at the south edge cannot teleport off the island",
     "spawn, Shiopon and the Lumiere gate approach stay walkable",
     "stage commands face actors, animate safe steps and expose a skip-to-end handle",
-    "tap during wait or actor motion finishes only that action and playback stays ordered",
     "the intended paved route remains connected from spawn to the Star Gate"
   ]
 }
