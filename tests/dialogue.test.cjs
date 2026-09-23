@@ -229,7 +229,7 @@ test('Shiopon proximity starts once, stages the opening, then joins the party', 
   state = h.window.TarotDialogue.getState();
   assert.equal(state.shioponDone, true);
   assert.equal(state.joined, true);
-  assert.equal(state.objective, '星門へ向かう');
+  assert.equal(state.objective, undefined, 'dialogue runtime must not own objective state');
   assert.equal(h.ends(), 1);
   assert.ok(h.signals.some(event => event.type === 'tarot-breaker:shiopon-follow-start'));
 
@@ -254,7 +254,7 @@ test('Lumiere event requires Shiopon completion and updates the objective once',
   await finishCurrentEvent(h.window.TarotDialogue);
   state = h.window.TarotDialogue.getState();
   assert.equal(state.lumiereDone, true);
-  assert.equal(state.objective, '星門の様子を確かめる');
+  assert.equal(state.objective, undefined, 'dialogue runtime must not own objective state');
   assert.equal(h.starts(), 2);
   assert.equal(h.ends(), 2);
 
@@ -306,9 +306,7 @@ test('tap during wait or actor motion finishes only that action and playback sta
 
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.window.TarotDialogue.getState().actionType, 'face');
-  h.window.TarotDialogue.advance();
-  await flush();
+  assert.equal(h.window.TarotDialogue.getState().mode, 'dialogue');
   assert.equal(h.elements['dialogue-text'].textContent, 'シオンさま？');
 });
 
