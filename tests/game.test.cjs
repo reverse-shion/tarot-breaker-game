@@ -98,7 +98,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     const down = pointer('pointerdown', sx, sy);
     const afterDown = state();
     now += 80;
-    const up = pointer('pointerup', sx, sy);
+    const up = pointer('pointerup', sx, sy, { timeStamp: now });
     const afterUp = state();
     return { sx, sy, down, up, afterDown, afterUp };
   };
