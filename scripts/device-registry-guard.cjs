@@ -28,8 +28,16 @@ const runtime=files.filter(f =>
 );
 
 const body=process.env.PR_BODY || "";
-const needsDevice=/DEVICE_GATE_REQUIRED:\s*YES/i.test(body);
-const foundation=/SCOPE:\s*FOUNDATION/i.test(body);
+function metadataValue(key) {
+  const matches=body.split(/\r?\n/).filter(line => line.trim().toUpperCase().startsWith(key + ":"));
+  if (matches.length !== 1) fail("PR metadata must declare exactly one "+key+" line.");
+  return matches[0].slice(matches[0].indexOf(":")+1).trim().toUpperCase();
+}
+const deviceGate=metadataValue("DEVICE_GATE_REQUIRED");
+if (!["YES","NO"].includes(deviceGate)) fail("DEVICE_GATE_REQUIRED must be YES or NO.");
+const needsDevice=deviceGate==="YES";
+const scope=metadataValue("SCOPE");
+const foundation=scope==="FOUNDATION";
 
 if (foundation && runtime.length) fail("FOUNDATION scope changes production/runtime files: "+runtime.join(", "));
 if (needsDevice) {
