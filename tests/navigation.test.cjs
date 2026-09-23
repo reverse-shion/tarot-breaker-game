@@ -1,4 +1,5 @@
 const test = require('node:test');
+// FOUNDATION baseline-debt audit: run the current Navigation / Collision contracts unchanged.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { createCollision, createNavigator, validateCollision, distance } = require('../blocked-collision.js');
