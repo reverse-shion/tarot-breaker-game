@@ -109,14 +109,14 @@
 
 <section id="github" class="panel">
 <div class="card">
-<h2>GitHubへ直接送信</h2>
+<h2>GitHubへPR送信</h2>
 <p class="muted">Fine-grained tokenはこのページのメモリ内だけで使用し、localStorage / Cookieには保存しません。ページを閉じると消えます。</p>
 <div class="grid">
 <div><label class="small">Repository</label><input id="repo" type="text" value="reverse-shion/tarot-breaker-game" autocapitalize="off" spellcheck="false"></div>
-<div><label class="small">Branch</label><input id="branch" type="text" value="main" autocapitalize="off" spellcheck="false"></div>
+<div><label class="small">Base Branch</label><input id="branch" type="text" value="main" autocapitalize="off" spellcheck="false"></div>
 </div>
 <div style="margin-top:10px">
-<label class="small">Fine-grained token（このRepositoryのみ / Contents: Read and write 推奨）</label>
+<label class="small">Fine-grained token（このRepositoryのみ / Contents: Read and write + Pull requests: Read and write）</label>
 <input id="token" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" placeholder="github_pat_...">
 </div>
 <div class="row" style="margin-top:10px">
@@ -134,14 +134,14 @@
 <div class="card" style="margin-top:12px;background:#081725">
 <label class="small">変換画像の送信先</label>
 <div id="ghTarget" class="path">—</div>
-<div class="row" style="margin-top:10px"><button id="uploadOne" class="btn" disabled>この画像をGitHubへ送信</button></div>
+<div class="row" style="margin-top:10px"><button id="uploadOne" class="btn" disabled>この画像をPRで送信</button></div>
 </div>
 <div class="card" style="margin-top:12px;background:#081725">
 <label class="small">スプライト配置先</label>
 <input id="framesDir" type="text" value="assets/sprites/shion" autocapitalize="off" spellcheck="false">
 <div style="margin-top:8px"><label><input id="uploadManifest" type="checkbox" checked> manifest.jsonも一緒に送信</label></div>
 <div id="spriteTarget" class="path" style="margin-top:8px">—</div>
-<div class="row" style="margin-top:10px"><button id="uploadFrames" class="btn" disabled>分割フレームをGitHubへ送信</button></div>
+<div class="row" style="margin-top:10px"><button id="uploadFrames" class="btn" disabled>分割フレームをPRで送信</button></div>
 </div>
 <div id="ghStatus" class="status">未接続</div>
 <div id="ghResult" class="status" style="display:none"></div>
@@ -220,13 +220,17 @@ el("manifestInfo").className="status ok";el("manifestInfo").textContent="manifes
 el("shareFrames").disabled=false;el("manifestDownload").disabled=false;el("uploadFrames").disabled=false;el("spriteStatus").className="status ok";el("spriteStatus").textContent=state.frames.length+"フレームに分割しました。";updateGhTarget()}
 function b64(blob){return blob.arrayBuffer().then(function(ab){var u=new Uint8Array(ab),bin="",chunk=0x8000;for(var i=0;i<u.length;i+=chunk)bin+=String.fromCharCode.apply(null,u.subarray(i,i+chunk));return btoa(bin)})}
 function ghConfig(){var repo=el("repo").value.trim(),branch=el("branch").value.trim()||"main",token=el("token").value.trim();if(!repo.includes("/"))throw new Error("Repository は owner/repo 形式で入力してください");if(!token)throw new Error("GitHub token を入力してください");return{repo:repo,branch:branch,token:token,headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"}}}
-async function testGitHub(){try{var c=ghConfig(),res=await fetch("https://api.github.com/repos/"+c.repo,{headers:c.headers});if(!res.ok)throw new Error("接続できませんでした ("+res.status+")");var j=await res.json(),perm=j.permissions||{};el("ghStatus").className="status ok";el("ghStatus").textContent="接続OK: "+j.full_name+" / branch: "+c.branch+(perm.push===false?"\n注意: 書き込み権限が確認できません。Fine-grained tokenのContents: Read and writeを確認してください。":"");updateGhTarget()}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}}
-async function ghPut(path,blob){
-var c=ghConfig(),ep="https://api.github.com/repos/"+c.repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/"),sha=null,existing=null,get=await fetch(ep+"?ref="+encodeURIComponent(c.branch),{headers:c.headers});
+async function ghJson(url,opt){var c=ghConfig(),res=await fetch(url,Object.assign({headers:c.headers},opt||{})),j=await res.json().catch(function(){return{}});if(!res.ok)throw new Error(j.message||("GitHub API error "+res.status));return j}
+async function testGitHub(){try{var c=ghConfig(),j=await ghJson("https://api.github.com/repos/"+c.repo);el("ghStatus").className="status ok";el("ghStatus").textContent="接続OK: "+j.full_name+" / base: "+c.branch+"\n送信時は作業ブランチとPRを自動作成します。";updateGhTarget()}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}}
+function prBranchName(){return "asset-studio/"+new Date().toISOString().replace(/[-:TZ.]/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,7)}
+async function createUploadBranch(){var c=ghConfig(),ref=await ghJson("https://api.github.com/repos/"+c.repo+"/git/ref/heads/"+encodeURIComponent(c.branch)),name=prBranchName();await ghJson("https://api.github.com/repos/"+c.repo+"/git/refs",{method:"POST",body:JSON.stringify({ref:"refs/heads/"+name,sha:ref.object.sha})});return name}
+async function ghPut(path,blob,targetBranch){
+var c=ghConfig(),branch=targetBranch||c.branch,ep="https://api.github.com/repos/"+c.repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/"),sha=null,existing=null,get=await fetch(ep+"?ref="+encodeURIComponent(branch),{headers:c.headers});
 if(get.ok){existing=await get.json();sha=existing.sha}else if(get.status!==404)throw new Error("GitHub確認エラー "+get.status);
-if(existing){var mode=el("overwriteMode").value;if(mode==="never")throw new Error("同名ファイルが存在するため送信を停止しました: "+path);if(mode==="ask"){var ok=confirm("同名ファイルがGitHubに存在します。\n\n"+path+"\n現在: "+fmt(existing.size||0)+"\n新規: "+fmt(blob.size)+"\n\n上書きしますか？");if(!ok)throw new Error("上書きをキャンセルしました")}}
-var body={message:(sha?"Update asset: ":"Add asset: ")+path,content:await b64(blob),branch:c.branch};if(sha)body.sha=sha;var put=await fetch(ep,{method:"PUT",headers:c.headers,body:JSON.stringify(body)}),j=await put.json().catch(function(){return{}});if(!put.ok)throw new Error(j.message||("GitHub送信エラー "+put.status));var content=j.content||{};return{path:path,html_url:content.html_url||("https://github.com/"+c.repo+"/blob/"+encodeURIComponent(c.branch)+"/"+path),download_url:content.download_url||"",sha:content.sha||""}}
-function showGhResult(results){state.lastUpload=results;el("ghResult").style.display="block";el("ghResult").className="status ok";el("ghResult").innerHTML="<b>アップロード完了</b><br>"+results.map(function(r){return "✓ <a href='"+r.html_url+"' target='_blank' rel='noopener' style='color:#9fd3ff'>"+r.path+"</a>"}).join("<br>")}
+if(existing){var mode=el("overwriteMode").value;if(mode==="never")throw new Error("同名ファイルが存在するため送信を停止しました: "+path);if(mode==="ask"){var ok=confirm("同名ファイルがGitHubに存在します。\n\n"+path+"\n現在: "+fmt(existing.size||0)+"\n新規: "+fmt(blob.size)+"\n\nPRで更新しますか？");if(!ok)throw new Error("上書きをキャンセルしました")}}
+var body={message:(sha?"Update asset: ":"Add asset: ")+path,content:await b64(blob),branch:branch};if(sha)body.sha=sha;var put=await fetch(ep,{method:"PUT",headers:c.headers,body:JSON.stringify(body)}),j=await put.json().catch(function(){return{}});if(!put.ok)throw new Error(j.message||("GitHub送信エラー "+put.status));return{path:path,sha:(j.content||{}).sha||""}}
+async function openAssetPr(head,paths){var c=ghConfig(),title="Asset Studio: "+(paths.length===1?paths[0]:paths.length+" assets"),body="Asset Studioから自動生成されたPRです。\n\n変更ファイル:\n"+paths.map(function(p){return "- \`"+p+"\`"}).join("\n")+"\n\nmainへの直接書き込みは行っていません。CI確認後にマージしてください。";return ghJson("https://api.github.com/repos/"+c.repo+"/pulls",{method:"POST",body:JSON.stringify({title:title,head:head,base:c.branch,body:body})})}
+function showGhResult(pr,results){state.lastUpload={pr:pr,results:results};el("ghResult").style.display="block";el("ghResult").className="status ok";el("ghResult").innerHTML="<b>PR作成完了</b><br><a href='"+pr.html_url+"' target='_blank' rel='noopener' style='color:#9fd3ff'>PR #"+pr.number+" を開く</a><br>"+results.map(function(r){return "✓ "+r.path}).join("<br>")}
 el("fileInput").addEventListener("change",function(e){loadFiles(Array.from(e.target.files||[]));e.target.value=""});
 el("spriteInput").addEventListener("change",async function(e){var f=e.target.files&&e.target.files[0];if(!f)return;try{var r=await imageFromFile(f);state.sprite={file:f,img:r.img,src:r.src};el("spriteBase").value=clean(f.name).replace(/-/g,"_");el("spriteStatus").className="status ok";el("spriteStatus").textContent=f.name+" / "+r.img.naturalWidth+"×"+r.img.naturalHeight}catch(err){el("spriteStatus").className="status err";el("spriteStatus").textContent=err.message}e.target.value=""});
 document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("active",x===b)});document.querySelectorAll(".panel").forEach(function(p){p.classList.toggle("active",p.id===b.dataset.tab)})}});
@@ -235,8 +239,8 @@ var ratioBusy=false;el("w").addEventListener("input",function(){var s=state.sour
 el("manifestDownload").onclick=function(){var f=manifestFile();if(f)download(f,f.name)};
 el("testGitHub").onclick=testGitHub;el("clearToken").onclick=function(){el("token").value="";el("ghStatus").className="status";el("ghStatus").textContent="トークンを消去しました。"};
 ["repo","branch","framesDir"].forEach(function(id){el(id).addEventListener("input",updateGhTarget)});
-el("uploadOne").onclick=async function(){if(!state.output)return;try{el("ghResult").style.display="none";el("ghStatus").className="status";el("ghStatus").textContent="送信中…";var r=await ghPut(joinPath(),state.output.blob);el("ghStatus").className="status ok";el("ghStatus").textContent="GitHub送信完了";showGhResult([r])}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
-el("uploadFrames").onclick=async function(){try{el("ghResult").style.display="none";var dir=el("framesDir").value.trim().replace(/^\/+|\/+$/g,""),results=[];for(var i=0;i<state.frames.length;i++){el("ghStatus").className="status";el("ghStatus").textContent=(i+1)+"/"+state.frames.length+" 送信中…";results.push(await ghPut(dir+"/"+state.frames[i].name,state.frames[i].blob))}if(el("uploadManifest").checked){var mf=manifestFile();if(mf){el("ghStatus").textContent="manifest送信中…";results.push(await ghPut(dir+"/"+mf.name,mf))}}el("ghStatus").className="status ok";el("ghStatus").textContent="スプライト一式の送信完了";showGhResult(results)}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
+el("uploadOne").onclick=async function(){if(!state.output)return;try{el("ghResult").style.display="none";el("ghStatus").className="status";el("ghStatus").textContent="作業ブランチを作成中…";var br=await createUploadBranch(),path=joinPath();el("ghStatus").textContent="画像を作業ブランチへ送信中…";var r=await ghPut(path,state.output.blob,br);el("ghStatus").textContent="PRを作成中…";var pr=await openAssetPr(br,[path]);el("ghStatus").className="status ok";el("ghStatus").textContent="PR作成完了。CI確認後にmainへマージできます。";showGhResult(pr,[r])}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
+el("uploadFrames").onclick=async function(){try{el("ghResult").style.display="none";var dir=el("framesDir").value.trim().replace(/^\\/+|\\/+$/g,""),results=[],paths=[],br=await createUploadBranch();for(var i=0;i<state.frames.length;i++){var p=dir+"/"+state.frames[i].name;el("ghStatus").className="status";el("ghStatus").textContent=(i+1)+"/"+state.frames.length+" 作業ブランチへ送信中…";results.push(await ghPut(p,state.frames[i].blob,br));paths.push(p)}if(el("uploadManifest").checked){var mf=manifestFile();if(mf){var mp=dir+"/"+mf.name;el("ghStatus").textContent="manifest送信中…";results.push(await ghPut(mp,mf,br));paths.push(mp)}}el("ghStatus").textContent="PRを作成中…";var pr=await openAssetPr(br,paths);el("ghStatus").className="status ok";el("ghStatus").textContent="スプライト一式のPR作成完了。CI確認後にmainへマージできます。";showGhResult(pr,results)}catch(e){el("ghStatus").className="status err";el("ghStatus").textContent=e.message}};
 window.addEventListener("pagehide",function(){if(el("token"))el("token").value=""});
 joinPath();updateGhTarget();
 })();
