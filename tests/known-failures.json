@@ -37,7 +37,6 @@
     "rear actor is alpha-masked in an isolated surface; front actor draws directly",
     "replacement foreground restores authored scale, keeps the approved +4px nudge and is drawn only once",
     "replacement islands fit completely inside the canonical scene",
-    "reset during a blocking action cancels stale playback and releases interaction",
     "reset/blur lifecycle clears keys, gestures and route; event hooks suspend until resumed",
     "right 32% accepts taps but cannot activate the stick",
     "route follower reaches stairs, never leaves collision, and stays still after arrival",
