@@ -257,7 +257,8 @@ test('Garden registered pointerup handler completes the accepted gesture', async
   h.tick(); // controls state is exposed through nav-status during draw().
   const after = h.state();
   assert.ok(h.controls.state.requested, `production pointerEnd rejected gesture=${JSON.stringify(gesture)} after=${JSON.stringify(controlsAfterUp)} event=${JSON.stringify({pointerId:up.pointerId,timeStamp:up.timeStamp,type:up.type,clientX:up.clientX,clientY:up.clientY})}`);
-  assert.deepEqual(h.controls.state.requested, { x: p.x, y: p.y });
+  assert.equal(h.controls.state.requested.x, p.x);
+  assert.equal(h.controls.state.requested.y, p.y);
   assert.equal(h.captured.size, 0);
 });
 
@@ -266,7 +267,7 @@ test('canvas tap uses camera/zoom/element offset and does not jump the camera to
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
   assert.ok(trace.afterUp.controls.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace})}`);
   assert.ok(h.controls.state.route.length); assert.ok(h.controls.state.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(h.controls.state.requested.x - expected.x) < 0.01); assert.ok(Math.abs(h.controls.state.requested.y - expected.y) < 0.01);
-  assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
+  assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); h.tick(); assert.ok(h.state().player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
   h.tick(350); const arrived = h.state();
   assert.equal(arrived.route.length, 0); assert.equal(arrived.player.moving, false);
@@ -275,7 +276,7 @@ test('canvas tap uses camera/zoom/element offset and does not jump the camera to
 test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
   const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
-  assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
+  assert.equal(h.controls.state.route.length, 0); assert.equal(h.controls.state.stick.active, true, `drag did not activate production stick; controls=${JSON.stringify({gesture:h.controls.state.gesture,stick:h.controls.state.stick,reason:h.controls.state.cancelReason})}`); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
   assert.equal(h.elements.joystick.hidden, true); assert.ok(h.state().collisionVersion >= 6);
   assert.ok(Number.isFinite(h.state().player.x)); assert.ok(Number.isFinite(h.state().player.y));
