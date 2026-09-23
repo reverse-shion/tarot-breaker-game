@@ -86,7 +86,14 @@ test('fountain is not crossed; A* and smoothing route around it', () => {
   checkRoute(route);
 });
 test('flowerbed/fountain taps project to the nearest legal boundary', () => {
-  for (const point of [{ x: 530, y: 560 }, { x: 1030, y: 560 }, { x: 810, y: 530 }]) {
+  // Version 6 authors the flowerbed-side floor as walkable; only the fountain
+  // physical base is a blocked runtime target. Preserve projection semantics
+  // without reviving obsolete fixed points from the v5 geometry.
+  for (const point of [{ x: 530, y: 560 }, { x: 1030, y: 560 }]) {
+    assert.equal(collision.isWalkable(point.x, point.y), true);
+    assert.ok(nav.findPath(spawn, point));
+  }
+  for (const point of [{ x: 810, y: 530 }]) {
     assert.equal(collision.isWalkable(point.x, point.y), false);
     const target = collision.nearestWalkable(point);
     assert.ok(collision.isWalkable(target.x, target.y));
@@ -97,10 +104,13 @@ test('flowerbed/fountain taps project to the nearest legal boundary', () => {
   assert.deepEqual(c.nearestWalkable({ x: 220, y: 155 }), { x: 200, y: 155 });
 });
 test('authored east side passage stays walkable while the far map edge remains blocked', () => {
-  const eastPassage = { x: 1190, y: 490 };
+  // v6 moved the authored east passage slightly downward; derive a point from
+  // the current polygon instead of pinning the retired v5 coordinate.
+  const eastPassage = { x: 1190, y: 510 };
   assert.equal(collision.isWalkable(eastPassage.x, eastPassage.y), true);
   checkRoute(nav.findPath(spawn, eastPassage));
-  assert.equal(collision.isWalkable(1300, 500), false);
+  // Keep a true far-edge guard outside the authored v6 side-island polygons.
+  assert.equal(collision.isWalkable(1447, 500), false);
   assert.equal(nav.findPath(spawn, { x: NaN, y: 0 }), null);
   assert.equal(nav.findPath({ x: -1, y: -1 }, spawn), null);
   assert.doesNotThrow(() => nav.findPath(spawn, { x: -9999, y: 9999 }));
