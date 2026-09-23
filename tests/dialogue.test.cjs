@@ -191,8 +191,10 @@ async function flush() {
 
 async function revealOpening(dialogue) {
   await flush();
-  if (dialogue.getState().mode === 'action') dialogue.advance();
-  await flush();
+  for (let guard = 0; guard < 32 && dialogue.getState().mode === 'action'; guard++) {
+    dialogue.advance();
+    await flush();
+  }
 }
 
 async function finishCurrentEvent(dialogue) {
@@ -217,7 +219,7 @@ test('Shiopon proximity starts once, stages the opening, then joins the party', 
   state = h.window.TarotDialogue.getState();
   assert.equal(state.mode, 'dialogue');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
-  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
   assert.deepEqual(
     h.performed.slice(0, 2).map(command => command.type),
     ['face', 'approach'],
@@ -297,13 +299,13 @@ test('tap during wait or actor motion finishes only that action and playback sta
   assert.equal(h.window.TarotDialogue.getState().actionType, 'approach');
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
   assert.equal(h.stageFinishes[0].kind, 'finish');
 
   h.window.TarotDialogue.advance();
   await flush();
   assert.equal(h.window.TarotDialogue.getState().actionType, 'wait');
-  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
   h.window.TarotDialogue.advance();
   await flush();
   assert.equal(h.elements['dialogue-text'].textContent, 'しーっ！');
