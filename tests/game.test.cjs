@@ -16,7 +16,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
     emit(type, values = {}) {
-      const event = { type, timeStamp: now, ...values, preventDefault() { this.defaultPrevented = true; } };
+      const event = { timeStamp: now, ...values, type, preventDefault() { this.defaultPrevented = true; } };
       for (const fn of this.listeners.get(type) || []) fn(event);
       if (type.startsWith('pointer')) inputTrace.push({ type, timeStamp: event.timeStamp, pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY, captured: [...captured] });
       return event;
