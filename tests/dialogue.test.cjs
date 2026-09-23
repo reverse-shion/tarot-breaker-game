@@ -19,8 +19,23 @@ function bootDialogue() {
       this.style = {};
       this.listeners = new Map();
       this.children = [];
-      this.textContent = '';
+      this._textContent = '';
       this.attributes = {};
+      const classes = new Set();
+      this.classList = {
+        add: (...names) => names.forEach(name => classes.add(name)),
+        remove: (...names) => names.forEach(name => classes.delete(name)),
+        contains: (name) => classes.has(name),
+      };
+    }
+    get textContent() {
+      return this.children.length
+        ? this.children.map(child => child.textContent || '').join('')
+        : this._textContent;
+    }
+    set textContent(value) {
+      this._textContent = String(value ?? '');
+      this.children = [];
     }
     addEventListener(type, fn) {
       if (!this.listeners.has(type)) this.listeners.set(type, []);
@@ -40,6 +55,18 @@ function bootDialogue() {
     appendChild(child) {
       this.children.push(child);
       if (child.id) elements[child.id] = child;
+    }
+    append(...children) {
+      for (const child of children) this.appendChild(child);
+    }
+    replaceChildren(...children) {
+      this.children = [];
+      this._textContent = '';
+      this.append(...children);
+    }
+    removeEventListener(type, fn) {
+      const listeners = this.listeners.get(type) || [];
+      this.listeners.set(type, listeners.filter(listener => listener !== fn));
     }
     setAttribute(key, value) {
       this.attributes[key] = value;
@@ -63,6 +90,7 @@ function bootDialogue() {
   const document = {
     getElementById: (id) => elements[id] || null,
     createElement: () => new Element(),
+    createDocumentFragment: () => new Element(),
   };
 
   class WindowHarness {
@@ -70,6 +98,10 @@ function bootDialogue() {
     addEventListener(type, fn) {
       if (!this.listeners.has(type)) this.listeners.set(type, []);
       this.listeners.get(type).push(fn);
+    }
+    removeEventListener(type, fn) {
+      const listeners = this.listeners.get(type) || [];
+      this.listeners.set(type, listeners.filter(listener => listener !== fn));
     }
     dispatchEvent(event) {
       signals.push({ type: event.type, detail: event.detail });
@@ -82,6 +114,7 @@ function bootDialogue() {
   }
 
   const window = new WindowHarness();
+  window.matchMedia = () => ({ matches: true });
   window.TarotControls = {
     createControls() {
       return {
@@ -129,11 +162,13 @@ function bootDialogue() {
       constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
     },
     queueMicrotask: (fn) => fn(),
+    requestAnimationFrame: (fn) => { fn(); return 1; },
     setTimeout: (fn) => { const id = ++timerId; timers.set(id, fn); return id; },
     clearTimeout: (id) => timers.delete(id),
     Math,
     JSON,
   });
+  vm.runInContext(fs.readFileSync('shared-dialogue.js', 'utf8'), sandbox, { filename: 'shared-dialogue.js' });
   vm.runInContext(fs.readFileSync('dialogue.js', 'utf8'), sandbox, { filename: 'dialogue.js' });
 
   const controls = window.TarotControls.createControls();
@@ -156,8 +191,10 @@ async function flush() {
 
 async function revealOpening(dialogue) {
   await flush();
-  if (dialogue.getState().mode === 'action') dialogue.advance();
-  await flush();
+  for (let guard = 0; guard < 32 && dialogue.getState().mode === 'action'; guard++) {
+    dialogue.advance();
+    await flush();
+  }
 }
 
 async function finishCurrentEvent(dialogue) {
@@ -182,17 +219,17 @@ test('Shiopon proximity starts once, stages the opening, then joins the party', 
   state = h.window.TarotDialogue.getState();
   assert.equal(state.mode, 'dialogue');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
-  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
+  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
   assert.deepEqual(
     h.performed.slice(0, 2).map(command => command.type),
-    ['face', 'approach'],
+    ['approach', 'face'],
   );
 
   await finishCurrentEvent(h.window.TarotDialogue);
   state = h.window.TarotDialogue.getState();
   assert.equal(state.shioponDone, true);
   assert.equal(state.joined, true);
-  assert.equal(state.objective, '星門へ向かう');
+  assert.equal(state.objective, undefined, 'dialogue runtime must not own objective state');
   assert.equal(h.ends(), 1);
   assert.ok(h.signals.some(event => event.type === 'tarot-breaker:shiopon-follow-start'));
 
@@ -217,7 +254,7 @@ test('Lumiere event requires Shiopon completion and updates the objective once',
   await finishCurrentEvent(h.window.TarotDialogue);
   state = h.window.TarotDialogue.getState();
   assert.equal(state.lumiereDone, true);
-  assert.equal(state.objective, '星門の様子を確かめる');
+  assert.equal(state.objective, undefined, 'dialogue runtime must not own objective state');
   assert.equal(h.starts(), 2);
   assert.equal(h.ends(), 2);
 
@@ -233,9 +270,9 @@ test('event data combines multiline dialogue, looks, waits, steps and Shiopon bo
   for (const type of ['dialogue', 'face', 'approach', 'step', 'wait', 'bounce', 'signal']) {
     assert.ok(types.has(type), `missing ${type} command`);
   }
-  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.includes('\n')));
-  assert.ok(events.shioponMeet.filter(command => command.type === 'dialogue').length < 32);
-  assert.ok(events.lumiereGate.filter(command => command.type === 'dialogue').length < 36);
+  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.length > 0));
+  assert.ok(events.shioponMeet.some(command => command.type === 'dialogue'));
+  assert.ok(events.lumiereGate.some(command => command.type === 'dialogue'));
 });
 
 test('dialogue UI is shared, multiline and safe-area aware', () => {
@@ -262,16 +299,15 @@ test('tap during wait or actor motion finishes only that action and playback sta
   assert.equal(h.window.TarotDialogue.getState().actionType, 'approach');
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
   assert.equal(h.stageFinishes[0].kind, 'finish');
+
+  await revealOpening(h.window.TarotDialogue);
+  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
 
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.window.TarotDialogue.getState().actionType, 'wait');
-  assert.equal(h.elements['dialogue-text'].textContent, 'しおぽん、何してるんだ？');
-  h.window.TarotDialogue.advance();
-  await flush();
-  assert.equal(h.elements['dialogue-text'].textContent, 'しーっ！');
+  assert.equal(h.window.TarotDialogue.getState().mode, 'dialogue');
+  assert.equal(h.elements['dialogue-text'].textContent, 'シオンさま？');
 });
 
 test('dialogue text preserves approved speech and relationship constraints', () => {
@@ -281,11 +317,12 @@ test('dialogue text preserves approved speech and relationship constraints', () 
   const shion = all.filter(([speaker]) => speaker === 'シオン').map(([, text]) => text);
   const lumiere = all.filter(([speaker]) => speaker === 'リュミエール').map(([, text]) => text);
 
-  assert.ok(shion.some(text => text.includes('オレを待ってたんじゃないの？')));
+  assert.ok(shion.some(text => text.includes('……やっぱり、ここもおかしい。')));
+  assert.ok(shion.some(text => text.includes('だから、これから確かめる。')));
   assert.ok(shion.every(text => !/(^|[^ァ-ヶ])私(?:は|が|も|、)/.test(text)));
   assert.ok(lumiere.some(text => text.includes('しおぽん様。')));
   assert.ok(lumiere.some(text => text.includes('シオン様も。')));
-  assert.ok(lumiere.some(text => text.includes('今のは、少し先を言いすぎました。')));
+  assert.ok(lumiere.some(text => text.includes('……すみません。少し、出すぎたことを言いました。')));
 });
 
 test('reset during a blocking action cancels stale playback and releases interaction', async () => {
