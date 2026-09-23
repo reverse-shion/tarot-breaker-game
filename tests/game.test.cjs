@@ -62,6 +62,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     waitImage: async image => image,
     drawMaskedActor(_ctx, _actor, _scale, _density, draw) { draw(_ctx); },
     syncCamera() {},
+    drawDebug() {},
   };
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
