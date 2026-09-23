@@ -24,7 +24,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     hasPointerCapture(id) { return captured.has(id); }
     releasePointerCapture(id) { captured.delete(id); }
   }
-  const elements = Object.fromEntries(['game', 'map-layer', 'start', 'start-screen', 'load-note', 'guide', 'joystick', 'joystick-knob', 'reset', 'game-shell'].map(id => [id, new Element()]));
+  const elements = Object.fromEntries(['game', 'map-layer', 'start', 'start-screen', 'load-note', 'guide', 'joystick', 'joystick-knob', 'reset', 'game-shell', 'load-error'].map(id => [id, new Element()]));
   const context = new Proxy({}, { get(_, key) {
     if (key === 'drawImage') return (...args) => drawCalls.push(args);
     if (key === 'createRadialGradient') return () => ({ addColorStop() {} });
@@ -33,6 +33,8 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   elements.game.getContext = () => context;
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
+  document.body = new Element('body');
+  document.body.classList = { contains() { return false; }, add() {}, remove() {} };
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
   document.getElementById = id => elements[id]; document.createElement = tag => {
     const element = new Element();
