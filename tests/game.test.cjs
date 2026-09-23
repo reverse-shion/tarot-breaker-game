@@ -80,7 +80,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
   window.CustomEvent = CustomEvent;
   const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search: '?from=landing&navDebug=1' },
-    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
+    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() { return 1; }, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
@@ -89,6 +89,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     await new Promise(setImmediate);
     if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
   }
+  assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
   const runtimeCollision = collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] });
