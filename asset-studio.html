@@ -167,18 +167,21 @@ function alphaCheck(im){try{var max=700,scale=Math.min(1,max/im.naturalWidth,max
 function canvasBlob(canvas,q){return new Promise(function(resolve,reject){canvas.toBlob(function(b){if(b)resolve(b);else reject(new Error("このブラウザではWebP書き出しに失敗しました"))},"image/webp",q)})}
 async function loadFiles(files){
 state.sources=[];state.active=-1;el("sourceList").innerHTML="";
-if(!files.length)return;
-el("loadStatus").textContent="読み込み中…";
+if(!files.length){el("loadStatus").className="status err";el("loadStatus").textContent="診断: ファイルを取得できませんでした。";return}
+el("loadStatus").className="status";el("loadStatus").textContent="診断 1/4: "+files.length+"件のファイルを取得しました。";
 for(var i=0;i<files.length;i++){
 var f=files[i];
-if(/heic|heif/i.test(f.name)||/heic|heif/i.test(f.type)){el("loadStatus").className="status err";el("loadStatus").textContent="HEIC/HEIFは直接変換できません。写真アプリからJPEG/PNGとして保存して選び直してください。";continue}
+if(/heic|heif/i.test(f.name)||/heic|heif/i.test(f.type)){el("loadStatus").className="status err";el("loadStatus").textContent="診断停止: HEIC/HEIFです。PNG/JPEG/WebPへ変換して選び直してください。\n"+f.name;continue}
 try{
-var r=await imageFromFile(f),a=alphaCheck(r.img);
+el("loadStatus").textContent="診断 2/4: 画像を読み込み中…\n"+f.name+"\n"+(f.type||"type不明")+" / "+fmt(f.size);
+var r=await imageFromFile(f);
+el("preview").src=r.src;el("loadStatus").textContent="診断 3/4: 画像デコード成功。プレビューへ反映しました。\n"+r.img.naturalWidth+"×"+r.img.naturalHeight;
+var a=alphaCheck(r.img);
 state.sources.push({file:f,img:r.img,src:r.src,alpha:a});
-}catch(e){el("loadStatus").className="status err";el("loadStatus").textContent=f.name+"\n"+e.message}
+}catch(e){el("loadStatus").className="status err";el("loadStatus").textContent="診断停止: 画像読み込み/デコード失敗\n"+f.name+"\n"+(e&&e.message?e.message:String(e));}
 }
 state.sources.forEach(function(s,idx){var d=document.createElement("div");d.className="item";d.innerHTML="<div><b>"+s.file.name+"</b><small>"+s.img.naturalWidth+"×"+s.img.naturalHeight+" / "+fmt(s.file.size)+"</small></div><button class='btn secondary'>選択</button>";d.querySelector("button").onclick=function(){selectSource(idx)};el("sourceList").appendChild(d)});
-if(state.sources.length){await selectSource(0);el("loadStatus").className="status ok";el("loadStatus").textContent=state.sources.length+"枚 読み込み成功"}}
+if(state.sources.length){try{await selectSource(0);el("loadStatus").className="status ok";el("loadStatus").textContent="診断 4/4: 読み込み・プレビュー・WebP変換まで成功\n"+state.sources.length+"枚 読み込み成功"}catch(e){el("loadStatus").className="status err";el("loadStatus").textContent="診断停止: プレビュー後の変換処理で失敗\n"+(e&&e.message?e.message:String(e))}}}
 async function selectSource(i){
 var s=state.sources[i];if(!s)return;state.active=i;el("preview").src=s.src;el("dim").textContent=s.img.naturalWidth+"×"+s.img.naturalHeight;el("bytes").textContent=fmt(s.file.size);el("alpha").textContent=s.alpha.has===null?"確認不可":(s.alpha.has?"あり":"なし");el("alphaInfo").textContent=s.alpha.has===null?"透過チェックはブラウザ制限で実行できませんでした。":("完全透明 "+s.alpha.zero.toLocaleString()+" / 半透明 "+s.alpha.partial.toLocaleString());el("w").value=s.img.naturalWidth;el("h").value=s.img.naturalHeight;el("filename").value=webpName(s.file.name);joinPath();await convert()}
 async function convert(){
