@@ -76,7 +76,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const fetched = [];
   const deterministicMath = Object.create(Math);
   deterministicMath.random = () => 0.5;
-  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location: { search: '?navDebug=1' },
+  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location: { search: '?from=landing&navDebug=1' },
     performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
