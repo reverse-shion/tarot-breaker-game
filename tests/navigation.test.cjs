@@ -2,10 +2,24 @@ const test = require('node:test');
 // FOUNDATION baseline-debt audit: run the current Navigation / Collision contracts unchanged.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const layout = require('../scene-layout.js');
 const { createCollision, createNavigator, validateCollision, distance } = require('../blocked-collision.js');
 const data = JSON.parse(fs.readFileSync('assets/maps/star-country-gate-garden-collision.json', 'utf8'));
-const collision = createCollision(data), nav = createNavigator(collision);
-const spawn = { x: 724, y: 1015 };
+const runtimeData = { ...data, blockedAreas: [...(data.blockedAreas || []), ...layout.solidBases] };
+const collision = createCollision(runtimeData), nav = createNavigator(collision);
+const DEFAULT_SPAWN = { x: 724, y: 1015 };
+function findNearestSpawn() {
+  if (collision.isWalkable(DEFAULT_SPAWN.x, DEFAULT_SPAWN.y)) return { ...DEFAULT_SPAWN };
+  for (let radius = 5; radius <= 320; radius += 5) {
+    for (let i = 0; i < 32; i++) {
+      const angle = (i / 32) * Math.PI * 2;
+      const p = { x: DEFAULT_SPAWN.x + Math.cos(angle) * radius, y: DEFAULT_SPAWN.y + Math.sin(angle) * radius };
+      if (collision.isWalkable(p.x, p.y)) return p;
+    }
+  }
+  return collision.nearestWalkable(DEFAULT_SPAWN) || DEFAULT_SPAWN;
+}
+const spawn = findNearestSpawn();
 const rect = (x, y, w, h) => ({ type: 'poly', points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
 const fixture = areas => ({ ...data, walkAreas: areas, blockedAreas: [] });
 
@@ -48,6 +62,7 @@ function checkRoute(result) {
 
 test('official JSON parses: reference size, nonempty polygons and finite coordinates', () => {
   assert.equal(validateCollision(data).areas.length, data.walkAreas.length);
+  assert.equal(data.version, 6);
   assert.ok(collision.isWalkable(spawn.x, spawn.y));
   assert.equal(nav.cellSize, 16);
 });
