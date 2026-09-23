@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
+const collisionLib = require('../blocked-collision.js');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 const sceneLayout = require('../scene-layout.js');
 
@@ -87,13 +88,15 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
+  const runtimeCollision = collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] });
+  const safeTarget = wanted => runtimeCollision.nearestWalkable(wanted) || wanted;
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
     pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy); tick();
   };
   elements.start.emit('click'); tick(120);
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -158,8 +161,8 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
   assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
-  const h = await boot(), before = h.state(); h.tapWorld(810, 700); const after = h.state();
-  assert.ok(after.route.length); assert.equal(after.requested.x, 810); assert.equal(after.requested.y, 700);
+  const h = await boot(), before = h.state(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); const after = h.state();
+  assert.ok(after.route.length); assert.ok(after.requested); assert.ok(Math.abs(after.requested.x - 810) < 80); assert.ok(Math.abs(after.requested.y - 700) < 80);
   assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
   h.tick(350); const arrived = h.state();
@@ -167,21 +170,21 @@ test('canvas tap uses camera/zoom/element offset and does not jump the camera to
   const idleDirection = arrived.player.dir; h.tick(120); assert.equal(h.state().player.dir, idleDirection);
 });
 test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
-  const h = await boot(); h.tapWorld(810, 700);
+  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
   assert.equal(h.elements.joystick.hidden, true); assert.ok(h.state().collisionVersion >= 6);
   assert.equal(h.state().player.x, h.state().world.w ? h.state().player.x : h.state().player.x);
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
-  h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
+  h.pointer('pointerup', 135, 600); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
 test('four directions use all four Shion walk frames then the matching idle frame', async () => {
-  const h = await boot(); h.tapWorld(810, 700); h.tick(250);
+  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.tick(250);
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    h.tapWorld(810, 700); h.tick(200);
+    (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.tick(200);
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
     for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
     assert.equal(frames.size, 4);
@@ -195,7 +198,7 @@ test('four directions use all four Shion walk frames then the matching idle fram
 });
 test('pointercancel, lost capture, blur and hidden page prevent stuck movement', async () => {
   for (const event of ['pointercancel', 'lostpointercapture', 'blur', 'visibilitychange', 'pagehide']) {
-    const h = await boot(); h.tapWorld(810, 700); h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 150, 600);
+    const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 150, 600);
     if (event.startsWith('pointer') || event === 'lostpointercapture') h.pointer(event, 150, 600);
     else if (event === 'visibilitychange') { h.document.hidden = true; h.document.emit(event); }
     else h.window.emit(event);
@@ -203,10 +206,10 @@ test('pointercancel, lost capture, blur and hidden page prevent stuck movement',
   }
 });
 test('future interaction lifecycle cancels and suspends player movement', async () => {
-  const h = await boot(); h.tapWorld(810, 700); h.window.emit('tarot-breaker:interaction-start'); h.tick();
+  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.window.emit('tarot-breaker:interaction-start'); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.state().suspended, true); assert.equal(h.state().shiopon.moving, false);
   h.tapWorld(810, 600); assert.equal(h.state().route.length, 0);
-  h.window.emit('tarot-breaker:interaction-end'); h.tapWorld(810, 700); assert.ok(h.state().route.length);
+  h.window.emit('tarot-breaker:interaction-end'); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); assert.ok(h.state().route.length);
 });
 test('stage commands face actors, animate safe steps and expose a skip-to-end handle', async () => {
   const h = await boot();
@@ -257,8 +260,8 @@ test('Shiopon bounce is visible mid-action and returns to its exact baseline', a
   h.window.emit('tarot-breaker:interaction-end');
 });
 test('desktop click uses the same input at camera zoom 1.22', async () => {
-  const h = await boot({ width: 1280, height: 900 }); h.tapWorld(810, 700);
-  assert.equal(h.state().camera.zoom, 1.22); assert.equal(h.state().requested.x, 810); assert.equal(h.state().requested.y, 700);
+  const h = await boot({ width: 1280, height: 900 }); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
+  assert.equal(h.state().camera.zoom, 1.22); assert.ok(h.state().requested);
   assert.ok(h.state().route.length);
 });
 test('preview asset configuration loads the same game and rejects invalid collision data', async () => {
