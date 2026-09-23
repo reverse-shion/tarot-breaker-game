@@ -24,7 +24,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     hasPointerCapture(id) { return captured.has(id); }
     releasePointerCapture(id) { captured.delete(id); }
   }
-  const elements = Object.fromEntries(['game', 'map-layer', 'start', 'start-screen', 'load-note', 'guide', 'joystick', 'joystick-knob', 'reset', 'game-shell'].map(id => [id, new Element()]));
+  const elements = Object.fromEntries(['game', 'map-layer', 'start', 'start-screen', 'load-note', 'guide', 'joystick', 'joystick-knob', 'reset', 'game-shell', 'load-error'].map(id => [id, new Element()]));
   const context = new Proxy({}, { get(_, key) {
     if (key === 'drawImage') return (...args) => drawCalls.push(args);
     if (key === 'createRadialGradient') return () => ({ addColorStop() {} });
@@ -33,6 +33,13 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   elements.game.getContext = () => context;
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
+  document.body = new Element('body');
+  const bodyClasses = new Set(['scene-booting']);
+  document.body.classList = {
+    contains(name) { return bodyClasses.has(name); },
+    add(...names) { names.forEach(name => bodyClasses.add(name)); },
+    remove(...names) { names.forEach(name => bodyClasses.delete(name)); },
+  };
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
   document.getElementById = id => elements[id]; document.createElement = tag => {
     const element = new Element();
@@ -46,6 +53,12 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.TarotSceneEffects = {
+    ready: Promise.resolve(),
+    waitImage: async image => image,
+    drawMaskedActor(_ctx, _actor, _scale, _density, draw) { draw(_ctx); },
+    syncCamera() {},
+  };
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
@@ -66,7 +79,10 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
-  await new Promise(setImmediate);
+  for (let i = 0; i < 20 && !elements['nav-status']?.dataset?.state; i++) {
+    await new Promise(setImmediate);
+    if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
+  }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
