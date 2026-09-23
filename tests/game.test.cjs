@@ -86,7 +86,16 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
-  for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
+  for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
+  // Expose the exact Controls instance created by production game.js so tests can
+  // distinguish input-state failures from render-time nav-status snapshots.
+  const createControls = window.TarotControls.createControls;
+  window.TarotControls.createControls = (...args) => {
+    const instance = createControls(...args);
+    window.__gardenControls = instance;
+    return instance;
+  };
+  vm.runInContext(fs.readFileSync('game.js', 'utf8'), sandbox, { filename: 'game.js' });
   for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
     if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
@@ -113,7 +122,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -234,11 +243,21 @@ test('Garden registered pointerup handler completes the accepted gesture', async
   const down = { type: 'pointerdown', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3000, preventDefault() {} };
   downHandler(down);
   assert.equal(h.captured.has(1), true);
+  assert.ok(h.controls.state.gesture, 'production Controls lost gesture immediately after pointerdown');
+  const gesture = { ...h.controls.state.gesture, world: { ...h.controls.state.gesture.world } };
   const up = { type: 'pointerup', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3080, preventDefault() {} };
   upHandler(up);
+  const controlsAfterUp = {
+    gesture: h.controls.state.gesture,
+    requested: h.controls.state.requested,
+    routeLength: h.controls.state.route.length,
+    reason: h.controls.state.cancelReason,
+    suspended: h.controls.state.suspended,
+  };
   h.tick(); // controls state is exposed through nav-status during draw().
   const after = h.state();
-  assert.ok(after.requested, `registered pointerup did not reach controls.tap; state=${JSON.stringify(after)}`);
+  assert.ok(h.controls.state.requested, `production pointerEnd rejected gesture=${JSON.stringify(gesture)} after=${JSON.stringify(controlsAfterUp)} event=${JSON.stringify({pointerId:up.pointerId,timeStamp:up.timeStamp,type:up.type,clientX:up.clientX,clientY:up.clientY})}`);
+  assert.ok(after.requested, `Controls accepted pointerup but nav-status did not expose it; controls=${JSON.stringify(controlsAfterUp)} state=${JSON.stringify(after)}`);
   assert.equal(h.captured.size, 0);
 });
 
