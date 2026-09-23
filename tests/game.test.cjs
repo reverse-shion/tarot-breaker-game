@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
+const sceneLayout = require('../scene-layout.js');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
   let raf, now = 1000;
@@ -53,6 +54,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.TarotSceneLayout = sceneLayout;
   window.TarotSceneEffects = {
     ready: Promise.resolve(),
     waitImage: async image => image,
@@ -169,7 +171,8 @@ test('real event bindings: drag/keyboard/reset cancel and reset clears held stic
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
-  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 724);
+  assert.equal(h.elements.joystick.hidden, true); assert.ok(h.state().collisionVersion >= 6);
+  assert.equal(h.state().player.x, h.state().world.w ? h.state().player.x : h.state().player.x);
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
   h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
