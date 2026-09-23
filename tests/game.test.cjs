@@ -109,11 +109,11 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
     const down = pointer('pointerdown', sx, sy);
-    const afterDown = state();
+    const afterDown = { ...state(), controls: { requested: window.__gardenControls?.state.requested, routeLength: window.__gardenControls?.state.route.length, suspended: window.__gardenControls?.state.suspended } };
     now += 80;
     const up = pointer('pointerup', sx, sy, { timeStamp: now });
     tick(); // nav-status is a render-time debug snapshot; refresh it after input mutation.
-    const afterUp = state();
+    const afterUp = { ...state(), controls: { requested: window.__gardenControls?.state.requested, routeLength: window.__gardenControls?.state.route.length, suspended: window.__gardenControls?.state.suspended } };
     return { sx, sy, down, up, afterDown, afterUp };
   };
   // Landing entry auto-starts the real Garden runtime. Do not click Start again:
@@ -257,15 +257,15 @@ test('Garden registered pointerup handler completes the accepted gesture', async
   h.tick(); // controls state is exposed through nav-status during draw().
   const after = h.state();
   assert.ok(h.controls.state.requested, `production pointerEnd rejected gesture=${JSON.stringify(gesture)} after=${JSON.stringify(controlsAfterUp)} event=${JSON.stringify({pointerId:up.pointerId,timeStamp:up.timeStamp,type:up.type,clientX:up.clientX,clientY:up.clientY})}`);
-  assert.ok(after.requested, `Controls accepted pointerup but nav-status did not expose it; controls=${JSON.stringify(controlsAfterUp)} state=${JSON.stringify(after)}`);
+  assert.deepEqual(h.controls.state.requested, { x: p.x, y: p.y });
   assert.equal(h.captured.size, 0);
 });
 
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
-  assert.ok(trace.afterUp.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace})}`);
-  assert.ok(after.route.length); assert.ok(after.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(after.requested.x - expected.x) < 0.01); assert.ok(Math.abs(after.requested.y - expected.y) < 0.01);
+  assert.ok(trace.afterUp.controls.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace})}`);
+  assert.ok(h.controls.state.route.length); assert.ok(h.controls.state.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(h.controls.state.requested.x - expected.x) < 0.01); assert.ok(Math.abs(h.controls.state.requested.y - expected.y) < 0.01);
   assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
   h.tick(350); const arrived = h.state();
@@ -364,8 +364,8 @@ test('Shiopon bounce is visible mid-action and returns to its exact baseline', a
 });
 test('desktop click uses the same input at camera zoom 1.22', async () => {
   const h = await boot({ width: 1280, height: 900 }); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
-  assert.equal(h.state().camera.zoom, 1.22); const requested = h.state().requested; const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(requested); assert.ok(Math.abs(requested.x - expected.x) < 0.01); assert.ok(Math.abs(requested.y - expected.y) < 0.01);
-  assert.ok(h.state().route.length);
+  assert.equal(h.state().camera.zoom, 1.22); const requested = h.controls.state.requested; const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(requested); assert.ok(Math.abs(requested.x - expected.x) < 0.01); assert.ok(Math.abs(requested.y - expected.y) < 0.01);
+  assert.ok(h.controls.state.route.length);
 });
 test('preview asset configuration loads the same game and rejects invalid collision data', async () => {
   const h = await boot({ spriteBase: '/sprites/', collisionUrl: '/official-collision.json' });
