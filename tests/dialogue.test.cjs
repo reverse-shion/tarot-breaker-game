@@ -21,6 +21,12 @@ function bootDialogue() {
       this.children = [];
       this.textContent = '';
       this.attributes = {};
+      const classes = new Set();
+      this.classList = {
+        add: (...names) => names.forEach(name => classes.add(name)),
+        remove: (...names) => names.forEach(name => classes.delete(name)),
+        contains: (name) => classes.has(name),
+      };
     }
     addEventListener(type, fn) {
       if (!this.listeners.has(type)) this.listeners.set(type, []);
@@ -40,6 +46,18 @@ function bootDialogue() {
     appendChild(child) {
       this.children.push(child);
       if (child.id) elements[child.id] = child;
+    }
+    append(...children) {
+      for (const child of children) this.appendChild(child);
+    }
+    replaceChildren(...children) {
+      this.children = [];
+      this.textContent = '';
+      this.append(...children);
+    }
+    removeEventListener(type, fn) {
+      const listeners = this.listeners.get(type) || [];
+      this.listeners.set(type, listeners.filter(listener => listener !== fn));
     }
     setAttribute(key, value) {
       this.attributes[key] = value;
@@ -63,6 +81,7 @@ function bootDialogue() {
   const document = {
     getElementById: (id) => elements[id] || null,
     createElement: () => new Element(),
+    createDocumentFragment: () => new Element(),
   };
 
   class WindowHarness {
@@ -70,6 +89,10 @@ function bootDialogue() {
     addEventListener(type, fn) {
       if (!this.listeners.has(type)) this.listeners.set(type, []);
       this.listeners.get(type).push(fn);
+    }
+    removeEventListener(type, fn) {
+      const listeners = this.listeners.get(type) || [];
+      this.listeners.set(type, listeners.filter(listener => listener !== fn));
     }
     dispatchEvent(event) {
       signals.push({ type: event.type, detail: event.detail });
@@ -82,6 +105,7 @@ function bootDialogue() {
   }
 
   const window = new WindowHarness();
+  window.matchMedia = () => ({ matches: true });
   window.TarotControls = {
     createControls() {
       return {
@@ -129,11 +153,13 @@ function bootDialogue() {
       constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
     },
     queueMicrotask: (fn) => fn(),
+    requestAnimationFrame: (fn) => { fn(); return 1; },
     setTimeout: (fn) => { const id = ++timerId; timers.set(id, fn); return id; },
     clearTimeout: (id) => timers.delete(id),
     Math,
     JSON,
   });
+  vm.runInContext(fs.readFileSync('shared-dialogue.js', 'utf8'), sandbox, { filename: 'shared-dialogue.js' });
   vm.runInContext(fs.readFileSync('dialogue.js', 'utf8'), sandbox, { filename: 'dialogue.js' });
 
   const controls = window.TarotControls.createControls();
