@@ -56,7 +56,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   window.TarotSceneEffects = {
     ready: Promise.resolve(),
     waitImage: async image => image,
-    drawActor(_ctx, actor, _scale, _density, draw) { draw(_ctx); },
+    drawMaskedActor(_ctx, _actor, _scale, _density, draw) { draw(_ctx); },
     syncCamera() {},
   };
   class Image {
