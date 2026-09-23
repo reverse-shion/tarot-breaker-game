@@ -175,7 +175,7 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
 });
 test('Garden pointer payload is accepted by the production controls contract', async () => {
   const h = await boot();
-  const controls = h.window.TarotControls.create(
+  const controls = h.window.TarotControls.createControls(
     collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
     h.window.TarotNavigation.createNavigator(
       collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
