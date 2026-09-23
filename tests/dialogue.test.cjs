@@ -317,11 +317,12 @@ test('dialogue text preserves approved speech and relationship constraints', () 
   const shion = all.filter(([speaker]) => speaker === 'シオン').map(([, text]) => text);
   const lumiere = all.filter(([speaker]) => speaker === 'リュミエール').map(([, text]) => text);
 
-  assert.ok(shion.some(text => text.includes('オレを待ってたんじゃないの？')));
+  assert.ok(shion.some(text => text.includes('……やっぱり、ここもおかしい。')));
+  assert.ok(shion.some(text => text.includes('だから、これから確かめる。')));
   assert.ok(shion.every(text => !/(^|[^ァ-ヶ])私(?:は|が|も|、)/.test(text)));
   assert.ok(lumiere.some(text => text.includes('しおぽん様。')));
   assert.ok(lumiere.some(text => text.includes('シオン様も。')));
-  assert.ok(lumiere.some(text => text.includes('今のは、少し先を言いすぎました。')));
+  assert.ok(lumiere.some(text => text.includes('……すみません。少し、出すぎたことを言いました。')));
 });
 
 test('reset during a blocking action cancels stale playback and releases interaction', async () => {
