@@ -85,7 +85,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
-  for (let i = 0; i < 20 && !elements['nav-status']?.dataset?.state; i++) {
+  for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
     if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
   }
