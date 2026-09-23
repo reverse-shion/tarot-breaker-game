@@ -91,6 +91,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
+  const rawControlsState = () => sandbox.window.__testControlsState?.() || null;
   const runtimeCollision = collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] });
   const safeTarget = wanted => runtimeCollision.nearestWalkable(wanted) || wanted;
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
@@ -106,7 +107,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // Landing entry auto-starts the real Garden runtime. Do not click Start again:
   // a second begin() is intentionally ignored once running.
   tick(120);
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace };
+  return { elements, window, document, state, rawControlsState, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -171,9 +172,9 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
   assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
-  const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
+  const h = await boot(), before = h.state(), rawBefore = h.rawControlsState(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
-  assert.ok(trace.afterUp.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace})}`);
+  assert.ok(trace.afterUp.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace,rawBefore,rawAfter:h.rawControlsState()})}`);
   assert.ok(after.route.length); assert.ok(after.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(after.requested.x - expected.x) < 0.01); assert.ok(Math.abs(after.requested.y - expected.y) < 0.01);
   assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
