@@ -103,6 +103,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     const afterDown = state();
     now += 80;
     const up = pointer('pointerup', sx, sy, { timeStamp: now });
+    tick(); // nav-status is a render-time debug snapshot; refresh it after input mutation.
     const afterUp = state();
     return { sx, sy, down, up, afterDown, afterUp };
   };
@@ -235,6 +236,7 @@ test('Garden registered pointerup handler completes the accepted gesture', async
   assert.equal(h.captured.has(1), true);
   const up = { type: 'pointerup', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3080, preventDefault() {} };
   upHandler(up);
+  h.tick(); // controls state is exposed through nav-status during draw().
   const after = h.state();
   assert.ok(after.requested, `registered pointerup did not reach controls.tap; state=${JSON.stringify(after)}`);
   assert.equal(h.captured.size, 0);
