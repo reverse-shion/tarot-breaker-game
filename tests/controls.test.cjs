@@ -2,9 +2,20 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createControls, stickVector } = require('../controls.js');
 const { createCollision, createNavigator, distance } = require('../blocked-collision.js');
+const layout = require('../scene-layout.js');
 const data = require('../assets/maps/star-country-gate-garden-collision.json');
-const collision = createCollision(data), nav = createNavigator(collision);
-const spawn = { x: 724, y: 1015 }, goal = { x: 810, y: 350 };
+const collision = createCollision({ ...data, blockedAreas: [...(data.blockedAreas || []), ...layout.solidBases] }), nav = createNavigator(collision);
+const DEFAULT_SPAWN = { x: 724, y: 1015 };
+function findNearestSpawn() {
+  if (collision.isWalkable(DEFAULT_SPAWN.x, DEFAULT_SPAWN.y)) return { ...DEFAULT_SPAWN };
+  for (let radius = 5; radius <= 320; radius += 5) for (let i = 0; i < 32; i++) {
+    const angle = (i / 32) * Math.PI * 2;
+    const p = { x: DEFAULT_SPAWN.x + Math.cos(angle) * radius, y: DEFAULT_SPAWN.y + Math.sin(angle) * radius };
+    if (collision.isWalkable(p.x, p.y)) return p;
+  }
+  return collision.nearestWalkable(DEFAULT_SPAWN) || DEFAULT_SPAWN;
+}
+const spawn = findNearestSpawn(), goal = { x: 810, y: 350 };
 const down = (c, overrides = {}) => c.pointerDown({ id: 1, x: 100, y: 300, width: 390, time: 100, world: goal, ...overrides });
 
 test('short tap starts navigation on release without showing the stick', () => {

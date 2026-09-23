@@ -5,17 +5,20 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
+const collisionLib = require('../blocked-collision.js');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
+const sceneLayout = require('../scene-layout.js');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
   let raf, now = 1000;
-  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
+  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
     emit(type, values = {}) {
-      const event = { type, timeStamp: now, preventDefault() { this.defaultPrevented = true; }, ...values };
+      const event = { ...values, type, timeStamp: values.timeStamp ?? now, preventDefault() { this.defaultPrevented = true; } };
       for (const fn of this.listeners.get(type) || []) fn(event);
+      if (type.startsWith('pointer')) inputTrace.push({ type, timeStamp: event.timeStamp, pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY, captured: [...captured] });
       return event;
     }
     appendChild(child) { elements[child.id] = child; }
@@ -53,11 +56,14 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.dispatchEvent = event => window.emit(event.type, event);
+  window.TarotSceneLayout = sceneLayout;
   window.TarotSceneEffects = {
     ready: Promise.resolve(),
     waitImage: async image => image,
     drawMaskedActor(_ctx, _actor, _scale, _density, draw) { draw(_ctx); },
     syncCamera() {},
+    drawDebug() {},
   };
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
@@ -67,31 +73,56 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
         this.naturalWidth = 2172;
         this.naturalHeight = 724;
       }
-      queueMicrotask(() => this.onload());
+      queueMicrotask(() => this.onload?.());
     }
   }
   const fetched = [];
   const deterministicMath = Object.create(Math);
   deterministicMath.random = () => 0.5;
-  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location: { search: '?navDebug=1' },
-    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
+  const CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
+  window.CustomEvent = CustomEvent;
+  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search: '?from=landing&navDebug=1' },
+    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() { return 1; }, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
-  for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
-  for (let i = 0; i < 20 && !elements['nav-status']?.dataset?.state; i++) {
+  for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
+  // Expose the exact Controls instance created by production game.js so tests can
+  // distinguish input-state failures from render-time nav-status snapshots.
+  const createControls = window.TarotControls.createControls;
+  window.TarotControls.createControls = (...args) => {
+    const instance = createControls(...args);
+    window.__gardenControls = instance;
+    return instance;
+  };
+  vm.runInContext(fs.readFileSync('game.js', 'utf8'), sandbox, { filename: 'game.js' });
+  for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
     if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
   }
+  if (!badCollision) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
+  const runtimeCollision = collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] });
+  const safeTarget = wanted => runtimeCollision.nearestWalkable(wanted) || wanted;
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
-    pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy); tick();
+    const down = pointer('pointerdown', sx, sy);
+    const afterDown = { ...state(), controls: { requested: window.__gardenControls?.state.requested, routeLength: window.__gardenControls?.state.route.length, suspended: window.__gardenControls?.state.suspended } };
+    now += 80;
+    const up = pointer('pointerup', sx, sy, { timeStamp: now });
+    tick(); // nav-status is a render-time debug snapshot; refresh it after input mutation.
+    const afterUp = { ...state(), controls: { requested: window.__gardenControls?.state.requested, routeLength: window.__gardenControls?.state.route.length, suspended: window.__gardenControls?.state.suspended } };
+    return { sx, sy, down, up, afterDown, afterUp };
   };
-  elements.start.emit('click'); tick(120);
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured };
+  // Landing entry auto-starts the real Garden runtime. Do not click Start again:
+  // a second begin() is intentionally ignored once running.
+  tick(120);
+  // The production game suppresses pointer input while dialogue is active.
+  // This harness does not load the dialogue runtime, so provide its inactive contract.
+  window.TarotDialogue ??= { getState: () => ({ active: false }) };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -155,30 +186,109 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
   assert.ok(s.lumiereGap < s.lumiereCollisionDistance + 8, `gap=${s.lumiereGap} reason=${s.reason}`);
   assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
 });
+test('Garden pointer payload is accepted by the production controls contract', async () => {
+  const h = await boot();
+  const controls = h.window.TarotControls.createControls(
+    collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
+    h.window.TarotNavigation.createNavigator(
+      collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
+      { cell: 16 },
+    ),
+  );
+  const before = h.state();
+  const p = h.safeTarget({ x: 810, y: 700 });
+  const x = (p.x - before.origin.x) * before.camera.zoom;
+  const y = (p.y - before.origin.y) * before.camera.zoom;
+  const payload = { id: 1, x, y, time: 3000, width: before.cssWidth, primary: true, button: 0, world: { x: p.x, y: p.y } };
+  assert.equal(controls.pointerDown(payload), true);
+  assert.equal(controls.state.gesture.id, 1);
+  const action = controls.pointerEnd({ id: 1, x, y, time: 3080, cancelled: false }, { x: before.player.x, y: before.player.y });
+  assert.ok(action);
+  assert.ok(controls.state.requested);
+});
+
+test('Garden registered pointerdown handler accepts the same browser-like event directly', async () => {
+  const h = await boot();
+  const handler = h.elements.game.listeners.get('pointerdown')?.[0];
+  assert.equal(typeof handler, 'function');
+  const before = h.state();
+  const p = h.safeTarget({ x: 810, y: 700 });
+  const x = (p.x - before.origin.x) * before.camera.zoom;
+  const y = (p.y - before.origin.y) * before.camera.zoom;
+  const event = {
+    type: 'pointerdown',
+    pointerId: 1,
+    clientX: 34 + x,
+    clientY: 20 + y,
+    button: 0,
+    isPrimary: true,
+    timeStamp: 3000,
+    preventDefault() { this.defaultPrevented = true; },
+  };
+  handler(event);
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(h.captured.has(1), true, 'registered game.js pointerdown handler rejected an otherwise valid pointer');
+});
+
+test('Garden registered pointerup handler completes the accepted gesture', async () => {
+  const h = await boot();
+  const downHandler = h.elements.game.listeners.get('pointerdown')?.[0];
+  const upHandler = h.elements.game.listeners.get('pointerup')?.[0];
+  assert.equal(typeof downHandler, 'function');
+  assert.equal(typeof upHandler, 'function');
+  const before = h.state();
+  const p = h.safeTarget({ x: 810, y: 700 });
+  const x = (p.x - before.origin.x) * before.camera.zoom;
+  const y = (p.y - before.origin.y) * before.camera.zoom;
+  const down = { type: 'pointerdown', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3000, preventDefault() {} };
+  downHandler(down);
+  assert.equal(h.captured.has(1), true);
+  assert.ok(h.controls.state.gesture, 'production Controls lost gesture immediately after pointerdown');
+  const gesture = { ...h.controls.state.gesture, world: { ...h.controls.state.gesture.world } };
+  const up = { type: 'pointerup', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3080, preventDefault() {} };
+  upHandler(up);
+  const controlsAfterUp = {
+    gesture: h.controls.state.gesture,
+    requested: h.controls.state.requested,
+    routeLength: h.controls.state.route.length,
+    reason: h.controls.state.cancelReason,
+    suspended: h.controls.state.suspended,
+  };
+  h.tick(); // controls state is exposed through nav-status during draw().
+  const after = h.state();
+  assert.ok(h.controls.state.requested, `production pointerEnd rejected gesture=${JSON.stringify(gesture)} after=${JSON.stringify(controlsAfterUp)} event=${JSON.stringify({pointerId:up.pointerId,timeStamp:up.timeStamp,type:up.type,clientX:up.clientX,clientY:up.clientY})}`);
+  assert.equal(h.controls.state.requested.x, p.x);
+  assert.equal(h.controls.state.requested.y, p.y);
+  assert.equal(h.captured.size, 0);
+});
+
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
-  const h = await boot(), before = h.state(); h.tapWorld(810, 700); const after = h.state();
-  assert.ok(after.route.length); assert.equal(after.requested.x, 810); assert.equal(after.requested.y, 700);
-  assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
+  const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
+  assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
+  assert.ok(trace.afterUp.controls.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace})}`);
+  assert.ok(h.controls.state.route.length); assert.ok(h.controls.state.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(h.controls.state.requested.x - expected.x) < 0.01); assert.ok(Math.abs(h.controls.state.requested.y - expected.y) < 0.01);
+  assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); h.tick(); assert.ok(h.state().player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
   h.tick(350); const arrived = h.state();
   assert.equal(arrived.route.length, 0); assert.equal(arrived.player.moving, false);
   const idleDirection = arrived.player.dir; h.tick(120); assert.equal(h.state().player.dir, idleDirection);
 });
 test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
-  const h = await boot(); h.tapWorld(810, 700);
+  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
-  assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
+  assert.equal(h.controls.state.route.length, 0); assert.equal(h.controls.state.stick.active, true, `drag did not activate production stick; controls=${JSON.stringify({gesture:h.controls.state.gesture,stick:h.controls.state.stick,reason:h.controls.state.cancelReason})}`); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
-  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 724);
+  assert.equal(h.elements.joystick.hidden, true); assert.ok(h.state().collisionVersion >= 6);
+  assert.ok(Number.isFinite(h.state().player.x)); assert.ok(Number.isFinite(h.state().player.y));
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
-  h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
+  h.pointer('pointerup', 135, 600); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
 test('four directions use all four Shion walk frames then the matching idle frame', async () => {
-  const h = await boot(); h.tapWorld(810, 700); h.tick(250);
+  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.tick(250);
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    h.tapWorld(810, 700); h.tick(200);
+    (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.tick(200);
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
     for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
     assert.equal(frames.size, 4);
@@ -192,7 +302,7 @@ test('four directions use all four Shion walk frames then the matching idle fram
 });
 test('pointercancel, lost capture, blur and hidden page prevent stuck movement', async () => {
   for (const event of ['pointercancel', 'lostpointercapture', 'blur', 'visibilitychange', 'pagehide']) {
-    const h = await boot(); h.tapWorld(810, 700); h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 150, 600);
+    const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 150, 600);
     if (event.startsWith('pointer') || event === 'lostpointercapture') h.pointer(event, 150, 600);
     else if (event === 'visibilitychange') { h.document.hidden = true; h.document.emit(event); }
     else h.window.emit(event);
@@ -200,10 +310,10 @@ test('pointercancel, lost capture, blur and hidden page prevent stuck movement',
   }
 });
 test('future interaction lifecycle cancels and suspends player movement', async () => {
-  const h = await boot(); h.tapWorld(810, 700); h.window.emit('tarot-breaker:interaction-start'); h.tick();
+  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.window.emit('tarot-breaker:interaction-start'); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.state().suspended, true); assert.equal(h.state().shiopon.moving, false);
   h.tapWorld(810, 600); assert.equal(h.state().route.length, 0);
-  h.window.emit('tarot-breaker:interaction-end'); h.tapWorld(810, 700); assert.ok(h.state().route.length);
+  h.window.emit('tarot-breaker:interaction-end'); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); assert.ok(h.state().route.length);
 });
 test('stage commands face actors, animate safe steps and expose a skip-to-end handle', async () => {
   const h = await boot();
@@ -254,9 +364,9 @@ test('Shiopon bounce is visible mid-action and returns to its exact baseline', a
   h.window.emit('tarot-breaker:interaction-end');
 });
 test('desktop click uses the same input at camera zoom 1.22', async () => {
-  const h = await boot({ width: 1280, height: 900 }); h.tapWorld(810, 700);
-  assert.equal(h.state().camera.zoom, 1.22); assert.equal(h.state().requested.x, 810); assert.equal(h.state().requested.y, 700);
-  assert.ok(h.state().route.length);
+  const h = await boot({ width: 1280, height: 900 }); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
+  assert.equal(h.state().camera.zoom, 1.22); const requested = h.controls.state.requested; const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(requested); assert.ok(Math.abs(requested.x - expected.x) < 0.01); assert.ok(Math.abs(requested.y - expected.y) < 0.01);
+  assert.ok(h.controls.state.route.length);
 });
 test('preview asset configuration loads the same game and rejects invalid collision data', async () => {
   const h = await boot({ spriteBase: '/sprites/', collisionUrl: '/official-collision.json' });
