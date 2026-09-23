@@ -73,7 +73,10 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
-  await new Promise(setImmediate);
+  for (let i = 0; i < 20 && !elements['nav-status']?.dataset?.state; i++) {
+    await new Promise(setImmediate);
+    if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
+  }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
