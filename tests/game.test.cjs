@@ -93,7 +93,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
-    pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy); tick();
+    pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy);
   };
   elements.start.emit('click'); tick(120);
   return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget };
