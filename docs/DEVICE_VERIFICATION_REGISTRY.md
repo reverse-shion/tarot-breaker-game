@@ -5,7 +5,7 @@ Status: ACTIVE
 This file is the durable handoff between conversations and agents. Only explicit human real-device verification may add a PASS.
 
 ## Authority rules
-- Record an exact full commit SHA. Never record only a moving branch name.
+- Record an exact commit SHA. Never record only a moving branch name.
 - PASS may be added only after the product owner explicitly confirms that exact build was tested on a real device.
 - CI PASS is not DEVICE PASS.
 - AI/automation must never infer, manufacture, backfill, or upgrade a Device PASS.
