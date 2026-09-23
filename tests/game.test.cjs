@@ -220,6 +220,26 @@ test('Garden registered pointerdown handler accepts the same browser-like event 
   assert.equal(h.captured.has(1), true, 'registered game.js pointerdown handler rejected an otherwise valid pointer');
 });
 
+test('Garden registered pointerup handler completes the accepted gesture', async () => {
+  const h = await boot();
+  const downHandler = h.elements.game.listeners.get('pointerdown')?.[0];
+  const upHandler = h.elements.game.listeners.get('pointerup')?.[0];
+  assert.equal(typeof downHandler, 'function');
+  assert.equal(typeof upHandler, 'function');
+  const before = h.state();
+  const p = h.safeTarget({ x: 810, y: 700 });
+  const x = (p.x - before.origin.x) * before.camera.zoom;
+  const y = (p.y - before.origin.y) * before.camera.zoom;
+  const down = { type: 'pointerdown', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3000, preventDefault() {} };
+  downHandler(down);
+  assert.equal(h.captured.has(1), true);
+  const up = { type: 'pointerup', pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, timeStamp: 3080, preventDefault() {} };
+  upHandler(up);
+  const after = h.state();
+  assert.ok(after.requested, `registered pointerup did not reach controls.tap; state=${JSON.stringify(after)}`);
+  assert.equal(h.captured.size, 0);
+});
+
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
