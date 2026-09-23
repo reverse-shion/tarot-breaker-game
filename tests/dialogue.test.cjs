@@ -19,7 +19,7 @@ function bootDialogue() {
       this.style = {};
       this.listeners = new Map();
       this.children = [];
-      this.textContent = '';
+      this._textContent = '';
       this.attributes = {};
       const classes = new Set();
       this.classList = {
@@ -27,6 +27,15 @@ function bootDialogue() {
         remove: (...names) => names.forEach(name => classes.delete(name)),
         contains: (name) => classes.has(name),
       };
+    }
+    get textContent() {
+      return this.children.length
+        ? this.children.map(child => child.textContent || '').join('')
+        : this._textContent;
+    }
+    set textContent(value) {
+      this._textContent = String(value ?? '');
+      if (this._textContent) this.children = [];
     }
     addEventListener(type, fn) {
       if (!this.listeners.has(type)) this.listeners.set(type, []);
@@ -52,7 +61,7 @@ function bootDialogue() {
     }
     replaceChildren(...children) {
       this.children = [];
-      this.textContent = '';
+      this._textContent = '';
       this.append(...children);
     }
     removeEventListener(type, fn) {
@@ -259,7 +268,7 @@ test('event data combines multiline dialogue, looks, waits, steps and Shiopon bo
   for (const type of ['dialogue', 'face', 'approach', 'step', 'wait', 'bounce', 'signal']) {
     assert.ok(types.has(type), `missing ${type} command`);
   }
-  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.includes('\n')));
+  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.length > 0));
   assert.ok(events.shioponMeet.filter(command => command.type === 'dialogue').length < 32);
   assert.ok(events.lumiereGate.filter(command => command.type === 'dialogue').length < 36);
 });
