@@ -177,7 +177,7 @@ test('Garden pointer payload is accepted by the production controls contract', a
   const h = await boot();
   const controls = h.window.TarotControls.create(
     collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
-    h.window.TarotNavigation.create(
+    h.window.TarotNavigation.createNavigator(
       collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
       { cell: 16 },
     ),
