@@ -53,6 +53,12 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.TarotSceneEffects = {
+    ready: Promise.resolve(),
+    waitImage: async image => image,
+    drawActor(_ctx, actor, _scale, _density, draw) { draw(_ctx); },
+    syncCamera() {},
+  };
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
