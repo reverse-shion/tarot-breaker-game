@@ -20,6 +20,10 @@ jobs:
           fetch-depth: 0
       - name: Main lineage guard
         run: node scripts/main-lineage-guard.cjs
+      - name: Device registry guard
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/device-registry-guard.cjs
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -37,3 +41,5 @@ jobs:
         run: node --test tests/merge-gate.test.cjs
       - name: Main lineage guard contract
         run: node --test tests/main-lineage-guard.test.cjs
+      - name: Device registry guard contract
+        run: node --test tests/device-registry-guard.test.cjs
