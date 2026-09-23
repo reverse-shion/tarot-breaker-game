@@ -70,7 +70,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
         this.naturalWidth = 2172;
         this.naturalHeight = 724;
       }
-      queueMicrotask(() => this.onload());
+      queueMicrotask(() => this.onload?.());
     }
   }
   const fetched = [];
@@ -97,7 +97,9 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
     pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy);
   };
-  elements.start.emit('click'); tick(120);
+  // Landing entry auto-starts the real Garden runtime. Do not click Start again:
+  // a second begin() is intentionally ignored once running.
+  tick(120);
   return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget };
 }
 
@@ -164,7 +166,7 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); const after = h.state();
-  assert.ok(after.route.length); assert.ok(after.requested); assert.ok(Math.abs(after.requested.x - 810) < 80); assert.ok(Math.abs(after.requested.y - 700) < 80);
+  assert.ok(after.route.length); assert.ok(after.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(after.requested.x - expected.x) < 0.01); assert.ok(Math.abs(after.requested.y - expected.y) < 0.01);
   assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
   h.tick(350); const arrived = h.state();
@@ -177,7 +179,7 @@ test('real event bindings: drag/keyboard/reset cancel and reset clears held stic
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
   h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
   assert.equal(h.elements.joystick.hidden, true); assert.ok(h.state().collisionVersion >= 6);
-  assert.equal(h.state().player.x, h.state().world.w ? h.state().player.x : h.state().player.x);
+  assert.ok(Number.isFinite(h.state().player.x)); assert.ok(Number.isFinite(h.state().player.y));
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
   h.pointer('pointerup', 135, 600); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
@@ -263,7 +265,7 @@ test('Shiopon bounce is visible mid-action and returns to its exact baseline', a
 });
 test('desktop click uses the same input at camera zoom 1.22', async () => {
   const h = await boot({ width: 1280, height: 900 }); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
-  assert.equal(h.state().camera.zoom, 1.22); assert.ok(h.state().requested);
+  assert.equal(h.state().camera.zoom, 1.22); const requested = h.state().requested; const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(requested); assert.ok(Math.abs(requested.x - expected.x) < 0.01); assert.ok(Math.abs(requested.y - expected.y) < 0.01);
   assert.ok(h.state().route.length);
 });
 test('preview asset configuration loads the same game and rejects invalid collision data', async () => {
