@@ -194,6 +194,29 @@ test('Garden pointer payload is accepted by the production controls contract', a
   assert.ok(controls.state.requested);
 });
 
+test('Garden registered pointerdown handler accepts the same browser-like event directly', async () => {
+  const h = await boot();
+  const handler = h.elements.game.listeners.get('pointerdown')?.[0];
+  assert.equal(typeof handler, 'function');
+  const before = h.state();
+  const p = h.safeTarget({ x: 810, y: 700 });
+  const x = (p.x - before.origin.x) * before.camera.zoom;
+  const y = (p.y - before.origin.y) * before.camera.zoom;
+  const event = {
+    type: 'pointerdown',
+    pointerId: 1,
+    clientX: 34 + x,
+    clientY: 20 + y,
+    button: 0,
+    isPrimary: true,
+    timeStamp: 3000,
+    preventDefault() { this.defaultPrevented = true; },
+  };
+  handler(event);
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(h.captured.has(1), true, 'registered game.js pointerdown handler rejected an otherwise valid pointer');
+});
+
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
   const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
