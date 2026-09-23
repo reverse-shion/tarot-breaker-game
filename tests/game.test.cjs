@@ -95,7 +95,12 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
-    pointer('pointerdown', sx, sy); now += 80; pointer('pointerup', sx, sy);
+    const down = pointer('pointerdown', sx, sy);
+    const afterDown = state();
+    now += 80;
+    const up = pointer('pointerup', sx, sy);
+    const afterUp = state();
+    return { sx, sy, down, up, afterDown, afterUp };
   };
   // Landing entry auto-starts the real Garden runtime. Do not click Start again:
   // a second begin() is intentionally ignored once running.
@@ -165,7 +170,9 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
   assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
 });
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
-  const h = await boot(), before = h.state(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); const after = h.state();
+  const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
+  assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
+  assert.ok(trace.afterUp.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp})}`);
   assert.ok(after.route.length); assert.ok(after.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(after.requested.x - expected.x) < 0.01); assert.ok(Math.abs(after.requested.y - expected.y) < 0.01);
   assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); assert.ok(after.player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
