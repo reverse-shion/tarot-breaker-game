@@ -201,9 +201,7 @@ test('four directions use all four Shion walk frames then the matching idle fram
   // This test isolates Shion's authored walk cycle. Put Shiopon in companion
   // follow mode so autonomous NPC collision cannot cancel keyboard movement.
   h.window.emit('tarot-breaker:shiopon-follow-start');
-  h.tapWorld(810, 700); h.tick(250);
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    h.tapWorld(810, 700); h.tick(200);
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
     // The authored walk cadence advances every 0.12s. Observe until all four
     // frames have appeared (bounded to 0.8s) instead of assuming 25 RAF ticks
@@ -213,9 +211,6 @@ test('four directions use all four Shion walk frames then the matching idle fram
       const state = h.state();
       if (state.player.moving) frames.add(state.player.frame);
       assert.equal(state.player.dir, dir);
-    }
-    if (frames.size !== 4) {
-      throw new Error(`walk trace ${dir}: frames=${[...frames].join(',')} state=${JSON.stringify(h.state().player)}`);
     }
     assert.deepEqual([...frames].sort((a, b) => a - b), [0, 1, 2, 3]);
     const walkingCalls = h.drawCalls.slice(drawStart).filter(call => call[0]?.url?.endsWith(`shion_walk_${dir}.png`));
