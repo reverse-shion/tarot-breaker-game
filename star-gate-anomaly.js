@@ -5,12 +5,13 @@ const ASSETS={
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
  anomalyGate:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/garden-star-gate.webp",
- darkEnergy:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_04.webp"]
+ darkEnergy:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_04.webp"],
+ celestialLight:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_04.webp"]
 };
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
 const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
-const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest","sga-dark-frame-01","sga-dark-frame-02","sga-dark-frame-03","sga-dark-frame-04","sga-dark-frame-rise","sga-dark-afterglow"]);
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest","sga-dark-frame-01","sga-dark-frame-02","sga-dark-frame-03","sga-dark-frame-04","sga-dark-frame-rise","sga-dark-afterglow","sga-celestial-frame-01","sga-celestial-frame-02","sga-celestial-frame-03","sga-celestial-frame-04"]);
 class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const DEV_HARNESS = ["star-gate-full","star-gate-camera"].includes(new URLSearchParams(location.search).get("dev"));
@@ -43,6 +44,21 @@ function darkEnergyFrame(n){
  const el=document.querySelector(".sga-dark-energy-frame");
  if(!el)throw new Error("Dark energy sprite layer unavailable");
  el.src=ASSETS.darkEnergy[n-1];
+}
+function celestialLightFrame(n){
+ const el=document.querySelector(".sga-celestial-gate-light-frame");
+ if(!el)throw new Error("Celestial gate light sprite layer unavailable");
+ el.src=ASSETS.celestialLight[n-1];
+}
+async function playCelestialGateLight(){
+ const el=document.querySelector(".sga-celestial-gate-light-frame");
+ if(!el)throw new Error("Celestial gate light sprite layer unavailable");
+ const times=[160,160,190,360];
+ for(let i=0;i<4;i++){
+   celestialLightFrame(i+1);
+   setGateState("sga-celestial-frame-0"+(i+1));
+   await pause(times[i]);
+ }
 }
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
@@ -91,8 +107,8 @@ async function resonance(){
  const framedState=camera.getState();
  if(!framed?.completed||!gateIsFramed(framedState)||!overscanCoversViewport(framedState))throw new StarGateOverscanCoverageError();
  await pause(800);
- setGateState("sga-sky-descent");await pause(1050);
- setGateState("sga-normal-flow");await pause(1320);
+ await playCelestialGateLight();
+ setGateState("sga-normal-flow");await pause(520);
  setGateState("sga-resonance-complete");await pause(1200);
  await say("shion","……星門は、特におかしくないな。");
  await pause(400);
