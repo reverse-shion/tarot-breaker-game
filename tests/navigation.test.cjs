@@ -86,7 +86,9 @@ test('authored east side passage stays walkable while the far map edge remains b
   const eastPassage = { x: 1188, y: 497 };
   assert.equal(collision.isWalkable(eastPassage.x, eastPassage.y), true);
   checkRoute(nav.findPath(spawn, eastPassage));
-  assert.equal(collision.isWalkable(1300, 500), false);
+  // v6 authors a walkable east-side polygon through x≈1440 at this height.
+  // Keep the boundary guard outside that authored corridor instead of rejecting valid map space.
+  assert.equal(collision.isWalkable(1447, 500), false);
   assert.equal(nav.findPath(spawn, { x: NaN, y: 0 }), null);
   assert.equal(nav.findPath({ x: -1, y: -1 }, spawn), null);
   assert.doesNotThrow(() => nav.findPath(spawn, { x: -9999, y: 9999 }));
