@@ -75,7 +75,7 @@
     right: Object.freeze({ x: 1, y: 0 }),
   });
   const params = new URLSearchParams(location.search);
-  const DEV_STAR_GATE_CHOICE = ["star-gate-choice","star-gate-camera","star-gate-full"].includes(params.get("dev"));
+  const DEV_STAR_GATE_CHOICE = ["star-gate-choice","star-gate-camera","star-gate-full","future-fixation-stage1"].includes(params.get("dev"));
   const enteringFromLanding = params.get("from") === "landing" || DEV_STAR_GATE_CHOICE;
   if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
