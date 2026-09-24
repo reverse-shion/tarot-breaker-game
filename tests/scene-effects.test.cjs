@@ -31,7 +31,7 @@ test('foot baseline is strict, local to the object and independent for each acto
 test('local physical bases remain solid for manual movement and pathfinding without editing authored areas',()=>{
  const authoredBlocked=JSON.parse(JSON.stringify(data.blockedAreas));
  const c=createCollision({...data,blockedAreas:[...data.blockedAreas,...layout.solidBases]});
- const nav=createNavigator(c,16),spawn={x:729,y:1015};
+ const nav=createNavigator(c,16),spawn=c.nearestWalkable({x:724,y:1015});
  assert.equal(c.isWalkable(800,533),false);
  assert.equal(c.isWalkable(760,240),false);
  assert.equal(c.segmentClear({x:800,y:620},{x:800,y:440}),false);
@@ -56,7 +56,7 @@ function bootScene(){
   createElement:()=>({width:0,height:0,getContext:()=>makeContext('tile-'+surfaces++)})};
  const window={TarotSceneLayout:{...layout,paintBackground(){},paintForeground(){},splitCrystal(){}},addEventListener(){},dispatchEvent(){}};
  vm.runInNewContext(fs.readFileSync('scene-effects.js','utf8'),{
-  window,document,location:{search:''},URLSearchParams,CustomEvent:class{},console,
+  window,document,location:{search:'',pathname:'/tarot-breaker-game/index.html'},URLSearchParams,CustomEvent:class{},console,
   fetch:async()=>({ok:true,json:async()=>depthData})
  });
  return {api:window.TarotSceneEffects,calls,shell,layer,gate};
