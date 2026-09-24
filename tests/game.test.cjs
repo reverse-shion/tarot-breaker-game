@@ -59,6 +59,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
       image.onerror = reject;
     }),
     syncCamera() {},
+    drawMaskedActor(ctx, actor, scale, quality, paint) { paint(ctx); },
     drawDebug() {},
   };
   window.CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
