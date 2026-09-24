@@ -45,7 +45,7 @@ function bootScene(){
  const calls=[];let surfaces=0;
  const makeContext=tag=>new Proxy({},{get:(_,key)=>(...args)=>{calls.push({tag,key,args});},set:()=>true});
  const foreground={getContext:()=>makeContext('foreground')},background={getContext:()=>makeContext('background')};
- const image={complete:true,naturalWidth:1448,src:'/asset.webp'};
+ const image={complete:true,naturalWidth:1448,src:'/asset.webp',closest(){return null;},addEventListener(){},removeEventListener(){}};
  const gate={dataset:{worldX:layout.gate.x,worldY:layout.gate.y,worldW:layout.gate.w,worldH:layout.gate.h},style:{},querySelector:()=>image};
  const fountain={dataset:{worldX:625,worldY:388,worldW:350,worldH:245},style:{},querySelector:()=>image};
  const layer={style:{},getBoundingClientRect(){throw new Error('per-frame layout read');}};
