@@ -679,82 +679,48 @@
 }
 
 
-/* Celestial Convergence Flow v2 — normal resonance only. */
+/* Celestial Gate 01→02→03→04 sequence, integrated into the world-space gate layer. */
 .scene-celestial-gate-light{display:block;opacity:0;visibility:hidden;overflow:visible;pointer-events:none}
-.sga-continuous-energy-flow{position:absolute;inset:0;z-index:0;overflow:visible;opacity:0;pointer-events:none;transition:opacity 260ms ease}
 #game-shell.sga-celestial-frame-01 .scene-celestial-gate-light,
 #game-shell.sga-celestial-frame-02 .scene-celestial-gate-light,
 #game-shell.sga-celestial-frame-03 .scene-celestial-gate-light,
-#game-shell.sga-celestial-frame-04 .scene-celestial-gate-light,
+#game-shell.sga-celestial-frame-04 .scene-celestial-gate-light{opacity:1;visibility:visible}
+
+.sga-sequence-layer{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;will-change:opacity,transform;mix-blend-mode:screen}
+.sga-sequence-layer img{width:auto;height:104%;max-width:110%;object-fit:contain;filter:drop-shadow(0 0 18px rgba(140,170,255,.35))}
+.sga-sequence-l1{transform:scale(.82) translateY(2%)}
+.sga-sequence-l2{transform:scale(.9)}
+.sga-sequence-l3{transform:scale(.95)}
+.sga-sequence-l4{transform:scale(1)}
+.sga-sequence-glowfloor{position:absolute;left:0;right:0;bottom:0;height:35%;z-index:0;background:radial-gradient(ellipse at 50% 100%,rgba(120,150,255,.35),transparent 70%);opacity:0;pointer-events:none;transition:opacity 1.2s ease}
+.sga-sequence-flash{position:absolute;inset:0;z-index:3;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen}
+
+#game-shell.sga-celestial-frame-01 .sga-sequence-l1,
+#game-shell.sga-celestial-frame-02 .sga-sequence-l2,
+#game-shell.sga-celestial-frame-03 .sga-sequence-l3,
+#game-shell.sga-celestial-frame-04 .sga-sequence-l4{opacity:1;transform:scale(1) translateY(0);transition:opacity .62s cubic-bezier(.2,.8,.2,1),transform .62s cubic-bezier(.2,.8,.2,1)}
+
+#game-shell.sga-celestial-frame-02 .sga-sequence-l1,
+#game-shell.sga-celestial-frame-03 .sga-sequence-l2,
+#game-shell.sga-celestial-frame-04 .sga-sequence-l3{opacity:0;transition:opacity .35s ease-out}
+
+/* Preserve the reference overlap: previous frame remains briefly while the next frame appears. */
+#game-shell.sga-celestial-frame-02.sga-sequence-overlap .sga-sequence-l1,
+#game-shell.sga-celestial-frame-03.sga-sequence-overlap .sga-sequence-l2,
+#game-shell.sga-celestial-frame-04.sga-sequence-overlap .sga-sequence-l3{opacity:1}
+
+/* 03/04 transition flashes and the final floor glow. */
+#game-shell.sga-sequence-flash-on .sga-sequence-flash{animation:sgaSequenceFlash .32s ease-out forwards}
+#game-shell.sga-celestial-frame-04 .sga-sequence-glowfloor{opacity:1}
+
+/* 04 fades away after its hold instead of entering an idle loop. */
 #game-shell.sga-normal-flow .scene-celestial-gate-light{opacity:1;visibility:visible}
-#game-shell.sga-celestial-frame-01 .sga-continuous-energy-flow{opacity:.36}
-#game-shell.sga-celestial-frame-02 .sga-continuous-energy-flow{opacity:.68}
-#game-shell.sga-celestial-frame-03 .sga-continuous-energy-flow{opacity:.88}
-#game-shell.sga-celestial-frame-04 .sga-continuous-energy-flow{opacity:.62}
-#game-shell.sga-normal-flow .sga-continuous-energy-flow{opacity:.14}
+#game-shell.sga-normal-flow .sga-sequence-l4{opacity:0;transition:opacity .42s ease-out}
+#game-shell.sga-normal-flow .sga-sequence-glowfloor{opacity:0;transition:opacity .42s ease-out}
 
-.sga-flow-glow,.sga-flow-core,.sga-flow-stream,.sga-flow-star,.sga-flow-spiral{position:absolute;pointer-events:none;will-change:transform,opacity}
-.sga-celestial-final-frame{position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none;will-change:opacity;transition:opacity 320ms ease-in}
-#game-shell.sga-celestial-frame-04 .sga-celestial-final-frame{opacity:1}
-#game-shell.sga-normal-flow .sga-celestial-final-frame{opacity:0;transition:opacity 420ms ease-out}
-.sga-flow-glow{
- left:24%;top:1%;width:52%;height:94%;opacity:.14;
- background:radial-gradient(ellipse at 50% 78%,rgba(220,242,255,.22),rgba(161,205,255,.09) 36%,rgba(190,166,240,.05) 58%,transparent 76%);
- clip-path:polygon(5% 0,95% 0,64% 100%,36% 100%);
- filter:blur(7px);animation:sgaConvergenceBreathe 1500ms ease-in-out infinite alternate;
-}
-.sga-flow-core{
- left:47.5%;top:0;width:5%;height:93%;opacity:.72;border-radius:50%;
- background:linear-gradient(180deg,transparent 0%,rgba(242,252,255,.28) 10%,rgba(188,232,255,.58) 48%,rgba(172,194,255,.34) 80%,transparent 100%);
- filter:blur(2px);transform-origin:50% 100%;animation:sgaCorePulse 1180ms ease-in-out infinite alternate;
-}
-.sga-flow-core::after{
- content:"";position:absolute;left:34%;top:-8%;width:32%;height:72%;
- background:linear-gradient(180deg,transparent,rgba(239,253,255,.85) 48%,transparent);
- animation:sgaCoreCurrent 900ms linear infinite;
-}
-
-.sga-flow-stream{
- top:-14%;width:3.2%;height:62%;opacity:.28;border-radius:50%;
- background:linear-gradient(180deg,transparent 0%,rgba(230,249,255,.16) 14%,rgba(180,222,255,.5) 50%,rgba(191,169,241,.16) 82%,transparent 100%);
- filter:blur(1.5px);transform-origin:50% 100%;
-}
-.sga-flow-stream.stream-a{left:29%;animation:sgaConvergeLeftWide 900ms linear infinite}
-.sga-flow-stream.stream-b{left:37%;animation:sgaConvergeLeft 1050ms linear -420ms infinite}
-.sga-flow-stream.stream-c{left:43%;width:2.4%;animation:sgaConvergeLeftNear 1180ms linear -710ms infinite}
-.sga-flow-stream.stream-d{left:55%;width:2.8%;animation:sgaConvergeRightNear 980ms linear -310ms infinite}
-.sga-flow-stream.stream-e{left:62%;animation:sgaConvergeRight 1210ms linear -620ms infinite}
-.sga-flow-stream.stream-f{left:69%;width:2.5%;animation:sgaConvergeRightWide 1320ms linear -840ms infinite}
-
-.sga-flow-star{width:6px;height:10px;opacity:0;background:rgba(225,248,255,.9);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);filter:drop-shadow(0 0 3px rgba(152,215,255,.6));animation:sgaStarFall var(--dur) linear var(--delay) infinite}
-.sga-flow-star:nth-of-type(9),.sga-flow-star:nth-of-type(12),.sga-flow-star:nth-of-type(15){background:rgba(218,190,255,.82);filter:drop-shadow(0 0 3px rgba(190,151,255,.5))}
-.sga-flow-star.star-1{left:31%;top:2%;--dur:980ms;--delay:-180ms}.sga-flow-star.star-2{left:67%;top:5%;--dur:1240ms;--delay:-760ms}
-.sga-flow-star.star-3{left:39%;top:10%;--dur:1120ms;--delay:-520ms}.sga-flow-star.star-4{left:58%;top:14%;--dur:1480ms;--delay:-910ms}
-.sga-flow-star.star-5{left:44%;top:4%;--dur:920ms;--delay:-330ms}.sga-flow-star.star-6{left:72%;top:18%;--dur:1380ms;--delay:-1040ms}
-.sga-flow-star.star-7{left:27%;top:20%;--dur:1540ms;--delay:-650ms}.sga-flow-star.star-8{left:54%;top:7%;--dur:1060ms;--delay:-820ms}
-.sga-flow-star.star-9{left:35%;top:16%;--dur:1320ms;--delay:-260ms}.sga-flow-star.star-10{left:64%;top:1%;--dur:1180ms;--delay:-570ms}
-
-.sga-flow-spiral{
- left:31%;top:18%;width:38%;height:55%;opacity:.16;border:1.5px solid rgba(191,168,244,.5);border-left-color:transparent;border-right-color:rgba(211,188,255,.34);border-radius:50%;transform:rotate(18deg) scaleX(.78);
- filter:drop-shadow(0 0 2px rgba(155,193,255,.35));animation:sgaSpiralDescend 1500ms ease-in-out infinite;
-}
-
-/* Convergence / absorption into the established gate centre. */
-#game-shell.sga-celestial-frame-03 .sga-flow-glow{opacity:.16}
-#game-shell.sga-celestial-frame-03 .sga-flow-core{opacity:1;transform:scaleX(1.28);filter:blur(1.4px) drop-shadow(0 0 6px rgba(198,236,255,.72))}
-#game-shell.sga-celestial-frame-04 .sga-flow-glow{opacity:.06}
-#game-shell.sga-celestial-frame-04 .sga-flow-core{transform:scaleX(.58);opacity:.28;transition:opacity 300ms ease-out,transform 300ms ease-out}
-#game-shell.sga-celestial-frame-04 .sga-flow-stream{opacity:.08}
-#game-shell.sga-celestial-frame-04 .sga-flow-spiral{opacity:.08}
-#game-shell.sga-normal-flow .sga-flow-glow,
-#game-shell.sga-normal-flow .sga-flow-stream,
-#game-shell.sga-normal-flow .sga-flow-star,
-#game-shell.sga-normal-flow .sga-flow-spiral{opacity:0;transition:opacity 260ms ease-out}
-#game-shell.sga-normal-flow .sga-flow-core{opacity:.16;transform:scaleX(.5);transition:opacity 260ms ease-out,transform 260ms ease-out}
-
-/* Absorption response: brightness only; established inner-light geometry is untouched. */
-#game-shell.sga-celestial-frame-04 .scene-gate-inner-light>img{filter:brightness(1.22) drop-shadow(0 0 5px rgba(187,226,255,.36))!important;transition:filter 240ms ease}
-#game-shell.sga-normal-flow .scene-gate-inner-light>img{filter:brightness(1.08)!important;transition:filter 260ms ease}
+/* Absorption response only; established inner-light geometry is untouched. */
+#game-shell.sga-celestial-frame-04 .scene-gate-inner-light>img{filter:brightness(1.22) drop-shadow(0 0 5px rgba(187,226,255,.36))!important;transition:filter .24s ease}
+#game-shell.sga-normal-flow .scene-gate-inner-light>img{filter:brightness(1.08)!important;transition:filter .42s ease}
 
 /* Legacy normal CSS pillar remains disabled. */
 #game-shell.sga-celestial-frame-01 .sga-sky-flow,
@@ -768,24 +734,9 @@
 #game-shell.sga-celestial-frame-04 .sga-energy-column,
 #game-shell.sga-normal-flow .sga-energy-column{display:none!important}
 
-@keyframes sgaCoreCurrent{0%{transform:translate3d(0,-18%,0);opacity:0}18%{opacity:.75}82%{opacity:.5}100%{transform:translate3d(0,72%,0);opacity:0}}
-@keyframes sgaCorePulse{from{transform:scaleX(.86);opacity:.58}to{transform:scaleX(1);opacity:.78}}
-@keyframes sgaConvergenceBreathe{from{transform:scaleX(.92);opacity:.1}to{transform:scaleX(1.02);opacity:.16}}
-@keyframes sgaConvergeLeftWide{0%{transform:translate3d(-8px,-8%,0) rotate(-3deg);opacity:0}16%{opacity:.24}100%{transform:translate3d(78px,108%,0) rotate(3deg);opacity:0}}
-@keyframes sgaConvergeLeft{0%{transform:translate3d(-4px,-8%,0) rotate(-2deg);opacity:0}18%{opacity:.3}100%{transform:translate3d(48px,108%,0) rotate(2deg);opacity:0}}
-@keyframes sgaConvergeLeftNear{0%{transform:translate3d(0,-8%,0);opacity:0}18%{opacity:.32}100%{transform:translate3d(25px,108%,0);opacity:0}}
-@keyframes sgaConvergeRightNear{0%{transform:translate3d(0,-8%,0);opacity:0}18%{opacity:.3}100%{transform:translate3d(-24px,108%,0);opacity:0}}
-@keyframes sgaConvergeRight{0%{transform:translate3d(4px,-8%,0) rotate(2deg);opacity:0}18%{opacity:.28}100%{transform:translate3d(-48px,108%,0) rotate(-2deg);opacity:0}}
-@keyframes sgaConvergeRightWide{0%{transform:translate3d(8px,-8%,0) rotate(3deg);opacity:0}16%{opacity:.24}100%{transform:translate3d(-78px,108%,0) rotate(-3deg);opacity:0}}
-@keyframes sgaStarFall{0%{transform:translate3d(0,-20px,0) scale(.7);opacity:0}18%{opacity:.7}68%{opacity:.48}100%{transform:translate3d(var(--star-x,0),470px,0) scale(.9);opacity:0}}
-@keyframes sgaSpiralDescend{0%{transform:translate3d(0,-28px,0) rotate(12deg) scaleX(.68);opacity:0}24%{opacity:.16}62%{transform:translate3d(0,90px,0) rotate(-10deg) scaleX(.86);opacity:.16}100%{transform:translate3d(0,190px,0) rotate(12deg) scaleX(.58);opacity:0}}
-
-.sga-flow-star.star-1,.sga-flow-star.star-3,.sga-flow-star.star-5,.sga-flow-star.star-7,.sga-flow-star.star-9{--star-x:38px}
-.sga-flow-star.star-2,.sga-flow-star.star-4,.sga-flow-star.star-6,.sga-flow-star.star-8,.sga-flow-star.star-10{--star-x:-38px}
-
+@keyframes sgaSequenceFlash{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){
- .sga-flow-stream,.sga-flow-star,.sga-flow-core::after{animation-duration:1.8s!important}
- .sga-flow-spiral{animation:none!important;opacity:.06}
- .sga-flow-glow,.sga-flow-core{animation-duration:2s!important}
+ .sga-sequence-layer{transition:opacity .18s linear!important;transform:none!important}
+ .sga-sequence-flash{animation:none!important}
 }
 
