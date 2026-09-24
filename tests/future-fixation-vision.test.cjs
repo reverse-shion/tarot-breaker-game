@@ -130,3 +130,10 @@ test("Stage 3 preserves current Shion world position and NPC isolation",()=>{
 test("Stage 3 asset order is reach draw check raise reach",()=>{
  assert.match(source,/shion:\["\.\/assets\/sprites\/shion\/shion_card_01_reach\.webp","\.\/assets\/sprites\/shion\/shion_card_02_draw\.webp","\.\/assets\/sprites\/shion\/shion_card_03_check\.webp","\.\/assets\/sprites\/shion\/shion_card_04_raise\.webp","\.\/assets\/sprites\/shion\/shion_card_05_reach\.webp"\]/);
 });
+
+test("Stage 3 Future Shion is not trapped inside the hidden legacy Vision overlay",()=>{
+ const mount=source.slice(source.indexOf("root.innerHTML="),source.indexOf("document.getElementById",source.indexOf("root.innerHTML=")));
+ const visionClose=mount.indexOf('</div><img class="sga-shion"');
+ assert.ok(visionClose>=0,"Future Shion must be a sibling after .sga-vision, not its child");
+ assert.match(css,/\.sga-card-phase \.sga-shion\.visible \{ opacity:1; \}/);
+});
