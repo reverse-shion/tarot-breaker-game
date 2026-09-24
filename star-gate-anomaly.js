@@ -176,6 +176,10 @@ async function futureFixationStage2(){
  if(!before)throw new Error("Shion stage state unavailable before Future Fixation Vision Stage 2");
  const v=root.querySelector(".sga-vision"),pan=root.querySelector(".sga-pan");
  // Stage 2 replaces only the world image. Current Shion remains anchored at the Stage 1 coordinate.
+ // Stage 2 invariant: keep every non-Shion actor suppressed before revealing ruins.
+ const actorVisibility=window.TarotActorVisibility;
+ actorVisibility?.set("shiopon",0);
+ actorVisibility?.set("lumiere",0);
  root.classList.add("sga-future-ruins");
  v.classList.add("visible");
  await pause(850);
