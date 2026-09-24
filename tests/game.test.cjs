@@ -8,7 +8,7 @@ const collisionData = require('../assets/maps/star-country-gate-garden-collision
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, search = '?navDebug=1&from=landing' } = {}) {
-  let raf, now = 1000;
+  let raf, now = 1000, rafQueue = [];
   const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
@@ -78,12 +78,19 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   deterministicMath.random = () => 0.5;
   const location = { search, href: '' };
   const sandbox = vm.createContext({ window, document, Image, CustomEvent: window.CustomEvent, URLSearchParams, location,
-    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {}, clearTimeout() {},
+    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; rafQueue.push(fn); }, setTimeout() {}, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
-  await new Promise(setImmediate);
+  for (let i = 0; i < 8; i++) {
+    await new Promise(setImmediate);
+    if (rafQueue.length) {
+      const queue = rafQueue.splice(0);
+      now += 1000 / 60;
+      for (const fn of queue) fn(now);
+    }
+  }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
