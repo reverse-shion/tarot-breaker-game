@@ -46,9 +46,9 @@ function recordingContext() {
 
 test('latest uploaded artwork URLs are cache-busted independently', () => {
   assert.match(html, /star-country-world-islands\.webp\?asset=34856728cf2b/);
-  assert.match(html, /star-country-gate-garden-foreground\.webp\?v=bffada4ffedbc317/);
-  assert.match(html, /scene-preview41-fix\.js\?v=1\.5\.0/);
-  assert.match(html, /game\.js\?v=1\.5\.0/);
+  assert.match(html, /star-country-gate-garden-transparent\.webp\?v=cca8dd37b9/);
+  assert.match(html, /scene-preview41-fix\.js\?v=inner-light-size-23086-v1/);
+  assert.match(html, /game\.js\?v=garden-arrival-v1/);
 });
 
 test('replacement islands fit completely inside the canonical scene', () => {
@@ -83,6 +83,8 @@ test('replacement foreground restores authored scale, keeps the approved +4px nu
   assert.equal(y, 0);
   assert.equal(width, 1448);
   assert.equal(height, 1086);
-  assert.equal(layout.artworkPlacement.foreground.repeat, false);
-  assert.equal(layout.artworkModelVersion, 'foreground-native-reference-1to1');
+  assert.equal(layout.artworkPlacement.foreground.mode, 'native-reference-1to1');
+  assert.equal(layout.artworkPlacement.foreground.x, 0);
+  assert.equal(layout.artworkPlacement.foreground.y, 0);
+  assert.equal(layout.artworkModelVersion, 'native-foreground-v6');
 });
