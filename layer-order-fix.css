@@ -21,6 +21,11 @@
   z-index: 3 !important;
 }
 
+/* Event reverse-flow artwork sits above scenery but below the gate inner light. */
+.scene-dark-energy-rise {
+  z-index: 3 !important;
+}
+
 .scene-gate-inner-light,
 .scene-gate-particle,
 .scene-gate-event {
