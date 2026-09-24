@@ -103,11 +103,11 @@ test('companion farewell finishes before boarding, stays on ground during flight
   const t=await landing('?from=garden',{companion:{mode:'following'},landingMemoryDone:true});const m=t.h.testMap;
   m.player.target={x:725,y:788};
   for(let i=1;i<500 && !t.lines.length;i++)m.loop(10000+i*16);
-  assert.equal(t.lines[0]?.text,'しおぽんはここで待ってるぴょん！');
+  assert.equal(t.lines[0]?.text,'しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！');
   assert.equal(m.ride.mode,'ground');assert.equal(m.companion.following,false);
   assert.ok(Math.hypot(m.companion.x-725,m.companion.y-788)>66);
   const waiting={x:m.companion.x,y:m.companion.y};
-  m.advance();await t.flush();assert.equal(t.lines[1]?.text,'シオンさん、いってらっしゃい');
+  m.advance();await t.flush();assert.equal(t.lines[1]?.text,'いってらっしゃい、ぴょん！');
   assert.equal(t.lines[1]?.speaker,'しおぽん');assert.equal(m.ride.mode,'ground');
   m.advance();await t.flush();assert.equal(m.ride.mode,'boarding');
   for(let i=1;i<80;i++)m.loop(20000+i*16);assert.equal(m.ride.mode,'flying');
