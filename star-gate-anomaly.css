@@ -523,6 +523,30 @@
 #game-shell.sga-dark-frame-01 .sga-dark-energy-frame{
   animation:sgaDarkEnergySeep01 600ms cubic-bezier(.2,.85,.15,1) both;
 }
+.scene-dark-energy-rise .sga-dark-energy-frame-next{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:0;
+  transform:translate3d(0,7px,0) scaleY(.95);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+#game-shell.sga-dark-frame-02.sga-dark-01-02-overlap .sga-dark-energy-frame-next{
+  opacity:1;
+  transform:translate3d(0,0,0) scaleY(1);
+  transition:opacity 600ms cubic-bezier(.2,.85,.15,1),transform 600ms cubic-bezier(.2,.85,.15,1);
+}
+#game-shell.sga-dark-frame-02:not(.sga-dark-01-02-overlap) .sga-dark-energy-frame-next{
+  opacity:1;
+  transform:translate3d(0,0,0) scaleY(1);
+}
+#game-shell.sga-dark-frame-02:not(.sga-dark-01-02-overlap) .sga-dark-energy-frame{
+  opacity:0;
+  transition:opacity 300ms ease-out;
+}
 .scene-dark-energy-rise .sga-dark-afterglow{
   position:absolute;
   left:39%;
