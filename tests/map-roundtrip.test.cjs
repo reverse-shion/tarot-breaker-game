@@ -47,7 +47,14 @@ function harness(search = '', saved = {}) {
     }, TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
   };
   h.window=h;vm.createContext(h);vm.runInContext(fs.readFileSync('map-journey.js','utf8'),h);
-  return {h,e:element,audio,lines,timers,frames,listeners,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await Promise.resolve();}}};
+  const fetches = [];
+  const originalFetch = h.fetch;
+  h.fetch = async url => {
+    const result = await originalFetch(url);
+    fetches.push({url:String(url),ok:result.ok});
+    return result;
+  };
+  return {h,e:element,audio,lines,timers,frames,listeners,fetches,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await Promise.resolve();}}};
 }
 function inline(file){return [...fs.readFileSync(file,'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];}
 async function landing(search, saved){
@@ -74,7 +81,14 @@ test('BGM waits for movement, is one looping instance, retries rejection and nev
 test('PAD return enters the real north path, does not replay memory or immediately leave', async()=>{
   const t=await landing('?from=garden');const m=t.h.testMap;
   assert.equal(m.player.y,257);assert.equal(m.player.dir,'down');assert.equal(m.memoryDone,true);
-  assert.ok(m.isGroundWalkable(m.player.x,m.player.y));
+  const returnWalkable = m.isGroundWalkable(m.player.x,m.player.y);
+  if (!returnWalkable) {
+    console.error('PAD_RETURN_TRACE', JSON.stringify({
+      player:{x:m.player.x,y:m.player.y,dir:m.player.dir},
+      collisionFetches:t.fetches,
+    }));
+  }
+  assert.ok(returnWalkable);
   for(let i=1;i<10;i++)m.loop(10000+i*16);await t.flush();assert.equal(t.h.location.href,'');
   // Walk back north over the existing entrance, rather than touching a corner.
   m.player.target={x:724,y:200};for(let i=1;i<90;i++)m.loop(10200+i*16);
