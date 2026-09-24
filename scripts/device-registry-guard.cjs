@@ -21,6 +21,8 @@ catch { fail("Could not determine PR changed files."); }
 const files=changed.split("\n").filter(Boolean);
 const ASSET_EXTENSIONS=/\.(?:avif|gif|jpe?g|png|svg|webp|mp3|ogg|wav|m4a|aac|flac|woff2?|ttf|otf)$/i;
 const assetOnly=files.length>0 && files.every(f => f.startsWith("assets/") && ASSET_EXTENSIONS.test(f));
+const SAFE_ASSET_ONLY_DIRS=["assets/events/","assets/audio/","assets/tarot/","assets/ui/","assets/sprites/"];
+const behaviorNeutralAssetOnly=assetOnly && files.every(f => SAFE_ASSET_ONLY_DIRS.some(dir => f.startsWith(dir)));
 let unreferencedNewAssetOnly=false;
 if (assetOnly) {
   unreferencedNewAssetOnly=files.every(f => {
@@ -42,6 +44,11 @@ const runtime=files.filter(f =>
 );
 
 const body=process.env.PR_BODY || "";
+if (behaviorNeutralAssetOnly) {
+  console.log("DEVICE REGISTRY GUARD: PASS (behavior-neutral asset-only PR)");
+  console.log("Only recognized asset files under approved presentation directories changed; no runtime/code/config file changed.");
+  process.exit(0);
+}
 if (unreferencedNewAssetOnly) {
   console.log("DEVICE REGISTRY GUARD: PASS (unreferenced new asset-only PR)");
   console.log("Files are newly added under assets/, are not present on the base branch, and are not referenced by the current base.");
