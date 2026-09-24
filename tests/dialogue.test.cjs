@@ -134,6 +134,7 @@ function bootDialogue() {
     Math,
     JSON,
   });
+  vm.runInContext(fs.readFileSync('shared-dialogue.js', 'utf8'), sandbox, { filename: 'shared-dialogue.js' });
   vm.runInContext(fs.readFileSync('dialogue.js', 'utf8'), sandbox, { filename: 'dialogue.js' });
 
   const controls = window.TarotControls.createControls();
