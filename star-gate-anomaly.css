@@ -687,7 +687,7 @@
 .scene-celestial-gate-light .sga-celestial-gate-light-frame{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transform:translate3d(0,-6px,0);
-  transition:opacity 110ms linear,transform 140ms ease-out;
+  transition:opacity 135ms linear,transform 155ms ease-out;
   will-change:transform,opacity;
 }
 .scene-celestial-gate-light .sga-celestial-gate-light-frame.is-active{
