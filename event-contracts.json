@@ -3,7 +3,7 @@
   "events": {
     "star-gate-anomaly": {
       "map": "star_gate_garden",
-      "status": "DEVICE VERIFIED",
+      "status": "PARTIALLY DEVICE VERIFIED",
       "productionEnabled": false,
       "startEvent": "tarot-breaker:star-gate-investigate",
       "segments": {
@@ -13,7 +13,7 @@
         "star-gate-reverse-flow": "DEVICE VERIFIED",
         "star-gate-sky-release": "DEVICE VERIFIED",
         "star-gate-camera-return": "DEVICE VERIFIED",
-        "star-gate-aftermath": "DEVICE VERIFIED"
+        "star-gate-aftermath": "NOT TESTED"
       },
       "verifiedBaseline": "1c75354ea3b1de2f5e8cedeb0fbbc90d7cb3f839"
     }
