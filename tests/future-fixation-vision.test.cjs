@@ -9,7 +9,8 @@ test("Future Fixation Stage 1 begins only after the locked camera return",()=>{
  const returned=source.indexOf("await camera.returnToPlayer(1350)");
  const fn=source.indexOf("async function futureFixationStage1()");
  assert.ok(returned>=0&&fn>returned);
- assert.match(source,/const FUTURE_STAGE1_DEV=DEV_MODE==="star-gate-full"/);\n assert.match(source,/if\(FUTURE_STAGE1_DEV\)await futureFixationStage1\(\)/);
+ assert.match(source,/const FUTURE_STAGE1_DEV=DEV_MODE==="star-gate-full"/);
+ assert.match(source,/if\(FUTURE_STAGE1_DEV\)await futureFixationStage1\(\)/);
 });
 
 test("Stage 1 preserves Shion world position and uses dark, not white, interruption",()=>{
