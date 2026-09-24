@@ -11,7 +11,8 @@ test("Future Fixation Stage 1 begins only after the locked camera return",()=>{
  const fn=source.indexOf("async function futureFixationStage1()");
  assert.ok(returned>=0&&fn>returned);
  assert.match(source,/const FUTURE_STAGE1_DEV=DEV_MODE==="star-gate-full"/);
- assert.match(source,/if\(FUTURE_STAGE1_DEV\)\{await futureFixationStage1\(\);await futureFixationStage2\(\)\}/);
+ const devChain=source.match(/if\(FUTURE_STAGE1_DEV\)\{([^}]*)\}return;/)?.[1]||"";
+ assert.match(devChain,/^await futureFixationStage1\(\);await futureFixationStage2\(\);await futureFixationStage3\(\)$/);
 });
 
 test("Stage 1 preserves Shion world position and uses dark, not white, interruption",()=>{
@@ -70,9 +71,15 @@ test("Blackout releases before current Shion fades in",()=>{
  assert.doesNotMatch(css,/sga-future-shion-only:not\(\.sga-future-ruins\) \.sga-future-blackout\{opacity:1\}/);
 });
 
-test("Stage 2 preserves scope and does not start Stage 3",()=>{
- assert.match(source,/await futureFixationStage1\(\);await futureFixationStage2\(\)/);
- assert.doesNotMatch(source,/await futureFixationStage3\(\)/);
+test("Stage 2 remains isolated and Stage 3 starts only after Stage 2 returns",()=>{
+ const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function futureFixationStage3"));
+ assert.doesNotMatch(stage2,/futureFixationStage3\(/);
+ const run=source.slice(source.indexOf("async function run()"));
+ const s1=run.indexOf("await futureFixationStage1()");
+ const s2=run.indexOf("await futureFixationStage2()");
+ const s3=run.indexOf("await futureFixationStage3()");
+ assert.ok(s1>=0&&s1<s2&&s2<s3);
+ assert.equal((run.match(/await futureFixationStage3\(\)/g)||[]).length,1);
 });
 
 test("Stage 1 Shion orientation is front-left-right-front without movement",()=>{
