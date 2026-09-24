@@ -3,12 +3,14 @@
 const ASSETS={
  ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
- aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp"
+ aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
+ anomalyGate:"./assets/events/gate-vision/garden-star-gate.webp",
+ darkEnergy:["./assets/events/gate-vision/dark_energy_rise_01.webp","./assets/events/gate-vision/dark_energy_rise_02.webp","./assets/events/gate-vision/dark_energy_rise_03.webp","./assets/events/gate-vision/dark_energy_rise_04.webp"]
 };
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
 const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
-const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest"]);
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest","sga-dark-frame-01","sga-dark-frame-02","sga-dark-frame-03","sga-dark-frame-04","sga-dark-frame-rise","sga-dark-afterglow"]);
 class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const DEV_HARNESS = ["star-gate-full","star-gate-camera"].includes(new URLSearchParams(location.search).get("dev"));
@@ -37,6 +39,23 @@ function gateShell(){return document.getElementById("game-shell")}
 function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
 function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
 function samePoint(a,b){return Math.abs(a.x-b.x)<.001&&Math.abs(a.y-b.y)<.001}
+function darkEnergyFrame(n){
+ const el=document.querySelector(".sga-dark-energy-frame");
+ if(!el)throw new Error("Dark energy sprite layer unavailable");
+ el.src=ASSETS.darkEnergy[n-1];
+}
+async function playDarkEnergyReverse(){
+ const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
+ if(!shell||!el)throw new Error("Dark energy reverse-flow unavailable");
+ const frames=[1,2,3,4],times=[120,120,120,150];
+ for(let i=0;i<frames.length;i++){
+   darkEnergyFrame(frames[i]);setGateState("sga-dark-frame-0"+frames[i]);await pause(times[i]);
+ }
+ setGateState("sga-dark-frame-rise");
+ await pause(950);
+ setGateState("sga-dark-afterglow");
+ await pause(360);
+}
 function gateIsFramed(state){
  const {origin,camera,viewport,scale}=state||{};if(!origin||!camera||!viewport||!scale)return false;
  const left=(GATE_BOUNDS.left*scale.x-origin.x)*camera.zoom;
@@ -81,9 +100,8 @@ async function resonance(){
  const lumiereDuringAnomaly=stage.getState().actors.lumiere;
  if(!samePoint(lumiereStart,lumiereDuringAnomaly))throw new Error("Lumiere moved during Star Gate anomaly");
  setGateState("sga-anomaly");await pause(480);
- setGateState("sga-reverse-gate");await pause(1100);
- setGateState("sga-reverse-flow");await pause(1050);
- setGateState("sga-skyward-release");await pause(1050);
+ setGateState("sga-reverse-gate");await pause(520);
+ await playDarkEnergyReverse();
  setGateState("sga-anomaly-rest");await pause(700);
  await say("lumiere","……？");
  const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
