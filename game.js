@@ -645,10 +645,13 @@
   }
 
   function updatePlayer(dt) {
+    // Scripted stage motion must remain active while interaction input is
+    // locked. The lock blocks player controls, not cinematic actor commands.
+    // Shiopon already follows this ordering in updateShiopon().
+    if (updateStageActor("shion", dt)) return;
     if (leavingMap || interactionLocked) {
       player.moving = false; player.frame = 0; anim = 0; return;
     }
-    if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
 
