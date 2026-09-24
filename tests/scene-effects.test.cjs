@@ -13,8 +13,9 @@ test('gate opening aligns with stair centre; standalone gate is mask-only and fo
  assert.deepEqual(layout.foregroundOffset,{x:-15,y:0});
  assert.equal((html.match(/class="scene-object scene-back scene-gate-base"/g)||[]).length,1);
  assert.match(html,/class="scene-object scene-back scene-gate-base"[\s\S]*?data-mask-only="true"[\s\S]*?hidden/);
- assert.doesNotMatch(html,/scene-front scene-foreground/);
- assert.match(html,/scene-back scene-foreground/);
+ // The authored foreground is intentionally a front world layer: scene-effects.js
+ // paints this canvas and reuses it as the 2.5D actor occlusion mask.
+ assert.match(html,/class="scene-world-layer scene-front scene-foreground"[\s\S]*?<canvas width="1448" height="1086"><\/canvas>/);
  for(const p of [{x:810,y:25},{x:693,y:175},{x:932,y:175},{x:811,y:230}]) assert.ok(layout.contains(p,{type:'poly',points:layout.legacyGate}));
 });
 test('foot baseline is strict, local to the object and independent for each actor',()=>{
@@ -30,7 +31,7 @@ test('foot baseline is strict, local to the object and independent for each acto
 test('local physical bases remain solid for manual movement and pathfinding without editing authored areas',()=>{
  const authoredBlocked=JSON.parse(JSON.stringify(data.blockedAreas));
  const c=createCollision({...data,blockedAreas:[...data.blockedAreas,...layout.solidBases]});
- const nav=createNavigator(c,16),spawn={x:729,y:1015};
+ const nav=createNavigator(c,16),spawn=c.nearestWalkable({x:724,y:1015});
  assert.equal(c.isWalkable(800,533),false);
  assert.equal(c.isWalkable(760,240),false);
  assert.equal(c.segmentClear({x:800,y:620},{x:800,y:440}),false);
@@ -44,7 +45,7 @@ function bootScene(){
  const calls=[];let surfaces=0;
  const makeContext=tag=>new Proxy({},{get:(_,key)=>(...args)=>{calls.push({tag,key,args});},set:()=>true});
  const foreground={getContext:()=>makeContext('foreground')},background={getContext:()=>makeContext('background')};
- const image={complete:true,naturalWidth:1448,src:'/asset.webp'};
+ const image={complete:true,naturalWidth:1448,src:'/asset.webp',closest(){return null;},addEventListener(){},removeEventListener(){}};
  const gate={dataset:{worldX:layout.gate.x,worldY:layout.gate.y,worldW:layout.gate.w,worldH:layout.gate.h},style:{},querySelector:()=>image};
  const fountain={dataset:{worldX:625,worldY:388,worldW:350,worldH:245},style:{},querySelector:()=>image};
  const layer={style:{},getBoundingClientRect(){throw new Error('per-frame layout read');}};
@@ -55,7 +56,7 @@ function bootScene(){
   createElement:()=>({width:0,height:0,getContext:()=>makeContext('tile-'+surfaces++)})};
  const window={TarotSceneLayout:{...layout,paintBackground(){},paintForeground(){},splitCrystal(){}},addEventListener(){},dispatchEvent(){}};
  vm.runInNewContext(fs.readFileSync('scene-effects.js','utf8'),{
-  window,document,location:{search:''},URLSearchParams,CustomEvent:class{},console,
+  window,document,location:{search:'',pathname:'/tarot-breaker-game/index.html'},URLSearchParams,CustomEvent:class{},console,
   fetch:async()=>({ok:true,json:async()=>depthData})
  });
  return {api:window.TarotSceneEffects,calls,shell,layer,gate};
@@ -63,12 +64,12 @@ function bootScene(){
 test('rear actor is alpha-masked in an isolated surface; front actor draws directly',async()=>{
  const {api,calls}=bootScene();await api.ready;
  const main={drawImage(...args){calls.push({tag:'main',key:'drawImage',args});}};
- const targets=[];api.drawMaskedActor(main,{x:440,y:420},{x:1,y:1},2,p=>targets.push(p));
+ const targets=[];api.drawMaskedActor(main,{x:400,y:435},{x:1,y:1},2,p=>targets.push(p));
  assert.notEqual(targets[0],main);
  api.drawMaskedActor(main,{x:569,y:470},{x:1,y:1},2,p=>targets.push(p));
  assert.equal(targets[1],main);
  assert.equal(calls.filter(c=>c.tag==='main'&&c.key==='drawImage').length,1);
- api.drawMaskedActor(main,{x:880,y:840},{x:2,y:2},1,p=>targets.push(p));
+ api.drawMaskedActor(main,{x:2080,y:1740},{x:2,y:2},1,p=>targets.push(p));
  assert.notEqual(targets[2],main);
 });
 test('scene and actors share the current camera; event FX is opt-in',async()=>{

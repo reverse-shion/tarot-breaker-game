@@ -6,7 +6,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const skyCss = fs.readFileSync('sky-atmosphere.css', 'utf8');
 
 test('Preview 38 mounts a dedicated far-sky plate below all moving atmosphere', () => {
-  assert.match(html, /scene-farthest-sky[\s\S]*?star-country-farthest-sky-background\.webp/);
+  assert.match(html, /scene-farthest-sky[\s\S]*?star-country-farthest-sky-background-extended\.webp/);
   assert.match(html, /scene-star-sky[\s\S]*?star-country-gate-garden-star-sky\.webp/);
   assert.match(html, /scene-sun-light/);
   assert.ok(

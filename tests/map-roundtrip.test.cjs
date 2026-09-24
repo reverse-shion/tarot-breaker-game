@@ -16,7 +16,7 @@ function harness(search = '', saved = {}) {
         hidden: false, dataset: {}, style: {setProperty(){}}, textContent:'', listeners:{},
         classList: {add:(...ks)=>ks.forEach(k=>classes.add(k)), remove:(...ks)=>ks.forEach(k=>classes.delete(k)), contains:k=>classes.has(k), toggle:(k,v)=>v ? classes.add(k) : classes.delete(k)},
         addEventListener(type, fn){(this.listeners[type] ||= []).push(fn);},
-        setAttribute(){}, appendChild(){}, querySelector:k=>element(k), getContext:()=>canvas,
+        setAttribute(){}, appendChild(){}, replaceChildren(){}, querySelector:k=>element(k), getContext:()=>canvas,
         getBoundingClientRect:()=>({left:0,top:0,width:1448,height:1086}),
       });
     }
@@ -34,10 +34,27 @@ function harness(search = '', saved = {}) {
     addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn), dispatchEvent:e=>(listeners[e.type]||[]).forEach(f=>f(e)),
     document:{body:element('body'),documentElement:element('root'),hidden:false,currentScript:{dataset:{}},
       getElementById:element,querySelector:element,querySelectorAll:()=>[],addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn)},
-    fetch:async()=>({ok:false}), TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
+    fetch:async(url)=>{
+      const clean=String(url).split('?')[0].replace(/^\.\//,'');
+      if (clean === 'assets/maps/star-landing/collision.json' || clean === 'assets/maps/star-landing/passage-layers.json') {
+        const raw = JSON.parse(fs.readFileSync(clean,'utf8'));
+        // Values returned by fetch().json() belong to the page realm. Recreate
+        // the fixture in this VM so Array.isArray checks match browser behavior.
+        const data = vm.runInContext('(' + JSON.stringify(raw) + ')', h);
+        return {ok:true,json:async()=>data};
+      }
+      return {ok:false};
+    }, TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
   };
   h.window=h;vm.createContext(h);vm.runInContext(fs.readFileSync('map-journey.js','utf8'),h);
-  return {h,e:element,audio,lines,timers,frames,listeners,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await Promise.resolve();}}};
+  const fetches = [];
+  const originalFetch = h.fetch;
+  h.fetch = async url => {
+    const result = await originalFetch(url);
+    fetches.push({url:String(url),ok:result.ok});
+    return result;
+  };
+  return {h,e:element,audio,lines,timers,frames,listeners,fetches,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await Promise.resolve();}}};
 }
 function inline(file){return [...fs.readFileSync(file,'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];}
 async function landing(search, saved){
@@ -62,9 +79,18 @@ test('BGM waits for movement, is one looping instance, retries rejection and nev
 });
 
 test('PAD return enters the real north path, does not replay memory or immediately leave', async()=>{
-  const t=await landing('?from=garden');const m=t.h.testMap;
+  // Reaching the Garden necessarily occurs after the one-shot landing memory.
+  // Model that persisted journey fact when testing the return route.
+  const t=await landing('?from=garden',{landingMemoryDone:true});const m=t.h.testMap;
   assert.equal(m.player.y,257);assert.equal(m.player.dir,'down');assert.equal(m.memoryDone,true);
-  assert.ok(m.isGroundWalkable(m.player.x,m.player.y));
+  const returnWalkable = m.isGroundWalkable(m.player.x,m.player.y);
+  if (!returnWalkable) {
+    console.error('PAD_RETURN_TRACE', JSON.stringify({
+      player:{x:m.player.x,y:m.player.y,dir:m.player.dir},
+      collisionFetches:t.fetches,
+    }));
+  }
+  assert.ok(returnWalkable);
   for(let i=1;i<10;i++)m.loop(10000+i*16);await t.flush();assert.equal(t.h.location.href,'');
   // Walk back north over the existing entrance, rather than touching a corner.
   m.player.target={x:724,y:200};for(let i=1;i<90;i++)m.loop(10200+i*16);
@@ -72,14 +98,16 @@ test('PAD return enters the real north path, does not replay memory or immediate
 });
 
 test('companion farewell finishes before boarding, stays on ground during flight and rejoins on return',async()=>{
-  const t=await landing('?from=garden',{companion:{mode:'following'}});const m=t.h.testMap;
+  // Garden return also implies the one-shot Devil memory was already completed.
+  // Otherwise the memory trigger correctly locks movement before Shion can reach the PAD.
+  const t=await landing('?from=garden',{companion:{mode:'following'},landingMemoryDone:true});const m=t.h.testMap;
   m.player.target={x:725,y:788};
   for(let i=1;i<500 && !t.lines.length;i++)m.loop(10000+i*16);
-  assert.equal(t.lines[0]?.text,'しおぽんはここで待ってるぴょん！');
+  assert.equal(t.lines[0]?.text,'しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！');
   assert.equal(m.ride.mode,'ground');assert.equal(m.companion.following,false);
   assert.ok(Math.hypot(m.companion.x-725,m.companion.y-788)>66);
   const waiting={x:m.companion.x,y:m.companion.y};
-  m.advance();await t.flush();assert.equal(t.lines[1]?.text,'シオンさん、いってらっしゃい');
+  m.advance();await t.flush();assert.equal(t.lines[1]?.text,'いってらっしゃい、ぴょん！');
   assert.equal(t.lines[1]?.speaker,'しおぽん');assert.equal(m.ride.mode,'ground');
   m.advance();await t.flush();assert.equal(m.ride.mode,'boarding');
   for(let i=1;i<80;i++)m.loop(20000+i*16);assert.equal(m.ride.mode,'flying');
@@ -109,10 +137,16 @@ test('PAD accepted pointer and keyboard gestures invoke the shared manager',asyn
 test('Alenon return bypasses prologue and spawns behind its authored PAD; title still starts prologue',()=>{
   for(const from of ['landing-return','title']){
     const t=harness('?from='+from);
-    t.run(inline('alenon.html').replace('      initRuinDrift();', '      window.testMap = {player, story, layout, resetPlayer, preparePrologue}; return;'));
+    t.run(inline('alenon.html').replace('      initRuinDrift();', '      window.testMap = {player, story, ride, layout, resetPlayer, preparePrologue, finishPadLanding}; return;'));
     const m=t.h.testMap;m.resetPlayer();m.preparePrologue();
     if(from==='landing-return'){
       assert.equal(m.story.completed,true);assert.equal(m.story.locked,false);assert.equal(t.e('prologue-overlay').hidden,true);
+      // Return handoff starts mounted in the authored landing phase. Verify that
+      // state first, then complete the landing before asserting the dismount point.
+      assert.equal(m.ride.mode,'landing');
+      assert.equal(m.player.x,m.layout.pad.x);assert.equal(m.player.y,m.layout.pad.y-18-2);
+      m.finishPadLanding();
+      assert.equal(m.ride.mode,'ground');
       assert.equal(m.player.x,m.layout.pad.x);assert.equal(m.player.y,m.layout.pad.y-68);
       const data=JSON.parse(fs.readFileSync('assets/maps/alenon-collision.json'));data.map='star-country-gate-garden';
       assert.ok(Nav.createCollision(data).isWalkable(m.player.x,m.player.y));

@@ -93,7 +93,7 @@ for (const ref of [
   './sky-atmosphere.css',
   './game.js',
   './scene-effects.js',
-  './assets/maps/star-country-farthest-sky-background.webp',
+  'star-country-farthest-sky-background-extended.webp',
   './assets/maps/star-country-world-islands.webp',
   './assets/maps/star-country-gate-garden-star-sky.webp',
   './assets/maps/star-country-world-clouds.webp'

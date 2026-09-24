@@ -24,9 +24,11 @@ function bootArtworkLayout() {
   };
   const document = {
     querySelector: (selector) => layers[selector] || null,
-    createElement: () => {
-      throw new Error('replacement artwork must not create an edge-copy canvas');
+    createElement: (tag) => {
+      if (tag !== 'link') throw new Error('replacement artwork must not create an edge-copy canvas');
+      return { dataset: {} };
     },
+    head: { appendChild() {} },
   };
   const window = { TarotSceneLayout: layout };
   vm.runInNewContext(source, { window, document, Number, Math, Object });
@@ -43,10 +45,10 @@ function recordingContext() {
 }
 
 test('latest uploaded artwork URLs are cache-busted independently', () => {
-  assert.match(html, /star-country-world-islands\.webp\?v=cbf8ee11e9e9d968/);
-  assert.match(html, /star-country-gate-garden-foreground\.webp\?v=bffada4ffedbc317/);
-  assert.match(html, /scene-preview41-fix\.js\?v=1\.4\.0/);
-  assert.match(html, /game\.js\?v=1\.3\.0/);
+  assert.match(html, /star-country-world-islands\.webp\?asset=34856728cf2b/);
+  assert.match(html, /star-country-gate-garden-transparent\.webp\?v=cca8dd37b9/);
+  assert.match(html, /scene-preview41-fix\.js\?v=inner-light-size-23086-v1/);
+  assert.match(html, /game\.js\?v=garden-arrival-v1/);
 });
 
 test('replacement islands fit completely inside the canonical scene', () => {
@@ -77,10 +79,12 @@ test('replacement foreground restores authored scale, keeps the approved +4px nu
   const draws = context.calls.filter((call) => call.operation === 'drawImage');
   assert.equal(draws.length, 1);
   const [, x, y, width, height] = draws[0].args;
-  assert.equal(x, -11);
+  assert.equal(x, 0);
   assert.equal(y, 0);
-  assert.ok(Math.abs(width - 1672 / 0.81) < 1e-9);
-  assert.ok(Math.abs(height - 941 / 0.81) < 1e-9);
-  assert.equal(layout.artworkPlacement.foreground.repeat, false);
-  assert.equal(layout.artworkModelVersion, 'foreground-authored-alignment-right-4px');
+  assert.equal(width, 1448);
+  assert.equal(height, 1086);
+  assert.equal(layout.artworkPlacement.foreground.mode, 'native-reference-1to1');
+  assert.equal(layout.artworkPlacement.foreground.x, 0);
+  assert.equal(layout.artworkPlacement.foreground.y, 0);
+  assert.equal(layout.artworkModelVersion, 'native-foreground-v6');
 });

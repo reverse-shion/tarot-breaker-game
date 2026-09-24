@@ -5,12 +5,13 @@ const ASSETS={
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
  anomalyGate:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/garden-star-gate.webp",
- darkEnergy:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_04.webp"]
+ darkEnergy:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_04.webp"],
+ celestialLight:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/celestial_gate_light_04.webp"]
 };
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
 const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
-const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest","sga-dark-frame-01","sga-dark-frame-02","sga-dark-frame-03","sga-dark-frame-04","sga-dark-frame-rise","sga-dark-afterglow"]);
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest","sga-dark-frame-01","sga-dark-frame-02","sga-dark-frame-03","sga-dark-frame-04","sga-dark-frame-rise","sga-dark-afterglow","sga-celestial-frame-01","sga-celestial-frame-02","sga-celestial-frame-03","sga-celestial-frame-04"]);
 class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const DEV_HARNESS = ["star-gate-full","star-gate-camera"].includes(new URLSearchParams(location.search).get("dev"));
@@ -44,15 +45,43 @@ function darkEnergyFrame(n){
  if(!el)throw new Error("Dark energy sprite layer unavailable");
  el.src=ASSETS.darkEnergy[n-1];
 }
+async function playCelestialGateLight(){
+ const shell=gateShell();
+ const layers=[...document.querySelectorAll(".sga-sequence-layer")];
+ if(!shell||layers.length!==4)throw new Error("Celestial four-stage sequence unavailable");
+ const phase=async(state,hold,overlap=0,flash=false)=>{
+   setGateState(state);
+   if(overlap)shell.classList.add("sga-sequence-overlap");
+   if(flash){
+     shell.classList.remove("sga-sequence-flash-on");
+     void shell.offsetWidth;
+     shell.classList.add("sga-sequence-flash-on");
+   }
+   if(overlap){
+     await pause(overlap);
+     shell.classList.remove("sga-sequence-overlap");
+     await pause(Math.max(0,hold-overlap));
+   }else await pause(hold);
+   if(flash)shell.classList.remove("sga-sequence-flash-on");
+ };
+ await pause(150);
+ await phase("sga-celestial-frame-01",600);
+ await phase("sga-celestial-frame-02",850,200);
+ await phase("sga-celestial-frame-03",730,180,true);
+ await phase("sga-celestial-frame-04",650,150,true);
+}
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
  if(!shell||!el)throw new Error("Dark energy reverse-flow unavailable");
- const frames=[1,2,3,4],times=[120,120,120,150];
- for(let i=0;i<frames.length;i++){
-   darkEnergyFrame(frames[i]);setGateState("sga-dark-frame-0"+frames[i]);await pause(times[i]);
- }
+ darkEnergyFrame(1);setGateState("sga-dark-frame-01");await pause(600);
+ setGateState("sga-dark-frame-02");shell.classList.add("sga-dark-01-02-overlap");await pause(200);
+ shell.classList.remove("sga-dark-01-02-overlap");await pause(400);
+ setGateState("sga-dark-frame-03");shell.classList.add("sga-dark-02-03-overlap");await pause(180);
+ shell.classList.remove("sga-dark-02-03-overlap");await pause(420);
+ setGateState("sga-dark-frame-04");shell.classList.add("sga-dark-03-04-overlap");await pause(150);
+ shell.classList.remove("sga-dark-03-04-overlap");await pause(450);
  setGateState("sga-dark-frame-rise");
- await pause(950);
+ await pause(850);
  setGateState("sga-dark-afterglow");
  await pause(360);
 }
@@ -91,8 +120,8 @@ async function resonance(){
  const framedState=camera.getState();
  if(!framed?.completed||!gateIsFramed(framedState)||!overscanCoversViewport(framedState))throw new StarGateOverscanCoverageError();
  await pause(800);
- setGateState("sga-sky-descent");await pause(1050);
- setGateState("sga-normal-flow");await pause(1320);
+ await playCelestialGateLight();
+ setGateState("sga-normal-flow");await pause(520);
  setGateState("sga-resonance-complete");await pause(1200);
  await say("shion","……星門は、特におかしくないな。");
  await pause(400);

@@ -517,7 +517,83 @@
   object-fit:contain;
   opacity:1;
   transform:translate3d(0,0,0);
-  will-change:transform;
+  will-change:transform,opacity;
+}
+/* Stage 1: frame 01 seeps out of the gate without changing the approved DOM/layers. */
+#game-shell.sga-dark-frame-01 .sga-dark-energy-frame{
+  animation:sgaDarkEnergySeep01 600ms cubic-bezier(.2,.85,.15,1) both;
+}
+.scene-dark-energy-rise .sga-dark-energy-frame-next{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:0;
+  transform:translate3d(0,7px,0) scaleY(.95);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+#game-shell.sga-dark-frame-02.sga-dark-01-02-overlap .sga-dark-energy-frame-next{
+  opacity:1;
+  transform:translate3d(0,0,0) scaleY(1);
+  transition:opacity 600ms cubic-bezier(.2,.85,.15,1),transform 600ms cubic-bezier(.2,.85,.15,1);
+}
+#game-shell.sga-dark-frame-02:not(.sga-dark-01-02-overlap) .sga-dark-energy-frame-next{
+  opacity:1;
+  transform:translate3d(0,0,0) scaleY(1);
+}
+#game-shell.sga-dark-frame-02:not(.sga-dark-01-02-overlap) .sga-dark-energy-frame{
+  opacity:0;
+  transition:opacity 300ms ease-out;
+}
+.scene-dark-energy-rise .sga-dark-energy-frame-third{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:0;
+  transform:translate3d(0,6px,0) scaleY(.97);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+#game-shell.sga-dark-frame-03.sga-dark-02-03-overlap .sga-dark-energy-frame-third{
+  opacity:1;
+  transform:translate3d(0,-4px,0) scaleY(1);
+  transition:opacity 600ms cubic-bezier(.2,.85,.15,1),transform 600ms cubic-bezier(.2,.85,.15,1);
+}
+#game-shell.sga-dark-frame-03:not(.sga-dark-02-03-overlap) .sga-dark-energy-frame-third{
+  opacity:1;
+  transform:translate3d(0,-4px,0) scaleY(1);
+}
+#game-shell.sga-dark-frame-03:not(.sga-dark-02-03-overlap) .sga-dark-energy-frame-next{
+  opacity:0;
+  transition:opacity 300ms ease-out;
+}
+.scene-dark-energy-rise .sga-dark-energy-frame-fourth{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:0;
+  transform:translate3d(0,2px,0) scaleY(.99);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+#game-shell.sga-dark-frame-04.sga-dark-03-04-overlap .sga-dark-energy-frame-fourth{
+  opacity:1;
+  transform:translate3d(0,0,0) scaleY(1);
+  transition:opacity 600ms cubic-bezier(.2,.85,.15,1),transform 600ms cubic-bezier(.2,.85,.15,1);
+}
+#game-shell.sga-dark-frame-04:not(.sga-dark-03-04-overlap) .sga-dark-energy-frame-fourth{
+  opacity:1;
+  transform:translate3d(0,0,0) scaleY(1);
+}
+#game-shell.sga-dark-frame-04:not(.sga-dark-03-04-overlap) .sga-dark-energy-frame-third{
+  opacity:0;
+  transition:opacity 300ms ease-out;
 }
 .scene-dark-energy-rise .sga-dark-afterglow{
   position:absolute;
@@ -540,7 +616,11 @@
   visibility:visible;
 }
 #game-shell.sga-dark-frame-rise .sga-dark-energy-frame{
-  animation:sgaDarkEnergyRise04 950ms cubic-bezier(.22,.61,.36,1) forwards;
+  opacity:0;
+}
+#game-shell.sga-dark-frame-rise .sga-dark-energy-frame-fourth{
+  opacity:1;
+  animation:sgaDarkEnergyAscend04 850ms cubic-bezier(.2,.75,.25,1) forwards;
 }
 #game-shell.sga-dark-frame-rise .sga-dark-afterglow{
   animation:sgaDarkAfterglowRise 950ms ease-out forwards;
@@ -551,9 +631,14 @@
 #game-shell.sga-dark-afterglow .sga-dark-afterglow{
   animation:sgaDarkAfterglowFade 360ms ease-out forwards;
 }
-@keyframes sgaDarkEnergyRise04{
-  from{transform:translate3d(0,0,0)}
-  to{transform:translate3d(0,-125%,0)}
+@keyframes sgaDarkEnergySeep01{
+  from{opacity:0;transform:translate3d(0,4px,0) scaleY(.91)}
+  to{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
+}
+@keyframes sgaDarkEnergyAscend04{
+  0%{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
+  18%{opacity:1}
+  100%{opacity:0;transform:translate3d(0,-18%,0) scaleY(1.09)}
 }
 @keyframes sgaDarkAfterglowRise{
   0%{opacity:0;transform:translate3d(0,10%,0) scaleY(.75)}
@@ -677,3 +762,66 @@
   mix-blend-mode:normal!important;
   filter:brightness(.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)!important;
 }
+
+
+/* Celestial Gate 01→02→03→04 sequence, integrated into the world-space gate layer. */
+.scene-celestial-gate-light{display:block;opacity:0;visibility:hidden;overflow:visible;pointer-events:none}
+#game-shell.sga-celestial-frame-01 .scene-celestial-gate-light,
+#game-shell.sga-celestial-frame-02 .scene-celestial-gate-light,
+#game-shell.sga-celestial-frame-03 .scene-celestial-gate-light,
+#game-shell.sga-celestial-frame-04 .scene-celestial-gate-light{opacity:1;visibility:visible}
+
+.sga-sequence-layer{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;will-change:opacity,transform;mix-blend-mode:screen}
+.sga-sequence-layer img{width:auto;height:88%;max-width:92%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 0 14px rgba(140,170,255,.3))}
+.sga-sequence-l1{transform:scale(.78) translateY(3%)}
+.sga-sequence-l2{transform:scale(.84) translateY(2%)}
+.sga-sequence-l3{transform:scale(.89) translateY(1%)}
+.sga-sequence-l4{transform:scale(.92)}
+.sga-sequence-glowfloor{position:absolute;left:0;right:0;bottom:0;height:35%;z-index:0;background:radial-gradient(ellipse at 50% 100%,rgba(120,150,255,.35),transparent 70%);opacity:0;pointer-events:none;transition:opacity 1.2s ease}
+.sga-sequence-flash{position:absolute;left:19.62%;top:0;width:60.75%;height:100%;z-index:3;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.82) 12%,#fff 50%,rgba(255,255,255,.82) 88%,transparent 100%);opacity:0;pointer-events:none;mix-blend-mode:screen}
+
+#game-shell.sga-celestial-frame-01 .sga-sequence-l1,
+#game-shell.sga-celestial-frame-02 .sga-sequence-l2,
+#game-shell.sga-celestial-frame-03 .sga-sequence-l3,
+#game-shell.sga-celestial-frame-04 .sga-sequence-l4{opacity:1;transform:scale(.92) translateY(0);transition:opacity .62s cubic-bezier(.2,.8,.2,1),transform .62s cubic-bezier(.2,.8,.2,1)}
+
+#game-shell.sga-celestial-frame-02 .sga-sequence-l1,
+#game-shell.sga-celestial-frame-03 .sga-sequence-l2,
+#game-shell.sga-celestial-frame-04 .sga-sequence-l3{opacity:0;transition:opacity .35s ease-out}
+
+/* Preserve the reference overlap: previous frame remains briefly while the next frame appears. */
+#game-shell.sga-celestial-frame-02.sga-sequence-overlap .sga-sequence-l1,
+#game-shell.sga-celestial-frame-03.sga-sequence-overlap .sga-sequence-l2,
+#game-shell.sga-celestial-frame-04.sga-sequence-overlap .sga-sequence-l3{opacity:1}
+
+/* 03/04 transition flashes and the final floor glow. */
+#game-shell.sga-sequence-flash-on .sga-sequence-flash{animation:sgaSequenceFlash .32s ease-out forwards}
+#game-shell.sga-celestial-frame-04 .sga-sequence-glowfloor{opacity:1}
+
+/* 04 fades away after its hold instead of entering an idle loop. */
+#game-shell.sga-normal-flow .scene-celestial-gate-light{opacity:1;visibility:visible}
+#game-shell.sga-normal-flow .sga-sequence-l4{opacity:0;transition:opacity .42s ease-out}
+#game-shell.sga-normal-flow .sga-sequence-glowfloor{opacity:0;transition:opacity .42s ease-out}
+
+/* Absorption response only; established inner-light geometry is untouched. */
+#game-shell.sga-celestial-frame-04 .scene-gate-inner-light>img{filter:brightness(1.22) drop-shadow(0 0 5px rgba(187,226,255,.36))!important;transition:filter .24s ease}
+#game-shell.sga-normal-flow .scene-gate-inner-light>img{filter:brightness(1.08)!important;transition:filter .42s ease}
+
+/* Legacy normal CSS pillar remains disabled. */
+#game-shell.sga-celestial-frame-01 .sga-sky-flow,
+#game-shell.sga-celestial-frame-02 .sga-sky-flow,
+#game-shell.sga-celestial-frame-03 .sga-sky-flow,
+#game-shell.sga-celestial-frame-04 .sga-sky-flow,
+#game-shell.sga-normal-flow .sga-sky-flow{opacity:0!important;visibility:hidden!important}
+#game-shell.sga-celestial-frame-01 .sga-energy-column,
+#game-shell.sga-celestial-frame-02 .sga-energy-column,
+#game-shell.sga-celestial-frame-03 .sga-energy-column,
+#game-shell.sga-celestial-frame-04 .sga-energy-column,
+#game-shell.sga-normal-flow .sga-energy-column{display:none!important}
+
+@keyframes sgaSequenceFlash{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+ .sga-sequence-layer{transition:opacity .18s linear!important;transform:none!important}
+ .sga-sequence-flash{animation:none!important}
+}
+

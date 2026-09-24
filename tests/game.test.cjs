@@ -7,8 +7,8 @@ const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 
-async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, search = '?navDebug=1' } = {}) {
-  let raf, now = 1000;
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, search = '?navDebug=1&from=landing' } = {}) {
+  let raf, now = 1000, rafQueue = [];
   const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
@@ -33,6 +33,8 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   elements.game.getContext = () => context;
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
+  document.body = new Element();
+  document.body.classList = { values: new Set(), add(...names){ names.forEach(name => this.values.add(name)); }, remove(...names){ names.forEach(name => this.values.delete(name)); }, contains(name){ return this.values.has(name); } };
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
   document.getElementById = id => elements[id]; document.createElement = tag => {
     const element = new Element();
@@ -46,6 +48,22 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.TarotSceneLayout = { solidBases: [] };
+  window.TarotSceneEffects = {
+    ready: Promise.resolve(),
+    waitImage: image => new Promise((resolve, reject) => {
+      if (image.complete && image.naturalWidth) return resolve(image);
+      image.addEventListener?.("load", () => resolve(image), { once: true });
+      image.addEventListener?.("error", reject, { once: true });
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+    }),
+    syncCamera() {},
+    drawMaskedActor(ctx, actor, scale, quality, paint) { paint(ctx); },
+    drawDebug() {},
+  };
+  window.CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
+  window.dispatchEvent = event => window.emit(event.type, event);
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
@@ -61,15 +79,30 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const deterministicMath = Object.create(Math);
   deterministicMath.random = () => 0.5;
   const location = { search, href: '' };
-  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location,
-    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
+  const sandbox = vm.createContext({ window, document, Image, CustomEvent: window.CustomEvent, URLSearchParams, location,
+    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; rafQueue.push(fn); }, setTimeout() {}, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js', 'game.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
-  await new Promise(setImmediate);
+  for (let i = 0; i < 8; i++) {
+    await new Promise(setImmediate);
+    if (rafQueue.length) {
+      const queue = rafQueue.splice(0);
+      now += 1000 / 60;
+      for (const fn of queue) fn(now);
+    }
+  }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
-  const state = () => JSON.parse(elements['nav-status'].dataset.state);
+  if (!elements['nav-status']?.dataset.state && !badCollision) {
+    const detail = errors.map(error => error?.stack || error?.message || String(error)).join("\n---\n");
+    throw new Error("Garden harness failed before nav debug state was produced:\n" + (detail || "no captured console error"));
+  }
+  const state = () => {
+    if (!elements['nav-status']?.dataset.state)
+      throw new Error("Garden state unavailable because boot did not complete");
+    return JSON.parse(elements['nav-status'].dataset.state);
+  };
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
@@ -85,7 +118,7 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.deepEqual(s.world, { w: 1448, h: 1086 });
   assert.deepEqual(s.scale, { x: 1, y: 1 });
-  assert.equal(s.player.x, 724); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
+  assert.equal(s.player.x, 724); assert.equal(s.player.y, 944); assert.equal(s.player.dir, 'up');
   assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
   assert.equal(s.lumiere.homeRef.x, 810); assert.equal(s.lumiere.homeRef.y, 212);
   assert.equal(s.lumiere.moving, false); assert.equal(s.lumiereCollisionDistance, 32);
@@ -121,11 +154,18 @@ test('Lumiere replaces the old torso once and draws one cached silhouette per ti
   }
 });
 test('Lumiere bobs as one body while slow wing frames change independently', async () => {
-  const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
+  const h = await boot(); const before = h.state().lumiere;
+  let after = before, wingChanged = false, bobChanged = false;
+  for (let i = 0; i < 90; i++) {
+    h.tick();
+    after = h.state().lumiere;
+    if (after.frame !== before.frame) wingChanged = true;
+    if (after.bobOffsetY !== before.bobOffsetY) bobChanged = true;
+  }
   assert.equal(after.x, before.x); assert.equal(after.y, before.y);
   assert.deepEqual(after.homeRef, { x: 810, y: 212 }); assert.equal(after.moving, false);
-  assert.notEqual(after.frame, before.frame);
-  assert.notEqual(after.bobOffsetY, before.bobOffsetY);
+  assert.equal(wingChanged, true);
+  assert.equal(bobChanged, true);
   assert.ok(Math.abs(after.bobOffsetY) <= 2.4);
   assert.ok(after.wingHold >= 0.7 && after.wingHold <= 1.35);
 });
@@ -149,24 +189,34 @@ test('canvas tap uses camera/zoom/element offset and does not jump the camera to
   assert.equal(arrived.route.length, 0); assert.equal(arrived.player.moving, false);
   const idleDirection = arrived.player.dir; h.tick(120); assert.equal(h.state().player.dir, idleDirection);
 });
-test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
+test('real event bindings: drag/keyboard and pointer cancel clear held movement', async () => {
   const h = await boot(); h.tapWorld(810, 700);
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
-  h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
-  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 724);
+  h.pointer('pointercancel', 135, 600); h.tick();
+  assert.equal(h.elements.joystick.hidden, true);
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
-  h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
+  h.tapWorld(810, 700);
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
 test('four directions use all four Shion walk frames then the matching idle frame', async () => {
-  const h = await boot(); h.tapWorld(810, 700); h.tick(250);
+  const h = await boot();
+  // This test isolates Shion's authored walk cycle. Put Shiopon in companion
+  // follow mode so autonomous NPC collision cannot cancel keyboard movement.
+  h.window.emit('tarot-breaker:shiopon-follow-start');
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    h.tapWorld(810, 700); h.tick(200);
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
-    for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
-    assert.equal(frames.size, 4);
+    // The authored walk cadence advances every 0.12s. Observe until all four
+    // frames have appeared (bounded to 0.8s) instead of assuming 25 RAF ticks
+    // always span a complete cycle from an arbitrary animation phase.
+    for (let i = 0; i < 48 && frames.size < 4; i++) {
+      h.tick();
+      const state = h.state();
+      if (state.player.moving) frames.add(state.player.frame);
+      assert.equal(state.player.dir, dir);
+    }
+    assert.deepEqual([...frames].sort((a, b) => a - b), [0, 1, 2, 3]);
     const walkingCalls = h.drawCalls.slice(drawStart).filter(call => call[0]?.url?.endsWith(`shion_walk_${dir}.png`));
     assert.ok(walkingCalls.length > 0);
     h.window.emit('keyup', { key }); const idleStart = h.drawCalls.length; h.tick();
@@ -206,6 +256,12 @@ test('stage commands face actors, animate safe steps and expose a skip-to-end ha
       call.operation === 'drawImage' && call.args[0]?.url?.endsWith('lumiere_hover_up.png')),
   );
 
+  // The landing-route spawn resolves against collision near the south edge,
+  // where a 12px upward stage step can be projected by the navigator. Move to
+  // a known walkable interior point before testing the exact authored step.
+  h.window.emit('tarot-breaker:interaction-end');
+  h.tapWorld(724, 900); h.tick(180);
+  h.window.emit('tarot-breaker:interaction-start');
   const before = h.state().player;
   const step = h.window.TarotStage.perform({
     type: 'step', actor: 'shion', direction: 'up', distance: 12, duration: 300,

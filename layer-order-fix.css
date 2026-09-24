@@ -22,7 +22,8 @@
 }
 
 /* Event reverse-flow artwork sits above scenery but below the gate inner light. */
-.scene-dark-energy-rise {
+.scene-dark-energy-rise,
+.scene-celestial-gate-light {
   z-index: 3 !important;
 }
 

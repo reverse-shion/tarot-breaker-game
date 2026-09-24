@@ -16,11 +16,12 @@ test('cloud stylesheet is loaded directly and fountain CSS stays isolated', () =
 test('Preview 46 uses one three-copy buffered cloud track', () => {
   const mainLayers = html.match(/scene-cloud-main/g) || [];
   const copies = html.match(/class="scene-cloud-copy"/g) || [];
-  const worldCloudCopies = html.match(/star-country-world-clouds\.webp/g) || [];
+  const trackMatch = html.match(/<div class="scene-cloud-track scene-cloud-main-track">([\s\S]*?)<\/div>/);
+  const worldCloudCopies = trackMatch?.[1].match(/star-country-world-clouds\.webp/g) || [];
 
   assert.ok(mainLayers.length >= 2, 'main cloud layer and track should both be present');
   assert.equal(copies.length, 3, 'the cloud track must contain three identical buffered copies');
-  assert.equal(worldCloudCopies.length, 3, 'all copies must use the supplied dedicated cloud artwork');
+  assert.equal(worldCloudCopies.length, 3, 'all three track copies must use the supplied dedicated cloud artwork');
   assert.match(html, /id="map-layer"[\s\S]*?star-country-world-islands\.webp/);
   assert.doesNotMatch(html, /star-country-gate-garden-cloud\.webp/);
   assert.doesNotMatch(html, /scene-cloud-far/);
