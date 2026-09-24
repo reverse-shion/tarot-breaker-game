@@ -2,9 +2,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { createCollision, createNavigator, validateCollision, distance } = require('../blocked-collision.js');
-const data = JSON.parse(fs.readFileSync('assets/maps/star-country-gate-garden-collision.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync('assets/maps/star-landing/collision.json', 'utf8'));
 const collision = createCollision(data), nav = createNavigator(collision);
-const spawn = { x: 724, y: 1015 };
+const spawn = { x: 725, y: 788 - 72 };
 const rect = (x, y, w, h) => ({ type: 'poly', points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
 const fixture = areas => ({ ...data, walkAreas: areas, blockedAreas: [] });
 
