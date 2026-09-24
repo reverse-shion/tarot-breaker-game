@@ -14,6 +14,14 @@ test("device registry guard narrowly exempts only unreferenced new asset-only PR
  assert.match(s,/New asset is safe only while current base does not reference its path/);
  assert.match(s,/PASS \(unreferenced new asset-only PR\)/);
 });
+test("device registry guard accepts presentation-only asset replacements without weakening runtime gates",()=>{
+ const s=fs.readFileSync("scripts/device-registry-guard.cjs","utf8");
+ assert.match(s,/SAFE_ASSET_ONLY_DIRS/);
+ assert.match(s,/assets\/events\//);
+ assert.match(s,/behaviorNeutralAssetOnly/);
+ assert.match(s,/PASS \(behavior-neutral asset-only PR\)/);
+ assert.match(s,/no runtime\/code\/config file changed/);
+});
 test("workflow executes device registry guard with PR body",()=>{
  const y=fs.readFileSync(".github/workflows/verified-gameplay-contracts.yml","utf8");
  assert.match(y,/Device registry guard/);
