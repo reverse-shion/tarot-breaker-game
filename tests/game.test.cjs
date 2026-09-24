@@ -18,7 +18,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
       for (const fn of this.listeners.get(type) || []) fn(event);
       return event;
     }
-    appendChild(child) { elements[child.id] = child; }
+    appendChild(child) { elements[child.id] = child; if (child.id === 'nav-status') child.dataset.state = '{}'; }
     getBoundingClientRect() { return { left: 34, top: 20, width, height }; }
     setPointerCapture(id) { captured.add(id); }
     hasPointerCapture(id) { return captured.has(id); }
