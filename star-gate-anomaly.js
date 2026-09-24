@@ -170,6 +170,29 @@ async function futureFixationStage1(){
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage1-complete",{detail:{checkpoint:true}}));
 }
 
+async function futureFixationStage2(){
+ const stage=window.TarotStage;
+ const before=stage?.getState?.().actors?.shion;
+ if(!before)throw new Error("Shion stage state unavailable before Future Fixation Vision Stage 2");
+ const v=root.querySelector(".sga-vision"),pan=root.querySelector(".sga-pan");
+ // Stage 2 replaces only the world image. Current Shion remains anchored at the Stage 1 coordinate.
+ root.classList.add("sga-future-ruins");
+ v.classList.add("visible");
+ await pause(850);
+ await say("shion","……星門庭園……？");await pause(350);
+ await say("shion","いや……");
+ await say("shion","そんなはず……");await pause(450);
+ // Three authored survey shots. Actor position is never mutated by this tour.
+ pan.classList.add("sga-future-shot-gate");await pause(900);await pause(700);
+ pan.classList.remove("sga-future-shot-gate");pan.classList.add("sga-future-shot-left");await pause(950);await pause(500);
+ pan.classList.remove("sga-future-shot-left");pan.classList.add("sga-future-shot-fountain");await pause(950);await pause(900);
+ await say("shion","……どうして……");
+ pan.classList.remove("sga-future-shot-fountain");pan.classList.add("sga-future-shot-return");await pause(900);await pause(600);
+ const after=stage.getState().actors.shion;
+ if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 2");
+ window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage2-complete",{detail:{checkpoint:true}}));
+}
+
 async function fadeNpc(actorId,duration=360){
  const vis=window.TarotActorVisibility;if(!vis)return;
  const steps=12;for(let i=1;i<=steps;i++){vis.set(actorId,1-i/steps);await pause(duration/steps)}
@@ -217,7 +240,7 @@ async function run(){
   if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
   await resonance();
-  if(DEV_HARNESS){success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true}}));if(FUTURE_STAGE1_DEV)await futureFixationStage1();return;}
+  if(DEV_HARNESS){success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true}}));if(FUTURE_STAGE1_DEV){await futureFixationStage1();await futureFixationStage2()}return;}
   await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
  finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();gateShell()?.classList.remove("sga-future-world-hidden");window.TarotAudio?.setCinematicSilence?.(false,200);cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
