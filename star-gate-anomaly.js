@@ -53,9 +53,9 @@ async function playCelestialGateLight(){
  setGateState("sga-celestial-frame-02");
  await pause(450);
  setGateState("sga-celestial-frame-03");
- await pause(500);
+ await pause(620);
  setGateState("sga-celestial-frame-04");
- await pause(500);
+ await pause(620);
 }
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
