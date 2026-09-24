@@ -19,6 +19,11 @@ let changed="";
 try { changed=git(["diff","--name-only","refs/remotes/origin/"+base+"...HEAD"]); }
 catch { fail("Could not determine PR changed files."); }
 const files=changed.split("\n").filter(Boolean);
+if (files.length === 0) {
+  console.log("DEVICE REGISTRY GUARD: PASS (no-op PR)");
+  console.log("Git diff against the current base is empty; there is no repository content change to verify.");
+  process.exit(0);
+}
 const ASSET_EXTENSIONS=/\.(?:avif|gif|jpe?g|png|svg|webp|mp3|ogg|wav|m4a|aac|flac|woff2?|ttf|otf)$/i;
 const assetOnly=files.length>0 && files.every(f => f.startsWith("assets/") && ASSET_EXTENSIONS.test(f));
 const SAFE_ASSET_ONLY_DIRS=["assets/events/","assets/audio/","assets/tarot/","assets/ui/","assets/sprites/"];
