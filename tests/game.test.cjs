@@ -48,6 +48,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.TarotSceneLayout = { solidBases: [] };
   window.TarotSceneEffects = {
     ready: Promise.resolve(),
     waitImage: image => new Promise((resolve, reject) => {
