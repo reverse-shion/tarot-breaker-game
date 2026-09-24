@@ -81,7 +81,7 @@ async function playDarkEnergyReverse(){
  setGateState("sga-dark-frame-04");shell.classList.add("sga-dark-03-04-overlap");await pause(150);
  shell.classList.remove("sga-dark-03-04-overlap");await pause(450);
  setGateState("sga-dark-frame-rise");
- await pause(950);
+ await pause(850);
  setGateState("sga-dark-afterglow");
  await pause(360);
 }
