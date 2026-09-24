@@ -687,18 +687,18 @@
 #game-shell.sga-celestial-frame-04 .scene-celestial-gate-light{opacity:1;visibility:visible}
 
 .sga-sequence-layer{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;will-change:opacity,transform;mix-blend-mode:screen}
-.sga-sequence-layer img{width:auto;height:104%;max-width:110%;object-fit:contain;filter:drop-shadow(0 0 18px rgba(140,170,255,.35))}
-.sga-sequence-l1{transform:scale(.82) translateY(2%)}
-.sga-sequence-l2{transform:scale(.9)}
-.sga-sequence-l3{transform:scale(.95)}
-.sga-sequence-l4{transform:scale(1)}
+.sga-sequence-layer img{width:auto;height:88%;max-width:92%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 0 14px rgba(140,170,255,.3))}
+.sga-sequence-l1{transform:scale(.78) translateY(3%)}
+.sga-sequence-l2{transform:scale(.84) translateY(2%)}
+.sga-sequence-l3{transform:scale(.89) translateY(1%)}
+.sga-sequence-l4{transform:scale(.92)}
 .sga-sequence-glowfloor{position:absolute;left:0;right:0;bottom:0;height:35%;z-index:0;background:radial-gradient(ellipse at 50% 100%,rgba(120,150,255,.35),transparent 70%);opacity:0;pointer-events:none;transition:opacity 1.2s ease}
 .sga-sequence-flash{position:absolute;inset:0;z-index:3;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen}
 
 #game-shell.sga-celestial-frame-01 .sga-sequence-l1,
 #game-shell.sga-celestial-frame-02 .sga-sequence-l2,
 #game-shell.sga-celestial-frame-03 .sga-sequence-l3,
-#game-shell.sga-celestial-frame-04 .sga-sequence-l4{opacity:1;transform:scale(1) translateY(0);transition:opacity .62s cubic-bezier(.2,.8,.2,1),transform .62s cubic-bezier(.2,.8,.2,1)}
+#game-shell.sga-celestial-frame-04 .sga-sequence-l4{opacity:1;transform:scale(.92) translateY(0);transition:opacity .62s cubic-bezier(.2,.8,.2,1),transform .62s cubic-bezier(.2,.8,.2,1)}
 
 #game-shell.sga-celestial-frame-02 .sga-sequence-l1,
 #game-shell.sga-celestial-frame-03 .sga-sequence-l2,
