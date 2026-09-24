@@ -156,9 +156,11 @@ async function futureFixationStage1(){
  window.TarotActorVisibility?.set("shiopon",0);
  window.TarotActorVisibility?.set("lumiere",0);
  window.TarotActorVisibility?.set("shion",0);
+ gateShell()?.classList.add("sga-future-world-hidden");
  root.classList.add("sga-future-shion-only");
- window.TarotActorVisibility?.set("shion",1);
- await pause(500);
+ root.classList.remove("sga-future-black");
+ const vis=window.TarotActorVisibility;
+ if(vis){for(let i=1;i<=12;i++){vis.set("shion",i/12);await pause(500/12)}}else await pause(500);
  await say("shion","……？");await pause(400);
  await say("shion","なんだ……？");
  await say("shion","リュミエール……？");await pause(500);
@@ -221,7 +223,7 @@ async function run(){
   }
   await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
- finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
+ finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();gateShell()?.classList.remove("sga-future-world-hidden");window.TarotAudio?.setCinematicSilence?.(false,200);cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
 }
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running})});
