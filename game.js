@@ -257,7 +257,7 @@
     // authored central axis (~735px) to the garden axis (~800px).
     scale: 1.15,
     offsetX: -45,
-    offsetY: -160,
+    offsetY: -220,
   });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
