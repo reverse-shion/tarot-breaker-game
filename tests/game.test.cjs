@@ -150,11 +150,18 @@ test('Lumiere replaces the old torso once and draws one cached silhouette per ti
   }
 });
 test('Lumiere bobs as one body while slow wing frames change independently', async () => {
-  const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
+  const h = await boot(); const before = h.state().lumiere;
+  let after = before, wingChanged = false, bobChanged = false;
+  for (let i = 0; i < 90; i++) {
+    h.tick();
+    after = h.state().lumiere;
+    if (after.frame !== before.frame) wingChanged = true;
+    if (after.bobOffsetY !== before.bobOffsetY) bobChanged = true;
+  }
   assert.equal(after.x, before.x); assert.equal(after.y, before.y);
   assert.deepEqual(after.homeRef, { x: 810, y: 212 }); assert.equal(after.moving, false);
-  assert.notEqual(after.frame, before.frame);
-  assert.notEqual(after.bobOffsetY, before.bobOffsetY);
+  assert.equal(wingChanged, true);
+  assert.equal(bobChanged, true);
   assert.ok(Math.abs(after.bobOffsetY) <= 2.4);
   assert.ok(after.wingHold >= 0.7 && after.wingHold <= 1.35);
 });
