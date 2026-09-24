@@ -104,3 +104,22 @@ test("Stage 2 camera tour guards every shot against world-edge exposure",()=>{
  for(const shot of ["gate","left","fountain","return"]) assert.match(stage2,new RegExp('verifyCoverage\\("'+shot+'"\\)'));
  assert.doesNotMatch(stage2,/allowOverscan:true/);
 });
+
+test("Stage 3 uses the five approved Future Shion card poses only",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ assert.match(stage3,/const timings=\[520,500,900,520,520\]/);
+ assert.match(stage3,/for\(let i=1;i<=5;i\+\+\)\{setShion\(i\)/);
+ assert.match(stage3,/vis\?\.set\("shion",0\)/);
+ assert.doesNotMatch(stage3,/aura1|aura2|ascend|transformed|floating|――選べ|これは……私の選択じゃない|待て！！/);
+});
+
+test("Stage 3 preserves current Shion world position and NPC isolation",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ assert.match(stage3,/vis\?\.set\("shiopon",0\);vis\?\.set\("lumiere",0\)/);
+ assert.match(stage3,/if\(!samePoint\(before,after\)\)throw new Error\("Shion moved during Future Fixation Vision Stage 3"\)/);
+ assert.doesNotMatch(stage3,/type:"move"|type:"step"|type:"approach"|teleport/);
+});
+
+test("Stage 3 asset order is reach draw check raise reach",()=>{
+ assert.match(source,/shion:\["\.\/assets\/sprites\/shion\/shion_card_01_reach\.webp","\.\/assets\/sprites\/shion\/shion_card_02_draw\.webp","\.\/assets\/sprites\/shion\/shion_card_03_check\.webp","\.\/assets\/sprites\/shion\/shion_card_04_raise\.webp","\.\/assets\/sprites\/shion\/shion_card_05_reach\.webp"\]/);
+});
