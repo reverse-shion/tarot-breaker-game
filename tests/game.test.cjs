@@ -48,6 +48,14 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return element;
   };
   const window = new Element(); window.devicePixelRatio = 3;
+  window.TarotSceneEffects = {
+    ready: Promise.resolve(),
+    waitImage: async image => image,
+    syncCamera() {},
+    drawDebug() {},
+  };
+  window.CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
+  window.dispatchEvent = event => window.emit(event.type, event);
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
@@ -63,8 +71,8 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const deterministicMath = Object.create(Math);
   deterministicMath.random = () => 0.5;
   const location = { search, href: '' };
-  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, location,
-    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {},
+  const sandbox = vm.createContext({ window, document, Image, CustomEvent: window.CustomEvent, URLSearchParams, location,
+    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() {}, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
