@@ -500,62 +500,69 @@
 }
 
 
-/* Dark Energy Ascension Flow — four preloaded frames, crossfaded from the gate toward the sky. */
-.scene-dark-energy-rise{display:block;opacity:0;visibility:hidden;pointer-events:none;overflow:visible}
-.sga-dark-sequence-frame{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;opacity:0;transform-origin:50% 100%;pointer-events:none;will-change:opacity,transform}
-.sga-dark-sequence-frame img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(105,42,155,.32))}
-.sga-dark-sequence-1{transform:translate3d(0,4px,0) scaleY(.91)}
-.sga-dark-sequence-2{transform:translate3d(0,7px,0) scaleY(.95)}
-.sga-dark-sequence-3{transform:translate3d(0,6px,0) scaleY(.97)}
-.sga-dark-sequence-4{transform:translate3d(0,2px,0) scaleY(1)}
-.sga-dark-abyss{position:absolute;left:14%;right:14%;bottom:0;height:34%;opacity:0;background:radial-gradient(ellipse at 50% 100%,rgba(95,27,137,.32),rgba(48,15,72,.12) 48%,transparent 74%);pointer-events:none;transition:opacity .45s ease}
-.sga-dark-pulse{position:absolute;left:13.93%;bottom:0;width:72.14%;height:68%;opacity:0;background:radial-gradient(ellipse at 50% 100%,rgba(197,147,235,.48) 0%,rgba(105,47,160,.38) 35%,rgba(39,17,61,.16) 64%,transparent 82%);pointer-events:none;mix-blend-mode:screen}
-.scene-dark-energy-rise .sga-dark-afterglow{position:absolute;left:39%;top:8%;width:22%;height:84%;opacity:0;background:linear-gradient(180deg,rgba(74,45,112,0),rgba(72,43,112,.26) 30%,rgba(48,25,75,.36) 68%,rgba(48,25,75,0));filter:blur(10px);pointer-events:none}
-
-#game-shell.sga-dark-pulse .scene-dark-energy-rise,
+/* Dark Energy Reverse Flow — WEBP sprite replacement.
+   The old CSS reverse-flow body is disabled only during anomaly reverse phases. */
+.scene-dark-energy-rise{
+  display:block;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  overflow:visible;
+}
+.scene-dark-energy-rise .sga-dark-energy-frame{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:1;
+  transform:translate3d(0,0,0);
+  will-change:transform;
+}
+.scene-dark-energy-rise .sga-dark-afterglow{
+  position:absolute;
+  left:39%;
+  top:8%;
+  width:22%;
+  height:84%;
+  opacity:0;
+  background:linear-gradient(180deg,rgba(74,45,112,0),rgba(72,43,112,.26) 30%,rgba(48,25,75,.36) 68%,rgba(48,25,75,0));
+  filter:blur(10px);
+  pointer-events:none;
+}
 #game-shell.sga-dark-frame-01 .scene-dark-energy-rise,
 #game-shell.sga-dark-frame-02 .scene-dark-energy-rise,
 #game-shell.sga-dark-frame-03 .scene-dark-energy-rise,
 #game-shell.sga-dark-frame-04 .scene-dark-energy-rise,
 #game-shell.sga-dark-frame-rise .scene-dark-energy-rise,
-#game-shell.sga-dark-afterglow .scene-dark-energy-rise{opacity:1;visibility:visible}
-#game-shell.sga-dark-pulse .sga-dark-abyss,
-#game-shell.sga-dark-frame-01 .sga-dark-abyss,
-#game-shell.sga-dark-frame-02 .sga-dark-abyss,
-#game-shell.sga-dark-frame-03 .sga-dark-abyss,
-#game-shell.sga-dark-frame-04 .sga-dark-abyss{opacity:.26}
-#game-shell.sga-dark-pulse .sga-dark-pulse{animation:sgaDarkPulse .36s ease-out forwards}
-#game-shell.sga-dark-pulse-retrigger .sga-dark-pulse{animation:sgaDarkPulseSoft .36s ease-out forwards}
-
-#game-shell.sga-dark-frame-01 .sga-dark-sequence-1,
-#game-shell.sga-dark-frame-02 .sga-dark-sequence-2,
-#game-shell.sga-dark-frame-03 .sga-dark-sequence-3,
-#game-shell.sga-dark-frame-04 .sga-dark-sequence-4{opacity:1;transform:translate3d(0,0,0) scaleY(1);transition:opacity .6s cubic-bezier(.2,.85,.15,1),transform .6s cubic-bezier(.2,.85,.15,1)}
-#game-shell.sga-dark-frame-02.sga-dark-overlap .sga-dark-sequence-1,
-#game-shell.sga-dark-frame-03.sga-dark-overlap .sga-dark-sequence-2,
-#game-shell.sga-dark-frame-04.sga-dark-overlap .sga-dark-sequence-3{opacity:1}
-#game-shell.sga-dark-frame-02:not(.sga-dark-overlap) .sga-dark-sequence-1,
-#game-shell.sga-dark-frame-03:not(.sga-dark-overlap) .sga-dark-sequence-2,
-#game-shell.sga-dark-frame-04:not(.sga-dark-overlap) .sga-dark-sequence-3{opacity:0;transition:opacity .3s ease-out}
-#game-shell.sga-dark-frame-03 .sga-dark-sequence-3{transform:translate3d(0,-4px,0) scaleY(1)}
-#game-shell.sga-dark-frame-04 .sga-dark-sequence-4{animation:sgaDarkWrithe .62s ease-in-out 1}
-
-#game-shell.sga-dark-frame-rise .sga-dark-sequence-4{opacity:0;animation:sgaDarkEnergyAscend .85s cubic-bezier(.2,.75,.25,1) forwards}
-#game-shell.sga-dark-frame-rise .sga-dark-abyss{opacity:.12;transition:opacity .85s ease-out}
-#game-shell.sga-dark-frame-rise .sga-dark-afterglow{animation:sgaDarkAfterglowRise .85s ease-out forwards}
-#game-shell.sga-dark-afterglow .sga-dark-afterglow{animation:sgaDarkAfterglowFade .36s ease-out forwards}
-
-@keyframes sgaDarkPulse{0%{opacity:0;transform:scale(.94)}42%{opacity:.78;transform:scale(1)}100%{opacity:0;transform:scale(1.02)}}
-@keyframes sgaDarkPulseSoft{0%{opacity:0;transform:scale(.97)}42%{opacity:.46;transform:scale(1)}100%{opacity:0;transform:scale(1.015)}}
-@keyframes sgaDarkWrithe{0%,100%{transform:translate3d(0,0,0) rotate(0)}35%{transform:translate3d(-1%,0,0) rotate(-.25deg)}70%{transform:translate3d(.7%,-2px,0) rotate(.2deg)}}
-@keyframes sgaDarkEnergyAscend{0%{opacity:1;transform:translate3d(0,0,0) scaleY(1)}18%{opacity:1}100%{opacity:0;transform:translate3d(0,-18%,0) scaleY(1.09)}}
-@keyframes sgaDarkAfterglowRise{0%{opacity:0;transform:translate3d(0,10%,0) scaleY(.75)}28%{opacity:.34}100%{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}}
-@keyframes sgaDarkAfterglowFade{from{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}to{opacity:0;transform:translate3d(0,-88%,0) scaleY(1.28)}}
-
-@media (prefers-reduced-motion:reduce){
- .sga-dark-sequence-frame{transition:opacity .2s linear!important;transform:none!important}
- .sga-dark-pulse{animation:none!important}
- .sga-dark-sequence-4{animation:none!important}
+#game-shell.sga-dark-afterglow .scene-dark-energy-rise{
+  opacity:1;
+  visibility:visible;
+}
+#game-shell.sga-dark-frame-rise .sga-dark-energy-frame{
+  animation:sgaDarkEnergyRise04 950ms cubic-bezier(.22,.61,.36,1) forwards;
+}
+#game-shell.sga-dark-frame-rise .sga-dark-afterglow{
+  animation:sgaDarkAfterglowRise 950ms ease-out forwards;
+}
+#game-shell.sga-dark-afterglow .sga-dark-energy-frame{
+  opacity:0;
+}
+#game-shell.sga-dark-afterglow .sga-dark-afterglow{
+  animation:sgaDarkAfterglowFade 360ms ease-out forwards;
+}
+@keyframes sgaDarkEnergyRise04{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(0,-125%,0)}
+}
+@keyframes sgaDarkAfterglowRise{
+  0%{opacity:0;transform:translate3d(0,10%,0) scaleY(.75)}
+  28%{opacity:.34}
+  100%{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}
+}
+@keyframes sgaDarkAfterglowFade{
+  from{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}
+  to{opacity:0;transform:translate3d(0,-88%,0) scaleY(1.28)}
 }
 
 /* The gate itself transitions from the approved normal art to the anomaly art. */
