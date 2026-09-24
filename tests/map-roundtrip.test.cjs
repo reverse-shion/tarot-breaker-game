@@ -98,7 +98,9 @@ test('PAD return enters the real north path, does not replay memory or immediate
 });
 
 test('companion farewell finishes before boarding, stays on ground during flight and rejoins on return',async()=>{
-  const t=await landing('?from=garden',{companion:{mode:'following'}});const m=t.h.testMap;
+  // Garden return also implies the one-shot Devil memory was already completed.
+  // Otherwise the memory trigger correctly locks movement before Shion can reach the PAD.
+  const t=await landing('?from=garden',{companion:{mode:'following'},landingMemoryDone:true});const m=t.h.testMap;
   m.player.target={x:725,y:788};
   for(let i=1;i<500 && !t.lines.length;i++)m.loop(10000+i*16);
   assert.equal(t.lines[0]?.text,'しおぽんはここで待ってるぴょん！');
