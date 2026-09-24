@@ -2015,6 +2015,15 @@
       scale: { ...scale },
       player: playerRef(),
     }),
+    isViewportInsideWorld() {
+      const origin = viewportOrigin();
+      const viewW = cssWidth / camera.zoom;
+      const viewH = cssHeight / camera.zoom;
+      const epsilon = 0.5;
+      return origin.x >= -epsilon && origin.y >= -epsilon &&
+        origin.x + viewW <= world.w + epsilon &&
+        origin.y + viewH <= world.h + epsilon;
+    },
   });
   window.TarotVisionWorld = Object.freeze({
     async begin(src) {
