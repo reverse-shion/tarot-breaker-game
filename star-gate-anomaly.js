@@ -40,6 +40,11 @@ function gateShell(){return document.getElementById("game-shell")}
 function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
 function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
 function samePoint(a,b){return Math.abs(a.x-b.x)<.001&&Math.abs(a.y-b.y)<.001}
+function darkEnergyFrame(n){
+ const el=document.querySelector(".sga-dark-energy-frame");
+ if(!el)throw new Error("Dark energy sprite layer unavailable");
+ el.src=ASSETS.darkEnergy[n-1];
+}
 async function playCelestialGateLight(){
  const shell=gateShell();
  const layers=[...document.querySelectorAll(".sga-sequence-layer")];
@@ -66,30 +71,16 @@ async function playCelestialGateLight(){
  await phase("sga-celestial-frame-04",650,150,true);
 }
 async function playDarkEnergyReverse(){
- const shell=gateShell(),frames=[...document.querySelectorAll(".sga-dark-sequence-frame")];
- if(!shell||frames.length!==4)throw new Error("Dark energy ascension flow unavailable");
- const phase=async(state,hold,overlap=0,pulse=false)=>{
-   setGateState(state);
-   if(overlap)shell.classList.add("sga-dark-overlap");
-   if(pulse){
-     shell.classList.remove("sga-dark-pulse-retrigger");
-     void shell.offsetWidth;
-     shell.classList.add("sga-dark-pulse-retrigger");
-   }
-   if(overlap){
-     await pause(overlap);
-     shell.classList.remove("sga-dark-overlap");
-     await pause(Math.max(0,hold-overlap));
-   }else await pause(hold);
-   if(pulse)shell.classList.remove("sga-dark-pulse-retrigger");
- };
- setGateState("sga-dark-pulse");await pause(360);
- await phase("sga-dark-frame-01",600);
- await phase("sga-dark-frame-02",800,200);
- await phase("sga-dark-frame-03",700,180,true);
- await phase("sga-dark-frame-04",650,150,true);
- setGateState("sga-dark-frame-rise");await pause(850);
- setGateState("sga-dark-afterglow");await pause(360);
+ const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
+ if(!shell||!el)throw new Error("Dark energy reverse-flow unavailable");
+ const frames=[1,2,3,4],times=[120,120,120,150];
+ for(let i=0;i<frames.length;i++){
+   darkEnergyFrame(frames[i]);setGateState("sga-dark-frame-0"+frames[i]);await pause(times[i]);
+ }
+ setGateState("sga-dark-frame-rise");
+ await pause(950);
+ setGateState("sga-dark-afterglow");
+ await pause(360);
 }
 function gateIsFramed(state){
  const {origin,camera,viewport,scale}=state||{};if(!origin||!camera||!viewport||!scale)return false;
