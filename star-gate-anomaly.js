@@ -158,10 +158,16 @@ async function futureFixationStage1(){
  window.TarotActorVisibility?.set("shion",0);
  gateShell()?.classList.add("sga-future-world-hidden");
  root.classList.add("sga-future-shion-only");
+ // Orientation only: keep the verified world coordinate locked.
+ const face=(dx,dy)=>stage.perform({type:"face",actor:"shion",target:{x:before.x+dx,y:before.y+dy}});
+ face(0,1);
  root.classList.remove("sga-future-black");
  const vis=window.TarotActorVisibility;
  if(vis){for(let i=1;i<=12;i++){vis.set("shion",i/12);await pause(500/12)}}else await pause(500);
- await say("shion","……？");await pause(400);
+ await say("shion","……？");await pause(250);
+ face(-1,0);await pause(350);
+ face(1,0);await pause(350);
+ face(0,1);await pause(250);
  await say("shion","なんだ……？");
  await say("shion","リュミエール……？");await pause(500);
  await say("shion","……ここは、どこだ？");
