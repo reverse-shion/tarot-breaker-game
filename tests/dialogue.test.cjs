@@ -273,16 +273,14 @@ test('tap during wait or actor motion finishes only that action and playback sta
   assert.equal(h.window.TarotDialogue.getState().actionType, 'approach');
   h.window.TarotDialogue.advance();
   await flush();
+  assert.equal(h.stageFinishes[0].kind, 'finish');
+  await revealOpening(h.window.TarotDialogue);
   assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
   assert.equal(h.elements['dialogue-layer'].hidden, false);
-  assert.equal(h.stageFinishes[0].kind, 'finish');
 
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.window.TarotDialogue.getState().actionType, 'wait');
-  assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
-  h.window.TarotDialogue.advance();
-  await flush();
+  await revealOpening(h.window.TarotDialogue);
   assert.equal(h.elements['dialogue-speaker'].textContent, 'しおぽん');
 });
 
