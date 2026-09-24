@@ -214,6 +214,9 @@ test('four directions use all four Shion walk frames then the matching idle fram
       if (state.player.moving) frames.add(state.player.frame);
       assert.equal(state.player.dir, dir);
     }
+    if (frames.size !== 4) {
+      throw new Error(`walk trace ${dir}: frames=${[...frames].join(',')} state=${JSON.stringify(h.state().player)}`);
+    }
     assert.deepEqual([...frames].sort((a, b) => a - b), [0, 1, 2, 3]);
     const walkingCalls = h.drawCalls.slice(drawStart).filter(call => call[0]?.url?.endsWith(`shion_walk_${dir}.png`));
     assert.ok(walkingCalls.length > 0);
