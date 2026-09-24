@@ -79,7 +79,9 @@ test('BGM waits for movement, is one looping instance, retries rejection and nev
 });
 
 test('PAD return enters the real north path, does not replay memory or immediately leave', async()=>{
-  const t=await landing('?from=garden');const m=t.h.testMap;
+  // Reaching the Garden necessarily occurs after the one-shot landing memory.
+  // Model that persisted journey fact when testing the return route.
+  const t=await landing('?from=garden',{landingMemoryDone:true});const m=t.h.testMap;
   assert.equal(m.player.y,257);assert.equal(m.player.dir,'down');assert.equal(m.memoryDone,true);
   const returnWalkable = m.isGroundWalkable(m.player.x,m.player.y);
   if (!returnWalkable) {
