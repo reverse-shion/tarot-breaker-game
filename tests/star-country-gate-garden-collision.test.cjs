@@ -11,11 +11,12 @@ const data = JSON.parse(
   ),
 );
 const collision = createCollision(data);
+const spawn = collision.nearestWalkable({ x: 724, y: 1015 });
 
-test('official collision v5 preserves the latest six authored walk areas', () => {
-  assert.equal(data.version, 5);
-  assert.equal(data.walkAreas.length, 6);
-  assert.equal(data.blockedAreas.length, 9);
+test('official collision v6 preserves the current authored walk polygons', () => {
+  assert.equal(data.version, 6);
+  assert.equal(data.walkAreas.length, 17);
+  assert.equal(data.blockedAreas.length, 0);
   for (const area of [...data.walkAreas, ...data.blockedAreas]) {
     assert.equal(area.type, 'poly');
     assert.ok(Array.isArray(area.points));
@@ -24,27 +25,31 @@ test('official collision v5 preserves the latest six authored walk areas', () =>
   }
 });
 
-test('spawn, Shiopon and the Lumiere gate approach stay walkable', () => {
-  assert.equal(collision.isWalkable(724, 1015), true, 'Shion spawn');
+test('resolved spawn, Shiopon and the Lumiere gate approach stay walkable', () => {
+  assert.equal(collision.isWalkable(spawn.x, spawn.y), true, 'resolved Shion spawn');
   assert.equal(collision.isWalkable(810, 800), true, 'Shiopon home');
   assert.equal(collision.isWalkable(810, 240), true, 'Lumiere gate approach');
 });
 
-test('fountain, flowerbeds and far map edges remain blocked', () => {
+test('fountain centre and true off-route map space remain blocked', () => {
   assert.equal(collision.isWalkable(810, 500), false, 'fountain center');
-  assert.equal(collision.isWalkable(530, 560), false, 'west flowerbed');
-  assert.equal(collision.isWalkable(1030, 560), false, 'east flowerbed');
-  assert.equal(collision.isWalkable(300, 420), false, 'far west side');
-  assert.equal(collision.isWalkable(1300, 500), false, 'far east side');
+  assert.equal(collision.isWalkable(450, 700), false, 'west off-route space');
+  assert.equal(collision.isWalkable(1100, 700), false, 'east off-route space');
+  assert.equal(collision.isWalkable(300, 500), false, 'far west off-route space');
+  assert.equal(collision.isWalkable(1447, 500), false, 'far east edge');
 });
 
-test('the intended paved route remains connected from spawn to the Star Gate', () => {
-  assert.equal(collision.isWalkable(600, 520), true, 'west fountain-ring path');
-  assert.equal(collision.isWalkable(1040, 520), true, 'east fountain-ring path');
-  assert.equal(collision.isWalkable(810, 300), true, 'central gate stairs');
+test('the current authored route remains connected from resolved spawn to the Star Gate', () => {
+  for (const point of [
+    { x: 810, y: 800 },
+    { x: 584, y: 556 },
+    { x: 990, y: 537 },
+    { x: 810, y: 350 },
+    { x: 810, y: 240 },
+  ]) assert.equal(collision.isWalkable(point.x, point.y), true, JSON.stringify(point));
 
   const navigation = createNavigator(collision, 16);
-  const route = navigation.findPath({ x: 724, y: 1015 }, { x: 810, y: 240 });
-  assert.ok(route, 'spawn must have a route to the gate approach');
+  const route = navigation.findPath(spawn, { x: 810, y: 240 });
+  assert.ok(route, 'resolved spawn must have a route to the gate approach');
   assert.ok(route.points.length > 1);
 });
