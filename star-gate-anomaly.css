@@ -693,7 +693,7 @@
 .sga-sequence-l3{transform:scale(.89) translateY(1%)}
 .sga-sequence-l4{transform:scale(.92)}
 .sga-sequence-glowfloor{position:absolute;left:0;right:0;bottom:0;height:35%;z-index:0;background:radial-gradient(ellipse at 50% 100%,rgba(120,150,255,.35),transparent 70%);opacity:0;pointer-events:none;transition:opacity 1.2s ease}
-.sga-sequence-flash{position:absolute;inset:0;z-index:3;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen}
+.sga-sequence-flash{position:absolute;left:19.62%;top:0;width:60.75%;height:100%;z-index:3;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.82) 12%,#fff 50%,rgba(255,255,255,.82) 88%,transparent 100%);opacity:0;pointer-events:none;mix-blend-mode:screen}
 
 #game-shell.sga-celestial-frame-01 .sga-sequence-l1,
 #game-shell.sga-celestial-frame-02 .sga-sequence-l2,
