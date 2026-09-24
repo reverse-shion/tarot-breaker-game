@@ -616,7 +616,11 @@
   visibility:visible;
 }
 #game-shell.sga-dark-frame-rise .sga-dark-energy-frame{
-  animation:sgaDarkEnergyRise04 950ms cubic-bezier(.22,.61,.36,1) forwards;
+  opacity:0;
+}
+#game-shell.sga-dark-frame-rise .sga-dark-energy-frame-fourth{
+  opacity:1;
+  animation:sgaDarkEnergyAscend04 850ms cubic-bezier(.2,.75,.25,1) forwards;
 }
 #game-shell.sga-dark-frame-rise .sga-dark-afterglow{
   animation:sgaDarkAfterglowRise 950ms ease-out forwards;
@@ -631,9 +635,10 @@
   from{opacity:0;transform:translate3d(0,4px,0) scaleY(.91)}
   to{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
 }
-@keyframes sgaDarkEnergyRise04{
-  from{transform:translate3d(0,0,0)}
-  to{transform:translate3d(0,-125%,0)}
+@keyframes sgaDarkEnergyAscend04{
+  0%{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
+  18%{opacity:1}
+  100%{opacity:0;transform:translate3d(0,-18%,0) scaleY(1.09)}
 }
 @keyframes sgaDarkAfterglowRise{
   0%{opacity:0;transform:translate3d(0,10%,0) scaleY(.75)}
