@@ -50,7 +50,13 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const window = new Element(); window.devicePixelRatio = 3;
   window.TarotSceneEffects = {
     ready: Promise.resolve(),
-    waitImage: async image => image,
+    waitImage: image => new Promise((resolve, reject) => {
+      if (image.complete && image.naturalWidth) return resolve(image);
+      image.addEventListener?.("load", () => resolve(image), { once: true });
+      image.addEventListener?.("error", reject, { once: true });
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+    }),
     syncCamera() {},
     drawDebug() {},
   };
