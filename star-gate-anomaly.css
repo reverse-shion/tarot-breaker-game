@@ -517,7 +517,11 @@
   object-fit:contain;
   opacity:1;
   transform:translate3d(0,0,0);
-  will-change:transform;
+  will-change:transform,opacity;
+}
+/* Stage 1: frame 01 seeps out of the gate without changing the approved DOM/layers. */
+#game-shell.sga-dark-frame-01 .sga-dark-energy-frame{
+  animation:sgaDarkEnergySeep01 600ms cubic-bezier(.2,.85,.15,1) both;
 }
 .scene-dark-energy-rise .sga-dark-afterglow{
   position:absolute;
@@ -550,6 +554,10 @@
 }
 #game-shell.sga-dark-afterglow .sga-dark-afterglow{
   animation:sgaDarkAfterglowFade 360ms ease-out forwards;
+}
+@keyframes sgaDarkEnergySeep01{
+  from{opacity:0;transform:translate3d(0,4px,0) scaleY(.91)}
+  to{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
 }
 @keyframes sgaDarkEnergyRise04{
   from{transform:translate3d(0,0,0)}
