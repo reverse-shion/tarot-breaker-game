@@ -64,12 +64,12 @@ function bootScene(){
 test('rear actor is alpha-masked in an isolated surface; front actor draws directly',async()=>{
  const {api,calls}=bootScene();await api.ready;
  const main={drawImage(...args){calls.push({tag:'main',key:'drawImage',args});}};
- const targets=[];api.drawMaskedActor(main,{x:440,y:420},{x:1,y:1},2,p=>targets.push(p));
+ const targets=[];api.drawMaskedActor(main,{x:400,y:435},{x:1,y:1},2,p=>targets.push(p));
  assert.notEqual(targets[0],main);
  api.drawMaskedActor(main,{x:569,y:470},{x:1,y:1},2,p=>targets.push(p));
  assert.equal(targets[1],main);
  assert.equal(calls.filter(c=>c.tag==='main'&&c.key==='drawImage').length,1);
- api.drawMaskedActor(main,{x:880,y:840},{x:2,y:2},1,p=>targets.push(p));
+ api.drawMaskedActor(main,{x:2080,y:1740},{x:2,y:2},1,p=>targets.push(p));
  assert.notEqual(targets[2],main);
 });
 test('scene and actors share the current camera; event FX is opt-in',async()=>{
