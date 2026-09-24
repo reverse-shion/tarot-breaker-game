@@ -46,16 +46,29 @@ function darkEnergyFrame(n){
  el.src=ASSETS.darkEnergy[n-1];
 }
 async function playCelestialGateLight(){
- const flow=document.querySelector(".sga-continuous-energy-flow");
- if(!flow)throw new Error("Celestial continuous energy flow unavailable");
- setGateState("sga-celestial-frame-01");
- await pause(250);
- setGateState("sga-celestial-frame-02");
- await pause(450);
- setGateState("sga-celestial-frame-03");
- await pause(620);
- setGateState("sga-celestial-frame-04");
- await pause(620);
+ const shell=gateShell();
+ const layers=[...document.querySelectorAll(".sga-sequence-layer")];
+ if(!shell||layers.length!==4)throw new Error("Celestial four-stage sequence unavailable");
+ const phase=async(state,hold,overlap=0,flash=false)=>{
+   setGateState(state);
+   if(overlap)shell.classList.add("sga-sequence-overlap");
+   if(flash){
+     shell.classList.remove("sga-sequence-flash-on");
+     void shell.offsetWidth;
+     shell.classList.add("sga-sequence-flash-on");
+   }
+   if(overlap){
+     await pause(overlap);
+     shell.classList.remove("sga-sequence-overlap");
+     await pause(Math.max(0,hold-overlap));
+   }else await pause(hold);
+   if(flash)shell.classList.remove("sga-sequence-flash-on");
+ };
+ await pause(150);
+ await phase("sga-celestial-frame-01",600);
+ await phase("sga-celestial-frame-02",850,200);
+ await phase("sga-celestial-frame-03",730,180,true);
+ await phase("sga-celestial-frame-04",650,150,true);
 }
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
