@@ -96,3 +96,11 @@ test("Vision registration is immutable and covers the full reference world",()=>
  assert.ok(y+1086*s>=1086);
  assert.equal((game.match(/VISION_REGISTRATION\s*=/g)||[]).length,1);
 });
+
+test("Stage 2 camera tour guards every shot against world-edge exposure",()=>{
+ const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function fadeNpc"));
+ assert.match(game,/isViewportInsideWorld\(\)/);
+ assert.match(stage2,/camera\.isViewportInsideWorld\?\.\(\)===false/);
+ for(const shot of ["gate","left","fountain","return"]) assert.match(stage2,new RegExp('verifyCoverage\\("'+shot+'"\\)'));
+ assert.doesNotMatch(stage2,/allowOverscan:true/);
+});
