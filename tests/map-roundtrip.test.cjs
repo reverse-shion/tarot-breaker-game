@@ -37,7 +37,11 @@ function harness(search = '', saved = {}) {
     fetch:async(url)=>{
       const clean=String(url).split('?')[0].replace(/^\.\//,'');
       if (clean === 'assets/maps/star-landing/collision.json' || clean === 'assets/maps/star-landing/passage-layers.json') {
-        return {ok:true,json:async()=>JSON.parse(fs.readFileSync(clean,'utf8'))};
+        const raw = JSON.parse(fs.readFileSync(clean,'utf8'));
+        // Values returned by fetch().json() belong to the page realm. Recreate
+        // the fixture in this VM so Array.isArray checks match browser behavior.
+        const data = vm.runInContext('(' + JSON.stringify(raw) + ')', h);
+        return {ok:true,json:async()=>data};
       }
       return {ok:false};
     }, TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
