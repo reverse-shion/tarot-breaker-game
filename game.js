@@ -251,6 +251,51 @@
     resolve: null,
   };
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
+  const VISION_REGISTRATION = Object.freeze({
+    // Static asset registration, not animation. The 1.15 scale gives enough
+    // overscan for every clamped camera shot while the x offset registers the
+    // authored central axis (~735px) to the garden axis (~800px).
+    scale: 1.31,
+    offsetX: -190,
+    offsetY: -320,
+  });
+  const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
+
+  function loadVisionWorld(src) {
+    if (visionWorld.image && visionWorld.src === src && visionWorld.image.complete)
+      return Promise.resolve(visionWorld.image);
+    const token = ++visionWorld.token;
+    const image = new Image();
+    image.decoding = "async";
+    return new Promise((resolve, reject) => {
+      image.onload = () => {
+        if (token !== visionWorld.token) return resolve(image);
+        visionWorld.image = image;
+        visionWorld.src = src;
+        resolve(image);
+      };
+      image.onerror = () => reject(new Error("Future Vision world image failed to load"));
+      image.src = src;
+    });
+  }
+
+  function drawVisionWorld() {
+    if (!visionWorld.active || !visionWorld.image || visionWorld.opacity <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = visionWorld.opacity;
+    ctx.imageSmoothingEnabled = true;
+    // Cinematic Vision is a single authored plate registered once into the
+    // multi-layer garden world. Registration is immutable for the whole vision.
+    const r = VISION_REGISTRATION;
+    ctx.drawImage(
+      visionWorld.image,
+      r.offsetX * scale.x,
+      r.offsetY * scale.y,
+      world.w * r.scale,
+      world.h * r.scale,
+    );
+    ctx.restore();
+  }
 
 
 
@@ -1418,12 +1463,22 @@
   }
 
   function drawActors() {
-    drawGroundShadowAt(lumiere, 18, 0.2);
-    drawGroundShadowAt(shiopon, 17, 0.36);
-    drawGroundShadowAt(player, 20, 0.46);
+    if (actorVisibility.lumiere > 0) {
+      ctx.save(); ctx.globalAlpha = actorVisibility.lumiere;
+      drawGroundShadowAt(lumiere, 18, 0.2); ctx.restore();
+    }
+    if (actorVisibility.shiopon > 0) {
+      ctx.save(); ctx.globalAlpha = actorVisibility.shiopon;
+      drawGroundShadowAt(shiopon, 17, 0.36); ctx.restore();
+    }
+    if (actorVisibility.shion > 0) {
+      ctx.save(); ctx.globalAlpha = actorVisibility.shion;
+      drawGroundShadowAt(player, 20, 0.46); ctx.restore();
+    }
 
     const actors = [
       {
+        id: "lumiere",
         actor: lumiere,
         actorImages: lumiereImages,
         drawHeight: LUMIERE_DRAW_HEIGHT,
@@ -1435,6 +1490,7 @@
         },
       },
       {
+        id: "shiopon",
         actor: shiopon,
         actorImages: shioponImages,
         drawHeight: SHIOPON_DRAW_HEIGHT,
@@ -1446,6 +1502,7 @@
         },
       },
       {
+        id: "shion",
         actor: player,
         actorImages: images,
         drawHeight: DRAW_HEIGHT,
@@ -1463,13 +1520,17 @@
     });
 
     for (const entry of actors) {
+      const opacity = actorVisibility[entry.id];
+      if (opacity <= 0) continue;
       const paint = (target) => {
         const original = ctx;
         ctx = target;
+        target.save();
+        target.globalAlpha *= opacity;
         try {
           drawActor(entry.actor, entry.actorImages, entry.drawHeight,
             entry.glowColor, entry.options);
-        } finally { ctx = original; }
+        } finally { target.restore(); ctx = original; }
       };
       if (window.TarotSceneEffects) {
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
@@ -1670,6 +1731,7 @@
     ctx.save();
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-origin.x, -origin.y);
+    drawVisionWorld();
     drawTapEffect();
     drawActors();
     drawCollisionDebug();
@@ -1953,7 +2015,42 @@
       scale: { ...scale },
       player: playerRef(),
     }),
+    isViewportInsideWorld() {
+      const origin = viewportOrigin();
+      const viewW = cssWidth / camera.zoom;
+      const viewH = cssHeight / camera.zoom;
+      const epsilon = 0.5;
+      return origin.x >= -epsilon && origin.y >= -epsilon &&
+        origin.x + viewW <= world.w + epsilon &&
+        origin.y + viewH <= world.h + epsilon;
+    },
   });
+  window.TarotVisionWorld = Object.freeze({
+    async begin(src) {
+      await loadVisionWorld(src);
+      visionWorld.active = true;
+      visionWorld.opacity = 0;
+      return { completed: true };
+    },
+    setOpacity(opacity) {
+      visionWorld.opacity = clamp(Number(opacity) || 0, 0, 1);
+    },
+    end() {
+      visionWorld.active = false;
+      visionWorld.opacity = 0;
+      visionWorld.image = null;
+      visionWorld.src = "";
+      visionWorld.token += 1;
+    },
+    getState: () => ({
+      active: visionWorld.active,
+      opacity: visionWorld.opacity,
+      src: visionWorld.src,
+      world: { width: world.w / scale.x, height: world.h / scale.y },
+      registration: { ...VISION_REGISTRATION },
+    }),
+  });
+
   window.TarotActorVisibility = Object.freeze({
     set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
     reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
