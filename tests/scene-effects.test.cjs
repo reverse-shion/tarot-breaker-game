@@ -13,8 +13,9 @@ test('gate opening aligns with stair centre; standalone gate is mask-only and fo
  assert.deepEqual(layout.foregroundOffset,{x:-15,y:0});
  assert.equal((html.match(/class="scene-object scene-back scene-gate-base"/g)||[]).length,1);
  assert.match(html,/class="scene-object scene-back scene-gate-base"[\s\S]*?data-mask-only="true"[\s\S]*?hidden/);
- assert.doesNotMatch(html,/scene-front scene-foreground/);
- assert.match(html,/scene-back scene-foreground/);
+ // The authored foreground is intentionally a front world layer: scene-effects.js
+ // paints this canvas and reuses it as the 2.5D actor occlusion mask.
+ assert.match(html,/class="scene-world-layer scene-front scene-foreground"[\s\S]*?<canvas width="1448" height="1086"><\/canvas>/);
  for(const p of [{x:810,y:25},{x:693,y:175},{x:932,y:175},{x:811,y:230}]) assert.ok(layout.contains(p,{type:'poly',points:layout.legacyGate}));
 });
 test('foot baseline is strict, local to the object and independent for each actor',()=>{
