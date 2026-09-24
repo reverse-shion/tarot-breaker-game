@@ -46,7 +46,10 @@ test("Stage 2 clears the Stage 1 blackout so ruins are visible",()=>{
 
 
 test("Stage 2 keeps NPC actors suppressed while ruins reveal",()=>{
- assert.match(css,/sga-future-ruins~\\.scene-actor:not\\(\\[data-actor="shion"\\]\\)\\{opacity:0 !important\\}/);
- assert.match(source,/set\\("shiopon",0\\)/);
- assert.match(source,/set\\("lumiere",0\\)/);
+ assert.match(css,/sga-future-ruins~\.scene-actor:not\(\[data-actor="shion"\]\)\{opacity:0 !important\}/);
+ const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function fadeNpc"));
+ assert.match(stage2,/actorVisibility\?\.set\("shiopon",0\)/);
+ assert.match(stage2,/actorVisibility\?\.set\("lumiere",0\)/);
+ assert.ok(stage2.indexOf('actorVisibility?.set("shiopon",0)') < stage2.indexOf('classList.add("sga-future-ruins")'));
+ assert.ok(stage2.indexOf('actorVisibility?.set("lumiere",0)') < stage2.indexOf('classList.add("sga-future-ruins")'));
 });
