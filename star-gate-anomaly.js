@@ -217,10 +217,7 @@ async function run(){
   if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
   await resonance();
-  if(DEV_HARNESS){
-   if(FUTURE_STAGE1_DEV)await futureFixationStage1();
-   success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true,futureStage1:FUTURE_STAGE1_DEV}}));return;
-  }
+  if(DEV_HARNESS){success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true}}));if(FUTURE_STAGE1_DEV)await futureFixationStage1();return;}
   await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
  finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();gateShell()?.classList.remove("sga-future-world-hidden");window.TarotAudio?.setCinematicSilence?.(false,200);cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
