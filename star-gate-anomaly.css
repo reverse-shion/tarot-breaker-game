@@ -684,7 +684,26 @@
 .scene-celestial-gate-light{
   display:block;opacity:0;visibility:hidden;overflow:visible;pointer-events:none;
 }
+.scene-celestial-gate-light .sga-celestial-continuous-light{
+  position:absolute;
+  z-index:0;
+  left:34%;
+  top:3%;
+  width:32%;
+  height:88%;
+  opacity:0;
+  pointer-events:none;
+  transform:translate3d(0,-18px,0);
+  transition:opacity 240ms ease-out;
+  background:
+    radial-gradient(ellipse at 50% 62%,rgba(218,239,255,.18) 0%,rgba(166,196,255,.09) 34%,rgba(181,157,238,.045) 58%,transparent 76%),
+    linear-gradient(180deg,transparent 0%,rgba(225,245,255,.08) 16%,rgba(193,220,255,.14) 48%,rgba(185,166,235,.07) 74%,transparent 100%);
+  filter:blur(5px);
+  will-change:transform,opacity;
+  animation:sgaCelestialContinuousDown 900ms linear infinite;
+}
 .scene-celestial-gate-light .sga-celestial-gate-light-frame{
+  z-index:1;
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transform:translate3d(0,-8px,0) scale(.998);
   transition:opacity 185ms ease-in-out,transform 230ms cubic-bezier(.22,.61,.36,1);
@@ -705,6 +724,15 @@
 #game-shell.sga-celestial-frame-04 .scene-celestial-gate-light{
   opacity:1;visibility:visible;
 }
+#game-shell.sga-normal-flow .scene-celestial-gate-light{
+  opacity:1;visibility:visible;
+}
+#game-shell.sga-celestial-frame-01 .sga-celestial-continuous-light{opacity:.08}
+#game-shell.sga-celestial-frame-02 .sga-celestial-continuous-light{opacity:.17}
+#game-shell.sga-celestial-frame-03 .sga-celestial-continuous-light{opacity:.20}
+#game-shell.sga-celestial-frame-04 .sga-celestial-continuous-light{opacity:.07}
+#game-shell.sga-normal-flow .sga-celestial-continuous-light{opacity:0}
+
 /* Old CSS normal-flow body stays off: no double light column. */
 #game-shell.sga-celestial-frame-01 .sga-sky-flow,
 #game-shell.sga-celestial-frame-02 .sga-sky-flow,
@@ -731,12 +759,17 @@
 #game-shell.sga-celestial-frame-04 .sga-celestial-sparkle{animation:sgaCelestialSparkleDown 620ms ease-in infinite}
 .sga-celestial-sparkle.s2,.sga-celestial-sparkle.s5{animation-delay:-210ms!important}
 .sga-celestial-sparkle.s3,.sga-celestial-sparkle.s6{animation-delay:-410ms!important}
+@keyframes sgaCelestialContinuousDown{
+  0%{transform:translate3d(0,-18px,0)}
+  100%{transform:translate3d(0,24px,0)}
+}
 @keyframes sgaCelestialSparkleDown{
   0%{opacity:0;transform:translate3d(0,-10px,0) scale(.75)}
   28%{opacity:.5}100%{opacity:0;transform:translate3d(0,26px,0) scale(1)}
 }
 @media (prefers-reduced-motion:reduce){
  .scene-celestial-gate-light .sga-celestial-gate-light-frame{transition:opacity 80ms linear!important;transform:none!important}
+ .scene-celestial-gate-light .sga-celestial-continuous-light{animation:none!important;transform:none!important}
  .sga-celestial-sparkle{animation:none!important;opacity:.16!important}
 }
 }
