@@ -649,3 +649,31 @@
 #game-shell.sga-dark-afterglow .sga-sky-flow i{
   display:none!important;
 }
+
+
+/* Anomaly gate: once the gate has turned black-purple, the inner portal must
+   become near-black purple and remain fully opaque. Never reveal sky/clouds through it. */
+#game-shell.sga-reverse-gate .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-01 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-02 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-03 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-04 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-rise .scene-gate-inner-backing,
+#game-shell.sga-dark-afterglow .scene-gate-inner-backing,
+#game-shell.sga-anomaly-rest .scene-gate-inner-backing{
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+  background:linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%)!important;
+}
+#game-shell.sga-reverse-gate .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-01 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-02 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-03 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-04 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-rise .scene-gate-inner-light>img,
+#game-shell.sga-dark-afterglow .scene-gate-inner-light>img,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+  filter:brightness(.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)!important;
+}
