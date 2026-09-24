@@ -76,10 +76,9 @@ async function playDarkEnergyReverse(){
  darkEnergyFrame(1);setGateState("sga-dark-frame-01");await pause(600);
  setGateState("sga-dark-frame-02");shell.classList.add("sga-dark-01-02-overlap");await pause(200);
  shell.classList.remove("sga-dark-01-02-overlap");await pause(400);
- const frames=[3,4],times=[120,150];
- for(let i=0;i<frames.length;i++){
-   darkEnergyFrame(frames[i]);setGateState("sga-dark-frame-0"+frames[i]);await pause(times[i]);
- }
+ setGateState("sga-dark-frame-03");shell.classList.add("sga-dark-02-03-overlap");await pause(180);
+ shell.classList.remove("sga-dark-02-03-overlap");await pause(420);
+ darkEnergyFrame(4);setGateState("sga-dark-frame-04");await pause(150);
  setGateState("sga-dark-frame-rise");
  await pause(950);
  setGateState("sga-dark-afterglow");
