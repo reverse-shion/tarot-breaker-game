@@ -16,7 +16,7 @@ function harness(search = '', saved = {}) {
         hidden: false, dataset: {}, style: {setProperty(){}}, textContent:'', listeners:{},
         classList: {add:(...ks)=>ks.forEach(k=>classes.add(k)), remove:(...ks)=>ks.forEach(k=>classes.delete(k)), contains:k=>classes.has(k), toggle:(k,v)=>v ? classes.add(k) : classes.delete(k)},
         addEventListener(type, fn){(this.listeners[type] ||= []).push(fn);},
-        setAttribute(){}, appendChild(){}, querySelector:k=>element(k), getContext:()=>canvas,
+        setAttribute(){}, appendChild(){}, replaceChildren(){}, querySelector:k=>element(k), getContext:()=>canvas,
         getBoundingClientRect:()=>({left:0,top:0,width:1448,height:1086}),
       });
     }
