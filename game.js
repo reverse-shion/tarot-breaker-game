@@ -251,6 +251,14 @@
     resolve: null,
   };
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
+  const VISION_REGISTRATION = Object.freeze({
+    // Static asset registration, not animation. The 1.15 scale gives enough
+    // overscan for every clamped camera shot while the x offset registers the
+    // authored central axis (~735px) to the garden axis (~800px).
+    scale: 1.15,
+    offsetX: -45,
+    offsetY: -160,
+  });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
   function loadVisionWorld(src) {
@@ -276,9 +284,16 @@
     ctx.save();
     ctx.globalAlpha = visionWorld.opacity;
     ctx.imageSmoothingEnabled = true;
-    // Vision art occupies the exact Star Gate Garden reference world.
-    // Camera movement therefore reveals world coordinates, never image edges.
-    ctx.drawImage(visionWorld.image, 0, 0, world.w, world.h);
+    // Cinematic Vision is a single authored plate registered once into the
+    // multi-layer garden world. Registration is immutable for the whole vision.
+    const r = VISION_REGISTRATION;
+    ctx.drawImage(
+      visionWorld.image,
+      r.offsetX * scale.x,
+      r.offsetY * scale.y,
+      world.w * r.scale,
+      world.h * r.scale,
+    );
     ctx.restore();
   }
 
@@ -2023,6 +2038,7 @@
       opacity: visionWorld.opacity,
       src: visionWorld.src,
       world: { width: world.w / scale.x, height: world.h / scale.y },
+      registration: { ...VISION_REGISTRATION },
     }),
   });
 
