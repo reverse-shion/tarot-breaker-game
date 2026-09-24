@@ -4,8 +4,8 @@ const ASSETS={
  ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
- anomalyGate:"./assets/events/gate-vision/garden-star-gate.webp",
- darkEnergy:["./assets/events/gate-vision/dark_energy_rise_01.webp","./assets/events/gate-vision/dark_energy_rise_02.webp","./assets/events/gate-vision/dark_energy_rise_03.webp","./assets/events/gate-vision/dark_energy_rise_04.webp"]
+ anomalyGate:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/garden-star-gate.webp",
+ darkEnergy:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_04.webp"]
 };
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
