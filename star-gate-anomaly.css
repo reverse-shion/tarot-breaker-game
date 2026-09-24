@@ -525,6 +525,7 @@
 #game-shell.sga-dark-frame-03 .sga-dark-abyss,
 #game-shell.sga-dark-frame-04 .sga-dark-abyss{opacity:.26}
 #game-shell.sga-dark-pulse .sga-dark-pulse{animation:sgaDarkPulse .36s ease-out forwards}
+#game-shell.sga-dark-pulse-retrigger .sga-dark-pulse{animation:sgaDarkPulseSoft .36s ease-out forwards}
 
 #game-shell.sga-dark-frame-01 .sga-dark-sequence-1,
 #game-shell.sga-dark-frame-02 .sga-dark-sequence-2,
@@ -545,6 +546,7 @@
 #game-shell.sga-dark-afterglow .sga-dark-afterglow{animation:sgaDarkAfterglowFade .36s ease-out forwards}
 
 @keyframes sgaDarkPulse{0%{opacity:0;transform:scale(.94)}42%{opacity:.78;transform:scale(1)}100%{opacity:0;transform:scale(1.02)}}
+@keyframes sgaDarkPulseSoft{0%{opacity:0;transform:scale(.97)}42%{opacity:.46;transform:scale(1)}100%{opacity:0;transform:scale(1.015)}}
 @keyframes sgaDarkWrithe{0%,100%{transform:translate3d(0,0,0) rotate(0)}35%{transform:translate3d(-1%,0,0) rotate(-.25deg)}70%{transform:translate3d(.7%,-2px,0) rotate(.2deg)}}
 @keyframes sgaDarkEnergyAscend{0%{opacity:1;transform:translate3d(0,0,0) scaleY(1)}18%{opacity:1}100%{opacity:0;transform:translate3d(0,-18%,0) scaleY(1.09)}}
 @keyframes sgaDarkAfterglowRise{0%{opacity:0;transform:translate3d(0,10%,0) scaleY(.75)}28%{opacity:.34}100%{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}}
