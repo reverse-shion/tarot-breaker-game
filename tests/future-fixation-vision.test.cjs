@@ -39,4 +39,7 @@ test("Stage 2 reveals the authored ruins and tours gate, left map and fountain w
 });
 
 
-test("Stage 2 clears the Stage 1 blackout so ruins are visible",()=>{\n assert.match(css,/sga-future-shion-only:not\\\(.sga-future-ruins\\\) \\.sga-future-blackout\\{opacity:1\\}/);\n assert.match(css,/sga-future-ruins \\.sga-future-blackout\\{opacity:0;pointer-events:none\\}/);\n});\n
+test("Stage 2 clears the Stage 1 blackout so ruins are visible",()=>{
+ assert.match(css,/sga-future-shion-only:not\(.sga-future-ruins\) \.sga-future-blackout\{opacity:1\}/);
+ assert.match(css,/sga-future-ruins \.sga-future-blackout\{opacity:0;pointer-events:none\}/);
+});
