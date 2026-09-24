@@ -1,7 +1,9 @@
 # TAROT BREAKER — Event Contracts
 
 Status: ACTIVE
-Machine-readable companion: `event-contracts.json`.
+Machine-readable Source of Truth: `event-contracts.json`.
+
+Contract maintenance rule: status and segment truth are authored in `event-contracts.json`. This document mirrors that registry for humans; CI validates that the mirror stays consistent instead of pinning a historical status such as `NOT TESTED`.
 
 ## EC-001 — Star Gate Anomaly
 event_id: star-gate-anomaly
