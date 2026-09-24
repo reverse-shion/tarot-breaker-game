@@ -3,18 +3,19 @@
   "events": {
     "star-gate-anomaly": {
       "map": "star_gate_garden",
-      "status": "NOT TESTED",
+      "status": "DEVICE VERIFIED",
       "productionEnabled": false,
       "startEvent": "tarot-breaker:star-gate-investigate",
       "segments": {
-        "star-gate-choice": "NOT TESTED",
-        "star-gate-camera": "NOT TESTED",
-        "star-gate-normal-resonance": "NOT TESTED",
-        "star-gate-reverse-flow": "NOT TESTED",
-        "star-gate-sky-release": "NOT TESTED",
-        "star-gate-camera-return": "NOT TESTED",
-        "star-gate-aftermath": "NOT TESTED"
-      }
+        "star-gate-choice": "DEVICE VERIFIED",
+        "star-gate-camera": "DEVICE VERIFIED",
+        "star-gate-normal-resonance": "DEVICE VERIFIED",
+        "star-gate-reverse-flow": "DEVICE VERIFIED",
+        "star-gate-sky-release": "DEVICE VERIFIED",
+        "star-gate-camera-return": "DEVICE VERIFIED",
+        "star-gate-aftermath": "DEVICE VERIFIED"
+      },
+      "verifiedBaseline": "1c75354ea3b1de2f5e8cedeb0fbbc90d7cb3f839"
     }
   }
 }
