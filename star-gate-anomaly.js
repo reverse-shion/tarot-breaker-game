@@ -46,14 +46,14 @@ function darkEnergyFrame(n){
  el.src=ASSETS.darkEnergy[n-1];
 }
 function celestialLightFrame(n){
- const el=document.querySelector(".sga-celestial-gate-light-frame");
- if(!el)throw new Error("Celestial gate light sprite layer unavailable");
- el.src=ASSETS.celestialLight[n-1];
+ const frames=[...document.querySelectorAll(".sga-celestial-gate-light-frame")];
+ if(frames.length!==4)throw new Error("Celestial gate light sprite frames unavailable");
+ for(const el of frames)el.classList.toggle("is-active",el.classList.contains("f"+n));
 }
 async function playCelestialGateLight(){
- const el=document.querySelector(".sga-celestial-gate-light-frame");
- if(!el)throw new Error("Celestial gate light sprite layer unavailable");
- const times=[160,160,190,360];
+ const frames=[...document.querySelectorAll(".sga-celestial-gate-light-frame")];
+ if(frames.length!==4)throw new Error("Celestial gate light sprite frames unavailable");
+ const times=[320,320,360,460];
  for(let i=0;i<4;i++){
    celestialLightFrame(i+1);
    setGateState("sga-celestial-frame-0"+(i+1));
