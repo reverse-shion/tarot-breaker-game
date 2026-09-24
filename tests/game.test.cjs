@@ -94,11 +94,15 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     }
   }
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
-  if (!elements['nav-status']?.dataset.state) {
+  if (!elements['nav-status']?.dataset.state && !badCollision) {
     const detail = errors.map(error => error?.stack || error?.message || String(error)).join("\n---\n");
     throw new Error("Garden harness failed before nav debug state was produced:\n" + (detail || "no captured console error"));
   }
-  const state = () => JSON.parse(elements['nav-status'].dataset.state);
+  const state = () => {
+    if (!elements['nav-status']?.dataset.state)
+      throw new Error("Garden state unavailable because boot did not complete");
+    return JSON.parse(elements['nav-status'].dataset.state);
+  };
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
     const s = state(), sx = (x - s.origin.x) * s.camera.zoom, sy = (y - s.origin.y) * s.camera.zoom;
