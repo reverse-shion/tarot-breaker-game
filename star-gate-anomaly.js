@@ -53,7 +53,7 @@ function celestialLightFrame(n){
 async function playCelestialGateLight(){
  const frames=[...document.querySelectorAll(".sga-celestial-gate-light-frame")];
  if(frames.length!==4)throw new Error("Celestial gate light sprite frames unavailable");
- const times=[320,320,360,460];
+ const times=[230,230,260,380];
  for(let i=0;i<4;i++){
    celestialLightFrame(i+1);
    setGateState("sga-celestial-frame-0"+(i+1));
