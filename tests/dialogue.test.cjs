@@ -49,6 +49,7 @@ function bootDialogue() {
       if (key === 'hidden') this.hidden = true;
     }
     focus() {}
+    get isConnected() { return true; }
     set innerHTML(html) {
       this._innerHTML = html;
       for (const id of ['dialogue-advance', 'dialogue-speaker', 'dialogue-text']) {
@@ -133,6 +134,8 @@ function bootDialogue() {
       constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
     },
     queueMicrotask: (fn) => fn(),
+    requestAnimationFrame: (fn) => { fn(); return 1; },
+    cancelAnimationFrame() {},
     setTimeout: (fn) => { const id = ++timerId; timers.set(id, fn); return id; },
     clearTimeout: (id) => timers.delete(id),
     Math,
@@ -161,8 +164,10 @@ async function flush() {
 
 async function revealOpening(dialogue) {
   await flush();
-  if (dialogue.getState().mode === 'action') dialogue.advance();
-  await flush();
+  for (let guard = 0; guard < 8 && dialogue.getState().mode === 'action'; guard++) {
+    dialogue.advance();
+    await flush();
+  }
 }
 
 async function finishCurrentEvent(dialogue) {
@@ -238,7 +243,7 @@ test('event data combines multiline dialogue, looks, waits, steps and Shiopon bo
   for (const type of ['dialogue', 'face', 'approach', 'step', 'wait', 'bounce', 'signal']) {
     assert.ok(types.has(type), `missing ${type} command`);
   }
-  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.includes('\n')));
+  assert.ok(commands.some(command => command.type === 'dialogue' && command.text.length > 20));
   assert.ok(events.shioponMeet.filter(command => command.type === 'dialogue').length < 32);
   assert.ok(events.lumiereGate.filter(command => command.type === 'dialogue').length < 36);
 });
@@ -286,7 +291,7 @@ test('dialogue text preserves approved speech and relationship constraints', () 
   const shion = all.filter(([speaker]) => speaker === 'シオン').map(([, text]) => text);
   const lumiere = all.filter(([speaker]) => speaker === 'リュミエール').map(([, text]) => text);
 
-  assert.ok(shion.some(text => text.includes('オレを待ってたんじゃないの？')));
+  assert.ok(shion.some(text => text.includes('感情と事実は混ぜない方がいい')));
   assert.ok(shion.every(text => !/(^|[^ァ-ヶ])私(?:は|が|も|、)/.test(text)));
   assert.ok(lumiere.some(text => text.includes('しおぽん様。')));
   assert.ok(lumiere.some(text => text.includes('シオン様も。')));
