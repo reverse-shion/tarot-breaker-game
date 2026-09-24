@@ -49,13 +49,13 @@ async function playCelestialGateLight(){
  const flow=document.querySelector(".sga-continuous-energy-flow");
  if(!flow)throw new Error("Celestial continuous energy flow unavailable");
  setGateState("sga-celestial-frame-01");
- await pause(260);
+ await pause(250);
  setGateState("sga-celestial-frame-02");
- await pause(360);
+ await pause(450);
  setGateState("sga-celestial-frame-03");
- await pause(420);
+ await pause(500);
  setGateState("sga-celestial-frame-04");
- await pause(420);
+ await pause(500);
 }
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
