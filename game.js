@@ -255,9 +255,9 @@
     // Static asset registration, not animation. The 1.15 scale gives enough
     // overscan for every clamped camera shot while the x offset registers the
     // authored central axis (~735px) to the garden axis (~800px).
-    scale: 1.21,
-    offsetX: -78,
-    offsetY: -220,
+    scale: 1.27,
+    offsetX: -111,
+    offsetY: -280,
   });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
