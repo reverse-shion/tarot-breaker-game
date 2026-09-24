@@ -114,7 +114,7 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.deepEqual(s.world, { w: 1448, h: 1086 });
   assert.deepEqual(s.scale, { x: 1, y: 1 });
-  assert.equal(s.player.x, 724); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
+  assert.equal(s.player.x, 724); assert.equal(s.player.y, 944); assert.equal(s.player.dir, 'up');
   assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
   assert.equal(s.lumiere.homeRef.x, 810); assert.equal(s.lumiere.homeRef.y, 212);
   assert.equal(s.lumiere.moving, false); assert.equal(s.lumiereCollisionDistance, 32);
