@@ -832,7 +832,8 @@
 #star-gate-anomaly.sga-future-blink-1 .sga-future-blackout{opacity:.72;transition:none}
 #star-gate-anomaly.sga-future-blink-2 .sga-future-blackout{opacity:.88;transition:none}
 #star-gate-anomaly.sga-future-black .sga-future-blackout{opacity:1;transition:opacity .2s linear}
-#star-gate-anomaly.sga-future-shion-only .sga-future-blackout{opacity:1}
+#star-gate-anomaly.sga-future-shion-only:not(.sga-future-ruins) .sga-future-blackout{opacity:1}
+#star-gate-anomaly.sga-future-ruins .sga-future-blackout{opacity:0;pointer-events:none}
 #star-gate-anomaly.sga-future-stage1{pointer-events:auto}
 
 /* Once blackout has landed, hide world DOM layers beneath the actor canvas. */
