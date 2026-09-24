@@ -43,3 +43,10 @@ test("Stage 2 clears the Stage 1 blackout so ruins are visible",()=>{
  assert.match(css,/sga-future-shion-only:not\(.sga-future-ruins\) \.sga-future-blackout\{opacity:1\}/);
  assert.match(css,/sga-future-ruins \.sga-future-blackout\{opacity:0;pointer-events:none\}/);
 });
+
+
+test("Stage 2 keeps NPC actors suppressed while ruins reveal",()=>{
+ assert.match(css,/sga-future-ruins~\\.scene-actor:not\\(\\[data-actor="shion"\\]\\)\\{opacity:0 !important\\}/);
+ assert.match(source,/set\\("shiopon",0\\)/);
+ assert.match(source,/set\\("lumiere",0\\)/);
+});
