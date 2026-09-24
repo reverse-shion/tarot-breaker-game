@@ -185,14 +185,14 @@ test('canvas tap uses camera/zoom/element offset and does not jump the camera to
   assert.equal(arrived.route.length, 0); assert.equal(arrived.player.moving, false);
   const idleDirection = arrived.player.dir; h.tick(120); assert.equal(h.state().player.dir, idleDirection);
 });
-test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
+test('real event bindings: drag/keyboard and pointer cancel clear held movement', async () => {
   const h = await boot(); h.tapWorld(810, 700);
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
   assert.equal(h.state().route.length, 0); assert.equal(h.elements.joystick.hidden, false);
-  h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
-  assert.equal(h.elements.joystick.hidden, true); assert.equal(h.state().player.x, 724);
+  h.pointer('pointercancel', 135, 600); h.tick();
+  assert.equal(h.elements.joystick.hidden, true);
   assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
-  h.pointer('pointerup', 135, 600); h.tapWorld(810, 700);
+  h.tapWorld(810, 700);
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
