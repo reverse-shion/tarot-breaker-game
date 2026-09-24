@@ -22,6 +22,15 @@ test("device registry guard accepts presentation-only asset replacements without
  assert.match(s,/PASS \(behavior-neutral asset-only PR\)/);
  assert.match(s,/no runtime\/code\/config file changed/);
 });
+test("device registry guard treats an explicitly empty diff as a no-op without weakening diff failure handling",()=>{
+ const s=fs.readFileSync("scripts/device-registry-guard.cjs","utf8");
+ assert.match(s,/if \(files\.length === 0\)/);
+ assert.match(s,/PASS \(no-op PR\)/);
+ assert.match(s,/Git diff against the current base is empty/);
+ const diffFailure=s.indexOf('catch { fail("Could not determine PR changed files."); }');
+ const noOp=s.indexOf("if (files.length === 0)");
+ assert.ok(diffFailure >= 0 && noOp > diffFailure, "no-op PASS must occur only after a successful diff");
+});
 test("workflow executes device registry guard with PR body",()=>{
  const y=fs.readFileSync(".github/workflows/verified-gameplay-contracts.yml","utf8");
  assert.match(y,/Device registry guard/);
