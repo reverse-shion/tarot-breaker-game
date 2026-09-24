@@ -46,7 +46,7 @@ test("Stage 2 uses a world-coordinate Vision layer and real camera tour",()=>{
 test("Vision World renders against the garden reference world before actors",()=>{
  assert.match(game,/const VISION_REGISTRATION = Object\.freeze/);
  assert.match(game,/scale: 1\.27/);
- assert.match(game,/offsetX: -111/);
+ assert.match(game,/offsetX: -135/);
  assert.match(game,/offsetY: -280/);
  assert.match(game,/r\.offsetX \* scale\.x/);
  assert.match(game,/world\.w \* r\.scale/);
