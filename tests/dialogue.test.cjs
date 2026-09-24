@@ -21,7 +21,10 @@ function bootDialogue() {
       this.children = [];
       this.textContent = '';
       this.attributes = {};
+      this.classList = { add() {}, remove() {}, contains() { return false; } };
     }
+    append(...children) { for (const child of children) this.appendChild(child); }
+    replaceChildren(...children) { this.children = []; for (const child of children) this.appendChild(child); }
     addEventListener(type, fn) {
       if (!this.listeners.has(type)) this.listeners.set(type, []);
       this.listeners.get(type).push(fn);
@@ -63,6 +66,7 @@ function bootDialogue() {
   const document = {
     getElementById: (id) => elements[id] || null,
     createElement: () => new Element(),
+    createDocumentFragment: () => new Element(),
   };
 
   class WindowHarness {
