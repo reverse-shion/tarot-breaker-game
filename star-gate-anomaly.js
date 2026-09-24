@@ -73,7 +73,10 @@ async function playCelestialGateLight(){
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
  if(!shell||!el)throw new Error("Dark energy reverse-flow unavailable");
- const frames=[1,2,3,4],times=[120,120,120,150];
+ darkEnergyFrame(1);setGateState("sga-dark-frame-01");await pause(600);
+ setGateState("sga-dark-frame-02");shell.classList.add("sga-dark-01-02-overlap");await pause(200);
+ shell.classList.remove("sga-dark-01-02-overlap");await pause(400);
+ const frames=[3,4],times=[120,150];
  for(let i=0;i<frames.length;i++){
    darkEnergyFrame(frames[i]);setGateState("sga-dark-frame-0"+frames[i]);await pause(times[i]);
  }
