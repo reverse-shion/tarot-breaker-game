@@ -33,6 +33,8 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   elements.game.getContext = () => context;
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
+  document.body = new Element();
+  document.body.classList = { values: new Set(), add(...names){ names.forEach(name => this.values.add(name)); }, remove(...names){ names.forEach(name => this.values.delete(name)); }, contains(name){ return this.values.has(name); } };
   document.currentScript = { dataset: { spriteBase, shioponBase, lumiereBase, collisionUrl } };
   document.getElementById = id => elements[id]; document.createElement = tag => {
     const element = new Element();
