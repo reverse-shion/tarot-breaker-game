@@ -268,19 +268,40 @@ test('dialogue UI is shared, multiline and safe-area aware', () => {
 
 test('tap during wait or actor motion finishes only that action and playback stays ordered', async () => {
   const h = bootDialogue();
+  const trace = (label) => {
+    const state = h.window.TarotDialogue.getState();
+    console.error('[DIALOGUE_TRACE]', label, JSON.stringify({
+      active: state.active,
+      eventId: state.eventId,
+      mode: state.mode,
+      actionType: state.actionType,
+      stepIndex: state.stepIndex,
+      lineIndex: state.lineIndex,
+      speaker: h.elements['dialogue-speaker']?.textContent || '',
+      layerHidden: h.elements['dialogue-layer']?.hidden,
+      performed: h.performed.map(command => command.type),
+      stageFinishes: h.stageFinishes.map(entry => ({ type: entry.command.type, kind: entry.kind })),
+    }));
+  };
+  trace('boot');
   h.controls.step({ x: 810, y: 850 }, 0.016, 155);
   await flush();
+  trace('after-trigger');
   assert.equal(h.window.TarotDialogue.getState().actionType, 'approach');
   h.window.TarotDialogue.advance();
   await flush();
+  trace('after-approach-skip');
   assert.equal(h.stageFinishes[0].kind, 'finish');
   await revealOpening(h.window.TarotDialogue);
+  trace('after-reveal-opening');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
   assert.equal(h.elements['dialogue-layer'].hidden, false);
 
   h.window.TarotDialogue.advance();
   await flush();
+  trace('after-first-dialogue-advance');
   await revealOpening(h.window.TarotDialogue);
+  trace('after-second-reveal');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'しおぽん');
 });
 
