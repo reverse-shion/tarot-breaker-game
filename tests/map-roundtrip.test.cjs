@@ -137,10 +137,16 @@ test('PAD accepted pointer and keyboard gestures invoke the shared manager',asyn
 test('Alenon return bypasses prologue and spawns behind its authored PAD; title still starts prologue',()=>{
   for(const from of ['landing-return','title']){
     const t=harness('?from='+from);
-    t.run(inline('alenon.html').replace('      initRuinDrift();', '      window.testMap = {player, story, layout, resetPlayer, preparePrologue}; return;'));
+    t.run(inline('alenon.html').replace('      initRuinDrift();', '      window.testMap = {player, story, ride, layout, resetPlayer, preparePrologue, finishPadLanding}; return;'));
     const m=t.h.testMap;m.resetPlayer();m.preparePrologue();
     if(from==='landing-return'){
       assert.equal(m.story.completed,true);assert.equal(m.story.locked,false);assert.equal(t.e('prologue-overlay').hidden,true);
+      // Return handoff starts mounted in the authored landing phase. Verify that
+      // state first, then complete the landing before asserting the dismount point.
+      assert.equal(m.ride.mode,'landing');
+      assert.equal(m.player.x,m.layout.pad.x);assert.equal(m.player.y,m.layout.pad.y-18-2);
+      m.finishPadLanding();
+      assert.equal(m.ride.mode,'ground');
       assert.equal(m.player.x,m.layout.pad.x);assert.equal(m.player.y,m.layout.pad.y-68);
       const data=JSON.parse(fs.readFileSync('assets/maps/alenon-collision.json'));data.map='star-country-gate-garden';
       assert.ok(Nav.createCollision(data).isWalkable(m.player.x,m.player.y));
