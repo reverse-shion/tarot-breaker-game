@@ -825,3 +825,31 @@
  .sga-sequence-flash{animation:none!important}
 }
 
+
+
+/* Future Fixation Vision v1.2 — Stage 1 only. Kept separate from locked Star Gate states. */
+#star-gate-anomaly .sga-future-blackout{position:fixed;inset:0;z-index:80;background:#000;opacity:0;pointer-events:none;transition:opacity .18s linear}
+#star-gate-anomaly.sga-future-blink-1 .sga-future-blackout{opacity:.72;transition:none}
+#star-gate-anomaly.sga-future-blink-2 .sga-future-blackout{opacity:.88;transition:none}
+#star-gate-anomaly.sga-future-black .sga-future-blackout{opacity:1;transition:opacity .2s linear}
+#star-gate-anomaly.sga-future-shion-only:not(.sga-future-ruins) .sga-future-blackout{opacity:1}
+#star-gate-anomaly.sga-future-ruins .sga-future-blackout{opacity:0;pointer-events:none}
+#star-gate-anomaly.sga-future-stage1{pointer-events:auto}
+
+/* Once blackout has landed, hide world DOM layers beneath the actor canvas. */
+#game-shell.sga-future-world-hidden > .scene-world-layer,
+#game-shell.sga-future-world-hidden > .scene-object,
+#game-shell.sga-future-world-hidden > .map-layer{opacity:0 !important}
+#game-shell.sga-future-world-hidden{background:#000}
+
+
+/* Future Fixation Vision v1.2 — Stage 2 ruins reveal and camera tour. */
+#star-gate-anomaly.sga-future-ruins .sga-vision{z-index:35;background:#05030b;transition:opacity .85s ease}
+#star-gate-anomaly.sga-future-ruins .sga-pan{inset:0;transform:translate3d(0,0,0) scale(1);transition:transform .95s cubic-bezier(.2,.72,.22,1)}
+#star-gate-anomaly.sga-future-ruins .sga-ruins{width:100%;height:100%;object-fit:cover;object-position:50% 50%}
+#star-gate-anomaly.sga-future-ruins .sga-smoke,
+#star-gate-anomaly.sga-future-ruins .sga-void{display:none}
+#star-gate-anomaly.sga-future-ruins .sga-pan.sga-future-shot-gate{transform:translate3d(0,11%,0) scale(1.12)}
+#star-gate-anomaly.sga-future-ruins .sga-pan.sga-future-shot-left{transform:translate3d(11%,1%,0) scale(1.10)}
+#star-gate-anomaly.sga-future-ruins .sga-pan.sga-future-shot-fountain{transform:translate3d(-2%,-5%,0) scale(1.10)}
+#star-gate-anomaly.sga-future-ruins .sga-pan.sga-future-shot-return{transform:translate3d(0,0,0) scale(1)}

@@ -115,6 +115,13 @@
     fadeTo(0, 180, () => bgm.pause());
   }
 
+  function setCinematicSilence(active, duration = 200) {
+    targetVolume = active ? 0 : INTERACTION_VOLUME;
+    if (!enteredWorld || !enabled) return;
+    if (active) fadeTo(0, duration);
+    else { resumeBgm(); fadeTo(targetVolume, duration); }
+  }
+
   function setEnabled(nextEnabled) {
     enabled = Boolean(nextEnabled);
     savePreference();
@@ -172,5 +179,6 @@
     },
     setEnabled,
     startFromMovement,
+    setCinematicSilence,
   });
 })();
