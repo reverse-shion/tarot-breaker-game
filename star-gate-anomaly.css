@@ -694,6 +694,9 @@
 #game-shell.sga-normal-flow .sga-continuous-energy-flow{opacity:.14}
 
 .sga-flow-glow,.sga-flow-core,.sga-flow-stream,.sga-flow-star,.sga-flow-spiral{position:absolute;pointer-events:none;will-change:transform,opacity}
+.sga-celestial-final-frame{position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none;will-change:opacity;transition:opacity 320ms ease-in}
+#game-shell.sga-celestial-frame-04 .sga-celestial-final-frame{opacity:1}
+#game-shell.sga-normal-flow .sga-celestial-final-frame{opacity:0;transition:opacity 420ms ease-out}
 .sga-flow-glow{
  left:24%;top:1%;width:52%;height:94%;opacity:.14;
  background:radial-gradient(ellipse at 50% 78%,rgba(220,242,255,.22),rgba(161,205,255,.09) 36%,rgba(190,166,240,.05) 58%,transparent 76%);
@@ -738,10 +741,10 @@
 
 /* Convergence / absorption into the established gate centre. */
 #game-shell.sga-celestial-frame-03 .sga-flow-glow{opacity:.16}
-#game-shell.sga-celestial-frame-03 .sga-flow-core{opacity:.82}
-#game-shell.sga-celestial-frame-04 .sga-flow-glow{opacity:.08}
-#game-shell.sga-celestial-frame-04 .sga-flow-core{transform:scaleX(.64);opacity:.62}
-#game-shell.sga-celestial-frame-04 .sga-flow-stream{opacity:.16}
+#game-shell.sga-celestial-frame-03 .sga-flow-core{opacity:1;transform:scaleX(1.28);filter:blur(1.4px) drop-shadow(0 0 6px rgba(198,236,255,.72))}
+#game-shell.sga-celestial-frame-04 .sga-flow-glow{opacity:.06}
+#game-shell.sga-celestial-frame-04 .sga-flow-core{transform:scaleX(.58);opacity:.28;transition:opacity 300ms ease-out,transform 300ms ease-out}
+#game-shell.sga-celestial-frame-04 .sga-flow-stream{opacity:.08}
 #game-shell.sga-celestial-frame-04 .sga-flow-spiral{opacity:.08}
 #game-shell.sga-normal-flow .sga-flow-glow,
 #game-shell.sga-normal-flow .sga-flow-stream,
