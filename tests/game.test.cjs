@@ -205,8 +205,16 @@ test('four directions use all four Shion walk frames then the matching idle fram
   for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
     h.tapWorld(810, 700); h.tick(200);
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
-    for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
-    assert.equal(frames.size, 4);
+    // The authored walk cadence advances every 0.12s. Observe until all four
+    // frames have appeared (bounded to 0.8s) instead of assuming 25 RAF ticks
+    // always span a complete cycle from an arbitrary animation phase.
+    for (let i = 0; i < 48 && frames.size < 4; i++) {
+      h.tick();
+      const state = h.state();
+      if (state.player.moving) frames.add(state.player.frame);
+      assert.equal(state.player.dir, dir);
+    }
+    assert.deepEqual([...frames].sort((a, b) => a - b), [0, 1, 2, 3]);
     const walkingCalls = h.drawCalls.slice(drawStart).filter(call => call[0]?.url?.endsWith(`shion_walk_${dir}.png`));
     assert.ok(walkingCalls.length > 0);
     h.window.emit('keyup', { key }); const idleStart = h.drawCalls.length; h.tick();
