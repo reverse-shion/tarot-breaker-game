@@ -37,3 +37,4 @@ test("Stage 2 reveals the authored ruins and tours gate, left map and fountain w
  assert.match(source,/await futureFixationStage1\(\);await futureFixationStage2\(\)/);
  assert.match(css,/sga-future-ruins/);
 });
+
