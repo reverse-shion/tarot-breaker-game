@@ -251,6 +251,36 @@
     resolve: null,
   };
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
+  const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
+
+  function loadVisionWorld(src) {
+    if (visionWorld.image && visionWorld.src === src && visionWorld.image.complete)
+      return Promise.resolve(visionWorld.image);
+    const token = ++visionWorld.token;
+    const image = new Image();
+    image.decoding = "async";
+    return new Promise((resolve, reject) => {
+      image.onload = () => {
+        if (token !== visionWorld.token) return resolve(image);
+        visionWorld.image = image;
+        visionWorld.src = src;
+        resolve(image);
+      };
+      image.onerror = () => reject(new Error("Future Vision world image failed to load"));
+      image.src = src;
+    });
+  }
+
+  function drawVisionWorld() {
+    if (!visionWorld.active || !visionWorld.image || visionWorld.opacity <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = visionWorld.opacity;
+    ctx.imageSmoothingEnabled = true;
+    // Vision art occupies the exact Star Gate Garden reference world.
+    // Camera movement therefore reveals world coordinates, never image edges.
+    ctx.drawImage(visionWorld.image, 0, 0, world.w, world.h);
+    ctx.restore();
+  }
 
 
 
@@ -1418,12 +1448,22 @@
   }
 
   function drawActors() {
-    drawGroundShadowAt(lumiere, 18, 0.2);
-    drawGroundShadowAt(shiopon, 17, 0.36);
-    drawGroundShadowAt(player, 20, 0.46);
+    if (actorVisibility.lumiere > 0) {
+      ctx.save(); ctx.globalAlpha = actorVisibility.lumiere;
+      drawGroundShadowAt(lumiere, 18, 0.2); ctx.restore();
+    }
+    if (actorVisibility.shiopon > 0) {
+      ctx.save(); ctx.globalAlpha = actorVisibility.shiopon;
+      drawGroundShadowAt(shiopon, 17, 0.36); ctx.restore();
+    }
+    if (actorVisibility.shion > 0) {
+      ctx.save(); ctx.globalAlpha = actorVisibility.shion;
+      drawGroundShadowAt(player, 20, 0.46); ctx.restore();
+    }
 
     const actors = [
       {
+        id: "lumiere",
         actor: lumiere,
         actorImages: lumiereImages,
         drawHeight: LUMIERE_DRAW_HEIGHT,
@@ -1435,6 +1475,7 @@
         },
       },
       {
+        id: "shiopon",
         actor: shiopon,
         actorImages: shioponImages,
         drawHeight: SHIOPON_DRAW_HEIGHT,
@@ -1446,6 +1487,7 @@
         },
       },
       {
+        id: "shion",
         actor: player,
         actorImages: images,
         drawHeight: DRAW_HEIGHT,
@@ -1463,13 +1505,17 @@
     });
 
     for (const entry of actors) {
+      const opacity = actorVisibility[entry.id];
+      if (opacity <= 0) continue;
       const paint = (target) => {
         const original = ctx;
         ctx = target;
+        target.save();
+        target.globalAlpha *= opacity;
         try {
           drawActor(entry.actor, entry.actorImages, entry.drawHeight,
             entry.glowColor, entry.options);
-        } finally { ctx = original; }
+        } finally { target.restore(); ctx = original; }
       };
       if (window.TarotSceneEffects) {
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
@@ -1670,6 +1716,7 @@
     ctx.save();
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-origin.x, -origin.y);
+    drawVisionWorld();
     drawTapEffect();
     drawActors();
     drawCollisionDebug();
@@ -1954,6 +2001,31 @@
       player: playerRef(),
     }),
   });
+  window.TarotVisionWorld = Object.freeze({
+    async begin(src) {
+      await loadVisionWorld(src);
+      visionWorld.active = true;
+      visionWorld.opacity = 0;
+      return { completed: true };
+    },
+    setOpacity(opacity) {
+      visionWorld.opacity = clamp(Number(opacity) || 0, 0, 1);
+    },
+    end() {
+      visionWorld.active = false;
+      visionWorld.opacity = 0;
+      visionWorld.image = null;
+      visionWorld.src = "";
+      visionWorld.token += 1;
+    },
+    getState: () => ({
+      active: visionWorld.active,
+      opacity: visionWorld.opacity,
+      src: visionWorld.src,
+      world: { width: world.w / scale.x, height: world.h / scale.y },
+    }),
+  });
+
   window.TarotActorVisibility = Object.freeze({
     set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
     reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
