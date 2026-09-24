@@ -25,3 +25,13 @@ test("Stage 1 keeps the authored current-Shion dialogue and nonpersistent audio 
  assert.match(source,/setCinematicSilence\?\.\(true,200\)/);
  assert.match(source,/sga-future-world-hidden/);
 });
+
+
+test("Future Fixation device harness skips title and enters at the Star Gate checkpoint",()=>{
+ const checkpoint=fs.readFileSync("star-gate-choice-checkpoint.js","utf8");
+ const game=fs.readFileSync("game.js","utf8");
+ assert.match(checkpoint,/future-fixation-stage1/);
+ assert.match(checkpoint,/\["star-gate-full","future-fixation-stage1"\]\.includes\(id\)/);
+ assert.match(game,/star-gate-full","future-fixation-stage1/);
+ assert.match(game,/startScreen\.hidden = true/);
+});
