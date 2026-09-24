@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const { createCollision, createNavigator, validateCollision, distance } = require('../blocked-collision.js');
 const data = JSON.parse(fs.readFileSync('assets/maps/star-landing/collision.json', 'utf8'));
 const collision = createCollision(data), nav = createNavigator(collision);
-const spawn = { x: 725, y: 788 - 72 };
+// Authored landing PAD dismount point (PAD_HOME 725,788; offset 72).
+const spawn = { x: 725, y: 716 };
 const rect = (x, y, w, h) => ({ type: 'poly', points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]] });
 const fixture = areas => ({ ...data, walkAreas: areas, blockedAreas: [] });
 
