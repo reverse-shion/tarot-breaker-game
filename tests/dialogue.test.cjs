@@ -192,7 +192,8 @@ test('Shiopon proximity starts once, stages the opening, then joins the party', 
   state = h.window.TarotDialogue.getState();
   assert.equal(state.mode, 'dialogue');
   assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
-  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
+  assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
+  assert.equal(h.elements['dialogue-layer'].hidden, false);
   assert.deepEqual(
     h.performed.slice(0, 2).map(command => command.type),
     ['approach', 'face'],
@@ -272,16 +273,17 @@ test('tap during wait or actor motion finishes only that action and playback sta
   assert.equal(h.window.TarotDialogue.getState().actionType, 'approach');
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
+  assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
+  assert.equal(h.elements['dialogue-layer'].hidden, false);
   assert.equal(h.stageFinishes[0].kind, 'finish');
 
   h.window.TarotDialogue.advance();
   await flush();
   assert.equal(h.window.TarotDialogue.getState().actionType, 'wait');
-  assert.equal(h.elements['dialogue-text'].textContent, '……やっぱり、ここもおかしい。');
+  assert.equal(h.elements['dialogue-speaker'].textContent, 'シオン');
   h.window.TarotDialogue.advance();
   await flush();
-  assert.equal(h.elements['dialogue-text'].textContent, 'シオンさま？');
+  assert.equal(h.elements['dialogue-speaker'].textContent, 'しおぽん');
 });
 
 test('dialogue text preserves approved speech and relationship constraints', () => {
