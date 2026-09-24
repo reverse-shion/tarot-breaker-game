@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const id = new URLSearchParams(location.search).get("dev");
-  if (!["star-gate-choice","star-gate-camera","star-gate-full"].includes(id)) return;
+  if (!["star-gate-choice","star-gate-camera","star-gate-full","future-fixation-stage1"].includes(id)) return;
   window.__TAROT_DEV_STAR_GATE_ANOMALY__ = true;
   window.__TAROT_DEV_STAR_GATE_CHOICE__ = true;
   document.documentElement.dataset.devHarness = id;
@@ -28,7 +28,7 @@
     try {
       await addScript("./star-gate-interaction.js?v=choice-sandbox-1");
       if (id === "star-gate-camera") await addScript("./star-gate-camera-checkpoint.js?v=camera-sandbox-1");
-      if (id === "star-gate-full") {
+      if (["star-gate-full","future-fixation-stage1"].includes(id)) {
         addCss("./star-gate-anomaly.css?v=lumiere-sequence-v3");
         await addScript("./star-gate-anomaly.js?v=lumiere-sequence-v3");
       }
