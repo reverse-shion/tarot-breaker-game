@@ -197,11 +197,14 @@ async function futureFixationStage2(){
  await say("shion","そんなはず……");await pause(450);
  // Real camera tour over the Vision World. Overscan is deliberately disabled
  // so no shot can reveal pixels outside the reference world.
- await camera.panTo("gate",900,{allowOverscan:false});await pause(700);
- await camera.panTo({x:430,y:500},950,{allowOverscan:false});await pause(500);
- await camera.panTo("fountain",950,{allowOverscan:false});await pause(900);
+ const verifyCoverage=(shot)=>{
+  if(camera.isViewportInsideWorld?.()===false)throw new Error(`Future Fixation Vision camera coverage failed: ${shot}`);
+ };
+ await camera.panTo("gate",900,{allowOverscan:false});verifyCoverage("gate");await pause(700);
+ await camera.panTo({x:430,y:500},950,{allowOverscan:false});verifyCoverage("left");await pause(500);
+ await camera.panTo("fountain",950,{allowOverscan:false});verifyCoverage("fountain");await pause(900);
  await say("shion","……どうして……");
- await camera.returnToPlayer(900);await pause(600);
+ await camera.returnToPlayer(900);verifyCoverage("return");await pause(600);
  const after=stage.getState().actors.shion;
  if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 2");
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage2-complete",{detail:{checkpoint:true}}));
