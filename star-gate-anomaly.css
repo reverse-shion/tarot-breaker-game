@@ -834,3 +834,9 @@
 #star-gate-anomaly.sga-future-black .sga-future-blackout{opacity:1;transition:opacity .2s linear}
 #star-gate-anomaly.sga-future-shion-only .sga-future-blackout{opacity:1}
 #star-gate-anomaly.sga-future-stage1{pointer-events:auto}
+
+/* Once blackout has landed, hide world DOM layers beneath the actor canvas. */
+#game-shell.sga-future-world-hidden > .scene-world-layer,
+#game-shell.sga-future-world-hidden > .scene-object,
+#game-shell.sga-future-world-hidden > .map-layer{opacity:0 !important}
+#game-shell.sga-future-world-hidden{background:#000}
