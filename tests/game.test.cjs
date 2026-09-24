@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 
-async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, search = '?navDebug=1' } = {}) {
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, search = '?navDebug=1&from=landing' } = {}) {
   let raf, now = 1000;
   const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set();
   class Element {
