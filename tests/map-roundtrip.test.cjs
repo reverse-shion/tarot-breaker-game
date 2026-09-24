@@ -34,7 +34,13 @@ function harness(search = '', saved = {}) {
     addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn), dispatchEvent:e=>(listeners[e.type]||[]).forEach(f=>f(e)),
     document:{body:element('body'),documentElement:element('root'),hidden:false,currentScript:{dataset:{}},
       getElementById:element,querySelector:element,querySelectorAll:()=>[],addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn)},
-    fetch:async()=>({ok:false}), TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
+    fetch:async(url)=>{
+      const clean=String(url).split('?')[0].replace(/^\.\//,'');
+      if (clean === 'assets/maps/star-landing/collision.json' || clean === 'assets/maps/star-landing/passage-layers.json') {
+        return {ok:true,json:async()=>JSON.parse(fs.readFileSync(clean,'utf8'))};
+      }
+      return {ok:false};
+    }, TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
   };
   h.window=h;vm.createContext(h);vm.runInContext(fs.readFileSync('map-journey.js','utf8'),h);
   return {h,e:element,audio,lines,timers,frames,listeners,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await Promise.resolve();}}};
