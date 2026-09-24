@@ -16,7 +16,7 @@ class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const DEV_MODE=new URLSearchParams(location.search).get("dev");
 const DEV_HARNESS=["star-gate-full","star-gate-camera","future-fixation-stage1"].includes(DEV_MODE);
-const FUTURE_STAGE1_DEV=DEV_MODE==="future-fixation-stage1";
+const FUTURE_STAGE1_DEV=DEV_MODE==="star-gate-full";
 let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
 async function preload(){await Promise.all(Object.values(ASSETS).flat().map(image))}
