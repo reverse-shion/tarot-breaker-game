@@ -498,3 +498,154 @@
 #game-shell.sga-anomaly-rest .scene-gate-inner-backing{
   opacity:1!important;
 }
+
+
+/* Dark Energy Reverse Flow — WEBP sprite replacement.
+   The old CSS reverse-flow body is disabled only during anomaly reverse phases. */
+.scene-dark-energy-rise{
+  display:block;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  overflow:visible;
+}
+.scene-dark-energy-rise .sga-dark-energy-frame{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:1;
+  transform:translate3d(0,0,0);
+  will-change:transform;
+}
+.scene-dark-energy-rise .sga-dark-afterglow{
+  position:absolute;
+  left:39%;
+  top:8%;
+  width:22%;
+  height:84%;
+  opacity:0;
+  background:linear-gradient(180deg,rgba(74,45,112,0),rgba(72,43,112,.26) 30%,rgba(48,25,75,.36) 68%,rgba(48,25,75,0));
+  filter:blur(10px);
+  pointer-events:none;
+}
+#game-shell.sga-dark-frame-01 .scene-dark-energy-rise,
+#game-shell.sga-dark-frame-02 .scene-dark-energy-rise,
+#game-shell.sga-dark-frame-03 .scene-dark-energy-rise,
+#game-shell.sga-dark-frame-04 .scene-dark-energy-rise,
+#game-shell.sga-dark-frame-rise .scene-dark-energy-rise,
+#game-shell.sga-dark-afterglow .scene-dark-energy-rise{
+  opacity:1;
+  visibility:visible;
+}
+#game-shell.sga-dark-frame-rise .sga-dark-energy-frame{
+  animation:sgaDarkEnergyRise04 950ms cubic-bezier(.22,.61,.36,1) forwards;
+}
+#game-shell.sga-dark-frame-rise .sga-dark-afterglow{
+  animation:sgaDarkAfterglowRise 950ms ease-out forwards;
+}
+#game-shell.sga-dark-afterglow .sga-dark-energy-frame{
+  opacity:0;
+}
+#game-shell.sga-dark-afterglow .sga-dark-afterglow{
+  animation:sgaDarkAfterglowFade 360ms ease-out forwards;
+}
+@keyframes sgaDarkEnergyRise04{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(0,-125%,0)}
+}
+@keyframes sgaDarkAfterglowRise{
+  0%{opacity:0;transform:translate3d(0,10%,0) scaleY(.75)}
+  28%{opacity:.34}
+  100%{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}
+}
+@keyframes sgaDarkAfterglowFade{
+  from{opacity:.18;transform:translate3d(0,-72%,0) scaleY(1.18)}
+  to{opacity:0;transform:translate3d(0,-88%,0) scaleY(1.28)}
+}
+
+/* The gate itself transitions from the approved normal art to the anomaly art. */
+.scene-star-gate{isolation:isolate}
+.scene-star-gate>img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.scene-star-gate-anomaly{
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 180ms ease-out;
+  mix-blend-mode:normal;
+}
+#game-shell.sga-reverse-gate .scene-star-gate-normal,
+#game-shell.sga-dark-frame-01 .scene-star-gate-normal,
+#game-shell.sga-dark-frame-02 .scene-star-gate-normal,
+#game-shell.sga-dark-frame-03 .scene-star-gate-normal,
+#game-shell.sga-dark-frame-04 .scene-star-gate-normal,
+#game-shell.sga-dark-frame-rise .scene-star-gate-normal,
+#game-shell.sga-dark-afterglow .scene-star-gate-normal,
+#game-shell.sga-anomaly-rest .scene-star-gate-normal{
+  opacity:0!important;
+}
+#game-shell.sga-reverse-gate .scene-star-gate-anomaly,
+#game-shell.sga-dark-frame-01 .scene-star-gate-anomaly,
+#game-shell.sga-dark-frame-02 .scene-star-gate-anomaly,
+#game-shell.sga-dark-frame-03 .scene-star-gate-anomaly,
+#game-shell.sga-dark-frame-04 .scene-star-gate-anomaly,
+#game-shell.sga-dark-frame-rise .scene-star-gate-anomaly,
+#game-shell.sga-dark-afterglow .scene-star-gate-anomaly,
+#game-shell.sga-anomaly-rest .scene-star-gate-anomaly{
+  opacity:1!important;
+  visibility:visible;
+}
+
+/* Preserve the Sephirot but turn it progressively from normal blue-white to black-purple. */
+#game-shell.sga-anomaly-flicker .sga-sephirot-paths path,
+#game-shell.sga-anomaly-flicker .sga-sephirot-nodes circle{
+  transition:stroke 720ms ease,fill 720ms ease,filter 720ms ease;
+  stroke:rgba(116,107,185,.90)!important;
+  filter:drop-shadow(0 0 5px rgba(116,107,185,.52));
+}
+#game-shell.sga-anomaly .sga-sephirot-paths path,
+#game-shell.sga-anomaly .sga-sephirot-nodes circle{
+  stroke:rgba(88,58,139,.92)!important;
+  filter:drop-shadow(0 0 5px rgba(105,82,166,.55));
+}
+#game-shell.sga-reverse-gate .sga-sephirot-paths path,
+#game-shell.sga-reverse-gate .sga-sephirot-nodes circle,
+#game-shell.sga-dark-frame-01 .sga-sephirot-paths path,
+#game-shell.sga-dark-frame-01 .sga-sephirot-nodes circle,
+#game-shell.sga-dark-frame-02 .sga-sephirot-paths path,
+#game-shell.sga-dark-frame-02 .sga-sephirot-nodes circle,
+#game-shell.sga-dark-frame-03 .sga-sephirot-paths path,
+#game-shell.sga-dark-frame-03 .sga-sephirot-nodes circle,
+#game-shell.sga-dark-frame-04 .sga-sephirot-paths path,
+#game-shell.sga-dark-frame-04 .sga-sephirot-nodes circle,
+#game-shell.sga-dark-frame-rise .sga-sephirot-paths path,
+#game-shell.sga-dark-frame-rise .sga-sephirot-nodes circle,
+#game-shell.sga-dark-afterglow .sga-sephirot-paths path,
+#game-shell.sga-dark-afterglow .sga-sephirot-nodes circle{
+  stroke:rgba(74,45,112,.94)!important;
+  filter:drop-shadow(0 0 5px rgba(105,82,166,.55));
+}
+
+/* Do not render the legacy CSS reverse-flow body alongside the WEBP sprites. */
+#game-shell.sga-reverse-gate .sga-energy-column,
+#game-shell.sga-dark-frame-01 .sga-energy-column,
+#game-shell.sga-dark-frame-02 .sga-energy-column,
+#game-shell.sga-dark-frame-03 .sga-energy-column,
+#game-shell.sga-dark-frame-04 .sga-energy-column,
+#game-shell.sga-dark-frame-rise .sga-energy-column,
+#game-shell.sga-dark-afterglow .sga-energy-column,
+#game-shell.sga-reverse-gate .sga-sky-flow i,
+#game-shell.sga-dark-frame-01 .sga-sky-flow i,
+#game-shell.sga-dark-frame-02 .sga-sky-flow i,
+#game-shell.sga-dark-frame-03 .sga-sky-flow i,
+#game-shell.sga-dark-frame-04 .sga-sky-flow i,
+#game-shell.sga-dark-frame-rise .sga-sky-flow i,
+#game-shell.sga-dark-afterglow .sga-sky-flow i{
+  display:none!important;
+}
