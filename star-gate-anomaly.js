@@ -45,32 +45,17 @@ function darkEnergyFrame(n){
  if(!el)throw new Error("Dark energy sprite layer unavailable");
  el.src=ASSETS.darkEnergy[n-1];
 }
-function celestialLightFrame(n){
- const frames=[...document.querySelectorAll(".sga-celestial-gate-light-frame")];
- if(frames.length!==4)throw new Error("Celestial gate light sprite frames unavailable");
- const current=frames[n-1];
- const previous=n>1?frames[n-2]:null;
- current.classList.add("is-active");
- current.classList.add("is-entering");
- requestAnimationFrame(()=>requestAnimationFrame(()=>current.classList.remove("is-entering")));
- if(previous){
-   previous.classList.add("is-leaving");
-   window.setTimeout(()=>previous.classList.remove("is-active","is-leaving"),190);
- }
- for(let i=0;i<frames.length;i++){
-   if(i!==n-1 && i!==n-2)frames[i].classList.remove("is-active","is-entering","is-leaving");
- }
-}
 async function playCelestialGateLight(){
- const frames=[...document.querySelectorAll(".sga-celestial-gate-light-frame")];
- if(frames.length!==4)throw new Error("Celestial gate light sprite frames unavailable");
- for(const el of frames)el.classList.remove("is-active","is-entering","is-leaving");
- const times=[210,210,235,390];
- for(let i=0;i<4;i++){
-   celestialLightFrame(i+1);
-   setGateState("sga-celestial-frame-0"+(i+1));
-   await pause(times[i]);
- }
+ const flow=document.querySelector(".sga-continuous-energy-flow");
+ if(!flow)throw new Error("Celestial continuous energy flow unavailable");
+ setGateState("sga-celestial-frame-01");
+ await pause(260);
+ setGateState("sga-celestial-frame-02");
+ await pause(360);
+ setGateState("sga-celestial-frame-03");
+ await pause(420);
+ setGateState("sga-celestial-frame-04");
+ await pause(420);
 }
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
