@@ -252,6 +252,12 @@ test('stage commands face actors, animate safe steps and expose a skip-to-end ha
       call.operation === 'drawImage' && call.args[0]?.url?.endsWith('lumiere_hover_up.png')),
   );
 
+  // The landing-route spawn resolves against collision near the south edge,
+  // where a 12px upward stage step can be projected by the navigator. Move to
+  // a known walkable interior point before testing the exact authored step.
+  h.window.emit('tarot-breaker:interaction-end');
+  h.tapWorld(724, 900); h.tick(180);
+  h.window.emit('tarot-breaker:interaction-start');
   const before = h.state().player;
   const step = h.window.TarotStage.perform({
     type: 'step', actor: 'shion', direction: 'up', distance: 12, duration: 300,
