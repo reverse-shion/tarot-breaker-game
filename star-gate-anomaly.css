@@ -275,7 +275,7 @@
 .sga-smoke { position:absolute; inset:-8%; width:116%; height:116%; object-fit:cover; opacity:.34; animation:sgaSmoke 9s ease-in-out infinite alternate; }
 .sga-smoke.second { opacity:.2; transform:scaleX(-1); animation-duration:12s; }
 .sga-void { position:absolute; left:50%; top:10%; width:min(30vw,210px); height:min(38vh,310px); object-fit:contain; transform:translate3d(-50%,0,0); opacity:.72; animation:sgaVoid 3.4s ease-in-out infinite; }
-.sga-shion { position:absolute; left:50%; bottom:14%; width:clamp(54px,11vw,82px); height:auto; transform:translate3d(-50%,0,0); opacity:0; transition:opacity .25s ease; }
+.sga-shion { position:absolute; left:0; top:0; width:auto; height:auto; transform:none; opacity:0; transition:opacity .25s ease; pointer-events:none; }
 .sga-card-phase .sga-shion.visible { opacity:1; }
 .sga-card { position:absolute; left:50%; bottom:29%; width:clamp(42px,9vw,66px); aspect-ratio:1/1; transform:translate3d(-50%,0,0) scale(.74); opacity:0; }
 .sga-card.visible { opacity:1; }
