@@ -2052,6 +2052,22 @@
     }),
   });
 
+  window.TarotActorScreenAnchor = Object.freeze({
+    get(actorId = "shion") {
+      if (actorId !== "shion") return null;
+      const origin = viewportOrigin();
+      const scaleDraw = DRAW_HEIGHT / FRAME.h;
+      const drawW = FRAME.w * scaleDraw;
+      const drawH = FRAME.h * scaleDraw;
+      const feetY = player.y + player.stageOffsetY;
+      return {
+        x: (player.x - origin.x) * camera.zoom,
+        feetY: (feetY - origin.y) * camera.zoom,
+        width: drawW * camera.zoom,
+        height: drawH * camera.zoom,
+      };
+    },
+  });
   window.TarotActorVisibility = Object.freeze({
     set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
     reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
