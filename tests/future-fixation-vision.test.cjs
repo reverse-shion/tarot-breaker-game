@@ -129,11 +129,14 @@ test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it
  assert.match(game,/window\.TarotActorScreenAnchor = Object\.freeze/);
 });
 
-test("Actor visibility reaches the final Canvas actor render path",()=>{
- assert.match(game,/const paintWithVisibility = \(target\) => \{/);
- assert.match(game,/target\.globalAlpha \*= opacity/);
- assert.match(game,/drawMaskedActor\(ctx, entry\.actor, scale,[\s\S]*?paintWithVisibility\)/);
- assert.match(game,/else paintWithVisibility\(ctx\)/);
+test("Actor visibility is owned by the single final scene composite",()=>{
+ const effects=fs.readFileSync("scene-effects.js","utf8");
+ assert.match(game,/drawMaskedActor\(ctx, entry\.actor, scale,[\s\S]*?paint, opacity\)/);
+ assert.doesNotMatch(game,/const paintWithVisibility/);
+ assert.match(effects,/function drawMaskedActor\(ctx,actor,scale,density,draw,opacity=1\)/);
+ assert.match(effects,/ctx\.globalAlpha\*=Math\.max\(0,Math\.min\(1,Number\(opacity\)\|\|0\)\)/);
+ assert.ok(effects.indexOf("draw(paint)") < effects.indexOf("ctx.globalAlpha*=Math.max"));
+ assert.equal((effects.match(/ctx\.globalAlpha\*=Math\.max\(0,Math\.min\(1,Number\(opacity\)\|\|0\)\)/g)||[]).length,1);
 });
 
 test("Dual-presence composition does not alter approved ruins registration",()=>{
