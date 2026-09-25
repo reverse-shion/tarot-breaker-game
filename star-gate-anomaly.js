@@ -208,7 +208,15 @@ async function futureFixationStage2(){
  // No viewport cover, CSS translation or actor relocation is permitted.
  await vision.begin(ASSETS.ruins);
  root.classList.add("sga-future-ruins");
- for(let i=1;i<=20;i++){vision.setOpacity(i/20);await pause(850/20)}
+ // The current Shion becomes an observer as the ruined future itself appears.
+ // Fade the completed actor composite from 1.0 to 0.55 in lockstep with the
+ // 850ms Vision World reveal; Future Shion does not own this transition.
+ for(let i=1;i<=20;i++){
+  const progress=i/20;
+  vision.setOpacity(progress);
+  actorVisibility?.set("shion",1-(1-FUTURE_VISION_CURRENT_SHION_OPACITY)*progress);
+  await pause(850/20);
+ }
  await say("shion","……星門庭園……？");await pause(350);
  await say("shion","いや……");
  await say("shion","そんなはず……");await pause(450);
@@ -233,9 +241,10 @@ async function futureFixationStage3(){
  if(!before)throw new Error("Shion stage state unavailable before Future Fixation Vision Stage 3");
  const vis=window.TarotActorVisibility;
  vis?.set("shiopon",0);vis?.set("lumiere",0);
- // Future Shion is a cinematic pose layer only. The current actor remains at
- // the verified world coordinate underneath and is never moved.
- vis?.set("shion",FUTURE_VISION_CURRENT_SHION_OPACITY);
+ // Future Shion is a cinematic pose layer only. Current Shion already became
+ // translucent with the Stage 2 ruins reveal; keep that state, never initiate it here.
+ if(vis&&Math.abs(vis.getState().shion-FUTURE_VISION_CURRENT_SHION_OPACITY)>1e-6)
+  throw new Error("Current Shion opacity drifted before Future Fixation Vision Stage 3");
  root.classList.add("sga-card-phase");
  alignFutureShion();
  const timings=[520,500,900,520,520];
