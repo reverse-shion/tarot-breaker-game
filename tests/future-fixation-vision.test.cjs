@@ -56,9 +56,14 @@ test("Vision World renders against the garden reference world before actors",()=
  assert.match(game,/visionWorld\.opacity = clamp/);
 });
 
-test("Actor visibility is enforced by the canvas renderer",()=>{
+test("Actor visibility is enforced by the final canvas composite",()=>{
+ const effects=fs.readFileSync("scene-effects.js","utf8");
  assert.match(game,/if \(opacity <= 0\) continue/);
- assert.match(game,/target\.globalAlpha \*= opacity/);
+ assert.match(game,/drawMaskedActor\(ctx, entry\.actor, scale,[\s\S]*?paint, opacity\)/);
+ assert.match(game,/ctx\.save\(\); ctx\.globalAlpha \*= opacity;[\s\S]*?paint\(ctx\)/);
+ assert.match(effects,/function drawMaskedActor\(ctx,actor,scale,density,draw,opacity=1\)/);
+ assert.match(effects,/draw\(paint\);[\s\S]*?ctx\.save\(\);ctx\.globalAlpha\*=Math\.max\(0,Math\.min\(1,Number\(opacity\)\|\|0\)\);ctx\.drawImage\(actorSurface/);
+ assert.equal((effects.match(/ctx\.globalAlpha\*=Math\.max\(0,Math\.min\(1,Number\(opacity\)\|\|0\)\)/g)||[]).length,1);
  const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function fadeNpc"));
  assert.match(stage2,/actorVisibility\?\.set\("shiopon",0\)/);
  assert.match(stage2,/actorVisibility\?\.set\("lumiere",0\)/);
