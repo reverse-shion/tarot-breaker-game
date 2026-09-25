@@ -42,11 +42,16 @@ function alignFutureShion(){
  const el=root?.querySelector(".sga-shion"),anchor=window.TarotActorScreenAnchor?.get?.("shion");
  if(!el||!anchor)return false;
  const gap=Math.max(10,anchor.width*.28);
- el.style.left=(anchor.x+anchor.width/2+gap)+"px";
- el.style.top=(anchor.feetY-anchor.height)+"px";
- el.style.bottom="auto";
- el.style.width=anchor.width+"px";
- el.style.height=anchor.height+"px";
+ const targetHeight=anchor.height;
+ const place=()=>{
+   const ratio=el.naturalWidth>0&&el.naturalHeight>0?el.naturalWidth/el.naturalHeight:null;
+   el.style.left=(anchor.x+anchor.width/2+gap)+"px";
+   el.style.bottom="auto";
+   el.style.height=targetHeight+"px";
+   el.style.width=ratio?targetHeight*ratio+"px":"auto";
+   el.style.top=(anchor.feetY-targetHeight)+"px";
+ };
+ if(el.complete&&el.naturalWidth>0)place();else el.addEventListener("load",place,{once:true});
  return true;
 }
 function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];alignFutureShion();el.classList.add("visible")}
