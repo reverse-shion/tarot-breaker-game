@@ -118,7 +118,7 @@ test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it
  assert.doesNotMatch(stage3,/vis\?\.set\("shion",0\)/);
  assert.match(source,/TarotActorScreenAnchor\?\.get\?\.\("shion"\)/);
  assert.match(source,/anchor\.x\+anchor\.width\/2\+gap/);
- assert.match(source,/anchor\.feetY-anchor\.height/);
+ assert.match(source,/anchor\.feetY-targetHeight/);
  assert.match(source,/const targetHeight=anchor\.height/);
  assert.match(source,/el\.naturalWidth\/el\.naturalHeight/);
  assert.match(source,/el\.style\.height=targetHeight\+"px"/);
