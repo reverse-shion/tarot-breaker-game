@@ -252,12 +252,13 @@
   };
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
   const VISION_REGISTRATION = Object.freeze({
-    // Static asset registration, not animation. The 1.15 scale gives enough
-    // overscan for every clamped camera shot while the x offset registers the
-    // authored central axis (~735px) to the garden axis (~800px).
-    scale: 1.31,
-    offsetX: -190,
-    offsetY: -320,
+    // Static cinematic plate registration. Coverage safety is validated
+    // against every reachable Future Vision camera shot, not unused world edges.
+    // Keep the authored gate / stair / fountain axis centered while revealing
+    // more of the ruins above the player.
+    scale: 1.10,
+    offsetX: -72,
+    offsetY: -330,
   });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
@@ -1526,16 +1527,24 @@
         const original = ctx;
         ctx = target;
         target.save();
-        target.globalAlpha *= opacity;
+        // Scene-effect masks may render actors through an offscreen target whose
+        // inherited alpha is reset. Apply actor visibility as the final composite
+        // alpha so Future Vision translucency survives both render paths.
         try {
           drawActor(entry.actor, entry.actorImages, entry.drawHeight,
             entry.glowColor, entry.options);
         } finally { target.restore(); ctx = original; }
       };
       if (window.TarotSceneEffects) {
+        // Render the actor's outline/glow/sprite as one opaque group first.
+        // Scene Effects owns the single final-composite visibility alpha.
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
-          Math.min(2, dpr * camera.zoom), paint);
-      } else paint(ctx);
+          Math.min(2, dpr * camera.zoom), paint, opacity);
+      } else {
+        // Fallback has no grouping surface; preserve legacy visibility behavior.
+        ctx.save(); ctx.globalAlpha *= opacity;
+        try { paint(ctx); } finally { ctx.restore(); }
+      }
     }
   }
 
@@ -2051,6 +2060,22 @@
     }),
   });
 
+  window.TarotActorScreenAnchor = Object.freeze({
+    get(actorId = "shion") {
+      if (actorId !== "shion") return null;
+      const origin = viewportOrigin();
+      const scaleDraw = DRAW_HEIGHT / FRAME.h;
+      const drawW = FRAME.w * scaleDraw;
+      const drawH = FRAME.h * scaleDraw;
+      const feetY = player.y + player.stageOffsetY;
+      return {
+        x: (player.x - origin.x) * camera.zoom,
+        feetY: (feetY - origin.y) * camera.zoom,
+        width: drawW * camera.zoom,
+        height: drawH * camera.zoom,
+      };
+    },
+  });
   window.TarotActorVisibility = Object.freeze({
     set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
     reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },

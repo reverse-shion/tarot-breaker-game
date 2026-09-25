@@ -23,7 +23,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div><img class="sga-shion" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><img class="sga-shion" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -37,7 +37,24 @@ async function say(actor,text){
  await new Promise(r=>resolveAdvance=r);d.hide();await sleep(100);
 }
 async function pause(ms){await sleep(ms)}
-function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
+const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
+function alignFutureShion(){
+ const el=root?.querySelector(".sga-shion"),anchor=window.TarotActorScreenAnchor?.get?.("shion");
+ if(!el||!anchor)return false;
+ const gap=Math.max(10,anchor.width*.28);
+ const targetHeight=anchor.height;
+ const place=()=>{
+   const ratio=el.naturalWidth>0&&el.naturalHeight>0?el.naturalWidth/el.naturalHeight:null;
+   el.style.left=(anchor.x+anchor.width/2+gap)+"px";
+   el.style.bottom="auto";
+   el.style.height=targetHeight+"px";
+   el.style.width=ratio?targetHeight*ratio+"px":"auto";
+   el.style.top=(anchor.feetY-targetHeight)+"px";
+ };
+ if(el.complete&&el.naturalWidth>0)place();else el.addEventListener("load",place,{once:true});
+ return true;
+}
+function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];alignFutureShion();el.classList.add("visible")}
 function gateShell(){return document.getElementById("game-shell")}
 function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
 function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
@@ -191,7 +208,15 @@ async function futureFixationStage2(){
  // No viewport cover, CSS translation or actor relocation is permitted.
  await vision.begin(ASSETS.ruins);
  root.classList.add("sga-future-ruins");
- for(let i=1;i<=20;i++){vision.setOpacity(i/20);await pause(850/20)}
+ // The current Shion becomes an observer as the ruined future itself appears.
+ // Fade the completed actor composite from 1.0 to 0.55 in lockstep with the
+ // 850ms Vision World reveal; Future Shion does not own this transition.
+ for(let i=1;i<=20;i++){
+  const progress=i/20;
+  vision.setOpacity(progress);
+  actorVisibility?.set("shion",1-(1-FUTURE_VISION_CURRENT_SHION_OPACITY)*progress);
+  await pause(850/20);
+ }
  await say("shion","……星門庭園……？");await pause(350);
  await say("shion","いや……");
  await say("shion","そんなはず……");await pause(450);
@@ -208,6 +233,25 @@ async function futureFixationStage2(){
  const after=stage.getState().actors.shion;
  if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 2");
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage2-complete",{detail:{checkpoint:true}}));
+}
+
+async function futureFixationStage3(){
+ const stage=window.TarotStage;
+ const before=stage?.getState?.().actors?.shion;
+ if(!before)throw new Error("Shion stage state unavailable before Future Fixation Vision Stage 3");
+ const vis=window.TarotActorVisibility;
+ vis?.set("shiopon",0);vis?.set("lumiere",0);
+ // Future Shion is a cinematic pose layer only. Current Shion already became
+ // translucent with the Stage 2 ruins reveal; keep that state, never initiate it here.
+ if(vis&&Math.abs(vis.getState().shion-FUTURE_VISION_CURRENT_SHION_OPACITY)>1e-6)
+  throw new Error("Current Shion opacity drifted before Future Fixation Vision Stage 3");
+ root.classList.add("sga-card-phase");
+ alignFutureShion();
+ const timings=[520,500,900,520,520];
+ for(let i=1;i<=5;i++){setShion(i);await pause(timings[i-1])}
+ const after=stage.getState().actors.shion;
+ if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 3");
+ window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage3-complete",{detail:{checkpoint:true}}));
 }
 
 async function fadeNpc(actorId,duration=360){
@@ -257,7 +301,7 @@ async function run(){
   if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
   await resonance();
-  if(DEV_HARNESS){success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true}}));if(FUTURE_STAGE1_DEV){await futureFixationStage1();await futureFixationStage2()}return;}
+  if(DEV_HARNESS){success=true;window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-sequence-complete",{detail:{checkpoint:true}}));if(FUTURE_STAGE1_DEV){await futureFixationStage1();await futureFixationStage2();await futureFixationStage3()}return;}
   await vision();await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
  finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();window.TarotVisionWorld?.end?.();gateShell()?.classList.remove("sga-future-world-hidden");window.TarotAudio?.setCinematicSilence?.(false,200);cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
