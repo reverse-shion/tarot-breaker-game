@@ -34,7 +34,7 @@ test("Stage 1 keeps the authored current-Shion dialogue and nonpersistent audio 
 test("Stage 2 uses a world-coordinate Vision layer and real camera tour",()=>{
  const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function fadeNpc"));
  assert.match(stage2,/await vision\.begin\(ASSETS\.ruins\)/);
- assert.match(stage2,/vision\.setOpacity\(i\/20\)/);
+ assert.match(stage2,/const progress=i\/20;[\s\S]*?vision\.setOpacity\(progress\)/);
  assert.match(stage2,/camera\.panTo\("gate",900,\{allowOverscan:false\}\)/);
  assert.match(stage2,/camera\.panTo\(\{x:430,y:500\},950,\{allowOverscan:false\}\)/);
  assert.match(stage2,/camera\.panTo\("fountain",950,\{allowOverscan:false\}\)/);
@@ -165,7 +165,8 @@ test("Stage 3 uses the five approved Future Shion card poses only",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  assert.match(stage3,/const timings=\[520,500,900,520,520\]/);
  assert.match(stage3,/for\(let i=1;i<=5;i\+\+\)\{setShion\(i\)/);
- assert.match(stage3,/vis\?\.set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
+ assert.match(stage3,/opacity drifted before Future Fixation Vision Stage 3/);
+ assert.doesNotMatch(stage3,/set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
  assert.doesNotMatch(stage3,/aura1|aura2|ascend|transformed|floating|――選べ|これは……私の選択じゃない|待て！！/);
 });
 
