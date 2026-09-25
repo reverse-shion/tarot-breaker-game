@@ -256,9 +256,9 @@
     // against every reachable Future Vision camera shot, not unused world edges.
     // Keep the authored gate / stair / fountain axis centered while revealing
     // more of the ruins above the player.
-    scale: 1.18,
-    offsetX: -130,
-    offsetY: -275,
+    scale: 1.10,
+    offsetX: -72,
+    offsetY: -330,
   });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
