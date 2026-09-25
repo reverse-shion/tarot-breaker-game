@@ -119,11 +119,21 @@ test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it
  assert.match(source,/TarotActorScreenAnchor\?\.get\?\.\("shion"\)/);
  assert.match(source,/anchor\.x\+anchor\.width\/2\+gap/);
  assert.match(source,/anchor\.feetY-anchor\.height/);
- assert.match(source,/el\.style\.width=anchor\.width\+"px"/);
- assert.match(source,/el\.style\.height=anchor\.height\+"px"/);
+ assert.match(source,/const targetHeight=anchor\.height/);
+ assert.match(source,/el\.naturalWidth\/el\.naturalHeight/);
+ assert.match(source,/el\.style\.height=targetHeight\+"px"/);
+ assert.match(source,/el\.style\.width=ratio\?targetHeight\*ratio\+"px":"auto"/);
+ assert.doesNotMatch(source,/el\.style\.width=anchor\.width\+"px"/);
  assert.doesNotMatch(css,/\.sga-shion \{[^}]*left:50%[^}]*bottom:14%/s);
  assert.doesNotMatch(css,/\.sga-shion \{[^}]*clamp\(54px,11vw,82px\)/s);
  assert.match(game,/window\.TarotActorScreenAnchor = Object\.freeze/);
+});
+
+test("Actor visibility reaches the final Canvas actor render path",()=>{
+ assert.match(game,/const paintWithVisibility = \(target\) => \{/);
+ assert.match(game,/target\.globalAlpha \*= opacity/);
+ assert.match(game,/drawMaskedActor\(ctx, entry\.actor, scale,[\s\S]*?paintWithVisibility\)/);
+ assert.match(game,/else paintWithVisibility\(ctx\)/);
 });
 
 test("Dual-presence composition does not alter approved ruins registration",()=>{
