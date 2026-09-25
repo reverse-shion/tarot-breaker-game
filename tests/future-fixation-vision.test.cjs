@@ -76,6 +76,14 @@ test("Blackout releases before current Shion fades in",()=>{
  assert.doesNotMatch(css,/sga-future-shion-only:not\(\.sga-future-ruins\) \.sga-future-blackout\{opacity:1\}/);
 });
 
+test("Current Shion fades with the ruins reveal, not Future Shion arrival",()=>{
+ const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function futureFixationStage3"));
+ const reveal=stage2.indexOf("vision.setOpacity(progress)");
+ const fade=stage2.indexOf('actorVisibility?.set("shion",1-(1-FUTURE_VISION_CURRENT_SHION_OPACITY)*progress)');
+ assert.ok(reveal>=0&&fade>reveal);
+ assert.match(stage2,/for\(let i=1;i<=20;i\+\+\)\{[\s\S]*?vision\.setOpacity\(progress\);[\s\S]*?actorVisibility\?\.set\("shion",1-\(1-FUTURE_VISION_CURRENT_SHION_OPACITY\)\*progress\);[\s\S]*?await pause\(850\/20\)/);
+});
+
 test("Stage 2 remains isolated and Stage 3 starts only after Stage 2 returns",()=>{
  const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function futureFixationStage3"));
  assert.doesNotMatch(stage2,/futureFixationStage3\(/);
@@ -119,7 +127,10 @@ test("Stage 2 camera tour guards every shot against world-edge exposure",()=>{
 test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  assert.match(source,/const FUTURE_VISION_CURRENT_SHION_OPACITY=\.55/);
- assert.match(stage3,/vis\?\.set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
+ const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function futureFixationStage3"));
+ assert.match(stage2,/actorVisibility\?\.set\("shion",1-\(1-FUTURE_VISION_CURRENT_SHION_OPACITY\)\*progress\)/);
+ assert.match(stage3,/opacity drifted before Future Fixation Vision Stage 3/);
+ assert.doesNotMatch(stage3,/set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
  assert.doesNotMatch(stage3,/vis\?\.set\("shion",0\)/);
  assert.match(source,/TarotActorScreenAnchor\?\.get\?\.\("shion"\)/);
  assert.match(source,/anchor\.x\+anchor\.width\/2\+gap/);
