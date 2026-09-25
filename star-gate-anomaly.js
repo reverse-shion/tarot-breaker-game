@@ -37,7 +37,19 @@ async function say(actor,text){
  await new Promise(r=>resolveAdvance=r);d.hide();await sleep(100);
 }
 async function pause(ms){await sleep(ms)}
-function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
+const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
+function alignFutureShion(){
+ const el=root?.querySelector(".sga-shion"),anchor=window.TarotActorScreenAnchor?.get?.("shion");
+ if(!el||!anchor)return false;
+ const gap=Math.max(10,anchor.width*.28);
+ el.style.left=(anchor.x+anchor.width/2+gap)+"px";
+ el.style.top=(anchor.feetY-anchor.height)+"px";
+ el.style.bottom="auto";
+ el.style.width=anchor.width+"px";
+ el.style.height=anchor.height+"px";
+ return true;
+}
+function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];alignFutureShion();el.classList.add("visible")}
 function gateShell(){return document.getElementById("game-shell")}
 function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
 function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
@@ -218,8 +230,9 @@ async function futureFixationStage3(){
  vis?.set("shiopon",0);vis?.set("lumiere",0);
  // Future Shion is a cinematic pose layer only. The current actor remains at
  // the verified world coordinate underneath and is never moved.
- vis?.set("shion",0);
+ vis?.set("shion",FUTURE_VISION_CURRENT_SHION_OPACITY);
  root.classList.add("sga-card-phase");
+ alignFutureShion();
  const timings=[520,500,900,520,520];
  for(let i=1;i<=5;i++){setShion(i);await pause(timings[i-1])}
  const after=stage.getState().actors.shion;
