@@ -1527,16 +1527,23 @@
         const original = ctx;
         ctx = target;
         target.save();
-        target.globalAlpha *= opacity;
+        // Scene-effect masks may render actors through an offscreen target whose
+        // inherited alpha is reset. Apply actor visibility as the final composite
+        // alpha so Future Vision translucency survives both render paths.
         try {
           drawActor(entry.actor, entry.actorImages, entry.drawHeight,
             entry.glowColor, entry.options);
         } finally { target.restore(); ctx = original; }
       };
+      const paintWithVisibility = (target) => {
+        target.save();
+        target.globalAlpha *= opacity;
+        try { paint(target); } finally { target.restore(); }
+      };
       if (window.TarotSceneEffects) {
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
-          Math.min(2, dpr * camera.zoom), paint);
-      } else paint(ctx);
+          Math.min(2, dpr * camera.zoom), paintWithVisibility);
+      } else paintWithVisibility(ctx);
     }
   }
 
