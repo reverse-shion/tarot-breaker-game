@@ -1535,15 +1535,16 @@
             entry.glowColor, entry.options);
         } finally { target.restore(); ctx = original; }
       };
-      const paintWithVisibility = (target) => {
-        target.save();
-        target.globalAlpha *= opacity;
-        try { paint(target); } finally { target.restore(); }
-      };
       if (window.TarotSceneEffects) {
+        // Render the actor's outline/glow/sprite as one opaque group first.
+        // Scene Effects owns the single final-composite visibility alpha.
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
-          Math.min(2, dpr * camera.zoom), paintWithVisibility);
-      } else paintWithVisibility(ctx);
+          Math.min(2, dpr * camera.zoom), paint, opacity);
+      } else {
+        // Fallback has no grouping surface; preserve legacy visibility behavior.
+        ctx.save(); ctx.globalAlpha *= opacity;
+        try { paint(ctx); } finally { ctx.restore(); }
+      }
     }
   }
 
