@@ -110,11 +110,33 @@ test("Stage 2 camera tour guards every shot against world-edge exposure",()=>{
  assert.doesNotMatch(stage2,/allowOverscan:true/);
 });
 
+
+test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ assert.match(source,/const FUTURE_VISION_CURRENT_SHION_OPACITY=\.55/);
+ assert.match(stage3,/vis\?\.set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
+ assert.doesNotMatch(stage3,/vis\?\.set\("shion",0\)/);
+ assert.match(source,/TarotActorScreenAnchor\?\.get\?\.\("shion"\)/);
+ assert.match(source,/anchor\.x\+anchor\.width\/2\+gap/);
+ assert.match(source,/anchor\.feetY-anchor\.height/);
+ assert.match(source,/el\.style\.width=anchor\.width\+"px"/);
+ assert.match(source,/el\.style\.height=anchor\.height\+"px"/);
+ assert.doesNotMatch(css,/\.sga-shion \{[^}]*left:50%[^}]*bottom:14%/s);
+ assert.doesNotMatch(css,/\.sga-shion \{[^}]*clamp\(54px,11vw,82px\)/s);
+ assert.match(game,/window\.TarotActorScreenAnchor = Object\.freeze/);
+});
+
+test("Dual-presence composition does not alter approved ruins registration",()=>{
+ assert.match(game,/scale: 1[.]10/);
+ assert.match(game,/offsetX: -72/);
+ assert.match(game,/offsetY: -330/);
+});
+
 test("Stage 3 uses the five approved Future Shion card poses only",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  assert.match(stage3,/const timings=\[520,500,900,520,520\]/);
  assert.match(stage3,/for\(let i=1;i<=5;i\+\+\)\{setShion\(i\)/);
- assert.match(stage3,/vis\?\.set\("shion",0\)/);
+ assert.match(stage3,/vis\?\.set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
  assert.doesNotMatch(stage3,/aura1|aura2|ascend|transformed|floating|――選べ|これは……私の選択じゃない|待て！！/);
 });
 
