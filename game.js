@@ -252,12 +252,13 @@
   };
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
   const VISION_REGISTRATION = Object.freeze({
-    // Static asset registration, not animation. The 1.15 scale gives enough
-    // overscan for every clamped camera shot while the x offset registers the
-    // authored central axis (~735px) to the garden axis (~800px).
-    scale: 1.26,
-    offsetX: -153,
-    offsetY: -195,
+    // Static cinematic plate registration. Coverage safety is validated
+    // against every reachable Future Vision camera shot, not unused world edges.
+    // Keep the authored gate / stair / fountain axis centered while revealing
+    // more of the ruins above the player.
+    scale: 1.18,
+    offsetX: -130,
+    offsetY: -275,
   });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
