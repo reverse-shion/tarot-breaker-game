@@ -1,9 +1,9 @@
 # TAROT BREAKER — Phase 2A-5 保存・復帰・タイトル接続仕様書 v1.0
 
-作成日：2026-10-01（日本時間）  
-対象：`reverse-shion/tarot-breaker-game`  
-監査基準main：`f1688abc89f82ef159c7de88e21fbfb821fd4aeb`  
-状態：設計仕様。実装・実機検証・公開は未実施。タイトルUIは提案であり未承認。  
+作成日：2026-10-01（日本時間）
+対象：`reverse-shion/tarot-breaker-game`
+監査基準main：`f1688abc89f82ef159c7de88e21fbfb821fd4aeb`
+状態：設計仕様。実装・実機検証・公開は未実施。タイトルUIは提案であり未承認。
 目的：記録済みのProgress v1から、安全な地点・イベント履歴・しおぽんの状態を復元し、「つづきから」を成立させる。
 
 ## 1. 結論と作業順序

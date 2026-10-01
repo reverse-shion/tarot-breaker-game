@@ -1,7 +1,7 @@
 # Phase 2A-5a — Dormant resume and arrival foundation
 
-Baseline main: `f1688abc89f82ef159c7de88e21fbfb821fd4aeb`  
-Branch: `phase-2a-5a-resume-foundation`  
+Baseline main: `f1688abc89f82ef159c7de88e21fbfb821fd4aeb`
+Branch: `phase-2a-5a-resume-foundation`
 Architect contract, 2026-10-01. Parent specification: `phase-2a-5-save-resume-spec-v1.md`.
 
 ## FACT / UNKNOWN / PROPOSED
