@@ -21,7 +21,7 @@ DEVICE_GATE_REQUIRED: YES
 DEVICE_RESULT: PASS
 ```
 
-and the exact candidate commit SHA must already exist in this registry as an explicit human-confirmed PASS.
+and the exact human-verified runtime commit SHA must already exist in this registry as an explicit human-confirmed PASS. The PR must also declare `DEVICE_RUNTIME_SHA: <40-char SHA>`. Later docs/tests/workflow/scripts evidence-only commits may sit above that runtime SHA only when no production/runtime file changed after it; those evidence commits do not require a new Device PASS.
 
 Foundation/docs/test/CI-only work may use:
 
