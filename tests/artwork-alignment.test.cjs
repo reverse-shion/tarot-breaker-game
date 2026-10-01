@@ -24,8 +24,10 @@ function bootArtworkLayout() {
   };
   const document = {
     querySelector: (selector) => layers[selector] || null,
-    createElement: () => {
-      throw new Error('replacement artwork must not create an edge-copy canvas');
+    head: { appendChild() {} },
+    createElement: tag => {
+      assert.equal(tag, 'link', 'artwork must not create an edge-copy canvas');
+      return { dataset: {} };
     },
   };
   const window = { TarotSceneLayout: layout };
@@ -43,10 +45,15 @@ function recordingContext() {
 }
 
 test('latest uploaded artwork URLs are cache-busted independently', () => {
-  assert.match(html, /star-country-world-islands\.webp\?v=cbf8ee11e9e9d968/);
-  assert.match(html, /star-country-gate-garden-foreground\.webp\?v=bffada4ffedbc317/);
-  assert.match(html, /scene-preview41-fix\.js\?v=1\.4\.0/);
-  assert.match(html, /game\.js\?v=1\.3\.0/);
+  const islands = './assets/maps/star-country-world-islands.webp?asset=34856728cf2b';
+  const foreground = './assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9';
+  for (const url of [islands, foreground]) {
+    assert.ok(html.includes(`href="${url}"`), 'official preload must match renderer');
+    assert.ok(html.includes(`src="${url}"`), 'official renderer must use revised artwork');
+  }
+  assert.notEqual(new URL(islands, 'https://example.test').search, new URL(foreground, 'https://example.test').search);
+  assert.match(html, /scene-preview41-fix\.js\?v=native-foreground-v7/);
+  assert.match(html, /game\.js\?v=garden-arrival-v1/);
 });
 
 test('replacement islands fit completely inside the canonical scene', () => {
@@ -67,20 +74,26 @@ test('replacement islands fit completely inside the canonical scene', () => {
   assert.equal(layers['.scene-foreground'].hidden, false);
 });
 
-test('replacement foreground restores authored scale, keeps the approved +4px nudge and is drawn only once', () => {
+test('native transparent foreground uses the canonical zero-origin scale and is drawn only once', () => {
   const { layout } = bootArtworkLayout();
   const context = recordingContext();
-  const image = { naturalWidth: 1672, naturalHeight: 941 };
+  const image = { naturalWidth: 1469, naturalHeight: 1071 };
+  const raster = fs.readFileSync('assets/maps/star-country-gate-garden-transparent.webp');
+  assert.equal(raster.toString('ascii',12,16),'VP8X');
+  assert.ok(raster[20] & 0x10, 'official foreground must retain an alpha channel');
+  assert.equal(1+raster.readUIntLE(24,3),1469);
+  assert.equal(1+raster.readUIntLE(27,3),1071);
 
   layout.paintForeground(context, image);
 
   const draws = context.calls.filter((call) => call.operation === 'drawImage');
   assert.equal(draws.length, 1);
   const [, x, y, width, height] = draws[0].args;
-  assert.equal(x, -11);
+  assert.equal(x, 0);
   assert.equal(y, 0);
-  assert.ok(Math.abs(width - 1672 / 0.81) < 1e-9);
-  assert.ok(Math.abs(height - 941 / 0.81) < 1e-9);
-  assert.equal(layout.artworkPlacement.foreground.repeat, false);
-  assert.equal(layout.artworkModelVersion, 'foreground-authored-alignment-right-4px');
+  assert.equal(width, 1448);
+  assert.equal(height, 1086);
+  assert.equal(layout.artworkPlacement.foreground.mode, 'native-reference-1to1');
+  assert.deepEqual(JSON.parse(JSON.stringify(layout.foregroundOffset)), { x: 0, y: 0 });
+  assert.equal(layout.artworkModelVersion, 'native-foreground-v6');
 });

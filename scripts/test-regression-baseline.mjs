@@ -11,7 +11,7 @@ const testFiles = fs.readdirSync('tests')
   .sort()
   .map(file => `tests/${file}`);
 
-const result = spawnSync(process.execPath, ['--test', ...testFiles], {
+const result = spawnSync(process.execPath, ['--test', '--test-reporter=tap', ...testFiles], {
   encoding: 'utf8',
   maxBuffer: 64 * 1024 * 1024,
 });
