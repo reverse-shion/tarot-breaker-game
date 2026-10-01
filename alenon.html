@@ -2555,6 +2555,33 @@
         requestAnimationFrame(step);
       }
 
+      function stopAlenonAudioForPageExit() {
+        // Embedded browsers may hide a page without dispatching pagehide.
+        // Silence every Alenon-owned transport synchronously on either lifecycle signal.
+        alenonWindWanted = false;
+        alenonOrbWanted = false;
+        ++alenonWindFadeToken;
+        setAlenonWindVolume(0);
+        setAlenonOrbVolume(0);
+        for (const audio of [alenonWindAmbience, alenonWindGust, alenonOrbResonance]) {
+          try {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.muted = true;
+          } catch (_) {}
+        }
+        try { alenonMix?.context?.suspend?.(); } catch (_) {}
+      }
+
+      function bindAlenonAudioLifecycle() {
+        if (window.__tarotAlenonAudioLifecycleBound) return;
+        window.__tarotAlenonAudioLifecycleBound = true;
+        window.addEventListener("pagehide", stopAlenonAudioForPageExit);
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) stopAlenonAudioForPageExit();
+        });
+      }
+
       function classifyAlenonAudio() {
         const debug = alenonAudioDiagnostic;
         const context = debug.context;
@@ -4913,10 +4940,7 @@
           };
           window.addEventListener("pointerdown", unlockContinueAudio, {passive: true});
           window.addEventListener("keydown", unlockContinueAudio);
-          window.addEventListener("pagehide", () => {
-            stopAlenonOrbResonance();
-            try { alenonWindGust.pause(); alenonWindGust.currentTime = 0; } catch (_) {}
-          });
+          bindAlenonAudioLifecycle();
           showContinueStatus(continueSession.definition.id + " / 安全な復帰地点へ配置済み");
           window.dispatchEvent(new CustomEvent("tarot-breaker:alenon-resume-ready"));
         } catch (error) {
@@ -4972,13 +4996,7 @@
           window.addEventListener("pointerdown", resumeReturnedAmbience, { once: true, passive: true });
           window.addEventListener("keydown", resumeReturnedAmbience, { once: true });
         }
-        window.addEventListener("pagehide", () => {
-          stopAlenonOrbResonance();
-          try {
-            alenonWindGust.pause();
-            alenonWindGust.currentTime = 0;
-          } catch (_) {}
-        });
+        bindAlenonAudioLifecycle();
 
         loadAlenonCollision().catch((error) => {
           console.error(error);
