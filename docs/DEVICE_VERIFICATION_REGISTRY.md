@@ -21,7 +21,7 @@ DEVICE_GATE_REQUIRED: YES
 DEVICE_RESULT: PASS
 ```
 
-and the exact candidate commit SHA must already exist in this registry as an explicit human-confirmed PASS.
+and the exact human-verified runtime commit SHA must already exist in this registry as an explicit human-confirmed PASS. The PR must also declare `DEVICE_RUNTIME_SHA: <40-char SHA>`. Later docs/tests/workflow/scripts evidence-only commits may sit above that runtime SHA only when no production/runtime file changed after it; those evidence commits do not require a new Device PASS.
 
 Foundation/docs/test/CI-only work may use:
 
@@ -47,7 +47,6 @@ Never edit a historical PASS into a different SHA. Append a new row.
 | Route / integration | Commit SHA | Device | Result | Verified route behavior | Human confirmation | Notes |
 |---|---|---|---|---|---|---|
 | Title → Alenon → PAD → Landing → Alenon return | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Ordinary route completes through Alenon return without abnormal replay, placement, movement, screen, or audio behavior | Product owner explicit confirmation in ChatGPT | Exact candidate build |
-| Title → Alenon → PAD → Landing → Alenon return | e4ea07d48ada103db367f74c6f726de086d46455 | iOS/iPad ChatGPT in-app browser | PASS | Ordinary route completes through Alenon return without abnormal replay, placement, movement, screen, or audio behavior | Product owner explicit confirmation in ChatGPT | Exact post-lineage-sync build; staged background/map reveal observed and explicitly deferred as a separate loading-presentation issue |
 
 ## Legacy baseline
 Existing production gameplay contracts VGC-002 through VGC-007 remain governed by `docs/VERIFIED_GAMEPLAY_CONTRACTS.md`. Historical exact device SHAs were not recorded, so this registry does not invent them.
