@@ -12,7 +12,7 @@
   const READINESS_KEYS = Object.freeze(["assetsReady", "collisionReady", "spawnResolved",
     "historyRestored", "companionPlaced", "arrivalSettled"]);
   const EDGE_KEYS = ["sourceMapId", "destinationMapId", "spawnId", "reason"];
-  const ENVELOPE_KEYS = ["version", "token", "phase", "issuedAt", "expiresAt", "edge", "sourceState"];
+  const ENVELOPE_KEYS = ["version", "token", "usedTokens", "phase", "issuedAt", "expiresAt", "edge", "sourceState"];
   const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
   const plain = value => value !== null && typeof value === "object" && !Array.isArray(value) &&
     (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
@@ -54,7 +54,6 @@
     return { ok: true, source: checked.value, destination: destination.value };
   }
   function createHandoffStore({ storage, now, createToken } = {}) {
-    const issuedTokens = new Set();
     function read() {
       if (!storage || typeof storage.getItem !== "function" || typeof storage.setItem !== "function" ||
           typeof now !== "function" || typeof createToken !== "function") return fail("dependencies-unavailable");
@@ -65,6 +64,9 @@
       let envelope;
       try { envelope = JSON.parse(raw); } catch (_) { return fail("corrupt-handoff"); }
       if (!exact(envelope, ENVELOPE_KEYS) || envelope.version !== 1 || !tokenValid(envelope.token) ||
+          !Array.isArray(envelope.usedTokens) || envelope.usedTokens.some(token => !tokenValid(token)) ||
+          new Set(envelope.usedTokens).size !== envelope.usedTokens.length ||
+          !envelope.usedTokens.includes(envelope.token) ||
           !["pending", "claimed", "committed"].includes(envelope.phase) ||
           !Number.isFinite(envelope.issuedAt) || !Number.isFinite(envelope.expiresAt) ||
           envelope.expiresAt !== envelope.issuedAt + HANDOFF_TTL_MS || time < envelope.issuedAt)
@@ -100,13 +102,13 @@
       if (loaded.envelope && !loaded.expired && loaded.envelope.phase !== "committed") return fail("handoff-in-flight");
       const token = createToken();
       if (!tokenValid(token)) return fail("invalid-token");
-      if (loaded.envelope?.token === token || issuedTokens.has(token)) return fail("token-reused");
-      const envelope = { version: 1, token, phase: "pending", issuedAt: loaded.time,
+      const usedTokens = loaded.envelope ? loaded.envelope.usedTokens : [];
+      if (usedTokens.includes(token)) return fail("token-reused");
+      const envelope = { version: 1, token, usedTokens: [...usedTokens, token], phase: "pending", issuedAt: loaded.time,
         expiresAt: loaded.time + HANDOFF_TTL_MS, edge: copy(input.edge), sourceState: states.source };
       if (!Number.isFinite(envelope.expiresAt) || envelope.expiresAt - loaded.time !== HANDOFF_TTL_MS)
         return fail("invalid-clock");
       write(envelope);
-      issuedTokens.add(token);
       return result({ ok: true, receipt: envelope });
     });
     const claim = safe(input => {

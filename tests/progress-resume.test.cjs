@@ -195,3 +195,54 @@ test('browser import performs no storage/clock/token/navigation operation and pr
   for(const file of fs.readdirSync(root).filter(file=>/\.(html|js)$/.test(file) && file!=='progress-resume.js'))
     assert.equal(fs.readFileSync(path.join(root,file),'utf8').includes('progress-resume.js'),false,file);
 });
+
+test('persisted identity history rejects stale A after recreated A/B issue and expiry cycles', () => {
+  const h=harness(); assert.equal(h.issue().ok,true);
+  const first=h.envelope(); assert.deepEqual(first.usedTokens,['attempt-1']);
+  h.setTime(first.expiresAt); h.setToken('attempt-2');
+  const recreated=Resume.createHandoffStore(h.dependencies);
+  assert.equal(recreated.issue({edge:h.route,state:h.state}).ok,true);
+  assert.deepEqual(h.envelope().usedTokens,['attempt-1','attempt-2']);
+  const stale=h.handoff.claim({...h.input,state:h.state}); assert.equal(stale.reason,'token-mismatch');
+  assert.equal(recreated.claim({...h.input,token:'attempt-2',state:h.state}).ok,true);
+  assert.deepEqual(h.envelope().usedTokens,['attempt-1','attempt-2']);
+  h.setTime(h.envelope().expiresAt); h.setToken('attempt-1');
+  const again=Resume.createHandoffStore(h.dependencies);
+  const before=h.session.getItem(Resume.HANDOFF_KEY);
+  assert.equal(again.issue({edge:h.route,state:h.state}).reason,'token-reused');
+  assert.equal(h.session.getItem(Resume.HANDOFF_KEY),before);
+  h.setToken('attempt-3');assert.equal(again.issue({edge:h.route,state:h.state}).ok,true);
+  assert.deepEqual(h.envelope().usedTokens,['attempt-1','attempt-2','attempt-3']);
+});
+
+test('identity history survives claim, commit, recreated committed replacement and quota failure', () => {
+  const h=harness();const issued=h.issue();
+  assert(Object.isFrozen(issued.receipt.usedTokens));
+  h.claim();assert.deepEqual(h.envelope().usedTokens,['attempt-1']);
+  h.commit();assert.deepEqual(h.envelope().usedTokens,['attempt-1']);
+  const state=h.progress.getCurrentState().state;
+  const route=edge(Registry.routes[4]);h.setToken('attempt-2');
+  const recreated=Resume.createHandoffStore(h.dependencies);
+  const before=h.session.getItem(Resume.HANDOFF_KEY);
+  h.session.throwWrite=true;
+  assert.equal(recreated.issue({edge:route,state}).ok,false);
+  assert.equal(h.session.getItem(Resume.HANDOFF_KEY),before);
+  h.session.throwWrite=false;assert.equal(recreated.issue({edge:route,state}).ok,true);
+  assert.deepEqual(h.envelope().usedTokens,['attempt-1','attempt-2']);
+  h.setTime(h.envelope().expiresAt);h.setToken('attempt-1');
+  assert.equal(Resume.createHandoffStore(h.dependencies).issue({edge:route,state}).reason,'token-reused');
+});
+
+test('corrupt identity histories fail closed without rewriting any evidence', () => {
+  for(const usedTokens of [undefined, null, [], ['attempt-1','attempt-1'], ['other'], ['attempt-1',''],
+    ['attempt-1',123], ['attempt-1','x'.repeat(129)], {token:'attempt-1'}]) {
+    const h=harness();h.issue();const receipt=h.envelope();receipt.usedTokens=usedTokens;
+    h.session.bytes.set(Resume.HANDOFF_KEY,JSON.stringify(receipt));
+    const before=h.session.getItem(Resume.HANDOFF_KEY);h.setToken('fresh');
+    const recreated=Resume.createHandoffStore(h.dependencies);
+    assert.equal(recreated.issue({edge:h.route,state:h.state}).reason,'corrupt-handoff');
+    assert.equal(recreated.claim({...h.input,state:h.state}).reason,'corrupt-handoff');
+    assert.equal(recreated.commit({...h.input,progress:h.progress,readiness:ready()}).reason,'corrupt-handoff');
+    assert.equal(h.session.getItem(Resume.HANDOFF_KEY),before);assert.equal(h.durable.writes,0);
+  }
+});
