@@ -26,3 +26,19 @@ Segments:
 No Star Gate segment is DEVICE VERIFIED merely because historical branches contain implementations.
 
 Existing production behavior remains governed by VGC-002 through VGC-007. This registry does not invent historical device SHAs.
+
+
+## EC-002 — Alenon isolated Continue receiver
+event_id: alenon-resume
+map: alenon
+status: NOT TESTED / isolated verification only
+productionEnabled: false
+segment: alenon-resume-entry — NOT TESTED
+start_event: tarot-breaker:alenon-resume-ready
+trigger_owner: registered development entry into the real Alenon runtime
+required_state: independently validated temporary Progress v1 Alenon checkpoint
+progress_changes: development namespace only at the existing authored completion boundary; no production durable writes
+return_behavior: normal title and mounted PAD return remain unchanged; sandbox cross-map departure is contained
+implementation_contract: docs/phase-2a-5b-alenon-implementation-contract.md
+
+No Alenon resume segment is DEVICE VERIFIED until explicit exact-candidate human confirmation.
