@@ -16,7 +16,7 @@ function harness(search = '', saved = {}) {
         hidden: false, dataset: {}, style: {setProperty(){}}, textContent:'', listeners:{},
         classList: {add:(...ks)=>ks.forEach(k=>classes.add(k)), remove:(...ks)=>ks.forEach(k=>classes.delete(k)), contains:k=>classes.has(k), toggle:(k,v)=>v ? classes.add(k) : classes.delete(k)},
         addEventListener(type, fn){(this.listeners[type] ||= []).push(fn);},
-        setAttribute(){}, appendChild(){}, querySelector:k=>element(k), getContext:()=>canvas,
+        setAttribute(){}, children:[], appendChild(child){this.children.push(child);}, replaceChildren(...children){this.children=children;}, querySelector:k=>element(k), getContext:()=>canvas,
         getBoundingClientRect:()=>({left:0,top:0,width:1448,height:1086}),
       });
     }
@@ -33,11 +33,15 @@ function harness(search = '', saved = {}) {
     setTimeout:f=>(timers.push(f),timers.length),clearTimeout(){},
     addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn), dispatchEvent:e=>(listeners[e.type]||[]).forEach(f=>f(e)),
     document:{body:element('body'),documentElement:element('root'),hidden:false,currentScript:{dataset:{}},
-      getElementById:element,querySelector:element,querySelectorAll:()=>[],addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn)},
-    fetch:async()=>({ok:false}), TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
+      getElementById:element,querySelector:element,querySelectorAll:()=>[],createElement:tag=>element(Symbol(tag)),createElementNS:(_ns,tag)=>element(Symbol(tag)),addEventListener:(type,fn)=>(listeners[type] ||= []).push(fn)},
+    fetch:async url=>{
+      const file = String(url).split('?')[0].replace(/^\.\//,'');
+      if (!file.startsWith('assets/maps/star-landing/')) return {ok:false};
+      return {ok:true,json:async()=>JSON.parse(fs.readFileSync(file,'utf8'))};
+    }, TarotDialogueUI:{bind:options=>({show:line=>lines.push(line),hide(){}})},
   };
   h.window=h;vm.createContext(h);vm.runInContext(fs.readFileSync('map-journey.js','utf8'),h);
-  return {h,e:element,audio,lines,timers,frames,listeners,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await Promise.resolve();}}};
+  return {h,e:element,audio,lines,timers,frames,listeners,run:code=>vm.runInContext(code,h), async flush(){for(let i=0;i<8;i++){timers.splice(0).forEach(f=>f());await new Promise(setImmediate);}}};
 }
 function inline(file){return [...fs.readFileSync(file,'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];}
 async function landing(search, saved){
@@ -62,24 +66,43 @@ test('BGM waits for movement, is one looping instance, retries rejection and nev
 });
 
 test('PAD return enters the real north path, does not replay memory or immediately leave', async()=>{
-  const t=await landing('?from=garden');const m=t.h.testMap;
+  const t=await landing('?from=garden',{landingMemoryDone:true});const m=t.h.testMap;
   assert.equal(m.player.y,257);assert.equal(m.player.dir,'down');assert.equal(m.memoryDone,true);
-  assert.ok(m.isGroundWalkable(m.player.x,m.player.y));
-  for(let i=1;i<10;i++)m.loop(10000+i*16);await t.flush();assert.equal(t.h.location.href,'');
+  assert.ok(m.isGroundWalkable(m.player.x,m.player.y), JSON.stringify(m.player));
+  for(let i=1;i<10;i++)m.loop(10000+i*16);await t.flush();assert.equal(t.h.location.href,'');assert.equal(t.lines.length,0,'completed memory must not replay');
   // Walk back north over the existing entrance, rather than touching a corner.
   m.player.target={x:724,y:200};for(let i=1;i<90;i++)m.loop(10200+i*16);
   await t.flush();assert.equal(t.h.location.href,'./index.html?from=landing');
 });
 
+test('Garden return URL alone does not complete or suppress fresh Landing memory',async()=>{
+  const t=await landing('?from=garden');const m=t.h.testMap;
+  assert.equal(m.memoryDone,false);
+  assert.notEqual(t.h.TarotJourney.get('landingMemoryDone'),true);
+  m.loop(10016);await t.flush();
+  const memoryLines=['……くっ、あのカードが頭から離れない','何かを伝えようとしてる……？','それとも――','……いや。考えるのは後だ。','今は……星門が先だ'];
+  for(let i=0;i<memoryLines.length;i++){
+    assert.equal(t.lines[i]?.text,memoryLines[i]);
+    assert.equal(t.lines[i]?.speaker,'シオン');
+    assert.notEqual(t.h.TarotJourney.get('landingMemoryDone'),true,'completion waits for every actual dialogue advance');
+    const before={x:m.player.x,y:m.player.y};m.player.target={x:724,y:400};m.loop(10032+i*16);
+    assert.equal(m.player.x,before.x);assert.equal(m.player.y,before.y);
+    m.advance();await t.flush();
+  }
+  assert.equal(t.h.TarotJourney.get('landingMemoryDone'),true);
+  m.loop(10200);await t.flush();assert.equal(t.lines.length,5,'completed event must not duplicate');
+});
+
 test('companion farewell finishes before boarding, stays on ground during flight and rejoins on return',async()=>{
-  const t=await landing('?from=garden',{companion:{mode:'following'}});const m=t.h.testMap;
+  const t=await landing('?from=garden',{landingMemoryDone:true,companion:{mode:'following'}});const m=t.h.testMap;
   m.player.target={x:725,y:788};
   for(let i=1;i<500 && !t.lines.length;i++)m.loop(10000+i*16);
-  assert.equal(t.lines[0]?.text,'しおぽんはここで待ってるぴょん！');
+  assert.equal(t.lines[0]?.speaker,'しおぽん');
+  assert.equal(t.lines[0]?.text,'しおぽんは、ここで待ってるの！\nだからシオンさん、ちゃんと戻ってきてね！');
   assert.equal(m.ride.mode,'ground');assert.equal(m.companion.following,false);
   assert.ok(Math.hypot(m.companion.x-725,m.companion.y-788)>66);
   const waiting={x:m.companion.x,y:m.companion.y};
-  m.advance();await t.flush();assert.equal(t.lines[1]?.text,'シオンさん、いってらっしゃい');
+  m.advance();await t.flush();assert.equal(t.lines[1]?.text,'いってらっしゃい、ぴょん！');
   assert.equal(t.lines[1]?.speaker,'しおぽん');assert.equal(m.ride.mode,'ground');
   m.advance();await t.flush();assert.equal(m.ride.mode,'boarding');
   for(let i=1;i<80;i++)m.loop(20000+i*16);assert.equal(m.ride.mode,'flying');
@@ -91,17 +114,30 @@ test('companion farewell finishes before boarding, stays on ground during flight
   const back=await landing('?from=alenon',{companion:t.h.TarotJourney.get('companion'),landingMemoryDone:true});
   assert.equal(back.h.testMap.companion.following,false);
   back.h.testMap.finishArrival();assert.equal(back.h.testMap.companion.following,true);
+  assert.equal(back.lines[0]?.text,'シオンさん！ おかえりなの！');
+  assert.equal(back.lines[0]?.speaker,'しおぽん');
+  const arrival={x:back.h.testMap.player.x,y:back.h.testMap.player.y};
+  back.h.testMap.player.target={x:724,y:650};back.h.testMap.loop(30016);
+  assert.equal(back.h.testMap.player.x,arrival.x);assert.equal(back.h.testMap.player.y,arrival.y);
+  back.h.testMap.advance();await back.flush();
+  assert.equal(back.lines[1]?.text,'ただいま。');assert.equal(back.lines[1]?.speaker,'シオン');
+  back.h.testMap.advance();await back.flush();
+  assert.equal(back.lines[2]?.text,'えへへ。ちゃんと戻ってきたぴょん！');assert.equal(back.lines[2]?.speaker,'しおぽん');
+  back.h.testMap.advance();await back.flush();
+  back.h.testMap.player.target={x:724,y:650};back.h.testMap.loop(30032);
+  assert.equal(back.h.testMap.player.moving,true);
+  back.h.testMap.finishArrival();await back.flush();assert.equal(back.lines.length,3,'greeting must not replay');
   assert.ok(back.audio.some(a=>a.src.includes('land') && a.playCalls>0),'landing SE still plays');
 });
 
 test('solo boarding has no farewell; walking at the south edge cannot teleport off the island',async()=>{
-  const t=await landing('?from=garden');const m=t.h.testMap;
+  const t=await landing('?from=garden',{landingMemoryDone:true});const m=t.h.testMap;
   m.player.x=600;m.player.y=1048;m.loop(10016);await t.flush();assert.equal(t.h.location.href,'');
   m.player.x=725;m.player.y=724;await m.beginBoarding();assert.equal(m.ride.mode,'boarding');assert.equal(t.lines.length,0);
 });
 
 test('PAD accepted pointer and keyboard gestures invoke the shared manager',async()=>{
-  const t=await landing('?from=garden');t.run(fs.readFileSync('audio.js','utf8'));const bgm=t.audio.at(-1);
+  const t=await landing('?from=garden',{landingMemoryDone:true});t.run(fs.readFileSync('audio.js','utf8'));const bgm=t.audio.at(-1);
   assert.equal(bgm.playCalls,0);t.e('viewport').listeners.pointerdown[0](event());assert.equal(bgm.playCalls,1);
   await t.flush();bgm.currentTime=12;t.listeners.keydown[0](event({key:'ArrowDown'}));assert.equal(bgm.currentTime,12);assert.equal(bgm.playCalls,1);
 });
@@ -109,11 +145,14 @@ test('PAD accepted pointer and keyboard gestures invoke the shared manager',asyn
 test('Alenon return bypasses prologue and spawns behind its authored PAD; title still starts prologue',()=>{
   for(const from of ['landing-return','title']){
     const t=harness('?from='+from);
-    t.run(inline('alenon.html').replace('      initRuinDrift();', '      window.testMap = {player, story, layout, resetPlayer, preparePrologue}; return;'));
+    t.run(inline('alenon.html').replace('      initRuinDrift();', '      window.testMap = {player, story, ride, layout, resetPlayer, preparePrologue, finishPadLanding}; return;'));
     const m=t.h.testMap;m.resetPlayer();m.preparePrologue();
     if(from==='landing-return'){
       assert.equal(m.story.completed,true);assert.equal(m.story.locked,false);assert.equal(t.e('prologue-overlay').hidden,true);
-      assert.equal(m.player.x,m.layout.pad.x);assert.equal(m.player.y,m.layout.pad.y-68);
+      assert.equal(m.ride.mode,'landing');
+      assert.equal(m.player.x,m.layout.pad.x);assert.equal(m.player.y,m.layout.pad.y-20);
+      m.finishPadLanding();assert.equal(m.ride.mode,'ground');
+      assert.equal(m.player.y,m.layout.pad.y-68);
       const data=JSON.parse(fs.readFileSync('assets/maps/alenon-collision.json'));data.map='star-country-gate-garden';
       assert.ok(Nav.createCollision(data).isWalkable(m.player.x,m.player.y));
     }else{assert.equal(m.story.completed,false);assert.equal(t.e('prologue-overlay').hidden,false);assert.equal(m.player.x,716);assert.equal(m.player.y,330);}

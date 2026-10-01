@@ -5,12 +5,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
-const collisionLib = require('../blocked-collision.js');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
-const sceneLayout = require('../scene-layout.js');
+const { gardenRuntime } = require('./helpers/garden-runtime.cjs');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
-  let raf, now = 1000;
+  const rafQueue = []; let now = 1000;
+  const { layout: sceneLayout, collision: runtimeCollision } = gardenRuntime();
   const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
@@ -82,7 +82,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
   window.CustomEvent = CustomEvent;
   const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search: '?from=landing&navDebug=1' },
-    performance: { now: () => now }, requestAnimationFrame: fn => { raf = fn; }, setTimeout() { return 1; }, clearTimeout() {},
+    performance: { now: () => now }, requestAnimationFrame: fn => { rafQueue.push(fn); return rafQueue.length; }, setTimeout() { return 1; }, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
@@ -95,15 +95,18 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     window.__gardenControls = instance;
     return instance;
   };
-  vm.runInContext(fs.readFileSync('game.js', 'utf8'), sandbox, { filename: 'game.js' });
+  const gameSource = fs.readFileSync('game.js', 'utf8');
+  const resetAnchor = '  function reset() {';
+  assert.equal(gameSource.split(resetAnchor).length, 2);
+  vm.runInContext(gameSource.replace(resetAnchor, '  window.__gardenReset = reset;\n' + resetAnchor), sandbox, { filename: 'game.js' });
   for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
-    if (raf) { now += 1000 / 60; const fn = raf; raf = null; fn(now); }
+    now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now));
   }
   if (!badCollision) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
-  const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; const fn = raf; if (fn) fn(now); } };
+  const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now)); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
-  const runtimeCollision = collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] });
+
   const safeTarget = wanted => runtimeCollision.nearestWalkable(wanted) || wanted;
   const pointer = (type, x, y, extra = {}) => elements.game.emit(type, { pointerId: 1, clientX: 34 + x, clientY: 20 + y, button: 0, isPrimary: true, ...extra });
   const tapWorld = (x, y) => {
@@ -122,7 +125,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -131,8 +134,14 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.equal(h.elements.game.width, 780); assert.equal(h.elements.game.height, 1688);
   assert.deepEqual(s.world, { w: 1448, h: 1086 });
   assert.deepEqual(s.scale, { x: 1, y: 1 });
-  assert.equal(s.player.x, 724); assert.equal(s.player.y, 1015); assert.equal(s.player.dir, 'up');
-  assert.equal(s.shiopon.homeRef.x, 810); assert.equal(s.shiopon.homeRef.y, 800);
+  assert.equal(s.player.x, 724); assert.equal(s.player.y, 944);
+  assert.equal(h.collision.isWalkable(s.player.x, s.player.y), true);
+  assert.ok(Math.hypot(s.player.x - 724, s.player.y - 1015) <= 80);
+  assert.ok(s.player.y < 960 - 8, 'Garden arrival clears the independently reviewed south exit');
+  assert.equal(s.player.dir, 'up');
+  assert.deepEqual(s.shiopon.homeRef,{x:810,y:800});
+  assert.ok(h.collision.isWalkable(s.shiopon.homeRef.x, s.shiopon.homeRef.y));
+  assert.ok(Math.hypot(s.shiopon.homeRef.x - 810, s.shiopon.homeRef.y - 800) <= 16);
   assert.equal(s.lumiere.homeRef.x, 810); assert.equal(s.lumiere.homeRef.y, 212);
   assert.equal(s.lumiere.moving, false); assert.equal(s.lumiereCollisionDistance, 32);
   assert.equal(s.actorCollisionDistance, 26); assert.ok(s.actorGap > s.actorCollisionDistance);
@@ -189,9 +198,9 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
 test('Garden pointer payload is accepted by the production controls contract', async () => {
   const h = await boot();
   const controls = h.window.TarotControls.createControls(
-    collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
+    h.collision,
     h.window.TarotNavigation.createNavigator(
-      collisionLib.createCollision({ ...collisionData, blockedAreas: [...(collisionData.blockedAreas || []), ...sceneLayout.solidBases] }),
+      h.collision,
       { cell: 16 },
     ),
   );
@@ -263,35 +272,57 @@ test('Garden registered pointerup handler completes the accepted gesture', async
 });
 
 test('canvas tap uses camera/zoom/element offset and does not jump the camera to the destination', async () => {
-  const h = await boot(), before = h.state(); const p = h.safeTarget({ x: 810, y: 700 }); const trace = h.tapWorld(p.x, p.y); const after = h.state();
+  const h = await boot(), before = h.state(); const p = { x: 790, y: 330 }; const trace = h.tapWorld(p.x, p.y); const after = h.state();
   assert.equal(trace.afterDown.suspended, false, `tap down suspended; before=${JSON.stringify(before)} down=${JSON.stringify(trace.afterDown)}`);
   assert.ok(trace.afterUp.controls.requested, `pointerup did not reach controls.tap; trace=${JSON.stringify({sx:trace.sx,sy:trace.sy,before,down:trace.afterDown,up:trace.afterUp,input:h.inputTrace})}`);
-  assert.ok(h.controls.state.route.length); assert.ok(h.controls.state.requested); const expected = h.safeTarget({ x: 810, y: 700 }); assert.ok(Math.abs(h.controls.state.requested.x - expected.x) < 0.01); assert.ok(Math.abs(h.controls.state.requested.y - expected.y) < 0.01);
+  assert.ok(h.controls.state.route.length); assert.ok(h.controls.state.requested); const expected = { x: 790, y: 330 }; assert.ok(Math.abs(h.controls.state.requested.x - expected.x) < 0.01); assert.ok(Math.abs(h.controls.state.requested.y - expected.y) < 0.01);
   assert.ok(Math.abs(after.camera.y - before.camera.y) < 8); h.tick(); assert.ok(h.state().player.moving);
   assert.equal(h.elements.joystick.hidden, true); assert.equal(h.captured.size, 0);
-  h.tick(350); const arrived = h.state();
+  h.tick(700); const arrived = h.state();
   assert.equal(arrived.route.length, 0); assert.equal(arrived.player.moving, false);
+  assert.equal(arrived.reason, 'arrived');
+  assert.ok(Math.hypot(arrived.player.x-p.x,arrived.player.y-p.y) < 8, 'tap must reach the selected destination within the production 8px arrival radius');
   const idleDirection = arrived.player.dir; h.tick(120); assert.equal(h.state().player.dir, idleDirection);
 });
-test('real event bindings: drag/keyboard/reset cancel and reset clears held stick', async () => {
+test('real drag/keyboard bindings cancel movement and production reset clears held input', async () => {
   const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.pointer('pointerdown', 110, 600); h.pointer('pointermove', 135, 600); h.tick();
   assert.equal(h.controls.state.route.length, 0); assert.equal(h.controls.state.stick.active, true, `drag did not activate production stick; controls=${JSON.stringify({gesture:h.controls.state.gesture,stick:h.controls.state.stick,reason:h.controls.state.cancelReason})}`); assert.equal(h.elements.joystick.hidden, false);
-  h.elements.reset.emit('pointerdown'); h.elements.reset.emit('click'); h.tick();
+  assert.doesNotMatch(fs.readFileSync('index.html', 'utf8'), /id="reset"/);
+  h.window.emit('keydown', { key: 'w' });
+  assert.equal(h.controls.state.keys.size, 1);
+  h.window.__gardenReset(); h.tick();
+  assert.equal(h.controls.state.stick.active, false);
+  assert.equal(h.controls.state.keys.size, 0);
+  assert.equal(h.controls.state.gesture, null);
+  assert.equal(h.controls.state.route.length, 0);
+  assert.equal(h.state().player.moving, false);
+  assert.equal(h.collision.isWalkable(h.state().player.x, h.state().player.y), true);
   assert.equal(h.elements.joystick.hidden, true); assert.ok(h.state().collisionVersion >= 6);
   assert.ok(Number.isFinite(h.state().player.x)); assert.ok(Number.isFinite(h.state().player.y));
-  assert.equal(h.state().shiopon.homeRef.x, 810); assert.equal(h.state().shiopon.homeRef.y, 800);
+  assert.ok(h.collision.isWalkable(h.state().shiopon.homeRef.x, h.state().shiopon.homeRef.y));
   h.pointer('pointerup', 135, 600); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })();
   h.window.emit('keydown', { key: 'w' }); h.tick(); assert.equal(h.state().route.length, 0);
   h.window.emit('keyup', { key: 'w' }); h.tick(); assert.equal(h.state().player.moving, false);
 });
 test('four directions use all four Shion walk frames then the matching idle frame', async () => {
-  const h = await boot(); (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.tick(250);
-  for (const [key, dir, idleIndex] of [['d', 'right', 3], ['w', 'up', 1], ['a', 'left', 2], ['s', 'down', 0]]) {
-    (() => { const p = h.safeTarget({ x: 810, y: 700 }); h.tapWorld(p.x, p.y); })(); h.tick(200);
+  const h = await boot();
+  // Independently reviewed 80px cardinal segments on current gate stairs.
+  // Stage skip positions the actor exactly, without changing collision/input.
+  for (const [key, dir, idleIndex, x, y, dx, dy] of [
+    ['d', 'right', 3, 740, 330, 80, 0], ['w', 'up', 1, 810, 365, 0, -80],
+    ['a', 'left', 2, 830, 330, -80, 0], ['s', 'down', 0, 810, 290, 0, 80],
+  ]) {
+    const center = { x, y };
+    assert.ok(h.collision.segmentClear(center, { x: x + dx, y: y + dy }));
+    h.window.emit('tarot-breaker:interaction-start');
+    const position = h.window.TarotStage.perform({type:'move',actor:'shion',target:{x,y},duration:300});
+    position.finish();await position.promise;h.tick();
+    assert.equal(h.state().player.x,x);assert.equal(h.state().player.y,y);
+    h.window.emit('tarot-breaker:interaction-end');
     const frames = new Set(); const drawStart = h.drawCalls.length; h.window.emit('keydown', { key });
-    for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); }
-    assert.equal(frames.size, 4);
+    for (let i = 0; i < 25; i++) { h.tick(); frames.add(h.state().player.frame); assert.equal(h.state().player.dir, dir); assert.equal(h.state().player.moving, true); }
+    assert.equal(frames.size, 4, JSON.stringify({dir, player:h.state().player}));
     const walkingCalls = h.drawCalls.slice(drawStart).filter(call => call[0]?.url?.endsWith(`shion_walk_${dir}.png`));
     assert.ok(walkingCalls.length > 0);
     h.window.emit('keyup', { key }); const idleStart = h.drawCalls.length; h.tick();
