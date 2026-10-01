@@ -38,12 +38,15 @@ Never edit a historical PASS into a different SHA. Append a new row.
 ### Event verification records
 | Event / checkpoint | Commit SHA | Device | Result | Locked observable behavior | Human confirmation | Notes |
 |---|---|---|---|---|---|---|
-| _No new checkpoint recorded yet_ | — | — | — | — | — | Add only after explicit device confirmation |
+| Alenon Continue — intro incomplete | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Prologue starts from beginning and reaches playable Alenon; page-exit audio stops | Product owner explicit confirmation in ChatGPT | Audio stop observed with about 2 seconds of host WebView close latency |
+| Alenon Continue — intro complete | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | No prologue replay; Shion renders/moves; audio normal | Product owner explicit confirmation in ChatGPT | Exact candidate build |
+| Alenon Continue — PAD return | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Safe PAD-return spawn; movement; no replay, abnormal warp, or PAD retrigger | Product owner explicit confirmation in ChatGPT | Exact candidate build |
+| Alenon Continue — PAD return / Shiopon waiting | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Shiopon absent locally; movement; completed events do not replay; PAD/audio normal | Product owner explicit confirmation in ChatGPT | Exact candidate build |
 
 ### Integration verification records
 | Route / integration | Commit SHA | Device | Result | Verified route behavior | Human confirmation | Notes |
 |---|---|---|---|---|---|---|
-| _No new integration record yet_ | — | — | — | — | — | Add only after explicit device confirmation |
+| Title → Alenon → PAD → Landing → Alenon return | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Ordinary route completes through Alenon return without abnormal replay, placement, movement, screen, or audio behavior | Product owner explicit confirmation in ChatGPT | Exact candidate build |
 
 ## Legacy baseline
 Existing production gameplay contracts VGC-002 through VGC-007 remain governed by `docs/VERIFIED_GAMEPLAY_CONTRACTS.md`. Historical exact device SHAs were not recorded, so this registry does not invent them.
