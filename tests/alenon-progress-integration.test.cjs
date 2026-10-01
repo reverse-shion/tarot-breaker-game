@@ -17,14 +17,14 @@ test("Alenon loads Route Registry before Progress Core", () => {
 
 test("normal Alenon entry uses Progress v1 without making legacy bypasses durable authority", () => {
   assert.match(source, /const legacyStoryBypass = returningFromLanding \|\| editMode \|\| objectMode \|\| collisionMode \|\| debugStoryBypass;/);
-  assert.match(source, /if \(!legacyStoryBypass && alenonProgress\)/);
+  assert.match(source, /if \(!continueDevRequest && !legacyStoryBypass && alenonProgress\)/);
   assert.match(source, /alenonProgressLoad\.status === "none" \|\| alenonProgressLoad\.status === "unavailable"/);
   assert.match(source, /alenonProgress\.resetGame\("phase-2a-4a-alenon-first-play"\)/);
   assert.match(source, /alenonProgressLoad\.status === "valid"/);
   assert.match(source, /alenonProgress\.isEventCompleted\("alenon_prologue"\)/);
   assert.match(source, /checkpoint\?\.mapId === "alenon"/);
   assert.match(source, /checkpoint\?\.spawnId === "intro"/);
-  assert.match(source, /const storyBypass = legacyStoryBypass \|\| progressResume;/);
+  assert.match(source, /const storyBypass = continueDevRequest \? continueSession\.completed : legacyStoryBypass \|\| progressResume;/);
 });
 
 test("prologue completion is persisted only at the authored completion boundary", () => {
@@ -48,7 +48,7 @@ test("completed resume restores existing ambience path and does not alter Orb hy
 
 test("invalid or unsupported Progress is not rewritten by Alenon integration", () => {
   const integrationStart = source.indexOf("// Phase 2A-4a: Progress v1 is authoritative");
-  const integrationEnd = source.indexOf("const storyBypass = legacyStoryBypass || progressResume;");
+  const integrationEnd = source.indexOf("const storyBypass = continueDevRequest ? continueSession.completed : legacyStoryBypass || progressResume;");
   const block = source.slice(integrationStart, integrationEnd);
   assert.doesNotMatch(block, /status === "invalid".*resetGame/s);
   assert.doesNotMatch(block, /status === "unsupported".*resetGame/s);

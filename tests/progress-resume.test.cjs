@@ -185,14 +185,15 @@ test('committed slots can be replaced and old tokens cannot replay a different t
   assert.equal(h.handoff.claim({...h.input,token:'next',state}).reason,'destination-mismatch');
 });
 
-test('browser import performs no storage/clock/token/navigation operation and production pages never import it', () => {
+test('browser import performs no storage/clock/token/navigation operation and only isolated Alenon development receiver imports it', () => {
   const source=fs.readFileSync(path.join(__dirname,'../progress-resume.js'),'utf8');
   const sandbox={TarotRouteRegistry:Registry,TarotProgressCore:Core};
   for(const key of ['localStorage','sessionStorage','location','Date','crypto'])
     Object.defineProperty(sandbox,key,{get(){throw Error('browser access: '+key);}});
   vm.runInNewContext(source,sandbox); assert.equal(typeof sandbox.TarotProgressResume.resolveContinue,'function');
   const root=path.join(__dirname,'..');
-  for(const file of fs.readdirSync(root).filter(file=>/\.(html|js)$/.test(file) && file!=='progress-resume.js'))
+  assert.match(fs.readFileSync(path.join(root,'alenon.html'),'utf8'), /if \(continueDevRequest\) \{\s*bootAlenonContinue\(\);\s*return;/);
+  for(const file of fs.readdirSync(root).filter(file=>/\.(html|js)$/.test(file) && !['progress-resume.js','alenon.html','alenon-resume.js','dev-checkpoints.js'].includes(file)))
     assert.equal(fs.readFileSync(path.join(root,file),'utf8').includes('progress-resume.js'),false,file);
 });
 
