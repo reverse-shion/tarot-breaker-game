@@ -42,6 +42,7 @@ Never edit a historical PASS into a different SHA. Append a new row.
 | Alenon Continue — intro complete | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | No prologue replay; Shion renders/moves; audio normal | Product owner explicit confirmation in ChatGPT | Exact candidate build |
 | Alenon Continue — PAD return | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Safe PAD-return spawn; movement; no replay, abnormal warp, or PAD retrigger | Product owner explicit confirmation in ChatGPT | Exact candidate build |
 | Alenon Continue — PAD return / Shiopon waiting | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Shiopon absent locally; movement; completed events do not replay; PAD/audio normal | Product owner explicit confirmation in ChatGPT | Exact candidate build |
+| Landing Continue — L3 / Shiopon waiting roundtrip | 96edc22bcc4d1f1ae7a988a8726217dfccecd7fa | iOS ChatGPT in-app browser | PASS | Waiting Shiopon is preserved; Landing → Alenon → Landing automatic greeting rejoins Shiopon; Garden roundtrip preserves joined state; Garden return places Shiopon naturally beside Shion; Shiopon meeting does not replay; no companion-location-mismatch | Product owner explicit confirmation in ChatGPT | Exact runtime SHA; player-relative placement verified after prior placement-only device issue |
 
 ### Integration verification records
 | Route / integration | Commit SHA | Device | Result | Verified route behavior | Human confirmation | Notes |
