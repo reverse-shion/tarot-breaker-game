@@ -46,7 +46,7 @@ function harness(search = '', saved = {}) {
 function inline(file){return [...fs.readFileSync(file,'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];}
 async function landing(search, saved){
   const t=harness(search,saved);
-  t.run(inline('star-country-landing.html').replace('      if (continueDevRequest) bootLandingContinue();\\n      else boot();', `window.testMap = {boot, player, ride, companion, loop, beginBoarding, finishArrival, leaveForGarden, updateCompanion, isGroundWalkable, get memoryDone(){return devilEventStarted}, advance(){storyAdvanceResolve?.(); storyAdvanceResolve=null;}};`));
+  t.run(inline('star-country-landing.html').replace('      if (continueDevRequest) bootLandingContinue();\n      else boot();', `window.testMap = {boot, player, ride, companion, loop, beginBoarding, finishArrival, leaveForGarden, updateCompanion, isGroundWalkable, get memoryDone(){return devilEventStarted}, advance(){storyAdvanceResolve?.(); storyAdvanceResolve=null;}};`));
   await t.h.testMap.boot();return t;
 }
 const event = extra => ({preventDefault(){},target:{closest:()=>null},button:0,pointerId:1,clientX:724,clientY:500,...extra});
