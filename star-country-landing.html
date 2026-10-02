@@ -1873,6 +1873,33 @@
         return after < 26 && after < before - 1e-6;
       }
 
+      function placeContinueFollowingCompanion() {
+        const sideGap = 48;
+        const behindGap = 56;
+        const behind = (() => {
+          if (player.dir === "down") return {x: player.x, y: player.y - behindGap};
+          if (player.dir === "up") return {x: player.x, y: player.y + behindGap};
+          if (player.dir === "left") return {x: player.x + behindGap, y: player.y};
+          return {x: player.x - behindGap, y: player.y};
+        })();
+        const candidates = [
+          {x: player.x - sideGap, y: player.y},
+          {x: player.x + sideGap, y: player.y},
+          behind,
+        ];
+        const point = candidates.find(candidate =>
+          isGroundWalkable(candidate.x, candidate.y) &&
+          Math.hypot(candidate.x - player.x, candidate.y - player.y) >= 44
+        );
+        if (!point) throw new Error("unsafe-continue-companion");
+        companion.visible = true;
+        companion.following = true;
+        companion.x = point.x;
+        companion.y = point.y;
+        companion.dir = continueSession.returningFromGarden ? "down" : player.dir;
+        companion.trail = [];
+      }
+
       function nearestPointOnSegment(point, a, b) {
         const dx = b[0] - a[0];
         const dy = b[1] - a[1];
@@ -2907,15 +2934,7 @@
                 Math.hypot(companion.x - player.x, companion.y - player.y) < 44)
               throw new Error("unsafe-continue-companion");
           } else if (continueSession.projection.companion?.mode === "following") {
-            companion.visible = true;
-            companion.following = true;
-            companion.x = continueSession.returningFromGarden ? 724 : 725;
-            companion.y = continueSession.returningFromGarden ? 321 : 660;
-            companion.dir = continueSession.returningFromGarden ? "down" : "up";
-            companion.trail = [];
-            if (!isGroundWalkable(companion.x, companion.y) ||
-                Math.hypot(companion.x - player.x, companion.y - player.y) < 44)
-              throw new Error("unsafe-continue-companion");
+            placeContinueFollowingCompanion();
           } else {
             companion.visible = false;
             companion.following = false;
