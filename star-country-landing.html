@@ -2449,6 +2449,10 @@
 
       function leaveForGarden() {
         if (leaving) return;
+        if (continueDevRequest && continueSession.context.companion === "waiting_at_landing") {
+          showContinueStatus("waiting_at_landing / 星門庭園への遷移は仕様判断待ち");
+          return;
+        }
         leaving = true;
         if (!continueDevRequest) window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
