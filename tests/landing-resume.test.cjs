@@ -165,13 +165,13 @@ test("isolated Landing session commits Garden roundtrip and reopens at garden_en
   assert.equal(returned.projection.landingMemoryDone,true);
 });
 
-test("waiting_at_landing suppresses Garden meeting without fabricating following",()=>{
+test("waiting_at_landing fails closed before undefined Garden transition",()=>{
   const s=storage();
   const garden=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
-  assert.equal(garden.ok,true);
-  assert.equal(garden.projection.gardenStory.shioponDone,true);
-  assert.equal(garden.projection.gardenStory.joined,false);
-  assert.equal(garden.context.companion,"waiting_at_landing");
+  assert.equal(garden.ok,false);
+  const html=fs.readFileSync("star-country-landing.html","utf8");
+  assert.match(html,/continueSession\.context\.companion === "waiting_at_landing"/);
+  assert.match(html,/星門庭園への遷移は仕様判断待ち/);
 });
 
 test("waiting Shiopon is a Continue-only blocking actor",()=>{
