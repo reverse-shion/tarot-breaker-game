@@ -2906,6 +2906,16 @@
             if (!isGroundWalkable(companion.x, companion.y) ||
                 Math.hypot(companion.x - player.x, companion.y - player.y) < 44)
               throw new Error("unsafe-continue-companion");
+          } else if (continueSession.projection.companion?.mode === "following") {
+            companion.visible = true;
+            companion.following = true;
+            companion.x = continueSession.returningFromGarden ? 724 : 725;
+            companion.y = continueSession.returningFromGarden ? 321 : 660;
+            companion.dir = continueSession.returningFromGarden ? "down" : "up";
+            companion.trail = [];
+            if (!isGroundWalkable(companion.x, companion.y) ||
+                Math.hypot(companion.x - player.x, companion.y - player.y) < 44)
+              throw new Error("unsafe-continue-companion");
           } else {
             companion.visible = false;
             companion.following = false;
