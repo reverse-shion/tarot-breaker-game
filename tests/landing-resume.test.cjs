@@ -97,7 +97,8 @@ test("authored Landing Continue actor points are exact, walkable and trigger-saf
   const walkable=(x,y)=>data.walkAreas.some(area=>inside(x,y,area.points));
   const shion={x:725,y:716},gardenReturn={x:724,y:257},waiting={x:725,y:660};
   assert.equal(walkable(shion.x,shion.y),true);
-  assert.equal(walkable(waiting.x,waiting.y),true);\n  assert.equal(walkable(gardenReturn.x,gardenReturn.y),true);
+  assert.equal(walkable(waiting.x,waiting.y),true);
+  assert.equal(walkable(gardenReturn.x,gardenReturn.y),true);
   assert.ok(Math.hypot(waiting.x-shion.x,waiting.y-shion.y)>=44);
   assert.ok(shion.y>355,"Devil Memory must not auto-trigger at Continue spawn");
   assert.ok(shion.y>245,"Garden exit must not auto-trigger at Continue spawn");
