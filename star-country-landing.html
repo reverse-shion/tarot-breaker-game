@@ -1056,7 +1056,7 @@
         player.dir="up";setActorVisual();await wait(650);
         await showStoryLine("……いや。考えるのは後だ。");
         await showStoryLine("今は……星門が先だ");
-        window.TarotJourney?.set("landingMemoryDone", true);
+        if (!continueDevRequest) window.TarotJourney?.set("landingMemoryDone", true);
         if (landingProgressValid) {
           try {
             landingProgress.completeEvent("landing_devil_memory", {
@@ -1165,7 +1165,7 @@
         if (!companion.visible || companion.following) return;
         companion.following = true;
         companion.trail = [];
-        window.TarotJourney?.set("companion", {mode: "following"});
+        if (!continueDevRequest) window.TarotJourney?.set("companion", {mode: "following"});
         if (landingProgressValid) {
           try {
             landingProgress.setCompanion(
@@ -2389,7 +2389,7 @@
           player.moving = false; player.frame = 0; player.anim = 0;
           companion.dir = direction(player.x - companion.x, player.y - companion.y);
           renderCompanion();
-          window.TarotJourney?.set("companion", {mode: "waiting", x: companion.x, y: companion.y});
+          if (!continueDevRequest) window.TarotJourney?.set("companion", {mode: "waiting", x: companion.x, y: companion.y});
           if (landingProgressValid) {
             try {
               landingProgress.setCompanion(
@@ -2443,7 +2443,7 @@
       function leaveForGarden() {
         if (leaving) return;
         leaving = true;
-        window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
+        if (!continueDevRequest) window.TarotJourney?.set("companion", companion.following ? {mode: "following"} : savedCompanion);
         clearTarget();
         keys.clear();
         document.body.classList.add("leaving", "leaving-garden");
