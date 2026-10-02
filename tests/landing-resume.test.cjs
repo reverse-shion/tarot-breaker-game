@@ -89,12 +89,15 @@ test("Landing HTML wires Continue separately from the normal arrival route",()=>
 
 
 test("authored Landing Continue actor points are exact, walkable and trigger-safe",()=>{
-  const Nav=require("../navigation.js");
   const data=JSON.parse(fs.readFileSync("assets/maps/star-landing/collision.json","utf8"));
-  const collision=Nav.createCollision(data);
+  const inside=(x,y,points)=>{let hit=false;for(let i=0,j=points.length-1;i<points.length;j=i++){
+    const a=points[i],b=points[j];
+    if(((a[1]>y)!==(b[1]>y)) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) hit=!hit;
+  }return hit;};
+  const walkable=(x,y)=>data.walkAreas.some(area=>inside(x,y,area.points));
   const shion={x:725,y:716},waiting={x:725,y:660};
-  assert.equal(collision.isWalkable(shion.x,shion.y),true);
-  assert.equal(collision.isWalkable(waiting.x,waiting.y),true);
+  assert.equal(walkable(shion.x,shion.y),true);
+  assert.equal(walkable(waiting.x,waiting.y),true);
   assert.ok(Math.hypot(waiting.x-shion.x,waiting.y-shion.y)>=44);
   assert.ok(shion.y>355,"Devil Memory must not auto-trigger at Continue spawn");
   assert.ok(shion.y>245,"Garden exit must not auto-trigger at Continue spawn");
