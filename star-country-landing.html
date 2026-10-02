@@ -2476,7 +2476,7 @@
         }, transitionMs - audioFadeMs);
 
         window.setTimeout(() => {
-          location.href = "./index.html?from=landing";
+          location.href = continueDevRequest ? `./index.html?from=landing&dev=${encodeURIComponent(continueSession.definition.id)}` : "./index.html?from=landing";
         }, transitionMs);
       }
 
