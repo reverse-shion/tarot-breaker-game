@@ -214,6 +214,7 @@
     rotation: 0,
     visualOffsetY: 0,
     stageOffsetY: 0,
+    hidden: window.TarotGardenDevTransit?.context?.companion === "waiting_at_landing",
   };
   const lumiere = {
     x: LUMIERE_HOME.x,
@@ -643,7 +644,7 @@
     }
 
     const shioponBlocked =
-      !shiopon.following && movingIntoActor(from, next, shioponRef());
+      !shiopon.hidden && !shiopon.following && movingIntoActor(from, next, shioponRef());
     const npcBlocked =
       next.moving &&
       (shioponBlocked ||
@@ -679,7 +680,29 @@
       gardenPos.x <= 838
     ) {
       leavingMap = true;
-      if (!landingResumeDevId) window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
+      if (landingResumeDevId) {
+        const transit = window.TarotGardenDevTransit;
+        if (!transit?.ok) {
+          leavingMap = false;
+          controls.cancel("dev-return-blocked");
+          return;
+        }
+        try {
+          transit.progress.commitArrival({
+            sourceMapId: "star_gate_garden",
+            destinationMapId: "star_country_landing",
+            spawnId: "garden_entrance",
+            reason: "garden_to_landing",
+          });
+        } catch (error) {
+          leavingMap = false;
+          controls.cancel("dev-return-failed");
+          console.warn("[Garden Continue] return was not committed", error);
+          return;
+        }
+      } else {
+        window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
+      }
       controls.cancel("map-return");
       location.href = landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden";
       return;
@@ -1020,6 +1043,7 @@
   }
 
   function updateShiopon(dt) {
+    if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
     if (shiopon.scripted) {
       updateShioponScript(dt);
@@ -1376,7 +1400,7 @@
 
   function drawActors() {
     drawGroundShadowAt(lumiere, 18, 0.2);
-    drawGroundShadowAt(shiopon, 17, 0.36);
+    if (!shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     drawGroundShadowAt(player, 20, 0.46);
 
     const actors = [
@@ -1411,7 +1435,7 @@
           visualOffsetY: player.stageOffsetY,
         },
       },
-    ].sort((a, b) => {
+    ].filter(entry => entry.actor !== shiopon || !shiopon.hidden).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
