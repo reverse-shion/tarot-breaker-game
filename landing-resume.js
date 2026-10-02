@@ -32,7 +32,7 @@
     return Object.freeze({ok: true, context, projection});
   }
   function openDevProgress(definition, storage, diagnostic) {
-    const key = "tarot-breaker:dev:landing-resume:v1:" + definition.id;
+    const key = "tarot-breaker:dev:landing-resume:v2:" + definition.id;
     const fallback = JSON.stringify(definition.temporaryState);
     const backend = Object.freeze({
       getItem(requested) {
