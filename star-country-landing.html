@@ -1866,6 +1866,13 @@
         );
       }
 
+      function movingIntoWaitingCompanion(fromX, fromY, toX, toY) {
+        if (!continueDevRequest || !companion.visible || companion.following) return false;
+        const before = Math.hypot(fromX - companion.x, fromY - companion.y);
+        const after = Math.hypot(toX - companion.x, toY - companion.y);
+        return after < 26 && after < before - 1e-6;
+      }
+
       function nearestPointOnSegment(point, a, b) {
         const dx = b[0] - a[0];
         const dy = b[1] - a[1];
@@ -2756,14 +2763,17 @@
             const yOnly = { x:player.x, y:next.y };
 
             let moved = false;
-            if (isGroundWalkable(next.x,next.y)) {
+            if (isGroundWalkable(next.x,next.y) &&
+                !movingIntoWaitingCompanion(player.x, player.y, next.x, next.y)) {
               player.x = next.x;
               player.y = next.y;
               moved = true;
-            } else if (isGroundWalkable(xOnly.x,xOnly.y)) {
+            } else if (isGroundWalkable(xOnly.x,xOnly.y) &&
+                !movingIntoWaitingCompanion(player.x, player.y, xOnly.x, xOnly.y)) {
               player.x = xOnly.x;
               moved = true;
-            } else if (isGroundWalkable(yOnly.x,yOnly.y)) {
+            } else if (isGroundWalkable(yOnly.x,yOnly.y) &&
+                !movingIntoWaitingCompanion(player.x, player.y, yOnly.x, yOnly.y)) {
               player.y = yOnly.y;
               moved = true;
             }
@@ -2846,9 +2856,9 @@
           PAD_HOME = {x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y};
           PAD_SIZE = PAD_DEFAULTS.size;
           PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
-          player.x = 725;
-          player.y = 716;
-          player.dir = "up";
+          player.x = continueSession.returningFromGarden ? 724 : 725;
+          player.y = continueSession.returningFromGarden ? 257 : 716;
+          player.dir = continueSession.returningFromGarden ? "down" : "up";
           if (!isGroundWalkable(player.x, player.y)) throw new Error("unsafe-continue-spawn");
           if (continueSession.projection.companion?.mode === "waiting") {
             companion.visible = true;
