@@ -349,13 +349,15 @@
     player: { x: 724, y: 1015 },
   };
 
-  const savedStory = window.TarotJourney?.get("gardenStory");
+  const devTransit = window.TarotGardenDevTransit?.ok ? window.TarotGardenDevTransit : null;
+  const savedStory = devTransit?.projection?.gardenStory || window.TarotJourney?.get("gardenStory");
   if (savedStory) {
     story.shioponDone = savedStory.shioponDone === true;
     story.lumiereDone = savedStory.lumiereDone === true;
     story.joined = savedStory.joined === true;
   }
   function saveStory() {
+    if (devTransit) return;
     window.TarotJourney?.set("gardenStory", {
       shioponDone: story.shioponDone,
       lumiereDone: story.lumiereDone,
