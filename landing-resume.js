@@ -23,7 +23,7 @@
       gardenStory: Object.freeze({
         shioponDone: has("garden_shiopon_meet"),
         lumiereDone: has("garden_lumiere_gate"),
-        joined: has("garden_shiopon_meet"),
+        joined: context.companion === "joined_with_shion",
       }),
       companion: context.companion === "waiting_at_landing" ?
         Object.freeze({mode: "waiting"}) :
@@ -31,13 +31,7 @@
     });
     return Object.freeze({ok: true, context, projection});
   }
-  function createSession({search, storage, diagnostic} = {}) {
-    const params = new URLSearchParams(search || "");
-    const definition = checkpoints.resolve(search);
-    if (!definition || !definition.id.startsWith(DEV_PREFIX) || definition.map !== MAP_ID ||
-        params.getAll("dev").length !== 1 ||
-        ["from", "padEdit", "debug", "collision", "passage", "edit", "objects"].some(key => params.has(key)))
-      return {ok: false, reason: "invalid-development-entry"};
+  function openDevProgress(definition, storage, diagnostic) {
     const key = "tarot-breaker:dev:landing-resume:v1:" + definition.id;
     const fallback = JSON.stringify(definition.temporaryState);
     const backend = Object.freeze({
@@ -51,10 +45,68 @@
         storage.setItem(key, bytes);
       },
     });
-    const progress = core.createProgress({storage: backend, diagnostic});
-    const load = progress.load();
-    const received = receive(load);
-    return received.ok ? Object.freeze({...received, progress, definition, key}) : received;
+    return {key, progress: core.createProgress({storage: backend, diagnostic})};
+  }
+  function projectResolved(resolved) {
+    if (!resolved.ok) return resolved;
+    const context = resolved.context;
+    const has = id => context.completedEvents.includes(id);
+    return Object.freeze({
+      ok: true,
+      context,
+      projection: Object.freeze({
+        landingMemoryDone: has("landing_devil_memory"),
+        gardenStory: Object.freeze({
+          shioponDone: has("garden_shiopon_meet"),
+          lumiereDone: has("garden_lumiere_gate"),
+          joined: context.companion === "joined_with_shion",
+        }),
+        companion: context.companion === "waiting_at_landing" ?
+          Object.freeze({mode: "waiting"}) :
+          context.companion === "joined_with_shion" ? Object.freeze({mode: "following"}) : null,
+      }),
+    });
+  }
+  function createSession({search, storage, diagnostic} = {}) {
+    const params = new URLSearchParams(search || "");
+    const definition = checkpoints.resolve(search);
+    const from = params.get("from");
+    const validFrom = !params.has("from") || (params.getAll("from").length === 1 && from === "garden");
+    if (!definition || !definition.id.startsWith(DEV_PREFIX) || definition.map !== MAP_ID ||
+        params.getAll("dev").length !== 1 || !validFrom ||
+        ["padEdit", "debug", "collision", "passage", "edit", "objects"].some(key => params.has(key)))
+      return {ok: false, reason: "invalid-development-entry"};
+    const opened = openDevProgress(definition, storage, diagnostic);
+    const resolved = resume.resolveContinue(opened.progress.load());
+    if (!resolved.ok) return resolved;
+    const expectedSpawn = from === "garden" ? "garden_entrance" : SPAWN_ID;
+    if (resolved.context.mapId !== MAP_ID || resolved.context.spawnId !== expectedSpawn)
+      return {ok: false, reason: "not-landing"};
+    const projected = projectResolved(resolved);
+    return Object.freeze({...projected, progress: opened.progress, definition, key: opened.key, returningFromGarden: from === "garden"});
+  }
+  function createGardenTransitSession({search, storage, diagnostic} = {}) {
+    const params = new URLSearchParams(search || "");
+    const definition = checkpoints.resolve(search);
+    if (!definition || !definition.id.startsWith(DEV_PREFIX) || definition.map !== MAP_ID ||
+        params.getAll("dev").length !== 1 || params.getAll("from").length !== 1 || params.get("from") !== "landing")
+      return {ok: false, reason: "invalid-development-entry"};
+    const opened = openDevProgress(definition, storage, diagnostic);
+    let resolved = resume.resolveContinue(opened.progress.load());
+    if (!resolved.ok) return resolved;
+    if (resolved.context.mapId === MAP_ID && resolved.context.spawnId === SPAWN_ID) {
+      opened.progress.commitArrival({
+        sourceMapId: MAP_ID,
+        destinationMapId: "star_gate_garden",
+        spawnId: "south_gate",
+        reason: "gate_to_garden",
+      });
+      resolved = resume.resolveContinue(opened.progress.load());
+    }
+    if (!resolved.ok || resolved.context.mapId !== "star_gate_garden" || resolved.context.spawnId !== "south_gate")
+      return {ok: false, reason: "not-garden"};
+    const projected = projectResolved(resolved);
+    return Object.freeze({...projected, progress: opened.progress, definition, key: opened.key});
   }
   function validateCollision(data) {
     if (data?.map !== "star-landing" || data?.referenceSize?.width !== 1448 || data?.referenceSize?.height !== 1086 ||
@@ -86,5 +138,5 @@
       image.src = src;
     });
   }
-  return Object.freeze({receive, createSession, validateCollision, loadImage});
+  return Object.freeze({receive, createSession, createGardenTransitSession, validateCollision, loadImage});
 });
