@@ -142,7 +142,7 @@ test("Landing Continue identity survives Landing -> Garden -> Landing without pr
   assert.match(landing,/\.\/index\.html\?from=landing&dev=\$\{encodeURIComponent\(continueSession\.definition\.id\)\}/);
   assert.match(garden,/const landingResumeDevId = enteringFromLanding/);
   assert.match(garden,/\.\/star-country-landing\.html\?from=garden&dev=\$\{encodeURIComponent\(landingResumeDevId\)\}/);
-  assert.match(garden,/if \(!landingResumeDevId\) window\.TarotJourney\?\.set\("companion"/);
+  assert.match(garden,/if \(landingResumeDevId\)[\s\S]*transit\.progress\.commitArrival[\s\S]*else \{[\s\S]*TarotJourney\?\.set\("companion"/);
 });
 
 
