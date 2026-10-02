@@ -834,6 +834,9 @@
   <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v3"></script>
   <script src="./route-registry.js?v=20260921-progress-v1"></script>
   <script src="./progress.js?v=20260921-progress-v1"></script>
+  <script src="./dev-checkpoints.js?v=20261003-landing-resume"></script>
+  <script src="./progress-resume.js?v=20261003-landing-resume"></script>
+  <script src="./landing-resume.js?v=20261003-landing-resume"></script>
   <script>
     (() => {
       "use strict";
@@ -886,14 +889,52 @@
       const storyNext = document.getElementById("landing-story-next");
 
       const params = new URLSearchParams(location.search);
+      const continueDevRequest = params.has("dev");
+      let continueSession = null;
+      let continueReady = false;
+      let continueBootBusy = false;
+      function showContinueStatus(message, retry) {
+        let panel = document.getElementById("landing-resume-status");
+        if (!panel) {
+          panel = document.createElement("aside");
+          panel.id = "landing-resume-status";
+          panel.setAttribute("role", "status");
+          panel.style.cssText = "position:fixed;z-index:9999;left:12px;right:12px;top:12px;padding:12px;background:#171327;color:white;border:1px solid #b8a1ff;border-radius:8px";
+          document.body.appendChild(panel);
+        }
+        panel.replaceChildren();
+        const text = document.createElement("span");
+        text.textContent = "Landing Continue 検証: " + message;
+        panel.appendChild(text);
+        if (retry) {
+          const button = document.createElement("button");
+          button.textContent = "再試行";
+          button.addEventListener("click", retry);
+          panel.appendChild(button);
+        }
+        const title = document.createElement("a");
+        title.href = "./index.html";
+        title.textContent = " タイトルへ";
+        panel.appendChild(title);
+      }
+      if (continueDevRequest) {
+        try {
+          continueSession = window.TarotLandingResume.createSession({search: location.search, storage: window.sessionStorage,
+            diagnostic: info => showContinueStatus("保存されていません: " + info.code)});
+        } catch (_) { continueSession = {ok: false, reason: "dev-storage-unavailable"}; }
+        if (!continueSession.ok) {
+          showContinueStatus(continueSession.reason, () => location.reload());
+          return;
+        }
+      }
       const arrivingFromAlenon = params.get("from") === "alenon";
       const returningFromGarden = params.get("from") === "garden";
 
       // Restore bridge: Progress may restore an already-completed fact into the
-      // legacy Journey mirror before the existing trigger guard is evaluated.
-      // It never clears the legacy flag and never starts an event.
-      const landingProgress = window.TarotProgressCore?.createProgress();
-      const landingProgressLoad = landingProgress?.load() || null;
+      // legacy runtime mirror before the existing trigger guard is evaluated.
+      // Continue uses an isolated checkpoint session and never writes production storage.
+      const landingProgress = continueDevRequest ? continueSession.progress : window.TarotProgressCore?.createProgress();
+      const landingProgressLoad = continueDevRequest ? {status: "valid"} : (landingProgress?.load() || null);
       const landingProgressValid = landingProgressLoad?.status === "valid";
       if (landingProgressValid && arrivingFromAlenon) {
         try {
@@ -967,7 +1008,9 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
-      let devilEventStarted = window.TarotJourney?.get("landingMemoryDone") === true;
+      let devilEventStarted = continueDevRequest ?
+        continueSession.projection.landingMemoryDone :
+        window.TarotJourney?.get("landingMemoryDone") === true;
       let farewellActive = false;
       let returnGreetingPlayed = false;
       let gardenExitArmed = !returningFromGarden;
@@ -1053,7 +1096,9 @@
       };
 
       // One companion on foot. Only player is ever attached to ride.
-      const savedCompanion = window.TarotJourney?.get("companion");
+      const savedCompanion = continueDevRequest ?
+        continueSession.projection.companion :
+        window.TarotJourney?.get("companion");
       const companion = {
         visible: (returningFromGarden && savedCompanion?.mode === "following") || savedCompanion?.mode === "waiting",
         following: returningFromGarden && savedCompanion?.mode === "following",
@@ -2470,6 +2515,7 @@
       }
 
       viewport.addEventListener("pointerdown", (event) => {
+        if (continueDevRequest && !continueReady) return;
         if (collisionMode || passageMode) return;
         if (event.target.closest?.("#pad-editor, #pad-editor-toggle, .tb-dialogue-layer")) return;
         if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
@@ -2540,6 +2586,7 @@
       viewport.addEventListener("pointercancel", endPointer, { passive:false });
 
       addEventListener("keydown", (event) => {
+        if (continueDevRequest && !continueReady) return;
         if (collisionMode || passageMode) return;
         if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
@@ -2569,6 +2616,15 @@
       function loop(now) {
         const dt = Math.min((now - last) / 1000, .05);
         last = now;
+
+        if (continueDevRequest && !continueReady) {
+          player.moving = false;
+          setActorPosition();
+          setActorVisual();
+          syncCamera();
+          requestAnimationFrame(loop);
+          return;
+        }
 
         if (collisionMode || passageMode) {
           player.moving = false;
@@ -2757,6 +2813,82 @@
         requestAnimationFrame(loop);
       }
 
+      async function bootLandingContinue() {
+        if (continueBootBusy || continueReady) return;
+        continueBootBusy = true;
+        clearTarget();
+        keys.clear();
+        stick.active = false;
+        stick.id = null;
+        stick.x = stick.y = 0;
+        joystick.hidden = true;
+        showContinueStatus("画像と当たり判定を確認中…");
+        try {
+          const sources = [...new Set([
+            ...Array.from(document.querySelectorAll("#world img"), image => image.getAttribute("src")),
+            "./assets/sprites/shion/shion_idle.png",
+            ...Object.values(walkSheet),
+          ].filter(Boolean))];
+          const [, areas] = await Promise.all([
+            Promise.all(sources.map(window.TarotLandingResume.loadImage)),
+            (async () => {
+              const response = await fetch(COLLISION_URL, {cache: "no-store"});
+              if (!response.ok) throw new Error("continue-collision-fetch-failed");
+              return window.TarotLandingResume.validateCollision(await response.json());
+            })(),
+            loadPassageLayers(),
+          ]);
+          landingWalkAreas = areas;
+          ride.mode = "ground";
+          ride.x = PAD_DEFAULTS.x;
+          ride.y = PAD_DEFAULTS.y;
+          ride.lift = 0;
+          PAD_HOME = {x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y};
+          PAD_SIZE = PAD_DEFAULTS.size;
+          PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
+          player.x = 725;
+          player.y = 716;
+          player.dir = "up";
+          if (!isGroundWalkable(player.x, player.y)) throw new Error("unsafe-continue-spawn");
+          if (continueSession.projection.companion?.mode === "waiting") {
+            companion.visible = true;
+            companion.following = false;
+            companion.x = 725;
+            companion.y = 660;
+            companion.dir = "down";
+            if (!isGroundWalkable(companion.x, companion.y) ||
+                Math.hypot(companion.x - player.x, companion.y - player.y) < 44)
+              throw new Error("unsafe-continue-companion");
+          } else {
+            companion.visible = false;
+            companion.following = false;
+          }
+          initPadEditor();
+          initPassageEditor();
+          applyPadEditorLayout({movePlayer: false});
+          renderCompanion();
+          fitWorld();
+          initCollisionEditor();
+          setActorPosition();
+          setActorVisual();
+          setRideMode("ground");
+          status.hidden = true;
+          guide.hidden = true;
+          addEventListener("resize", fitWorld, {passive:true});
+          addEventListener("orientationchange", fitWorld, {passive:true});
+          continueReady = true;
+          showContinueStatus(continueSession.definition.id + " / 安全な復帰地点へ配置済み");
+          window.dispatchEvent(new CustomEvent("tarot-breaker:landing-resume-ready"));
+          requestAnimationFrame((now) => {
+            last = now;
+            loop(now);
+          });
+        } catch (error) {
+          continueReady = false;
+          showContinueStatus(error.message, bootLandingContinue);
+        } finally { continueBootBusy = false; }
+      }
+
       async function boot() {
         await loadLandingCollision();
         await loadPassageLayers();
@@ -2812,7 +2944,8 @@
         });
       }
 
-      boot();
+      if (continueDevRequest) bootLandingContinue();
+      else boot();
     })();
   </script>
 </body>
