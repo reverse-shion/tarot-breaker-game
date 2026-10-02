@@ -50,7 +50,7 @@ test("Landing dev session reads only its remapped session key and never producti
   assert.equal(session.ok,true);
   assert.deepEqual(s.reads,[session.key]);
   assert.equal(s.writes.length,0);
-  assert.match(session.key,/^tarot-breaker:dev:landing-resume:v2:/);
+  assert.match(session.key,/^tarot-breaker:dev:landing-resume:v3:/);
   assert.notEqual(session.key,"tarot-breaker:progress:v1");
 });
 
@@ -95,16 +95,44 @@ test("authored Landing Continue actor points are exact, walkable and trigger-saf
     if(((a[1]>y)!==(b[1]>y)) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) hit=!hit;
   }return hit;};
   const walkable=(x,y)=>data.walkAreas.some(area=>inside(x,y,area.points));
-  const shion={x:725,y:716},gardenReturn={x:724,y:257},waiting={x:725,y:660},joinedReturn={x:724,y:321};
+  const shion={x:725,y:716},gardenReturn={x:724,y:257},waiting={x:725,y:660};
   assert.equal(walkable(shion.x,shion.y),true);
   assert.equal(walkable(waiting.x,waiting.y),true);
   assert.equal(walkable(gardenReturn.x,gardenReturn.y),true);
-  assert.equal(walkable(joinedReturn.x,joinedReturn.y),true);
   assert.ok(Math.hypot(waiting.x-shion.x,waiting.y-shion.y)>=44);
-  assert.ok(Math.hypot(joinedReturn.x-gardenReturn.x,joinedReturn.y-gardenReturn.y)>=44);
   assert.ok(shion.y>355,"Devil Memory must not auto-trigger at Continue spawn");
   assert.ok(shion.y>245,"Garden exit must not auto-trigger at Continue spawn");
   assert.ok(Math.hypot(shion.x-725,shion.y-788)>66,"PAD must not auto-board at Continue spawn");
+});
+
+test("joined Shiopon placement is player-relative, ordered left then right then behind, and fail-closed",()=>{
+  const player={x:724,y:257,dir:"down"};
+  assert.deepEqual(receiver.chooseFollowingPlacement({
+    player,isWalkable:(x,y)=>x===676&&y===257
+  }),{x:676,y:257});
+  assert.deepEqual(receiver.chooseFollowingPlacement({
+    player,isWalkable:(x,y)=>x===772&&y===257
+  }),{x:772,y:257});
+  assert.deepEqual(receiver.chooseFollowingPlacement({
+    player,isWalkable:(x,y)=>x===724&&y===201
+  }),{x:724,y:201});
+  assert.equal(receiver.chooseFollowingPlacement({player,isWalkable:()=>false}),null);
+  assert.equal(receiver.chooseFollowingPlacement({player:{x:724,y:257,dir:"bad"},isWalkable:()=>true}),null);
+});
+
+test("Garden return picks the safe right-side Shiopon position from authored collision",()=>{
+  const data=JSON.parse(fs.readFileSync("assets/maps/star-landing/collision.json","utf8"));
+  const areas=receiver.validateCollision(data);
+  const inside=(x,y,points)=>{let hit=false;for(let i=0,j=points.length-1;i<points.length;j=i++){
+    const a=points[i],b=points[j];
+    if(((a[1]>y)!==(b[1]>y)) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) hit=!hit;
+  }return hit;};
+  const point=receiver.chooseFollowingPlacement({
+    player:{x:724,y:257,dir:"down"},
+    isWalkable:(x,y)=>areas.some(area=>inside(x,y,area.points)),
+  });
+  assert.deepEqual(point,{x:772,y:257});
+  assert.ok(Math.hypot(point.x-724,point.y-257)>=44);
 });
 
 test("Landing image readiness rejects load and decode failures",async(t)=>{
@@ -135,7 +163,9 @@ test("Landing Continue readiness guards input, loop triggers and production Jour
   const boot=html.slice(html.indexOf("async function bootLandingContinue"),html.indexOf("async function boot()",html.indexOf("async function bootLandingContinue")));
   assert.match(boot,/const safeSpawn = continueSession\.returningFromGarden \? \{x:724, y:257\} : \{x:725, y:716\};/);
   assert.match(boot,/if \(continueSession\.returningFromAlenon\) \{[\s\S]*ride\.mode = "arriving"/);
-  assert.match(boot,/projection\.companion\?\.mode === "following"[\s\S]*companion\.visible = true;[\s\S]*companion\.following = true;[\s\S]*returningFromGarden \? 321 : 660/);
+  assert.match(boot,/projection\.companion\?\.mode === "following"[\s\S]*placeContinueFollowingCompanion\(\)/);
+  assert.match(html,/function placeContinueFollowingCompanion\(\)[\s\S]*TarotLandingResume\.chooseFollowingPlacement\([\s\S]*isWalkable: isGroundWalkable[\s\S]*companion\.visible = true;[\s\S]*companion\.following = true;/);
+  assert.doesNotMatch(boot,/returningFromGarden \? 321 : 660/);
   assert.match(boot,/setRideMode\(continueSession\.returningFromAlenon \? "arriving" : "ground"\)/);
   assert.doesNotMatch(boot,/nearestGroundPoint|nearestWalkable|findNearestSpawnRef/);
 });
