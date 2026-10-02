@@ -59,7 +59,7 @@ test("Landing receiver rejects wrong or ambiguous development entries",()=>{
     "?dev=garden-resume-before-shiopon",
     "?dev=alenon-resume-intro-complete",
     "?dev=landing-resume-arrival&dev=landing-resume-memory-complete",
-    "?dev=landing-resume-arrival&from=alenon",
+    "?dev=landing-resume-arrival&from=unknown",
     "?dev=landing-resume-arrival&padEdit=1",
     "?dev=landing-resume-arrival&debug=1",
   ]) assert.equal(receiver.createSession({search,storage:storage()}).ok,false,search);
@@ -131,18 +131,25 @@ test("Landing Continue readiness guards input, loop triggers and production Jour
   assert.equal(writes.length,4);
   assert.equal(guarded.length,4);
   const boot=html.slice(html.indexOf("async function bootLandingContinue"),html.indexOf("async function boot()",html.indexOf("async function bootLandingContinue")));
-  assert.match(boot,/player\.x = continueSession\.returningFromGarden \? 724 : 725;[\s\S]*player\.y = continueSession\.returningFromGarden \? 257 : 716;/);
+  assert.match(boot,/const safeSpawn = continueSession\.returningFromGarden \? \{x:724, y:257\} : \{x:725, y:716\};/);
+  assert.match(boot,/if \(continueSession\.returningFromAlenon\) \{[\s\S]*ride\.mode = "arriving"/);
+  assert.match(boot,/setRideMode\(continueSession\.returningFromAlenon \? "arriving" : "ground"\)/);
   assert.doesNotMatch(boot,/nearestGroundPoint|nearestWalkable|findNearestSpawnRef/);
 });
 
 
-test("Landing Continue identity survives Landing -> Garden -> Landing without production writes",()=>{
+test("Landing Continue identity survives Garden and Alenon roundtrips without production writes",()=>{
   const landing=fs.readFileSync("star-country-landing.html","utf8");
   const garden=fs.readFileSync("game.js","utf8");
+  const alenon=fs.readFileSync("alenon.html","utf8");
   assert.match(landing,/\.\/index\.html\?from=landing&dev=\$\{encodeURIComponent\(continueSession\.definition\.id\)\}/);
   assert.match(garden,/const landingResumeDevId = enteringFromLanding/);
   assert.match(garden,/\.\/star-country-landing\.html\?from=garden&dev=\$\{encodeURIComponent\(landingResumeDevId\)\}/);
   assert.match(garden,/if \(landingResumeDevId\)[\s\S]*transit\.progress\.commitArrival[\s\S]*else \{[\s\S]*TarotJourney\?\.set\("companion"/);
+  assert.match(landing,/continueSession\.progress\.commitArrival\(\{[\s\S]*destinationMapId: "alenon"[\s\S]*reason: "pad_to_alenon"/);
+  assert.match(landing,/\.\/alenon\.html\?from=landing-return&landingDev=\$\{encodeURIComponent\(continueSession\.definition\.id\)\}/);
+  assert.match(alenon,/const landingContinueTransitId =/);
+  assert.match(alenon,/\.\/star-country-landing\.html\?from=alenon&dev=\$\{encodeURIComponent\(landingContinueTransitId\)\}/);
 });
 
 
@@ -165,13 +172,41 @@ test("isolated Landing session commits Garden roundtrip and reopens at garden_en
   assert.equal(returned.projection.landingMemoryDone,true);
 });
 
-test("waiting_at_landing fails closed before undefined Garden transition",()=>{
+test("waiting_at_landing stays blocked until the return greeting rejoins Shiopon",()=>{
   const s=storage();
   const garden=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
   assert.equal(garden.ok,false);
   const html=fs.readFileSync("star-country-landing.html","utf8");
-  assert.match(html,/continueSession\.context\.companion === "waiting_at_landing"/);
-  assert.match(html,/星門庭園への遷移は仕様判断待ち/);
+  assert.match(html,/continueSession\.context\.companion === "waiting_at_landing" && !companion\.following/);
+  assert.match(html,/しおぽんとの帰還会話が完了するまで星門庭園へは移動できません/);
+});
+
+
+
+test("waiting Continue completes Landing -> Alenon -> Landing -> greeting -> Garden durable flow",()=>{
+  const s=storage();
+  const initial=receiver.createSession({search:"?dev=landing-resume-waiting",storage:s});
+  assert.equal(initial.ok,true);
+  assert.equal(initial.context.companion,"waiting_at_landing");
+  initial.progress.commitArrival({
+    sourceMapId:"star_country_landing",destinationMapId:"alenon",spawnId:"pad_return",reason:"pad_to_alenon"
+  });
+  const returned=receiver.createSession({search:"?from=alenon&dev=landing-resume-waiting",storage:s});
+  assert.equal(returned.ok,true);
+  assert.equal(returned.returningFromAlenon,true);
+  assert.equal(returned.context.mapId,"star_country_landing");
+  assert.equal(returned.context.spawnId,"pad_ground");
+  assert.equal(returned.context.companion,"waiting_at_landing");
+  assert.equal(returned.projection.companion?.mode,"waiting");
+  returned.progress.setCompanion(
+    "joined_with_shion",{mapId:"star_country_landing",spawnId:"pad_ground"},"rejoin_after_arrival"
+  );
+  const garden=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
+  assert.equal(garden.ok,true);
+  assert.equal(garden.context.mapId,"star_gate_garden");
+  assert.equal(garden.context.spawnId,"south_gate");
+  assert.equal(garden.context.companion,"joined_with_shion");
+  assert.equal(garden.projection.companion?.mode,"following");
 });
 
 test("waiting Shiopon is a Continue-only blocking actor",()=>{
