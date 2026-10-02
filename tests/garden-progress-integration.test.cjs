@@ -25,3 +25,10 @@ test("Garden records only existing completion facts and unchanged Landing arriva
   assert.match(observer,/completeEvent\("garden_shiopon_meet"/);
   assert.match(observer,/completeEvent\("garden_lumiere_gate"/);
 });
+
+
+test("Landing Continue Garden transit is excluded from production Progress",()=>{
+  assert.match(observer,/const landingResumeDev = params\.get\("from"\) === "landing"/);
+  assert.match(observer,/landing-resume-\(arrival\|memory-complete\|waiting\)/);
+  assert.match(observer,/if \(landingResumeDev\) return;/);
+});
