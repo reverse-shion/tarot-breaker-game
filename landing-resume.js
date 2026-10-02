@@ -31,8 +31,27 @@
     });
     return Object.freeze({ok: true, context, projection});
   }
+  function chooseFollowingPlacement({player, isWalkable, sideGap=48, behindGap=56, minGap=44} = {}) {
+    if (!player || !Number.isFinite(player.x) || !Number.isFinite(player.y) ||
+        !["down","up","left","right"].includes(player.dir) || typeof isWalkable !== "function")
+      return null;
+    const behind = player.dir === "down" ? {x:player.x, y:player.y-behindGap} :
+      player.dir === "up" ? {x:player.x, y:player.y+behindGap} :
+      player.dir === "left" ? {x:player.x+behindGap, y:player.y} :
+      {x:player.x-behindGap, y:player.y};
+    const candidates = [
+      {x:player.x-sideGap, y:player.y},
+      {x:player.x+sideGap, y:player.y},
+      behind,
+    ];
+    const point = candidates.find(candidate =>
+      isWalkable(candidate.x, candidate.y) &&
+      Math.hypot(candidate.x-player.x, candidate.y-player.y) >= minGap
+    );
+    return point ? Object.freeze({...point}) : null;
+  }
   function openDevProgress(definition, storage, diagnostic) {
-    const key = "tarot-breaker:dev:landing-resume:v2:" + definition.id;
+    const key = "tarot-breaker:dev:landing-resume:v3:" + definition.id;
     const fallback = JSON.stringify(definition.temporaryState);
     const backend = Object.freeze({
       getItem(requested) {
@@ -159,5 +178,5 @@
       image.src = src;
     });
   }
-  return Object.freeze({receive, createSession, createGardenTransitSession, validateCollision, loadImage});
+  return Object.freeze({receive, createSession, createGardenTransitSession, chooseFollowingPlacement, validateCollision, loadImage});
 });
