@@ -110,7 +110,8 @@
     const opened = openDevProgress(definition, storage, diagnostic);
     let resolved = resume.resolveContinue(opened.progress.load());
     if (!resolved.ok) return resolved;
-    if (resolved.context.mapId === MAP_ID && resolved.context.spawnId === SPAWN_ID) {
+    if (resolved.context.mapId === MAP_ID &&
+        [SPAWN_ID, "garden_entrance"].includes(resolved.context.spawnId)) {
       try {
         opened.progress.commitArrival({
           sourceMapId: MAP_ID,
