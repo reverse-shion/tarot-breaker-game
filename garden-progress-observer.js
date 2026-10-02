@@ -33,7 +33,7 @@
     if (typeof console !== "undefined") console.warn("[Garden Progress]", message, error || "");
   }
 
-  if (!landingResumeDev && params.get("from") === "landing") {
+  // Garden only acknowledges that the unchanged URL arrival actually reached this scene.\n  if (!landingResumeDev && params.get("from") === "landing") {
     try {
       progress.commitArrival({
         sourceMapId: "star_country_landing",
