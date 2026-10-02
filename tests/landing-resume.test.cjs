@@ -95,11 +95,13 @@ test("authored Landing Continue actor points are exact, walkable and trigger-saf
     if(((a[1]>y)!==(b[1]>y)) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) hit=!hit;
   }return hit;};
   const walkable=(x,y)=>data.walkAreas.some(area=>inside(x,y,area.points));
-  const shion={x:725,y:716},gardenReturn={x:724,y:257},waiting={x:725,y:660};
+  const shion={x:725,y:716},gardenReturn={x:724,y:257},waiting={x:725,y:660},joinedReturn={x:724,y:321};
   assert.equal(walkable(shion.x,shion.y),true);
   assert.equal(walkable(waiting.x,waiting.y),true);
   assert.equal(walkable(gardenReturn.x,gardenReturn.y),true);
+  assert.equal(walkable(joinedReturn.x,joinedReturn.y),true);
   assert.ok(Math.hypot(waiting.x-shion.x,waiting.y-shion.y)>=44);
+  assert.ok(Math.hypot(joinedReturn.x-gardenReturn.x,joinedReturn.y-gardenReturn.y)>=44);
   assert.ok(shion.y>355,"Devil Memory must not auto-trigger at Continue spawn");
   assert.ok(shion.y>245,"Garden exit must not auto-trigger at Continue spawn");
   assert.ok(Math.hypot(shion.x-725,shion.y-788)>66,"PAD must not auto-board at Continue spawn");
@@ -133,6 +135,7 @@ test("Landing Continue readiness guards input, loop triggers and production Jour
   const boot=html.slice(html.indexOf("async function bootLandingContinue"),html.indexOf("async function boot()",html.indexOf("async function bootLandingContinue")));
   assert.match(boot,/const safeSpawn = continueSession\.returningFromGarden \? \{x:724, y:257\} : \{x:725, y:716\};/);
   assert.match(boot,/if \(continueSession\.returningFromAlenon\) \{[\s\S]*ride\.mode = "arriving"/);
+  assert.match(boot,/projection\.companion\?\.mode === "following"[\s\S]*companion\.visible = true;[\s\S]*companion\.following = true;[\s\S]*returningFromGarden \? 321 : 660/);
   assert.match(boot,/setRideMode\(continueSession\.returningFromAlenon \? "arriving" : "ground"\)/);
   assert.doesNotMatch(boot,/nearestGroundPoint|nearestWalkable|findNearestSpawnRef/);
 });
@@ -207,6 +210,45 @@ test("waiting Continue completes Landing -> Alenon -> Landing -> greeting -> Gar
   assert.equal(garden.context.spawnId,"south_gate");
   assert.equal(garden.context.companion,"joined_with_shion");
   assert.equal(garden.projection.companion?.mode,"following");
+  assert.equal(garden.projection.gardenStory.shioponDone,true);
+
+  garden.progress.commitArrival({
+    sourceMapId:"star_gate_garden",destinationMapId:"star_country_landing",
+    spawnId:"garden_entrance",reason:"garden_to_landing"
+  });
+  const landingAgain=receiver.createSession({search:"?from=garden&dev=landing-resume-waiting",storage:s});
+  assert.equal(landingAgain.ok,true);
+  assert.equal(landingAgain.context.spawnId,"garden_entrance");
+  assert.equal(landingAgain.context.companion,"joined_with_shion");
+  assert.equal(landingAgain.projection.companion?.mode,"following");
+
+  const gardenAgain=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
+  assert.equal(gardenAgain.ok,true);
+  assert.equal(gardenAgain.context.mapId,"star_gate_garden");
+  assert.equal(gardenAgain.context.companion,"joined_with_shion");
+  assert.equal(gardenAgain.projection.gardenStory.shioponDone,true);
+  assert.equal(gardenAgain.projection.companion?.mode,"following");
+});
+
+
+
+test("Garden re-entry accepts both Landing source checkpoints without replaying Shiopon",()=>{
+  const s=storage();
+  const initial=receiver.createSession({search:"?dev=landing-resume-waiting",storage:s});
+  initial.progress.setCompanion(
+    "joined_with_shion",{mapId:"star_country_landing",spawnId:"pad_ground"},"rejoin_after_arrival"
+  );
+  const first=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
+  assert.equal(first.ok,true);
+  assert.equal(first.projection.gardenStory.shioponDone,true);
+  first.progress.commitArrival({
+    sourceMapId:"star_gate_garden",destinationMapId:"star_country_landing",spawnId:"garden_entrance",reason:"garden_to_landing"
+  });
+  const second=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
+  assert.equal(second.ok,true);
+  assert.equal(second.context.spawnId,"south_gate");
+  assert.equal(second.context.companion,"joined_with_shion");
+  assert.equal(second.projection.gardenStory.shioponDone,true);
 });
 
 test("waiting Shiopon is a Continue-only blocking actor",()=>{
