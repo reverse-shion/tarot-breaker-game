@@ -7,6 +7,11 @@
   const core = root.TarotProgressCore;
   if (!core) return;
 
+  const params = new URLSearchParams(root.location.search);
+  const landingResumeDev = params.get("from") === "landing" &&
+    /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "");
+  if (landingResumeDev) return;
+
   const progress = core.createProgress();
   const loaded = progress.load();
   if (loaded.status !== "valid") return;
