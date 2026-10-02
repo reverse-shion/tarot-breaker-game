@@ -1874,23 +1874,10 @@
       }
 
       function placeContinueFollowingCompanion() {
-        const sideGap = 48;
-        const behindGap = 56;
-        const behind = (() => {
-          if (player.dir === "down") return {x: player.x, y: player.y - behindGap};
-          if (player.dir === "up") return {x: player.x, y: player.y + behindGap};
-          if (player.dir === "left") return {x: player.x + behindGap, y: player.y};
-          return {x: player.x - behindGap, y: player.y};
-        })();
-        const candidates = [
-          {x: player.x - sideGap, y: player.y},
-          {x: player.x + sideGap, y: player.y},
-          behind,
-        ];
-        const point = candidates.find(candidate =>
-          isGroundWalkable(candidate.x, candidate.y) &&
-          Math.hypot(candidate.x - player.x, candidate.y - player.y) >= 44
-        );
+        const point = window.TarotLandingResume.chooseFollowingPlacement({
+          player: {x:player.x, y:player.y, dir:player.dir},
+          isWalkable: isGroundWalkable,
+        });
         if (!point) throw new Error("unsafe-continue-companion");
         companion.visible = true;
         companion.following = true;
