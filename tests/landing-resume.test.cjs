@@ -95,9 +95,9 @@ test("authored Landing Continue actor points are exact, walkable and trigger-saf
     if(((a[1]>y)!==(b[1]>y)) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) hit=!hit;
   }return hit;};
   const walkable=(x,y)=>data.walkAreas.some(area=>inside(x,y,area.points));
-  const shion={x:725,y:716},waiting={x:725,y:660};
+  const shion={x:725,y:716},gardenReturn={x:724,y:257},waiting={x:725,y:660};
   assert.equal(walkable(shion.x,shion.y),true);
-  assert.equal(walkable(waiting.x,waiting.y),true);
+  assert.equal(walkable(waiting.x,waiting.y),true);\n  assert.equal(walkable(gardenReturn.x,gardenReturn.y),true);
   assert.ok(Math.hypot(waiting.x-shion.x,waiting.y-shion.y)>=44);
   assert.ok(shion.y>355,"Devil Memory must not auto-trigger at Continue spawn");
   assert.ok(shion.y>245,"Garden exit must not auto-trigger at Continue spawn");
@@ -130,7 +130,7 @@ test("Landing Continue readiness guards input, loop triggers and production Jour
   assert.equal(writes.length,4);
   assert.equal(guarded.length,4);
   const boot=html.slice(html.indexOf("async function bootLandingContinue"),html.indexOf("async function boot()",html.indexOf("async function bootLandingContinue")));
-  assert.match(boot,/player\.x = 725;[\s\S]*player\.y = 716;/);
+  assert.match(boot,/player\.x = continueSession\.returningFromGarden \? 724 : 725;[\s\S]*player\.y = continueSession\.returningFromGarden \? 257 : 716;/);
   assert.doesNotMatch(boot,/nearestGroundPoint|nearestWalkable|findNearestSpawnRef/);
 });
 
@@ -142,4 +142,40 @@ test("Landing Continue identity survives Landing -> Garden -> Landing without pr
   assert.match(garden,/const landingResumeDevId = enteringFromLanding/);
   assert.match(garden,/\.\/star-country-landing\.html\?from=garden&dev=\$\{encodeURIComponent\(landingResumeDevId\)\}/);
   assert.match(garden,/if \(!landingResumeDevId\) window\.TarotJourney\?\.set\("companion"/);
+});
+
+
+test("isolated Landing session commits Garden roundtrip and reopens at garden_entrance",()=>{
+  const s=storage();
+  const initial=receiver.createSession({search:"?dev=landing-resume-arrival",storage:s});
+  initial.progress.completeEvent("landing_devil_memory",{mapId:"star_country_landing",spawnId:"pad_ground"});
+  const garden=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-arrival",storage:s});
+  assert.equal(garden.ok,true);
+  assert.equal(garden.context.mapId,"star_gate_garden");
+  assert.equal(garden.context.spawnId,"south_gate");
+  garden.progress.commitArrival({
+    sourceMapId:"star_gate_garden",destinationMapId:"star_country_landing",
+    spawnId:"garden_entrance",reason:"garden_to_landing"
+  });
+  const returned=receiver.createSession({search:"?from=garden&dev=landing-resume-arrival",storage:s});
+  assert.equal(returned.ok,true);
+  assert.equal(returned.returningFromGarden,true);
+  assert.equal(returned.context.spawnId,"garden_entrance");
+  assert.equal(returned.projection.landingMemoryDone,true);
+});
+
+test("waiting_at_landing suppresses Garden meeting without fabricating following",()=>{
+  const s=storage();
+  const garden=receiver.createGardenTransitSession({search:"?from=landing&dev=landing-resume-waiting",storage:s});
+  assert.equal(garden.ok,true);
+  assert.equal(garden.projection.gardenStory.shioponDone,true);
+  assert.equal(garden.projection.gardenStory.joined,false);
+  assert.equal(garden.context.companion,"waiting_at_landing");
+});
+
+test("waiting Shiopon is a Continue-only blocking actor",()=>{
+  const html=fs.readFileSync("star-country-landing.html","utf8");
+  assert.match(html,/function movingIntoWaitingCompanion/);
+  assert.match(html,/after < 26 && after < before/);
+  assert.match(html,/!movingIntoWaitingCompanion\(player\.x, player\.y, next\.x, next\.y\)/);
 });
