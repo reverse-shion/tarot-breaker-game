@@ -76,6 +76,9 @@
   });
   const params = new URLSearchParams(location.search);
   const enteringFromLanding = params.get("from") === "landing";
+  const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
+    ? params.get("dev")
+    : null;
   if (enteringFromLanding && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
@@ -676,9 +679,9 @@
       gardenPos.x <= 838
     ) {
       leavingMap = true;
-      window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
+      if (!landingResumeDevId) window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
       controls.cancel("map-return");
-      location.href = "./star-country-landing.html?from=garden";
+      location.href = landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden";
       return;
     }
 
