@@ -936,7 +936,7 @@
       const landingProgress = continueDevRequest ? continueSession.progress : window.TarotProgressCore?.createProgress();
       const landingProgressLoad = continueDevRequest ? {status: "valid"} : (landingProgress?.load() || null);
       const landingProgressValid = landingProgressLoad?.status === "valid";
-      if (landingProgressValid && arrivingFromAlenon) {
+      if (landingProgressValid && arrivingFromAlenon && !continueDevRequest) {
         try {
           landingProgress.commitArrival({
             sourceMapId: "alenon",
@@ -947,7 +947,7 @@
         } catch (error) {
           console.warn("[Landing Progress] arrival observation was not persisted", error);
         }
-      } else if (landingProgressValid && returningFromGarden) {
+      } else if (landingProgressValid && returningFromGarden && !continueDevRequest) {
         try {
           landingProgress.commitArrival({
             sourceMapId: "star_gate_garden",
@@ -2444,18 +2444,33 @@
 
       function leaveForAlenon() {
         if (leaving || ride.mode !== "flying") return;
+        if (continueDevRequest) {
+          try {
+            continueSession.progress.commitArrival({
+              sourceMapId: "star_country_landing",
+              destinationMapId: "alenon",
+              spawnId: "pad_return",
+              reason: "pad_to_alenon",
+            });
+          } catch (error) {
+            showContinueStatus("PAD→アレノン復帰状態を保存できません: " + (error?.code || error?.message || "unknown"));
+            return;
+          }
+        }
         leaving = true;
         clearTarget(); keys.clear();
         document.body.classList.add("leaving");
         window.setTimeout(() => {
-          location.href = "./alenon.html?from=landing-return";
+          location.href = continueDevRequest
+            ? `./alenon.html?from=landing-return&landingDev=${encodeURIComponent(continueSession.definition.id)}`
+            : "./alenon.html?from=landing-return";
         }, 760);
       }
 
       function leaveForGarden() {
         if (leaving) return;
-        if (continueDevRequest && continueSession.context.companion === "waiting_at_landing") {
-          showContinueStatus("waiting_at_landing / 星門庭園への遷移は仕様判断待ち");
+        if (continueDevRequest && continueSession.context.companion === "waiting_at_landing" && !companion.following) {
+          showContinueStatus("しおぽんとの帰還会話が完了するまで星門庭園へは移動できません");
           return;
         }
         leaving = true;
@@ -2859,17 +2874,29 @@
             loadPassageLayers(),
           ]);
           landingWalkAreas = areas;
-          ride.mode = "ground";
-          ride.x = PAD_DEFAULTS.x;
-          ride.y = PAD_DEFAULTS.y;
-          ride.lift = 0;
           PAD_HOME = {x: PAD_DEFAULTS.x, y: PAD_DEFAULTS.y};
           PAD_SIZE = PAD_DEFAULTS.size;
           PAD_DISMOUNT_OFFSET_Y = PAD_DEFAULTS.dismountOffsetY;
-          player.x = continueSession.returningFromGarden ? 724 : 725;
-          player.y = continueSession.returningFromGarden ? 257 : 716;
-          player.dir = continueSession.returningFromGarden ? "down" : "up";
-          if (!isGroundWalkable(player.x, player.y)) throw new Error("unsafe-continue-spawn");
+          const safeSpawn = continueSession.returningFromGarden ? {x:724, y:257} : {x:725, y:716};
+          if (!isGroundWalkable(safeSpawn.x, safeSpawn.y)) throw new Error("unsafe-continue-spawn");
+          if (continueSession.returningFromAlenon) {
+            ride.mode = "arriving";
+            ride.x = PAD_HOME.x;
+            ride.y = Math.min(WORLD_H + 20, PAD_HOME.y + 148);
+            ride.lift = 48;
+            ride.progress = 0;
+            player.x = ride.x;
+            player.y = ride.y - ride.lift - 2;
+            player.dir = "up";
+          } else {
+            ride.mode = "ground";
+            ride.x = PAD_HOME.x;
+            ride.y = PAD_HOME.y;
+            ride.lift = 0;
+            player.x = safeSpawn.x;
+            player.y = safeSpawn.y;
+            player.dir = continueSession.returningFromGarden ? "down" : "up";
+          }
           if (continueSession.projection.companion?.mode === "waiting") {
             companion.visible = true;
             companion.following = false;
@@ -2891,7 +2918,7 @@
           initCollisionEditor();
           setActorPosition();
           setActorVisual();
-          setRideMode("ground");
+          setRideMode(continueSession.returningFromAlenon ? "arriving" : "ground");
           status.hidden = true;
           guide.hidden = true;
           addEventListener("resize", fitWorld, {passive:true});
