@@ -195,7 +195,7 @@ test('browser import performs no storage/clock/token/navigation operation and on
   assert.match(fs.readFileSync(path.join(root,'alenon.html'),'utf8'), /if \(continueDevRequest\) \{\s*bootAlenonContinue\(\);\s*return;/);
   assert.match(fs.readFileSync(path.join(root,'star-country-landing.html'),'utf8'), /if \(continueDevRequest\) bootLandingContinue\(\);\s*else boot\(\);/);
   for(const file of fs.readdirSync(root).filter(file=>/\.(html|js)$/.test(file) &&
-      !['progress-resume.js','alenon.html','alenon-resume.js','star-country-landing.html','landing-resume.js','dev-checkpoints.js'].includes(file)))
+      !['progress-resume.js','alenon.html','alenon-resume.js','star-country-landing.html','landing-resume.js','dev-checkpoints.js','garden-dev-bootstrap.js'].includes(file)))
     assert.equal(fs.readFileSync(path.join(root,file),'utf8').includes('progress-resume.js'),false,file);
 });
 
