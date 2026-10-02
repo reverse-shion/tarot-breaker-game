@@ -95,12 +95,16 @@
     let resolved = resume.resolveContinue(opened.progress.load());
     if (!resolved.ok) return resolved;
     if (resolved.context.mapId === MAP_ID && resolved.context.spawnId === SPAWN_ID) {
-      opened.progress.commitArrival({
-        sourceMapId: MAP_ID,
-        destinationMapId: "star_gate_garden",
-        spawnId: "south_gate",
-        reason: "gate_to_garden",
-      });
+      try {
+        opened.progress.commitArrival({
+          sourceMapId: MAP_ID,
+          destinationMapId: "star_gate_garden",
+          spawnId: "south_gate",
+          reason: "gate_to_garden",
+        });
+      } catch (error) {
+        return {ok:false, reason:error?.code || error?.message || "garden-transit-rejected"};
+      }
       resolved = resume.resolveContinue(opened.progress.load());
     }
     if (!resolved.ok || resolved.context.mapId !== "star_gate_garden" || resolved.context.spawnId !== "south_gate")
