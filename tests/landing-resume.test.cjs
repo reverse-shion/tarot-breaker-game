@@ -86,3 +86,47 @@ test("Landing HTML wires Continue separately from the normal arrival route",()=>
   assert.match(html,/tarot-breaker:landing-resume-ready/);
   assert.doesNotMatch(fs.readFileSync("landing-resume.js","utf8"),/localStorage\s*\./);
 });
+
+
+test("authored Landing Continue actor points are exact, walkable and trigger-safe",()=>{
+  const Nav=require("../navigation.js");
+  const data=JSON.parse(fs.readFileSync("assets/maps/star-landing/collision.json","utf8"));
+  const collision=Nav.createCollision(data);
+  const shion={x:725,y:716},waiting={x:725,y:660};
+  assert.equal(collision.isWalkable(shion.x,shion.y),true);
+  assert.equal(collision.isWalkable(waiting.x,waiting.y),true);
+  assert.ok(Math.hypot(waiting.x-shion.x,waiting.y-shion.y)>=44);
+  assert.ok(shion.y>355,"Devil Memory must not auto-trigger at Continue spawn");
+  assert.ok(shion.y>245,"Garden exit must not auto-trigger at Continue spawn");
+  assert.ok(Math.hypot(shion.x-725,shion.y-788)>66,"PAD must not auto-board at Continue spawn");
+});
+
+test("Landing image readiness rejects load and decode failures",async(t)=>{
+  const Original=global.Image;
+  t.after(()=>{ if(Original===undefined) delete global.Image; else global.Image=Original; });
+  global.Image=class {
+    constructor(){this.naturalWidth=1;this.naturalHeight=1;}
+    set src(value){this._src=value;queueMicrotask(()=>this.onerror?.());}
+  };
+  await assert.rejects(receiver.loadImage("bad.webp"),/continue-image-failed/);
+  global.Image=class {
+    constructor(){this.naturalWidth=1;this.naturalHeight=1;}
+    decode(){return Promise.reject(new Error("decode"));}
+    set src(value){this._src=value;queueMicrotask(()=>this.onload?.());}
+  };
+  await assert.rejects(receiver.loadImage("decode.webp"),/continue-image-decode-failed/);
+});
+
+test("Landing Continue readiness guards input, loop triggers and production Journey writes",()=>{
+  const html=fs.readFileSync("star-country-landing.html","utf8");
+  assert.match(html,/viewport\.addEventListener\("pointerdown",[\s\S]*if \(continueDevRequest && !continueReady\) return;/);
+  assert.match(html,/addEventListener\("keydown",[\s\S]*if \(continueDevRequest && !continueReady\) return;/);
+  assert.match(html,/function loop\(now\)[\s\S]*if \(continueDevRequest && !continueReady\)[\s\S]*requestAnimationFrame\(loop\);[\s\S]*return;/);
+  const writes=[...html.matchAll(/TarotJourney\?\.set\(/g)];
+  const guarded=[...html.matchAll(/if \(!continueDevRequest\) window\.TarotJourney\?\.set\(/g)];
+  assert.equal(writes.length,4);
+  assert.equal(guarded.length,4);
+  const boot=html.slice(html.indexOf("async function bootLandingContinue"),html.indexOf("async function boot()",html.indexOf("async function bootLandingContinue")));
+  assert.match(boot,/player\.x = 725;[\s\S]*player\.y = 716;/);
+  assert.doesNotMatch(boot,/nearestGroundPoint|nearestWalkable|findNearestSpawnRef/);
+});
