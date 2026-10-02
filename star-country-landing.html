@@ -2366,8 +2366,13 @@
           arrivingFromAlenon &&
           savedCompanion?.mode === "waiting" &&
           companion.visible;
-        rejoinCompanion();
-        if (shouldGreetOnReturn) void runReturnGreeting();
+        if (shouldGreetOnReturn) {
+          // The waiting state remains authoritative until the automatic return
+          // greeting has actually completed. Do not expose following early.
+          void runReturnGreeting().then(rejoinCompanion);
+        } else {
+          rejoinCompanion();
+        }
         status.textContent = "PAD着陸完了";
         guide.hidden = true;
         guide.hidden = false;
@@ -2732,7 +2737,8 @@
             if (ride.mode === "flying") {
               ride.x = player.target.x;
               ride.y = player.target.y;
-            } else if (isGroundWalkable(player.target.x, player.target.y)) {
+            } else if (isGroundWalkable(player.target.x, player.target.y) &&
+                !movingIntoWaitingCompanion(player.x, player.y, player.target.x, player.target.y)) {
               player.x = player.target.x;
               player.y = player.target.y;
             }

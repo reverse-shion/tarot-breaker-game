@@ -38,7 +38,7 @@
     const fixture = Object.freeze({ version: 1,
       checkpoint: Object.freeze({mapId: "star_country_landing", spawnId: "pad_ground"}),
       completedEvents: Object.freeze([...events]), companion });
-    register(id, { event: "landing-resume", segment: "landing-resume-entry", map: "star_country_landing",
+    register(id, { event: "garden-landing-continue-recovery", segment: "landing-resume-entry", map: "star_country_landing",
       spawn: "pad_ground", temporaryState: fixture,
       requiredRuntime: Object.freeze(["star-country-landing.html", "progress.js", "progress-resume.js", "landing-resume.js"]),
       entryAction: "registered ?dev=" + id, emittedSignal: "tarot-breaker:landing-resume-ready",
@@ -56,7 +56,7 @@
     const fixture = Object.freeze({ version: 1,
       checkpoint: Object.freeze({mapId: "star_gate_garden", spawnId: "south_gate"}),
       completedEvents: Object.freeze([...events]), companion });
-    register(id, { event: "garden-resume", segment: "garden-resume-entry", map: "star_gate_garden",
+    register(id, { event: "garden-landing-continue-recovery", segment: "garden-resume-entry", map: "star_gate_garden",
       spawn: "south_gate", temporaryState: fixture,
       requiredRuntime: Object.freeze(["index.html", "progress.js", "progress-resume.js", "garden-resume.js"]),
       entryAction: "registered ?dev=" + id, emittedSignal: "tarot-breaker:garden-resume-ready",

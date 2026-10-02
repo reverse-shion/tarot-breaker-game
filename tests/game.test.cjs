@@ -8,7 +8,8 @@ const collisionData = require('../assets/maps/star-country-gate-garden-collision
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 const { gardenRuntime } = require('./helpers/garden-runtime.cjs');
 
-async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false } = {}) {
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false,
+  search = '?from=landing&navDebug=1', devTransit = null, dialogueState = null } = {}) {
   const rafQueue = []; let now = 1000;
   const { layout: sceneLayout, collision: runtimeCollision } = gardenRuntime();
   const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
@@ -58,6 +59,10 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const window = new Element(); window.devicePixelRatio = 3;
   window.dispatchEvent = event => window.emit(event.type, event);
   window.TarotSceneLayout = sceneLayout;
+  if (devTransit) window.TarotGardenDevTransit = devTransit;
+  if (dialogueState) window.TarotDialogue = {getState:()=>dialogueState};
+  const journeyWrites=[];
+  window.TarotJourney={set(...args){journeyWrites.push(args);}};
   window.TarotSceneEffects = {
     ready: Promise.resolve(),
     waitImage: async image => image,
@@ -81,7 +86,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   deterministicMath.random = () => 0.5;
   const CustomEvent = class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
   window.CustomEvent = CustomEvent;
-  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search: '?from=landing&navDebug=1' },
+  const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search },
     performance: { now: () => now }, requestAnimationFrame: fn => { rafQueue.push(fn); return rafQueue.length; }, setTimeout() { return 1; }, clearTimeout() {},
     fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
@@ -98,7 +103,9 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const gameSource = fs.readFileSync('game.js', 'utf8');
   const resetAnchor = '  function reset() {';
   assert.equal(gameSource.split(resetAnchor).length, 2);
-  vm.runInContext(gameSource.replace(resetAnchor, '  window.__gardenReset = reset;\n' + resetAnchor), sandbox, { filename: 'game.js' });
+  vm.runInContext(gameSource.replace('  const player = {','  const player = window.__gardenPlayer = {')
+    .replace('  function chooseShioponTarget() {','  window.__testGardenExit = {updatePlayer, arm(){gardenExitArmed=true;}};\n\n  function chooseShioponTarget() {')
+    .replace(resetAnchor, '  window.__gardenReset = reset;\n' + resetAnchor), sandbox, { filename: 'game.js' });
   for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
     now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now));
@@ -125,7 +132,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -157,6 +164,28 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.ok(lumiereMotionDraws.every(call => call[3] === 493));
   assert.ok(lumiereMotionDraws.every(call => call[4] === 596));
   assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
+});
+test('Garden direct Continue boots the real runtime at exact authored spawn with restored follower state',async()=>{
+  const transit={ok:true,context:{mapId:'star_gate_garden',spawnId:'south_gate',companion:'joined_with_shion'},spawn:{x:724,y:944}};
+  const h=await boot({search:'?dev=garden-resume-after-shiopon&navDebug=1',devTransit:transit,
+    dialogueState:{active:false,joined:true}});
+  const s=h.state();
+  assert.equal(s.player.x,724);assert.equal(s.player.y,944);
+  assert.equal(s.shiopon.following,true);
+  assert.equal(h.collision.isWalkable(s.player.x,s.player.y),true);
+  assert.equal(h.errors.length,0);
+});
+test('failed isolated Garden transit never falls back to production Journey or navigation',async()=>{
+  const h=await boot({search:'?from=landing&dev=landing-resume-arrival&navDebug=1',
+    devTransit:{ok:false,reason:'fixture-failure'},dialogueState:{active:false,joined:false}});
+  h.window.__gardenPlayer.x=724;h.window.__gardenPlayer.y=1008;
+  h.window.__testGardenExit.arm();
+  h.controls.step=()=>({x:724,y:1012,moving:true,dx:0,dy:1});
+  h.window.__testGardenExit.updatePlayer(.05);
+  assert.equal(h.location.href,undefined);
+  assert.equal(h.journeyWrites.length,0);
+  assert.equal(h.controls.state.cancelReason,'dev-return-blocked');
+  h.window.emit('keyup',{key:'s'});
 });
 test('Lumiere replaces the old torso once and draws one cached silhouette per tick', async () => {
   const h = await boot();

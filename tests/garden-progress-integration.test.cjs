@@ -4,6 +4,10 @@ const html=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf8");
 const observer=fs.readFileSync(path.join(__dirname,"..","garden-progress-observer.js"),"utf8");
 const dialogue=fs.readFileSync(path.join(__dirname,"..","dialogue.js"),"utf8");
 
+test("Garden Progress observer remains valid JavaScript",()=>{
+  assert.doesNotThrow(()=>new Function(observer));
+});
+
 test("Garden loads Progress bridge without editing story ownership",()=>{
   const registry=html.indexOf("./route-registry.js?v=20260921-progress-v1");
   const progress=html.indexOf("./progress.js?v=20260921-progress-v1");

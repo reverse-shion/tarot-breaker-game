@@ -179,4 +179,12 @@ test("waiting Shiopon is a Continue-only blocking actor",()=>{
   assert.match(html,/function movingIntoWaitingCompanion/);
   assert.match(html,/after < 26 && after < before/);
   assert.match(html,/!movingIntoWaitingCompanion\(player\.x, player\.y, next\.x, next\.y\)/);
+  assert.match(html,/isGroundWalkable\(player\.target\.x, player\.target\.y\) &&\s*!movingIntoWaitingCompanion\(player\.x, player\.y, player\.target\.x, player\.target\.y\)/);
+});
+
+test("PAD arrival restores following only after the automatic return dialogue",()=>{
+  const html=fs.readFileSync("star-country-landing.html","utf8");
+  const finish=html.slice(html.indexOf("function finishArrival()"),html.indexOf("async function beginBoarding()"));
+  assert.match(finish,/runReturnGreeting\(\)\.then\(rejoinCompanion\)/);
+  assert.doesNotMatch(finish,/rejoinCompanion\(\);\s*if \(shouldGreetOnReturn\)/);
 });

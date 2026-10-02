@@ -10,10 +10,15 @@
   const params = new URLSearchParams(root.location.search);
   const landingResumeDev = params.get("from") === "landing" &&
     /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "");
+  const gardenResumeDev = !params.has("from") &&
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
 
   let progress;
-  if (landingResumeDev) {
-    const transit = root.TarotLandingResume?.createGardenTransitSession({
+  if (landingResumeDev || gardenResumeDev) {
+    const transit = gardenResumeDev ? root.TarotGardenResume?.createSession({
+      search: root.location.search,
+      storage: root.sessionStorage,
+    }) : root.TarotLandingResume?.createGardenTransitSession({
       search: root.location.search,
       storage: root.sessionStorage,
     });
@@ -33,7 +38,8 @@
     if (typeof console !== "undefined") console.warn("[Garden Progress]", message, error || "");
   }
 
-  // Garden only acknowledges that the unchanged URL arrival actually reached this scene.\n  if (!landingResumeDev && params.get("from") === "landing") {
+  // Garden only acknowledges that the unchanged URL arrival actually reached this scene.
+  if (!landingResumeDev && params.get("from") === "landing") {
     try {
       progress.commitArrival({
         sourceMapId: "star_country_landing",

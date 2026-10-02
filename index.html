@@ -52,7 +52,10 @@
   <body class="scene-booting" data-audio-autostart="true">
     <script>
       (function () {
-        var fromLanding = new URLSearchParams(location.search).get("from") === "landing";
+        var params = new URLSearchParams(location.search);
+        var fromLanding = params.get("from") === "landing";
+        var gardenResume = !params.has("from") && /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+        fromLanding = fromLanding || gardenResume;
         document.body.dataset.enteringFromLanding = fromLanding ? "true" : "false";
         if (fromLanding) {
           // A stalled asset or failed deferred script must reach the existing
