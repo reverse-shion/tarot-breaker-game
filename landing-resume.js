@@ -71,19 +71,35 @@
     const params = new URLSearchParams(search || "");
     const definition = checkpoints.resolve(search);
     const from = params.get("from");
-    const validFrom = !params.has("from") || (params.getAll("from").length === 1 && from === "garden");
+    const validFrom = !params.has("from") ||
+      (params.getAll("from").length === 1 && ["garden", "alenon"].includes(from));
     if (!definition || !definition.id.startsWith(DEV_PREFIX) || definition.map !== MAP_ID ||
         params.getAll("dev").length !== 1 || !validFrom ||
         ["padEdit", "debug", "collision", "passage", "edit", "objects"].some(key => params.has(key)))
       return {ok: false, reason: "invalid-development-entry"};
     const opened = openDevProgress(definition, storage, diagnostic);
-    const resolved = resume.resolveContinue(opened.progress.load());
+    let resolved = resume.resolveContinue(opened.progress.load());
+    if (!resolved.ok) return resolved;
+    if (from === "alenon" && resolved.context.mapId === "alenon" && resolved.context.spawnId === "pad_return") {
+      try {
+        opened.progress.commitArrival({
+          sourceMapId: "alenon",
+          destinationMapId: MAP_ID,
+          spawnId: SPAWN_ID,
+          reason: "pad_to_landing",
+        });
+      } catch (error) {
+        return {ok:false, reason:error?.code || error?.message || "landing-return-rejected"};
+      }
+      resolved = resume.resolveContinue(opened.progress.load());
+    }
     if (!resolved.ok) return resolved;
     const expectedSpawn = from === "garden" ? "garden_entrance" : SPAWN_ID;
     if (resolved.context.mapId !== MAP_ID || resolved.context.spawnId !== expectedSpawn)
       return {ok: false, reason: "not-landing"};
     const projected = projectResolved(resolved);
-    return Object.freeze({...projected, progress: opened.progress, definition, key: opened.key, returningFromGarden: from === "garden"});
+    return Object.freeze({...projected, progress: opened.progress, definition, key: opened.key,
+      returningFromGarden: from === "garden", returningFromAlenon: from === "alenon"});
   }
   function createGardenTransitSession({search, storage, diagnostic} = {}) {
     const params = new URLSearchParams(search || "");
