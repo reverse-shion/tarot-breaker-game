@@ -50,7 +50,7 @@ test("Landing dev session reads only its remapped session key and never producti
   assert.equal(session.ok,true);
   assert.deepEqual(s.reads,[session.key]);
   assert.equal(s.writes.length,0);
-  assert.match(session.key,/^tarot-breaker:dev:landing-resume:v1:/);
+  assert.match(session.key,/^tarot-breaker:dev:landing-resume:v2:/);
   assert.notEqual(session.key,"tarot-breaker:progress:v1");
 });
 
