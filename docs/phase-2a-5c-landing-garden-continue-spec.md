@@ -319,6 +319,8 @@ Pre-audit inspected current main at `0958b445442645321264f4a724fbef2f7b2e885c`, 
 
 Result: no Phase 2A-5c stop condition was found. Runtime implementation may proceed after review of this contract.
 
+This contract-only PR is classified as `SCOPE: FOUNDATION` with `DEVICE_GATE_REQUIRED: NO` because it changes documentation only. The later runtime implementation PR is not covered by that exemption and must satisfy the Phase 2A-5c Device Gate defined in §10.
+
 ### 16.2 Frozen authority and event order
 
 The current registry is authoritative for Phase 2A-5c:
