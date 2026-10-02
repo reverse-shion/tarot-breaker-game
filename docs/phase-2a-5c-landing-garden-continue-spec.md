@@ -346,7 +346,7 @@ Legal transitions relevant to this phase remain:
 - `joined_with_shion → waiting_at_landing` by `board_pad` at `star_country_landing / pad_ground`
 - `waiting_at_landing → joined_with_shion` by `rejoin_after_arrival` at `star_country_landing / pad_ground`
 
-Continue restores the recorded state and never executes either transition merely because a map was loaded.
+Continue restores the recorded state and never executes either transition merely because a map was loaded. `waiting_at_landing` is legal once `garden_shiopon_meet` is complete; `garden_lumiere_gate` is not a prerequisite for the waiting state.
 
 ### 16.4 Frozen Continue fixtures
 
@@ -356,7 +356,7 @@ All fixtures are Progress v1 records. Production storage is forbidden for dev ex
 |---|---|---:|---|---|---|
 | `landing-resume-arrival` | `star_country_landing / pad_ground` | `725,716` | `alenon_prologue` | `not_joined` | Devil Memory incomplete; trigger remains eligible |
 | `landing-resume-memory-complete` | `star_country_landing / pad_ground` | `725,716` | `alenon_prologue, landing_devil_memory` | `not_joined` | Devil Memory suppressed |
-| `landing-resume-waiting` | `star_country_landing / pad_ground` | `725,716` | all four registered events | `waiting_at_landing` | Devil Memory suppressed; Shiopon restored as waiting, not following |
+| `landing-resume-waiting` | `star_country_landing / pad_ground` | `725,716` | `alenon_prologue, landing_devil_memory, garden_shiopon_meet` | `waiting_at_landing` | Devil Memory suppressed; Shiopon restored as waiting, not following; Lumiere remains incomplete |
 | `garden-resume-before-shiopon` | `star_gate_garden / south_gate` | `724,944` | `alenon_prologue, landing_devil_memory` | `not_joined` | Shiopon meeting remains eligible; Lumiere gate ineligible |
 | `garden-resume-after-shiopon` | `star_gate_garden / south_gate` | `724,944` | previous + `garden_shiopon_meet` | `joined_with_shion` | Shiopon meeting suppressed; following restored; Lumiere gate eligible |
 | `garden-resume-after-lumiere` | `star_gate_garden / south_gate` | `724,944` | all four registered events | `joined_with_shion` | both Garden story events suppressed; following restored |
