@@ -133,3 +133,13 @@ test("Landing Continue readiness guards input, loop triggers and production Jour
   assert.match(boot,/player\.x = 725;[\s\S]*player\.y = 716;/);
   assert.doesNotMatch(boot,/nearestGroundPoint|nearestWalkable|findNearestSpawnRef/);
 });
+
+
+test("Landing Continue identity survives Landing -> Garden -> Landing without production writes",()=>{
+  const landing=fs.readFileSync("star-country-landing.html","utf8");
+  const garden=fs.readFileSync("game.js","utf8");
+  assert.match(landing,/\.\/index\.html\?from=landing&dev=\$\{encodeURIComponent\(continueSession\.definition\.id\)\}/);
+  assert.match(garden,/const landingResumeDevId = enteringFromLanding/);
+  assert.match(garden,/\.\/star-country-landing\.html\?from=garden&dev=\$\{encodeURIComponent\(landingResumeDevId\)\}/);
+  assert.match(garden,/if \(!landingResumeDevId\) window\.TarotJourney\?\.set\("companion"/);
+});
