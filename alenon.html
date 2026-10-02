@@ -2152,6 +2152,11 @@
       const objectMode = params.get("objects") === "1";
       const collisionMode = params.get("collision") === "1";
       const returningFromLanding = params.get("from") === "landing-return";
+      const landingContinueTransitId =
+        returningFromLanding && params.getAll("landingDev").length === 1 &&
+        /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("landingDev") || "")
+          ? params.get("landingDev")
+          : null;
       const debugStoryBypass = params.get("skipPrologue") === "1";
       const legacyStoryBypass = returningFromLanding || editMode || objectMode || collisionMode || debugStoryBypass;
 
@@ -4190,7 +4195,9 @@
         stopAlenonOrbResonance();
 
         window.setTimeout(() => {
-          location.href = "./star-country-landing.html?from=alenon";
+          location.href = landingContinueTransitId
+            ? `./star-country-landing.html?from=alenon&dev=${encodeURIComponent(landingContinueTransitId)}`
+            : "./star-country-landing.html?from=alenon";
         }, 820);
       }
 
