@@ -1,6 +1,6 @@
 # Phase 2A-6 — Public Continue Implementation Contract v1.0
 
-Status: CONTRACT + PREFLIGHT REVIEW PASS / Alenon candidate runtime implemented / independent runtime review, remote CI and Device Gate pending
+Status: ALENON IMPLEMENTATION + INDEPENDENT LOCAL REVIEW PASS / runtime publication, remote CI and Device Gates pending
 
 Independent content review: `ae0c1cf30f1b72e4d6d1655feff4e77dcc69fc6c` PASS。関連5ファイル77/77、full regression276/276 PASS、fail/skip 0。契約本文のみのレビュー結果であり、Public runtime・remote CI・integrationの合格を意味しない。
 
@@ -160,11 +160,11 @@ Local preflight PASS、独立local/content review PASS、full regression279/279 
 
 GitHub pushは自動承認レビューにより拒否された。ユーザーの「次の段階に進んで」だけでは、当該リポジトリへの契約公開を明示的に許可したと認められないという判定。PR・remote CI・main統合は未実施。監査全文との照合も未完了。
 
-次の技術段階はAlenon専用runtime branchの作成と、専用入口marker・対応checkpoint allowlistの固定。外部公開には送信先を含む明示承認が必要。
+登録段階の次の技術段階だったAlenon専用runtime branch作成と入口実装は、以下§13–14の候補で完了した。登録時点のpush拒否は、その後のユーザーの明示承認により解決し、契約・登録変更はDraft PR #87へ公開済み。PR #87のexact HEAD `f74c3796f3819f9601fafae8e5f323fca19667e7` でValidateとEvent Safetyはsuccess。main未統合。runtime候補の公開・CI・実機確認は別の後続段階。
 
 再開文:
 
-> Phase 2A-6の `docs/phase-2a-6-public-continue-implementation-contract.md` を独立レビューして、PASSならPublic Continueのpreflight登録と専用実装ブランチへ進んで。通常開始のProgress resetとPAD帰還checkpoint保存は今回変更しない。
+> Phase 2A-6 Alenon Public Continueの独立レビュー済み候補から再開して。§14のruntime SHAと公開状況を確認し、専用ブランチ公開・remote CI・exact-build実機確認へ進んで。通常開始のProgress resetとPAD帰還checkpoint保存は変更しない。mainへは必要なテストと実機確認が完了し、マージ承認を得てから統合する。
 
 ## 13. Alenon candidate segment (Phase 2A-6A)
 
@@ -183,3 +183,18 @@ Fixtures: `?dev=public-continue-alenon-intro-incomplete`, `intro-complete`, `pad
 Device checks needed on exact reviewed/published candidate: normal Title/start/audio; Title no-save/reasons/layout; each isolated Alenon fixture; a real Public `entry=continue` from a test save on the same origin; actual prologue completion persistence/reload; Production PAD → Landing → Alenon roundtrip and waiting companion behavior. Test saves must be prepared explicitly on the test origin without replacing a player's existing production save. No human PASS or release eligibility is inferred from automation. Main merge remains blocked until required human and CI gates pass.
 
 Local Alenon candidate evidence: 12/12 new Public tests PASS, full regression 291/291 PASS (fail/skip 0), Public Alenon preflight PASS, new/inline JavaScript syntax PASS, asset/background/audio validation PASS and diff --check PASS. Tests execute the real Alenon inline runtime with controlled DOM/media/storage rather than a parallel UI simulation. They cover readiness/failure/retry, stale save detection, Production authored completion, zero entry Progress writes, Journey mirror restoration, Production PAD departure versus fixture containment, actual Title event wiring/BFCache recovery, and unchanged normal Title/PAD-return bootstrap. Automation does not establish real media/touch/viewport behavior or human Device PASS.
+
+## 14. Independent Alenon implementation review / next gate
+
+Branch: `feature/phase-2a-6-public-continue-alenon`
+Exact reviewed runtime candidate: `db670a271c675d258e9c6e3ab604eef44a036aff`
+Parent contract/preflight: `f74c3796f3819f9601fafae8e5f323fca19667e7`
+Freshly verified main: `b24e2f46568410c5e1688ca156458e4d49f2ee52`
+
+Independent local/content review: PASS。main276/276、candidate291/291、targeted41/41 PASS。fail/skip/known/new failureは0。追加の保存削除・破損・非対応version・矛盾companion・map変更・unsafe spawn・degenerate collision matrixもPASS。
+
+レビューでは、通常PAD出発がdev markerなしの `./star-country-landing.html?from=alenon` に到達すること、Public prologue保存後の再読込で再演しないこと、4 fixtureでProduction accessゼロと専用session保存を確認した。Landing/Garden Public receiverは未実装。通常開始のProgress policyとProduction PAD帰還の保存経路は維持。
+
+Remote runtime CI: PENDING。Human isolated Device Gate: PENDING。Human Production integration Device Gate: PENDING。main merge: NOT AUTHORIZED / NOT PERFORMED。
+
+次は実装候補を専用ブランチへ公開し、Draft PRのCIを確認する段階。前回の明示的な公開承認は契約・登録変更を対象としており、このruntime候補の公開承認とは区別する。公開前にはローカルfixtureをユーザーが開けるexact-build URLとして提示しない。公開後も自動合格を実機PASSとして扱わない。
