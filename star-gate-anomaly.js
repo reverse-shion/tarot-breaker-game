@@ -1,9 +1,9 @@
 (() => {
 "use strict";
 const ASSETS={
- ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
- shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
- aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp"
+ ruins:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/7c4aaf23195860991c4e724caecc1bddec684c4a/assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
+ shion:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/baac4dd485e703c7d021c5a07bdea808d2d5fd3e/assets/sprites/shion/shion_card_01_reach.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/833b2fdd91b648c710e49a7250bbcda3ba29cf06/assets/sprites/shion/shion_card_02_draw.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/2e0b2d3e7493016773bf4d9b1e1ff12c55aabf8a/assets/sprites/shion/shion_card_03_check.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/0abb9281daa913071bf0ddb5ec83e35f4511a420/assets/sprites/shion/shion_card_04_raise.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/3512d3cc89090baa16e761e9ffeb7241f2a458b0/assets/sprites/shion/shion_card_05_reach.webp"],
+ aura1:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/49accffdc64f196a80149f5f43373950739eb6bb/assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp"
 };
 const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
 const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
