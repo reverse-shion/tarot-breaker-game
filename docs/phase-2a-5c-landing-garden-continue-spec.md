@@ -1,10 +1,10 @@
 # TAROT BREAKER — Phase 2A-5c Landing / Garden Continue Receiver
 
 **Version:** v1.1 — audited implementation contract  
-**Status:** PRE-AUDIT COMPLETE / IMPLEMENTATION CONTRACT READY  
+**Status:** IMPLEMENTATION + DEVICE VERIFICATION COMPLETE / FINAL MAIN GATE  
 **Previous phase:** Phase 2A-5b COMPLETE  
 **Baseline main SHA:** `0958b445442645321264f4a724fbef2f7b2e885c`  
-**Next action:** review this v1.1 contract, then create the runtime implementation branch  
+**Next action:** run final main-target CI / review gates on PR #85; merge only after explicit product-owner authorization  
 **Implementation authorization:** CONTRACT READY — runtime implementation remains blocked until this v1.1 contract is reviewed
 
 > ## RESTART HERE
@@ -440,6 +440,18 @@ Reason: no schema or canonical route change is required, but both target maps st
 ### 16.10 Review gate
 
 This audit branch contains documentation only. Runtime implementation must use a separate implementation branch created from the reviewed baseline. Do not merge runtime changes into this audit branch.
+
+---
+
+## 18. Phase 2A-5c final verification status
+
+Verified runtime SHA: `96edc22bcc4d1f1ae7a988a8726217dfccecd7fa`.
+
+Human Device PASS is recorded for L1, L2, L3, G1, G2, G3, and the ordinary Title → Alenon → PAD → Landing → Garden → Landing → Alenon route in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
+
+PR #86 was independently diff/error-path reviewed and merged into the Phase 2A-5c feature branch at `3bfca901efa1b247e009f1d7309bd4e2c4236bc5`. No production/runtime file changed after the verified runtime SHA; later commits are evidence/documentation only.
+
+Remaining work is final PR #85 main-target CI / merge-gate verification and explicit product-owner authorization. Public Title Continue activation remains out of scope for this phase.
 
 ---
 
