@@ -255,3 +255,8 @@ test("invalid save is not auto-reset; it exposes RETRY and a confirmed New Game 
   assert.equal(t.elements["start-screen"].dataset.titleMode, "continue");
   assert.equal(t.elements.continue.hidden, false);
 });
+
+
+test("first-visit preview bypasses live Continue title controller", () => {
+  assert.match(source, /params\.get\("titlePreview"\) === "first"/);
+});
