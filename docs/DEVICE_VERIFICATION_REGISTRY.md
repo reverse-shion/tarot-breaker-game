@@ -160,3 +160,22 @@ Runtime SHA: `8e831832fd5e3e9d6a6534e70d0ce0074148162d`.
 This PASS is limited to the title-menu visual and interaction changes explicitly checked on the exact runtime above. It does not infer unrelated gameplay, route, OS/browser, or viewport coverage. Main merge authorization and CI remain separate.
 
 Evidence note: PR #98 metadata was synchronized after recording this exact-runtime PASS; this note is evidence-only and does not modify runtime content.
+
+
+## Production Continue prologue-entry regression — exact-runtime human verification 2026-10-03
+
+Runtime SHA: `124f3ac8003fe4384311d37850f3418086dc456a`.
+
+| Check | Commit SHA | Device | Result | Human-confirmed observable behavior |
+|---|---|---|---|---|
+| Public Continue incomplete Alenon prologue | 124f3ac8003fe4384311d37850f3418086dc456a | Device not restated in confirmation | PASS | Public Continue no longer exposes the developer/manual `TOUCH TO BEGIN` gate; the incomplete Alenon story enters the authored flow automatically. |
+| Completed Alenon / PAD resume checkpoints | 124f3ac8003fe4384311d37850f3418086dc456a | Device not restated in confirmation | PASS | Owner confirmed completed-prologue and PAD-return recovery checks without issue; completed story did not replay. |
+| Landing arrival / Devil Memory completed recovery | 124f3ac8003fe4384311d37850f3418086dc456a | Device not restated in confirmation | PASS | Owner confirmed both Landing recovery cases without issue; completed Devil Memory remains completed. |
+| waiting_at_landing full PAD roundtrip | 124f3ac8003fe4384311d37850f3418086dc456a | Device not restated in confirmation | PASS | Starting with Shiopon waiting at Landing, owner completed PAD → Alenon → PAD return; after disembark the authored return greeting started, completed, Shiopon rejoined, and Garden progression was available. |
+
+### Scope boundary
+
+This PASS covers the exact production-Continue regression and the locked historical recovery contracts explicitly exercised above. The direct `landing-resume-waiting` fixture intentionally restores the waiting state only; the greeting belongs to the authored Alenon PAD roundtrip return. Regression tests added after the runtime SHA are evidence/test-only and do not change runtime behavior. No broader device, OS/browser, viewport, or unrelated gameplay coverage is inferred.
+
+
+PR #99 gate refresh note — 2026-10-03: metadata now records the exact-runtime device result as PASS. This is evidence-only; runtime content is unchanged.

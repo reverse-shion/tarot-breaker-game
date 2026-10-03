@@ -295,3 +295,38 @@ test("PAD arrival restores following only after the automatic return dialogue",(
   assert.match(finish,/runReturnGreeting\(\)\.then\(rejoinCompanion\)/);
   assert.doesNotMatch(finish,/rejoinCompanion\(\);\s*if \(shouldGreetOnReturn\)/);
 });
+
+
+test("waiting_at_landing runtime contract requires PAD return before greeting and rejoin",()=>{
+  const html=fs.readFileSync("star-country-landing.html","utf8");
+  const finish=html.slice(html.indexOf("function finishArrival()"),html.indexOf("async function beginBoarding()",html.indexOf("function finishArrival()")));
+  assert.match(finish,/const shouldGreetOnReturn\s*=\s*[\s\S]*arrivingFromAlenon[\s\S]*savedCompanion\?\.mode === "waiting"[\s\S]*companion\.visible/);
+  assert.match(finish,/void runReturnGreeting\(\)\.then\(rejoinCompanion\)/);
+  assert.match(finish,/else \{\s*rejoinCompanion\(\);\s*\}/);
+
+  const greeting=html.slice(html.indexOf("async function runReturnGreeting()"),html.indexOf("const idleFrame",html.indexOf("async function runReturnGreeting()")));
+  assert.match(greeting,/!arrivingFromAlenon/);
+  assert.match(greeting,/savedCompanion\?\.mode !== "waiting"/);
+  assert.match(greeting,/シオンさん！ おかえりなの！/);
+
+  const boot=html.slice(html.indexOf("async function bootLandingContinue()"),html.indexOf("async function boot()",html.indexOf("async function bootLandingContinue()")));
+  assert.match(boot,/if \(continueSession\.returningFromAlenon\) \{[\s\S]*ride\.mode = "arriving"/);
+  assert.match(boot,/setRideMode\(continueSession\.returningFromAlenon \? "arriving" : "ground"\)/);
+  assert.doesNotMatch(boot,/runReturnGreeting\(\)/,
+    "direct Continue at Landing must not invent the return greeting before a real PAD roundtrip");
+});
+
+test("locked historical Continue contracts remain represented by regression tests",()=>{
+  const alenon=fs.readFileSync("alenon.html","utf8");
+  const landing=fs.readFileSync("star-country-landing.html","utf8");
+  const title=fs.readFileSync("public-continue-title.js","utf8");
+
+  assert.match(alenon,/const productionStoryEntry\s*=[\s\S]*params\.get\("from"\) === "title"[\s\S]*continuePublicRequest && !publicHarnessRequest/);
+  assert.match(alenon,/if \(productionStoryEntry\)[\s\S]*runPrologue\(\)/);
+  assert.match(title,/render\(controller\.inspect\(\)\)/);
+  assert.doesNotMatch(title,/titlePreview/);
+
+  assert.match(landing,/let devilEventStarted = continueRequest \?[\s\S]*continueSession\.projection\.landingMemoryDone/);
+  assert.match(landing,/continueSession\.context\.companion === "waiting_at_landing" && !companion\.following/);
+  assert.match(landing,/しおぽんとの帰還会話が完了するまで星門庭園へは移動できません/);
+});

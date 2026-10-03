@@ -104,12 +104,7 @@
 
   function refresh() {
     controller = window.TarotPublicContinue.createController({navigate: navigateRuntime});
-    function inspectTitleState() {
-    if (titlePreview === "first") return {ok:false, status:"none"};
-    return controller.inspect();
-  }
-
-  render(controller.inspect());
+    render(controller.inspect());
   }
 
   render(controller.inspect());
