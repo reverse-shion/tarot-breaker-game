@@ -35,6 +35,7 @@ function harness({arrival=true, imageDelay, decodeDelay, decodeMissing=false, ba
     decode(){return decodeDelay?.promise || Promise.resolve();}
   }
   const window=new Element();window.devicePixelRatio=2;window.dispatchEvent=e=>{events.push(e.type);window.emit(e.type,e);};
+  window.TarotRuntimeEntry={requireInternal:()=>({ok:true}),navigate:target=>(sandbox.location.href=target,{ok:true})};
   const sandbox={document,window,Image,URLSearchParams,CustomEvent:class {constructor(type,init){this.type=type;this.detail=init?.detail;}},location:{search:arrival?'?from=landing&navDebug=1':'?navDebug=1',href:''},performance:{now:()=>now},console:{error:e=>errors.push(e),warn(){},log(){}},requestAnimationFrame:f=>frames.push(f),setTimeout:(f,ms)=>{timers.set(++timerId,{f,ms});return timerId;},clearTimeout:id=>timers.delete(id),fetch:async url=>({ok:!badJson,json:async()=>url.includes('manifest')?manifest:collision})};
   Object.assign(window,{setTimeout:sandbox.setTimeout,clearTimeout:sandbox.clearTimeout});
   vm.createContext(sandbox);
@@ -102,12 +103,29 @@ test('already failed image rejects immediately, and failed decode fallback propa
   await assert.rejects(h.sandbox.waitImage({complete:true,naturalWidth:10,src:'broken.webp',decode:async()=>{throw new Error('decode failure');}}),/canvas failure/);
 });
 
-test('normal TOUCH TO START still resets journey and opens the prologue, without an arrival timer',async()=>{
-  const h=harness({arrival:false});let resets=0;h.window.TarotJourney={reset:()=>resets++};h.run();await flush();
+test('normal TOUCH TO START resets durable Progress and Journey before opening the prologue',async()=>{
+  const h=harness({arrival:false});let journeyResets=0,progressResets=0;
+  h.window.TarotJourney={reset:()=>journeyResets++};
+  h.window.TarotProgressCore={createProgress:()=>({resetGame(token){assert.equal(token,'title-new-game');progressResets++;return {persisted:true};}})};
+  h.run();await flush();
   assert.equal(h.ready(),true);assert.equal(h.elements['start'].disabled,false);
   assert.equal(h.events.includes('tarot-breaker:world-enter'),false);
-  h.elements.start.emit('click');assert.equal(resets,1);assert.equal(h.sandbox.location.href,'./alenon.html?from=title&build=6bc2a38e');
+  h.elements.start.emit('click');
+  assert.equal(progressResets,1);assert.equal(journeyResets,1);
+  assert.equal(h.sandbox.location.href,'./alenon.html?from=title&build=6bc2a38e');
   assert.equal(h.timers.size,0);
+});
+
+test('New Game fails closed when durable Progress cannot be reset',async()=>{
+  const h=harness({arrival:false});let journeyResets=0;
+  h.window.TarotJourney={reset:()=>journeyResets++};
+  h.window.TarotProgressCore={createProgress:()=>({resetGame:()=>({persisted:false,reason:'write-unavailable'})})};
+  h.run();await flush();
+  h.elements.start.emit('click');
+  assert.equal(journeyResets,0);
+  assert.equal(h.sandbox.location.href,'');
+  assert.equal(h.elements.start.disabled,false);
+  assert.match(h.elements['load-note'].textContent,/初期化できません/);
 });
 
 test('first-paint cover is opaque and guards the parent composite; error removes the cover',()=>{
@@ -154,7 +172,7 @@ test('PAD gate audio remains one play, fixed 1800ms transfer, 180ms fade, volume
   const fn=source.slice(source.indexOf('      function leaveForGarden()'),source.indexOf('      function setTarget(',source.indexOf('      function leaveForGarden()')));
   const audio={playCalls:0,volume:0,currentTime:0,pause(){this.paused=true;},play(){this.playCalls++;this.paused=false;return Promise.resolve();}};
   const timers=[],frames=[];const location={href:''};
-  const scope={continueDevRequest:false,leaving:false,companion:{following:true},savedCompanion:{mode:'following'},clearTarget(){},keys:new Set(),document:{body:{classList:{add(){}}}},status:{style:{}},guide:{},starGateAudio:audio,performance:{now:()=>0},requestAnimationFrame:f=>frames.push(f),location,window:{setTimeout:(f,ms)=>timers.push({f,ms})}};
+  const scope={continueDevRequest:false,continueRequest:false,leaving:false,companion:{following:true},savedCompanion:{mode:'following'},clearTarget(){},keys:new Set(),document:{body:{classList:{add(){}}}},status:{style:{}},guide:{},starGateAudio:audio,performance:{now:()=>0},requestAnimationFrame:f=>frames.push(f),location,window:{setTimeout:(f,ms)=>timers.push({f,ms})}};
   vm.createContext(scope);vm.runInContext(fn+';leaveForGarden();leaveForGarden();',scope);
   assert.equal(audio.playCalls,1);assert.equal(audio.volume,.45);assert.notEqual(audio.loop,true);
   assert.deepEqual(timers.map(t=>t.ms),[1620,1800]);

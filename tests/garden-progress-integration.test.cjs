@@ -45,5 +45,5 @@ test("waiting_at_landing is absent from Garden and cannot restart Shiopon meetin
   assert.match(game,/hidden: window\.TarotGardenDevTransit\?\.context\?\.companion === "waiting_at_landing"/);
   assert.match(game,/if \(shiopon\.hidden\) return;/);
   assert.match(game,/entry\.actor !== shiopon \|\| !shiopon\.hidden/);
-  assert.match(dialogue,/savedStory = devTransit\?\.projection\?\.gardenStory/);
+  assert.match(dialogue,/savedStory = publicTransit\?\.projection\?\.gardenStory \|\| devTransit\?\.projection\?\.gardenStory/);
 });

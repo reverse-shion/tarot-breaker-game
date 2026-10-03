@@ -29,6 +29,26 @@
     return {key, progress: core.createProgress({storage: backend, diagnostic})};
   }
 
+  function projectResolved(resolved) {
+    if (!resolved?.ok) return resolved;
+    const context = resolved.context;
+    if (context.mapId !== MAP_ID || context.spawnId !== SPAWN_ID)
+      return Object.freeze({ok:false, reason:"not-garden"});
+    if (context.companion === "waiting_at_landing")
+      return Object.freeze({ok:false, reason:"garden-companion-contradiction"});
+    const has = id => context.completedEvents.includes(id);
+    const projection = Object.freeze({
+      landingMemoryDone: has("landing_devil_memory"),
+      gardenStory: Object.freeze({
+        shioponDone: has("garden_shiopon_meet"),
+        lumiereDone: has("garden_lumiere_gate"),
+        joined: context.companion === "joined_with_shion",
+      }),
+      companion: context.companion === "joined_with_shion" ? Object.freeze({mode:"following"}) : null,
+    });
+    return Object.freeze({ok:true, context, projection, spawn:Object.freeze({x:724,y:944})});
+  }
+
   function createSession({search, storage, diagnostic} = {}) {
     const params = new URLSearchParams(search || "");
     const definition = checkpoints.resolve(search);
@@ -40,20 +60,11 @@
     const opened = openDevProgress(definition, storage, diagnostic);
     const resolved = resume.resolveContinue(opened.progress.load());
     if (!resolved.ok) return resolved;
-    const context = resolved.context;
-    if (context.mapId !== MAP_ID || context.spawnId !== SPAWN_ID)
-      return Object.freeze({ok:false, reason:"not-garden"});
-    const has = id => context.completedEvents.includes(id);
-    const projection = Object.freeze({
-      gardenStory: Object.freeze({
-        shioponDone: has("garden_shiopon_meet"),
-        lumiereDone: has("garden_lumiere_gate"),
-        joined: context.companion === "joined_with_shion",
-      }),
-    });
-    return Object.freeze({ok:true, context, projection, progress:opened.progress,
-      definition, key:opened.key, spawn:Object.freeze({x:724,y:944})});
+    const projected = projectResolved(resolved);
+    if (!projected.ok) return projected;
+    return Object.freeze({...projected, progress:opened.progress,
+      definition, key:opened.key});
   }
 
-  return Object.freeze({createSession});
+  return Object.freeze({createSession, projectResolved});
 });

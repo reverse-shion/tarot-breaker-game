@@ -17,8 +17,11 @@
     const result = resume.resolveContinue(load);
     if (!result.ok) return Object.freeze({ok:false, status:"invalid", reason:result.reason});
     const context = result.context;
-    if (context.mapId !== "alenon" || !["intro", "pad_return"].includes(context.spawnId))
-      return Object.freeze({ok:false, status:"preparing"});
+    const supported =
+      (context.mapId === "alenon" && ["intro", "pad_return"].includes(context.spawnId)) ||
+      (context.mapId === "star_country_landing" && ["pad_ground", "garden_entrance"].includes(context.spawnId)) ||
+      (context.mapId === "star_gate_garden" && context.spawnId === "south_gate");
+    if (!supported) return Object.freeze({ok:false, status:"preparing"});
     return Object.freeze({ok:true, status:"valid", context, url:"./" + context.entryFile + "?entry=continue"});
   }
   function createController({storage, diagnostic, navigate} = {}) {

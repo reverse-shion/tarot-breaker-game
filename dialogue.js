@@ -350,7 +350,9 @@
   };
 
   const devTransit = window.TarotGardenDevTransit?.ok ? window.TarotGardenDevTransit : null;
-  const savedStory = devTransit?.projection?.gardenStory || window.TarotJourney?.get("gardenStory");
+  const publicTransit = window.TarotGardenContinueTransit?.ok ? window.TarotGardenContinueTransit : null;
+  const savedStory = publicTransit?.projection?.gardenStory || devTransit?.projection?.gardenStory ||
+    window.TarotJourney?.get("gardenStory");
   if (savedStory) {
     story.shioponDone = savedStory.shioponDone === true;
     story.lumiereDone = savedStory.lumiereDone === true;

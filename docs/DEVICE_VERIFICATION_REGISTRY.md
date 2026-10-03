@@ -117,3 +117,16 @@ The success-status fix changes only the status panel visibility in Alenon (7 run
 The selected visual/Continue refresh/error-return smoke checklist is explicitly PASS on this new exact runtime. Prior broader route/fixture evidence for `2b2302d78c065ca61b680a3990854187ce4f261a` remains historical and is NOT relabelled as a new-SHA route PASS; no new full-game retest or flawless companion-visual claim is manufactured. Independent evidence review returned PASS. Overall PR Device Gate is PASS for the reviewed proportional scope and selected checklist. CI and main merge authorization remain separate.
 
 Deferred LANDING-SHIOPON-TRANSIENT-VISIBILITY remains an open existing defect. No rendering-cause claim or follower repair is included.
+
+
+## Phase 2A-6C Garden Public Continue — exact-runtime human verification 2026-10-03
+
+Runtime SHA: `2c9189158360d7bffa99b845899607647db230cc`.
+
+| Check | Commit SHA | Device | Result | Human-confirmed observable behavior |
+|---|---|---|---|---|
+| Public Continue → Star Gate Garden → south exit → PAD Landing | 2c9189158360d7bffa99b845899607647db230cc | Device not restated in this confirmation | PASS | Product owner explicitly confirmed “問題なかった” after testing the exact fixed build. Garden resumed from Continue and the south-edge return successfully transitioned to the PAD landing map. |
+
+### Scope boundary
+
+This PASS covers the reported blocking defect repaired in Phase 2A-6C: a Garden Public Continue session can use the physically reachable south exit and return to Landing. It does not manufacture broader device coverage, OS/browser details, or unrelated route behavior not explicitly confirmed in this check. The runtime fix derives the exit boundary from collision geometry; later commits above the runtime SHA are tests/evidence only.

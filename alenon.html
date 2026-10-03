@@ -1862,8 +1862,17 @@
   
   </style>
   <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-dialogue-ui-v3" />
+  <script src="./runtime-entry.js?v=title-entry-v1"></script>
 </head>
 <body data-alenon-drift-revision="no-objective-v35">
+  <script>
+    (function(){
+      var p=new URLSearchParams(location.search);
+      var tool=p.has("dev")||p.has("edit")||p.has("objects")||p.has("collision")||p.has("skipPrologue")||p.has("debug");
+      var result=window.TarotRuntimeEntry?.requireInternal({allowDirect:tool,title:"./index.html"});
+      if(!tool && !result?.ok) document.documentElement.style.visibility="hidden";
+    })();
+  </script>
   <main id="viewport" aria-label="TAROT BREAKER プロローグ アレノンの遺跡">
     <section id="world" aria-label="アレノンの遺跡マップ">
       <!-- Backmost layer -->
@@ -4223,9 +4232,11 @@
         stopAlenonOrbResonance();
 
         window.setTimeout(() => {
-          location.href = landingContinueTransitId
+          const target = landingContinueTransitId
             ? `./star-country-landing.html?from=alenon&dev=${encodeURIComponent(landingContinueTransitId)}`
             : "./star-country-landing.html?from=alenon";
+          if (window.TarotRuntimeEntry?.navigate) window.TarotRuntimeEntry.navigate(target);
+          else location.href = target;
         }, 820);
       }
 

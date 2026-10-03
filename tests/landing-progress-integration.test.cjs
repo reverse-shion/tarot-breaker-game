@@ -3,7 +3,7 @@ const fs=require("node:fs"),path=require("node:path"),test=require("node:test"),
 const source=fs.readFileSync(path.join(__dirname,"..","star-country-landing.html"),"utf8");
 
 test("Landing Progress is observer-only and legacy replay guard stays authoritative",()=>{
-  assert.match(source,/let devilEventStarted = continueDevRequest \?[\s\S]*continueSession\.projection\.landingMemoryDone[\s\S]*window\.TarotJourney\?\.get\("landingMemoryDone"\) === true;/);
+  assert.match(source,/let devilEventStarted = continueRequest \?[\s\S]*continueSession\.projection\.landingMemoryDone[\s\S]*window\.TarotJourney\?\.get\("landingMemoryDone"\) === true;/);
   assert.doesNotMatch(source,/devilEventStarted\s*=\s*landingProgress/);
   assert.equal(source.match(/TarotJourney\?\.set\("landingMemoryDone", true\)/g)?.length,1);
   assert.match(source,/if \(!continueDevRequest\) window\.TarotJourney\?\.set\("landingMemoryDone", true\)/);
@@ -19,6 +19,7 @@ test("Landing observes Alenon arrival without changing authored gate transition"
   assert.ok(source.includes('sourceMapId: "alenon"'));
   assert.ok(source.includes('destinationMapId: "star_country_landing"'));
   for(const token of ['const DEVIL_EVENT_Y = 355;','const GARDEN_EXIT_Y = 215;','starGateAudio.volume = .45;','const transitionMs = 1800;']) assert.ok(source.includes(token),token);
-  assert.match(source,/location\.href = continueDevRequest \?[\s\S]*: "\.\/index\.html\?from=landing";/);
+  assert.match(source,/const target = continueDevRequest \?[\s\S]*: "\.\/index\.html\?from=landing";/);
+  assert.match(source,/TarotRuntimeEntry\?\.navigate\) window\.TarotRuntimeEntry\.navigate\(target\)/);
 });
 

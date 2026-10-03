@@ -28,7 +28,7 @@ test("Garden direct Continue bootstrap writes its real receiver after shared dep
   });
   assert.deepEqual(writes,[
     '<script src="./dev-checkpoints.js?v=phase-2a-5c-1"></script>',
-    '<script src="./progress-resume.js?v=phase-2a-5c-1"></script>',
+    '<script src="./progress-resume.js?v=phase-2a-6c-garden"></script>',
     '<script src="./garden-resume.js?v=phase-2a-5c-1"></script>',
   ]);
 });
@@ -41,7 +41,7 @@ test("Garden dev bootstrap writes executable script end tags in dependency order
   });
   assert.deepEqual(writes,[
     '<script src="./dev-checkpoints.js?v=phase-2a-5c-1"></script>',
-    '<script src="./progress-resume.js?v=phase-2a-5c-1"></script>',
+    '<script src="./progress-resume.js?v=phase-2a-6c-garden"></script>',
     '<script src="./landing-resume.js?v=phase-2a-5c-2"></script>',
   ]);
   for(const output of writes){

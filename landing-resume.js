@@ -178,5 +178,5 @@
       image.src = src;
     });
   }
-  return Object.freeze({receive, createSession, createGardenTransitSession, chooseFollowingPlacement, validateCollision, loadImage});
+  return Object.freeze({receive, projectResolved, createSession, createGardenTransitSession, chooseFollowingPlacement, validateCollision, loadImage});
 });

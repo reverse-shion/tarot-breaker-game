@@ -7,7 +7,7 @@ function production(state){return new Map([[Core.STORAGE_KEY,JSON.stringify(stat
 function noWrites(t){assert.equal(t.accesses.filter(([op])=>op!=='read').length,0);}
 
 test('Title durable status validation is read only including unsupported map/version and unavailable',()=>{
- for(const [state,status] of [[null,'none'],['bad','invalid'],[{...initial(),version:9},'unsupported'],[initial(),'valid'],[{...initial(),checkpoint:{mapId:'star_country_landing',spawnId:'pad_ground'},completedEvents:['alenon_prologue']},'preparing']]){
+ for(const [state,status] of [[null,'none'],['bad','invalid'],[{...initial(),version:9},'unsupported'],[initial(),'valid'],[{...initial(),checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:['alenon_prologue','landing_devil_memory']},'valid']]){
   const store=storage(state),bytes=store.bytes(),controller=Controller.createController({storage:store,diagnostic(){}});
   assert.equal(controller.inspect().status,status);assert.equal(store.bytes(),bytes);assert.equal(store.writes.length,0);
  }
@@ -55,7 +55,9 @@ test('Public incomplete prologue persists via existing Production boundary; norm
  m.runPrologue();for(let i=0;i<700&&!m.story.completed;i++)await t.tick();assert.equal(m.story.completed,true);
  const saved=JSON.parse(t.production.get(Core.STORAGE_KEY));assert.deepEqual(saved.completedEvents,['alenon_prologue']);assert.deepEqual(saved.checkpoint,{mapId:'alenon',spawnId:'intro'});
  const back=page('?entry=continue',{production:t.production,allowProductionWrites:true});await back.flush();assert.equal(back.h.testAlenon.story.started,false);assert.equal(back.h.testAlenon.story.completed,true);
- const game=fs.readFileSync('game.js','utf8');assert.match(game,/TarotJourney\?\.reset\(\)/);assert.doesNotMatch(game,/resetGame\(/);
+ const game=fs.readFileSync('game.js','utf8');
+ assert.match(game,/if \(!enteringGardenRuntime\) \{[\s\S]*resetGame\("title-new-game"\)[\s\S]*TarotJourney\?\.reset\(\)/);
+ assert.doesNotMatch(game,/gardenResumePublic[\s\S]{0,500}resetGame\(/);
  const source=fs.readFileSync('alenon.html','utf8');assert.doesNotMatch(source,/commitArrival\(/);
 });
 test('registered Public harness executes same adapter while preserving Production/Journey bytes and containing departure',async()=>{
@@ -86,9 +88,12 @@ test('real Title UI renders reasons, ignores Garden paths and revalidates click 
   vm.createContext(h);for(const file of ['route-registry.js','progress.js','progress-resume.js','public-continue.js','public-continue-title.js'])vm.runInContext(fs.readFileSync(file,'utf8'),h);
   return {store,h,button,note,start,events};
  }
- for(const [state,fragment] of [[null,'保存データがありません'],['bad','確認できません'],[{...initial(),version:2},'保存形式'],[{...initial(),checkpoint:{mapId:'star_country_landing',spawnId:'pad_ground'},completedEvents:['alenon_prologue']},'準備中']]){
+ for(const [state,fragment] of [[null,'保存データがありません'],['bad','確認できません'],[{...initial(),version:2},'保存形式']]){
   const t=title(state);assert.equal(t.button.disabled,true);assert.ok(t.note.textContent.includes(fragment));assert.equal(t.store.writes.length,0);
  }
+ const gardenState={...initial(),checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:['alenon_prologue','landing_devil_memory']};
+ const gardenTitle=title(gardenState);assert.equal(gardenTitle.button.disabled,false);assert.match(gardenTitle.note.textContent,/最後に保存/);
+ gardenTitle.button.handlers.click({stopPropagation(){}});assert.equal(gardenTitle.h.location.href,'./index.html?entry=continue');
  const t=title(initial());assert.equal(t.button.disabled,false);assert.match(t.note.textContent,/最後に保存/);t.store.change(null);t.button.handlers.click({stopPropagation(){}});assert.equal(t.h.location.href,'');assert.equal(t.button.disabled,true);
  t.store.change(initial());t.events.storage();assert.equal(t.button.disabled,false);t.button.handlers.click({stopPropagation(){}});assert.equal(t.h.location.href,'./alenon.html?entry=continue');assert.equal(t.button.disabled,true);
  assert.equal(t.start.disabled,true);t.events.pageshow();assert.equal(t.start.disabled,false);assert.equal(t.button.disabled,false);assert.equal(t.store.writes.length,0);
@@ -99,7 +104,7 @@ test('real Title UI renders reasons, ignores Garden paths and revalidates click 
 });
 
 test('Public adapter imports are explicitly allowlisted; editor redirect cannot precede Public query refusal',()=>{
- const allowed=new Set(['alenon.html','alenon-public-continue.js','public-continue.js','index.html','public-continue-title.js','dev-checkpoints.js']);
+ const allowed=new Set(['alenon.html','alenon-public-continue.js','public-continue.js','index.html','public-continue-title.js','dev-checkpoints.js','star-country-landing.html','landing-public-continue.js','garden-public-continue.js','garden-public-bootstrap.js','garden-dev-bootstrap.js','garden-resume.js','garden-progress-observer.js','dialogue.js','game.js']);
  for(const file of fs.readdirSync('.').filter(file=>/\.(html|js)$/.test(file)&&!allowed.has(file))){
   const source=fs.readFileSync(file,'utf8');assert.doesNotMatch(source,/public-continue\.js|alenon-public-continue\.js|TarotAlenonPublicContinue|TarotPublicContinue/,file);
  }

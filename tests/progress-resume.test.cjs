@@ -193,9 +193,9 @@ test('browser import performs no storage/clock/token/navigation operation and on
   vm.runInNewContext(source,sandbox); assert.equal(typeof sandbox.TarotProgressResume.resolveContinue,'function');
   const root=path.join(__dirname,'..');
   assert.match(fs.readFileSync(path.join(root,'alenon.html'),'utf8'), /if \(continueDevRequest\) \{\s*bootAlenonContinue\(\);\s*return;/);
-  assert.match(fs.readFileSync(path.join(root,'star-country-landing.html'),'utf8'), /if \(continueDevRequest\) bootLandingContinue\(\);\s*else boot\(\);/);
+  assert.match(fs.readFileSync(path.join(root,'star-country-landing.html'),'utf8'), /if \(continueRequest\) bootLandingContinue\(\);\s*else boot\(\);/);
   for(const file of fs.readdirSync(root).filter(file=>/\.(html|js)$/.test(file) &&
-      !['index.html','public-continue.js','alenon-public-continue.js','progress-resume.js','alenon.html','alenon-resume.js','star-country-landing.html','landing-resume.js','garden-resume.js','dev-checkpoints.js','garden-dev-bootstrap.js'].includes(file)))
+      !['index.html','public-continue.js','alenon-public-continue.js','progress-resume.js','alenon.html','alenon-resume.js','star-country-landing.html','landing-resume.js','landing-public-continue.js','garden-resume.js','garden-public-continue.js','dev-checkpoints.js','garden-dev-bootstrap.js'].includes(file)))
     assert.equal(fs.readFileSync(path.join(root,file),'utf8').includes('progress-resume.js'),false,file);
 });
 

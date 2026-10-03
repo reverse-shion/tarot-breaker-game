@@ -74,11 +74,24 @@
     left: Object.freeze({ x: -1, y: 0 }),
     right: Object.freeze({ x: 1, y: 0 }),
   });
+  function navigateRuntime(target) {
+    if (window.TarotRuntimeEntry?.navigate) {
+      const result = window.TarotRuntimeEntry.navigate(target);
+      if (result?.ok) return true;
+      console.warn("[Runtime Entry] handoff unavailable", result?.reason);
+      return false;
+    }
+    location.href = target;
+    return true;
+  }
+
   const params = new URLSearchParams(location.search);
   const enteringFromLanding = params.get("from") === "landing";
   const gardenResumeDev = params.get("from") === null &&
     /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
-  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev;
+  const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
+    !params.has("from") && !params.has("dev");
+  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic;
   const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
     ? params.get("dev")
     : null;
@@ -676,7 +689,7 @@
     // the lower corners cannot trigger a map transition.
     const gardenPos = { x: next.x, y: next.y };
     if (
-      enteringFromLanding && gardenExitArmed && !leavingMap && next.moving &&
+      enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
       !window.TarotDialogue?.getState().active &&
       next.dy > 0 && gardenPos.y >= gardenExitRef.y - 4 &&
       gardenPos.x >= 610 &&
@@ -707,7 +720,7 @@
         window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
       }
       controls.cancel("map-return");
-      location.href = landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden";
+      navigateRuntime(landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden");
       return;
     }
 
@@ -1682,18 +1695,29 @@
     event?.preventDefault();
     if (!ready || running) return;
 
-    // Root URL is the official title entry. Only a PAD handoff may enter the
-    // Star Gate Garden directly.
-    if (!enteringFromLanding) {
-      if (typeof gardenResumeDev === "undefined" || !gardenResumeDev) {
-        if (start) start.disabled = true;
-        window.TarotJourney?.reset();
-        const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
-        const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
-          ? "&orbOutput=webAudio" : "";
-        location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
+    // Root title may start a new game. Any validated Garden runtime entry
+    // (Landing handoff, dev Continue, or Public Continue) must never fall through
+    // to the New Game reset/navigation path.
+    if (!enteringGardenRuntime) {
+      if (start) start.disabled = true;
+      const progress = window.TarotProgressCore?.createProgress();
+      if (!progress) {
+        if (start) start.disabled = false;
+        if (note) note.textContent = "セーブ機能を初期化できません";
         return;
       }
+      const reset = progress.resetGame("title-new-game");
+      if (!reset?.persisted) {
+        if (start) start.disabled = false;
+        if (note) note.textContent = "セーブデータを初期化できません。再試行してください";
+        return;
+      }
+      window.TarotJourney?.reset();
+      const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
+      const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
+        ? "&orbOutput=webAudio" : "";
+      navigateRuntime(`./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`);
+      return;
     }
 
     running = true;
@@ -1933,17 +1957,20 @@
       }
 
       await loadCollision();
-      if (gardenResumeDev) {
-        const session = window.TarotGardenDevTransit;
+      const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
+      if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
+        throw new Error("garden-south-exit-unavailable");
+      if (gardenResumeDev || gardenResumePublic) {
+        const session = gardenResumePublic ? window.TarotGardenContinueTransit : window.TarotGardenDevTransit;
         if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
             session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||
-            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= 952)
+            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= southExitRef.y - 8)
           throw new Error("garden-continue-spawn-invalid");
         spawnRef = {x:session.spawn.x, y:session.spawn.y};
-        gardenExitRef = {...DEFAULT_SPAWN};
+        gardenExitRef = {...southExitRef};
       } else {
         spawnRef = findNearestSpawnRef();
-        gardenExitRef = { ...spawnRef };
+        gardenExitRef = {...southExitRef};
       }
       if (enteringFromLanding)
         spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
@@ -2015,6 +2042,19 @@
       };
 
       if (document.body.classList.contains("scene-load-error")) return;
+      if (gardenResumePublic) {
+        const fresh = window.TarotGardenPublicContinue?.revalidate(window.TarotGardenContinueTransit, {
+          search: location.search,
+          storage: window.localStorage,
+        });
+        if (!fresh?.ok) throw new Error(fresh?.reason || "garden-public-revalidate-failed");
+        const projected = window.TarotGardenPublicContinue.projectJourney(fresh, {
+          journey: window.TarotJourney,
+          storage: window.sessionStorage,
+        });
+        if (!projected?.ok) throw new Error(projected?.reason || "garden-public-project-failed");
+        window.TarotGardenContinueTransit = fresh;
+      }
       ready = true;
       resize();
       reset();
@@ -2024,9 +2064,11 @@
         start.disabled = false;
       }
       note.textContent =
-        params.get("from") === "landing"
-          ? "PAD離着陸場から星門庭園へ到着"
-          : "星門庭園の読み込み完了";
+        gardenResumePublic
+          ? "保存地点から星門庭園を再開"
+          : params.get("from") === "landing"
+            ? "PAD離着陸場から星門庭園へ到着"
+            : "星門庭園の読み込み完了";
 
       // begin() applies the existing PAD spawn/companion handoff and draws
       // again. Keep that final frame behind the gate light, not the earlier reset.
