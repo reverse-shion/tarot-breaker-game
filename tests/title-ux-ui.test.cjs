@@ -144,8 +144,10 @@ test("Title markup uses Japanese-first world-design labels and no legacy TOUCH T
 
 test("Title CSS keeps choices text-led, touch-sized and world-design themed", () => {
   assert.match(css, /Title UX \/ UI v1\.1 — World Design Edition/);
-  assert.match(css, /\.title-screen__choice \{[\s\S]*min-height: 64px;[\s\S]*background: transparent;/);
+  assert.match(css, /\.title-screen__choice \{[\s\S]*min-height: 52px;[\s\S]*background: transparent;/);
   assert.match(css, /\.title-screen__menu-sigil/);
+  assert.match(css, /\.title-screen\[data-title-mode="continue"\] #start \{[\s\S]*min-height: 48px;[\s\S]*margin-top: -2px;/);
+  assert.match(css, /text-shadow:[\s\S]*rgba\(0, 0, 0, \.92\)/);
   assert.match(css, /\.title-screen__confirm-panel/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   assert.match(css, /prefers-reduced-motion/);
