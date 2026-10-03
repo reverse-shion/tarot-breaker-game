@@ -979,3 +979,22 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
     filter:drop-shadow(0 2px 4px rgba(0,0,0,.66)) drop-shadow(0 0 18px rgba(178,225,255,.72)) brightness(1.28);
   }
 }
+
+/* Device feedback: Continue should read as a clear heartbeat, not ambient shimmer.
+ * Three quick beats, then a short rest. Geometry stays locked. */
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation:title-frame-heartbeat 2.4s ease-in-out infinite;
+}
+@keyframes title-frame-heartbeat {
+  0%, 8%, 16%, 24%, 100% {
+    opacity:.88;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(116,188,239,.22)) brightness(.96);
+  }
+  4%, 12%, 20% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.64)) drop-shadow(0 0 22px rgba(188,231,255,.88)) brightness(1.42);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-screen[data-title-mode="continue"] #continue .title-screen__frame { animation:none; }
+}
