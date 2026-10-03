@@ -2,6 +2,7 @@
 const fs=require("node:fs");
 const test=require("node:test");
 const assert=require("node:assert/strict");
+const vm=require("node:vm");
 const source=fs.readFileSync("star-gate-anomaly.js","utf8");
 const css=fs.readFileSync("star-gate-anomaly.css","utf8");
 const game=fs.readFileSync("game.js","utf8");
@@ -124,7 +125,7 @@ test("Stage 2 camera tour guards every shot against world-edge exposure",()=>{
 });
 
 
-test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it",()=>{
+test("Stage 3 keeps current Shion translucent and anchors Future Shion diagonally in front",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  assert.match(source,/const FUTURE_VISION_CURRENT_SHION_OPACITY=\.55/);
  const stage2=source.slice(source.indexOf("async function futureFixationStage2"),source.indexOf("async function futureFixationStage3"));
@@ -133,9 +134,13 @@ test("Stage 3 keeps current Shion translucent and anchors Future Shion beside it
  assert.doesNotMatch(stage3,/set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
  assert.doesNotMatch(stage3,/vis\?\.set\("shion",0\)/);
  assert.match(source,/TarotActorScreenAnchor\?\.get\?\.\("shion"\)/);
- assert.match(source,/anchor\.x\+anchor\.width\/2\+gap/);
- assert.match(source,/anchor\.feetY-targetHeight/);
- assert.match(source,/const targetHeight=anchor\.height/);
+ assert.match(source,/const FUTURE_SHION_OFFSET_X=\.45/);
+ assert.match(source,/const FUTURE_SHION_OFFSET_Y=\.30/);
+ assert.match(source,/anchor\.x\+anchor\.width\*FUTURE_SHION_OFFSET_X-targetWidth\/2/);
+ assert.match(source,/const futureFeetY=stage3\?anchor\.feetY\+anchor\.height\*FUTURE_SHION_OFFSET_Y:anchor\.feetY/);
+ assert.match(source,/futureFeetY-targetHeight/);
+ assert.match(source,/const FUTURE_SHION_VISUAL_SCALE=\.86/);
+ assert.match(source,/const targetHeight=anchor\.height\*FUTURE_SHION_VISUAL_SCALE/);
  assert.match(source,/el\.naturalWidth\/el\.naturalHeight/);
  assert.match(source,/el\.style\.height=targetHeight\+"px"/);
  assert.match(source,/el\.style\.width=ratio\?targetHeight\*ratio\+"px":"auto"/);
@@ -153,6 +158,36 @@ test("Actor visibility is owned by the single final scene composite",()=>{
  assert.match(effects,/ctx\.globalAlpha\*=Math\.max\(0,Math\.min\(1,Number\(opacity\)\|\|0\)\)/);
  assert.ok(effects.indexOf("draw(paint)") < effects.indexOf("ctx.globalAlpha*=Math.max"));
  assert.equal((effects.match(/ctx\.globalAlpha\*=Math\.max\(0,Math\.min\(1,Number\(opacity\)\|\|0\)\)/g)||[]).length,1);
+});
+
+test("Future Shion keeps its feet and aspect ratio across poses and scaled anchors",()=>{
+ const align=source.slice(source.indexOf("const FUTURE_SHION_VISUAL_SCALE"),source.indexOf("function gateShell"));
+ for(const anchor of [{x:195,feetY:350,width:64,height:80},{x:320,feetY:450,width:96,height:120}]){
+  const classes=new Set();
+  const el={style:{},complete:true,naturalWidth:512,naturalHeight:512,classList:{add:n=>classes.add(n)}};
+  const context={root:{querySelector:()=>el,classList:{contains:()=>true}},window:{TarotActorScreenAnchor:{get:id=>{assert.equal(id,"shion");return anchor}}},ASSETS:{shion:["reach1","draw","check","raise","reach5"]}};
+  vm.createContext(context);vm.runInContext(align,context);
+  for(let n=1;n<=5;n++){
+   vm.runInContext(`setShion(${n})`,context);
+   const height=parseFloat(el.style.height),width=parseFloat(el.style.width),left=parseFloat(el.style.left),top=parseFloat(el.style.top);
+   assert.equal(el.src,context.ASSETS.shion[n-1]);
+   assert.equal(height,anchor.height*.86);
+   assert.equal(width/height,el.naturalWidth/el.naturalHeight);
+   assert.ok(Math.abs(top+height-(anchor.feetY+anchor.height*.30))<1e-9);
+   assert.ok(Math.abs(left+width/2-(anchor.x+anchor.width*.45))<1e-9);
+  }
+  el.complete=false;let onload;
+  el.addEventListener=(name,cb,options)=>{assert.equal(name,"load");assert.equal(options.once,true);onload=cb};
+  vm.runInContext("setShion(1)",context);
+  el.naturalWidth=256;el.naturalHeight=512;onload();
+  assert.equal(parseFloat(el.style.width)/parseFloat(el.style.height),.5);
+  assert.ok(Math.abs(parseFloat(el.style.top)+parseFloat(el.style.height)-(anchor.feetY+anchor.height*.30))<1e-9);
+  // The shared pose helper must preserve the legacy event's horizontal layout.
+  context.root.classList.contains=()=>false;el.complete=true;
+  vm.runInContext("setShion(1)",context);
+  assert.equal(parseFloat(el.style.left),anchor.x+anchor.width/2+Math.max(10,anchor.width*.28));
+  assert.ok(Math.abs(parseFloat(el.style.top)+parseFloat(el.style.height)-anchor.feetY)<1e-9);
+ }
 });
 
 test("Dual-presence composition does not alter approved ruins registration",()=>{
@@ -186,4 +221,28 @@ test("Stage 3 Future Shion is not trapped inside the hidden legacy Vision overla
  const visionClose=mount.indexOf('</div><img class="sga-shion"');
  assert.ok(visionClose>=0,"Future Shion must be a sibling after .sga-vision, not its child");
  assert.match(css,/\.sga-card-phase \.sga-shion\.visible \{ opacity:1; \}/);
+});
+
+test("Stage 3 settles once without changing pose timing, floating or flashing",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ assert.match(stage3,/root\.classList\.add\("sga-card-phase","sga-future-shion-settle"\)/);
+ assert.equal((source.match(/classList\.add\([^\n]*"sga-future-shion-settle"/g)||[]).length,1);
+ const setPose=source.slice(source.indexOf("function setShion"),source.indexOf("function gateShell"));
+ assert.doesNotMatch(setPose,/settle|animation/);
+ assert.match(stage3,/const timings=\[520,500,900,520,520\]/);
+ const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card {"));
+ assert.match(effect,/animation:sgaFutureShionSettle \.7s ease-out 1 both/);
+ assert.match(effect,/brightness\(1\.04\)/);
+ assert.match(effect,/drop-shadow\(0 0 \.6px rgba\(245,245,248,\.14\)\) drop-shadow\(0 0 1px rgba\(209,202,226,\.10\)\)/);
+ assert.doesNotMatch(effect,/infinite|pulse|transform|translate|blur\(|background|position:fixed|inset|gold/i);
+ assert.doesNotMatch(stage3,/sga-cut|flash|aura|floating/);
+});
+
+test("Reduced motion keeps the static edge and uses only a short simple fade",()=>{
+ const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card {"));
+ assert.match(effect,/@media \(prefers-reduced-motion: reduce\)[\s\S]*animation:sgaFutureShionFade \.18s linear 1 both/);
+ const fade=effect.match(/@keyframes sgaFutureShionFade \{([\s\S]*?)\n\}/)[1];
+ assert.match(fade,/from \{ opacity:0; \}/);
+ assert.match(fade,/to \{ opacity:1; \}/);
+ assert.doesNotMatch(fade,/filter|brightness|transform/);
 });

@@ -38,18 +38,26 @@ async function say(actor,text){
 }
 async function pause(ms){await sleep(ms)}
 const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
+// The card-pose source fills more of its 512px canvas than the playable Shion
+// frame does. Match the visible silhouette, not the raw image canvas height.
+const FUTURE_SHION_VISUAL_SCALE=.86;
+const FUTURE_SHION_OFFSET_X=.45;
+const FUTURE_SHION_OFFSET_Y=.30;
 function alignFutureShion(){
  const el=root?.querySelector(".sga-shion"),anchor=window.TarotActorScreenAnchor?.get?.("shion");
  if(!el||!anchor)return false;
+ const stage3=root.classList.contains("sga-future-shion-settle");
  const gap=Math.max(10,anchor.width*.28);
- const targetHeight=anchor.height;
+ const targetHeight=anchor.height*FUTURE_SHION_VISUAL_SCALE;
+ const futureFeetY=stage3?anchor.feetY+anchor.height*FUTURE_SHION_OFFSET_Y:anchor.feetY;
  const place=()=>{
    const ratio=el.naturalWidth>0&&el.naturalHeight>0?el.naturalWidth/el.naturalHeight:null;
-   el.style.left=(anchor.x+anchor.width/2+gap)+"px";
+   const targetWidth=ratio?targetHeight*ratio:anchor.width*FUTURE_SHION_VISUAL_SCALE;
+   el.style.left=(stage3?anchor.x+anchor.width*FUTURE_SHION_OFFSET_X-targetWidth/2:anchor.x+anchor.width/2+gap)+"px";
    el.style.bottom="auto";
    el.style.height=targetHeight+"px";
    el.style.width=ratio?targetHeight*ratio+"px":"auto";
-   el.style.top=(anchor.feetY-targetHeight)+"px";
+   el.style.top=(futureFeetY-targetHeight)+"px";
  };
  if(el.complete&&el.naturalWidth>0)place();else el.addEventListener("load",place,{once:true});
  return true;
@@ -245,7 +253,7 @@ async function futureFixationStage3(){
  // translucent with the Stage 2 ruins reveal; keep that state, never initiate it here.
  if(vis&&Math.abs(vis.getState().shion-FUTURE_VISION_CURRENT_SHION_OPACITY)>1e-6)
   throw new Error("Current Shion opacity drifted before Future Fixation Vision Stage 3");
- root.classList.add("sga-card-phase");
+ root.classList.add("sga-card-phase","sga-future-shion-settle");
  alignFutureShion();
  const timings=[520,500,900,520,520];
  for(let i=1;i<=5;i++){setShion(i);await pause(timings[i-1])}
