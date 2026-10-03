@@ -693,6 +693,110 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
 .title-screen[data-title-mode="continue"] #start .title-screen__choice-en {
   color: rgba(220, 230, 246, .68);
 }
+
+/* Continue focal treatment: aged silver/ivory with a restrained left-to-right glint.
+ * This deliberately avoids the logo's warm gold so the menu reads as a separate focal layer.
+ */
+.title-screen[data-title-mode="continue"] #continue {
+  overflow: hidden;
+  color: #eaf4ff;
+  min-height: 56px;
+  padding: 5px 16px 5px;
+  border-top: 1px solid rgba(191, 218, 239, .20);
+  border-bottom: 1px solid rgba(158, 190, 220, .18);
+  background:
+    linear-gradient(90deg, transparent 4%, rgba(4, 12, 24, .30) 24%, rgba(5, 13, 26, .44) 50%, rgba(4, 12, 24, .30) 76%, transparent 96%);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 242, 250, .035),
+    inset 0 -1px 0 rgba(93, 125, 155, .08);
+  animation: none;
+}
+.title-screen[data-title-mode="continue"] #continue::before {
+  left: 4%;
+  right: 4%;
+  height: 42px;
+  background:
+    radial-gradient(ellipse at center, rgba(116, 170, 215, .17) 0%, rgba(22, 50, 78, .13) 44%, transparent 74%);
+  opacity: 1;
+}
+.title-screen[data-title-mode="continue"] #continue::after {
+  left: 13%;
+  right: 13%;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(147, 192, 226, .54), rgba(229, 240, 246, .70), rgba(147, 192, 226, .54), transparent);
+  box-shadow: 0 0 8px rgba(105, 170, 220, .22);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__choice-jp {
+  font-weight: 600;
+  color: #edf6fb;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .96),
+    0 0 5px rgba(202, 228, 246, .62),
+    0 0 14px rgba(93, 159, 210, .32);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__choice-en {
+  color: rgba(198, 222, 239, .86);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .92), 0 0 6px rgba(121, 179, 221, .32);
+}
+.title-screen__choice-shine {
+  position: absolute;
+  z-index: 2;
+  top: 3px;
+  bottom: 3px;
+  left: -34%;
+  width: 22%;
+  pointer-events: none;
+  opacity: 0;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(222, 239, 250, .04) 18%,
+    rgba(241, 250, 255, .58) 48%,
+    rgba(183, 219, 244, .16) 72%,
+    transparent 100%
+  );
+  filter: blur(.15px);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__choice-shine {
+  animation: title-continue-glint 4.8s ease-in-out infinite 1.1s;
+}
+.title-screen[data-title-mode="continue"] #start {
+  min-height: 46px;
+  margin-top: -1px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  color: rgba(220, 224, 228, .88);
+}
+.title-screen[data-title-mode="continue"] #start::before {
+  left: 17%;
+  right: 17%;
+  height: 30px;
+  background: radial-gradient(ellipse at center, rgba(4, 8, 16, .40) 0%, rgba(7, 12, 21, .20) 46%, transparent 74%);
+}
+.title-screen[data-title-mode="continue"] #start::after {
+  left: 28%;
+  right: 28%;
+  background: linear-gradient(90deg, transparent, rgba(170, 177, 184, .28), transparent);
+  box-shadow: none;
+}
+.title-screen[data-title-mode="continue"] #start .title-screen__choice-jp {
+  color: rgba(226, 229, 231, .90);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .94), 0 0 6px rgba(191, 199, 207, .18);
+}
+.title-screen[data-title-mode="continue"] #start .title-screen__choice-en {
+  color: rgba(185, 192, 200, .62);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .90);
+}
+
+@keyframes title-continue-glint {
+  0%, 68% { left: -34%; opacity: 0; }
+  72% { opacity: .20; }
+  78% { opacity: .82; }
+  85% { left: 112%; opacity: .14; }
+  100% { left: 112%; opacity: 0; }
+}
+
 .title-screen__choice:not(:disabled):active {
   transform: scale(.975);
   filter: brightness(1.28);
@@ -891,5 +995,9 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
   .title-screen__choice,
   .title-screen__choice::after {
     transition: none;
+  }
+  .title-screen[data-title-mode="continue"] #continue .title-screen__choice-shine {
+    animation: none;
+    opacity: 0;
   }
 }
