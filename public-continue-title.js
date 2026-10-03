@@ -3,7 +3,8 @@
   "use strict";
 
   const params = new URLSearchParams(location.search);
-  if (params.has("from") || params.has("dev") || params.has("entry")) return;
+  const titlePreview = params.get("titlePreview");
+  if (params.has("from") || (params.has("dev") && !titlePreview) || params.has("entry")) return;
 
   const screen = document.getElementById("start-screen");
   const start = document.getElementById("start");
@@ -104,7 +105,12 @@
 
   function refresh() {
     controller = window.TarotPublicContinue.createController({navigate: navigateRuntime});
-    render(controller.inspect());
+    function inspectTitleState() {
+    if (titlePreview === "first") return {ok:false, status:"none"};
+    return controller.inspect();
+  }
+
+  render(inspectTitleState());
   }
 
   render(controller.inspect());
