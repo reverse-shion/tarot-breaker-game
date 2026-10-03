@@ -142,20 +142,18 @@ test("Title markup uses Japanese-first world-design labels and no legacy TOUCH T
   assert.doesNotMatch(html, /id="continue"[^>]*style=/);
 });
 
-test("Title CSS implements the ruined Star Kingdom royal plaque menu", () => {
-  assert.match(css, /Title UX \/ UI v1\.0 — Ruined Star Kingdom \/ Royal Plaque Edition/);
-  assert.match(html, /title-screen__plaque/);
-  assert.match(html, /title-screen__emblem title-screen__emblem--primary/);
-  assert.match(html, /title-screen__emblem title-screen__emblem--secondary/);
-  assert.doesNotMatch(html, /title-screen__menu-sigil/);
-  assert.match(css, /\.title-screen__choice \{[\s\S]*grid-template-columns:[\s\S]*min-height: 64px;[\s\S]*touch-action: manipulation/);
-  assert.match(css, /\.title-screen__start-wrap \{[\s\S]*width: min\(88vw, 420px\);[\s\S]*gap: 10px;/);
-  assert.match(css, /\.title-screen__plaque \{[\s\S]*border: 1\.5px solid[\s\S]*clip-path:/);
-  assert.match(css, /\.title-screen__choice-en \{[\s\S]*font: 500 clamp\(12px, 2\.8vw, 13px\)/);
+test("Title menu renders generated frame artwork without CSS-built symbols", () => {
+  assert.match(html, /title-screen__frame title-screen__frame--continue/);
+  assert.match(html, /title-screen__frame title-screen__frame--newgame/);
+  assert.doesNotMatch(html, /title-screen__plaque/);
+  assert.doesNotMatch(html, /title-screen__emblem/);
+  assert.match(css, /assets\/ui\/title\/continue-frame\.webp/);
+  assert.match(css, /assets\/ui\/title\/newgame-fra\.webp/);
+  assert.match(css, /\.title-screen__choice \{[\s\S]*min-height: 68px;[\s\S]*border-radius: 999px;[\s\S]*touch-action: manipulation/);
+  assert.match(css, /\.title-screen__frame \{[\s\S]*background-size: 100% 100%/);
   assert.match(css, /title-continue-glint 6s/);
   assert.match(css, /translateY\(2px\) scale\(\.995\)/);
   assert.match(css, /prefers-reduced-motion/);
-  assert.match(css, /#continue \.title-screen__choice-shine \{[\s\S]*animation: none/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   assert.match(css, /\.title-screen__confirm-panel/);
 });
