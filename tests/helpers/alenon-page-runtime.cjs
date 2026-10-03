@@ -12,7 +12,7 @@ module.exports = function page(search, options = {}) {
   const accesses = [];
   function storage(bytes, label) { return {
     getItem(k) { accesses.push(['read',label,k]); if (label==='session' && k.includes(':dev:') && options.readError) throw Error('denied'); return bytes.get(k)??null; },
-    setItem(k,v) { accesses.push(['write',label,k]); if (label==='production' || !k.includes(':dev:') || options.writeError) throw Error('forbidden'); bytes.set(k,v); },
+    setItem(k,v) { accesses.push(['write',label,k]); if ((!options.allowProductionWrites && (label==='production' || !k.includes(':dev:'))) || options.writeError) throw Error('forbidden'); bytes.set(k,v); },
     removeItem(k) { accesses.push(['remove',label,k]); throw Error('forbidden'); },
   }; }
   function e(key) {
@@ -52,10 +52,10 @@ module.exports = function page(search, options = {}) {
     TarotDialogueUI:{bind:()=>({show:line=>lines.push(line),hide(){}})},
   };
   h.window=h;vm.createContext(h);
-  for(const file of ['map-journey.js','route-registry.js','progress.js','dev-checkpoints.js','progress-resume.js','alenon-resume.js'])vm.runInContext(fs.readFileSync(file,'utf8'),h);
+  for(const file of ['map-journey.js','route-registry.js','progress.js','dev-checkpoints.js','progress-resume.js','alenon-resume.js','public-continue.js','alenon-public-continue.js'])vm.runInContext(fs.readFileSync(file,'utf8'),h);
   const source=[...fs.readFileSync('alenon.html','utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
   const exposure=`window.testAlenon={player,story,ride,layout,orbInteraction,resetPlayer,preparePrologue,runPrologue,updateOrbInteractionRange,beginBoarding,beginPadExit,finishPadLanding,bootAlenonContinue,get ready(){return continueReady},get session(){return continueSession},get collisionReady(){return alenonCollisionReady},advance(){dialogueState.advanceResolve?.();dialogueState.advanceResolve=null;dialogueState.active=false}};`;
-  vm.runInContext(source.replace('      if (continueDevRequest) {\n        bootAlenonContinue();',exposure+'\n      if (continueDevRequest) {\n        bootAlenonContinue();'),h);
+  vm.runInContext(source.replace('      if (continuePublicRequest) {\n        bootAlenonContinue();',exposure+'\n      if (continuePublicRequest) {\n        bootAlenonContinue();'),h);
   return {h,e,audio,lines,frames,timers,listeners,session,production,accesses,
     releaseCollision:()=>releaseCollision?.(),releaseDecode:()=>releaseDecode?.(),releaseImages:()=>imageQueue.splice(0).forEach(f=>f()),
     async flush(){for(let i=0;i<12;i++)await new Promise(setImmediate);},

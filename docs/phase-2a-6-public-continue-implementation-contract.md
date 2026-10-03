@@ -1,6 +1,6 @@
 # Phase 2A-6 — Public Continue Implementation Contract v1.0
 
-Status: CONTRACT + LOCAL PREFLIGHT REGISTRATION REVIEW PASS / PR and remote CI pending / gameplay runtime unchanged
+Status: CONTRACT + PREFLIGHT REVIEW PASS / Alenon candidate runtime implemented / independent runtime review, remote CI and Device Gate pending
 
 Independent content review: `ae0c1cf30f1b72e4d6d1655feff4e77dcc69fc6c` PASS。関連5ファイル77/77、full regression276/276 PASS、fail/skip 0。契約本文のみのレビュー結果であり、Public runtime・remote CI・integrationの合格を意味しない。
 
@@ -165,3 +165,21 @@ GitHub pushは自動承認レビューにより拒否された。ユーザーの
 再開文:
 
 > Phase 2A-6の `docs/phase-2a-6-public-continue-implementation-contract.md` を独立レビューして、PASSならPublic Continueのpreflight登録と専用実装ブランチへ進んで。通常開始のProgress resetとPAD帰還checkpoint保存は今回変更しない。
+
+## 13. Alenon candidate segment (Phase 2A-6A)
+
+WORKING: Title UI + pure `public-continue.js` controller, `alenon-public-continue.js` explicit adapter, reuse of the authored Alenon strict readiness boot, tests and four session-only real-runtime fixtures. HIGH risk; human Device Gate pending. Only Alenon `intro` and `pad_return` are supported; Landing/Garden saves display 準備中 and retain their exact bytes.
+
+The marker is fixed as `entry=continue`. Duplicate/unknown entry values and dev/from/landingDev/skipPrologue/edit/objects/collision/legacyCollision/map/spawn/resume conflicts are refused before gameplay. The initial editor redirect also excludes explicit entry requests, so a contradictory collision query cannot escape refusal into a tool.
+
+Title loads and validates durable Progress read-only, independently of Garden assets. Click re-reads the save and suppresses duplicate launches. Navigation failure allows retry; storage/pageshow refreshes status. A normal-start click disables Continue for that departure; a successful Continue disables normal start for that departure. The normal Journey reset and Progress non-reset behavior are unchanged.
+
+Public Alenon uses the existing receiver's validated projection, authored intro/PAD ground point, image decode, strict collision and no-event-before-readiness behavior. A second durable read after assets settle must still match the entry context. Only then are the three Journey mirrors (landingMemoryDone/gardenStory/companion) projected; unrelated Journey keys are retained, and readback must confirm restored mirrors before controls unlock. Waiting companion projection has no stale x/y and therefore uses Landing's existing deterministic fallback placement. No checkpoint/event/companion transition is written merely by entry. The authored prologue completion uses the existing Production Progress path. PAD departure uses the existing Production route. Production PAD-return checkpoint saving is unchanged.
+
+On Public errors, the player sees Japanese explanations with retry and Title return. Raw diagnostic codes remain in console or isolated development status. Public retry reloads the receiver so stale-during-readiness state is independently revalidated. No automatic ordinary-start fallback occurs.
+
+Fixtures: `?dev=public-continue-alenon-intro-incomplete`, `intro-complete`, `pad-return`, and `pad-return-waiting` (each suffix appended to `public-continue-alenon-`). They run the same Public adapter with an injected session-only Progress backend, keep Journey detached, and contain PAD departure. They do not copy to or read Production Progress and cannot establish Production persistence/roundtrip Device PASS. `dev` plus `entry=continue` remains rejected.
+
+Device checks needed on exact reviewed/published candidate: normal Title/start/audio; Title no-save/reasons/layout; each isolated Alenon fixture; a real Public `entry=continue` from a test save on the same origin; actual prologue completion persistence/reload; Production PAD → Landing → Alenon roundtrip and waiting companion behavior. Test saves must be prepared explicitly on the test origin without replacing a player's existing production save. No human PASS or release eligibility is inferred from automation. Main merge remains blocked until required human and CI gates pass.
+
+Local Alenon candidate evidence: 12/12 new Public tests PASS, full regression 291/291 PASS (fail/skip 0), Public Alenon preflight PASS, new/inline JavaScript syntax PASS, asset/background/audio validation PASS and diff --check PASS. Tests execute the real Alenon inline runtime with controlled DOM/media/storage rather than a parallel UI simulation. They cover readiness/failure/retry, stale save detection, Production authored completion, zero entry Progress writes, Journey mirror restoration, Production PAD departure versus fixture containment, actual Title event wiring/BFCache recovery, and unchanged normal Title/PAD-return bootstrap. Automation does not establish real media/touch/viewport behavior or human Device PASS.

@@ -185,7 +185,7 @@ test('committed slots can be replaced and old tokens cannot replay a different t
   assert.equal(h.handoff.claim({...h.input,token:'next',state}).reason,'destination-mismatch');
 });
 
-test('browser import performs no storage/clock/token/navigation operation and only isolated Continue receivers import it', () => {
+test('browser import performs no storage/clock/token/navigation operation and only explicitly approved Continue entry modules import it', () => {
   const source=fs.readFileSync(path.join(__dirname,'../progress-resume.js'),'utf8');
   const sandbox={TarotRouteRegistry:Registry,TarotProgressCore:Core};
   for(const key of ['localStorage','sessionStorage','location','Date','crypto'])
@@ -195,7 +195,7 @@ test('browser import performs no storage/clock/token/navigation operation and on
   assert.match(fs.readFileSync(path.join(root,'alenon.html'),'utf8'), /if \(continueDevRequest\) \{\s*bootAlenonContinue\(\);\s*return;/);
   assert.match(fs.readFileSync(path.join(root,'star-country-landing.html'),'utf8'), /if \(continueDevRequest\) bootLandingContinue\(\);\s*else boot\(\);/);
   for(const file of fs.readdirSync(root).filter(file=>/\.(html|js)$/.test(file) &&
-      !['progress-resume.js','alenon.html','alenon-resume.js','star-country-landing.html','landing-resume.js','garden-resume.js','dev-checkpoints.js','garden-dev-bootstrap.js'].includes(file)))
+      !['index.html','public-continue.js','alenon-public-continue.js','progress-resume.js','alenon.html','alenon-resume.js','star-country-landing.html','landing-resume.js','garden-resume.js','dev-checkpoints.js','garden-dev-bootstrap.js'].includes(file)))
     assert.equal(fs.readFileSync(path.join(root,file),'utf8').includes('progress-resume.js'),false,file);
 });
 

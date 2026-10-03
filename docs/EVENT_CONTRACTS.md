@@ -67,7 +67,7 @@ Exact human-verified runtime SHA: `96edc22bcc4d1f1ae7a988a8726217dfccecd7fa`. L1
 ## EC-004 — Public Continue entry registration
 event_id: public-continue
 maps: title, alenon, star_country_landing, star_gate_garden
-status: NOT TESTED / registration only / runtime absent
+status: NOT TESTED / Alenon candidate runtime / unreleased
 productionEnabled: false
 segments:
 - public-continue-title — NOT TESTED
@@ -75,16 +75,22 @@ segments:
 - public-continue-landing — NOT TESTED
 - public-continue-garden — NOT TESTED
 - public-continue-integration — NOT TESTED
-start_event: tarot-breaker:public-continue-request (reserved; no emitter or receiver implemented)
-trigger_owner: future explicit Title Continue gesture and dedicated Production controller
+start_event: tarot-breaker:public-continue-request (candidate Title success emitter; release pending)
+trigger_owner: explicit Title Continue gesture and dedicated Production controller in candidate
 required_state: validated durable Progress v1 record and an individually proven map/spawn receiver
 progress_changes: none on registration or Continue entry; future gameplay uses existing Production completion/save boundaries only
 return_behavior: future Public entry must restore normal Production routes; isolated dev sessions remain separate
 implementation_contract: docs/phase-2a-6-public-continue-implementation-contract.md
 
-WORKING now: registry, contract documentation, and preflight acceptance coverage only.
+WORKING now: Title/Alenon Public candidate, explicit adapter/controller, registry, contract documentation, and automated acceptance coverage.
 LOCKED: normal Title/Journey reset, Production Progress reset policy, existing PAD-return save path, all isolated receivers and VGC-001 through VGC-007.
 
-Preflight PASS proves target registration only. It does not prove runtime availability, device verification, release eligibility, or permission to modify a locked system. No Public Continue device URL is available at this stage. Do not advertise the reserved start event as a working runtime signal.
+Preflight PASS proves target registration only. It does not prove device verification, release eligibility, or permission to modify a locked system. Alenon candidate fixtures are registered and exercised by runtime tests; exact-build remote links require publication and independent review before presentation. Landing/Garden Public runtime remains unavailable.
 
 Runtime integration proceeds Alenon → Landing → Garden with separate implementation, review, test, applicable device, CI, and merge gates per map. Public destination allowlist contains only proven map/spawn combinations. Invalid, unavailable, contradictory, or unsupported saves fail closed without altering durable save bytes. New Game reset and Production PAD-return checkpoint saving remain out of scope.
+
+### EC-004 Alenon candidate implementation
+
+Title and Alenon runtime exist on the Phase 2A-6A candidate branch; release status remains NOT TESTED / productionEnabled false until the required review, CI and human Device Gates. Title success emits `tarot-breaker:public-continue-request`; the real Alenon boot emits `tarot-breaker:alenon-resume-ready` after readiness. Public marker is `entry=continue`, durable save is sole authority, and only Alenon intro/pad_return are admitted. Landing/Garden Public runtime is absent.
+
+Four `public-continue-alenon-*` fixtures are registered and exercise the real Public adapter using injected session-only storage. Detached Journey projection and contained PAD departure preserve zero Production writes in these fixtures. They do not prove the Production roundtrip. Full details and pending Device checklist: implementation contract §13. No historical device record is changed or transferred.

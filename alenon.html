@@ -7,7 +7,7 @@
   <script data-map-zone-editor-redirect="v1">
     (() => {
       const p = new URLSearchParams(location.search);
-      if (!p.has("dev") && p.get("collision") === "1" && p.get("legacyCollision") !== "1") {
+      if (!p.has("dev") && !p.has("entry") && p.get("collision") === "1" && p.get("legacyCollision") !== "1") {
         location.replace("./tools/map-zone-editor.html?map=alenon");
       }
     })();
@@ -2079,6 +2079,8 @@
   <script src="./dev-checkpoints.js?v=20261001-alenon-resume"></script>
   <script src="./progress-resume.js?v=20261001-alenon-resume"></script>
   <script src="./alenon-resume.js?v=20261001-alenon-resume"></script>
+  <script src="./public-continue.js?v=phase-2a-6-alenon"></script>
+  <script src="./alenon-public-continue.js?v=phase-2a-6-alenon"></script>
   <script>
     (() => {
       "use strict";
@@ -2107,13 +2109,24 @@
       const world = document.getElementById("world");
       const viewport = document.getElementById("viewport");
       const params = new URLSearchParams(location.search);
-      const continueDevRequest = params.has("dev");
+      const publicHarnessRequest = /^public-continue-alenon-/.test(params.get("dev") || "");
+      const continuePublicRequest = params.has("entry") || publicHarnessRequest;
+      const continueDevRequest = params.has("dev") && !publicHarnessRequest;
+      const continueRequest = continueDevRequest || continuePublicRequest;
       let continueSession = null;
       let continueReady = false;
       let continueSpawn = null;
       let continueBootBusy = false;
       let clearContinueInput = null;
       function showContinueStatus(message, retry) {
+        if (continuePublicRequest && !publicHarnessRequest && /[a-z]/i.test(message)) {
+          console.warn("[Public Continue]", message);
+          message = message.includes("changed") ? "保存内容が変わりました。再試行してください。" :
+            message.includes("storage") || message.includes("unavailable") ? "保存データを読み込めません。再試行してください。" :
+            message.includes("entry") ? "この再開リンクは利用できません。タイトルから再開してください。" :
+            message.includes("image") || message.includes("collision") || message.includes("spawn") ? "マップを読み込めませんでした。再試行してください。" :
+            "保存された状態を復元できません。タイトルへ戻って確認してください。";
+        }
         let panel = document.getElementById("alenon-resume-status");
         if (!panel) {
           panel = document.createElement("aside");
@@ -2124,7 +2137,7 @@
         }
         panel.replaceChildren();
         const text = document.createElement("span");
-        text.textContent = "Alenon Continue 検証: " + message;
+        text.textContent = (continuePublicRequest && !publicHarnessRequest ? "再開: " : "Alenon Continue 検証: ") + message;
         panel.appendChild(text);
         if (retry) {
           const button = document.createElement("button");
@@ -2136,6 +2149,18 @@
         title.href = "./index.html";
         title.textContent = " タイトルへ";
         panel.appendChild(title);
+      }
+      if (continuePublicRequest) {
+        try {
+          continueSession = publicHarnessRequest ?
+            window.TarotAlenonPublicContinue.createHarness({search:location.search, storage:window.sessionStorage}) :
+            window.TarotAlenonPublicContinue.receive({search:location.search});
+        } catch (_) { continueSession = {ok:false, reason:"public-storage-unavailable"}; }
+        if (!continueSession.ok) {
+          document.body.classList.add("story-running");
+          showContinueStatus(continueSession.reason, () => location.reload());
+          return;
+        }
       }
       if (continueDevRequest) {
         try {
@@ -2162,23 +2187,25 @@
 
       // Phase 2A-4a: Progress v1 is authoritative only for a normal Alenon entry.
       // Existing return/tool/debug bypasses remain runtime-only and never prove completion.
-      const alenonProgress = continueDevRequest ? continueSession.progress : window.TarotProgressCore?.createProgress();
+      const alenonProgress = continueRequest ? continueSession.progress : window.TarotProgressCore?.createProgress();
       let alenonProgressLoad = null;
-      let progressResume = false;
-      if (!continueDevRequest && !legacyStoryBypass && alenonProgress) {
-        alenonProgressLoad = alenonProgress.load();
-        if (alenonProgressLoad.status === "none" || alenonProgressLoad.status === "unavailable") {
-          // First play (or storage-unavailable play) starts from the existing Progress v1 INITIAL state.
-          // resetGame is used only when no durable authority was loaded; it is never called on every load.
-          alenonProgress.resetGame("phase-2a-4a-alenon-first-play");
-        } else if (alenonProgressLoad.status === "valid") {
-          const checkpoint = alenonProgress.getCheckpoint();
-          progressResume =
-            alenonProgress.isEventCompleted("alenon_prologue") &&
-            checkpoint?.mapId === "alenon" &&
-            checkpoint?.spawnId === "intro";
+      let progressResume = continuePublicRequest ? continueSession.completed : false;
+      if (!continuePublicRequest) {
+        if (!continueDevRequest && !legacyStoryBypass && alenonProgress) {
+          alenonProgressLoad = alenonProgress.load();
+          if (alenonProgressLoad.status === "none" || alenonProgressLoad.status === "unavailable") {
+            // First play (or storage-unavailable play) starts from the existing Progress v1 INITIAL state.
+            // resetGame is used only when no durable authority was loaded; it is never called on every load.
+            alenonProgress.resetGame("phase-2a-4a-alenon-first-play");
+          } else if (alenonProgressLoad.status === "valid") {
+            const checkpoint = alenonProgress.getCheckpoint();
+            progressResume =
+              alenonProgress.isEventCompleted("alenon_prologue") &&
+              checkpoint?.mapId === "alenon" &&
+              checkpoint?.spawnId === "intro";
+          }
+          // Invalid/unsupported bytes are deliberately left untouched and are not completion authority.
         }
-        // Invalid/unsupported bytes are deliberately left untouched and are not completion authority.
       }
       const storyBypass = continueDevRequest ? continueSession.completed : legacyStoryBypass || progressResume;
       const COLLISION_URL = "./assets/maps/alenon-collision.json?v=2";
@@ -2221,7 +2248,7 @@
       const orbInteractionLeave = document.getElementById("orb-interaction-leave");
 
       const story = {
-        locked: continueDevRequest || !storyBypass,
+        locked: continueRequest || !storyBypass,
         scripted: false,
         started: false,
         completed: storyBypass,
@@ -3109,7 +3136,7 @@
       }
 
       async function runPrologue() {
-        if ((continueDevRequest && !continueReady) || story.started || storyBypass) return;
+        if ((continueRequest && !continueReady) || story.started || storyBypass) return;
 
         story.started = true;
         story.locked = true;
@@ -4106,7 +4133,7 @@
       }
 
       function beginBoarding() {
-        if (continueDevRequest && !continueReady) return;
+        if (continueRequest && !continueReady) return;
         if (ride.mode !== "ground" || !story.completed) return;
         story.locked = true;
         document.body.classList.add("story-running");
@@ -4177,7 +4204,7 @@
       }
 
       function beginPadExit() {
-        if (continueDevRequest && ride.mode === "flying") {
+        if ((continueDevRequest || publicHarnessRequest) && ride.mode === "flying") {
           player.target = null;
           resetPlayer();
           showContinueStatus("PAD 出発の検証完了。別マップへの移動は次段階です。");
@@ -4403,7 +4430,7 @@
       }
 
       function updateOrbInteractionRange() {
-        if ((continueDevRequest && !continueReady) || !story.completed || ride.mode !== "ground") return;
+        if ((continueRequest && !continueReady) || !story.completed || ride.mode !== "ground") return;
 
         const distance = Math.hypot(
           player.x - layout.orb.x,
@@ -4426,12 +4453,12 @@
       }
 
       function resetPlayer() {
-        if (continueDevRequest) {
+        if (continueRequest) {
           clearContinueInput?.();
           stopPadMoveAudio();
         }
         resetRide();
-        if (continueDevRequest && continueSpawn) {
+        if (continueRequest && continueSpawn) {
           player.x = continueSpawn.x;
           player.y = continueSpawn.y;
           ride.reboardLockedUntil = performance.now() + PAD_REBOARD_COOLDOWN_MS;
@@ -4884,7 +4911,7 @@
           requestAnimationFrame(loop);
         }
 
-        if (continueDevRequest) clearContinueInput = () => {
+        if (continueRequest) clearContinueInput = () => {
           keys.clear();
           pointerStart = null;
           stopJoystick();
@@ -4922,7 +4949,13 @@
             {x: layout.pad.x, y: layout.pad.y - PAD_DISMOUNT_OFFSET_Y};
           if (!isGroundWalkable(candidate.x, candidate.y)) throw new Error("unsafe-continue-spawn");
           continueSpawn = candidate;
-          // Detached projection was completed before any trigger is enabled. Never set TarotJourney.
+          // Isolated projection never touches Journey. Public projects only after strict readiness checks.
+          if (continuePublicRequest && !publicHarnessRequest) {
+            const refreshed = window.TarotAlenonPublicContinue.receive({search:location.search});
+            if (!refreshed.ok || JSON.stringify(refreshed.context) !== JSON.stringify(continueSession.context))
+              throw new Error("public-save-changed-during-readiness");
+            window.TarotAlenonPublicContinue.project(continueSession, window.TarotJourney, window.sessionStorage);
+          }
           resetPlayer();
           setActorPosition();
           setActorVisual();
@@ -4948,16 +4981,20 @@
           window.addEventListener("pointerdown", unlockContinueAudio, {passive: true});
           window.addEventListener("keydown", unlockContinueAudio);
           bindAlenonAudioLifecycle();
-          showContinueStatus(continueSession.definition.id + " / 安全な復帰地点へ配置済み");
+          showContinueStatus(continuePublicRequest && !publicHarnessRequest ? "保存された地点から再開しました" : continueSession.definition.id + " / 安全な復帰地点へ配置済み");
           window.dispatchEvent(new CustomEvent("tarot-breaker:alenon-resume-ready"));
         } catch (error) {
           continueReady = false;
           story.locked = true;
           alenonCollisionReady = false;
-          showContinueStatus(error.message, bootAlenonContinue);
+          showContinueStatus(error.message, continuePublicRequest && !publicHarnessRequest ? () => location.reload() : bootAlenonContinue);
         } finally { continueBootBusy = false; }
       }
 
+      if (continuePublicRequest) {
+        bootAlenonContinue();
+        return;
+      }
       if (continueDevRequest) {
         bootAlenonContinue();
         return;

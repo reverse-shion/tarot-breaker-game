@@ -10,7 +10,7 @@ const segments = ['public-continue-title', 'public-continue-alenon',
 const run = (target, cwd = process.cwd()) => spawnSync(process.execPath,
   [path.resolve('scripts/event-preflight.cjs'), '--target', target], {cwd, encoding:'utf8'});
 
-test('Public Continue target and segments are preflightable without claiming implemented runtime', () => {
+test('Public Continue target and segments are preflightable without claiming device verification or release', () => {
   const registry = JSON.parse(fs.readFileSync('event-contracts.json', 'utf8'));
   const entry = registry.events['public-continue'];
   assert.equal(entry.status, 'NOT TESTED');
@@ -27,7 +27,8 @@ test('Public Continue target and segments are preflightable without claiming imp
     assert.equal(output.changeAuthorized, true);
   }
   const contracts = fs.readFileSync('docs/EVENT_CONTRACTS.md', 'utf8');
-  assert.match(contracts, /registration only \/ runtime absent/);
+  assert.match(contracts, /NOT TESTED \/ Alenon candidate runtime \/ unreleased/);
+  assert.match(contracts, /Landing\/Garden Public runtime remains unavailable/);
   assert.match(contracts, /Preflight PASS proves target registration only/);
 });
 
