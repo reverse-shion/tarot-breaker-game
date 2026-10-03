@@ -60,7 +60,11 @@
           !params.has("from") && !params.has("dev");
         if ((fromLanding && !params.has("dev")) || publicGardenResume) {
           var admitted = window.TarotRuntimeEntry?.requireInternal({title:"./index.html"});
-          if (!admitted?.ok) return;
+          if (!admitted?.ok) {
+            window.__tarotRuntimeEntryRejected = true;
+            document.documentElement.style.visibility = "hidden";
+            return;
+          }
         }
         fromLanding = fromLanding || gardenResume || publicGardenResume;
         document.body.dataset.enteringFromLanding = fromLanding ? "true" : "false";
