@@ -38,11 +38,14 @@ async function say(actor,text){
 }
 async function pause(ms){await sleep(ms)}
 const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
+// The card-pose source fills more of its 512px canvas than the playable Shion
+// frame does. Match the visible silhouette, not the raw image canvas height.
+const FUTURE_SHION_VISUAL_SCALE=.86;
 function alignFutureShion(){
  const el=root?.querySelector(".sga-shion"),anchor=window.TarotActorScreenAnchor?.get?.("shion");
  if(!el||!anchor)return false;
  const gap=Math.max(10,anchor.width*.28);
- const targetHeight=anchor.height;
+ const targetHeight=anchor.height*FUTURE_SHION_VISUAL_SCALE;
  const place=()=>{
    const ratio=el.naturalWidth>0&&el.naturalHeight>0?el.naturalWidth/el.naturalHeight:null;
    el.style.left=(anchor.x+anchor.width/2+gap)+"px";
