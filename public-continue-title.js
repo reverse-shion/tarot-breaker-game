@@ -126,18 +126,30 @@
     event.stopPropagation();
     if (departing) return;
 
-    const result = controller.launch();
-    if (!result.ok) {
-      render(result);
-      return;
-    }
-
-    window.dispatchEvent(new CustomEvent("tarot-breaker:public-continue-request"));
     departing = true;
     button.disabled = true;
     retry.disabled = true;
     previousStartDisabled = start.disabled;
     start.disabled = true;
+    screen.classList.add("title-screen--departing");
+    button.classList.add("is-departing");
+
+    window.setTimeout(() => {
+      const result = controller.launch();
+      if (!result.ok) {
+        departing = false;
+        screen.classList.remove("title-screen--departing");
+        button.classList.remove("is-departing");
+        if (previousStartDisabled !== null) {
+          start.disabled = previousStartDisabled;
+          previousStartDisabled = null;
+        }
+        retry.disabled = false;
+        render(result);
+        return;
+      }
+      window.dispatchEvent(new CustomEvent("tarot-breaker:public-continue-request"));
+    }, 260);
   });
 
   retry.addEventListener("click", event => {
@@ -179,6 +191,9 @@
     departing = false;
     allowConfirmedStart = false;
     closeConfirm();
+    screen.classList.remove("title-screen--departing");
+    button.classList.remove("is-departing");
+    start.classList.remove("is-departing");
     if (previousStartDisabled !== null) {
       start.disabled = previousStartDisabled;
       previousStartDisabled = null;
