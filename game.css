@@ -948,3 +948,34 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
   .title-screen.title-screen--departing::after,
   .title-screen.title-screen--departing .title-screen__choice.is-departing .title-screen__frame { animation:none !important; }
 }
+
+
+/* Device feedback: improve label contrast without changing locked geometry.
+ * The shade stays inside each choice and below both artwork and live text. */
+.title-screen__choice::before {
+  content:"";
+  position:absolute;
+  left:14%;
+  right:14%;
+  top:18%;
+  bottom:18%;
+  z-index:-2;
+  pointer-events:none;
+  border-radius:999px;
+  background:linear-gradient(90deg, transparent 0%, rgba(1,7,18,.48) 18%, rgba(1,6,16,.68) 50%, rgba(1,7,18,.48) 82%, transparent 100%);
+  filter:blur(5px);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation:title-frame-soft-glow 3.2s ease-in-out infinite;
+  will-change:filter,opacity;
+}
+@keyframes title-frame-soft-glow {
+  0%,100% {
+    opacity:.86;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(116,188,239,.22)) brightness(.94);
+  }
+  50% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.66)) drop-shadow(0 0 18px rgba(178,225,255,.72)) brightness(1.28);
+  }
+}
