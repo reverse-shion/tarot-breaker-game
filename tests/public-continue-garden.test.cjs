@@ -125,6 +125,18 @@ test("Garden Public production wiring is strict, exact-spawn, stale-checked and 
   assert.match(title,/params\.has\("entry"\)\) return/);
 });
 
+
+test("Garden Public Continue can never execute the root New Game reset branch",()=>{
+  const game=fs.readFileSync("game.js","utf8");
+  const beginStart=game.indexOf("  function begin(event) {");
+  const beginEnd=game.indexOf("  function pointerInfo(",beginStart);
+  assert.ok(beginStart>=0&&beginEnd>beginStart);
+  const begin=game.slice(beginStart,beginEnd);
+  assert.match(begin,/if \(!enteringGardenRuntime\) \{[\s\S]*TarotJourney\?\.reset\(\)[\s\S]*alenon\.html\?from=title/);
+  assert.doesNotMatch(begin,/if \(!enteringFromLanding\)[\s\S]*TarotJourney\?\.reset\(\)/);
+  assert.match(game,/const enteringGardenRuntime = enteringFromLanding \|\| gardenResumeDev \|\| gardenResumePublic;/);
+});
+
 test("Garden Public adapter browser import is inert",()=>{
   const h={
     TarotProgressCore:Core,
