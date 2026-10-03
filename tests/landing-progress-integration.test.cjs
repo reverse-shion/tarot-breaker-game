@@ -3,7 +3,7 @@ const fs=require("node:fs"),path=require("node:path"),test=require("node:test"),
 const source=fs.readFileSync(path.join(__dirname,"..","star-country-landing.html"),"utf8");
 
 test("Landing Progress is observer-only and legacy replay guard stays authoritative",()=>{
-  assert.match(source,/let devilEventStarted = continueDevRequest \?[\s\S]*continueSession\.projection\.landingMemoryDone[\s\S]*window\.TarotJourney\?\.get\("landingMemoryDone"\) === true;/);
+  assert.match(source,/let devilEventStarted = continueRequest \?[\s\S]*continueSession\.projection\.landingMemoryDone[\s\S]*window\.TarotJourney\?\.get\("landingMemoryDone"\) === true;/);
   assert.doesNotMatch(source,/devilEventStarted\s*=\s*landingProgress/);
   assert.equal(source.match(/TarotJourney\?\.set\("landingMemoryDone", true\)/g)?.length,1);
   assert.match(source,/if \(!continueDevRequest\) window\.TarotJourney\?\.set\("landingMemoryDone", true\)/);
