@@ -204,8 +204,8 @@ test('title forwards audioDebug only when opt-in; normal destination remains unc
     const sandbox = {
       enteringFromLanding: false, start: { disabled: false }, URLSearchParams,
       location: { search, href: '' }, window: { TarotJourney: { reset() {} } },
-      navigateRuntime(target) { this.location.href = target; },
     };
+    sandbox.navigateRuntime = target => { sandbox.location.href = target; };
     vm.runInNewContext('(function () {' + branch + '})()', sandbox);
     assert.equal(sandbox.location.href, expected);
     assert.equal(sandbox.start.disabled, true);
