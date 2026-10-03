@@ -140,7 +140,14 @@ test("Garden Public Continue can never execute the root New Game reset branch",(
 test("Garden Public Continue keeps the south exit active and returns to Landing",()=>{
   const game=fs.readFileSync("game.js","utf8");
   const landing=fs.readFileSync("star-country-landing.html","utf8");
-  assert.match(game,/const enteringGardenRuntime = enteringFromLanding \|\| gardenResumeDev \|\| gardenResumePublic;/);
+  const collision=JSON.parse(fs.readFileSync("assets/maps/star-country-gate-garden-collision.json","utf8"));
+  const entranceMaxY=Math.max(...collision.walkAreas
+    .flatMap(area=>area.type==="poly"?area.points:[])
+    .filter(([x])=>x>=610&&x<=838)
+    .map(([,y])=>y));
+  assert.ok(entranceMaxY<1011,"authored south walkable edge must be above the old unreachable y=1011 trigger");
+  assert.match(game,/const southExitRef = collision\.nearestWalkable\(DEFAULT_SPAWN\);/);
+  assert.match(game,/gardenExitRef = \{\.\.\.southExitRef\};/);
   assert.match(game,/enteringGardenRuntime && gardenExitArmed && !leavingMap && next\.moving/);
   assert.doesNotMatch(game,/enteringFromLanding && gardenExitArmed && !leavingMap && next\.moving/);
   assert.match(game,/navigateRuntime\([^\n]*star-country-landing\.html\?from=garden/);
