@@ -114,3 +114,20 @@ test('actual normal title and ordinary PAD-return bootstrap preserve existing Pr
   if(search.includes('landing-return'))assert.equal(t.h.testAlenon.ride.mode,'landing');
  }
 });
+
+test('Production Continue hides the whole status panel on successful readiness while dev diagnostics remain visible',async()=>{
+ for(const state of [initial(),{...initial(),completedEvents:['alenon_prologue']},{...initial(),checkpoint:{mapId:'alenon',spawnId:'pad_return'},completedEvents:['alenon_prologue']}]){
+  const t=page('?entry=continue',{production:production(state),allowProductionWrites:true,deferImages:true});await t.flush();
+  const panel=t.e('alenon-resume-status');assert.equal(panel.hidden,false);assert.ok(panel.children.some(child=>child.href==='./index.html'),'loading panel contains controlled Title return');
+  assert.equal(t.h.testAlenon.ready,false);t.releaseImages();await t.flush();assert.equal(t.h.testAlenon.ready,true);assert.equal(panel.hidden,true,'entire status panel including Title link is hidden after readiness');
+  assert.equal(t.accesses.filter(([op,label])=>op==='write'&&label==='production').length,0,'banner must not introduce save writes');
+ }
+ const dev=page('?dev=public-continue-alenon-intro-complete');await dev.flush();assert.equal(dev.h.testAlenon.ready,true);assert.equal(dev.e('alenon-resume-status').hidden,false);assert.match(dev.e('alenon-resume-status').children[0].textContent,/public-continue-alenon-intro-complete/);
+});
+
+test('Production Continue failure retains visible retry and Title controls; successful retry clears status',async()=>{
+ const options={fetchError:true,production:production({...initial(),completedEvents:['alenon_prologue']}),allowProductionWrites:true};
+ const t=page('?entry=continue',options);await t.flush();const panel=t.e('alenon-resume-status');
+ assert.equal(t.h.testAlenon.ready,false);assert.equal(panel.hidden,false);assert.ok(panel.children.some(child=>child.textContent==='再試行'));assert.ok(panel.children.some(child=>child.href==='./index.html'));assert.match(panel.children[0].textContent,/復元できません/);
+ options.fetchError=false;await t.h.testAlenon.bootAlenonContinue();assert.equal(t.h.testAlenon.ready,true);assert.equal(panel.hidden,true);
+});
