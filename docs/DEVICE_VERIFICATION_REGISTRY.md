@@ -144,3 +144,19 @@ Runtime SHA: `579974955e418cccfbcec5dbb38dbcaf2ea95824`.
 ### Scope boundary
 
 This PASS covers the exact reported regression and the supplied reproduction path. It does not infer unrelated route, OS/browser, or viewport coverage. Commits above the runtime SHA are tests/evidence only.
+
+
+## Title menu visual / first-visit preview — exact-runtime human verification 2026-10-03
+
+Runtime SHA: `8e831832fd5e3e9d6a6534e70d0ce0074148162d`.
+
+| Check | Commit SHA | Device | Result | Human-confirmed observable behavior |
+|---|---|---|---|---|
+| Saved-game Title menu | 8e831832fd5e3e9d6a6534e70d0ce0074148162d | Device not restated in final confirmation | PASS | Product owner confirmed the locked Continue / New Game layout and interaction were without issue. Continue uses the approved blue-silver three-beat heartbeat; New Game confirmation cancel no longer leaves the persistent white focus pill. |
+| First-visit Title preview | 8e831832fd5e3e9d6a6534e70d0ce0074148162d | Device not restated in final confirmation | PASS | Product owner confirmed the isolated first-visit view remains on “物語をはじめる / BEGIN” and the antique-gold frame heartbeat is acceptable. The preview is visual-only and does not establish save mutation behavior. |
+
+### Scope boundary
+
+This PASS is limited to the title-menu visual and interaction changes explicitly checked on the exact runtime above. It does not infer unrelated gameplay, route, OS/browser, or viewport coverage. Main merge authorization and CI remain separate.
+
+Evidence note: PR #98 metadata was synchronized after recording this exact-runtime PASS; this note is evidence-only and does not modify runtime content.

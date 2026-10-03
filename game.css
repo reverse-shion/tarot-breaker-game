@@ -538,4 +538,499 @@ html, body, #game-shell { width:100%; min-height:100%; height:100dvh; }
 html,body{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;min-height:100%!important;margin:0!important;background:#02050d!important}
 #game-shell{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;min-height:100%!important;max-height:none!important}
 .title-screen{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important}
-.title-screen__background{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important}
+.title-screen__background{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 50%!important}
+
+
+/* Title UX / UI v1.0 — Ruined Star Kingdom / Royal Plaque Edition.
+ * Title-only presentation. Save/Continue runtime contracts remain unchanged.
+ */
+.title-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 17% 62%, rgba(226,235,255,.48) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 78% 57%, rgba(214,226,246,.34) 0 1px, transparent 1.8px);
+  opacity: .55;
+  animation: title-world-stars 5.4s ease-in-out infinite alternate;
+}
+.title-screen__logo { z-index: 2; }
+.title-screen__start-wrap {
+  z-index: 3;
+  bottom: max(7.2vh, calc(env(safe-area-inset-bottom) + 22px));
+  width: min(90vw, 460px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+.title-screen__choice {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  aspect-ratio: 1920 / 368;
+  min-height: 68px;
+  padding: 0 18% 0 20%;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #d8e2ec;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+  transition: transform 80ms ease-out, filter 80ms ease-out, opacity .18s ease;
+}
+.title-screen__frame {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.64));
+  transition: filter 80ms ease-out, opacity .18s ease;
+}
+.title-screen__frame--continue {
+  background-image: url("./assets/ui/title/continue-frame.webp");
+}
+.title-screen__frame--newgame {
+  background-image: url("./assets/ui/title/newgame-fra.webp");
+  opacity: .90;
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame,
+.title-screen[data-title-mode="new"] #start .title-screen__frame {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.70)) drop-shadow(0 0 7px rgba(116,177,220,.22));
+}
+.title-screen[data-title-mode="continue"] #start .title-screen__frame {
+  opacity: .84;
+}
+
+.title-screen__choice-copy {
+  position: relative;
+  z-index: 2;
+  grid-column: 1;
+  min-width: 0;
+  width: 100%;
+  transform: none;
+  display: block;
+}
+.title-screen__choice-jp {
+  display: block;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(17px, 4.3vw, 20px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: .08em;
+  transform: translateX(.05em);
+  color: rgba(226,234,241,.96);
+  text-shadow: 0 1px 2px #01030a, 0 0 5px rgba(0,0,0,.96), 0 0 8px rgba(151,184,211,.16);
+}
+.title-screen__choice-en {
+  display: block;
+  margin-top: 2px;
+  font: 500 clamp(10px, 2.5vw, 12px)/1.05 Georgia, "Times New Roman", serif;
+  letter-spacing: .18em;
+  transform: translateX(.11em);
+  color: rgba(202,213,223,.88);
+  text-shadow: 0 1px 2px #01030a, 0 0 5px rgba(0,0,0,.96);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__choice-jp,
+.title-screen[data-title-mode="new"] #start .title-screen__choice-jp { color: #edf6fb; text-shadow: 0 1px 2px #01030a, 0 0 5px rgba(0,0,0,.98), 0 0 9px rgba(179,216,241,.38); }
+.title-screen[data-title-mode="continue"] #continue .title-screen__choice-en,
+.title-screen[data-title-mode="new"] #start .title-screen__choice-en { color: rgba(215,230,241,.94); }
+.title-screen[data-title-mode="continue"] #start .title-screen__choice-jp { color: rgba(225,230,235,.94); }
+.title-screen[data-title-mode="continue"] #start .title-screen__choice-en { color: rgba(194,202,210,.84); }
+.title-screen__choice-shine {
+  position: absolute;
+  z-index: 3;
+  top: 7px;
+  bottom: 7px;
+  left: -28%;
+  width: 17%;
+  pointer-events: none;
+  opacity: 0;
+  transform: skewX(-17deg);
+  background: linear-gradient(90deg, transparent, rgba(236,248,255,.05), rgba(240,250,255,.62), rgba(173,214,242,.15), transparent);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__choice-shine {
+  animation: none;
+}
+.title-screen__choice:not(:disabled):active {
+  transform: translateY(2px) scale(.995);
+  filter: brightness(1.28);
+  transition-duration: 60ms;
+}
+.title-screen__choice:not(:disabled):active .title-screen__frame { filter: brightness(1.16) drop-shadow(0 0 9px rgba(185,220,244,.30)); }
+.title-screen__choice:focus-visible {
+  outline: 1px solid rgba(198,220,237,.78);
+  outline-offset: 2px;
+}
+.title-screen__retry:focus-visible,
+.title-screen__confirm-choice:focus-visible {
+  outline: 1px solid rgba(198,220,237,.70);
+  outline-offset: 2px;
+}
+.title-screen__choice:disabled {
+  opacity: .38;
+  cursor: default;
+  animation: none !important;
+}
+@keyframes title-continue-glint {
+  0%, 78% { left: -28%; opacity: 0; }
+  81% { opacity: .18; }
+  86% { opacity: .82; }
+  93% { left: 112%; opacity: .12; }
+  100% { left: 112%; opacity: 0; }
+}
+
+.title-screen__retry {
+  align-self: center;
+  min-width: 150px;
+  min-height: 50px;
+  margin-top: 2px;
+  padding: 7px 16px;
+  border: 0;
+  background: transparent;
+  color: rgba(234, 239, 249, .82);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.title-screen__retry span {
+  display: block;
+  font: 500 14px/1.25 "Yu Gothic", system-ui, sans-serif;
+  letter-spacing: .08em;
+}
+.title-screen__retry small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(210, 221, 241, .48);
+  font: 400 8px/1 Georgia, "Times New Roman", serif;
+  letter-spacing: .30em;
+}
+.title-screen__status {
+  display: block;
+  min-height: 17px;
+  margin-top: 2px;
+  color: rgba(235, 227, 208, .78);
+  font: 11px/1.45 "Yu Gothic", system-ui, sans-serif;
+  letter-spacing: .035em;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(0, 0, 0, .62);
+}
+.title-screen__status:empty { min-height: 0; margin-top: 0; }
+.title-screen [hidden] { display: none !important; }
+
+.title-screen__confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    24px
+    max(24px, env(safe-area-inset-bottom));
+  background: rgba(1, 4, 13, .58);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.title-screen__confirm-panel {
+  position: relative;
+  width: min(84vw, 380px);
+  padding: 28px 22px 20px;
+  text-align: center;
+  color: #edf2fb;
+  background:
+    linear-gradient(180deg, rgba(12, 18, 38, .83), rgba(6, 11, 27, .80));
+  border: 1px solid rgba(229, 208, 163, .34);
+  box-shadow:
+    0 18px 70px rgba(0, 0, 0, .50),
+    inset 0 0 28px rgba(169, 196, 235, .04);
+}
+.title-screen__confirm-panel::before,
+.title-screen__confirm-panel::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+.title-screen__confirm-panel::before {
+  left: -1px;
+  top: -1px;
+  border-left: 1px solid rgba(244, 218, 163, .72);
+  border-top: 1px solid rgba(244, 218, 163, .72);
+}
+.title-screen__confirm-panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 1px solid rgba(244, 218, 163, .72);
+  border-bottom: 1px solid rgba(244, 218, 163, .72);
+}
+.title-screen__confirm-sigil {
+  display: block;
+  margin-bottom: 13px;
+  color: rgba(243, 216, 157, .82);
+  font: 400 12px/1 Georgia, "Times New Roman", serif;
+  text-shadow: 0 0 9px rgba(244, 211, 142, .54);
+}
+.title-screen__confirm h2 {
+  margin: 0;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", "Yu Gothic", system-ui, sans-serif;
+  font-size: clamp(16px, 4.2vw, 19px);
+  font-weight: 500;
+  line-height: 1.7;
+  letter-spacing: .07em;
+}
+.title-screen__confirm p {
+  margin: 9px 0 21px;
+  color: rgba(220, 228, 241, .72);
+  font: 12px/1.6 "Yu Gothic", system-ui, sans-serif;
+  letter-spacing: .035em;
+}
+.title-screen__confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.title-screen__confirm-choice {
+  min-height: 58px;
+  padding: 8px 6px;
+  border: 0;
+  border-top: 1px solid rgba(220, 229, 244, .18);
+  border-bottom: 1px solid rgba(220, 229, 244, .18);
+  background: rgba(213, 228, 255, .025);
+  color: rgba(229, 236, 247, .78);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.title-screen__confirm-choice--primary {
+  border-top-color: rgba(241, 216, 166, .45);
+  border-bottom-color: rgba(241, 216, 166, .45);
+  color: #f2dfb8;
+  background: rgba(241, 211, 150, .045);
+}
+.title-screen__confirm-choice span {
+  display: block;
+  font: 500 14px/1.3 "Yu Gothic", system-ui, sans-serif;
+  letter-spacing: .08em;
+}
+.title-screen__confirm-choice small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(204, 216, 238, .46);
+  font: 400 8px/1 Georgia, "Times New Roman", serif;
+  letter-spacing: .24em;
+}
+.title-screen__confirm-choice--primary small { color: rgba(236, 211, 164, .54); }
+.title-screen__confirm-choice:active { transform: scale(.98); filter: brightness(1.22); }
+
+@keyframes title-world-stars {
+  from { opacity: .48; transform: translateY(0); }
+  to { opacity: .82; transform: translateY(-2px); }
+}
+@keyframes title-choice-breathe {
+  0%, 100% { filter: brightness(.96); }
+  50% { filter: brightness(1.14); }
+}
+@media (max-height: 680px) {
+  .title-screen__start-wrap {
+    bottom: max(4.5vh, calc(env(safe-area-inset-bottom) + 12px));
+    width: min(90vw, 420px);
+  }
+  .title-screen__choice { min-height: 68px; padding: 0 18% 0 20%; }
+  .title-screen__choice-jp { font-size: clamp(16px, 4vw, 20px); }
+  .title-screen__choice-en { margin-top: 3px; }
+ }
+@media (max-width: 360px) {
+  .title-screen__start-wrap { width: min(94vw, 360px); gap: 1px; }
+  .title-screen__choice { min-height: 68px; padding: 0 18% 0 20%; }
+  .title-screen__choice-jp { font-size: 17px; }
+  .title-screen__choice-en { font-size: 10px; letter-spacing: .16em; }
+  .title-screen__confirm-panel { width: 88vw; padding-left: 18px; padding-right: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-screen::before,
+  .title-screen[data-title-mode="continue"] #continue,
+  .title-screen[data-title-mode="new"] #start {
+    animation: none;
+  }
+  .title-screen__choice,
+  .title-screen__choice::after {
+    transition: none;
+  }
+  .title-screen[data-title-mode="continue"] #continue .title-screen__choice-shine {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+
+/* Title menu device-tuned layout + final motion.
+ * Device editor values locked 2026-10-03.
+ * Preserve source artwork aspect ratios: frame images remain background-size:contain.
+ */
+#continue .title-screen__frame {
+  transform: translate(0, -7px) scale(1.12);
+  transform-origin: center center;
+}
+#continue .title-screen__choice-copy {
+  transform: translate(0, 0) scale(1);
+  transform-origin: center center;
+}
+#start .title-screen__frame {
+  transform: translate(0, -18px) scale(1.35);
+  transform-origin: center center;
+}
+#start .title-screen__choice-copy {
+  transform: translate(0, -12px) scale(.81);
+  transform-origin: center center;
+}
+
+/* Replace the old left-to-right text glint with a quiet breathing glow on the artwork itself. */
+.title-screen__choice-shine { display:none !important; }
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation: title-frame-soft-glow 3.8s ease-in-out infinite;
+}
+@keyframes title-frame-soft-glow {
+  0%,100% {
+    opacity:.88;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.70)) drop-shadow(0 0 4px rgba(115,176,221,.12)) brightness(.96);
+  }
+  50% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.68)) drop-shadow(0 0 12px rgba(151,207,245,.42)) brightness(1.12);
+  }
+}
+
+/* Short selection bloom: the plaque lights first, then a soft radial light fills the title before navigation. */
+.title-screen::after {
+  content:"";
+  position:absolute;
+  inset:-12%;
+  z-index:7;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.82);
+  background:radial-gradient(circle at 50% 72%, rgba(238,249,255,.78) 0%, rgba(151,210,249,.34) 19%, rgba(92,145,218,.14) 39%, transparent 66%);
+}
+.title-screen.title-screen--departing::after {
+  animation:title-selection-bloom .28s ease-out both;
+}
+.title-screen.title-screen--departing .title-screen__choice.is-departing {
+  z-index:8;
+  filter:brightness(1.32);
+}
+.title-screen.title-screen--departing .title-screen__choice.is-departing .title-screen__frame {
+  animation:title-selected-frame .28s ease-out both !important;
+}
+@keyframes title-selection-bloom {
+  0% { opacity:0; transform:scale(.82); }
+  48% { opacity:.72; transform:scale(1); }
+  100% { opacity:.18; transform:scale(1.08); }
+}
+@keyframes title-selected-frame {
+  0% { filter:brightness(1) drop-shadow(0 0 5px rgba(160,210,245,.24)); }
+  55% { filter:brightness(1.45) drop-shadow(0 0 18px rgba(213,240,255,.82)); }
+  100% { filter:brightness(1.20) drop-shadow(0 0 10px rgba(173,220,250,.42)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-screen[data-title-mode="continue"] #continue .title-screen__frame { animation:none; }
+  .title-screen.title-screen--departing::after,
+  .title-screen.title-screen--departing .title-screen__choice.is-departing .title-screen__frame { animation:none !important; }
+}
+
+
+/* Device feedback: improve label contrast without changing locked geometry.
+ * The shade stays inside each choice and below both artwork and live text. */
+.title-screen__choice::before {
+  content:"";
+  position:absolute;
+  left:14%;
+  right:14%;
+  top:18%;
+  bottom:18%;
+  z-index:-2;
+  pointer-events:none;
+  border-radius:999px;
+  background:linear-gradient(90deg, transparent 0%, rgba(1,7,18,.48) 18%, rgba(1,6,16,.68) 50%, rgba(1,7,18,.48) 82%, transparent 100%);
+  filter:blur(5px);
+}
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation:title-frame-soft-glow 3.2s ease-in-out infinite;
+  will-change:filter,opacity;
+}
+@keyframes title-frame-soft-glow {
+  0%,100% {
+    opacity:.86;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(116,188,239,.22)) brightness(.94);
+  }
+  50% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.66)) drop-shadow(0 0 18px rgba(178,225,255,.72)) brightness(1.28);
+  }
+}
+
+/* Device feedback: Continue should read as a clear heartbeat, not ambient shimmer.
+ * Three quick beats, then a short rest. Geometry stays locked. */
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation:title-frame-heartbeat 2.4s ease-in-out infinite;
+}
+@keyframes title-frame-heartbeat {
+  0%, 8%, 16%, 24%, 100% {
+    opacity:.88;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(116,188,239,.22)) brightness(.96);
+  }
+  4%, 12%, 20% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.64)) drop-shadow(0 0 22px rgba(188,231,255,.88)) brightness(1.42);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-screen[data-title-mode="continue"] #continue .title-screen__frame { animation:none; }
+}
+
+/* Device tuning: Continue frame heartbeat.
+ * Three readable pulses followed by a short rest; geometry stays locked. */
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation:title-frame-heartbeat 2.6s ease-in-out infinite;
+}
+@keyframes title-frame-heartbeat {
+  0%, 8%, 22%, 36%, 100% {
+    opacity:.86;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(116,188,239,.22)) brightness(.94);
+  }
+  4%, 18%, 32% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.64)) drop-shadow(0 0 22px rgba(190,232,255,.86)) brightness(1.38);
+  }
+}
+
+
+/* First-visit BEGIN: same heartbeat cadence as Continue, using the antique-gold frame hue. */
+.title-screen[data-title-mode="new"] #start .title-screen__frame--newgame {
+  animation:title-frame-heartbeat-gold 2.6s ease-in-out infinite;
+  will-change:filter,opacity;
+}
+@keyframes title-frame-heartbeat-gold {
+  0%, 8%, 22%, 36%, 100% {
+    opacity:.86;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(190,145,76,.24)) brightness(.94);
+  }
+  4%, 18%, 32% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.64)) drop-shadow(0 0 22px rgba(232,190,116,.84)) brightness(1.34);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-screen[data-title-mode="new"] #start .title-screen__frame--newgame { animation:none; }
+}
