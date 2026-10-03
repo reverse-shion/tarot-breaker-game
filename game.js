@@ -1700,6 +1700,18 @@
     // to the New Game reset/navigation path.
     if (!enteringGardenRuntime) {
       if (start) start.disabled = true;
+      const progress = window.TarotProgressCore?.createProgress();
+      if (!progress) {
+        if (start) start.disabled = false;
+        if (note) note.textContent = "セーブ機能を初期化できません";
+        return;
+      }
+      const reset = progress.resetGame("title-new-game");
+      if (!reset?.persisted) {
+        if (start) start.disabled = false;
+        if (note) note.textContent = "セーブデータを初期化できません。再試行してください";
+        return;
+      }
       window.TarotJourney?.reset();
       const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
       const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
