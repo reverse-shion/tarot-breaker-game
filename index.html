@@ -163,8 +163,17 @@
     <script src="./progress.js?v=20260921-progress-v1"></script>
     <script src="./progress-resume.js?v=phase-2a-6-alenon"></script>
     <script src="./public-continue.js?v=phase-2a-6-alenon"></script>
-    <script src="./public-continue-title.js?v=title-ux-v1-1"></script>
-    <script src="./title-first-visit-preview.js?v=1"></script>
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        if (params.get("titlePreview") === "first") {
+          window.__TAROT_BREAKER_FIRST_VISIT_PREVIEW__ = true;
+          document.write('<script src="./title-first-visit-preview.js?v=2"><\\/script>');
+        } else {
+          document.write('<script src="./public-continue-title.js?v=title-ux-v1-1"><\\/script>');
+        }
+      })();
+    </script>
     <script src="./garden-dev-bootstrap.js?v=phase-2a-5c-1"></script>
     <script src="./garden-progress-observer.js?v=phase-2a-5c-transit-1" defer></script>
     <script src="./navigation.js?v=0.7.1" defer></script>
