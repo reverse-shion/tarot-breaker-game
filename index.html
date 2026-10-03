@@ -109,17 +109,23 @@
         <img class="title-screen__logo" src="./assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f" alt="TAROT BREAKER" draggable="false" />
 
         <div class="title-screen__start-wrap" role="group" aria-label="タイトルメニュー">
-          <span class="title-screen__menu-sigil" aria-hidden="true"><i></i><b>✦</b><i></i></span>
-
           <button id="continue" class="title-screen__choice title-screen__choice--primary" type="button" disabled hidden aria-label="つづきから">
+            <span class="title-screen__plaque" aria-hidden="true"></span>
+            <span class="title-screen__emblem title-screen__emblem--primary" aria-hidden="true"><i></i><b>✦</b></span>
             <span class="title-screen__choice-shine" aria-hidden="true"></span>
-            <span class="title-screen__choice-jp">つづきから</span>
-            <span class="title-screen__choice-en">CONTINUE</span>
+            <span class="title-screen__choice-copy">
+              <span class="title-screen__choice-jp">つづきから</span>
+              <span class="title-screen__choice-en">CONTINUE</span>
+            </span>
           </button>
 
           <button id="start" class="title-screen__choice title-screen__choice--start" type="button" disabled aria-label="物語をはじめる">
-            <span class="title-screen__choice-jp">物語をはじめる</span>
-            <span class="title-screen__choice-en">BEGIN</span>
+            <span class="title-screen__plaque" aria-hidden="true"></span>
+            <span class="title-screen__emblem title-screen__emblem--secondary" aria-hidden="true"><i></i><b>✦</b></span>
+            <span class="title-screen__choice-copy">
+              <span class="title-screen__choice-jp">物語をはじめる</span>
+              <span class="title-screen__choice-en">BEGIN</span>
+            </span>
           </button>
 
           <button id="title-retry" class="title-screen__retry" type="button" hidden>
