@@ -3,8 +3,7 @@
   "use strict";
 
   const params = new URLSearchParams(location.search);
-  const titlePreview = params.get("titlePreview");
-  if (params.has("from") || (params.has("dev") && !titlePreview) || params.has("entry")) return;
+  if (params.has("from") || params.has("dev") || params.has("entry")) return;
 
   const screen = document.getElementById("start-screen");
   const start = document.getElementById("start");
@@ -110,7 +109,7 @@
     return controller.inspect();
   }
 
-  render(inspectTitleState());
+  render(controller.inspect());
   }
 
   render(controller.inspect());
