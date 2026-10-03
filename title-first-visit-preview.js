@@ -1,6 +1,8 @@
 (() => {
   "use strict";
   if (window.__TAROT_BREAKER_FIRST_VISIT_PREVIEW__ !== true) return;
+  // Mark this visual-only page so the production title controller keeps its exact contract untouched.
+  history.replaceState(null, "", location.pathname + "?dev=title-first-visit-preview");
 
   const screen = document.getElementById("start-screen");
   const continueButton = document.getElementById("continue");
