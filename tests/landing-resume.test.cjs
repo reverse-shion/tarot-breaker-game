@@ -171,7 +171,7 @@ test("Landing Continue readiness guards input, loop triggers and production Jour
 });
 
 
-test("Landing Continue identity survives Garden and Alenon roundtrips without production writes",()=>{
+test("Landing Continue identity survives Garden and Alenon roundtrips through the active Progress instance",()=>{
   const landing=fs.readFileSync("star-country-landing.html","utf8");
   const garden=fs.readFileSync("game.js","utf8");
   const alenon=fs.readFileSync("alenon.html","utf8");
@@ -179,7 +179,7 @@ test("Landing Continue identity survives Garden and Alenon roundtrips without pr
   assert.match(garden,/const landingResumeDevId = enteringFromLanding/);
   assert.match(garden,/\.\/star-country-landing\.html\?from=garden&dev=\$\{encodeURIComponent\(landingResumeDevId\)\}/);
   assert.match(garden,/if \(landingResumeDevId\)[\s\S]*transit\.progress\.commitArrival[\s\S]*else \{[\s\S]*TarotJourney\?\.set\("companion"/);
-  assert.match(landing,/continueSession\.progress\.commitArrival\(\{[\s\S]*destinationMapId: "alenon"[\s\S]*reason: "pad_to_alenon"/);
+  assert.match(landing,/if \(landingProgressValid\)[\s\S]*landingProgress\.commitArrival\(\{[\s\S]*destinationMapId: "alenon"[\s\S]*reason: "pad_to_alenon"/);
   assert.match(landing,/\.\/alenon\.html\?from=landing-return&landingDev=\$\{encodeURIComponent\(continueSession\.definition\.id\)\}/);
   assert.match(alenon,/const landingContinueTransitId =/);
   assert.match(alenon,/\.\/star-country-landing\.html\?from=alenon&dev=\$\{encodeURIComponent\(landingContinueTransitId\)\}/);
