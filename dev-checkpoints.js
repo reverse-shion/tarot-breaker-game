@@ -29,6 +29,17 @@
       durableWritePolicy: "production writes forbidden; checkpoint-specific dev session only at authored prologue completion" });
   }
 
+  for (const [suffix, spawnId, events, companion] of alenonScenarios) {
+    const id = "public-continue-alenon-" + suffix;
+    register(id, {event:"public-continue", segment:"public-continue-alenon", map:"alenon", spawn:spawnId,
+      temporaryState:Object.freeze({version:1, checkpoint:Object.freeze({mapId:"alenon", spawnId}), completedEvents:Object.freeze([...events]), companion}),
+      requiredRuntime:Object.freeze(["alenon.html", "public-continue.js", "alenon-public-continue.js", "progress.js", "progress-resume.js", "alenon-resume.js"]),
+      entryAction:"registered ?dev=" + id, emittedSignal:"tarot-breaker:alenon-resume-ready",
+      receivingRuntime:"real Alenon Public adapter with injected session-only Progress backend",
+      expectedFirstRuntimeState:"locked until decoded assets, valid collision and authored safe ground spawn",
+      durableWritePolicy:"production writes forbidden; injected checkpoint-specific session backend; cross-map departure contained"});
+  }
+
   const landingScenarios = [
     ["landing-resume-arrival", ["alenon_prologue"], "not_joined"],
     ["landing-resume-memory-complete", ["alenon_prologue", "landing_devil_memory"], "not_joined"],
