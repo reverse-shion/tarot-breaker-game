@@ -660,7 +660,7 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
   background: linear-gradient(90deg, transparent, rgba(236,248,255,.05), rgba(240,250,255,.62), rgba(173,214,242,.15), transparent);
 }
 .title-screen[data-title-mode="continue"] #continue .title-screen__choice-shine {
-  animation: title-continue-glint 6s ease-in-out infinite .9s;
+  animation: none;
 }
 .title-screen__choice:not(:disabled):active {
   transform: translateY(2px) scale(.995);
