@@ -89,7 +89,9 @@
   const enteringFromLanding = params.get("from") === "landing";
   const gardenResumeDev = params.get("from") === null &&
     /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
-  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev;
+  const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
+    !params.has("from") && !params.has("dev");
+  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic;
   const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
     ? params.get("dev")
     : null;
@@ -1944,8 +1946,8 @@
       }
 
       await loadCollision();
-      if (gardenResumeDev) {
-        const session = window.TarotGardenDevTransit;
+      if (gardenResumeDev || gardenResumePublic) {
+        const session = gardenResumePublic ? window.TarotGardenContinueTransit : window.TarotGardenDevTransit;
         if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
             session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||
             !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= 952)
@@ -2026,6 +2028,19 @@
       };
 
       if (document.body.classList.contains("scene-load-error")) return;
+      if (gardenResumePublic) {
+        const fresh = window.TarotGardenPublicContinue?.revalidate(window.TarotGardenContinueTransit, {
+          search: location.search,
+          storage: window.localStorage,
+        });
+        if (!fresh?.ok) throw new Error(fresh?.reason || "garden-public-revalidate-failed");
+        const projected = window.TarotGardenPublicContinue.projectJourney(fresh, {
+          journey: window.TarotJourney,
+          storage: window.sessionStorage,
+        });
+        if (!projected?.ok) throw new Error(projected?.reason || "garden-public-project-failed");
+        window.TarotGardenContinueTransit = fresh;
+      }
       ready = true;
       resize();
       reset();
@@ -2035,9 +2050,11 @@
         start.disabled = false;
       }
       note.textContent =
-        params.get("from") === "landing"
-          ? "PAD離着陸場から星門庭園へ到着"
-          : "星門庭園の読み込み完了";
+        gardenResumePublic
+          ? "保存地点から星門庭園を再開"
+          : params.get("from") === "landing"
+            ? "PAD離着陸場から星門庭園へ到着"
+            : "星門庭園の読み込み完了";
 
       // begin() applies the existing PAD spawn/companion handoff and draws
       // again. Keep that final frame behind the gate light, not the earlier reset.
