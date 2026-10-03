@@ -137,6 +137,16 @@ test("Garden Public Continue can never execute the root New Game reset branch",(
   assert.match(game,/const enteringGardenRuntime = enteringFromLanding \|\| gardenResumeDev \|\| gardenResumePublic;/);
 });
 
+test("Garden Public Continue keeps the south exit active and returns to Landing",()=>{
+  const game=fs.readFileSync("game.js","utf8");
+  const landing=fs.readFileSync("star-country-landing.html","utf8");
+  assert.match(game,/const enteringGardenRuntime = enteringFromLanding \|\| gardenResumeDev \|\| gardenResumePublic;/);
+  assert.match(game,/enteringGardenRuntime && gardenExitArmed && !leavingMap && next\.moving/);
+  assert.doesNotMatch(game,/enteringFromLanding && gardenExitArmed && !leavingMap && next\.moving/);
+  assert.match(game,/navigateRuntime\([^\n]*star-country-landing\.html\?from=garden/);
+  assert.match(landing,/returningFromGarden[\s\S]*commitArrival\(\{[\s\S]*sourceMapId: "star_gate_garden",[\s\S]*destinationMapId: "star_country_landing",[\s\S]*spawnId: "garden_entrance"/);
+});
+
 test("Garden Public adapter browser import is inert",()=>{
   const h={
     TarotProgressCore:Core,
