@@ -100,3 +100,20 @@ Exact runtime: `2b2302d78c065ca61b680a3990854187ce4f261a`.
 | Public invalid entry error / retry / manual Title return | iPhone | PASS | Owner confirmed the supplied `alenon.html?entry=invalid` checklist without issue: Japanese invalid-link explanation; retry does not fall back to normal gameplay; manual Title return works. This confirms this entry-validation failure path only, not human reproduction of every asset/storage failure. |
 
 Public manual error/Title recovery is now confirmed for invalid-entry rejection. Overall DEVICE_RESULT remains PENDING for remaining applicable iPad display/input coverage and Production restored-checkpoint refresh. No runtime change or main merge.
+
+## Phase 2A-6A success-status fix — exact-runtime human verification 2026-10-03 12:26 JST
+
+Runtime SHA: `01afd254e815f01ab9dd2779e072311e2ad6e838`. Owner explicitly confirmed both exact-build checks without issue ("1、2問題なかったよ"). The checklist specified the previous iPad Safari test context; OS version and viewport dimensions were not provided.
+
+| Check | Commit SHA | Device | Result | Human-confirmed observable behavior |
+|---|---|---|---|---|
+| Production Title Continue success / refresh | 01afd254e815f01ab9dd2779e072311e2ad6e838 | iPad Safari (specified test context) | PASS | From Title Continue, the whole resume status panel and Title link disappear after success; subsequent refresh does not replay the opening dialogue and movement remains available. |
+| Public invalid-entry error / manual Title recovery | 01afd254e815f01ab9dd2779e072311e2ad6e838 | iPad Safari (specified test context) | PASS | `entry=invalid` retains its error explanation; manual Title return works. |
+
+### Proportional gate boundary
+
+The success-status fix changes only the status panel visibility in Alenon (7 runtime additions / 1 deletion), plus additive tests and contract text. Independent review confirmed no change to Progress, Journey projection, readiness admission, audio, touch/movement handlers, collision, route, spawn, story or companion behavior. Automated targeted 27/27 and full 293/293 tests passed; the published tree exactly matched reviewed local content.
+
+The selected visual/Continue refresh/error-return smoke checklist is explicitly PASS on this new exact runtime. Prior broader route/fixture evidence for `2b2302d78c065ca61b680a3990854187ce4f261a` remains historical and is NOT relabelled as a new-SHA route PASS; no new full-game retest or flawless companion-visual claim is manufactured. Independent evidence review returned PASS. Overall PR Device Gate is PASS for the reviewed proportional scope and selected checklist. CI and main merge authorization remain separate.
+
+Deferred LANDING-SHIOPON-TRANSIENT-VISIBILITY remains an open existing defect. No rendering-cause claim or follower repair is included.
