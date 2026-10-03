@@ -193,7 +193,7 @@ test('Web Audio Orb request alone has no authority without audioDebug=1', async 
 
 test('title forwards audioDebug only when opt-in; normal destination remains unchanged', () => {
   const game = fs.readFileSync('game.js', 'utf8');
-  const start = game.indexOf('    if (!enteringFromLanding) {', game.indexOf('  function begin(event) {'));
+  const start = game.indexOf('    if (!enteringGardenRuntime) {', game.indexOf('  function begin(event) {'));
   const branch = game.slice(start, game.indexOf('\n    running = true;', start));
   for (const [search, expected] of [
     ['', './alenon.html?from=title&build=6bc2a38e'],
