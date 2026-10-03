@@ -3,7 +3,7 @@
   "use strict";
 
   const params = new URLSearchParams(location.search);
-  if (params.has("from") || params.has("dev") || params.has("entry")) return;
+  if (params.has("from") || params.has("dev") || params.has("entry") || params.get("titlePreview") === "first") return;
 
   const screen = document.getElementById("start-screen");
   const start = document.getElementById("start");
