@@ -6,6 +6,18 @@ Authority: Human device verification outranks implementation convenience.
 ## Purpose
 A gameplay behavior marked VERIFIED is a release contract. Future work must preserve it unless the product owner explicitly changes the specification.
 
+## Stable main baseline rule
+The current merged `main` is the stable product baseline. New events, effects, story content, assets, or feature work must preserve existing main behavior and implementation outside the minimum scope required for that addition.
+
+Non-negotiable rules:
+- Do not refactor, reorganize, clean up, modernize, rename, replace, or otherwise modify existing main implementation merely because new work is being added.
+- Existing title, Continue, save/progress, map traversal, event history, companion state, verified story flow, and deployment behavior must not be changed incidentally by feature work.
+- A change to existing main is allowed only when (a) it fixes a confirmed defect, or (b) the new feature cannot be implemented without that specific change. In case (b), the PR must explicitly identify the required existing-main change, why it is unavoidable, and its regression scope before merge.
+- No "while here" fixes or unrelated improvements are permitted in an event/feature PR.
+- Product-owner explicit approval remains required for any intentional replacement of a verified contract or stable baseline behavior.
+
+Baseline recorded when this rule was adopted: `d59daf271ea9b59a0dc729545acb84185b7d66c2`. This SHA is a historical reference for the adopted stable baseline; later explicitly approved merges become the new current main without weakening this rule.
+
 ## Required lifecycle
 IMPLEMENTED -> FIXED -> DEPLOYED -> VERIFIED -> CONTRACT LOCKED
 
