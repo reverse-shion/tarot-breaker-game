@@ -176,3 +176,6 @@ Runtime SHA: `124f3ac8003fe4384311d37850f3418086dc456a`.
 ### Scope boundary
 
 This PASS covers the exact production-Continue regression and the locked historical recovery contracts explicitly exercised above. The direct `landing-resume-waiting` fixture intentionally restores the waiting state only; the greeting belongs to the authored Alenon PAD roundtrip return. Regression tests added after the runtime SHA are evidence/test-only and do not change runtime behavior. No broader device, OS/browser, viewport, or unrelated gameplay coverage is inferred.
+
+
+PR #99 gate refresh note — 2026-10-03: metadata now records the exact-runtime device result as PASS. This is evidence-only; runtime content is unchanged.
