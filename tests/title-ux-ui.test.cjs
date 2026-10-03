@@ -135,8 +135,7 @@ test("Title markup uses Japanese-first world-design labels and no legacy TOUCH T
   assert.match(html, />BEGIN</);
   assert.match(html, /つづきから/);
   assert.match(html, />CONTINUE</);
-  assert.match(html, /はじめから/);
-  assert.match(html, />NEW GAME</);
+  assert.match(source, /setStartLabel\("はじめから", "NEW GAME", "new-game"\)/);
   assert.match(html, /物語を、はじめから選び直しますか？/);
   assert.match(html, /現在の進行データはリセットされます。/);
   assert.doesNotMatch(html, /TOUCH TO START/);
