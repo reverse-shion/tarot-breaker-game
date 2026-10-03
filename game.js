@@ -1695,18 +1695,17 @@
     event?.preventDefault();
     if (!ready || running) return;
 
-    // Root URL is the official title entry. Only a PAD handoff may enter the
-    // Star Gate Garden directly.
-    if (!enteringFromLanding) {
-      if (typeof gardenResumeDev === "undefined" || !gardenResumeDev) {
-        if (start) start.disabled = true;
-        window.TarotJourney?.reset();
-        const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
-        const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
-          ? "&orbOutput=webAudio" : "";
-        navigateRuntime(`./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`);
-        return;
-      }
+    // Root title may start a new game. Any validated Garden runtime entry
+    // (Landing handoff, dev Continue, or Public Continue) must never fall through
+    // to the New Game reset/navigation path.
+    if (!enteringGardenRuntime) {
+      if (start) start.disabled = true;
+      window.TarotJourney?.reset();
+      const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
+      const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
+        ? "&orbOutput=webAudio" : "";
+      navigateRuntime(`./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`);
+      return;
     }
 
     running = true;
