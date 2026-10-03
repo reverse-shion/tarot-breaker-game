@@ -564,7 +564,7 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
+  gap: 2px;
 }
 .title-screen__choice {
   position: relative;
@@ -575,7 +575,7 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
   width: 100%;
   aspect-ratio: 1920 / 368;
   min-height: 0;
-  padding: 0 14.5% 0 17.5%;
+  padding: 0 18% 0 20%;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -618,25 +618,25 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
   grid-column: 1;
   min-width: 0;
   width: 100%;
-  transform: translateX(2.5%);
+  transform: none;
   display: block;
 }
 .title-screen__choice-jp {
   display: block;
   font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
-  font-size: clamp(20px, 5vw, 22px);
+  font-size: clamp(17px, 4.3vw, 20px);
   font-weight: 600;
   line-height: 1.15;
-  letter-spacing: .10em;
+  letter-spacing: .08em;
   transform: translateX(.05em);
   color: rgba(226,234,241,.96);
   text-shadow: 0 1px 2px #01030a, 0 0 5px rgba(0,0,0,.96), 0 0 8px rgba(151,184,211,.16);
 }
 .title-screen__choice-en {
   display: block;
-  margin-top: 4px;
-  font: 500 clamp(12px, 2.8vw, 13px)/1.1 Georgia, "Times New Roman", serif;
-  letter-spacing: .22em;
+  margin-top: 2px;
+  font: 500 clamp(10px, 2.5vw, 12px)/1.05 Georgia, "Times New Roman", serif;
+  letter-spacing: .18em;
   transform: translateX(.11em);
   color: rgba(202,213,223,.88);
   text-shadow: 0 1px 2px #01030a, 0 0 5px rgba(0,0,0,.96);
@@ -847,15 +847,15 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
     bottom: max(4.5vh, calc(env(safe-area-inset-bottom) + 12px));
     width: min(90vw, 420px);
   }
-  .title-screen__choice { min-height: 0; padding: 0 14.5% 0 17.5%; }
+  .title-screen__choice { min-height: 0; padding: 0 18% 0 20%; }
   .title-screen__choice-jp { font-size: clamp(16px, 4vw, 20px); }
   .title-screen__choice-en { margin-top: 3px; }
  }
 @media (max-width: 360px) {
-  .title-screen__start-wrap { width: min(94vw, 360px); gap: 8px; }
-  .title-screen__choice { min-height: 0; padding: 0 14.5% 0 17.5%; }
-  .title-screen__choice-jp { font-size: 18px; }
-  .title-screen__choice-en { font-size: 12px; letter-spacing: .18em; }
+  .title-screen__start-wrap { width: min(94vw, 360px); gap: 1px; }
+  .title-screen__choice { min-height: 0; padding: 0 18% 0 20%; }
+  .title-screen__choice-jp { font-size: 17px; }
+  .title-screen__choice-en { font-size: 10px; letter-spacing: .16em; }
   .title-screen__confirm-panel { width: 88vw; padding-left: 18px; padding-right: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
