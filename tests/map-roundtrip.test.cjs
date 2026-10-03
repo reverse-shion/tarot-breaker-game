@@ -46,7 +46,7 @@ function harness(search = '', saved = {}) {
 function inline(file){return [...fs.readFileSync(file,'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];}
 async function landing(search, saved){
   const t=harness(search,saved);
-  t.run(inline('star-country-landing.html').replace('      if (continueDevRequest) bootLandingContinue();\n      else boot();', `window.testMap = {boot, player, ride, companion, loop, beginBoarding, finishArrival, leaveForGarden, updateCompanion, isGroundWalkable, get memoryDone(){return devilEventStarted}, advance(){storyAdvanceResolve?.(); storyAdvanceResolve=null;}};`));
+  t.run(inline('star-country-landing.html').replace('      if (continueRequest) bootLandingContinue();\n      else boot();', `window.testMap = {boot, player, ride, companion, loop, beginBoarding, finishArrival, leaveForGarden, updateCompanion, isGroundWalkable, get memoryDone(){return devilEventStarted}, advance(){storyAdvanceResolve?.(); storyAdvanceResolve=null;}};`));
   await t.h.testMap.boot();return t;
 }
 const event = extra => ({preventDefault(){},target:{closest:()=>null},button:0,pointerId:1,clientX:724,clientY:500,...extra});
@@ -142,7 +142,7 @@ test('Continue tap endpoint cannot snap through waiting Shiopon collision',()=>{
   t.h.TarotLandingResume={createSession:()=>({ok:true,returningFromGarden:false,
     definition:{id:'landing-resume-waiting'},context:{companion:'waiting_at_landing'},
     projection:{landingMemoryDone:true,companion:{mode:'waiting'}}})};
-  t.run(inline('star-country-landing.html').replace('      if (continueDevRequest) bootLandingContinue();\n      else boot();',
+  t.run(inline('star-country-landing.html').replace('      if (continueRequest) bootLandingContinue();\n      else boot();',
     'window.testMap={player,companion,ride,loop};'));
   const m=t.h.testMap;
   m.player.x=725;m.player.y=633;m.player.target={x:725,y:636};
