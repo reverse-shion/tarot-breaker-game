@@ -33,6 +33,12 @@
     busy: "起動中…",
   });
 
+  const schedule = (fn, ms) => {
+    if (typeof window.setTimeout === "function") return window.setTimeout(fn, ms);
+    fn();
+    return 0;
+  };
+
   const navigateRuntime = url => {
     if (window.TarotRuntimeEntry?.navigate) {
       const result = window.TarotRuntimeEntry.navigate(url);
@@ -136,7 +142,7 @@
     screen.classList.add("title-screen--departing");
     start.classList.add("is-departing");
 
-    window.setTimeout(() => {
+    schedule(() => {
       transitionReadyStart = true;
       departing = false;
       start.disabled = false;
@@ -156,7 +162,7 @@
     screen.classList.add("title-screen--departing");
     button.classList.add("is-departing");
 
-    window.setTimeout(() => {
+    schedule(() => {
       const result = controller.launch();
       if (!result.ok) {
         departing = false;
