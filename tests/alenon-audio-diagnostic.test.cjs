@@ -202,7 +202,7 @@ test('title forwards audioDebug only when opt-in; normal destination remains unc
     ['?audioDebug=1&orbOutput=webAudio', './alenon.html?from=title&build=6bc2a38e&audioDebug=1&orbOutput=webAudio'],
   ]) {
     const sandbox = {
-      enteringFromLanding: false, start: { disabled: false }, URLSearchParams,
+      enteringFromLanding: false, enteringGardenRuntime: false, start: { disabled: false }, URLSearchParams,
       location: { search, href: '' }, window: { TarotJourney: { reset() {} } },
     };
     sandbox.navigateRuntime = target => { sandbox.location.href = target; };
