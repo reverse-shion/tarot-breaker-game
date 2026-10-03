@@ -153,9 +153,9 @@ test("Landing image readiness rejects load and decode failures",async(t)=>{
 
 test("Landing Continue readiness guards input, loop triggers and production Journey writes",()=>{
   const html=fs.readFileSync("star-country-landing.html","utf8");
-  assert.match(html,/viewport\.addEventListener\("pointerdown",[\s\S]*if \(continueDevRequest && !continueReady\) return;/);
-  assert.match(html,/addEventListener\("keydown",[\s\S]*if \(continueDevRequest && !continueReady\) return;/);
-  assert.match(html,/function loop\(now\)[\s\S]*if \(continueDevRequest && !continueReady\)[\s\S]*requestAnimationFrame\(loop\);[\s\S]*return;/);
+  assert.match(html,/viewport\.addEventListener\("pointerdown",[\s\S]*if \(continueRequest && !continueReady\) return;/);
+  assert.match(html,/addEventListener\("keydown",[\s\S]*if \(continueRequest && !continueReady\) return;/);
+  assert.match(html,/function loop\(now\)[\s\S]*if \(continueRequest && !continueReady\)[\s\S]*requestAnimationFrame\(loop\);[\s\S]*return;/);
   const writes=[...html.matchAll(/TarotJourney\?\.set\(/g)];
   const guarded=[...html.matchAll(/if \(!continueDevRequest\) window\.TarotJourney\?\.set\(/g)];
   assert.equal(writes.length,4);
