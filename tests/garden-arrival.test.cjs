@@ -35,6 +35,7 @@ function harness({arrival=true, imageDelay, decodeDelay, decodeMissing=false, ba
     decode(){return decodeDelay?.promise || Promise.resolve();}
   }
   const window=new Element();window.devicePixelRatio=2;window.dispatchEvent=e=>{events.push(e.type);window.emit(e.type,e);};
+  window.TarotRuntimeEntry={requireInternal:()=>({ok:true}),navigate:target=>(sandbox.location.href=target,{ok:true})};
   const sandbox={document,window,Image,URLSearchParams,CustomEvent:class {constructor(type,init){this.type=type;this.detail=init?.detail;}},location:{search:arrival?'?from=landing&navDebug=1':'?navDebug=1',href:''},performance:{now:()=>now},console:{error:e=>errors.push(e),warn(){},log(){}},requestAnimationFrame:f=>frames.push(f),setTimeout:(f,ms)=>{timers.set(++timerId,{f,ms});return timerId;},clearTimeout:id=>timers.delete(id),fetch:async url=>({ok:!badJson,json:async()=>url.includes('manifest')?manifest:collision})};
   Object.assign(window,{setTimeout:sandbox.setTimeout,clearTimeout:sandbox.clearTimeout});
   vm.createContext(sandbox);
