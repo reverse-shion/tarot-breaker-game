@@ -76,10 +76,13 @@
   });
   const params = new URLSearchParams(location.search);
   const enteringFromLanding = params.get("from") === "landing";
+  const gardenResumeDev = params.get("from") === null &&
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev;
   const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
     ? params.get("dev")
     : null;
-  if (enteringFromLanding && startScreen) startScreen.hidden = true;
+  if (enteringGardenRuntime && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
 
@@ -1682,13 +1685,15 @@
     // Root URL is the official title entry. Only a PAD handoff may enter the
     // Star Gate Garden directly.
     if (!enteringFromLanding) {
-      if (start) start.disabled = true;
-      window.TarotJourney?.reset();
-      const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
-      const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
-        ? "&orbOutput=webAudio" : "";
-      location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
-      return;
+      if (typeof gardenResumeDev === "undefined" || !gardenResumeDev) {
+        if (start) start.disabled = true;
+        window.TarotJourney?.reset();
+        const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
+        const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
+          ? "&orbOutput=webAudio" : "";
+        location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
+        return;
+      }
     }
 
     running = true;
@@ -1699,7 +1704,7 @@
     reset();
     if (window.TarotDialogue?.getState().joined) {
       startShioponFollow();
-      if (enteringFromLanding) placeShioponBesidePlayer();
+      if (enteringGardenRuntime) placeShioponBesidePlayer();
     }
     last = performance.now();
     draw();
@@ -1928,8 +1933,18 @@
       }
 
       await loadCollision();
-      spawnRef = findNearestSpawnRef();
-      gardenExitRef = { ...spawnRef };
+      if (gardenResumeDev) {
+        const session = window.TarotGardenDevTransit;
+        if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
+            session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||
+            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= 952)
+          throw new Error("garden-continue-spawn-invalid");
+        spawnRef = {x:session.spawn.x, y:session.spawn.y};
+        gardenExitRef = {...DEFAULT_SPAWN};
+      } else {
+        spawnRef = findNearestSpawnRef();
+        gardenExitRef = { ...spawnRef };
+      }
       if (enteringFromLanding)
         spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
 
@@ -2015,7 +2030,7 @@
 
       // begin() applies the existing PAD spawn/companion handoff and draws
       // again. Keep that final frame behind the gate light, not the earlier reset.
-      if (enteringFromLanding) {
+      if (enteringGardenRuntime) {
         begin();
         document.body.classList.add("scene-rendered");
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -2025,7 +2040,7 @@
       document.body.classList.remove("scene-booting", "scene-load-error", "scene-rendered");
       document.body.classList.add("scene-ready");
     } catch (error) {
-      if (enteringFromLanding) window.failGardenArrival?.();
+      if (enteringGardenRuntime) window.failGardenArrival?.();
       running = false;
       ready = false;
       console.error(error);

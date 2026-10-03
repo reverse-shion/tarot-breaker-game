@@ -31,8 +31,27 @@
     });
     return Object.freeze({ok: true, context, projection});
   }
+  function chooseFollowingPlacement({player, isWalkable, sideGap=48, behindGap=56, minGap=44} = {}) {
+    if (!player || !Number.isFinite(player.x) || !Number.isFinite(player.y) ||
+        !["down","up","left","right"].includes(player.dir) || typeof isWalkable !== "function")
+      return null;
+    const behind = player.dir === "down" ? {x:player.x, y:player.y-behindGap} :
+      player.dir === "up" ? {x:player.x, y:player.y+behindGap} :
+      player.dir === "left" ? {x:player.x+behindGap, y:player.y} :
+      {x:player.x-behindGap, y:player.y};
+    const candidates = [
+      {x:player.x-sideGap, y:player.y},
+      {x:player.x+sideGap, y:player.y},
+      behind,
+    ];
+    const point = candidates.find(candidate =>
+      isWalkable(candidate.x, candidate.y) &&
+      Math.hypot(candidate.x-player.x, candidate.y-player.y) >= minGap
+    );
+    return point ? Object.freeze({...point}) : null;
+  }
   function openDevProgress(definition, storage, diagnostic) {
-    const key = "tarot-breaker:dev:landing-resume:v1:" + definition.id;
+    const key = "tarot-breaker:dev:landing-resume:v3:" + definition.id;
     const fallback = JSON.stringify(definition.temporaryState);
     const backend = Object.freeze({
       getItem(requested) {
@@ -71,19 +90,35 @@
     const params = new URLSearchParams(search || "");
     const definition = checkpoints.resolve(search);
     const from = params.get("from");
-    const validFrom = !params.has("from") || (params.getAll("from").length === 1 && from === "garden");
+    const validFrom = !params.has("from") ||
+      (params.getAll("from").length === 1 && ["garden", "alenon"].includes(from));
     if (!definition || !definition.id.startsWith(DEV_PREFIX) || definition.map !== MAP_ID ||
         params.getAll("dev").length !== 1 || !validFrom ||
         ["padEdit", "debug", "collision", "passage", "edit", "objects"].some(key => params.has(key)))
       return {ok: false, reason: "invalid-development-entry"};
     const opened = openDevProgress(definition, storage, diagnostic);
-    const resolved = resume.resolveContinue(opened.progress.load());
+    let resolved = resume.resolveContinue(opened.progress.load());
+    if (!resolved.ok) return resolved;
+    if (from === "alenon" && resolved.context.mapId === "alenon" && resolved.context.spawnId === "pad_return") {
+      try {
+        opened.progress.commitArrival({
+          sourceMapId: "alenon",
+          destinationMapId: MAP_ID,
+          spawnId: SPAWN_ID,
+          reason: "pad_to_landing",
+        });
+      } catch (error) {
+        return {ok:false, reason:error?.code || error?.message || "landing-return-rejected"};
+      }
+      resolved = resume.resolveContinue(opened.progress.load());
+    }
     if (!resolved.ok) return resolved;
     const expectedSpawn = from === "garden" ? "garden_entrance" : SPAWN_ID;
     if (resolved.context.mapId !== MAP_ID || resolved.context.spawnId !== expectedSpawn)
       return {ok: false, reason: "not-landing"};
     const projected = projectResolved(resolved);
-    return Object.freeze({...projected, progress: opened.progress, definition, key: opened.key, returningFromGarden: from === "garden"});
+    return Object.freeze({...projected, progress: opened.progress, definition, key: opened.key,
+      returningFromGarden: from === "garden", returningFromAlenon: from === "alenon"});
   }
   function createGardenTransitSession({search, storage, diagnostic} = {}) {
     const params = new URLSearchParams(search || "");
@@ -94,7 +129,8 @@
     const opened = openDevProgress(definition, storage, diagnostic);
     let resolved = resume.resolveContinue(opened.progress.load());
     if (!resolved.ok) return resolved;
-    if (resolved.context.mapId === MAP_ID && resolved.context.spawnId === SPAWN_ID) {
+    if (resolved.context.mapId === MAP_ID &&
+        [SPAWN_ID, "garden_entrance"].includes(resolved.context.spawnId)) {
       try {
         opened.progress.commitArrival({
           sourceMapId: MAP_ID,
@@ -142,5 +178,5 @@
       image.src = src;
     });
   }
-  return Object.freeze({receive, createSession, createGardenTransitSession, validateCollision, loadImage});
+  return Object.freeze({receive, createSession, createGardenTransitSession, chooseFollowingPlacement, validateCollision, loadImage});
 });
