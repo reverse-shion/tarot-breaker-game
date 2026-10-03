@@ -50,7 +50,7 @@ test("cold production map entries require handoff while dev/editor entries remai
   for(const source of [alenon,landing,index]) assert.match(source,/runtime-entry\.js\?v=title-entry-v1/);
   assert.match(alenon,/TarotRuntimeEntry\?\.requireInternal\(\{allowDirect:tool,title:"\.\/index\.html"\}\)/);
   assert.match(landing,/TarotRuntimeEntry\?\.requireInternal\(\{allowDirect:tool,title:"\.\/index\.html"\}\)/);
-  assert.match(index,/if \(fromLanding && !params\.has\("dev"\)\)[\s\S]*TarotRuntimeEntry\?\.requireInternal\(\{title:"\.\/index\.html"\}\)/);
+  assert.match(index,/if \(\(fromLanding && !params\.has\("dev"\)\) \|\| publicGardenResume\)[\s\S]*TarotRuntimeEntry\?\.requireInternal\(\{title:"\.\/index\.html"\}\)/);
   assert.match(alenon,/p\.has\("dev"\).*p\.has\("edit"\).*p\.has\("objects"\).*p\.has\("collision"\).*p\.has\("skipPrologue"\).*p\.has\("debug"\)/s);
   assert.match(landing,/p\.has\("dev"\).*p\.has\("padEdit"\).*p\.has\("debug"\)/s);
 });
