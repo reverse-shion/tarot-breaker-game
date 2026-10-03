@@ -11,7 +11,7 @@ const source = fs.readFileSync(path.join(__dirname, "..", "star-country-landing.
 test("Landing observes Garden return without replacing legacy companion runtime", () => {
   assert.match(source, /returningFromGarden/);
   assert.match(source, /sourceMapId: "star_gate_garden"[\s\S]*destinationMapId: "star_country_landing"[\s\S]*reason: "garden_to_landing"/);
-  assert.match(source, /const savedCompanion = continueDevRequest \?[\s\S]*window\.TarotJourney\?\.get\("companion"\)/);
+  assert.match(source, /const savedCompanion = continueRequest \?[\s\S]*window\.TarotJourney\?\.get\("companion"\)/);
   assert.match(source, /continueSession\.projection\.companion/);
 });
 
