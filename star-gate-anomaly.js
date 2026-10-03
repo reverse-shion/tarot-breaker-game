@@ -57,8 +57,32 @@ function overscanCoversViewport(state){
  return viewportTop>=CINEMATIC_SKY_OVERSCAN.y&&viewportTop<=overscanBottom&&topSafety>=OVERSCAN_COVERAGE.minimumTopSafety&&viewportBottom>=OVERSCAN_COVERAGE.mainSceneTop;
 }
 async function resonance(){
- const camera=window.TarotCinematicCamera;if(!camera)throw new Error("Cinematic camera unavailable");
- const shionStart=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
+ const camera=window.TarotCinematicCamera;
+ const shionStart=window.TarotStage?.getState?.().actors?.shion||camera?.getState?.().player;
+ if(DEV_HARNESS&&!camera){
+  // Current verified Garden runtime intentionally exposes no historical
+  // CinematicCamera API. Preserve the authored timing/state sequence in the
+  // isolated recovery instead of aborting after the investigate choice.
+  gateShell()?.classList.add("sga-sequence-active");
+  setGateState(null);await pause(800);
+  setGateState("sga-sky-descent");await pause(1050);
+  setGateState("sga-normal-flow");await pause(1320);
+  setGateState("sga-resonance-complete");await pause(320);
+  setGateState("sga-normal-hold");await pause(1200);
+  setGateState("sga-shion-confirmation");
+  await say("shion","……星門は、特におかしくないな。");
+  setGateState("sga-false-safety-pause");await pause(400);
+  setGateState("sga-anomaly-flicker");await pause(1180);
+  setGateState("sga-anomaly");await pause(480);
+  setGateState("sga-reverse-gate");await pause(1100);
+  setGateState("sga-reverse-flow");await pause(1050);
+  setGateState("sga-skyward-release");await pause(1050);
+  setGateState("sga-anomaly-rest");await pause(700);
+  gateShell()?.classList.remove("sga-sequence-active");await pause(220);
+  await say("lumiere","……？");
+  return;
+ }
+ if(!camera)throw new Error("Cinematic camera unavailable");
  gateShell()?.classList.add("sga-sequence-active");
  setGateState(null);
  const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:14,minZoom:.48});
