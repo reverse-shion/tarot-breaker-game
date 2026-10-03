@@ -31,3 +31,12 @@ test("current Garden runtime may run recovery without historical CinematicCamera
   assert.match(fallback,/……星門は、特におかしくないな。/);
   assert.match(fallback,/await say\("lumiere","……？"\)/);
 });
+
+test("recovery preload uses the historical Ruins file path and only endpoint assets",()=>{
+  const anomaly=fs.readFileSync("star-gate-anomaly.js","utf8");
+  assert.match(anomaly,/assets\/events-gate-vision\/ruins\.webp/);
+  const preload=anomaly.slice(anomaly.indexOf("async function preload"), anomaly.indexOf("function mount"));
+  assert.match(preload,/ASSETS\.shion\[0\]/);
+  assert.doesNotMatch(preload,/aura/);
+  assert.doesNotMatch(anomaly,/shion_card_02_draw/);
+});
