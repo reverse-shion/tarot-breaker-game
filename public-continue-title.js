@@ -21,6 +21,7 @@
 
   let departing = false;
   let allowConfirmedStart = false;
+  let transitionReadyStart = false;
   let previousStartDisabled = null;
 
   const labels = Object.freeze({
@@ -102,6 +103,16 @@
   render(controller.inspect());
 
   start.addEventListener("click", event => {
+    if (transitionReadyStart) {
+      transitionReadyStart = false;
+      allowConfirmedStart = false;
+      departing = true;
+      button.disabled = true;
+      retry.disabled = true;
+      closeConfirm();
+      return;
+    }
+
     if (departing) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -115,11 +126,22 @@
       return;
     }
 
+    event.preventDefault();
+    event.stopImmediatePropagation();
     allowConfirmedStart = false;
     departing = true;
     button.disabled = true;
     retry.disabled = true;
     closeConfirm();
+    screen.classList.add("title-screen--departing");
+    start.classList.add("is-departing");
+
+    window.setTimeout(() => {
+      transitionReadyStart = true;
+      departing = false;
+      start.disabled = false;
+      start.click();
+    }, 240);
   }, true);
 
   button.addEventListener("click", event => {
@@ -190,6 +212,7 @@
   window.addEventListener("pageshow", () => {
     departing = false;
     allowConfirmedStart = false;
+    transitionReadyStart = false;
     closeConfirm();
     screen.classList.remove("title-screen--departing");
     button.classList.remove("is-departing");
