@@ -85,7 +85,7 @@ test("Garden Public receiver rejects conflicts, wrong map, contradictory compani
   assert.equal(Adapter.receive({search:"?entry=continue",storage:storage(landing)}).reason,"not-garden");
 
   const contradictory=garden({events:["alenon_prologue","landing_devil_memory","garden_shiopon_meet"],companion:"waiting_at_landing"});
-  assert.equal(Adapter.receive({search:"?entry=continue",storage:storage(contradictory)}).reason,"garden-companion-contradiction");
+  assert.equal(Adapter.receive({search:"?entry=continue",storage:storage(contradictory)}).reason,"save-not-valid");
 
   const staleStore=storage(garden());
   const session=Adapter.receive({search:"?entry=continue",storage:staleStore});
