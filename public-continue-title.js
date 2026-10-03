@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const params = new URLSearchParams(location.search);
-  if (params.has("from") || params.has("dev")) return;
+  if (params.has("from") || params.has("dev") || params.has("entry")) return;
   const button = document.getElementById("continue");
   const note = document.getElementById("continue-note");
   const start = document.getElementById("start");
