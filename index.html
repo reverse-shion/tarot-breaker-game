@@ -56,11 +56,13 @@
         var params = new URLSearchParams(location.search);
         var fromLanding = params.get("from") === "landing";
         var gardenResume = !params.has("from") && /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
-        if (fromLanding && !params.has("dev")) {
+        var publicGardenResume = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
+          !params.has("from") && !params.has("dev");
+        if ((fromLanding && !params.has("dev")) || publicGardenResume) {
           var admitted = window.TarotRuntimeEntry?.requireInternal({title:"./index.html"});
           if (!admitted?.ok) return;
         }
-        fromLanding = fromLanding || gardenResume;
+        fromLanding = fromLanding || gardenResume || publicGardenResume;
         document.body.dataset.enteringFromLanding = fromLanding ? "true" : "false";
         if (fromLanding) {
           // A stalled asset or failed deferred script must reach the existing
