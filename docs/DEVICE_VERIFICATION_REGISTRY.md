@@ -57,3 +57,26 @@ Never edit a historical PASS into a different SHA. Append a new row.
 
 ## Legacy baseline
 Existing production gameplay contracts VGC-002 through VGC-007 remain governed by `docs/VERIFIED_GAMEPLAY_CONTRACTS.md`. Historical exact device SHAs were not recorded, so this registry does not invent them.
+
+## Phase 2A-6A human device evidence — 2026-10-03
+
+Exact runtime: `2b2302d78c065ca61b680a3990854187ce4f261a`. Source: product owner messages and screenshots in this conversation, 11:32–11:49 JST. iPhone Safari is visible in the Production screenshots; exact OS version and separate iPad coverage are not established. No previous Device PASS is transferred.
+
+| Check | Result | Explicit evidence / limits |
+|---|---|---|
+| Title with existing unsupported-map save | PASS | Screenshot IMG_7299: preparing message; controller identifies a valid Landing/Garden save as unsupported by this Alenon-only release. |
+| Isolated intro incomplete | PARTIAL | Owner observed beginning-of-prologue start. Completion of this session-only fixture was not explicitly confirmed. Production prologue completion below is separate. |
+| Isolated intro complete | PASS (no replay) | Owner: opening dialogue absent. Movement was not independently confirmed in this specific reply. |
+| Isolated PAD return | PASS | Owner confirmed requested safe return spawn, no opening replay and movement checklist without issue. |
+| Isolated PAD return / companion waiting | PASS | Owner confirmed requested return spawn, no opening replay, movement and Shiopon absent in Alenon checklist without issue. |
+| Production Title / save / Public Continue | PASS | Private Safari test: IMG_7300 no save; completed authored prologue; IMG_7301 saved checkpoint available; IMG_7302 Public receiver ready. Subsequent owner confirmation covered no replay, movement and PAD roundtrip. Reopening Title is verified; explicit browser refresh at the restored checkpoint is not separately confirmed. |
+| Public Continue → Landing → Alenon | PASS | Owner confirmed roundtrip without load stall and movement after return. |
+| Garden meeting → Landing waiting → Alenon → Landing greeting/rejoin and audio | PASS (tested route behaviors) | Owner confirmed requested waiting/rejoin and audio checklist, with separately reported pre-existing transient Shiopon rendering defect below. Does not claim flawless companion visuals. |
+
+### Deferred existing defect — LANDING-SHIOPON-TRANSIENT-VISIBILITY
+
+Owner reports Shiopon briefly disappears while walking in Landing; Shion remains visible. More frequent on initial traversal, sometimes recurs. Owner explicitly dates the symptom to the original Landing companion-follow implementation, before this Continue change. Cause and baseline reproduction remain unverified; do not assert an identified root cause or erase previous records. Movement, dialogue and waiting/rejoin were reported functional. Owner agreed to defer this separate rendering fix; no runtime, collision, story, audio or follower changes are included in this evidence update.
+
+### Remaining verification / release status
+
+Overall DEVICE_RESULT remains PENDING. Confirm isolated incomplete fixture reaches playable completion, explicit refresh/re-entry behavior at the Alenon saved checkpoint, applicable iPad viewport coverage and Public failure/manual Title recovery. Automated negative-path coverage is already PASS and is not human Device evidence. No blanket PASS, main merge authorization or production enablement is added.
