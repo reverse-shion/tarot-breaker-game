@@ -7,7 +7,7 @@ function production(state){return new Map([[Core.STORAGE_KEY,JSON.stringify(stat
 function noWrites(t){assert.equal(t.accesses.filter(([op])=>op!=='read').length,0);}
 
 test('Title durable status validation is read only including unsupported map/version and unavailable',()=>{
- for(const [state,status] of [[null,'none'],['bad','invalid'],[{...initial(),version:9},'unsupported'],[initial(),'valid'],[{...initial(),checkpoint:{mapId:'star_country_landing',spawnId:'pad_ground'},completedEvents:['alenon_prologue']},'preparing']]){
+ for(const [state,status] of [[null,'none'],['bad','invalid'],[{...initial(),version:9},'unsupported'],[initial(),'valid'],[{...initial(),checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:['alenon_prologue','landing_devil_memory']},'preparing']]){
   const store=storage(state),bytes=store.bytes(),controller=Controller.createController({storage:store,diagnostic(){}});
   assert.equal(controller.inspect().status,status);assert.equal(store.bytes(),bytes);assert.equal(store.writes.length,0);
  }
@@ -86,7 +86,7 @@ test('real Title UI renders reasons, ignores Garden paths and revalidates click 
   vm.createContext(h);for(const file of ['route-registry.js','progress.js','progress-resume.js','public-continue.js','public-continue-title.js'])vm.runInContext(fs.readFileSync(file,'utf8'),h);
   return {store,h,button,note,start,events};
  }
- for(const [state,fragment] of [[null,'保存データがありません'],['bad','確認できません'],[{...initial(),version:2},'保存形式'],[{...initial(),checkpoint:{mapId:'star_country_landing',spawnId:'pad_ground'},completedEvents:['alenon_prologue']},'準備中']]){
+ for(const [state,fragment] of [[null,'保存データがありません'],['bad','確認できません'],[{...initial(),version:2},'保存形式'],[{...initial(),checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:['alenon_prologue','landing_devil_memory']},'準備中']]){
   const t=title(state);assert.equal(t.button.disabled,true);assert.ok(t.note.textContent.includes(fragment));assert.equal(t.store.writes.length,0);
  }
  const t=title(initial());assert.equal(t.button.disabled,false);assert.match(t.note.textContent,/最後に保存/);t.store.change(null);t.button.handlers.click({stopPropagation(){}});assert.equal(t.h.location.href,'');assert.equal(t.button.disabled,true);
@@ -99,7 +99,7 @@ test('real Title UI renders reasons, ignores Garden paths and revalidates click 
 });
 
 test('Public adapter imports are explicitly allowlisted; editor redirect cannot precede Public query refusal',()=>{
- const allowed=new Set(['alenon.html','alenon-public-continue.js','public-continue.js','index.html','public-continue-title.js','dev-checkpoints.js']);
+ const allowed=new Set(['alenon.html','alenon-public-continue.js','public-continue.js','index.html','public-continue-title.js','dev-checkpoints.js','star-country-landing.html','landing-public-continue.js']);
  for(const file of fs.readdirSync('.').filter(file=>/\.(html|js)$/.test(file)&&!allowed.has(file))){
   const source=fs.readFileSync(file,'utf8');assert.doesNotMatch(source,/public-continue\.js|alenon-public-continue\.js|TarotAlenonPublicContinue|TarotPublicContinue/,file);
  }
