@@ -158,3 +158,5 @@ Runtime SHA: `8e831832fd5e3e9d6a6534e70d0ce0074148162d`.
 ### Scope boundary
 
 This PASS is limited to the title-menu visual and interaction changes explicitly checked on the exact runtime above. It does not infer unrelated gameplay, route, OS/browser, or viewport coverage. Main merge authorization and CI remain separate.
+
+Evidence note: PR #98 metadata was synchronized after recording this exact-runtime PASS; this note is evidence-only and does not modify runtime content.
