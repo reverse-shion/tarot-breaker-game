@@ -150,7 +150,10 @@ test("Title menu renders generated frame artwork without CSS-built symbols", () 
   assert.match(css, /assets\/ui\/title\/continue-frame\.webp/);
   assert.match(css, /assets\/ui\/title\/newgame-fra\.webp/);
   assert.match(css, /\.title-screen__choice \{[\s\S]*min-height: 68px;[\s\S]*border-radius: 999px;[\s\S]*touch-action: manipulation/);
-  assert.match(css, /\.title-screen__frame \{[\s\S]*background-size: 100% 100%/);
+  assert.match(css, /\.title-screen__choice \{[\s\S]*aspect-ratio: 1920 \/ 368/);
+  assert.match(css, /\.title-screen__frame \{[\s\S]*background-size: contain/);
+  assert.doesNotMatch(css, /\.title-screen__frame \{[\s\S]{0,260}background-size: 100% 100%/);
+  assert.match(css, /\.title-screen__background\{[\s\S]*object-fit:cover/);
   assert.match(css, /title-continue-glint 6s/);
   assert.match(css, /translateY\(2px\) scale\(\.995\)/);
   assert.match(css, /prefers-reduced-motion/);
