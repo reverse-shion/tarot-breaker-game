@@ -2088,7 +2088,14 @@
       console.error(error);
       if (start) {
         start.disabled = true;
-        start.textContent = "起動できません";
+        const titleJp = start.querySelector?.(".title-screen__choice-jp");
+        const titleEn = start.querySelector?.(".title-screen__choice-en");
+        if (titleJp) {
+          titleJp.textContent = "起動できません";
+          if (titleEn) titleEn.textContent = "ERROR";
+        } else {
+          start.textContent = "起動できません";
+        }
       }
       note.textContent = error.message;
       document.body.classList.remove("scene-booting", "scene-ready");
