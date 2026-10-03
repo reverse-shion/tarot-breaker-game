@@ -163,6 +163,7 @@ test("Title menu renders generated frame artwork without CSS-built symbols", () 
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   assert.match(css, /\.title-screen__confirm-panel/);
+  assert.doesNotMatch(source, /start\.focus/);
 });
 
 test("NO_SAVE shows only 物語をはじめる / BEGIN and allows the existing New Game handler", () => {
