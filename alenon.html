@@ -3343,9 +3343,13 @@
         prologueOverlay.hidden = false;
         prologueStart.hidden = true;
         moveGuide.hidden = true;
-        // Start immediately when entering from the official title route.
-        // requestAnimationFrame ensures the overlay has painted before the story starts.
-        if (params.get("from") === "title") {
+        // Production entry must never expose the developer/manual TOUCH TO BEGIN gate.
+        // A first-play Continue resumes the incomplete prologue automatically, matching
+        // the official title route. Dev/harness entries retain the manual gate.
+        const productionStoryEntry =
+          params.get("from") === "title" ||
+          (continuePublicRequest && !publicHarnessRequest);
+        if (productionStoryEntry) {
           requestAnimationFrame(() => requestAnimationFrame(() => runPrologue()));
         } else {
           prologueStart.hidden = false;
