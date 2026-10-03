@@ -49,14 +49,7 @@
       }
     </style>
     <script src="./runtime-entry.js?v=title-entry-v1"></script>
-    <script>
-    (function () {
-      if (new URLSearchParams(location.search).get("dev") !== "garden-resume-after-lumiere") return;
-      document.write('<link rel="stylesheet" href="./star-gate-interaction.css?v=recovery-v3">');
-      document.write('<link rel="stylesheet" href="./star-gate-anomaly.css?v=recovery-v3">');
-    })();
-  </script>
-</head>
+  </head>
   <body class="scene-booting" data-audio-autostart="true">
     <script>
       (function () {
@@ -192,15 +185,6 @@
     <script src="./single-map-occlusion.js?v=garden-arrival-v1" defer></script>
     <script src="./scene-effects.js?v=garden-arrival-v1" defer></script>
     <script src="./game.js?v=garden-arrival-v1" data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/" data-lumiere-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/" defer></script>
-    <script>
-      (function () {
-        if (new URLSearchParams(location.search).get("dev") !== "garden-resume-after-lumiere") return;
-        window.__TAROT_DEV_STAR_GATE_ANOMALY__ = true;
-        document.write('<script src="./star-gate-recovery-adapter.js?v=3"><\/script>');
-        document.write('<script src="./star-gate-interaction.js?v=recovery-v3" defer><\/script>');
-        document.write('<script src="./star-gate-anomaly.js?v=recovery-v3" defer><\/script>');
-      })();
-    </script>
     <script src="./fountain-position-editor.js?v=3.0.0" defer></script>
     <script src="./title-layout-editor.js?v=1" defer></script>
     <script src="./waterfall-position-editor.js?v=3.0.0" defer></script>
