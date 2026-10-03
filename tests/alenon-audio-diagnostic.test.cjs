@@ -202,8 +202,11 @@ test('title forwards audioDebug only when opt-in; normal destination remains unc
     ['?audioDebug=1&orbOutput=webAudio', './alenon.html?from=title&build=6bc2a38e&audioDebug=1&orbOutput=webAudio'],
   ]) {
     const sandbox = {
-      enteringFromLanding: false, enteringGardenRuntime: false, start: { disabled: false }, URLSearchParams,
-      location: { search, href: '' }, window: { TarotJourney: { reset() {} } },
+      enteringFromLanding: false, enteringGardenRuntime: false, start: { disabled: false }, note: { textContent: "" }, URLSearchParams,
+      location: { search, href: '' }, window: {
+        TarotJourney: { reset() {} },
+        TarotProgressCore: { createProgress: () => ({ resetGame: () => ({ persisted: true }) }) },
+      },
     };
     sandbox.navigateRuntime = target => { sandbox.location.href = target; };
     vm.runInNewContext('(function () {' + branch + '})()', sandbox);
