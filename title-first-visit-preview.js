@@ -1,7 +1,6 @@
 (() => {
   "use strict";
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("titlePreview") !== "first") return;
+  if (window.__TAROT_BREAKER_FIRST_VISIT_PREVIEW__ !== true) return;
 
   const screen = document.getElementById("start-screen");
   const continueButton = document.getElementById("continue");
