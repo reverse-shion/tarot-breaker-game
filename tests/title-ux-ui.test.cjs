@@ -142,18 +142,22 @@ test("Title markup uses Japanese-first world-design labels and no legacy TOUCH T
   assert.doesNotMatch(html, /id="continue"[^>]*style=/);
 });
 
-test("Title CSS keeps choices text-led, touch-sized and world-design themed", () => {
-  assert.match(css, /Title UX \/ UI v1\.1 — World Design Edition/);
-  assert.match(css, /\.title-screen__choice \{[\s\S]*min-height: 52px;[\s\S]*background: transparent;/);
-  assert.match(css, /\.title-screen__menu-sigil/);
-  assert.match(css, /\.title-screen\[data-title-mode="continue"\] #start \{[\s\S]*min-height: 48px;[\s\S]*margin-top: -1px;/);
-  assert.match(css, /text-shadow:[\s\S]*rgba\(0, 0, 0, \.92\)/);
-  assert.match(css, /\.title-screen__confirm-panel/);
-  assert.match(css, /env\(safe-area-inset-bottom\)/);
+test("Title CSS implements the ruined Star Kingdom royal plaque menu", () => {
+  assert.match(css, /Title UX \/ UI v1\.0 — Ruined Star Kingdom \/ Royal Plaque Edition/);
+  assert.match(html, /title-screen__plaque/);
+  assert.match(html, /title-screen__emblem title-screen__emblem--primary/);
+  assert.match(html, /title-screen__emblem title-screen__emblem--secondary/);
+  assert.doesNotMatch(html, /title-screen__menu-sigil/);
+  assert.match(css, /\.title-screen__choice \{[\s\S]*grid-template-columns:[\s\S]*min-height: 64px;[\s\S]*touch-action: manipulation/);
+  assert.match(css, /\.title-screen__start-wrap \{[\s\S]*width: min\(88vw, 420px\);[\s\S]*gap: 10px;/);
+  assert.match(css, /\.title-screen__plaque \{[\s\S]*border: 1\.5px solid[\s\S]*clip-path:/);
+  assert.match(css, /\.title-screen__choice-en \{[\s\S]*font: 500 clamp\(12px, 2\.8vw, 13px\)/);
+  assert.match(css, /title-continue-glint 6s/);
+  assert.match(css, /translateY\(2px\) scale\(\.995\)/);
   assert.match(css, /prefers-reduced-motion/);
-  assert.match(css, /@keyframes title-continue-glint/);
-  assert.match(css, /#continue \.title-screen__choice-jp \{[\s\S]*color: #edf6fb/);
-  assert.match(css, /#start \.title-screen__choice-jp \{[\s\S]*color: rgba\(239, 242, 244, \.97\)/);
+  assert.match(css, /#continue \.title-screen__choice-shine \{[\s\S]*animation: none/);
+  assert.match(css, /env\(safe-area-inset-bottom\)/);
+  assert.match(css, /\.title-screen__confirm-panel/);
 });
 
 test("NO_SAVE shows only 物語をはじめる / BEGIN and allows the existing New Game handler", () => {
