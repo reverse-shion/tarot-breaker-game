@@ -154,7 +154,7 @@ test('PAD gate audio remains one play, fixed 1800ms transfer, 180ms fade, volume
   const fn=source.slice(source.indexOf('      function leaveForGarden()'),source.indexOf('      function setTarget(',source.indexOf('      function leaveForGarden()')));
   const audio={playCalls:0,volume:0,currentTime:0,pause(){this.paused=true;},play(){this.playCalls++;this.paused=false;return Promise.resolve();}};
   const timers=[],frames=[];const location={href:''};
-  const scope={continueDevRequest:false,leaving:false,companion:{following:true},savedCompanion:{mode:'following'},clearTarget(){},keys:new Set(),document:{body:{classList:{add(){}}}},status:{style:{}},guide:{},starGateAudio:audio,performance:{now:()=>0},requestAnimationFrame:f=>frames.push(f),location,window:{setTimeout:(f,ms)=>timers.push({f,ms})}};
+  const scope={continueDevRequest:false,continueRequest:false,leaving:false,companion:{following:true},savedCompanion:{mode:'following'},clearTarget(){},keys:new Set(),document:{body:{classList:{add(){}}}},status:{style:{}},guide:{},starGateAudio:audio,performance:{now:()=>0},requestAnimationFrame:f=>frames.push(f),location,window:{setTimeout:(f,ms)=>timers.push({f,ms})}};
   vm.createContext(scope);vm.runInContext(fn+';leaveForGarden();leaveForGarden();',scope);
   assert.equal(audio.playCalls,1);assert.equal(audio.volume,.45);assert.notEqual(audio.loop,true);
   assert.deepEqual(timers.map(t=>t.ms),[1620,1800]);
