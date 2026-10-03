@@ -873,3 +873,78 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
     opacity: 0;
   }
 }
+
+
+/* Title menu device-tuned layout + final motion.
+ * Device editor values locked 2026-10-03.
+ * Preserve source artwork aspect ratios: frame images remain background-size:contain.
+ */
+#continue .title-screen__frame {
+  transform: translate(0, -7px) scale(1.12);
+  transform-origin: center center;
+}
+#continue .title-screen__choice-copy {
+  transform: translate(0, 0) scale(1);
+  transform-origin: center center;
+}
+#start .title-screen__frame {
+  transform: translate(0, -18px) scale(1.35);
+  transform-origin: center center;
+}
+#start .title-screen__choice-copy {
+  transform: translate(0, -12px) scale(.81);
+  transform-origin: center center;
+}
+
+/* Replace the old left-to-right text glint with a quiet breathing glow on the artwork itself. */
+.title-screen__choice-shine { display:none !important; }
+.title-screen[data-title-mode="continue"] #continue .title-screen__frame {
+  animation: title-frame-soft-glow 3.8s ease-in-out infinite;
+}
+@keyframes title-frame-soft-glow {
+  0%,100% {
+    opacity:.88;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.70)) drop-shadow(0 0 4px rgba(115,176,221,.12)) brightness(.96);
+  }
+  50% {
+    opacity:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.68)) drop-shadow(0 0 12px rgba(151,207,245,.42)) brightness(1.12);
+  }
+}
+
+/* Short selection bloom: the plaque lights first, then a soft radial light fills the title before navigation. */
+.title-screen::after {
+  content:"";
+  position:absolute;
+  inset:-12%;
+  z-index:7;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.82);
+  background:radial-gradient(circle at 50% 72%, rgba(238,249,255,.78) 0%, rgba(151,210,249,.34) 19%, rgba(92,145,218,.14) 39%, transparent 66%);
+}
+.title-screen.title-screen--departing::after {
+  animation:title-selection-bloom .28s ease-out both;
+}
+.title-screen.title-screen--departing .title-screen__choice.is-departing {
+  z-index:8;
+  filter:brightness(1.32);
+}
+.title-screen.title-screen--departing .title-screen__choice.is-departing .title-screen__frame {
+  animation:title-selected-frame .28s ease-out both !important;
+}
+@keyframes title-selection-bloom {
+  0% { opacity:0; transform:scale(.82); }
+  48% { opacity:.72; transform:scale(1); }
+  100% { opacity:.18; transform:scale(1.08); }
+}
+@keyframes title-selected-frame {
+  0% { filter:brightness(1) drop-shadow(0 0 5px rgba(160,210,245,.24)); }
+  55% { filter:brightness(1.45) drop-shadow(0 0 18px rgba(213,240,255,.82)); }
+  100% { filter:brightness(1.20) drop-shadow(0 0 10px rgba(173,220,250,.42)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-screen[data-title-mode="continue"] #continue .title-screen__frame { animation:none; }
+  .title-screen.title-screen--departing::after,
+  .title-screen.title-screen--departing .title-screen__choice.is-departing .title-screen__frame { animation:none !important; }
+}
