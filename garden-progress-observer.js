@@ -1,5 +1,7 @@
 /* Phase 2A-4c observer + Phase 2A-5c isolated Landing Continue transit.
- * Production remains observer-only. Dev transit writes only to its checkpoint session.
+ * Durable Progress is authoritative. Normal Landing -> Garden arrival also
+ * refreshes the legacy session Journey projection so authored dialogue cannot
+ * replay a completion that already exists in Progress.
  */
 (function (root) {
   "use strict";
@@ -47,6 +49,21 @@
     if (typeof console !== "undefined") console.warn("[Garden Progress]", message, error || "");
   }
 
+  function syncJourneyFromProgress() {
+    const current = progress.getCurrentState?.();
+    const state = current?.state;
+    if (!state || !Array.isArray(state.completedEvents) || !root.TarotJourney?.set) return;
+    const has = id => state.completedEvents.includes(id);
+    const joined = state.companion === "joined_with_shion";
+    root.TarotJourney.set("landingMemoryDone", has("landing_devil_memory"));
+    root.TarotJourney.set("gardenStory", {
+      shioponDone: has("garden_shiopon_meet"),
+      lumiereDone: has("garden_lumiere_gate"),
+      joined,
+    });
+    root.TarotJourney.set("companion", joined ? { mode: "following" } : null);
+  }
+
   // Garden only acknowledges that the unchanged URL arrival actually reached this scene.
   if (!landingResumeDev && params.get("from") === "landing") {
     try {
@@ -56,6 +73,7 @@
         spawnId: "south_gate",
         reason: "gate_to_garden",
       });
+      syncJourneyFromProgress();
     } catch (error) {
       note("arrival observation was not persisted", error);
     }

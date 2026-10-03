@@ -130,3 +130,17 @@ Runtime SHA: `2c9189158360d7bffa99b845899607647db230cc`.
 ### Scope boundary
 
 This PASS covers the reported blocking defect repaired in Phase 2A-6C: a Garden Public Continue session can use the physically reachable south exit and return to Landing. It does not manufacture broader device coverage, OS/browser details, or unrelated route behavior not explicitly confirmed in this check. The runtime fix derives the exit boundary from collision geometry; later commits above the runtime SHA are tests/evidence only.
+
+
+## Phase 2A-6D Alenon roundtrip / Shiopon history fix — exact-runtime human verification 2026-10-03
+
+Runtime SHA: `579974955e418cccfbcec5dbb38dbcaf2ea95824`.
+
+| Check | Commit SHA | Device | Result | Human-confirmed observable behavior |
+|---|---|---|---|---|
+| Shiopon complete → Landing → Alenon → reload → Continue | 579974955e418cccfbcec5dbb38dbcaf2ea95824 | Device not restated in this confirmation | PASS | Product owner explicitly confirmed the reported reproduction path is fixed: after reaching Alenon, reload → Title → Continue resumes from Alenon rather than the Landing waiting-Shiopon return state. |
+| Alenon roundtrip → Landing → Garden after Shiopon completion | 579974955e418cccfbcec5dbb38dbcaf2ea95824 | Device not restated in this confirmation | PASS | Product owner explicitly confirmed the Shiopon meeting does not replay after the roundtrip. Durable Progress completion history remains authoritative on Garden re-entry. |
+
+### Scope boundary
+
+This PASS covers the exact reported regression and the supplied reproduction path. It does not infer unrelated route, OS/browser, or viewport coverage. Commits above the runtime SHA are tests/evidence only.

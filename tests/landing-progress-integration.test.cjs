@@ -23,3 +23,14 @@ test("Landing observes Alenon arrival without changing authored gate transition"
   assert.match(source,/TarotRuntimeEntry\?\.navigate\) window\.TarotRuntimeEntry\.navigate\(target\)/);
 });
 
+
+
+test("Landing persists every real PAD departure to Alenon, not only Dev Continue",()=>{
+  const start=source.indexOf("      function leaveForAlenon()");
+  const end=source.indexOf("      function leaveForGarden()",start);
+  const fn=source.slice(start,end);
+  assert.match(fn,/if \(landingProgressValid\)/);
+  assert.match(fn,/landingProgress\.commitArrival\(\{[\s\S]*sourceMapId: "star_country_landing",[\s\S]*destinationMapId: "alenon",[\s\S]*spawnId: "pad_return",[\s\S]*reason: "pad_to_alenon"/);
+  assert.doesNotMatch(fn,/if \(continueDevRequest\) \{[\s\S]*commitArrival/);
+  assert.match(fn,/if \(!saved\?\.persisted\)[\s\S]*return;/);
+});
