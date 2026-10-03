@@ -80,3 +80,13 @@ Owner reports Shiopon briefly disappears while walking in Landing; Shion remains
 ### Remaining verification / release status
 
 Overall DEVICE_RESULT remains PENDING. Confirm isolated incomplete fixture reaches playable completion, explicit refresh/re-entry behavior at the Alenon saved checkpoint, applicable iPad viewport coverage and Public failure/manual Title recovery. Automated negative-path coverage is already PASS and is not human Device evidence. No blanket PASS, main merge authorization or production enablement is added.
+
+### Additional explicit human confirmation — 2026-10-03 11:58 JST
+
+Exact runtime remains `2b2302d78c065ca61b680a3990854187ce4f261a`; no runtime change.
+
+| Check | Device / browser | Result | Human evidence |
+|---|---|---|---|
+| Isolated Public intro incomplete: authored completion, movement, same-tab reload and no opening replay | iPhone / browser not explicitly identified for this fixture (owner corrected device at 11:59 JST) | PASS | Owner explicitly states steps 1–3 completed without issue. Screenshot confirms registered public-continue-alenon-intro-incomplete ready banner and expected initial TOUCH TO BEGIN overlay. This completes the earlier PARTIAL fixture evidence; session-only persistence does not establish Production refresh. |
+
+Owner explicitly corrected the tested device to iPhone at 11:59 JST; IMG_0631 must not be used to infer an iPad test. Separate iPad coverage remains unconfirmed. Earlier Production screenshots establish iPhone Safari coverage. Production restored-checkpoint refresh, Public failure/manual Title recovery, iPad Title UI and intro-complete movement are not inferred from this additional confirmation. Overall DEVICE_RESULT remains PENDING.
