@@ -22,3 +22,12 @@ test("dev recovery does not complete durable Star Gate Progress at endpoint",()=
   assert.match(anomaly,/DEV_HARNESS&&endpoint==="future-shion-reached"/);
   assert.match(anomaly,/return;\s*}\s*await aftermath\(\);complete\(\)/);
 });
+
+test("current Garden runtime may run recovery without historical CinematicCamera",()=>{
+  const anomaly=fs.readFileSync("star-gate-anomaly.js","utf8");
+  assert.match(anomaly,/DEV_HARNESS&&!camera/);
+  const fallback=anomaly.slice(anomaly.indexOf("if(DEV_HARNESS&&!camera)"), anomaly.indexOf('if(!camera)throw new Error("Cinematic camera unavailable")'));
+  assert.match(fallback,/sga-sky-descent/);
+  assert.match(fallback,/……星門は、特におかしくないな。/);
+  assert.match(fallback,/await say\("lumiere","……？"\)/);
+});
