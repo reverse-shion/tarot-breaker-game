@@ -12,9 +12,18 @@
     /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "");
   const gardenResumeDev = !params.has("from") &&
     /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+  const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
+    !params.has("from") && !params.has("dev");
 
   let progress;
-  if (landingResumeDev || gardenResumeDev) {
+  if (gardenResumePublic) {
+    const transit = root.TarotGardenContinueTransit;
+    if (!transit?.ok || !transit.progress) {
+      root.TarotGardenContinueTransit = Object.freeze({ok:false, reason:transit?.reason || "garden-public-transit-unavailable"});
+      return;
+    }
+    progress = transit.progress;
+  } else if (landingResumeDev || gardenResumeDev) {
     const transit = gardenResumeDev ? root.TarotGardenResume?.createSession({
       search: root.location.search,
       storage: root.sessionStorage,
