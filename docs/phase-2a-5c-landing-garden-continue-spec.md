@@ -443,7 +443,7 @@ This audit branch contains documentation only. Runtime implementation must use a
 
 ---
 
-## 18. Phase 2A-5c final verification status
+## 17. Phase 2A-5c final verification status
 
 Verified runtime SHA: `96edc22bcc4d1f1ae7a988a8726217dfccecd7fa`.
 
@@ -451,18 +451,18 @@ Human Device PASS is recorded for L1, L2, L3, G1, G2, G3, and the ordinary Title
 
 PR #86 was independently diff/error-path reviewed and merged into the Phase 2A-5c feature branch at `3bfca901efa1b247e009f1d7309bd4e2c4236bc5`. No production/runtime file changed after the verified runtime SHA; later commits are evidence/documentation only.
 
-Remaining work is final PR #85 main-target CI / merge-gate verification and explicit product-owner authorization. Public Title Continue activation remains out of scope for this phase.
+PR #85 main-target Validate and Event Safety / Main Merge Gate are required to be green on the final docs-only head. Public Title Continue activation remains out of scope for this phase.
 
 ---
 
-## 17. Next-session handoff
+## 18. Next-session handoff
 
-**Current project state:** Phase 2A-5b is merged and its exact post-merge main CI passed. Phase 2A-5c pre-audit is complete; v1.1 implementation contract is ready for review.
+**Current project state:** Phase 2A-5c implementation and exact-runtime Device Gate are complete. PR #86 has been integrated into the Phase 2A-5c feature branch. PR #85 targets `main` and is at the final merge gate.
 
-**First action next time:** review the v1.1 contract. After review PASS, create a fresh implementation branch from the approved main baseline and begin Landing receiver/tests.
+**First action next time:** check PR #85 final main-target Validate and Event Safety / Main Merge Gate on its current HEAD. If both are green, confirm the final diff review and wait for explicit product-owner authorization before merging to `main`.
 
 **Copy/paste restart command:**
 
-> **TAROT BREAKERの次のフェーズに進んで。GitHubの `docs/phase-2a-5c-landing-garden-continue-spec.md` を確認して、Phase 2A-5c実装前監査から続きから開始して。**
+> **TAROT BREAKER Phase 2A-5cの最終Merge Gateから再開して。PR #85の最新HEAD、CI、Device Registry、main lineage、最終レビューを確認して。mainへのマージは私の明示承認まで行わないで。**
 
 That sentence plus this repository document is the handoff point.
