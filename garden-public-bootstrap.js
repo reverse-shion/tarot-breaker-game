@@ -1,6 +1,7 @@
 /* Synchronous browser bridge for ?entry=continue on Garden only. */
 (() => {
   "use strict";
+  if (window.__tarotRuntimeEntryRejected === true) return;
   const params = new URLSearchParams(location.search);
   if (params.getAll("entry").length !== 1 || params.get("entry") !== "continue" ||
       params.has("from") || params.has("dev")) return;
