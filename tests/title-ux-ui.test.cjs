@@ -157,6 +157,7 @@ test("Title menu renders generated frame artwork without CSS-built symbols", () 
   assert.doesNotMatch(css, /animation:\s*title-continue-glint/);
   assert.match(css, /title-frame-heartbeat 2\.4s/);
   assert.match(css, /title-selection-bloom \.28s/);
+  assert.match(css, /4%, 18%, 32%/);
   assert.match(css, /\.title-screen__choice::before[\s\S]*rgba\(1,6,16,\.68\)/);
   assert.match(css, /translateY\(2px\) scale\(\.995\)/);
   assert.match(css, /prefers-reduced-motion/);
