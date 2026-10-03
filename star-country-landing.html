@@ -2507,9 +2507,11 @@
         clearTarget(); keys.clear();
         document.body.classList.add("leaving");
         window.setTimeout(() => {
-          location.href = continueDevRequest
+          const target = continueDevRequest
             ? `./alenon.html?from=landing-return&landingDev=${encodeURIComponent(continueSession.definition.id)}`
             : "./alenon.html?from=landing-return";
+          if (window.TarotRuntimeEntry?.navigate) window.TarotRuntimeEntry.navigate(target);
+          else location.href = target;
         }, 760);
       }
 
@@ -2553,7 +2555,9 @@
         }, transitionMs - audioFadeMs);
 
         window.setTimeout(() => {
-          location.href = continueDevRequest ? `./index.html?from=landing&dev=${encodeURIComponent(continueSession.definition.id)}` : "./index.html?from=landing";
+          const target = continueDevRequest ? `./index.html?from=landing&dev=${encodeURIComponent(continueSession.definition.id)}` : "./index.html?from=landing";
+          if (window.TarotRuntimeEntry?.navigate) window.TarotRuntimeEntry.navigate(target);
+          else location.href = target;
         }, transitionMs);
       }
 
