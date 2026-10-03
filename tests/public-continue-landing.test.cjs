@@ -36,7 +36,7 @@ function journeyHarness(seed={unrelated:"kept"}) {
   return {journey,sessionStorage,data};
 }
 
-test("Title controller enables both Landing durable checkpoints while Garden remains fail-closed",()=>{
+test("Title controller enables Landing and Garden durable checkpoints",()=>{
   for(const saved of [
     state(),
     state({spawn:"garden_entrance",events:["alenon_prologue","landing_devil_memory","garden_shiopon_meet"],companion:"joined_with_shion"}),
@@ -50,7 +50,9 @@ test("Title controller enables both Landing durable checkpoints while Garden rem
   }
   const garden={version:1,checkpoint:{mapId:"star_gate_garden",spawnId:"south_gate"},
     completedEvents:["alenon_prologue","landing_devil_memory"],companion:"not_joined"};
-  assert.equal(Controller.createController({storage:storage(garden),diagnostic(){}}).inspect().status,"preparing");
+  const inspected=Controller.createController({storage:storage(garden),diagnostic(){}}).inspect();
+  assert.equal(inspected.status,"valid");
+  assert.equal(inspected.url,"./index.html?entry=continue");
 });
 
 test("Landing Public receiver validates production entry read-only and restores exact projection",()=>{
