@@ -63,3 +63,28 @@ implementation_contract: docs/phase-2a-5c-landing-garden-continue-spec.md
 Verified behavior is limited to Garden observer/bootstrap, isolated Garden transit and return, Landing receiver, Continue waiting/disembark/dialogue/follower restoration, Garden re-entry authority, tap endpoint safety, and development/production isolation. Alenon, Audio, unrelated Story/Movement/Collision/Dialogue, the Star Gate anomaly, VGC-001 through VGC-007, ordinary production Journey behavior, and existing device records remain LOCKED.
 
 Exact human-verified runtime SHA: `96edc22bcc4d1f1ae7a988a8726217dfccecd7fa`. L1/L2/L3/G1/G2/G3 and the ordinary Title → Alenon → PAD → Landing → Garden → Landing → Alenon integration route are recorded as PASS in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
+
+## EC-004 — Public Continue entry registration
+event_id: public-continue
+maps: title, alenon, star_country_landing, star_gate_garden
+status: NOT TESTED / registration only / runtime absent
+productionEnabled: false
+segments:
+- public-continue-title — NOT TESTED
+- public-continue-alenon — NOT TESTED
+- public-continue-landing — NOT TESTED
+- public-continue-garden — NOT TESTED
+- public-continue-integration — NOT TESTED
+start_event: tarot-breaker:public-continue-request (reserved; no emitter or receiver implemented)
+trigger_owner: future explicit Title Continue gesture and dedicated Production controller
+required_state: validated durable Progress v1 record and an individually proven map/spawn receiver
+progress_changes: none on registration or Continue entry; future gameplay uses existing Production completion/save boundaries only
+return_behavior: future Public entry must restore normal Production routes; isolated dev sessions remain separate
+implementation_contract: docs/phase-2a-6-public-continue-implementation-contract.md
+
+WORKING now: registry, contract documentation, and preflight acceptance coverage only.
+LOCKED: normal Title/Journey reset, Production Progress reset policy, existing PAD-return save path, all isolated receivers and VGC-001 through VGC-007.
+
+Preflight PASS proves target registration only. It does not prove runtime availability, device verification, release eligibility, or permission to modify a locked system. No Public Continue device URL is available at this stage. Do not advertise the reserved start event as a working runtime signal.
+
+Runtime integration proceeds Alenon → Landing → Garden with separate implementation, review, test, applicable device, CI, and merge gates per map. Public destination allowlist contains only proven map/spawn combinations. Invalid, unavailable, contradictory, or unsupported saves fail closed without altering durable save bytes. New Game reset and Production PAD-return checkpoint saving remain out of scope.
