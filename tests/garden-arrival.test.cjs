@@ -103,12 +103,29 @@ test('already failed image rejects immediately, and failed decode fallback propa
   await assert.rejects(h.sandbox.waitImage({complete:true,naturalWidth:10,src:'broken.webp',decode:async()=>{throw new Error('decode failure');}}),/canvas failure/);
 });
 
-test('normal TOUCH TO START still resets journey and opens the prologue, without an arrival timer',async()=>{
-  const h=harness({arrival:false});let resets=0;h.window.TarotJourney={reset:()=>resets++};h.run();await flush();
+test('normal TOUCH TO START resets durable Progress and Journey before opening the prologue',async()=>{
+  const h=harness({arrival:false});let journeyResets=0,progressResets=0;
+  h.window.TarotJourney={reset:()=>journeyResets++};
+  h.window.TarotProgressCore={createProgress:()=>({resetGame(token){assert.equal(token,'title-new-game');progressResets++;return {persisted:true};}})};
+  h.run();await flush();
   assert.equal(h.ready(),true);assert.equal(h.elements['start'].disabled,false);
   assert.equal(h.events.includes('tarot-breaker:world-enter'),false);
-  h.elements.start.emit('click');assert.equal(resets,1);assert.equal(h.sandbox.location.href,'./alenon.html?from=title&build=6bc2a38e');
+  h.elements.start.emit('click');
+  assert.equal(progressResets,1);assert.equal(journeyResets,1);
+  assert.equal(h.sandbox.location.href,'./alenon.html?from=title&build=6bc2a38e');
   assert.equal(h.timers.size,0);
+});
+
+test('New Game fails closed when durable Progress cannot be reset',async()=>{
+  const h=harness({arrival:false});let journeyResets=0;
+  h.window.TarotJourney={reset:()=>journeyResets++};
+  h.window.TarotProgressCore={createProgress:()=>({resetGame:()=>({persisted:false,reason:'write-unavailable'})})};
+  h.run();await flush();
+  h.elements.start.emit('click');
+  assert.equal(journeyResets,0);
+  assert.equal(h.sandbox.location.href,'');
+  assert.equal(h.elements.start.disabled,false);
+  assert.match(h.elements['load-note'].textContent,/初期化できません/);
 });
 
 test('first-paint cover is opaque and guards the parent composite; error removes the cover',()=>{
