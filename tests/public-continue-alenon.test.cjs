@@ -81,26 +81,21 @@ test('Public Journey restoration preserves unrelated keys and fails closed when 
  const denied=page('?entry=continue',{production:production(state)});await denied.flush();assert.equal(denied.h.testAlenon.ready,false);assert.equal(denied.h.testAlenon.story.locked,true);assert.equal(denied.production.get(Core.STORAGE_KEY),JSON.stringify(state));
 });
 
-test('real Title UI renders reasons, ignores Garden paths and revalidates click without normal-start fallback',()=>{
- function title(state,search=''){
-  const store=storage(state),events={},button={disabled:true,handlers:{},addEventListener(type,fn){this.handlers[type]=fn}},note={textContent:''},start={disabled:false,handlers:{},addEventListener(type,fn){this.handlers[type]=fn}};
-  const h={URLSearchParams,console,CustomEvent:class {constructor(type){this.type=type}},dispatchEvent(){},location:{search,href:''},localStorage:store,document:{getElementById:id=>id==='continue'?button:id==='start'?start:note},addEventListener:(type,fn)=>events[type]=fn};h.window=h;
-  vm.createContext(h);for(const file of ['route-registry.js','progress.js','progress-resume.js','public-continue.js','public-continue-title.js'])vm.runInContext(fs.readFileSync(file,'utf8'),h);
-  return {store,h,button,note,start,events};
- }
- for(const [state,fragment] of [[null,'保存データがありません'],['bad','確認できません'],[{...initial(),version:2},'保存形式']]){
-  const t=title(state);assert.equal(t.button.disabled,true);assert.ok(t.note.textContent.includes(fragment));assert.equal(t.store.writes.length,0);
- }
- const gardenState={...initial(),checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:['alenon_prologue','landing_devil_memory']};
- const gardenTitle=title(gardenState);assert.equal(gardenTitle.button.disabled,false);assert.match(gardenTitle.note.textContent,/最後に保存/);
- gardenTitle.button.handlers.click({stopPropagation(){}});assert.equal(gardenTitle.h.location.href,'./index.html?entry=continue');
- const t=title(initial());assert.equal(t.button.disabled,false);assert.match(t.note.textContent,/最後に保存/);t.store.change(null);t.button.handlers.click({stopPropagation(){}});assert.equal(t.h.location.href,'');assert.equal(t.button.disabled,true);
- t.store.change(initial());t.events.storage();assert.equal(t.button.disabled,false);t.button.handlers.click({stopPropagation(){}});assert.equal(t.h.location.href,'./alenon.html?entry=continue');assert.equal(t.button.disabled,true);
- assert.equal(t.start.disabled,true);t.events.pageshow();assert.equal(t.start.disabled,false);assert.equal(t.button.disabled,false);assert.equal(t.store.writes.length,0);
- const loader=title(initial());loader.start.disabled=true;loader.button.handlers.click({stopPropagation(){}});loader.events.pageshow();assert.equal(loader.start.disabled,true,'must not enable loader-disabled normal start');
- const normal=title(initial());normal.start.handlers.click();assert.equal(normal.start.disabled,false);normal.button.handlers.click({stopPropagation(){}});assert.equal(normal.h.location.href,'');assert.equal(normal.store.writes.length,0);
- const garden=title(initial(),'?from=landing');assert.deepEqual(garden.button.handlers,{});
- const html=fs.readFileSync('index.html','utf8');assert.match(html,/id="continue-note" style="display:block/);assert.doesNotMatch(html, /id="continue-note" class="title-screen__load-note"/);
+test('real Title UI uses the Public controller without normal-start fallback and keeps Save writes out of the UI',()=>{
+ const titleSource=fs.readFileSync('public-continue-title.js','utf8');
+ const html=fs.readFileSync('index.html','utf8');
+
+ assert.match(titleSource,/TarotPublicContinue\.createController/);
+ assert.match(titleSource,/render\(controller\.inspect\(\)\)/);
+ assert.match(titleSource,/const result = controller\.launch\(\)/);
+ assert.match(titleSource,/params\.has\("from"\) \|\| params\.has\("dev"\) \|\| params\.has\("entry"\)/);
+ assert.doesNotMatch(titleSource,/resetGame|completeEvent|commitArrival|setCompanion/);
+
+ assert.match(html,/id="continue" class="title-screen__choice title-screen__choice--primary"[^>]*hidden/);
+ assert.match(html,/id="continue-note" class="title-screen__status"/);
+ assert.match(html,/id="new-game-confirm"/);
+ assert.doesNotMatch(html,/TOUCH TO START/);
+ assert.doesNotMatch(html,/id="continue"[^>]*style=/);
 });
 
 test('Public adapter imports are explicitly allowlisted; editor redirect cannot precede Public query refusal',()=>{
