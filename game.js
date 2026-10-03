@@ -689,7 +689,7 @@
     // the lower corners cannot trigger a map transition.
     const gardenPos = { x: next.x, y: next.y };
     if (
-      enteringFromLanding && gardenExitArmed && !leavingMap && next.moving &&
+      enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
       !window.TarotDialogue?.getState().active &&
       next.dy > 0 && gardenPos.y >= gardenExitRef.y - 4 &&
       gardenPos.x >= 610 &&
