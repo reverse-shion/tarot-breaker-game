@@ -1957,17 +1957,20 @@
       }
 
       await loadCollision();
+      const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
+      if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
+        throw new Error("garden-south-exit-unavailable");
       if (gardenResumeDev || gardenResumePublic) {
         const session = gardenResumePublic ? window.TarotGardenContinueTransit : window.TarotGardenDevTransit;
         if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
             session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||
-            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= 952)
+            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= southExitRef.y - 8)
           throw new Error("garden-continue-spawn-invalid");
         spawnRef = {x:session.spawn.x, y:session.spawn.y};
-        gardenExitRef = {...DEFAULT_SPAWN};
+        gardenExitRef = {...southExitRef};
       } else {
         spawnRef = findNearestSpawnRef();
-        gardenExitRef = { ...spawnRef };
+        gardenExitRef = {...southExitRef};
       }
       if (enteringFromLanding)
         spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
