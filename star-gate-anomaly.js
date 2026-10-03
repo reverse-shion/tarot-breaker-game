@@ -103,10 +103,11 @@ async function vision(){
  pan.classList.add("survey-gate");await pause(1700);
  // Only now transition from the normal-size world Shion to the cinematic pose layer.
  window.TarotActorVisibility?.set("shion",0);
- root.classList.add("sga-card-phase");setShion(1);await pause(520);setShion(2);await pause(500);setShion(3);await pause(900);setShion(4);await pause(520);setShion(5);await pause(120);
- card.classList.add("visible");await pause(480);card.classList.add("ascend");await pause(1650);card.classList.add("transformed");await pause(1500);card.classList.add("floating");await pause(700);
- await say(null,"――選べ。");await pause(600);
- root.querySelector(".sga-cut").classList.add("show");await pause(260);v.classList.remove("visible");root.classList.remove("sga-vision-mode","sga-darken");window.TarotActorVisibility?.reset();await pause(300);
+ root.classList.add("sga-card-phase");setShion(1);
+ window.dispatchEvent(new Event("tarot-breaker:star-gate-future-shion-reached"));
+ // Recovery contract ends here. Keep the first Future Shion illustration on
+ // screen for human device verification; later cards/aura/choice are out of scope.
+ return "future-shion-reached";
 }
 async function aftermath(){
  root.querySelector(".sga-impurity").classList.add("visible");
@@ -140,9 +141,30 @@ async function run(){
   const promptLocked=window.TarotStarGateInteraction?.getState?.().promptLock===true;
   if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
   await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
-  await resonance();await vision();await aftermath();complete();success=true;
+  await resonance();
+  const endpoint=await vision();
+  if(DEV_HARNESS&&endpoint==="future-shion-reached"){
+    success=true;
+    window.__TAROT_STAR_GATE_RECOVERY_HOLD__=true;
+    return;
+  }
+  await aftermath();complete();success=true;
  }catch(e){console.error("Star Gate anomaly aborted",e)}
- finally{resolveAdvance=null;ui?.hide();window.TarotCinematicCamera?.release?.();window.TarotActorVisibility?.reset?.();cleanupGateState({preserveFinal:success});if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}running=false;const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;interactionOwned=false;if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"))}
+ finally{
+  resolveAdvance=null;ui?.hide();
+  const hold=DEV_HARNESS&&window.__TAROT_STAR_GATE_RECOVERY_HOLD__===true;
+  window.TarotCinematicCamera?.release?.();
+  if(!hold){
+    window.TarotActorVisibility?.reset?.();
+    cleanupGateState({preserveFinal:success});
+    if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}
+  }
+  running=false;
+  const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;
+  interactionOwned=false;
+  if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
+  if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"));
+ }
 }
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running,state:currentGateState,history:[...stateHistory]})});
