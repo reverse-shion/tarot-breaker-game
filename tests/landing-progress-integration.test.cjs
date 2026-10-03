@@ -19,6 +19,7 @@ test("Landing observes Alenon arrival without changing authored gate transition"
   assert.ok(source.includes('sourceMapId: "alenon"'));
   assert.ok(source.includes('destinationMapId: "star_country_landing"'));
   for(const token of ['const DEVIL_EVENT_Y = 355;','const GARDEN_EXIT_Y = 215;','starGateAudio.volume = .45;','const transitionMs = 1800;']) assert.ok(source.includes(token),token);
-  assert.match(source,/location\.href = continueDevRequest \?[\s\S]*: "\.\/index\.html\?from=landing";/);
+  assert.match(source,/const target = continueDevRequest \?[\s\S]*: "\.\/index\.html\?from=landing";/);
+  assert.match(source,/TarotRuntimeEntry\?\.navigate\) window\.TarotRuntimeEntry\.navigate\(target\)/);
 });
 
