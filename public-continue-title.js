@@ -60,7 +60,8 @@
   function closeConfirm() {
     confirm.hidden = true;
     screen.classList.remove("title-screen--confirming");
-    start.focus?.({preventScroll: true});
+    // Do not restore focus to the New Game choice after dismissing the modal.
+    // iOS/WebKit can retain :focus-visible and draw a persistent pill outline.
   }
 
   function openConfirm() {
