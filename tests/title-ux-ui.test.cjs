@@ -151,6 +151,8 @@ test("Title CSS keeps choices text-led, touch-sized and world-design themed", ()
   assert.match(css, /\.title-screen__confirm-panel/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /@keyframes title-continue-glint/);
+  assert.match(css, /#continue \.title-screen__choice-jp \{[\s\S]*color: #edf6fb/);
 });
 
 test("NO_SAVE shows only 物語をはじめる / BEGIN and allows the existing New Game handler", () => {
