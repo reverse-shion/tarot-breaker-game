@@ -1,5 +1,5 @@
-/* Phase 2A-4c: observer-only Garden Progress bridge (CI contract revision 2).
- * It never starts, suppresses, restores, or mutates Garden story runtime.
+/* Phase 2A-4c observer + Phase 2A-5c isolated Landing Continue transit.
+ * Production remains observer-only. Dev transit writes only to its checkpoint session.
  */
 (function (root) {
   "use strict";
@@ -7,17 +7,39 @@
   const core = root.TarotProgressCore;
   if (!core) return;
 
-  const progress = core.createProgress();
-  const loaded = progress.load();
-  if (loaded.status !== "valid") return;
+  const params = new URLSearchParams(root.location.search);
+  const landingResumeDev = params.get("from") === "landing" &&
+    /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "");
+  const gardenResumeDev = !params.has("from") &&
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+
+  let progress;
+  if (landingResumeDev || gardenResumeDev) {
+    const transit = gardenResumeDev ? root.TarotGardenResume?.createSession({
+      search: root.location.search,
+      storage: root.sessionStorage,
+    }) : root.TarotLandingResume?.createGardenTransitSession({
+      search: root.location.search,
+      storage: root.sessionStorage,
+    });
+    if (!transit?.ok) {
+      root.TarotGardenDevTransit = Object.freeze({ok:false, reason:transit?.reason || "garden-transit-unavailable"});
+      return;
+    }
+    root.TarotGardenDevTransit = transit;
+    progress = transit.progress;
+  } else {
+    progress = core.createProgress();
+    const loaded = progress.load();
+    if (loaded.status !== "valid") return;
+  }
 
   function note(message, error) {
     if (typeof console !== "undefined") console.warn("[Garden Progress]", message, error || "");
   }
 
-  // Landing owns the existing transition. Garden only acknowledges that the
-  // unchanged URL arrival actually reached this scene.
-  if (new URLSearchParams(root.location.search).get("from") === "landing") {
+  // Garden only acknowledges that the unchanged URL arrival actually reached this scene.
+  if (!landingResumeDev && params.get("from") === "landing") {
     try {
       progress.commitArrival({
         sourceMapId: "star_country_landing",
@@ -31,10 +53,9 @@
   }
 
   root.addEventListener("tarot-breaker:interaction-end", function () {
-    const state = root.TarotGardenDialogue?.getState?.();
+    const state = root.TarotGardenDialogue?.getState?.() || root.TarotDialogue?.getState?.();
     if (!state) return;
 
-    // Existing dialogue.js remains the sole authority for completion.
     if (state.shioponDone === true && !progress.isEventCompleted("garden_shiopon_meet")) {
       try {
         progress.completeEvent("garden_shiopon_meet", {

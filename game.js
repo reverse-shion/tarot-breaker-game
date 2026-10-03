@@ -76,7 +76,13 @@
   });
   const params = new URLSearchParams(location.search);
   const enteringFromLanding = params.get("from") === "landing";
-  if (enteringFromLanding && startScreen) startScreen.hidden = true;
+  const gardenResumeDev = params.get("from") === null &&
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev;
+  const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
+    ? params.get("dev")
+    : null;
+  if (enteringGardenRuntime && startScreen) startScreen.hidden = true;
   const DEPTH_DEBUG = params.has("depthDebug");
   const NAV_DEBUG = params.get("navDebug") === "1";
 
@@ -211,6 +217,7 @@
     rotation: 0,
     visualOffsetY: 0,
     stageOffsetY: 0,
+    hidden: window.TarotGardenDevTransit?.context?.companion === "waiting_at_landing",
   };
   const lumiere = {
     x: LUMIERE_HOME.x,
@@ -640,7 +647,7 @@
     }
 
     const shioponBlocked =
-      !shiopon.following && movingIntoActor(from, next, shioponRef());
+      !shiopon.hidden && !shiopon.following && movingIntoActor(from, next, shioponRef());
     const npcBlocked =
       next.moving &&
       (shioponBlocked ||
@@ -676,9 +683,31 @@
       gardenPos.x <= 838
     ) {
       leavingMap = true;
-      window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
+      if (landingResumeDevId) {
+        const transit = window.TarotGardenDevTransit;
+        if (!transit?.ok) {
+          leavingMap = false;
+          controls.cancel("dev-return-blocked");
+          return;
+        }
+        try {
+          transit.progress.commitArrival({
+            sourceMapId: "star_gate_garden",
+            destinationMapId: "star_country_landing",
+            spawnId: "garden_entrance",
+            reason: "garden_to_landing",
+          });
+        } catch (error) {
+          leavingMap = false;
+          controls.cancel("dev-return-failed");
+          console.warn("[Garden Continue] return was not committed", error);
+          return;
+        }
+      } else {
+        window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
+      }
       controls.cancel("map-return");
-      location.href = "./star-country-landing.html?from=garden";
+      location.href = landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden";
       return;
     }
 
@@ -1017,6 +1046,7 @@
   }
 
   function updateShiopon(dt) {
+    if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
     if (shiopon.scripted) {
       updateShioponScript(dt);
@@ -1373,7 +1403,7 @@
 
   function drawActors() {
     drawGroundShadowAt(lumiere, 18, 0.2);
-    drawGroundShadowAt(shiopon, 17, 0.36);
+    if (!shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     drawGroundShadowAt(player, 20, 0.46);
 
     const actors = [
@@ -1408,7 +1438,7 @@
           visualOffsetY: player.stageOffsetY,
         },
       },
-    ].sort((a, b) => {
+    ].filter(entry => entry.actor !== shiopon || !shiopon.hidden).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
@@ -1655,13 +1685,15 @@
     // Root URL is the official title entry. Only a PAD handoff may enter the
     // Star Gate Garden directly.
     if (!enteringFromLanding) {
-      if (start) start.disabled = true;
-      window.TarotJourney?.reset();
-      const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
-      const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
-        ? "&orbOutput=webAudio" : "";
-      location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
-      return;
+      if (typeof gardenResumeDev === "undefined" || !gardenResumeDev) {
+        if (start) start.disabled = true;
+        window.TarotJourney?.reset();
+        const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
+        const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
+          ? "&orbOutput=webAudio" : "";
+        location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
+        return;
+      }
     }
 
     running = true;
@@ -1672,7 +1704,7 @@
     reset();
     if (window.TarotDialogue?.getState().joined) {
       startShioponFollow();
-      if (enteringFromLanding) placeShioponBesidePlayer();
+      if (enteringGardenRuntime) placeShioponBesidePlayer();
     }
     last = performance.now();
     draw();
@@ -1901,8 +1933,18 @@
       }
 
       await loadCollision();
-      spawnRef = findNearestSpawnRef();
-      gardenExitRef = { ...spawnRef };
+      if (gardenResumeDev) {
+        const session = window.TarotGardenDevTransit;
+        if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
+            session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||
+            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= 952)
+          throw new Error("garden-continue-spawn-invalid");
+        spawnRef = {x:session.spawn.x, y:session.spawn.y};
+        gardenExitRef = {...DEFAULT_SPAWN};
+      } else {
+        spawnRef = findNearestSpawnRef();
+        gardenExitRef = { ...spawnRef };
+      }
       if (enteringFromLanding)
         spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
 
@@ -1988,7 +2030,7 @@
 
       // begin() applies the existing PAD spawn/companion handoff and draws
       // again. Keep that final frame behind the gate light, not the earlier reset.
-      if (enteringFromLanding) {
+      if (enteringGardenRuntime) {
         begin();
         document.body.classList.add("scene-rendered");
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -1998,7 +2040,7 @@
       document.body.classList.remove("scene-booting", "scene-load-error", "scene-rendered");
       document.body.classList.add("scene-ready");
     } catch (error) {
-      if (enteringFromLanding) window.failGardenArrival?.();
+      if (enteringGardenRuntime) window.failGardenArrival?.();
       running = false;
       ready = false;
       console.error(error);

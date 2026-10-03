@@ -7,7 +7,7 @@ const event=extra=>({preventDefault(){},target:{closest:()=>null},button:0,point
 function noProductionWrites(t){assert.equal(t.accesses.filter(([op,label,key])=>op!=='read' && (label==='production'||!key.includes(':dev:'))).length,0);assert.equal(t.accesses.filter(([op,label])=>op==='read'&&label==='production').length,0);}
 
 test('all real Alenon entries validate v1, boot without writes and use exact detached projections',async()=>{
-  for(const definition of Registry.list()){
+  for(const definition of Registry.list().filter(definition=>definition.event==='alenon-resume')){
     assert.equal(Core.validateRecord(definition.temporaryState).ok,true);
     const t=page('?dev='+definition.id);await t.flush();const m=t.h.testAlenon;
     assert.equal(m.ready,true,definition.id);assert.equal(m.story.completed,definition.id!=='alenon-resume-intro-incomplete');

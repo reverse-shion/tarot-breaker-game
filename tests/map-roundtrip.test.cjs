@@ -46,7 +46,7 @@ function harness(search = '', saved = {}) {
 function inline(file){return [...fs.readFileSync(file,'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];}
 async function landing(search, saved){
   const t=harness(search,saved);
-  t.run(inline('star-country-landing.html').replace('      boot();', `window.testMap = {boot, player, ride, companion, loop, beginBoarding, finishArrival, leaveForGarden, updateCompanion, isGroundWalkable, get memoryDone(){return devilEventStarted}, advance(){storyAdvanceResolve?.(); storyAdvanceResolve=null;}};`));
+  t.run(inline('star-country-landing.html').replace('      if (continueDevRequest) bootLandingContinue();\n      else boot();', `window.testMap = {boot, player, ride, companion, loop, beginBoarding, finishArrival, leaveForGarden, updateCompanion, isGroundWalkable, get memoryDone(){return devilEventStarted}, advance(){storyAdvanceResolve?.(); storyAdvanceResolve=null;}};`));
   await t.h.testMap.boot();return t;
 }
 const event = extra => ({preventDefault(){},target:{closest:()=>null},button:0,pointerId:1,clientX:724,clientY:500,...extra});
@@ -113,7 +113,7 @@ test('companion farewell finishes before boarding, stays on ground during flight
   assert.ok(t.audio.filter(a=>a.playCalls>0).length>=2,'activation and movement SE still play');
   const back=await landing('?from=alenon',{companion:t.h.TarotJourney.get('companion'),landingMemoryDone:true});
   assert.equal(back.h.testMap.companion.following,false);
-  back.h.testMap.finishArrival();assert.equal(back.h.testMap.companion.following,true);
+  back.h.testMap.finishArrival();assert.equal(back.h.testMap.companion.following,false,'waiting authority remains until greeting completes');
   assert.equal(back.lines[0]?.text,'シオンさん！ おかえりなの！');
   assert.equal(back.lines[0]?.speaker,'しおぽん');
   const arrival={x:back.h.testMap.player.x,y:back.h.testMap.player.y};
@@ -124,6 +124,7 @@ test('companion farewell finishes before boarding, stays on ground during flight
   back.h.testMap.advance();await back.flush();
   assert.equal(back.lines[2]?.text,'えへへ。ちゃんと戻ってきたぴょん！');assert.equal(back.lines[2]?.speaker,'しおぽん');
   back.h.testMap.advance();await back.flush();
+  assert.equal(back.h.testMap.companion.following,true,'follower restores only after the final automatic line');
   back.h.testMap.player.target={x:724,y:650};back.h.testMap.loop(30032);
   assert.equal(back.h.testMap.player.moving,true);
   back.h.testMap.finishArrival();await back.flush();assert.equal(back.lines.length,3,'greeting must not replay');
@@ -134,6 +135,21 @@ test('solo boarding has no farewell; walking at the south edge cannot teleport o
   const t=await landing('?from=garden',{landingMemoryDone:true});const m=t.h.testMap;
   m.player.x=600;m.player.y=1048;m.loop(10016);await t.flush();assert.equal(t.h.location.href,'');
   m.player.x=725;m.player.y=724;await m.beginBoarding();assert.equal(m.ride.mode,'boarding');assert.equal(t.lines.length,0);
+});
+
+test('Continue tap endpoint cannot snap through waiting Shiopon collision',()=>{
+  const t=harness('?dev=landing-resume-waiting');
+  t.h.TarotLandingResume={createSession:()=>({ok:true,returningFromGarden:false,
+    definition:{id:'landing-resume-waiting'},context:{companion:'waiting_at_landing'},
+    projection:{landingMemoryDone:true,companion:{mode:'waiting'}}})};
+  t.run(inline('star-country-landing.html').replace('      if (continueDevRequest) bootLandingContinue();\n      else boot();',
+    'window.testMap={player,companion,ride,loop};'));
+  const m=t.h.testMap;
+  m.player.x=725;m.player.y=633;m.player.target={x:725,y:636};
+  m.loop(10016);
+  assert.equal(m.player.y,633);
+  assert.ok(Math.hypot(m.player.x-m.companion.x,m.player.y-m.companion.y)>=26);
+  assert.equal(m.player.moving,false);
 });
 
 test('PAD accepted pointer and keyboard gestures invoke the shared manager',async()=>{
