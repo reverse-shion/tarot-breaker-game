@@ -906,6 +906,7 @@
           panel.style.cssText = "position:fixed;z-index:9999;left:12px;right:12px;top:12px;padding:12px;background:#171327;color:white;border:1px solid #b8a1ff;border-radius:8px";
           document.body.appendChild(panel);
         }
+        panel.hidden = false;
         panel.replaceChildren();
         const text = document.createElement("span");
         text.textContent = "Landing Continue 検証: " + message;
