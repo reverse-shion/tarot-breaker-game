@@ -266,6 +266,26 @@ test('companion transitions require meet, approved reason and landing checkpoint
   fails(() => q.setCompanion('joined_with_shion', {mapId:'star_country_landing',spawnId:'pad_ground'}, 'rejoin_after_arrival'), 'unapproved-companion-transition');
 });
 
+test('Landing wait -> Alenon -> Landing -> Garden preserves Shiopon completion history', () => {
+  const h = harness(JSONOf(withHistory('star_country_landing', 'pad_ground', met, 'waiting_at_landing')));
+  const p = h.create(); p.load();
+
+  const toAlenon = p.commitArrival(Registry.routes[4]);
+  assert.equal(toAlenon.persisted, true);
+  assert.deepEqual(p.getCurrentState().state, withHistory('alenon', 'pad_return', met, 'waiting_at_landing'));
+
+  const backToLanding = p.commitArrival(Registry.routes[1]);
+  assert.equal(backToLanding.persisted, true);
+  p.setCompanion('joined_with_shion', {mapId:'star_country_landing',spawnId:'pad_ground'}, 'rejoin_after_arrival');
+  const toGarden = p.commitArrival(Registry.routes[2]);
+  assert.equal(toGarden.persisted, true);
+
+  const state = p.getCurrentState().state;
+  assert.deepEqual(state.checkpoint, {mapId:'star_gate_garden',spawnId:'south_gate'});
+  assert.equal(state.companion, 'joined_with_shion');
+  assert.equal(state.completedEvents.includes('garden_shiopon_meet'), true);
+});
+
 test('failed write preserves confirmed record and reports volatile candidate separately', () => {
   const h = harness(JSONOf(initial()));
   const p = h.create(); p.load();
