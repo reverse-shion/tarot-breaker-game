@@ -52,6 +52,7 @@ Never edit a historical PASS into a different SHA. Append a new row.
 ### Integration verification records
 | Route / integration | Commit SHA | Device | Result | Verified route behavior | Human confirmation | Notes |
 |---|---|---|---|---|---|---|
+| Title → Alenon → PAD → Landing → Garden → Landing → Alenon return | 96edc22bcc4d1f1ae7a988a8726217dfccecd7fa | iOS ChatGPT in-app browser | PASS | Ordinary route completes end-to-end with no Loading stall, unintended event replay, missing/unnatural Shiopon follow, Garden return failure, PAD return failure, or companion-location-mismatch | Product owner explicit confirmation in ChatGPT | Exact verified runtime SHA for Phase 2A-5c |
 | Title → Alenon → PAD → Landing → Alenon return | 660475d30f99aec50fc82930d03af72b4509827d | iOS/iPad ChatGPT in-app browser | PASS | Ordinary route completes through Alenon return without abnormal replay, placement, movement, screen, or audio behavior | Product owner explicit confirmation in ChatGPT | Exact candidate build |\n| Title → Alenon → PAD → Landing → Alenon return | e4ea07d48ada103db367f74c6f726de086d46455 | iOS/iPad ChatGPT in-app browser | PASS | Ordinary route completes through Alenon return without abnormal replay, placement, movement, screen, or audio behavior | Product owner explicit confirmation in ChatGPT | Exact post-lineage-sync runtime; staged background/map reveal observed and explicitly deferred as a separate loading-presentation issue |
 
 ## Legacy baseline
