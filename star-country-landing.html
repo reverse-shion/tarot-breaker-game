@@ -837,6 +837,8 @@
   <script src="./dev-checkpoints.js?v=20261003-landing-resume"></script>
   <script src="./progress-resume.js?v=20261003-landing-resume"></script>
   <script src="./landing-resume.js?v=20261003-landing-resume"></script>
+  <script src="./public-continue.js?v=phase-2a-6b-landing"></script>
+  <script src="./landing-public-continue.js?v=phase-2a-6b-landing"></script>
   <script>
     (() => {
       "use strict";
@@ -889,7 +891,9 @@
       const storyNext = document.getElementById("landing-story-next");
 
       const params = new URLSearchParams(location.search);
+      const continuePublicRequest = params.has("entry");
       const continueDevRequest = params.has("dev");
+      const continueRequest = continuePublicRequest || continueDevRequest;
       let continueSession = null;
       let continueReady = false;
       let continueBootBusy = false;
@@ -917,7 +921,22 @@
         title.textContent = " タイトルへ";
         panel.appendChild(title);
       }
-      if (continueDevRequest) {
+      function hideContinueStatus() {
+        const panel = document.getElementById("landing-resume-status");
+        if (panel) panel.hidden = true;
+      }
+      if (continuePublicRequest) {
+        try {
+          continueSession = window.TarotLandingPublicContinue.receive({
+            search: location.search,
+            diagnostic: info => showContinueStatus("保存データを確認できません: " + info.code),
+          });
+        } catch (_) { continueSession = {ok: false, reason: "public-storage-unavailable"}; }
+        if (!continueSession.ok) {
+          showContinueStatus("保存地点を復元できません: " + continueSession.reason, () => location.reload());
+          return;
+        }
+      } else if (continueDevRequest) {
         try {
           continueSession = window.TarotLandingResume.createSession({search: location.search, storage: window.sessionStorage,
             diagnostic: info => showContinueStatus("保存されていません: " + info.code)});
@@ -927,16 +946,19 @@
           return;
         }
       }
-      const arrivingFromAlenon = params.get("from") === "alenon";
-      const returningFromGarden = params.get("from") === "garden";
+      const arrivingFromAlenon = continuePublicRequest
+        ? continueSession.returningFromAlenon
+        : params.get("from") === "alenon";
+      const returningFromGarden = continuePublicRequest
+        ? continueSession.returningFromGarden
+        : params.get("from") === "garden";
 
-      // Restore bridge: Progress may restore an already-completed fact into the
-      // legacy runtime mirror before the existing trigger guard is evaluated.
-      // Continue uses an isolated checkpoint session and never writes production storage.
-      const landingProgress = continueDevRequest ? continueSession.progress : window.TarotProgressCore?.createProgress();
-      const landingProgressLoad = continueDevRequest ? {status: "valid"} : (landingProgress?.load() || null);
+      // Restore bridge: durable Progress is authoritative. Development Continue
+      // remains session-only; Public Continue uses the validated production record.
+      const landingProgress = continueRequest ? continueSession.progress : window.TarotProgressCore?.createProgress();
+      const landingProgressLoad = continueRequest ? {status: "valid"} : (landingProgress?.load() || null);
       const landingProgressValid = landingProgressLoad?.status === "valid";
-      if (landingProgressValid && arrivingFromAlenon && !continueDevRequest) {
+      if (landingProgressValid && arrivingFromAlenon && !continueRequest) {
         try {
           landingProgress.commitArrival({
             sourceMapId: "alenon",
@@ -947,7 +969,7 @@
         } catch (error) {
           console.warn("[Landing Progress] arrival observation was not persisted", error);
         }
-      } else if (landingProgressValid && returningFromGarden && !continueDevRequest) {
+      } else if (landingProgressValid && returningFromGarden && !continueRequest) {
         try {
           landingProgress.commitArrival({
             sourceMapId: "star_gate_garden",
@@ -1008,7 +1030,7 @@
       let collisionPanY = 0;
       let leaving = false;
       let landingWalkAreas = [];
-      let devilEventStarted = continueDevRequest ?
+      let devilEventStarted = continueRequest ?
         continueSession.projection.landingMemoryDone :
         window.TarotJourney?.get("landingMemoryDone") === true;
       let farewellActive = false;
@@ -1096,7 +1118,7 @@
       };
 
       // One companion on foot. Only player is ever attached to ride.
-      const savedCompanion = continueDevRequest ?
+      const savedCompanion = continueRequest ?
         continueSession.projection.companion :
         window.TarotJourney?.get("companion");
       const companion = {
@@ -1867,7 +1889,7 @@
       }
 
       function movingIntoWaitingCompanion(fromX, fromY, toX, toY) {
-        if (!continueDevRequest || !companion.visible || companion.following) return false;
+        if (!continueRequest || !companion.visible || companion.following) return false;
         const before = Math.hypot(fromX - companion.x, fromY - companion.y);
         const after = Math.hypot(toX - companion.x, toY - companion.y);
         return after < 26 && after < before - 1e-6;
@@ -2483,7 +2505,7 @@
 
       function leaveForGarden() {
         if (leaving) return;
-        if (continueDevRequest && continueSession.context.companion === "waiting_at_landing" && !companion.following) {
+        if (continueRequest && continueSession.context.companion === "waiting_at_landing" && !companion.following) {
           showContinueStatus("しおぽんとの帰還会話が完了するまで星門庭園へは移動できません");
           return;
         }
@@ -2560,7 +2582,7 @@
       }
 
       viewport.addEventListener("pointerdown", (event) => {
-        if (continueDevRequest && !continueReady) return;
+        if (continueRequest && !continueReady) return;
         if (collisionMode || passageMode) return;
         if (event.target.closest?.("#pad-editor, #pad-editor-toggle, .tb-dialogue-layer")) return;
         if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
@@ -2631,7 +2653,7 @@
       viewport.addEventListener("pointercancel", endPointer, { passive:false });
 
       addEventListener("keydown", (event) => {
-        if (continueDevRequest && !continueReady) return;
+        if (continueRequest && !continueReady) return;
         if (collisionMode || passageMode) return;
         if (leaving || devilEventActive || farewellActive || ["arriving","boarding","landing"].includes(ride.mode)) return;
         const key = event.key.toLowerCase();
@@ -2662,7 +2684,7 @@
         const dt = Math.min((now - last) / 1000, .05);
         last = now;
 
-        if (continueDevRequest && !continueReady) {
+        if (continueRequest && !continueReady) {
           player.moving = false;
           setActorPosition();
           setActorVisual();
@@ -2939,8 +2961,19 @@
           guide.hidden = true;
           addEventListener("resize", fitWorld, {passive:true});
           addEventListener("orientationchange", fitWorld, {passive:true});
+          if (continuePublicRequest) {
+            const fresh = window.TarotLandingPublicContinue.revalidate(continueSession, {search: location.search});
+            if (!fresh.ok) throw new Error("continue-revalidation-failed: " + fresh.reason);
+            const projected = window.TarotLandingPublicContinue.projectJourney(fresh, {
+              journey: window.TarotJourney,
+              storage: window.sessionStorage,
+            });
+            if (!projected.ok) throw new Error("continue-history-restore-failed: " + projected.reason);
+            continueSession = fresh;
+          }
           continueReady = true;
-          showContinueStatus(continueSession.definition.id + " / 安全な復帰地点へ配置済み");
+          if (continuePublicRequest) hideContinueStatus();
+          else showContinueStatus(continueSession.definition.id + " / 安全な復帰地点へ配置済み");
           window.dispatchEvent(new CustomEvent("tarot-breaker:landing-resume-ready"));
           requestAnimationFrame((now) => {
             last = now;
@@ -3007,7 +3040,7 @@
         });
       }
 
-      if (continueDevRequest) bootLandingContinue();
+      if (continueRequest) bootLandingContinue();
       else boot();
     })();
   </script>
