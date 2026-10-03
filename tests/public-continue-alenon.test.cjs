@@ -55,7 +55,9 @@ test('Public incomplete prologue persists via existing Production boundary; norm
  m.runPrologue();for(let i=0;i<700&&!m.story.completed;i++)await t.tick();assert.equal(m.story.completed,true);
  const saved=JSON.parse(t.production.get(Core.STORAGE_KEY));assert.deepEqual(saved.completedEvents,['alenon_prologue']);assert.deepEqual(saved.checkpoint,{mapId:'alenon',spawnId:'intro'});
  const back=page('?entry=continue',{production:t.production,allowProductionWrites:true});await back.flush();assert.equal(back.h.testAlenon.story.started,false);assert.equal(back.h.testAlenon.story.completed,true);
- const game=fs.readFileSync('game.js','utf8');assert.match(game,/TarotJourney\?\.reset\(\)/);assert.doesNotMatch(game,/resetGame\(/);
+ const game=fs.readFileSync('game.js','utf8');
+ assert.match(game,/if \(!enteringGardenRuntime\) \{[\s\S]*resetGame\("title-new-game"\)[\s\S]*TarotJourney\?\.reset\(\)/);
+ assert.doesNotMatch(game,/gardenResumePublic[\s\S]{0,500}resetGame\(/);
  const source=fs.readFileSync('alenon.html','utf8');assert.doesNotMatch(source,/commitArrival\(/);
 });
 test('registered Public harness executes same adapter while preserving Production/Journey bytes and containing departure',async()=>{
