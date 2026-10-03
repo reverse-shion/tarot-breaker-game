@@ -2490,14 +2490,18 @@
 
       function leaveForAlenon() {
         if (leaving || ride.mode !== "flying") return;
-        if (continueDevRequest) {
+        if (landingProgressValid) {
           try {
-            continueSession.progress.commitArrival({
+            const saved = landingProgress.commitArrival({
               sourceMapId: "star_country_landing",
               destinationMapId: "alenon",
               spawnId: "pad_return",
               reason: "pad_to_alenon",
             });
+            if (!saved?.persisted) {
+              showContinueStatus("PAD→アレノン復帰状態を保存できません。再試行してください");
+              return;
+            }
           } catch (error) {
             showContinueStatus("PAD→アレノン復帰状態を保存できません: " + (error?.code || error?.message || "unknown"));
             return;
