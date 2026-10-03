@@ -74,6 +74,17 @@
     left: Object.freeze({ x: -1, y: 0 }),
     right: Object.freeze({ x: 1, y: 0 }),
   });
+  function navigateRuntime(target) {
+    if (window.TarotRuntimeEntry?.navigate) {
+      const result = window.TarotRuntimeEntry.navigate(target);
+      if (result?.ok) return true;
+      console.warn("[Runtime Entry] handoff unavailable", result?.reason);
+      return false;
+    }
+    location.href = target;
+    return true;
+  }
+
   const params = new URLSearchParams(location.search);
   const enteringFromLanding = params.get("from") === "landing";
   const gardenResumeDev = params.get("from") === null &&
@@ -707,7 +718,7 @@
         window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
       }
       controls.cancel("map-return");
-      location.href = landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden";
+      navigateRuntime(landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden");
       return;
     }
 
@@ -1691,7 +1702,7 @@
         const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
         const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
           ? "&orbOutput=webAudio" : "";
-        location.href = `./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`;
+        navigateRuntime(`./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`);
         return;
       }
     }
