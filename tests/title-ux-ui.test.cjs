@@ -255,3 +255,11 @@ test("invalid save is not auto-reset; it exposes RETRY and a confirmed New Game 
   assert.equal(t.elements["start-screen"].dataset.titleMode, "continue");
   assert.equal(t.elements.continue.hidden, false);
 });
+
+
+test("titlePreview=first is a read-only first-visit visual override", () => {
+  assert.match(source, /params\.get\("titlePreview"\)/);
+  assert.match(source, /titlePreview === "first"/);
+  assert.match(source, /return \{ok:false, status:"none"\}/);
+  assert.doesNotMatch(source, /titlePreview[\s\S]{0,240}(localStorage|removeItem|clear\()/);
+});
