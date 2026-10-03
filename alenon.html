@@ -4232,9 +4232,11 @@
         stopAlenonOrbResonance();
 
         window.setTimeout(() => {
-          location.href = landingContinueTransitId
+          const target = landingContinueTransitId
             ? `./star-country-landing.html?from=alenon&dev=${encodeURIComponent(landingContinueTransitId)}`
             : "./star-country-landing.html?from=alenon";
+          if (window.TarotRuntimeEntry?.navigate) window.TarotRuntimeEntry.navigate(target);
+          else location.href = target;
         }, 820);
       }
 
