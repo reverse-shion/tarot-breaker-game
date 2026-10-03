@@ -47,12 +47,12 @@ No Alenon resume segment is DEVICE VERIFIED until explicit exact-candidate human
 ## EC-003 — Garden / Landing isolated Continue recovery
 event_id: garden-landing-continue-recovery
 maps: star_country_landing, star_gate_garden
-status: NOT TESTED / recovery implementation working scope
+status: DEVICE VERIFIED / isolated Continue + ordinary integration route
 productionEnabled: false
 segments:
-- landing-resume-entry — NOT TESTED
-- garden-resume-entry — NOT TESTED
-- garden-landing-roundtrip — NOT TESTED
+- landing-resume-entry — DEVICE VERIFIED
+- garden-resume-entry — DEVICE VERIFIED
+- garden-landing-roundtrip — DEVICE VERIFIED
 start_event: tarot-breaker:landing-resume-ready for the registered Landing receiver; Garden transit is admitted only by its registered isolated Landing Continue session
 trigger_owner: existing Landing and Garden authored runtimes after the isolated Continue readiness projection succeeds
 required_state: a registered Phase 2A-5c checkpoint with validated Progress v1 history, companion authority, exact map, and authored spawn
@@ -60,6 +60,6 @@ progress_changes: isolated development session only; production Progress, Journe
 return_behavior: the isolated Garden roundtrip returns to the originating Landing Continue session; ordinary production Journey routing remains unchanged
 implementation_contract: docs/phase-2a-5c-landing-garden-continue-spec.md
 
-WORKING behavior is limited to Garden observer/bootstrap, isolated Garden transit and return, Landing receiver, Continue waiting/disembark/dialogue/follower restoration, Garden re-entry authority, tap endpoint safety, and development/production isolation. Alenon, Audio, unrelated Story/Movement/Collision/Dialogue, the Star Gate anomaly, VGC-001 through VGC-007, ordinary production Journey behavior, and existing device records remain LOCKED.
+Verified behavior is limited to Garden observer/bootstrap, isolated Garden transit and return, Landing receiver, Continue waiting/disembark/dialogue/follower restoration, Garden re-entry authority, tap endpoint safety, and development/production isolation. Alenon, Audio, unrelated Story/Movement/Collision/Dialogue, the Star Gate anomaly, VGC-001 through VGC-007, ordinary production Journey behavior, and existing device records remain LOCKED.
 
-No segment in this event is DEVICE VERIFIED. CI or preflight PASS must not be recorded as Device PASS.
+Exact human-verified runtime SHA: `96edc22bcc4d1f1ae7a988a8726217dfccecd7fa`. L1/L2/L3/G1/G2/G3 and the ordinary Title → Alenon → PAD → Landing → Garden → Landing → Alenon integration route are recorded as PASS in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
