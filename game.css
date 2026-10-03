@@ -920,16 +920,19 @@ html,body{position:fixed!important;inset:0!important;width:100%!important;height
 @media (max-height: 680px) {
   .title-screen__start-wrap {
     bottom: max(4.8vh, calc(env(safe-area-inset-bottom) + 12px));
-    width: min(72vw, 390px);
+    width: min(88vw, 390px);
   }
-  .title-screen__choice { min-height: 55px; padding-top: 6px; padding-bottom: 7px; }
+  .title-screen__choice { min-height: 60px; padding-top: 4px; padding-bottom: 4px; grid-template-columns: 54px minmax(0, 1fr) 18px; }
+  .title-screen__emblem { width: 48px; height: 48px; }
   .title-screen__choice-jp { font-size: clamp(16px, 4vw, 20px); }
   .title-screen__choice-en { margin-top: 3px; }
-  .title-screen__menu-sigil { margin-bottom: 1px; }
-}
+ }
 @media (max-width: 360px) {
-  .title-screen__start-wrap { width: min(82vw, 360px); }
-  .title-screen__choice-jp { font-size: 17px; }
+  .title-screen__start-wrap { width: min(92vw, 360px); gap: 8px; }
+  .title-screen__choice { min-height: 60px; grid-template-columns: 50px minmax(0, 1fr) 12px; padding-left: 6px; padding-right: 10px; }
+  .title-screen__emblem { width: 46px; height: 46px; }
+  .title-screen__choice-jp { font-size: 18px; }
+  .title-screen__choice-en { font-size: 12px; letter-spacing: .18em; }
   .title-screen__confirm-panel { width: 88vw; padding-left: 18px; padding-right: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
