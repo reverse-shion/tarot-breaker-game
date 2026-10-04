@@ -23,7 +23,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><div class="sga-world-loss" aria-hidden="true"><svg class="sga-world-loss-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="sga-loss-zone" data-loss="01" d="M68 0H100V39L92 42L86 36L80 40L74 32L69 28Z"/><path class="sga-loss-zone" data-loss="02" d="M0 0H39L43 10L37 17L40 25L34 32L25 29L17 34L8 30L0 35Z"/><path class="sga-loss-zone" data-loss="03" d="M65 38L74 42L79 50L87 47L100 53V100H60L63 88L58 78L64 67L58 57Z"/><path class="sga-loss-zone" data-loss="04" d="M0 35L12 33L18 42L29 38L38 47L34 57L41 67L35 77L42 86L38 100H0Z"/><path class="sga-loss-zone" data-loss="05" d="M37 0H69L65 15L61 21L57 17L53 21L48 17L44 21L40 15ZM34 73L41 68L46 74L52 69L59 74L66 69L73 100H31Z"/><rect class="sga-loss-veil" data-loss="gate" x="0" y="0" width="100" height="100"/></svg></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-world-rift" aria-hidden="true"><svg class="sga-world-rift-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><g class="sga-rift-edges"><path class="sga-rift-line sga-rift-edge sga-rift-primary" data-rift="primary" pathLength="1"/></g><g class="sga-rift-cores"><path class="sga-rift-line sga-rift-core sga-rift-primary" data-rift="primary" pathLength="1"/></g></svg></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><div class="sga-world-loss" aria-hidden="true"><svg class="sga-world-loss-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g data-loss-group="left"><path class="sga-loss-piece sga-loss-left sga-loss-a" d="M0 0H27C30 5 27 10 31 15C28 20 31 25 26 30C20 33 13 30 8 35H0Z"/><path class="sga-loss-piece sga-loss-left sga-loss-b" d="M0 27C8 24 14 30 21 28C27 31 25 37 30 41C27 47 30 52 25 57C18 55 11 61 0 58Z"/><path class="sga-loss-piece sga-loss-left sga-loss-c" d="M0 55C8 58 13 54 20 59C25 63 22 69 29 73C26 78 28 84 23 89C15 86 8 92 0 90Z"/></g><g data-loss-group="bottom"><path class="sga-loss-piece sga-loss-bottom sga-loss-a" d="M0 84C8 80 15 86 22 81C29 84 33 79 40 83L42 100H0Z"/><path class="sga-loss-piece sga-loss-bottom sga-loss-b" d="M58 83C65 79 70 84 77 81C84 85 91 80 100 84V100H57Z"/><path class="sga-loss-piece sga-loss-bottom sga-loss-c" d="M27 92C33 87 38 90 43 86C46 89 48 91 50 94C53 90 56 87 60 89C64 92 67 89 73 93L74 100H26Z"/></g><g data-loss-group="right"><path class="sga-loss-piece sga-loss-right sga-loss-a" d="M73 0H100V35C92 33 87 36 81 31C76 28 79 22 74 18C77 12 72 7 73 0Z"/><path class="sga-loss-piece sga-loss-right sga-loss-b" d="M76 28C83 31 87 27 94 32L100 30V61C91 58 85 63 79 58C74 53 78 47 73 43C77 38 73 33 76 28Z"/><path class="sga-loss-piece sga-loss-right sga-loss-c" d="M75 57C82 60 87 56 93 61L100 59V89C92 86 86 92 79 87C73 83 77 77 72 73C76 68 72 62 75 57Z"/></g><g data-loss-group="center"><path class="sga-loss-piece sga-loss-center sga-loss-a" d="M25 0H43C46 6 42 11 45 16C42 22 45 27 41 32C36 30 32 34 27 31C29 25 25 20 29 15C26 10 29 5 25 0Z"/><path class="sga-loss-piece sga-loss-center sga-loss-b" d="M57 0H74C71 6 75 11 72 16C76 21 72 27 74 32C69 35 64 31 59 33C55 28 58 23 55 18C58 12 54 7 57 0Z"/><path class="sga-loss-piece sga-loss-center sga-loss-c" d="M24 32C30 29 34 34 40 31C44 36 41 42 45 47C42 53 45 59 40 65C34 62 30 66 25 63C28 57 24 52 28 47C25 42 29 37 24 32Z"/><path class="sga-loss-piece sga-loss-center sga-loss-d" d="M60 32C66 35 70 30 76 34C72 40 76 45 72 50C76 55 72 61 75 66C69 69 65 64 59 67C55 61 59 56 55 51C58 46 55 40 60 32Z"/></g><g data-loss-group="gate"><path class="sga-loss-piece sga-loss-gate-piece sga-loss-a" d="M41 0H59C62 8 58 14 61 21C58 27 61 33 57 39C52 37 48 41 43 38C46 32 42 27 45 21C42 15 46 8 41 0Z"/><path class="sga-loss-piece sga-loss-gate-piece sga-loss-b" d="M39 35C45 32 49 36 54 33C60 37 58 43 62 48C59 54 62 60 58 66C52 63 48 67 42 64C45 58 41 53 45 48C42 43 45 39 39 35Z"/><path class="sga-loss-piece sga-loss-gate-piece sga-loss-c" d="M40 62C46 59 50 64 55 61C61 65 58 72 62 78C59 84 62 91 58 100H41C44 93 40 87 44 81C41 74 45 68 40 62Z"/></g></svg></div><div class="sga-future-composition" aria-hidden="true"><div class="sga-future-shion-frame"><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div></div><div class="sga-future-card-frame"><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div></div><div class="sga-world-rift" aria-hidden="true"><svg class="sga-world-rift-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><g class="sga-rift-edges"><path class="sga-rift-line sga-rift-edge sga-rift-primary" data-rift="primary" pathLength="1"/></g><g class="sga-rift-cores"><path class="sga-rift-line sga-rift-core sga-rift-primary" data-rift="primary" pathLength="1"/></g></svg></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -215,26 +215,60 @@ function positionWorldRiftFromCard(){
  rift.style.setProperty("--sga-rift-origin-y",(oy*100).toFixed(2)+"%");
  return true;
 }
-async function runWorldLossSequence(worldLoss){
+async function runWorldLossPrelude(worldLoss){
  if(!worldLoss)return;
- worldLoss.classList.add("sga-world-loss-active","sga-loss-01");
- window.TarotAudio?.setCinematicLevel?.(.85,320);
- await pause(350);
+ worldLoss.classList.add("sga-world-loss-active","sga-loss-left-active");
+ window.TarotAudio?.setCinematicLevel?.(.82,360);
+ await pause(500);
 
- worldLoss.classList.add("sga-loss-02");
- await pause(400);
-
- worldLoss.classList.add("sga-loss-03");
+ worldLoss.classList.add("sga-loss-bottom-active");
+ window.TarotAudio?.setCinematicLevel?.(.65,380);
+ await pause(500);
+}
+async function continueWorldLossAfterRecognition(worldLoss){
+ if(!worldLoss)return;
+ worldLoss.classList.add("sga-loss-right-active");
  root.classList.add("sga-rift-recede");
- window.TarotAudio?.setCinematicLevel?.(.55,360);
- await pause(350);
+ window.TarotAudio?.setCinematicLevel?.(.45,380);
+ await pause(500);
 
- worldLoss.classList.add("sga-loss-04");
- await pause(350);
+ worldLoss.classList.add("sga-loss-center-active");
+ window.TarotAudio?.setCinematicLevel?.(.28,420);
+ await pause(550);
+}
+function prepareFinalCompositionReframe(){
+ const shionFrame=root?.querySelector(".sga-future-shion-frame");
+ const cardFrame=root?.querySelector(".sga-future-card-frame");
+ const shion=root?.querySelector(".sga-shion-main");
+ const card=root?.querySelector(".sga-card");
+ if(!shionFrame||!cardFrame||!shion||!card)return false;
+ const viewportWidth=root?.clientWidth||window.innerWidth||390;
+ const viewportHeight=root?.clientHeight||window.innerHeight||844;
+ const cardLeft=parseFloat(card.style.left),cardTop=parseFloat(card.style.top);
+ const flightY=parseFloat(card.style.getPropertyValue("--sga-card-flight-y"))||-110;
+ const shionLeft=parseFloat(shion.style.left),shionTop=parseFloat(shion.style.top);
+ const shionWidth=parseFloat(shion.style.width),shionHeight=parseFloat(shion.style.height);
+ if(![cardLeft,cardTop,flightY,shionLeft,shionTop,shionWidth,shionHeight].every(Number.isFinite))return false;
 
- worldLoss.classList.add("sga-loss-05");
- window.TarotAudio?.setCinematicLevel?.(.25,360);
- await pause(400);
+ const cardX=cardLeft;
+ const cardY=cardTop+flightY;
+ const shionX=shionLeft+shionWidth/2;
+ const shionY=shionTop+shionHeight/2;
+ const cardTargetX=viewportWidth*.50;
+ const cardTargetY=viewportHeight*.41;
+ const shionTargetX=viewportWidth*.50;
+ const shionTargetY=viewportHeight*.59;
+
+ cardFrame.style.setProperty("--sga-reframe-x",(cardTargetX-cardX)+"px");
+ cardFrame.style.setProperty("--sga-reframe-y",(cardTargetY-cardY)+"px");
+ shionFrame.style.setProperty("--sga-reframe-x",(shionTargetX-shionX)+"px");
+ shionFrame.style.setProperty("--sga-reframe-y",(shionTargetY-shionY)+"px");
+ return true;
+}
+async function playFinalCompositionReframe(){
+ if(!prepareFinalCompositionReframe())throw new Error("Future Fixation final composition reframe unavailable");
+ root.classList.add("sga-final-reframe");
+ await pause(650);
 }
 function replayClass(el,className){if(!el)return;el.classList.remove(className);void el.offsetWidth;el.classList.add(className)}
 function gateShell(){return document.getElementById("game-shell")}
@@ -441,8 +475,12 @@ async function restorePresentAfterFutureFixation(before){
  const rift=root.querySelector(".sga-world-rift");
  rift?.classList.remove("sga-rift-ready","sga-rift-primary-active");
  const loss=root.querySelector(".sga-world-loss");
- loss?.classList.remove("sga-world-loss-active","sga-loss-01","sga-loss-02","sga-loss-03","sga-loss-04","sga-loss-05","sga-loss-gate");
- root.classList.remove("sga-rift-recede","sga-future-void-frame","sga-last-light-lost","sga-gate-remains");
+ loss?.classList.remove("sga-world-loss-active","sga-loss-left-active","sga-loss-bottom-active","sga-loss-right-active","sga-loss-center-active","sga-loss-gate-active");
+ root.classList.remove("sga-rift-recede","sga-future-void-frame","sga-last-light-lost","sga-gate-remains","sga-final-reframe");
+ for(const frame of root.querySelectorAll(".sga-future-shion-frame,.sga-future-card-frame")){
+  frame.style.removeProperty("--sga-reframe-x");
+  frame.style.removeProperty("--sga-reframe-y");
+ }
  await pause(80);
 
  // Reveal the present in place. Audio begins returning shortly after the image,
@@ -540,31 +578,40 @@ async function futureFixationStage3(){
  // SEQUENCE 10 — overhead stop. The Arcana is the only new movement.
  await pause(450);
 
- // SEQUENCE 11 — one primary scar: a warning that continuity is failing,
- // not the climax and not a repeated physical collapse.
+ // SEQUENCE 11 — one primary scar: a warning only, never the climax.
  positionWorldRiftFromCard();
  worldRift.classList.add("sga-rift-ready","sga-rift-primary-active");
  await pause(250);
 
- // SEQUENCE 12 — deterministic, random-looking world loss begins independently
- // of Shion's recognition. The world does not pause because he speaks.
- const lossProgress=runWorldLossSequence(worldLoss);
- await pause(450);
+ // RIFT_SILENCE — let the first impossible wound register before the world changes.
+ await pause(220);
+
+ // LOSS LEFT -> BOTTOM. Camera remains fixed; the world disappears around Shion.
+ await runWorldLossPrelude(worldLoss);
+
+ // LOSS_RECOGNITION. RIGHT and CENTER OUTER continue while the dialogue is open.
+ const lossAfterRecognition=continueWorldLossAfterRecognition(worldLoss);
  await say("shion","……消えて、いく……");
- await lossProgress;
+ await lossAfterRecognition;
 
- // Most of the ruined garden is gone. Preserve the Star Gate as the final
- // landmark for a short beat, then remove even that remaining world.
+ // LANDMARK_REMAINS — hold the recognizable Star Gate / central world a little longer.
  root.classList.add("sga-gate-remains");
- await pause(300);
- worldLoss.classList.add("sga-loss-gate");
- window.TarotAudio?.setCinematicLevel?.(.10,300);
- await pause(450);
+ await pause(350);
 
- // FUTURE_VOID_FRAME — the background is nearly absent, while Future Shion
- // and the Arcana remain. This is a vision expression, not a CANON claim.
+ // GATE_LOSS — the landmark is not destroyed; its remaining image simply ceases.
+ worldLoss.classList.add("sga-loss-gate-active");
+ window.TarotAudio?.setCinematicLevel?.(.12,400);
+ await pause(500);
+
+ // FUTURE_ISOLATION — only the subjects remain legible against almost nothing.
  root.classList.add("sga-future-void-frame");
  await pause(350);
+
+ // FINAL_REFRAME — one synchronized shot-composition change only. No world-camera
+ // pan and no Arcana-only autonomous movement.
+ await playFinalCompositionReframe();
+ await pause(300);
+
  await say("shion","……これが……選ばれた未来、なのか。");
 
  // NO_RESPONSE — nothing changes in answer to the line.

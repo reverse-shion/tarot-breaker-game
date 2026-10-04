@@ -382,8 +382,8 @@
   opacity:.82;
   filter:brightness(.78) saturate(.68);
 }
-/* v1.7 World Loss: fixed irregular zones make the ruined future appear to
-   lose existence piece by piece. The geometry never randomizes at runtime. */
+/* v1.8 World Loss: small curved erosion pieces, never giant black plates.
+   Deterministic order: LEFT -> BOTTOM -> RIGHT -> CENTER -> GATE. */
 .sga-world-loss{
   position:absolute;
   inset:0;
@@ -395,38 +395,60 @@
 }
 .sga-world-loss-svg{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
 .sga-world-loss-active{opacity:1;visibility:visible}
-.sga-loss-zone,
-.sga-loss-veil{
+.sga-loss-piece{
   fill:#010103;
   opacity:0;
+  transform:scale(.90);
   transform-box:fill-box;
-  transition:opacity .42s ease,transform .48s ease;
-}
-.sga-loss-zone{
-  stroke:rgba(128,116,144,.16);
-  stroke-width:.28px;
+  transform-origin:center;
+  stroke:rgba(116,105,132,.11);
+  stroke-width:.20px;
   vector-effect:non-scaling-stroke;
+  transition:opacity .38s ease,transform .50s cubic-bezier(.22,.68,.24,1);
 }
-.sga-loss-zone[data-loss="01"]{transform:scale(.82);transform-origin:88% 18%}
-.sga-loss-zone[data-loss="02"]{transform:scale(.84);transform-origin:15% 19%}
-.sga-loss-zone[data-loss="03"]{transform:scale(.80);transform-origin:82% 72%}
-.sga-loss-zone[data-loss="04"]{transform:scale(.82);transform-origin:17% 73%}
-.sga-loss-zone[data-loss="05"]{transform:scale(.86);transform-origin:52% 50%}
-.sga-loss-01 .sga-loss-zone[data-loss="01"],
-.sga-loss-02 .sga-loss-zone[data-loss="02"],
-.sga-loss-03 .sga-loss-zone[data-loss="03"],
-.sga-loss-04 .sga-loss-zone[data-loss="04"],
-.sga-loss-05 .sga-loss-zone[data-loss="05"]{
+.sga-loss-piece.sga-loss-b{transition-delay:.07s}
+.sga-loss-piece.sga-loss-c{transition-delay:.14s}
+.sga-loss-piece.sga-loss-d{transition-delay:.20s}
+.sga-loss-left-active .sga-loss-left,
+.sga-loss-bottom-active .sga-loss-bottom,
+.sga-loss-right-active .sga-loss-right,
+.sga-loss-center-active .sga-loss-center,
+.sga-loss-gate-active .sga-loss-gate-piece{
   opacity:1;
   transform:scale(1);
 }
-.sga-loss-veil{transition:opacity .45s ease}
-.sga-loss-gate .sga-loss-veil{opacity:.985}
+
+.sga-future-composition{
+  position:absolute;
+  inset:0;
+  z-index:14;
+  pointer-events:none;
+}
+.sga-future-shion-frame,
+.sga-future-card-frame{
+  --sga-reframe-x:0px;
+  --sga-reframe-y:0px;
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  transform:translate3d(0,0,0);
+  transition:none;
+}
+.sga-final-reframe .sga-future-shion-frame,
+.sga-final-reframe .sga-future-card-frame{
+  transform:translate3d(var(--sga-reframe-x),var(--sga-reframe-y),0);
+  transition:transform .65s ease-in-out;
+}
+.sga-future-shion-frame{z-index:15}
+.sga-future-card-frame{z-index:16}
+.sga-future-shion-frame .sga-shion{z-index:15}
+.sga-future-card-frame .sga-card{z-index:17}
 
 #star-gate-anomaly.sga-future-void-frame .sga-shion-main{
-  filter:brightness(.68) saturate(.62) drop-shadow(0 0 .9px rgba(221,216,229,.22));
+  filter:brightness(.65) saturate(.58) drop-shadow(0 0 .9px rgba(221,216,229,.20));
   transition:filter .45s ease;
 }
+
 .sga-card{
   --sga-card-flight-x:0px;
   --sga-card-flight-y:-110px;
@@ -461,7 +483,7 @@
   transition:opacity .80s ease;
 }
 
-/* v1.7: pose 04 is the only visible card owner until the atomic handoff.
+/* v1.8: pose 04 is the only visible card owner until the atomic handoff.
    The independent authored Arcana is positioned while hidden, then shown only
    in the exact frame pose 05 replaces pose 04. */
 .sga-card-handoff-visible{
@@ -584,8 +606,9 @@
   .sga-card .aura2,
   .sga-card::after{transition-duration:.36s}
   .sga-world-rift.sga-rift-primary-active .sga-rift-primary{animation-duration:.12s;animation-timing-function:linear}
-  .sga-world-loss .sga-loss-zone,
-  .sga-world-loss .sga-loss-veil{transition-duration:.18s}
+  .sga-world-loss .sga-loss-piece{transition-duration:.18s;transition-delay:0s}
+  .sga-final-reframe .sga-future-shion-frame,
+  .sga-final-reframe .sga-future-card-frame{transition-duration:.18s}
 }
 
 @keyframes sgaSkyDown {
@@ -1152,6 +1175,7 @@
 }
 #star-gate-anomaly.sga-present-restored .sga-world-omen-layer,
 #star-gate-anomaly.sga-present-restored .sga-world-loss,
+#star-gate-anomaly.sga-present-restored .sga-future-composition,
 #star-gate-anomaly.sga-present-restored .sga-shion,
 #star-gate-anomaly.sga-present-restored .sga-card-surge,
 #star-gate-anomaly.sga-present-restored .sga-card,
