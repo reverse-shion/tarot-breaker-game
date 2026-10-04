@@ -510,7 +510,7 @@ async function futureFixationStage3(){
  // NO_RESPONSE — the world does not confirm Shion's hypothesis.
  await pause(750);
 
- // SEQUENCE 11 — Arcana blackening resumes independently after the silence.
+ // SEQUENCE 11 — Arcana anomaly resumes independently after the silence.
  root.classList.add("sga-card-blackening");
  await pause(800);
  root.classList.add("sga-card-blackened");
