@@ -401,9 +401,11 @@ test("Stage 3 ends the future with a fixed-camera black cut and restores the pre
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  const rift=stage3.indexOf('worldRift.classList.add("sga-rift-primary-active")');
  const riftFull=stage3.indexOf('worldRift.classList.add("sga-rift-full-active")',rift);
- const finalHold=stage3.lastIndexOf("await pause(700)");
- const returnCall=stage3.indexOf("await restorePresentAfterFutureFixation(before)",rift);
- assert.ok(rift>=0&&rift<riftFull&&riftFull<finalHold&&finalHold<returnCall);
+ const blackened=stage3.indexOf('root.classList.add("sga-card-blackened")',riftFull);
+ const settle=stage3.indexOf("await pause(500)",blackened);
+ const finalHold=stage3.indexOf("await pause(700)",settle);
+ const returnCall=stage3.indexOf("await restorePresentAfterFutureFixation(before)",finalHold);
+ assert.ok(rift>=0&&rift<riftFull&&riftFull<blackened&&blackened<settle&&settle<finalHold&&finalHold<returnCall);
  assert.doesNotMatch(stage3.slice(rift,returnCall),/panTo\(|frameBounds\(|returnToPlayer\(|zoom/);
 
  const restore=source.slice(source.indexOf("async function restorePresentAfterFutureFixation"),source.indexOf("async function futureFixationStage3"));
