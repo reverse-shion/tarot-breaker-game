@@ -196,24 +196,59 @@ test("Dual-presence composition does not alter approved ruins registration",()=>
  assert.match(game,/offsetY: -330/);
 });
 
-test("Stage 3 v1.3 keeps one authored Arcana from hand to overhead blackening",()=>{
+test("Stage 3 v1.4 performs an atomic 04 -> 05 Arcana handoff without duplicate cards",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
- for(const line of ["……？","アルカナが……どうなっているんだ……？","……世界が、この未来を選んでいるのか？"])assert.ok(stage3.includes(line));
- const p1=stage3.indexOf("setShion(1)");
- const p2=stage3.indexOf("setShion(2)");
  const p3=stage3.indexOf("setShion(3)");
  const p4=stage3.indexOf("crossfadeFutureShion(4,110");
- const p5=stage3.indexOf("crossfadeFutureShion(5,100");
- assert.ok(p1>=0&&p1<p2&&p2<p3&&p3<p4&&p4<p5);
- assert.match(stage3,/root\.classList\.add\("sga-card-attached","sga-card-corrupt"\)/);
- assert.match(stage3,/positionFutureStage3Card\("raised",\{animateMs:110\}\)/);
+ const register=stage3.indexOf("registerFutureArcanaHandoff()");
+ const handoff=stage3.indexOf("handoffArcanaFromPose04To05()");
+ const hold=stage3.indexOf("await pause(100)",handoff);
+ const flight=stage3.indexOf('replayClass(card,"sga-card-flight")',handoff);
+ assert.ok(p3>=0&&p3<p4&&p4<register&&register<handoff&&handoff<hold&&hold<flight);
+ assert.doesNotMatch(stage3,/crossfadeFutureShion\(5/);
+ assert.doesNotMatch(stage3,/positionFutureStage3Card/);
  assert.match(stage3,/await pause\(350\)/);
- assert.match(stage3,/root\.classList\.add\("sga-card-detached"\)/);
- assert.match(stage3,/replayClass\(card,"sga-card-flight"\)/);
  assert.match(stage3,/await pause\(1700\)/);
- assert.match(stage3,/await pause\(450\)/);
- assert.match(stage3,/root\.classList\.add\("sga-world-omen"\)/);
- assert.match(stage3,/await pause\(350\)/);
+ assert.match(source,/const FUTURE_ARCANA_HANDOFF=Object\.freeze\(\{xRatio:\.63,yRatio:\.20,widthRatio:\.62,rotation:0\}\)/);
+ assert.match(source,/function registerFutureArcanaHandoff\(\)/);
+ assert.match(source,/futureArcanaHandoff=Object\.freeze\(\{handoffX,handoffY,cardSize,flightX,flightY,rotation:FUTURE_ARCANA_HANDOFF\.rotation\}\)/);
+ assert.match(source,/function handoffArcanaFromPose04To05\(\)/);
+ assert.match(source,/const raf=window\.requestAnimationFrame\|\|\(\(fn\)=>fn\(\)\)/);
+ assert.match(source,/raf\(\(\)=>\{[\s\S]*shion\.src=ASSETS\.shion\[4\];[\s\S]*card\.classList\.add\("sga-card-handoff-visible"\)/);
+ const handoffFn=source.slice(source.indexOf("function handoffArcanaFromPose04To05"),source.indexOf("function positionWorldFractureFromCard"));
+ assert.doesNotMatch(handoffFn,/alignFutureShion|style\.left|style\.top|style\.width|registerFutureArcanaHandoff/);
+});
+
+test("Stage 3 v1.4 keeps the independent Arcana hidden until pose 05 owns the card",()=>{
+ const cardCss=css.slice(css.indexOf(".sga-card{"),css.indexOf("/* The word \"world\""));
+ assert.match(cardCss,/opacity:0;[\s\S]*visibility:hidden/);
+ assert.match(cardCss,/\.sga-card-handoff-visible\{[\s\S]*opacity:1;[\s\S]*visibility:visible/);
+ assert.match(cardCss,/\.sga-card-handoff-visible \.aura1\{opacity:1\}/);
+ assert.doesNotMatch(cardCss,/sga-card-attached|sga-card-detached|sga-card-corrupt|sga-card-absorb|sga-card-tug/);
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ assert.doesNotMatch(stage3,/sga-card-attached|sga-card-detached|sga-card-corrupt|sga-card-absorb|sga-card-tug/);
+});
+
+test("Stage 3 v1.4 freezes pose-04 card geometry and flies only by relative transform",()=>{
+ const registerFn=source.slice(source.indexOf("function registerFutureArcanaHandoff"),source.indexOf("function handoffArcanaFromPose04To05"));
+ assert.match(registerFn,/handoffX=left\+width\*FUTURE_ARCANA_HANDOFF\.xRatio/);
+ assert.match(registerFn,/handoffY=top\+height\*FUTURE_ARCANA_HANDOFF\.yRatio/);
+ assert.match(registerFn,/card\.style\.left=handoffX\+"px"/);
+ assert.match(registerFn,/card\.style\.top=handoffY\+"px"/);
+ assert.match(registerFn,/--sga-card-flight-x/);
+ assert.match(registerFn,/--sga-card-flight-y/);
+ const cardCss=css.slice(css.indexOf("/* v1.4:"),css.indexOf("/* The word \"world\""));
+ assert.match(cardCss,/sgaAuthoredCardFlight 1\.70s linear 1 forwards/);
+ assert.match(cardCss,/translate\(var\(--sga-card-flight-x\),var\(--sga-card-flight-y\)\)/);
+ assert.doesNotMatch(cardCss,/left:[^;]*animation|top:[^;]*animation/);
+ assert.doesNotMatch(cardCss,/rotate\([^v]/);
+});
+
+test("Stage 3 v1.4 keeps authored dark-aura artwork and the later blackening contract",()=>{
+ assert.match(source,/aura1:"\.\/assets\/sprites\/shion\/shion_card_dark_aura_01\.webp",aura2:"\.\/assets\/sprites\/shion\/shion_card_dark_aura_02\.webp"/);
+ assert.doesNotMatch(source,/arcanaBack:"\.\/assets\/tarot\/backs\/tarot-card-back\.webp"/);
+ assert.match(source,/class="sga-card" aria-hidden="true"><img class="aura1"/);
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  const lineAt=stage3.indexOf('await say("shion","……世界が、この未来を選んでいるのか？")');
  const silenceAt=stage3.indexOf("await pause(750)",lineAt);
  const blackAt=stage3.indexOf('root.classList.add("sga-card-blackening")',lineAt);
@@ -221,31 +256,9 @@ test("Stage 3 v1.3 keeps one authored Arcana from hand to overhead blackening",(
  assert.ok(lineAt>=0&&lineAt<silenceAt&&silenceAt<blackAt&&blackAt<fractureAt);
  assert.match(stage3,/await pause\(800\)/);
  assert.match(stage3,/root\.classList\.add\("sga-card-blackened"\)/);
- assert.match(stage3,/await pause\(500\)/);
- assert.match(stage3,/future-fixation-arcana-anomaly-complete/);
- assert.doesNotMatch(stage3,/arcanaBack|sga-arcana-anomaly|tarot-card-back|playFuturePressureTone|AudioContext|createOscillator/);
- assert.doesNotMatch(stage3,/Re:カード|Re:Arcana|Anti Arcana|Etera|Arete|これは……私の選択じゃない|――選べ/);
 });
 
-test("Stage 3 v1.3 uses the existing dark-aura artwork instead of manufacturing a flying CSS card",()=>{
- assert.match(source,/aura1:"\.\/assets\/sprites\/shion\/shion_card_dark_aura_01\.webp",aura2:"\.\/assets\/sprites\/shion\/shion_card_dark_aura_02\.webp"/);
- assert.doesNotMatch(source,/arcanaBack:"\.\/assets\/tarot\/backs\/tarot-card-back\.webp"/);
- assert.match(source,/class="sga-card" aria-hidden="true"><img class="aura1"/);
- assert.doesNotMatch(source,/class="sga-arcana-anomaly"/);
- assert.match(source,/function positionFutureStage3Card\(mode="check",\{animateMs=0\}=\{\}\)/);
- assert.match(source,/function positionWorldFractureFromCard\(\)/);
- const cardCss=css.slice(css.indexOf("/* v1.3:"),css.indexOf("@keyframes sgaSkyDown"));
- assert.match(cardCss,/sga-card-corrupt \.sga-card \.aura1\{opacity:\.44\}/);
- assert.match(cardCss,/sga-card-detached \.sga-card \.aura1\{opacity:1\}/);
- assert.match(cardCss,/sgaAuthoredCardFlight 1\.70s linear 1 forwards/);
- assert.match(cardCss,/sga-world-omen \.sga-vision[\s\S]*saturate\(\.93\) brightness\(\.98\)/);
- assert.match(cardCss,/sga-card-blackening \.sga-card \.aura1\{opacity:0\}/);
- assert.match(cardCss,/sga-card-blackening \.sga-card \.aura2\{opacity:1\}/);
- assert.match(cardCss,/transition:filter \.80s ease/);
- assert.doesNotMatch(cardCss,/rotate\(|animation:[^;]*(?:infinite|bounce)|sgaUiFault|sgaFutureCue/i);
-});
-
-test("Stage 3 v1.3 separates Shion's hypothesis from blackening and the world fracture",()=>{
+test("Stage 3 v1.4 separates Shion's hypothesis from blackening and the world fracture",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  const lineAt=stage3.indexOf("……世界が、この未来を選んでいるのか？");
  const blackAt=stage3.indexOf('root.classList.add("sga-card-blackening")');
@@ -256,9 +269,9 @@ test("Stage 3 v1.3 separates Shion's hypothesis from blackening and the world fr
  assert.doesNotMatch(betweenLineAndBlack,/worldFault|blackening|blackened|fracture|setCinematicSilence/);
 });
 
-test("Stage 3 v1.3 removes the generic cue, UI glitch and temporary oscillator tone",()=>{
+test("Stage 3 v1.4 removes the generic cue, UI glitch and temporary oscillator tone",()=>{
  assert.doesNotMatch(source,/sga-future-cue|sga-ui-anomaly|playFuturePressureTone|createOscillator|frequency\.setValueAtTime\(72/);
- const cardCss=css.slice(css.indexOf("/* v1.3:"),css.indexOf("@keyframes sgaSkyDown"));
+ const cardCss=css.slice(css.indexOf("/* v1.4:"),css.indexOf("@keyframes sgaSkyDown"));
  assert.doesNotMatch(cardCss,/sga-future-cue|sga-ui-anomaly|sgaFutureCue|sgaUiFault/);
 });
 
