@@ -3,7 +3,6 @@
 const ASSETS={
  ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
- arcanaBack:"./assets/tarot/backs/tarot-card-back.webp",
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
  anomalyGate:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/garden-star-gate.webp",
  darkEnergy:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_01.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_02.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_03.webp","https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/events/gate-vision/dark_energy_rise_04.webp"],
@@ -24,7 +23,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-arcana-anomaly" aria-hidden="true"><img src="'+ASSETS.arcanaBack+'" alt=""></div><div class="sga-world-fracture" aria-hidden="true"></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-world-fracture" aria-hidden="true"></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -102,29 +101,38 @@ async function crossfadeFutureShion(n,duration=110,{liftOld=false}={}){
  ghost.style.filter="";
  ghost.removeAttribute("src");
 }
-function positionFutureStage3Effects(mode="check"){
+function positionFutureStage3Card(mode="check",{animateMs=0}={}){
  const shion=root?.querySelector(".sga-shion-main")||root?.querySelector(".sga-shion");
- const arcana=root?.querySelector(".sga-arcana-anomaly");
- if(!shion||!arcana)return false;
+ const card=root?.querySelector(".sga-card");
+ if(!shion||!card)return false;
  const left=parseFloat(shion.style.left),top=parseFloat(shion.style.top),width=parseFloat(shion.style.width),height=parseFloat(shion.style.height);
- if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0){shion.addEventListener("load",()=>positionFutureStage3Effects(mode),{once:true});return false}
+ if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0){
+  shion.addEventListener("load",()=>positionFutureStage3Card(mode,{animateMs}),{once:true});
+  return false;
+ }
  const raised=mode==="raised";
  const startX=left+width*(raised?.63:.59);
- arcana.style.left=startX+"px";
- arcana.style.top=(top+height*(raised?.20:.46))+"px";
- arcana.style.width=Math.max(14,Math.min(22,width*.24))+"px";
- arcana.style.setProperty("--sga-arcana-rise","-"+Math.max(92,height*1.08)+"px");
+ const startY=top+height*(raised?.20:.46);
+ const cardSize=Math.max(42,Math.min(62,width*.62));
+ if(animateMs>0){
+  card.style.transition="left "+animateMs+"ms ease-out, top "+animateMs+"ms ease-out, opacity .10s linear";
+ }else card.style.transition="";
+ card.style.left=startX+"px";
+ card.style.top=startY+"px";
+ card.style.bottom="auto";
+ card.style.width=cardSize+"px";
+ card.style.setProperty("--sga-card-rise","-"+Math.max(96,height*1.10)+"px");
  const viewportWidth=root?.clientWidth||window.innerWidth||390;
- const drift=Math.max(12,Math.min(46,(viewportWidth*.50-startX)*.68));
- arcana.style.setProperty("--sga-arcana-drift-x",drift+"px");
+ const drift=Math.max(14,Math.min(48,(viewportWidth*.50-startX)*.66));
+ card.style.setProperty("--sga-card-drift-x",drift+"px");
  return true;
 }
-function positionWorldFractureFromArcana(){
- const arcana=root?.querySelector(".sga-arcana-anomaly"),fault=root?.querySelector(".sga-world-fracture");
- if(!arcana||!fault)return false;
- const startX=parseFloat(arcana.style.left),startY=parseFloat(arcana.style.top);
- const rise=parseFloat(arcana.style.getPropertyValue("--sga-arcana-rise"))||-110;
- const drift=parseFloat(arcana.style.getPropertyValue("--sga-arcana-drift-x"))||0;
+function positionWorldFractureFromCard(){
+ const card=root?.querySelector(".sga-card"),fault=root?.querySelector(".sga-world-fracture");
+ if(!card||!fault)return false;
+ const startX=parseFloat(card.style.left),startY=parseFloat(card.style.top);
+ const rise=parseFloat(card.style.getPropertyValue("--sga-card-rise"))||-110;
+ const drift=parseFloat(card.style.getPropertyValue("--sga-card-drift-x"))||0;
  if(![startX,startY,rise,drift].every(Number.isFinite))return false;
  const finalX=startX+drift,finalY=Math.max(24,startY+rise);
  fault.style.setProperty("--sga-fracture-x",finalX+"px");
@@ -318,66 +326,74 @@ async function futureFixationStage3(){
  if(!before)throw new Error("Shion stage state unavailable before Future Fixation Vision Stage 3");
  const vis=window.TarotActorVisibility;
  vis?.set("shiopon",0);vis?.set("lumiere",0);
- // Current Shion remains the translucent observer established by Stage 2.
  if(vis&&Math.abs(vis.getState().shion-FUTURE_VISION_CURRENT_SHION_OPACITY)>1e-6)
   throw new Error("Current Shion opacity drifted before Future Fixation Vision Stage 3");
 
- const arcana=root.querySelector(".sga-arcana-anomaly");
+ const card=root.querySelector(".sga-card");
  const worldFault=root.querySelector(".sga-world-fracture");
- if(!arcana||!worldFault)throw new Error("Future Fixation Stage 3 anomaly layers unavailable");
+ if(!card||!worldFault)throw new Error("Future Fixation Stage 3 card layers unavailable");
 
  root.classList.add("sga-card-phase","sga-future-shion-settle");
- // Stage 3 needs an audible reference so the first card damage can remove it.
  window.TarotAudio?.setCinematicSilence?.(false,240);
 
- // 01: Future Shion stands near the middle of the staircase, visibly left of
- // current Shion. The ruined future itself is already familiar to him.
- setShion(1);positionFutureStage3Effects("check");await pause(760);
-
- // 02: no comic cue. A tiny loss of brightness near the held Arcana is enough.
- root.classList.add("sga-arcana-premonition");await pause(180);
+ // Future Shion arrives on the left-centre staircase without reacting to the
+ // already-ruined future itself.
+ setShion(1);await pause(760);
  await say("shion","……？");await pause(180);
  setShion(2);await pause(520);
- setShion(3);positionFutureStage3Effects("check");await pause(560);
+ setShion(3);positionFutureStage3Card("check");await pause(560);
 
- // 03-05: the fault begins inside the card. No generic UI glitch is used.
- root.classList.remove("sga-arcana-premonition");
- root.classList.add("sga-arcana-corrupt");
+ // The authored dark-aura card artwork is registered directly over the card
+ // Shion is already holding. It stays attached to the hand until detachment.
+ root.classList.add("sga-card-attached","sga-card-corrupt");
  window.TarotAudio?.setCinematicSilence?.(true,160);
  await pause(720);
  await say("shion","アルカナが……どうなっているんだ……？");
+ root.classList.add("sga-card-absorb");await pause(920);
 
- // Future Shion stays still while the card interior loses detail/light.
- root.classList.add("sga-arcana-absorb");await pause(920);
-
- // The card moves first. Then pose 03 lifts a few pixels and crossfades into
- // 04 so the player reads one continuous involuntary arm movement.
- root.classList.add("sga-arcana-tug");await pause(220);
+ // The Arcana moves first; Shion's arm follows. Card and body move together
+ // through the 03 -> 04 crossfade so the card never appears to teleport.
+ root.classList.add("sga-card-tug");await pause(220);
+ positionFutureStage3Card("raised",{animateMs:110});
  await crossfadeFutureShion(4,110,{liftOld:true});
- positionFutureStage3Effects("raised");
- root.classList.remove("sga-arcana-tug");
- root.classList.add("sga-arcana-raised");await pause(560);
+ root.classList.remove("sga-card-tug");
+ await pause(350);
 
- // The separate card layer detaches from the hand while pose 04 crossfades
- // into the approved empty-hand pose 05.
- root.classList.add("sga-arcana-detached");
+ // 04 -> 05 removes the card from the character art while the already-aligned
+ // authored card layer remains in exactly the same place: one card, one object.
+ root.classList.add("sga-card-detached");
  await crossfadeFutureShion(5,100);
- positionFutureStage3Effects("raised");await pause(80);
- replayClass(arcana,"sga-arcana-flight");
- await pause(1650);
- root.classList.add("sga-arcana-black");
- await pause(780);
+ card.style.transition="";
+ await pause(40);
 
- // Let the image land before the hypothesis is spoken.
+ // The independent authored card rises quietly toward the screen centre.
+ replayClass(card,"sga-card-flight");
+ await pause(1700);
+
+ // Complete stop. Do not darken yet.
+ await pause(450);
+
+ // Give the word "world" a minimal visual basis without answering Shion:
+ // the ruined background alone loses a small amount of saturation.
+ root.classList.add("sga-world-omen");
+ await pause(350);
+
  await say("shion","……世界が、この未来を選んでいるのか？");
 
- // The world fault must grow from the Arcana's final position upward so the
- // player sees one causal line: Arcana -> sky -> world rule failure.
- positionWorldFractureFromArcana();
+ // Canon guard: the world does not answer the question.
+ await pause(750);
+
+ // The already-running Arcana anomaly resumes independently of the dialogue.
+ // Use the authored second dark-aura frame instead of manufacturing a CSS card.
+ root.classList.add("sga-card-blackening");
+ await pause(800);
+ root.classList.add("sga-card-blackened");
+ await pause(500);
+
+ // Only after the black card has settled does the larger world rule fault begin.
+ positionWorldFractureFromCard();
  replayClass(worldFault,"show");
  root.classList.add("sga-world-rule-fault");
- // v1.1 intentionally leaves the scene silent here; the temporary oscillator
- // tone was removed because a dedicated pressure/air sound has not been authored.
  await pause(1150);
 
  const after=stage.getState().actors.shion;
