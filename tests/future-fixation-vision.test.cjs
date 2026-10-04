@@ -275,6 +275,52 @@ test("Stage 3 v1.4 removes the generic cue, UI glitch and temporary oscillator t
  assert.doesNotMatch(cardCss,/sga-future-cue|sga-ui-anomaly|sgaFutureCue|sgaUiFault/);
 });
 
+test("Stage 3 ends the future with a fixed-camera black cut and restores the present garden",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ const fracture=stage3.indexOf('replayClass(worldFault,"show")');
+ const fractureHold=stage3.indexOf("await pause(700)",fracture);
+ const returnCall=stage3.indexOf("await restorePresentAfterFutureFixation(before)",fracture);
+ assert.ok(fracture>=0&&fracture<fractureHold&&fractureHold<returnCall);
+ assert.doesNotMatch(stage3.slice(fracture,returnCall),/panTo\(|frameBounds\(|returnToPlayer\(/);
+
+ const restore=source.slice(source.indexOf("async function restorePresentAfterFutureFixation"),source.indexOf("async function futureFixationStage3"));
+ const blackOn=restore.indexOf('root.classList.add("sga-future-return-black")');
+ const visionEnd=restore.indexOf("vision.end()");
+ const worldReveal=restore.indexOf('gateShell()?.classList.remove("sga-future-world-hidden")');
+ const visibilityReset=restore.indexOf("vis?.reset?.()");
+ const presentClass=restore.indexOf('root.classList.add("sga-present-restored")');
+ const blackOff=restore.indexOf('root.classList.remove("sga-future-return-black")');
+ assert.ok(blackOn>=0&&blackOn<visionEnd&&visionEnd<worldReveal&&worldReveal<visibilityReset&&visibilityReset<presentClass&&presentClass<blackOff);
+ assert.match(restore,/await pause\(220\)/);
+ assert.match(restore,/await pause\(80\)/);
+ assert.match(restore,/await pause\(260\)/);
+ assert.match(restore,/await pause\(650\)/);
+ assert.doesNotMatch(restore,/say\(/);
+ assert.doesNotMatch(restore,/panTo\(|frameBounds\(|returnToPlayer\(/);
+});
+
+test("Present-return reaction changes facing only and restores Shion's original direction",()=>{
+ const restore=source.slice(source.indexOf("async function restorePresentAfterFutureFixation"),source.indexOf("async function futureFixationStage3"));
+ assert.match(restore,/flinchVectorForDir\(before\.dir\|\|current\.dir\|\|"down"\)/);
+ assert.match(restore,/faceVectorForDir\(before\.dir\|\|current\.dir\|\|"down"\)/);
+ assert.equal((restore.match(/type:"face"/g)||[]).length,2);
+ assert.doesNotMatch(restore,/type:"move"|type:"step"|type:"approach"|teleport/);
+ assert.match(restore,/if\(!samePoint\(before,after\)\)throw new Error\("Shion moved while returning from Future Fixation Vision"\)/);
+ assert.match(restore,/setCinematicSilence\?\.\(false,300\)/);
+ assert.match(restore,/future-fixation-return-complete/);
+});
+
+test("Stage 3 present return hides all future overlay actors before black clears",()=>{
+ assert.match(css,/#star-gate-anomaly\.sga-future-return-black \.sga-future-blackout\{[\s\S]*opacity:1/);
+ const returned=css.slice(css.indexOf("/* Stage 3 return:"),css.indexOf("/*",css.indexOf("/* Stage 3 return:")+5)>0?css.indexOf("/*",css.indexOf("/* Stage 3 return:")+5):undefined);
+ assert.match(returned,/sga-present-restored \.sga-shion/);
+ assert.match(returned,/sga-present-restored \.sga-card/);
+ assert.match(returned,/sga-present-restored \.sga-world-fracture/);
+ assert.match(returned,/opacity:0!important/);
+ assert.match(returned,/visibility:hidden!important/);
+ assert.doesNotMatch(returned,/white|#fff|rgb\(255/);
+});
+
 test("Stage 3 preserves current Shion world position and NPC isolation",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  assert.match(stage3,/vis\?\.set\("shiopon",0\);vis\?\.set\("lumiere",0\)/);
