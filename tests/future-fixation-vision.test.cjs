@@ -439,7 +439,7 @@ test("Present-return reaction changes facing only and restores Shion's original 
  assert.equal((restore.match(/type:"face"/g)||[]).length,2);
  assert.doesNotMatch(restore,/type:"move"|type:"step"|type:"approach"|teleport/);
  assert.match(restore,/if\(!samePoint\(before,after\)\)throw new Error\("Shion moved while returning from Future Fixation Vision"\)/);
- assert.match(restore,/setCinematicSilence\?\.\(false,300\)/);
+ assert.match(restore,/setCinematicSilence\?\.\(false,400\)/);
  assert.match(restore,/future-fixation-return-complete/);
 });
 
