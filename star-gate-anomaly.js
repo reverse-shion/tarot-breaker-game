@@ -376,8 +376,8 @@ async function futureFixationStage3(){
  positionWorldFractureFromArcana();
  replayClass(worldFault,"show");
  root.classList.add("sga-world-rule-fault");
- // v1.1 intentionally leaves the scene silent here; the temporary 72 Hz tone
- // was removed because a dedicated pressure/air sound has not been authored.
+ // v1.1 intentionally leaves the scene silent here; the temporary oscillator
+ // tone was removed because a dedicated pressure/air sound has not been authored.
  await pause(1150);
 
  const after=stage.getState().actors.shion;
