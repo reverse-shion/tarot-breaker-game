@@ -352,12 +352,14 @@ async function futureFixationStage3(){
  root.classList.add("sga-card-absorb");await pause(920);
 
  // The Arcana moves first; Shion's arm follows. Card and body move together
- // through the 03 -> 04 crossfade so the card never appears to teleport.
+ // through the 03 -> 04 crossfade so the card never appears to jump between poses.
  root.classList.add("sga-card-tug");await pause(220);
  positionFutureStage3Card("raised",{animateMs:110});
  await crossfadeFutureShion(4,110,{liftOld:true});
+ card.style.transition="transform 80ms ease-out";
  root.classList.remove("sga-card-tug");
  await pause(350);
+ card.style.transition="";
 
  // 04 -> 05 removes the card from the character art while the already-aligned
  // authored card layer remains in exactly the same place: one card, one object.
