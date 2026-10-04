@@ -196,13 +196,40 @@ test("Dual-presence composition does not alter approved ruins registration",()=>
  assert.match(game,/offsetY: -330/);
 });
 
-test("Stage 3 uses the five approved Future Shion card poses only",()=>{
+test("Stage 3 turns the five approved Future Shion poses into Arcana anomaly story beats",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
- assert.match(stage3,/const timings=\[520,500,900,520,520\]/);
- assert.match(stage3,/for\(let i=1;i<=5;i\+\+\)\{setShion\(i\)/);
- assert.match(stage3,/opacity drifted before Future Fixation Vision Stage 3/);
- assert.doesNotMatch(stage3,/set\("shion",FUTURE_VISION_CURRENT_SHION_OPACITY\)/);
- assert.doesNotMatch(stage3,/aura1|aura2|ascend|transformed|floating|――選べ|これは……私の選択じゃない|待て！！/);
+ const beats=["setShion(1)","setShion(2)","setShion(3)","setShion(4)","setShion(5)"];
+ let last=-1;
+ for(const beat of beats){const at=stage3.indexOf(beat);assert.ok(at>last,beat+" must remain in authored order");last=at}
+ for(const line of ["……？","アルカナが……どうなっているんだ……？","……世界が、この未来を選んでいるのか？"])assert.ok(stage3.includes(line));
+ const bed=stage3.indexOf("setCinematicSilence?.(false,240)");
+ const silence=stage3.indexOf("setCinematicSilence?.(true,160)");
+ assert.ok(bed>=0&&bed<silence,"Stage 3 needs an audible bed before the Arcana removes it");
+ assert.equal((stage3.match(/replayClass\(uiFault,"show"\)/g)||[]).length,1);
+ assert.equal((stage3.match(/replayClass\(worldFault,"show"\)/g)||[]).length,1);
+ assert.match(stage3,/root\.classList\.add\("sga-arcana-corrupt"\)/);
+ assert.match(stage3,/root\.classList\.add\("sga-arcana-absorb"\)/);
+ assert.match(stage3,/root\.classList\.add\("sga-arcana-tug"\)/);
+ assert.match(stage3,/replayClass\(arcana,"sga-arcana-flight"\)/);
+ assert.match(stage3,/playFuturePressureTone\(1350\)/);
+ assert.match(stage3,/future-fixation-arcana-anomaly-complete/);
+ assert.doesNotMatch(stage3,/Re:カード|Re:Arcana|Anti Arcana|Etera|Arete|これは……私の選択じゃない|――選べ/);
+ assert.doesNotMatch(stage3,/aura1|aura2|sga-cut|floating/);
+});
+
+test("Stage 3 keeps the anomaly card-side and one-shot instead of making it a character",()=>{
+ assert.match(source,/arcanaBack:"\.\/assets\/tarot\/backs\/tarot-card-back\.webp"/);
+ assert.match(source,/class="sga-arcana-anomaly"/);
+ assert.match(source,/function positionFutureStage3Effects\(mode="check"\)/);
+ assert.match(source,/const raised=mode==="raised"/);
+ assert.match(source,/--sga-arcana-rise/);
+ const anomalyCss=css.slice(css.indexOf("/* Future Fixation Vision Stage 3 — Arcana anomaly."),css.indexOf("@keyframes sgaSkyDown"));
+ assert.match(anomalyCss,/sgaArcanaStain 1\.25s ease-out 1 forwards/);
+ assert.match(anomalyCss,/sgaArcanaAbsorb 1\.05s ease-in 1 forwards/);
+ assert.match(anomalyCss,/sgaArcanaFlight 1\.65s cubic-bezier\([^)]*\) 1 forwards/);
+ assert.match(anomalyCss,/sgaUiFault \.16s steps\(2,end\) 1 both/);
+ assert.match(anomalyCss,/sgaWorldRuleFault \.48s steps\(2,end\) 1 forwards/);
+ assert.doesNotMatch(anomalyCss,/infinite|pulse|shake|flash/i);
 });
 
 test("Stage 3 preserves current Shion world position and NPC isolation",()=>{
@@ -223,18 +250,18 @@ test("Stage 3 Future Shion is not trapped inside the hidden legacy Vision overla
  assert.match(css,/\.sga-card-phase \.sga-shion\.visible \{ opacity:1; \}/);
 });
 
-test("Stage 3 settles once without changing pose timing, floating or flashing",()=>{
+test("Stage 3 settles once before the Arcana anomaly without floating or flashing",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  assert.match(stage3,/root\.classList\.add\("sga-card-phase","sga-future-shion-settle"\)/);
  assert.equal((source.match(/classList\.add\([^\n]*"sga-future-shion-settle"/g)||[]).length,1);
  const setPose=source.slice(source.indexOf("function setShion"),source.indexOf("function gateShell"));
  assert.doesNotMatch(setPose,/settle|animation/);
- assert.match(stage3,/const timings=\[520,500,900,520,520\]/);
  const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card {"));
  assert.match(effect,/animation:sgaFutureShionSettle \.7s ease-out 1 both/);
  assert.match(effect,/brightness\(1\.04\)/);
  assert.match(effect,/drop-shadow\(0 0 \.6px rgba\(245,245,248,\.14\)\) drop-shadow\(0 0 1px rgba\(209,202,226,\.10\)\)/);
  assert.doesNotMatch(effect,/infinite|pulse|transform|translate|blur\(|background|position:fixed|inset|gold/i);
+ assert.ok(stage3.indexOf('root.classList.add("sga-card-phase","sga-future-shion-settle")') < stage3.indexOf("setShion(1)"));
  assert.doesNotMatch(stage3,/sga-cut|flash|aura|floating/);
 });
 
