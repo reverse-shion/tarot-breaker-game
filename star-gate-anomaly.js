@@ -107,7 +107,7 @@ function positionFutureStage3Effects(mode="check"){
  const arcana=root?.querySelector(".sga-arcana-anomaly");
  if(!shion||!arcana)return false;
  const left=parseFloat(shion.style.left),top=parseFloat(shion.style.top),width=parseFloat(shion.style.width),height=parseFloat(shion.style.height);
- if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0)return false;
+ if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0){shion.addEventListener("load",()=>positionFutureStage3Effects(mode),{once:true});return false}
  const raised=mode==="raised";
  const startX=left+width*(raised?.63:.59);
  arcana.style.left=startX+"px";
