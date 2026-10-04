@@ -196,10 +196,67 @@ test("Dual-presence composition does not alter approved ruins registration",()=>
  assert.match(game,/offsetY: -330/);
 });
 
-test("Stage 3 v1.4 performs an atomic 04 -> 05 Arcana handoff without duplicate cards",()=>{
+test("Stage 3 v1.5 makes Arcana surge visibly precede Shion reaction and forced raise",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ const check=stage3.indexOf('await say("shion","……アルカナが……？")');
+ const surgePos=stage3.indexOf("positionArcanaSurgeFromPose03()",check);
+ const surge=stage3.indexOf('root.classList.add("sga-arcana-surge")',surgePos);
+ const lead=stage3.indexOf("await pause(180)",surge);
+ const jolt=stage3.indexOf('root.classList.add("sga-forced-raise-jolt")',lead);
+ const breath=stage3.indexOf('await say("shion","……っ")',jolt);
+ const raise=stage3.indexOf("crossfadeFutureShion(4,100,{liftOld:true})",breath);
+ assert.ok(check>=0&&check<surgePos&&surgePos<surge&&surge<lead&&lead<jolt&&jolt<breath&&breath<raise);
+ assert.doesNotMatch(stage3,/アルカナが……どうなっているんだ/);
+ assert.doesNotMatch(stage3,/アルカナよ|答えてくれ/);
+});
+
+test("Stage 3 v1.5 surge is effect-only and never introduces a second card during pose 03",()=>{
+ const mount=source.slice(source.indexOf("root.innerHTML="),source.indexOf("document.getElementById",source.indexOf("root.innerHTML=")));
+ assert.match(mount,/class="sga-card-surge" aria-hidden="true"/);
+ assert.doesNotMatch(mount,/sga-card-surge[^>]*><img/);
+ assert.match(source,/const FUTURE_ARCANA_SURGE=Object\.freeze\(\{xRatio:\.506,yRatio:\.43,widthRatio:\.20,heightRatio:\.30\}\)/);
+ assert.match(source,/function positionArcanaSurgeFromPose03\(\)/);
+ const surgeCss=css.slice(css.indexOf("/* v1.5 Arcana surge"),css.indexOf(".sga-card{"));
+ assert.match(surgeCss,/rgba\(5,1,9,\.72\)/);
+ assert.match(surgeCss,/sgaArcanaUpflow \.46s ease-out 1 forwards/);
+ assert.doesNotMatch(surgeCss,/particle|lightning|neon|magic-circle/i);
+});
+
+test("Stage 3 v1.5 bridges Arcana anomaly to the world hypothesis before the no-response hold",()=>{
+ const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
+ const omen=stage3.indexOf('root.classList.add("sga-world-omen")');
+ const bridge=stage3.indexOf('await say("shion","……アルカナだけじゃない……")',omen);
+ const bridgeHold=stage3.indexOf("await pause(300)",bridge);
+ const hypothesis=stage3.indexOf('await say("shion","……世界が、この未来を選んでいるのか？")',bridgeHold);
+ const silence=stage3.indexOf("await pause(750)",hypothesis);
+ const black=stage3.indexOf('root.classList.add("sga-card-blackening")',silence);
+ assert.ok(omen>=0&&omen<bridge&&bridge<bridgeHold&&bridgeHold<hypothesis&&hypothesis<silence&&silence<black);
+ const noResponse=stage3.slice(hypothesis,black);
+ assert.doesNotMatch(noResponse,/worldFault|blackening|blackened|fracture|setCinematicSilence|sga-card-flight/);
+});
+
+test("Stage 3 v1.5 mounts a real subtle world-omen layer below Future Shion",()=>{
+ const mount=source.slice(source.indexOf("root.innerHTML="),source.indexOf("document.getElementById",source.indexOf("root.innerHTML=")));
+ assert.ok(mount.indexOf('class="sga-world-omen-layer"') < mount.indexOf('class="sga-shion sga-shion-main"'));
+ assert.match(css,/\.sga-world-omen-layer\{[\s\S]*backdrop-filter:saturate\(\.90\) brightness\(\.97\)/);
+ assert.match(css,/\.sga-world-omen \.sga-world-omen-layer\{opacity:\.46\}/);
+});
+
+test("Stage 3 v1.5 uses one-shot future-presence echo and a vertical forced-raise jolt",()=>{
+ assert.match(source,/async function playFutureShionEntryEcho\(\)/);
+ assert.match(source,/ghost\.classList\.add\("sga-future-entry-echo"\)/);
+ const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card{"));
+ assert.match(effect,/sgaFutureEntryEcho \.5s ease-out 1 both/);
+ assert.match(effect,/translate\(1\.5px,-1px\)/);
+ assert.match(effect,/sgaForcedRaiseJolt \.15s ease-out 1/);
+ assert.match(effect,/translateY\(-1px\)/);
+ assert.doesNotMatch(effect,/infinite/);
+});
+
+test("Stage 3 v1.5 performs an atomic 04 -> 05 Arcana handoff without duplicate cards",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  const p3=stage3.indexOf("setShion(3)");
- const p4=stage3.indexOf("crossfadeFutureShion(4,110");
+ const p4=stage3.indexOf("crossfadeFutureShion(4,100");
  const register=stage3.indexOf("registerFutureArcanaHandoff()");
  const handoff=stage3.indexOf("handoffArcanaFromPose04To05()");
  const hold=stage3.indexOf("await pause(100)",handoff);
@@ -208,7 +265,7 @@ test("Stage 3 v1.4 performs an atomic 04 -> 05 Arcana handoff without duplicate 
  assert.doesNotMatch(stage3,/crossfadeFutureShion\(5/);
  assert.doesNotMatch(stage3,/positionFutureStage3Card/);
  assert.match(stage3,/await pause\(350\)/);
- assert.match(stage3,/await pause\(1700\)/);
+ assert.match(stage3,/await pause\(1650\)/);
  assert.match(source,/const FUTURE_ARCANA_HANDOFF=Object\.freeze\(\{xRatio:\.63,yRatio:\.20,widthRatio:\.62,rotation:0\}\)/);
  assert.match(source,/function registerFutureArcanaHandoff\(\)/);
  assert.match(source,/futureArcanaHandoff=Object\.freeze\(\{handoffX,handoffY,cardSize,flightX,flightY,rotation:FUTURE_ARCANA_HANDOFF\.rotation\}\)/);
@@ -219,7 +276,7 @@ test("Stage 3 v1.4 performs an atomic 04 -> 05 Arcana handoff without duplicate 
  assert.doesNotMatch(handoffFn,/alignFutureShion|style\.left|style\.top|style\.width|registerFutureArcanaHandoff/);
 });
 
-test("Stage 3 v1.4 keeps the independent Arcana hidden until pose 05 owns the card",()=>{
+test("Stage 3 v1.5 keeps the independent Arcana hidden until pose 05 owns the card",()=>{
  const cardCss=css.slice(css.indexOf(".sga-card{"),css.indexOf("/* The word \"world\""));
  assert.match(cardCss,/opacity:0;[\s\S]*visibility:hidden/);
  assert.match(cardCss,/\.sga-card-handoff-visible\{[\s\S]*opacity:1;[\s\S]*visibility:visible/);
@@ -229,7 +286,7 @@ test("Stage 3 v1.4 keeps the independent Arcana hidden until pose 05 owns the ca
  assert.doesNotMatch(stage3,/sga-card-attached|sga-card-detached|sga-card-corrupt|sga-card-absorb|sga-card-tug/);
 });
 
-test("Stage 3 v1.4 freezes pose-04 card geometry and flies only by relative transform",()=>{
+test("Stage 3 v1.5 freezes pose-04 card geometry and flies only by relative transform",()=>{
  const registerFn=source.slice(source.indexOf("function registerFutureArcanaHandoff"),source.indexOf("function handoffArcanaFromPose04To05"));
  assert.match(registerFn,/handoffX=left\+width\*FUTURE_ARCANA_HANDOFF\.xRatio/);
  assert.match(registerFn,/handoffY=top\+height\*FUTURE_ARCANA_HANDOFF\.yRatio/);
@@ -237,14 +294,14 @@ test("Stage 3 v1.4 freezes pose-04 card geometry and flies only by relative tran
  assert.match(registerFn,/card\.style\.top=handoffY\+"px"/);
  assert.match(registerFn,/--sga-card-flight-x/);
  assert.match(registerFn,/--sga-card-flight-y/);
- const cardCss=css.slice(css.indexOf("/* v1.4:"),css.indexOf("/* The word \"world\""));
- assert.match(cardCss,/sgaAuthoredCardFlight 1\.70s linear 1 forwards/);
+ const cardCss=css.slice(css.indexOf("/* v1.5:"),css.indexOf("/* The word \"world\""));
+ assert.match(cardCss,/sgaAuthoredCardFlight 1\.65s linear 1 forwards/);
  assert.match(cardCss,/translate\(var\(--sga-card-flight-x\),var\(--sga-card-flight-y\)\)/);
  assert.doesNotMatch(cardCss,/left:[^;]*animation|top:[^;]*animation/);
  assert.doesNotMatch(cardCss,/rotate\([^v]/);
 });
 
-test("Stage 3 v1.4 keeps authored dark-aura artwork and the later blackening contract",()=>{
+test("Stage 3 v1.5 keeps authored dark-aura artwork and the later blackening contract",()=>{
  assert.match(source,/aura1:"\.\/assets\/sprites\/shion\/shion_card_dark_aura_01\.webp",aura2:"\.\/assets\/sprites\/shion\/shion_card_dark_aura_02\.webp"/);
  assert.doesNotMatch(source,/arcanaBack:"\.\/assets\/tarot\/backs\/tarot-card-back\.webp"/);
  assert.match(source,/class="sga-card" aria-hidden="true"><img class="aura1"/);
@@ -258,7 +315,7 @@ test("Stage 3 v1.4 keeps authored dark-aura artwork and the later blackening con
  assert.match(stage3,/root\.classList\.add\("sga-card-blackened"\)/);
 });
 
-test("Stage 3 v1.4 separates Shion's hypothesis from blackening and the world fracture",()=>{
+test("Stage 3 v1.5 separates Shion's hypothesis from blackening and the world fracture",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
  const lineAt=stage3.indexOf("……世界が、この未来を選んでいるのか？");
  const blackAt=stage3.indexOf('root.classList.add("sga-card-blackening")');
@@ -269,9 +326,9 @@ test("Stage 3 v1.4 separates Shion's hypothesis from blackening and the world fr
  assert.doesNotMatch(betweenLineAndBlack,/worldFault|blackening|blackened|fracture|setCinematicSilence/);
 });
 
-test("Stage 3 v1.4 removes the generic cue, UI glitch and temporary oscillator tone",()=>{
+test("Stage 3 v1.5 removes the generic cue, UI glitch and temporary oscillator tone",()=>{
  assert.doesNotMatch(source,/sga-future-cue|sga-ui-anomaly|playFuturePressureTone|createOscillator|frequency\.setValueAtTime\(72/);
- const cardCss=css.slice(css.indexOf("/* v1.4:"),css.indexOf("@keyframes sgaSkyDown"));
+ const cardCss=css.slice(css.indexOf("/* v1.5:"),css.indexOf("@keyframes sgaSkyDown"));
  assert.doesNotMatch(cardCss,/sga-future-cue|sga-ui-anomaly|sgaFutureCue|sgaUiFault/);
 });
 
@@ -314,6 +371,8 @@ test("Stage 3 present return hides all future overlay actors before black clears
  assert.match(css,/#star-gate-anomaly\.sga-future-return-black \.sga-future-blackout\{[\s\S]*opacity:1/);
  const returned=css.slice(css.indexOf("/* Stage 3 return:"),css.indexOf("/*",css.indexOf("/* Stage 3 return:")+5)>0?css.indexOf("/*",css.indexOf("/* Stage 3 return:")+5):undefined);
  assert.match(returned,/sga-present-restored \.sga-shion/);
+ assert.match(returned,/sga-present-restored \.sga-world-omen-layer/);
+ assert.match(returned,/sga-present-restored \.sga-card-surge/);
  assert.match(returned,/sga-present-restored \.sga-card/);
  assert.match(returned,/sga-present-restored \.sga-world-fracture/);
  assert.match(returned,/opacity:0!important/);
@@ -347,15 +406,17 @@ test("Stage 3 settles once before the Arcana anomaly without floating or flashin
  assert.doesNotMatch(setPose,/settle|animation/);
  const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card{"));
  assert.match(effect,/animation:sgaFutureShionSettle \.7s ease-out 1 both/);
- assert.match(effect,/brightness\(1\.04\)/);
- assert.match(effect,/drop-shadow\(0 0 \.6px rgba\(245,245,248,\.14\)\) drop-shadow\(0 0 1px rgba\(209,202,226,\.10\)\)/);
- assert.doesNotMatch(effect,/infinite|pulse|transform|translate|blur\(|background|position:fixed|inset|gold/i);
+ assert.match(effect,/brightness\(1\.025\)/);
+ assert.match(effect,/saturate\(\.94\)/);
+ assert.match(effect,/drop-shadow\(0 0 \.9px rgba\(245,245,248,\.22\)\)/);
+ assert.match(effect,/sgaFutureEntryEcho \.5s ease-out 1 both/);
+ assert.doesNotMatch(effect,/infinite|pulse|position:fixed|gold/i);
  assert.ok(stage3.indexOf('root.classList.add("sga-card-phase","sga-future-shion-settle")') < stage3.indexOf("setShion(1)"));
  assert.doesNotMatch(stage3,/sga-cut|flash|floating/);
 });
 
 test("Reduced motion keeps the static edge and uses only a short simple fade",()=>{
- const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card {"));
+ const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card{"));
  assert.match(effect,/@media \(prefers-reduced-motion: reduce\)[\s\S]*animation:sgaFutureShionFade \.18s linear 1 both/);
  const fade=effect.match(/@keyframes sgaFutureShionFade \{([\s\S]*?)\n\}/)[1];
  assert.match(fade,/from \{ opacity:0; \}/);
