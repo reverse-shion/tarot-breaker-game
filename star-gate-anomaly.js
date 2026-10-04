@@ -540,7 +540,7 @@ async function futureFixationStage3(){
  await pause(300);
  await say("shion","……世界が、この未来を選んでいるのか？");
 
- // NO_RESPONSE — the already-visible rift does not grow, flash, move or answer.
+ // NO_RESPONSE — the already-visible rift does not grow, brighten, move or answer.
  await pause(750);
 
  // SEQUENCE 11 — Arcana blackening resumes independently. Existing rift cores
