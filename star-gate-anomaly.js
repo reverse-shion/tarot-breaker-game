@@ -23,7 +23,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-world-fracture" aria-hidden="true"></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-world-rift" aria-hidden="true"><svg class="sga-world-rift-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><g class="sga-rift-edges"><path class="sga-rift-line sga-rift-edge sga-rift-primary" data-rift="primary" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-major" data-rift="major-left" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-major" data-rift="major-right" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-major" data-rift="major-lower" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-minor" data-rift="minor-left" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-minor" data-rift="minor-right" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-minor" data-rift="minor-lower" pathLength="1"/></g><g class="sga-rift-cores"><path class="sga-rift-line sga-rift-core sga-rift-primary" data-rift="primary" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-major" data-rift="major-left" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-major" data-rift="major-right" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-major" data-rift="major-lower" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-minor" data-rift="minor-left" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-minor" data-rift="minor-right" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-minor" data-rift="minor-lower" pathLength="1"/></g></svg></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -43,9 +43,11 @@ const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
 const FUTURE_SHION_VISUAL_SCALE=.86;
 const FUTURE_SHION_OFFSET_X=-1.15;
 const FUTURE_SHION_OFFSET_Y=.30;
-// Single source of truth for the Arcana handoff point inside pose 04.
-// These ratios are applied once to pose 04's rendered rectangle, then frozen.
-const FUTURE_ARCANA_HANDOFF=Object.freeze({xRatio:.63,yRatio:.20,widthRatio:.62,rotation:0});
+// Pose 04 is authored on a fixed 512x512 source canvas.
+// Handoff position is derived from the painted Arcana's source-space center,
+// never from a guessed percentage of Future Shion's displayed silhouette.
+const FUTURE_ARCANA_SOURCE_ANCHOR=Object.freeze({canvasWidth:512,canvasHeight:512,cardCenterX:180,cardCenterY:62});
+const FUTURE_ARCANA_LAYER=Object.freeze({widthRatio:.62,rotation:0});
 const FUTURE_ARCANA_SURGE=Object.freeze({xRatio:.506,yRatio:.43,widthRatio:.20,heightRatio:.30});
 let futureArcanaHandoff=null;
 function alignFutureShionElement(el){
@@ -148,23 +150,27 @@ function registerFutureArcanaHandoff(){
  if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0)
   throw new Error("Future Shion pose 04 rectangle unavailable for Arcana handoff");
 
- const handoffX=left+width*FUTURE_ARCANA_HANDOFF.xRatio;
- const handoffY=top+height*FUTURE_ARCANA_HANDOFF.yRatio;
- const cardSize=Math.max(42,Math.min(62,width*FUTURE_ARCANA_HANDOFF.widthRatio));
- const viewportWidth=root?.clientWidth||window.innerWidth||390;
- const flightX=Math.max(14,Math.min(48,(viewportWidth*.50-handoffX)*.66));
- const flightY=-Math.max(96,height*1.10);
+ const handoffX=left+width*(FUTURE_ARCANA_SOURCE_ANCHOR.cardCenterX/FUTURE_ARCANA_SOURCE_ANCHOR.canvasWidth);
+ const handoffY=top+height*(FUTURE_ARCANA_SOURCE_ANCHOR.cardCenterY/FUTURE_ARCANA_SOURCE_ANCHOR.canvasHeight);
+ const cardSize=Math.max(42,Math.min(62,width*FUTURE_ARCANA_LAYER.widthRatio));
+ const viewportHeight=root?.clientHeight||window.innerHeight||844;
+ const minFinalY=Math.max(cardSize/2+10,28);
+ const desiredLift=Math.max(72,height*.55);
+ const finalY=Math.max(minFinalY,Math.min(viewportHeight*.22,handoffY-desiredLift));
+ const flightX=0;
+ const flightY=finalY-handoffY;
 
- // Freeze every launch property now. Pose 05 and flight must never recalculate it.
- futureArcanaHandoff=Object.freeze({handoffX,handoffY,cardSize,flightX,flightY,rotation:FUTURE_ARCANA_HANDOFF.rotation});
+ // Freeze launch geometry from pose 04. Pose 05 and the flight may not
+ // recalculate or rewrite left/top/width after this point.
+ futureArcanaHandoff=Object.freeze({handoffX,handoffY,cardSize,flightX,flightY,rotation:FUTURE_ARCANA_LAYER.rotation});
  card.style.transition="none";
  card.style.left=handoffX+"px";
  card.style.top=handoffY+"px";
  card.style.bottom="auto";
  card.style.width=cardSize+"px";
- card.style.setProperty("--sga-card-flight-x",flightX+"px");
+ card.style.setProperty("--sga-card-flight-x","0px");
  card.style.setProperty("--sga-card-flight-y",flightY+"px");
- card.style.setProperty("--sga-card-rotation",FUTURE_ARCANA_HANDOFF.rotation+"deg");
+ card.style.setProperty("--sga-card-rotation",FUTURE_ARCANA_LAYER.rotation+"deg");
  return true;
 }
 function handoffArcanaFromPose04To05(){
@@ -185,16 +191,33 @@ function handoffArcanaFromPose04To05(){
   });
  });
 }
-function positionWorldFractureFromCard(){
- const card=root?.querySelector(".sga-card"),fault=root?.querySelector(".sga-world-fracture");
- if(!card||!fault)return false;
+function positionWorldRiftFromCard(){
+ const card=root?.querySelector(".sga-card"),rift=root?.querySelector(".sga-world-rift");
+ if(!card||!rift)return false;
  const startX=parseFloat(card.style.left),startY=parseFloat(card.style.top);
  const flightY=parseFloat(card.style.getPropertyValue("--sga-card-flight-y"))||-110;
- const flightX=parseFloat(card.style.getPropertyValue("--sga-card-flight-x"))||0;
- if(![startX,startY,flightY,flightX].every(Number.isFinite))return false;
- const finalX=startX+flightX,finalY=Math.max(24,startY+flightY);
- fault.style.setProperty("--sga-fracture-x",finalX+"px");
- fault.style.setProperty("--sga-fracture-y",finalY+"px");
+ if(![startX,startY,flightY].every(Number.isFinite))return false;
+ const width=root?.clientWidth||window.innerWidth||390;
+ const height=root?.clientHeight||window.innerHeight||844;
+ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+ const ox=clamp(startX/width,.06,.94);
+ const oy=clamp((startY+flightY)/height,.055,.34);
+ const point=(x,y)=>clamp(x,0,1).toFixed(4)+" "+clamp(y,0,1).toFixed(4);
+ const path=(points)=>"M "+points.map(([x,y])=>point(x,y)).join(" L ");
+ const paths=Object.freeze({
+  primary:path([[ox,oy],[ox+.008,oy-.026],[ox-.005,oy-.062],[ox+.012,oy-.105],[ox-.006,.012]]),
+  "major-left":path([[ox-.005,Math.max(.018,oy-.062)],[ox*.58,.12],[.28,.21],[.045,.30]]),
+  "major-right":path([[ox+.012,Math.max(.018,oy-.105)],[ox+(1-ox)*.34,.11],[.72,.20],[.965,.27]]),
+  "major-lower":path([[ox,oy],[ox*.62,Math.min(.48,oy+.13)],[.34,.40],[.075,.55]]),
+  "minor-left":path([[.28,.21],[.22,.115],[.14,.068]]),
+  "minor-right":path([[.72,.20],[.82,.135],[.91,.18]]),
+  "minor-lower":path([[.34,.40],[.49,.485],[.64,.455]])
+ });
+ for(const [name,d] of Object.entries(paths)){
+  rift.querySelectorAll('[data-rift="'+name+'"]').forEach(el=>el.setAttribute("d",d));
+ }
+ rift.style.setProperty("--sga-rift-origin-x",(ox*100).toFixed(2)+"%");
+ rift.style.setProperty("--sga-rift-origin-y",(oy*100).toFixed(2)+"%");
  return true;
 }
 function replayClass(el,className){if(!el)return;el.classList.remove(className);void el.offsetWidth;el.classList.add(className)}
@@ -399,7 +422,8 @@ async function restorePresentAfterFutureFixation(before){
  gateShell()?.classList.remove("sga-future-world-hidden");
  vis?.reset?.();
  root.classList.add("sga-present-restored");
- root.querySelector(".sga-world-fracture")?.classList.remove("show");
+ const rift=root.querySelector(".sga-world-rift");
+ rift?.classList.remove("sga-rift-ready","sga-rift-primary-active","sga-rift-full-active");
  await pause(80);
 
  // Reveal the present in place.
@@ -439,8 +463,8 @@ async function futureFixationStage3(){
  futureArcanaHandoff=null;
  const card=root.querySelector(".sga-card");
  const surge=root.querySelector(".sga-card-surge");
- const worldFault=root.querySelector(".sga-world-fracture");
- if(!card||!surge||!worldFault)throw new Error("Future Fixation Stage 3 anomaly layers unavailable");
+ const worldRift=root.querySelector(".sga-world-rift");
+ if(!card||!surge||!worldRift)throw new Error("Future Fixation Stage 3 anomaly layers unavailable");
 
  root.classList.add("sga-card-phase","sga-future-shion-settle");
  window.TarotAudio?.setCinematicSilence?.(false,240);
@@ -497,29 +521,36 @@ async function futureFixationStage3(){
  replayClass(card,"sga-card-flight");
  await pause(1650);
 
- // SEQUENCE 10 — overhead stop.
+ // SEQUENCE 10 — overhead stop. Hold the completed vertical flight before
+ // any world response so the isolated Arcana composition can register.
  await pause(450);
 
- // The world changes first; Shion names that observation second.
+ // PRIMARY_RIFT — the same vertical axis continues from hand -> Arcana -> space.
+ positionWorldRiftFromCard();
+ worldRift.classList.add("sga-rift-ready","sga-rift-primary-active");
+ await pause(220);
+
+ // FULL_WORLD_RIFT / WORLD_COLOR_LOSS — branches spread across the visible
+ // world before Shion speaks. This is spatial failure, not another building collapse.
+ worldRift.classList.add("sga-rift-full-active");
  root.classList.add("sga-world-omen");
- await pause(250);
+ await pause(600);
+
  await say("shion","……アルカナだけじゃない……");
  await pause(300);
  await say("shion","……世界が、この未来を選んでいるのか？");
 
- // NO_RESPONSE — the world does not confirm Shion's hypothesis.
+ // NO_RESPONSE — the already-visible rift does not grow, flash, move or answer.
  await pause(750);
 
- // SEQUENCE 11 — Arcana anomaly resumes independently after the silence.
+ // SEQUENCE 11 — Arcana blackening resumes independently. Existing rift cores
+ // deepen through CSS only; no new branches are introduced.
  root.classList.add("sga-card-blackening");
  await pause(800);
  root.classList.add("sga-card-blackened");
  await pause(500);
 
- // SEQUENCE 12 — fixed camera, one thin rule-fracture upward from the Arcana.
- positionWorldFractureFromCard();
- replayClass(worldFault,"show");
- root.classList.add("sga-world-rule-fault");
+ // FINAL_FUTURE_FRAME — hold the full world-failure composition before the cut.
  await pause(700);
 
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-arcana-anomaly-complete",{detail:{checkpoint:true}}));

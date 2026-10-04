@@ -383,7 +383,7 @@
   filter:brightness(.78) saturate(.68);
 }
 .sga-card{
-  --sga-card-flight-x:20px;
+  --sga-card-flight-x:0px;
   --sga-card-flight-y:-110px;
   --sga-card-rotation:0deg;
   position:absolute;
@@ -416,7 +416,7 @@
   transition:opacity .80s ease;
 }
 
-/* v1.5: pose 04 is the only visible card owner until the atomic handoff.
+/* v1.6: pose 04 is the only visible card owner until the atomic handoff.
    The independent authored Arcana is positioned while hidden, then shown only
    in the exact frame pose 05 replaces pose 04. */
 .sga-card-handoff-visible{
@@ -438,25 +438,31 @@
   }
   100%{
     transform:translate(-50%,-50%)
-      translate(var(--sga-card-flight-x),var(--sga-card-flight-y))
+      translateY(var(--sga-card-flight-y))
       rotate(var(--sga-card-rotation));
     opacity:1;
   }
 }
 
-/* World symptom: a very small loss of saturation/light behind Future Shion.
-   This layer is mounted before Future Shion, so the character itself stays readable. */
+/* v1.6 world color-loss: clearly visible on the ruined background while
+   Future Shion / Arcana remain above this layer and keep their own rendering. */
 .sga-world-omen-layer{
   position:absolute;
   inset:0;
+  z-index:11;
   opacity:0;
   pointer-events:none;
-  background:rgba(3,2,6,.018);
-  -webkit-backdrop-filter:saturate(.90) brightness(.97);
-  backdrop-filter:saturate(.90) brightness(.97);
-  transition:opacity .35s ease;
+  background:rgba(3,2,6,.035);
+  -webkit-backdrop-filter:saturate(.82) brightness(.92);
+  backdrop-filter:saturate(.82) brightness(.92);
+  transition:opacity .60s ease,-webkit-backdrop-filter .80s ease,backdrop-filter .80s ease;
 }
-.sga-world-omen .sga-world-omen-layer{opacity:.46}
+.sga-world-omen .sga-world-omen-layer{opacity:.74}
+.sga-card-blackening .sga-world-omen-layer{
+  opacity:.86;
+  -webkit-backdrop-filter:saturate(.78) brightness(.90);
+  backdrop-filter:saturate(.78) brightness(.90);
+}
 
 /* The question receives no answer. Only after the silent hold does the
    already-running Arcana anomaly resume and replace aura1 with aura2. */
@@ -483,55 +489,69 @@
 .sga-card-blackening .sga-card::after{opacity:.34}
 .sga-card-blackened .sga-card::after{opacity:.42}
 
-/* Only after the completed black-card composition may the larger world fault
-   begin. It grows from the final Arcana position upward. */
-.sga-world-fracture{
-  --sga-fracture-x:50%;
-  --sga-fracture-y:160px;
+/* v1.6 World Rift: full-screen spatial fracture above Future Shion/Arcana.
+   Geometry is fixed/deterministic; JS only anchors it to the final Arcana point. */
+.sga-world-rift{
+  --sga-rift-origin-x:50%;
+  --sga-rift-origin-y:22%;
   position:absolute;
   inset:0;
-  z-index:12;
+  width:100%;
+  height:100%;
+  z-index:18;
   opacity:0;
+  visibility:hidden;
   overflow:hidden;
   pointer-events:none;
 }
-.sga-world-fracture::before{
-  content:"";
+.sga-world-rift-svg{
   position:absolute;
-  left:var(--sga-fracture-x);
-  top:0;
-  width:1px;
-  height:var(--sga-fracture-y);
-  background:linear-gradient(to top,rgba(2,0,5,.96),rgba(22,6,31,.70) 42%,rgba(170,150,186,.20) 78%,transparent);
-  transform:translateX(-50%) scaleY(0);
-  transform-origin:50% 100%;
-  box-shadow:4px -24px 0 -0.4px rgba(8,1,12,.62),-3px -47px 0 -0.4px rgba(37,10,48,.30);
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
 }
-.sga-world-fracture::after{
-  content:"";
-  position:absolute;
-  left:calc(var(--sga-fracture-x) - 8px);
-  top:0;
-  width:18px;
-  height:18%;
-  background:linear-gradient(100deg,transparent 0 38%,rgba(2,1,5,.60) 40% 58%,transparent 60%);
-  opacity:0;
+.sga-rift-line{
+  fill:none;
+  stroke-dasharray:1;
+  stroke-dashoffset:1;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
 }
-.sga-world-fracture.show{opacity:1}
-.sga-world-fracture.show::before{animation:sgaWorldFractureGrow .46s ease-out 1 forwards}
-.sga-world-fracture.show::after{animation:sgaWorldColorLoss .52s .22s ease-out 1 forwards}
-@keyframes sgaWorldFractureGrow{
-  from{transform:translateX(-50%) scaleY(0);opacity:.28}
-  to{transform:translateX(-50%) scaleY(1);opacity:.86}
+.sga-rift-edge{
+  stroke:rgba(226,219,235,.30);
+  stroke-width:3.2px;
 }
-@keyframes sgaWorldColorLoss{
-  from{opacity:0}
-  to{opacity:.42}
+.sga-rift-core{
+  stroke:rgba(3,1,6,.98);
+  stroke-width:1.7px;
 }
-.sga-world-rule-fault .sga-shion-main{
-  filter:drop-shadow(0 0 .6px rgba(245,245,248,.12)) drop-shadow(0 0 1px rgba(209,202,226,.08));
+.sga-world-rift.sga-rift-ready{
+  opacity:1;
+  visibility:visible;
 }
-
+.sga-world-rift.sga-rift-primary-active .sga-rift-primary{
+  animation:sgaRiftDrawPrimary .22s ease-out 1 forwards;
+}
+.sga-world-rift.sga-rift-full-active .sga-rift-major{
+  animation:sgaRiftDrawMajor .38s ease-out 1 forwards;
+}
+.sga-world-rift.sga-rift-full-active .sga-rift-minor{
+  animation:sgaRiftDrawMinor .32s .28s ease-out 1 forwards;
+}
+@keyframes sgaRiftDrawPrimary{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes sgaRiftDrawMajor{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes sgaRiftDrawMinor{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.sga-card-blackening .sga-world-rift .sga-rift-core{
+  stroke:rgba(2,1,5,1);
+  stroke-width:2px;
+  transition:stroke .80s ease,stroke-width .80s ease;
+}
+.sga-card-blackening .sga-world-rift .sga-rift-edge{
+  stroke:rgba(218,210,229,.34);
+  transition:stroke .80s ease;
+}
 /* Legacy layers remain inert; Stage 3 v1.3 does not use them. */
 .sga-cut{position:absolute;inset:0;background:#08040d;opacity:0;pointer-events:none}
 .sga-impurity{position:absolute;left:50%;top:12%;width:58px;height:86px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(3,0,10,.82),rgba(21,5,35,.38) 52%,transparent 72%);opacity:0;filter:blur(2px);transition:opacity .5s ease}
@@ -544,8 +564,9 @@
   .sga-card .aura1,
   .sga-card .aura2,
   .sga-card::after{transition-duration:.36s}
-  .sga-world-fracture.show::before{animation-duration:.20s;animation-timing-function:linear}
-  .sga-world-fracture.show::after{animation-duration:.20s;animation-delay:.08s}
+  .sga-world-rift.sga-rift-primary-active .sga-rift-primary{animation-duration:.12s;animation-timing-function:linear}
+  .sga-world-rift.sga-rift-full-active .sga-rift-major{animation-duration:.20s;animation-timing-function:linear}
+  .sga-world-rift.sga-rift-full-active .sga-rift-minor{animation-duration:.18s;animation-delay:.10s;animation-timing-function:linear}
 }
 
 @keyframes sgaSkyDown {
@@ -1114,7 +1135,7 @@
 #star-gate-anomaly.sga-present-restored .sga-shion,
 #star-gate-anomaly.sga-present-restored .sga-card-surge,
 #star-gate-anomaly.sga-present-restored .sga-card,
-#star-gate-anomaly.sga-present-restored .sga-world-fracture,
+#star-gate-anomaly.sga-present-restored .sga-world-rift,
 #star-gate-anomaly.sga-present-restored .sga-vision{
   opacity:0!important;
   visibility:hidden!important;
