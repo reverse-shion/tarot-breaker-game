@@ -215,7 +215,7 @@ test("Stage 3 v1.1 makes Arcana damage one continuous cause instead of stacked g
  assert.match(stage3,/replayClass\(arcana,"sga-arcana-flight"\)/);
  assert.ok(stage3.indexOf("positionWorldFractureFromArcana()") < stage3.indexOf('replayClass(worldFault,"show")'));
  assert.match(stage3,/future-fixation-arcana-anomaly-complete/);
- assert.doesNotMatch(stage3,/uiFault|sga-ui-anomaly|sga-future-cue|playFuturePressureTone|AudioContext|72/);
+ assert.doesNotMatch(stage3,/uiFault|sga-ui-anomaly|sga-future-cue|playFuturePressureTone|AudioContext|createOscillator/);
  assert.doesNotMatch(stage3,/Re:カード|Re:Arcana|Anti Arcana|Etera|Arete|これは……私の選択じゃない|――選べ/);
  assert.doesNotMatch(stage3,/aura1|aura2|sga-cut|floating/);
 });
