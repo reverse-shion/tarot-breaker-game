@@ -1014,7 +1014,7 @@
 #star-gate-anomaly.sga-future-ruins .sga-future-blackout{opacity:0;pointer-events:none}
 
 /* Stage 3 return: cut the future to black, restore the present world underneath,
-   then reveal the garden without a white flash or camera motion. */
+   then reveal the garden without a bright flash or camera motion. */
 #star-gate-anomaly.sga-future-return-black .sga-future-blackout{
   opacity:1;
   pointer-events:none;
