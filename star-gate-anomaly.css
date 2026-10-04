@@ -301,127 +301,121 @@
     animation:sgaFutureShionFade .18s linear 1 both;
   }
 }
-.sga-card { position:absolute; left:50%; bottom:29%; width:clamp(42px,9vw,66px); aspect-ratio:1/1; transform:translate3d(-50%,0,0) scale(.74); opacity:0; }
-.sga-card.visible { opacity:1; }
-.sga-card.ascend { animation:sgaAscend 3.5s cubic-bezier(.22,.61,.36,1) forwards; }
-.sga-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transition:opacity .28s ease; }
-.sga-card .aura2 { opacity:0; }
-.sga-card.transformed .aura1 { opacity:0; }
-.sga-card.transformed .aura2 { opacity:1; }
-.sga-card.floating,
-.sga-card.ascend.floating { animation:sgaFloat 2.4s ease-in-out infinite alternate; }
-.sga-cut { position:absolute; inset:0; background:#08040d; opacity:0; pointer-events:none; }
-.sga-cut.show { animation:sgaCut .42s steps(2,end) both; }
-.sga-impurity { position:absolute; left:50%; top:12%; width:58px; height:86px; transform:translateX(-50%); border-radius:50%; background:radial-gradient(ellipse,rgba(3,0,10,.82),rgba(21,5,35,.38) 52%,transparent 72%); opacity:0; filter:blur(2px); transition:opacity .5s ease; }
-.sga-impurity.visible { opacity:.72; }
-
-/* Future Fixation Vision Stage 3 v1.1 — one Arcana fault, not a stack of effects. */
-.sga-shion-transition{opacity:0;pointer-events:none}
-.sga-future-shion-settle .sga-shion-main.sga-pose-lift{
-  transform:translateY(-3px);
-  filter:brightness(.93) drop-shadow(0 0 .6px rgba(245,245,248,.12)) drop-shadow(0 0 1px rgba(209,202,226,.08));
-  transition:transform .12s ease-out,filter .12s ease-out;
+.sga-card{
+  --sga-card-rise:-110px;
+  --sga-card-drift-x:20px;
+  position:absolute;
+  z-index:17;
+  left:50%;
+  top:50%;
+  bottom:auto;
+  width:52px;
+  aspect-ratio:1/1;
+  transform:translate(-50%,-50%);
+  opacity:0;
+  pointer-events:none;
+  transform-origin:50% 50%;
+}
+.sga-card img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+.sga-card .aura1{
+  opacity:0;
+  transition:opacity .72s ease;
+}
+.sga-card .aura2{
+  opacity:0;
+  transition:opacity .80s ease;
 }
 
-.sga-arcana-anomaly{
-  --sga-arcana-rise:-110px;
-  --sga-arcana-drift-x:20px;
-  position:absolute;z-index:17;width:16px;aspect-ratio:249/430;opacity:0;
-  transform:translate(-50%,-50%);pointer-events:none;transform-origin:50% 50%;
+/* v1.3: use the authored dark-aura card art as the same physical Arcana
+   from Shion's hand through detachment, ascent and blackening. */
+.sga-card-attached .sga-card{opacity:1}
+.sga-card-corrupt .sga-card .aura1{opacity:.44}
+.sga-card-absorb .sga-card .aura1{opacity:.68}
+.sga-card-tug .sga-card{
+  transform:translate(-50%,-50%) translateY(-4px);
+  transition:transform .22s ease-out,left .11s ease-out,top .11s ease-out,opacity .10s linear;
 }
-.sga-arcana-anomaly img{
-  display:block;width:100%;height:100%;object-fit:contain;opacity:0;
-  filter:brightness(.34) saturate(.42) contrast(1.22);
-}
-.sga-arcana-anomaly::before{
-  content:"";position:absolute;inset:0;border-radius:1px;opacity:0;pointer-events:none;
-  background:
-    linear-gradient(112deg,rgba(2,0,5,.98) 0 17%,rgba(24,5,34,.88) 28%,rgba(48,15,63,.48) 44%,rgba(4,0,8,.92) 62%,rgba(22,6,31,.72) 78%,rgba(1,0,3,.98) 100%);
-  clip-path:polygon(0 0,0 0,0 100%,0 100%);
-}
-.sga-arcana-anomaly::after{
-  content:"";position:absolute;inset:-28%;border-radius:44%;opacity:0;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 50%,rgba(4,0,8,.60) 0 28%,rgba(13,2,20,.25) 50%,transparent 72%);
-  filter:blur(2px);
-}
+.sga-card-detached .sga-card{opacity:1}
+.sga-card-detached .sga-card .aura1{opacity:1}
 
-/* The first warning is only a tiny loss at the card edge; no head icon. */
-.sga-arcana-premonition .sga-arcana-anomaly{opacity:1}
-.sga-arcana-premonition .sga-arcana-anomaly::before{
-  opacity:.18;clip-path:polygon(0 0,9% 2%,6% 44%,12% 70%,5% 100%,0 100%);
+/* Quiet, nearly linear movement. No rotation, bounce, float or pulse. */
+.sga-card.sga-card-flight{
+  animation:sgaAuthoredCardFlight 1.70s linear 1 forwards;
 }
-
-/* Corruption starts inside the card and moves inward. */
-.sga-arcana-corrupt .sga-arcana-anomaly{opacity:1}
-.sga-arcana-corrupt .sga-arcana-anomaly::before{
-  animation:sgaArcanaInvasion 1.30s cubic-bezier(.22,.61,.36,1) 1 forwards;
-}
-@keyframes sgaArcanaInvasion{
-  0%{
-    opacity:.18;
-    clip-path:polygon(0 0,9% 2%,6% 44%,12% 70%,5% 100%,0 100%);
-  }
-  52%{
-    opacity:.68;
-    clip-path:polygon(0 0,42% 0,34% 28%,50% 53%,37% 74%,58% 100%,0 100%);
-  }
-  100%{
-    opacity:.90;
-    clip-path:polygon(0 0,76% 0,68% 19%,86% 42%,72% 65%,92% 100%,0 100%);
-  }
-}
-
-/* Only after the card itself is damaged does nearby light begin to disappear. */
-.sga-arcana-absorb .sga-arcana-anomaly::before{
-  animation:sgaArcanaClose 1.02s ease-in 1 forwards;
-}
-.sga-arcana-absorb .sga-arcana-anomaly::after{
-  animation:sgaArcanaLocalShadow 1.02s ease-in 1 forwards;
-}
-@keyframes sgaArcanaClose{
-  from{opacity:.90;clip-path:polygon(0 0,76% 0,68% 19%,86% 42%,72% 65%,92% 100%,0 100%)}
-  to{opacity:.98;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-}
-@keyframes sgaArcanaLocalShadow{
-  from{opacity:0}
-  to{opacity:.52}
-}
-
-.sga-arcana-tug .sga-arcana-anomaly{
-  transform:translate(-50%,calc(-50% - 4px));transition:transform .22s ease-out;
-}
-.sga-arcana-raised .sga-arcana-anomaly{transition:none}
-.sga-arcana-detached .sga-arcana-anomaly img{opacity:.88}
-.sga-arcana-anomaly.sga-arcana-flight{
-  animation:sgaArcanaFlight 1.65s cubic-bezier(.22,.62,.28,1) 1 forwards;
-}
-@keyframes sgaArcanaFlight{
+@keyframes sgaAuthoredCardFlight{
   0%{transform:translate(-50%,-50%);opacity:1}
-  100%{transform:translate(-50%,-50%) translate(var(--sga-arcana-drift-x),var(--sga-arcana-rise));opacity:1}
+  100%{transform:translate(-50%,-50%) translate(var(--sga-card-drift-x),var(--sga-card-rise));opacity:1}
 }
-.sga-arcana-black .sga-arcana-anomaly img{
-  opacity:.72;filter:brightness(.12) saturate(.24) contrast(1.58);
-}
-.sga-arcana-black .sga-arcana-anomaly::before{
-  opacity:.98;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);
-}
-.sga-arcana-black .sga-arcana-anomaly::after{opacity:.64}
 
-/* The fracture grows from the Arcana's final point toward the sky.
-   This is the same phenomenon continuing, not a second unrelated glitch. */
+/* The word "world" receives only a minimal visual basis before the line. */
+.sga-world-omen .sga-vision{
+  filter:saturate(.93) brightness(.98);
+  transition:opacity .55s ease,filter .35s ease;
+}
+
+/* The question receives no answer. Only after the silent hold does the
+   already-running Arcana anomaly resume and replace aura1 with aura2. */
+.sga-card-blackening .sga-card{
+  filter:brightness(.66) saturate(.52);
+  transition:filter .80s ease;
+}
+.sga-card-blackening .sga-card .aura1{opacity:0}
+.sga-card-blackening .sga-card .aura2{opacity:1}
+.sga-card-blackened .sga-card{
+  filter:brightness(.52) saturate(.28);
+}
+.sga-card::after{
+  content:"";
+  position:absolute;
+  inset:-22%;
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.46) 0 28%,rgba(9,2,15,.18) 48%,transparent 72%);
+  opacity:0;
+  pointer-events:none;
+  filter:blur(2px);
+  transition:opacity .80s ease;
+}
+.sga-card-blackening .sga-card::after{opacity:.34}
+.sga-card-blackened .sga-card::after{opacity:.42}
+
+/* Only after the completed black-card composition may the larger world fault
+   begin. It grows from the final Arcana position upward. */
 .sga-world-fracture{
   --sga-fracture-x:50%;
   --sga-fracture-y:160px;
-  position:absolute;inset:0;z-index:12;opacity:0;overflow:hidden;pointer-events:none;
+  position:absolute;
+  inset:0;
+  z-index:12;
+  opacity:0;
+  overflow:hidden;
+  pointer-events:none;
 }
 .sga-world-fracture::before{
-  content:"";position:absolute;left:var(--sga-fracture-x);top:0;width:1px;height:var(--sga-fracture-y);
+  content:"";
+  position:absolute;
+  left:var(--sga-fracture-x);
+  top:0;
+  width:1px;
+  height:var(--sga-fracture-y);
   background:linear-gradient(to top,rgba(2,0,5,.96),rgba(22,6,31,.70) 42%,rgba(170,150,186,.20) 78%,transparent);
-  transform:translateX(-50%) scaleY(0);transform-origin:50% 100%;
+  transform:translateX(-50%) scaleY(0);
+  transform-origin:50% 100%;
   box-shadow:4px -24px 0 -0.4px rgba(8,1,12,.62),-3px -47px 0 -0.4px rgba(37,10,48,.30);
 }
 .sga-world-fracture::after{
-  content:"";position:absolute;left:calc(var(--sga-fracture-x) - 8px);top:0;width:18px;height:18%;
+  content:"";
+  position:absolute;
+  left:calc(var(--sga-fracture-x) - 8px);
+  top:0;
+  width:18px;
+  height:18%;
   background:linear-gradient(100deg,transparent 0 38%,rgba(2,1,5,.60) 40% 58%,transparent 60%);
   opacity:0;
 }
@@ -440,9 +434,17 @@
   filter:drop-shadow(0 0 .6px rgba(245,245,248,.12)) drop-shadow(0 0 1px rgba(209,202,226,.08));
 }
 
+/* Legacy layers remain inert; Stage 3 v1.3 does not use them. */
+.sga-cut{position:absolute;inset:0;background:#08040d;opacity:0;pointer-events:none}
+.sga-impurity{position:absolute;left:50%;top:12%;width:58px;height:86px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(3,0,10,.82),rgba(21,5,35,.38) 52%,transparent 72%);opacity:0;filter:blur(2px);transition:opacity .5s ease}
+
 @media (prefers-reduced-motion: reduce){
   .sga-future-shion-settle .sga-shion-main.sga-pose-lift{transform:none;transition:none}
-  .sga-arcana-anomaly.sga-arcana-flight{animation-duration:.72s;animation-timing-function:linear}
+  .sga-card.sga-card-flight{animation-duration:.78s;animation-timing-function:linear}
+  .sga-card-blackening .sga-card,
+  .sga-card .aura1,
+  .sga-card .aura2,
+  .sga-card::after{transition-duration:.36s}
   .sga-world-fracture.show::before{animation-duration:.20s;animation-timing-function:linear}
   .sga-world-fracture.show::after{animation-duration:.20s;animation-delay:.08s}
 }
