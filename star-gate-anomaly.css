@@ -1012,3 +1012,20 @@
 /* Future Fixation Vision Stage 2 is rendered by TarotVisionWorld inside
    the game canvas. This overlay owns transition/effect/UI only. */
 #star-gate-anomaly.sga-future-ruins .sga-future-blackout{opacity:0;pointer-events:none}
+
+/* Stage 3 return: cut the future to black, restore the present world underneath,
+   then reveal the garden without a white flash or camera motion. */
+#star-gate-anomaly.sga-future-return-black .sga-future-blackout{
+  opacity:1;
+  pointer-events:none;
+  transition:opacity .18s linear;
+}
+#star-gate-anomaly.sga-present-restored .sga-shion,
+#star-gate-anomaly.sga-present-restored .sga-card,
+#star-gate-anomaly.sga-present-restored .sga-world-fracture,
+#star-gate-anomaly.sga-present-restored .sga-vision{
+  opacity:0!important;
+  visibility:hidden!important;
+  animation:none!important;
+}
+
