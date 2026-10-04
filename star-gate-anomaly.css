@@ -302,8 +302,9 @@
   }
 }
 .sga-card{
-  --sga-card-rise:-110px;
-  --sga-card-drift-x:20px;
+  --sga-card-flight-x:20px;
+  --sga-card-flight-y:-110px;
+  --sga-card-rotation:0deg;
   position:absolute;
   z-index:17;
   left:50%;
@@ -311,8 +312,9 @@
   bottom:auto;
   width:52px;
   aspect-ratio:1/1;
-  transform:translate(-50%,-50%);
+  transform:translate(-50%,-50%) rotate(var(--sga-card-rotation));
   opacity:0;
+  visibility:hidden;
   pointer-events:none;
   transform-origin:50% 50%;
 }
@@ -333,25 +335,32 @@
   transition:opacity .80s ease;
 }
 
-/* v1.3: use the authored dark-aura card art as the same physical Arcana
-   from Shion's hand through detachment, ascent and blackening. */
-.sga-card-attached .sga-card{opacity:1}
-.sga-card-corrupt .sga-card .aura1{opacity:.44}
-.sga-card-absorb .sga-card .aura1{opacity:.68}
-.sga-card-tug .sga-card{
-  transform:translate(-50%,-50%) translateY(-4px);
-  transition:transform .22s ease-out,left .11s ease-out,top .11s ease-out,opacity .10s linear;
+/* v1.4: pose 04 is the only visible card owner until the atomic handoff.
+   The independent authored Arcana is positioned while hidden, then shown only
+   in the exact frame pose 05 replaces pose 04. */
+.sga-card-handoff-visible{
+  opacity:1;
+  visibility:visible;
 }
-.sga-card-detached .sga-card{opacity:1}
-.sga-card-detached .sga-card .aura1{opacity:1}
+.sga-card-handoff-visible .aura1{opacity:1}
+.sga-card-handoff-visible .aura2{opacity:0}
 
-/* Quiet, nearly linear movement. No rotation, bounce, float or pulse. */
+/* Quiet, nearly linear movement from the frozen pose-04 handoff coordinates.
+   left/top never change during flight; only this relative transform changes. */
 .sga-card.sga-card-flight{
   animation:sgaAuthoredCardFlight 1.70s linear 1 forwards;
 }
 @keyframes sgaAuthoredCardFlight{
-  0%{transform:translate(-50%,-50%);opacity:1}
-  100%{transform:translate(-50%,-50%) translate(var(--sga-card-drift-x),var(--sga-card-rise));opacity:1}
+  0%{
+    transform:translate(-50%,-50%) rotate(var(--sga-card-rotation));
+    opacity:1;
+  }
+  100%{
+    transform:translate(-50%,-50%)
+      translate(var(--sga-card-flight-x),var(--sga-card-flight-y))
+      rotate(var(--sga-card-rotation));
+    opacity:1;
+  }
 }
 
 /* The word "world" receives only a minimal visual basis before the line. */
