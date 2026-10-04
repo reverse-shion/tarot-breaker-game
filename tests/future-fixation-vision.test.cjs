@@ -232,14 +232,15 @@ test("Stage 3 v1.6 bridges Arcana anomaly to the world hypothesis before the no-
  const black=stage3.indexOf('root.classList.add("sga-card-blackening")',silence);
  assert.ok(omen>=0&&omen<bridge&&bridge<bridgeHold&&bridgeHold<hypothesis&&hypothesis<silence&&silence<black);
  const noResponse=stage3.slice(hypothesis,black);
- assert.doesNotMatch(noResponse,/worldFault|blackening|blackened|fracture|setCinematicSilence|sga-card-flight/);
+ assert.match(noResponse,/await pause\(750\)/);
+ assert.doesNotMatch(noResponse,/worldFault|worldRift|sga-rift-|blackened|fracture|setCinematicSilence|sga-card-flight|classList\.add|classList\.remove/);
 });
 
-test("Stage 3 v1.6 mounts a real subtle world-omen layer below Future Shion",()=>{
+test("Stage 3 v1.6 mounts the stronger world-color-loss layer below Future Shion",()=>{
  const mount=source.slice(source.indexOf("root.innerHTML="),source.indexOf("document.getElementById",source.indexOf("root.innerHTML=")));
  assert.ok(mount.indexOf('class="sga-world-omen-layer"') < mount.indexOf('class="sga-shion sga-shion-main"'));
- assert.match(css,/\.sga-world-omen-layer\{[\s\S]*backdrop-filter:saturate\(\.90\) brightness\(\.97\)/);
- assert.match(css,/\.sga-world-omen \.sga-world-omen-layer\{opacity:\.46\}/);
+ assert.match(css,/\.sga-world-omen-layer\{[\s\S]*backdrop-filter:saturate\(\.82\) brightness\(\.92\)/);
+ assert.match(css,/\.sga-world-omen \.sga-world-omen-layer\{opacity:\.74\}/);
 });
 
 test("Stage 3 v1.6 uses one-shot future-presence echo and a vertical forced-raise jolt",()=>{
