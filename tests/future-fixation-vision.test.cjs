@@ -294,7 +294,7 @@ test("Stage 3 v1.5 freezes pose-04 card geometry and flies only by relative tran
  assert.match(registerFn,/card\.style\.top=handoffY\+"px"/);
  assert.match(registerFn,/--sga-card-flight-x/);
  assert.match(registerFn,/--sga-card-flight-y/);
- const cardCss=css.slice(css.indexOf("/* v1.5:"),css.indexOf("/* The word \"world\""));
+ const cardCss=css.slice(css.indexOf("/* v1.5:"),css.indexOf("/* World symptom:"));
  assert.match(cardCss,/sgaAuthoredCardFlight 1\.65s linear 1 forwards/);
  assert.match(cardCss,/translate\(var\(--sga-card-flight-x\),var\(--sga-card-flight-y\)\)/);
  assert.doesNotMatch(cardCss,/left:[^;]*animation|top:[^;]*animation/);
