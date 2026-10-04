@@ -399,7 +399,7 @@ test("Stage 3 v1.6 removes the generic cue, UI glitch and temporary oscillator t
 
 test("Stage 3 ends the future with a fixed-camera black cut and restores the present garden",()=>{
  const stage3=source.slice(source.indexOf("async function futureFixationStage3"),source.indexOf("async function fadeNpc"));
- const rift=stage3.indexOf('worldRift.classList.add("sga-rift-primary-active")');
+ const rift=stage3.indexOf('worldRift.classList.add("sga-rift-ready","sga-rift-primary-active")');
  const riftFull=stage3.indexOf('worldRift.classList.add("sga-rift-full-active")',rift);
  const blackened=stage3.indexOf('root.classList.add("sga-card-blackened")',riftFull);
  const settle=stage3.indexOf("await pause(500)",blackened);
