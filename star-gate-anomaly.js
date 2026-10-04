@@ -43,6 +43,10 @@ const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
 const FUTURE_SHION_VISUAL_SCALE=.86;
 const FUTURE_SHION_OFFSET_X=-1.15;
 const FUTURE_SHION_OFFSET_Y=.30;
+// Single source of truth for the Arcana handoff point inside pose 04.
+// These ratios are applied once to pose 04's rendered rectangle, then frozen.
+const FUTURE_ARCANA_HANDOFF=Object.freeze({xRatio:.63,yRatio:.20,widthRatio:.62,rotation:0});
+let futureArcanaHandoff=null;
 function alignFutureShionElement(el){
  const anchor=window.TarotActorScreenAnchor?.get?.("shion");
  if(!el||!anchor)return false;
@@ -101,40 +105,59 @@ async function crossfadeFutureShion(n,duration=110,{liftOld=false}={}){
  ghost.style.filter="";
  ghost.removeAttribute("src");
 }
-function positionFutureStage3Card(mode="check",{animateMs=0}={}){
+function registerFutureArcanaHandoff(){
  const shion=root?.querySelector(".sga-shion-main")||root?.querySelector(".sga-shion");
  const card=root?.querySelector(".sga-card");
  if(!shion||!card)return false;
  const left=parseFloat(shion.style.left),top=parseFloat(shion.style.top),width=parseFloat(shion.style.width),height=parseFloat(shion.style.height);
- if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0){
-  shion.addEventListener("load",()=>positionFutureStage3Card(mode,{animateMs}),{once:true});
-  return false;
- }
- const raised=mode==="raised";
- const startX=left+width*(raised?.63:.59);
- const startY=top+height*(raised?.20:.46);
- const cardSize=Math.max(42,Math.min(62,width*.62));
- if(animateMs>0){
-  card.style.transition="left "+animateMs+"ms ease-out, top "+animateMs+"ms ease-out, opacity .10s linear";
- }else card.style.transition="";
- card.style.left=startX+"px";
- card.style.top=startY+"px";
+ if(![left,top,width,height].every(Number.isFinite)||width<=0||height<=0)
+  throw new Error("Future Shion pose 04 rectangle unavailable for Arcana handoff");
+
+ const handoffX=left+width*FUTURE_ARCANA_HANDOFF.xRatio;
+ const handoffY=top+height*FUTURE_ARCANA_HANDOFF.yRatio;
+ const cardSize=Math.max(42,Math.min(62,width*FUTURE_ARCANA_HANDOFF.widthRatio));
+ const viewportWidth=root?.clientWidth||window.innerWidth||390;
+ const flightX=Math.max(14,Math.min(48,(viewportWidth*.50-handoffX)*.66));
+ const flightY=-Math.max(96,height*1.10);
+
+ // Freeze every launch property now. Pose 05 and flight must never recalculate it.
+ futureArcanaHandoff=Object.freeze({handoffX,handoffY,cardSize,flightX,flightY,rotation:FUTURE_ARCANA_HANDOFF.rotation});
+ card.style.transition="none";
+ card.style.left=handoffX+"px";
+ card.style.top=handoffY+"px";
  card.style.bottom="auto";
  card.style.width=cardSize+"px";
- card.style.setProperty("--sga-card-rise","-"+Math.max(96,height*1.10)+"px");
- const viewportWidth=root?.clientWidth||window.innerWidth||390;
- const drift=Math.max(14,Math.min(48,(viewportWidth*.50-startX)*.66));
- card.style.setProperty("--sga-card-drift-x",drift+"px");
+ card.style.setProperty("--sga-card-flight-x",flightX+"px");
+ card.style.setProperty("--sga-card-flight-y",flightY+"px");
+ card.style.setProperty("--sga-card-rotation",FUTURE_ARCANA_HANDOFF.rotation+"deg");
  return true;
+}
+function handoffArcanaFromPose04To05(){
+ const shion=root?.querySelector(".sga-shion-main");
+ const card=root?.querySelector(".sga-card");
+ if(!shion||!card||!futureArcanaHandoff)throw new Error("Arcana handoff is not registered from pose 04");
+ const raf=window.requestAnimationFrame||((fn)=>fn());
+ return new Promise(resolve=>{
+  raf(()=>{
+   // Atomic ownership transfer: pose 04's painted card disappears in the same
+   // rendering turn that pose 05 and the already-positioned independent card appear.
+   // Do not realign Shion or rewrite card geometry here.
+   shion.src=ASSETS.shion[4];
+   shion.classList.add("visible");
+   card.classList.add("sga-card-handoff-visible");
+   root.classList.add("sga-card-handed-off");
+   resolve();
+  });
+ });
 }
 function positionWorldFractureFromCard(){
  const card=root?.querySelector(".sga-card"),fault=root?.querySelector(".sga-world-fracture");
  if(!card||!fault)return false;
  const startX=parseFloat(card.style.left),startY=parseFloat(card.style.top);
- const rise=parseFloat(card.style.getPropertyValue("--sga-card-rise"))||-110;
- const drift=parseFloat(card.style.getPropertyValue("--sga-card-drift-x"))||0;
- if(![startX,startY,rise,drift].every(Number.isFinite))return false;
- const finalX=startX+drift,finalY=Math.max(24,startY+rise);
+ const flightY=parseFloat(card.style.getPropertyValue("--sga-card-flight-y"))||-110;
+ const flightX=parseFloat(card.style.getPropertyValue("--sga-card-flight-x"))||0;
+ if(![startX,startY,flightY,flightX].every(Number.isFinite))return false;
+ const finalX=startX+flightX,finalY=Math.max(24,startY+flightY);
  fault.style.setProperty("--sga-fracture-x",finalX+"px");
  fault.style.setProperty("--sga-fracture-y",finalY+"px");
  return true;
@@ -329,6 +352,7 @@ async function futureFixationStage3(){
  if(vis&&Math.abs(vis.getState().shion-FUTURE_VISION_CURRENT_SHION_OPACITY)>1e-6)
   throw new Error("Current Shion opacity drifted before Future Fixation Vision Stage 3");
 
+ futureArcanaHandoff=null;
  const card=root.querySelector(".sga-card");
  const worldFault=root.querySelector(".sga-world-fracture");
  if(!card||!worldFault)throw new Error("Future Fixation Stage 3 card layers unavailable");
@@ -341,34 +365,33 @@ async function futureFixationStage3(){
  setShion(1);await pause(760);
  await say("shion","……？");await pause(180);
  setShion(2);await pause(520);
- setShion(3);positionFutureStage3Card("check");await pause(560);
+ setShion(3);await pause(560);
 
- // The authored dark-aura card artwork is registered directly over the card
- // Shion is already holding. It stays attached to the hand until detachment.
- root.classList.add("sga-card-attached","sga-card-corrupt");
+ // The anomaly is still owned visually by pose 03/04. The independent Arcana
+ // stays completely hidden until the ownership handoff to pose 05.
  window.TarotAudio?.setCinematicSilence?.(true,160);
  await pause(720);
  await say("shion","アルカナが……どうなっているんだ……？");
- root.classList.add("sga-card-absorb");await pause(920);
+ await pause(920);
 
- // The Arcana moves first; Shion's arm follows. Card and body move together
- // through the 03 -> 04 crossfade so the card never appears to jump between poses.
- root.classList.add("sga-card-tug");await pause(220);
- positionFutureStage3Card("raised",{animateMs:110});
+ // Pose 03 precedes the involuntary arm raise; only 03 -> 04 may crossfade.
+ await pause(220);
  await crossfadeFutureShion(4,110,{liftOld:true});
- card.style.transition="transform 80ms ease-out";
- root.classList.remove("sga-card-tug");
+
+ // Pose 04 is now the sole owner of the visible card. Register the exact
+ // handoff anchor from pose 04 once, while the independent layer is hidden.
+ registerFutureArcanaHandoff();
  await pause(350);
- card.style.transition="";
 
- // 04 -> 05 removes the card from the character art while the already-aligned
- // authored card layer remains in exactly the same place: one card, one object.
- root.classList.add("sga-card-detached");
- await crossfadeFutureShion(5,100);
- card.style.transition="";
- await pause(40);
+ // Atomic 04 -> 05 ownership transfer. No crossfade, no geometry rewrite:
+ // pose 05 and the independent Arcana appear in the same rendering turn.
+ await handoffArcanaFromPose04To05();
 
- // The independent authored card rises quietly toward the screen centre.
+ // Let the eye register the card in Shion's hand before it actually departs.
+ await pause(100);
+
+ // Flight starts from the frozen pose-04 handoff coordinates. left/top remain
+ // untouched; only the relative transform changes.
  replayClass(card,"sga-card-flight");
  await pause(1700);
 
