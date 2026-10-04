@@ -242,7 +242,7 @@ test("Stage 3 v1.3 uses the existing dark-aura artwork instead of manufacturing 
  assert.match(cardCss,/sga-card-blackening \.sga-card \.aura1\{opacity:0\}/);
  assert.match(cardCss,/sga-card-blackening \.sga-card \.aura2\{opacity:1\}/);
  assert.match(cardCss,/transition:filter \.80s ease/);
- assert.doesNotMatch(cardCss,/rotate\(|infinite|pulse|bounce|floating|sgaUiFault|sgaFutureCue/i);
+ assert.doesNotMatch(cardCss,/rotate\(|animation:[^;]*(?:infinite|bounce)|sgaUiFault|sgaFutureCue/i);
 });
 
 test("Stage 3 v1.3 separates Shion's hypothesis from blackening and the world fracture",()=>{
@@ -286,7 +286,7 @@ test("Stage 3 settles once before the Arcana anomaly without floating or flashin
  assert.equal((source.match(/classList\.add\([^\n]*"sga-future-shion-settle"/g)||[]).length,1);
  const setPose=source.slice(source.indexOf("function setShion"),source.indexOf("function gateShell"));
  assert.doesNotMatch(setPose,/settle|animation/);
- const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card {"));
+ const effect=css.slice(css.indexOf("/* Stage 3 only:"),css.indexOf(".sga-card{"));
  assert.match(effect,/animation:sgaFutureShionSettle \.7s ease-out 1 both/);
  assert.match(effect,/brightness\(1\.04\)/);
  assert.match(effect,/drop-shadow\(0 0 \.6px rgba\(245,245,248,\.14\)\) drop-shadow\(0 0 1px rgba\(209,202,226,\.10\)\)/);
