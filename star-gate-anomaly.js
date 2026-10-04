@@ -23,7 +23,7 @@ async function preload(){await Promise.all(Object.values(ASSETS).flat().map(imag
 function mount(){
  if(root)return root;
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
- root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-world-rift" aria-hidden="true"><svg class="sga-world-rift-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><g class="sga-rift-edges"><path class="sga-rift-line sga-rift-edge sga-rift-primary" data-rift="primary" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-major" data-rift="major-left" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-major" data-rift="major-right" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-major" data-rift="major-lower" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-minor" data-rift="minor-left" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-minor" data-rift="minor-right" pathLength="1"/><path class="sga-rift-line sga-rift-edge sga-rift-minor" data-rift="minor-lower" pathLength="1"/></g><g class="sga-rift-cores"><path class="sga-rift-line sga-rift-core sga-rift-primary" data-rift="primary" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-major" data-rift="major-left" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-major" data-rift="major-right" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-major" data-rift="major-lower" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-minor" data-rift="minor-left" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-minor" data-rift="minor-right" pathLength="1"/><path class="sga-rift-line sga-rift-core sga-rift-minor" data-rift="minor-lower" pathLength="1"/></g></svg></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><div class="sga-world-loss" aria-hidden="true"><svg class="sga-world-loss-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="sga-loss-zone" data-loss="01" d="M68 0H100V39L92 42L86 36L80 40L74 32L69 28Z"/><path class="sga-loss-zone" data-loss="02" d="M0 0H39L43 10L37 17L40 25L34 32L25 29L17 34L8 30L0 35Z"/><path class="sga-loss-zone" data-loss="03" d="M65 38L74 42L79 50L87 47L100 53V100H60L63 88L58 78L64 67L58 57Z"/><path class="sga-loss-zone" data-loss="04" d="M0 35L12 33L18 42L29 38L38 47L34 57L41 67L35 77L42 86L38 100H0Z"/><path class="sga-loss-zone" data-loss="05" d="M37 0H69L65 15L61 21L57 17L53 21L48 17L44 21L40 15ZM34 73L41 68L46 74L52 69L59 74L66 69L73 100H31Z"/><rect class="sga-loss-veil" data-loss="gate" x="0" y="0" width="100" height="100"/></svg></div><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div><div class="sga-world-rift" aria-hidden="true"><svg class="sga-world-rift-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><g class="sga-rift-edges"><path class="sga-rift-line sga-rift-edge sga-rift-primary" data-rift="primary" pathLength="1"/></g><g class="sga-rift-cores"><path class="sga-rift-line sga-rift-core sga-rift-primary" data-rift="primary" pathLength="1"/></g></svg></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
 function makeUi(){
@@ -203,22 +203,38 @@ function positionWorldRiftFromCard(){
  const ox=clamp(startX/width,.06,.94);
  const oy=clamp((startY+flightY)/height,.055,.34);
  const point=(x,y)=>clamp(x,0,1).toFixed(4)+" "+clamp(y,0,1).toFixed(4);
- const path=(points)=>"M "+points.map(([x,y])=>point(x,y)).join(" L ");
- const paths=Object.freeze({
-  primary:path([[ox,oy],[ox+.008,oy-.026],[ox-.005,oy-.062],[ox+.012,oy-.105],[ox-.006,.012]]),
-  "major-left":path([[ox-.005,Math.max(.018,oy-.062)],[ox*.58,.12],[.28,.21],[.045,.30]]),
-  "major-right":path([[ox+.012,Math.max(.018,oy-.105)],[ox+(1-ox)*.34,.11],[.72,.20],[.965,.27]]),
-  "major-lower":path([[ox,oy],[ox*.62,Math.min(.48,oy+.13)],[.34,.40],[.075,.55]]),
-  "minor-left":path([[.28,.21],[.22,.115],[.14,.068]]),
-  "minor-right":path([[.72,.20],[.82,.135],[.91,.18]]),
-  "minor-lower":path([[.34,.40],[.49,.485],[.64,.455]])
- });
- for(const [name,d] of Object.entries(paths)){
-  rift.querySelectorAll('[data-rift="'+name+'"]').forEach(el=>el.setAttribute("d",d));
- }
+ const primary="M "+[
+  point(ox,oy),
+  point(ox+.008,oy-.026),
+  point(ox-.005,oy-.062),
+  point(ox+.012,oy-.105),
+  point(ox-.006,.012)
+ ].join(" L ");
+ rift.querySelectorAll('[data-rift="primary"]').forEach(el=>el.setAttribute("d",primary));
  rift.style.setProperty("--sga-rift-origin-x",(ox*100).toFixed(2)+"%");
  rift.style.setProperty("--sga-rift-origin-y",(oy*100).toFixed(2)+"%");
  return true;
+}
+async function runWorldLossSequence(worldLoss){
+ if(!worldLoss)return;
+ worldLoss.classList.add("sga-world-loss-active","sga-loss-01");
+ window.TarotAudio?.setCinematicLevel?.(.85,320);
+ await pause(350);
+
+ worldLoss.classList.add("sga-loss-02");
+ await pause(400);
+
+ worldLoss.classList.add("sga-loss-03");
+ root.classList.add("sga-rift-recede");
+ window.TarotAudio?.setCinematicLevel?.(.55,360);
+ await pause(350);
+
+ worldLoss.classList.add("sga-loss-04");
+ await pause(350);
+
+ worldLoss.classList.add("sga-loss-05");
+ window.TarotAudio?.setCinematicLevel?.(.25,360);
+ await pause(400);
 }
 function replayClass(el,className){if(!el)return;el.classList.remove(className);void el.offsetWidth;el.classList.add(className)}
 function gateShell(){return document.getElementById("game-shell")}
@@ -423,15 +439,18 @@ async function restorePresentAfterFutureFixation(before){
  vis?.reset?.();
  root.classList.add("sga-present-restored");
  const rift=root.querySelector(".sga-world-rift");
- rift?.classList.remove("sga-rift-ready","sga-rift-primary-active","sga-rift-full-active");
+ rift?.classList.remove("sga-rift-ready","sga-rift-primary-active");
+ const loss=root.querySelector(".sga-world-loss");
+ loss?.classList.remove("sga-world-loss-active","sga-loss-01","sga-loss-02","sga-loss-03","sga-loss-04","sga-loss-05","sga-loss-gate");
+ root.classList.remove("sga-rift-recede","sga-future-void-frame","sga-last-light-lost","sga-gate-remains");
  await pause(80);
 
- // Reveal the present in place.
+ // Reveal the present in place. Audio begins returning shortly after the image,
+ // so the present world itself becomes the release.
  root.classList.remove("sga-future-return-black");
- await pause(260);
-
- // Let the return land before Shion reacts. No dialogue.
- await pause(650);
+ await pause(150);
+ window.TarotAudio?.setCinematicSilence?.(false,400);
+ await pause(500);
 
  // A short startled body response using facing only: world coordinates stay fixed.
  const current=stage.getState().actors.shion;
@@ -441,10 +460,6 @@ async function restorePresentAfterFutureFixation(before){
  await pause(140);
  await stage.perform({type:"face",actor:"shion",target:{x:before.x+original.x,y:before.y+original.y}}).promise;
  await pause(220);
-
- // Sound returns only after the player has had a silent beat in the present.
- window.TarotAudio?.setCinematicSilence?.(false,300);
- await pause(250);
 
  const after=stage.getState().actors.shion;
  if(!samePoint(before,after))throw new Error("Shion moved while returning from Future Fixation Vision");
@@ -464,7 +479,8 @@ async function futureFixationStage3(){
  const card=root.querySelector(".sga-card");
  const surge=root.querySelector(".sga-card-surge");
  const worldRift=root.querySelector(".sga-world-rift");
- if(!card||!surge||!worldRift)throw new Error("Future Fixation Stage 3 anomaly layers unavailable");
+ const worldLoss=root.querySelector(".sga-world-loss");
+ if(!card||!surge||!worldRift||!worldLoss)throw new Error("Future Fixation Stage 3 anomaly layers unavailable");
 
  root.classList.add("sga-card-phase","sga-future-shion-settle");
  window.TarotAudio?.setCinematicSilence?.(false,240);
@@ -479,7 +495,7 @@ async function futureFixationStage3(){
  setShion(3);await pause(560);
 
  // SEQUENCE 02 — pose 03 has already completed the act of checking the Arcana.
- window.TarotAudio?.setCinematicSilence?.(true,160);
+ // Keep the low cinematic mix present; sound is removed later with the world itself.
  await pause(720);
  await say("shion","……アルカナが……？");
  await pause(260);
@@ -521,36 +537,47 @@ async function futureFixationStage3(){
  replayClass(card,"sga-card-flight");
  await pause(1650);
 
- // SEQUENCE 10 — overhead stop. Hold the completed vertical flight before
- // any world response so the isolated Arcana composition can register.
+ // SEQUENCE 10 — overhead stop. The Arcana is the only new movement.
  await pause(450);
 
- // PRIMARY_RIFT — the same vertical axis continues from hand -> Arcana -> space.
+ // SEQUENCE 11 — one primary scar: a warning that continuity is failing,
+ // not the climax and not a repeated physical collapse.
  positionWorldRiftFromCard();
  worldRift.classList.add("sga-rift-ready","sga-rift-primary-active");
- await pause(220);
+ await pause(250);
 
- // FULL_WORLD_RIFT / WORLD_COLOR_LOSS — branches spread across the visible
- // world before Shion speaks. This is spatial failure, not another building collapse.
- worldRift.classList.add("sga-rift-full-active");
- root.classList.add("sga-world-omen");
- await pause(600);
+ // SEQUENCE 12 — deterministic, random-looking world loss begins independently
+ // of Shion's recognition. The world does not pause because he speaks.
+ const lossProgress=runWorldLossSequence(worldLoss);
+ await pause(450);
+ await say("shion","……消えて、いく……");
+ await lossProgress;
 
- await say("shion","……アルカナだけじゃない……");
+ // Most of the ruined garden is gone. Preserve the Star Gate as the final
+ // landmark for a short beat, then remove even that remaining world.
+ root.classList.add("sga-gate-remains");
  await pause(300);
- await say("shion","……世界が、この未来を選んでいるのか？");
+ worldLoss.classList.add("sga-loss-gate");
+ window.TarotAudio?.setCinematicLevel?.(.10,300);
+ await pause(450);
 
- // NO_RESPONSE — the already-visible rift does not grow, brighten, move or answer.
+ // FUTURE_VOID_FRAME — the background is nearly absent, while Future Shion
+ // and the Arcana remain. This is a vision expression, not a CANON claim.
+ root.classList.add("sga-future-void-frame");
+ await pause(350);
+ await say("shion","……これが……選ばれた未来、なのか。");
+
+ // NO_RESPONSE — nothing changes in answer to the line.
  await pause(750);
 
- // SEQUENCE 11 — Arcana blackening resumes independently. Existing rift cores
- // deepen through CSS only; no new branches are introduced.
+ // SEQUENCE 14 — the final surviving light is removed from the Arcana.
  root.classList.add("sga-card-blackening");
+ window.TarotAudio?.setCinematicSilence?.(true,800);
  await pause(800);
- root.classList.add("sga-card-blackened");
- await pause(500);
+ root.classList.add("sga-card-blackened","sga-last-light-lost");
 
- // FINAL_FUTURE_FRAME — hold the full world-failure composition before the cut.
+ // FINAL_FUTURE_FRAME — Future Shion remains as a faint outline. Only the
+ // later Black Cut is allowed to make the frame completely black.
  await pause(700);
 
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-arcana-anomaly-complete",{detail:{checkpoint:true}}));
