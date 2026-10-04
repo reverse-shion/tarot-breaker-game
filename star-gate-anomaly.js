@@ -343,6 +343,55 @@ async function futureFixationStage2(){
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage2-complete",{detail:{checkpoint:true}}));
 }
 
+function faceVectorForDir(dir){
+ return dir==="up"?{x:0,y:-1}:dir==="left"?{x:-1,y:0}:dir==="right"?{x:1,y:0}:{x:0,y:1};
+}
+function flinchVectorForDir(dir){
+ return dir==="up"?{x:1,y:0}:dir==="right"?{x:0,y:1}:dir==="down"?{x:-1,y:0}:{x:0,y:-1};
+}
+async function restorePresentAfterFutureFixation(before){
+ const stage=window.TarotStage;
+ const vis=window.TarotActorVisibility;
+ const vision=window.TarotVisionWorld;
+ if(!stage||!vision)throw new Error("Present-world restore API unavailable after Future Fixation Vision");
+
+ // Cut to black first. Nothing in the future is allowed to disappear visibly.
+ root.classList.add("sga-future-return-black");
+ await pause(220);
+
+ // Restore the authored present garden behind the blackout. No camera movement.
+ vision.end();
+ gateShell()?.classList.remove("sga-future-world-hidden");
+ vis?.reset?.();
+ root.classList.add("sga-present-restored");
+ root.querySelector(".sga-world-fracture")?.classList.remove("show");
+ await pause(80);
+
+ // Reveal the present in place.
+ root.classList.remove("sga-future-return-black");
+ await pause(260);
+
+ // Let the return land before Shion reacts. No dialogue.
+ await pause(650);
+
+ // A short startled body response using facing only: world coordinates stay fixed.
+ const current=stage.getState().actors.shion;
+ const flinch=flinchVectorForDir(before.dir||current.dir||"down");
+ const original=faceVectorForDir(before.dir||current.dir||"down");
+ await stage.perform({type:"face",actor:"shion",target:{x:before.x+flinch.x,y:before.y+flinch.y}}).promise;
+ await pause(140);
+ await stage.perform({type:"face",actor:"shion",target:{x:before.x+original.x,y:before.y+original.y}}).promise;
+ await pause(220);
+
+ // Sound returns only after the player has had a silent beat in the present.
+ window.TarotAudio?.setCinematicSilence?.(false,300);
+ await pause(250);
+
+ const after=stage.getState().actors.shion;
+ if(!samePoint(before,after))throw new Error("Shion moved while returning from Future Fixation Vision");
+ window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-return-complete",{detail:{checkpoint:true}}));
+}
+
 async function futureFixationStage3(){
  const stage=window.TarotStage;
  const before=stage?.getState?.().actors?.shion;
@@ -416,14 +465,21 @@ async function futureFixationStage3(){
  await pause(500);
 
  // Only after the black card has settled does the larger world rule fault begin.
+ // Camera stays fixed: the thin tear grows from the overhead Arcana into the
+ // portion of sky already visible in the current frame.
  positionWorldFractureFromCard();
  replayClass(worldFault,"show");
  root.classList.add("sga-world-rule-fault");
- await pause(1150);
+ await pause(700);
+
+ window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-arcana-anomaly-complete",{detail:{checkpoint:true}}));
+
+ // End the vision instead of extending the destruction. Black cut -> present
+ // garden -> silent beat -> one small Shion reaction -> control can return.
+ await restorePresentAfterFutureFixation(before);
 
  const after=stage.getState().actors.shion;
  if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 3");
- window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-arcana-anomaly-complete",{detail:{checkpoint:true}}));
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage3-complete",{detail:{checkpoint:true}}));
 }
 
