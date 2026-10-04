@@ -122,6 +122,18 @@
     else { resumeBgm(); fadeTo(targetVolume, duration); }
   }
 
+  function setCinematicLevel(level = 1, duration = 200) {
+    const factor = Math.max(0, Math.min(1, Number(level) || 0));
+    targetVolume = INTERACTION_VOLUME * factor;
+    if (!enteredWorld || !enabled) return;
+    if (factor <= 0) {
+      fadeTo(0, duration);
+      return;
+    }
+    resumeBgm();
+    fadeTo(targetVolume, duration);
+  }
+
   function setEnabled(nextEnabled) {
     enabled = Boolean(nextEnabled);
     savePreference();
@@ -180,5 +192,6 @@
     setEnabled,
     startFromMovement,
     setCinematicSilence,
+    setCinematicLevel,
   });
 })();
