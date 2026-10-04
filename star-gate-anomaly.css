@@ -315,6 +315,121 @@
 .sga-impurity { position:absolute; left:50%; top:12%; width:58px; height:86px; transform:translateX(-50%); border-radius:50%; background:radial-gradient(ellipse,rgba(3,0,10,.82),rgba(21,5,35,.38) 52%,transparent 72%); opacity:0; filter:blur(2px); transition:opacity .5s ease; }
 .sga-impurity.visible { opacity:.72; }
 
+/* Future Fixation Vision Stage 3 — Arcana anomaly.
+   The Future Shion sprite remains the actor; these layers only visualize
+   the unknown card-side phenomenon and a single display/world fault. */
+.sga-future-cue{
+  position:absolute;z-index:16;width:16px;height:16px;opacity:0;pointer-events:none;
+  transform:translate(-50%,-50%) scale(.72);border:1px solid rgba(230,224,255,.46);
+  border-radius:50%;box-shadow:0 0 3px rgba(210,198,240,.16);
+}
+.sga-future-cue.show{animation:sgaFutureCue .20s ease-out 1 both}
+@keyframes sgaFutureCue{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}
+  38%{opacity:.62}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.14)}
+}
+
+.sga-arcana-anomaly{
+  --sga-arcana-rise:-110px;
+  position:absolute;z-index:17;width:16px;aspect-ratio:249/430;opacity:0;
+  transform:translate(-50%,-50%);pointer-events:none;transform-origin:50% 50%;
+}
+.sga-arcana-anomaly img{
+  display:block;width:100%;height:100%;object-fit:contain;opacity:0;
+  filter:brightness(.42) saturate(.58) contrast(1.16);
+}
+.sga-arcana-anomaly::before{
+  content:"";position:absolute;inset:-70%;border-radius:46%;
+  background:
+    radial-gradient(ellipse at 52% 46%,rgba(5,1,12,.96) 0 18%,rgba(34,8,52,.64) 35%,rgba(62,20,82,.22) 52%,transparent 72%);
+  opacity:0;filter:blur(2px);pointer-events:none;
+}
+.sga-arcana-anomaly::after{
+  content:"";position:absolute;inset:-135%;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,0,0,.62) 0 12%,rgba(4,0,8,.34) 30%,transparent 64%);
+  opacity:0;pointer-events:none;
+}
+.sga-arcana-corrupt .sga-arcana-anomaly{opacity:1}
+.sga-arcana-corrupt .sga-arcana-anomaly::before{animation:sgaArcanaStain 1.25s ease-out 1 forwards}
+@keyframes sgaArcanaStain{
+  0%{opacity:.08;filter:blur(1px)}
+  48%{opacity:.54;filter:blur(1.7px)}
+  100%{opacity:.80;filter:blur(2.2px)}
+}
+.sga-arcana-absorb .sga-arcana-anomaly::before{animation:sgaArcanaAbsorb 1.05s ease-in 1 forwards}
+.sga-arcana-absorb .sga-arcana-anomaly::after{animation:sgaArcanaShadow 1.05s ease-in 1 forwards}
+@keyframes sgaArcanaAbsorb{
+  from{opacity:.80;filter:blur(2.2px)}
+  to{opacity:.96;filter:blur(3px)}
+}
+@keyframes sgaArcanaShadow{
+  from{opacity:0}
+  to{opacity:.48}
+}
+.sga-arcana-tug .sga-arcana-anomaly{
+  transform:translate(-50%,calc(-50% - 4px));transition:transform .22s ease-out;
+}
+.sga-arcana-raised .sga-arcana-anomaly{transition:none}
+.sga-arcana-detached .sga-arcana-anomaly img{opacity:.92}
+.sga-arcana-anomaly.sga-arcana-flight{
+  animation:sgaArcanaFlight 1.65s cubic-bezier(.22,.62,.28,1) 1 forwards;
+}
+@keyframes sgaArcanaFlight{
+  0%{transform:translate(-50%,-50%);opacity:1}
+  100%{transform:translate(-50%,-50%) translateY(var(--sga-arcana-rise));opacity:1}
+}
+.sga-arcana-black .sga-arcana-anomaly img{
+  opacity:.78;filter:brightness(.16) saturate(.36) contrast(1.5) drop-shadow(0 0 3px rgba(40,6,60,.44));
+}
+.sga-arcana-black .sga-arcana-anomaly::before{opacity:.96;filter:blur(3.5px)}
+.sga-arcana-black .sga-arcana-anomaly::after{opacity:.72}
+
+.sga-ui-anomaly{
+  position:fixed;z-index:70;left:5%;right:5%;top:67%;height:2px;opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(213,199,235,.32) 24%,rgba(25,5,37,.62) 52%,rgba(216,206,236,.24) 76%,transparent);
+  pointer-events:none;
+}
+.sga-ui-anomaly.show{animation:sgaUiFault .16s steps(2,end) 1 both}
+@keyframes sgaUiFault{
+  0%{opacity:0;transform:translateX(0)}
+  24%{opacity:.72;transform:translateX(-3px)}
+  52%{opacity:.18;transform:translateX(2px)}
+  76%{opacity:.54;transform:translateX(-1px)}
+  100%{opacity:0;transform:translateX(0)}
+}
+
+.sga-world-fracture{
+  position:absolute;inset:0;z-index:12;opacity:0;overflow:hidden;pointer-events:none;
+}
+.sga-world-fracture::before{
+  content:"";position:absolute;right:17%;top:7%;width:1px;height:58%;
+  background:linear-gradient(to bottom,transparent,rgba(202,191,218,.34) 14%,rgba(4,0,8,.92) 42%,rgba(105,72,126,.28) 70%,transparent);
+  transform:rotate(8deg);transform-origin:50% 0;
+  box-shadow:6px 38px 0 -0.4px rgba(7,1,12,.7),-5px 72px 0 -0.4px rgba(30,9,40,.48);
+}
+.sga-world-fracture::after{
+  content:"";position:absolute;right:0;top:0;width:2.4%;height:100%;background:#020106;
+  opacity:.42;clip-path:polygon(35% 0,100% 0,100% 100%,0 100%,42% 68%,18% 43%);
+}
+.sga-world-fracture.show{animation:sgaWorldRuleFault .48s steps(2,end) 1 forwards}
+@keyframes sgaWorldRuleFault{
+  0%{opacity:0;transform:translateX(0)}
+  32%{opacity:.72;transform:translateX(2px)}
+  62%{opacity:.34;transform:translateX(-1px)}
+  100%{opacity:.58;transform:translateX(0)}
+}
+.sga-world-rule-fault .sga-shion{
+  filter:drop-shadow(0 0 .6px rgba(245,245,248,.12)) drop-shadow(0 0 1px rgba(209,202,226,.08));
+}
+
+@media (prefers-reduced-motion: reduce){
+  .sga-future-cue.show{animation:sgaFutureCue .12s linear 1 both}
+  .sga-ui-anomaly.show{animation:sgaUiFault .10s steps(1,end) 1 both}
+  .sga-arcana-anomaly.sga-arcana-flight{animation-duration:.72s;animation-timing-function:linear}
+  .sga-world-fracture.show{animation-duration:.20s;animation-timing-function:linear}
+}
+
 @keyframes sgaSkyDown {
   0% { transform: translate3d(-50%, -10%, 0) scaleY(.72); opacity: 0; }
   24% { opacity: .88; }
