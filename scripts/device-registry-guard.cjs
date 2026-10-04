@@ -35,7 +35,14 @@ if (assetOnly) {
       git(["cat-file","-e","refs/remotes/origin/"+base+":"+f]);
       return false;
     } catch {
-      const refs=git(["grep","-l","-F","--",f,"refs/remotes/origin/"+base,"--","."]);
+      let refs="";
+      try {
+        refs=git(["grep","-l","-F","--",f,"refs/remotes/origin/"+base,"--","."]);
+      } catch (err) {
+        // git grep exits 1 when there are no matches. For a newly added asset,
+        // that is the expected "unreferenced on base" result, not a guard error.
+        if (err?.status !== 1) throw err;
+      }
       return !refs;
     }
   });
