@@ -11,7 +11,7 @@
 - ローカル照合ブランチ: `audit/stage3-v1.9.2-preflight` (mainから作成)
 - WORKING: dev=star-gate-full のStage 3後半と、必要なP0取得・資源準備・復元接続。
 - LOCKED: Stage 1/2、Stage 3前半の演出、通常経路、Production保存/進行、既存Device Verified契約。
-- HIGH: 音、入力、描画、カメラ、復帰に影響するため。
+- 実装を再開する場合のriskはHIGH (音、入力、描画、カメラ、復帰)。今回の差分は文書/証拠のみLOWで、文書差分のDevice GateはNOT APPLICABLE。未実装イベントのiPhone Gateは引き続き未実施。
 
 AGENTS.md、regression-lock-v1、delegated-development-v1、change-risk-device-gate-v1、EVENT_DEVELOPMENT_SYSTEM、VERIFIED_GAMEPLAY_CONTRACTS、EVENT_CONTRACTS、DEVICE_VERIFICATION_REGISTRY、AI_CHANGE_SAFETY、EVENT_DEVELOPMENT_CONTRACT、3つのrole contractを確認した。下位AGENTS.mdはない。
 
