@@ -50,7 +50,7 @@ mainとPRは分岐している。mainにはその後のTitle/Continue/Progress/r
 ## 検証区分
 
 - 実施済み: 読み取り専用git/PR照合、Pillowによる4素材全画素alpha・寸法・hash計測、4素材/pose03の視認、独立Architect照合。
-- event-preflight --target star-gate-anomaly: target登録/非LOCKED判定PASS。ただし既定sandboxのchild-process制約により出力branch/headがunknown。gitで別途完全SHA/ブランチを確認。これをruntime接続PASSとは扱わない。
+- event-preflight --target star-gate-anomaly: target登録/非LOCKED判定PASS。初回の既定sandboxではchild-process制約によりbranch/headがunknown。権限付き再実行ではブランチaudit/stage3-v1.9.2-preflightと照合記録commit e85eeb3a514e75a821c69af8fe58df83ba6e5defを含めてPASS。これをruntime接続PASSとは扱わない。
 - 現行mainの回帰suite: 326/326 PASS、failure 0、new 0。最初の実行はspawnSync EPERMでテスト開始失敗。権限付き再実行で上記結果を取得。
 - ブラウザ素材検証の結果は別添evidence JSON。ゲーム演出のブラウザPASSではない。初回Chromium起動はsandbox socket権限で失敗し、次のfile URLはERR_BLOCKED_BY_ADMINISTRATOR。バイト一致のdata URLで素材decode/alpha検証へ切替。
 - §90 T1–T35: **全て未実施**。v1.9.2 runtimeを実装していないため、素材照合/現行main suiteを新実装のT1/T27 PASSへ読み替えない。
