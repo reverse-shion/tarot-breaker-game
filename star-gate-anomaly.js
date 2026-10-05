@@ -2,6 +2,7 @@
 "use strict";
 if(!window.__TAROT_DEV_STAGE3__ || new URLSearchParams(location.search).get("dev")!=="star-gate-full")return;
 const ASSETS={
+ sky:"./assets/maps/star-country-farthest-sky-background-extended.webp",
  ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
@@ -27,7 +28,9 @@ function image(src){
 }
 async function preload(){
  const current=session;let completed=false,error;
- Promise.all([...Object.values(ASSETS).flat(),...window.TarotFutureStage3.ASSETS.map(a=>a.path)].map(image)).then(()=>completed=true,e=>error=e);
+ const sky=document.querySelector(".scene-farthest-sky--extended > img");
+ const skyDecoded=sky?.decode?sky.decode().then(()=>{current.clock.assert();if(!sky.naturalWidth||!sky.naturalHeight)throw new Error("Extended sky decode failed");}):Promise.reject(new Error("Extended sky decode unavailable"));
+ Promise.all([skyDecoded,...[...Object.values(ASSETS).flat(),...window.TarotFutureStage3.ASSETS.map(a=>a.path)].map(image)]).then(()=>completed=true,e=>error=e);
  const start=current.clock.now();
  while(!completed){current.clock.assert();if(error)throw error;if(current.clock.now()-start>=10000)throw new Error("Stage 3 preload deadline");await current.clock.wait(16);}
  for(const a of window.TarotFutureStage3.ASSETS){const i=preparedImages.get(a.path);if(i.naturalWidth!==a.width||i.naturalHeight!==a.height)throw new Error("Asset registration mismatch: "+a.id);}
@@ -357,7 +360,14 @@ function overscanCoversViewport(state){
  const viewportBottom=(origin.y+viewport.height/camera.zoom)/scale.y;
  const overscanBottom=CINEMATIC_SKY_OVERSCAN.y+CINEMATIC_SKY_OVERSCAN.h;
  const topSafety=viewportTop-CINEMATIC_SKY_OVERSCAN.y;
- return viewportTop>=CINEMATIC_SKY_OVERSCAN.y&&viewportTop<=overscanBottom&&topSafety>=OVERSCAN_COVERAGE.minimumTopSafety&&viewportBottom>=OVERSCAN_COVERAGE.mainSceneTop;
+ const analytic=viewportTop>=CINEMATIC_SKY_OVERSCAN.y&&viewportTop<=overscanBottom&&topSafety>=OVERSCAN_COVERAGE.minimumTopSafety&&viewportBottom>=OVERSCAN_COVERAGE.mainSceneTop;
+ // World-coordinate overscan alone cannot prove the raster is present or covers the frame.
+ const sky=document.querySelector('.scene-farthest-sky--extended > img');
+ if(!analytic||!sky?.complete||!sky.naturalWidth||!sky.naturalHeight)return false;
+ const rect=sky.getBoundingClientRect();
+ const mainTop=(OVERSCAN_COVERAGE.mainSceneTop*scale.y-origin.y)*camera.zoom;
+ return rect.left<=1&&rect.right>=viewport.width-1&&rect.top<=1&&rect.bottom>=Math.min(viewport.height,Math.max(0,mainTop))-1;
+
 }
 async function resonance(){
  const camera=window.TarotCinematicCamera;if(!camera)throw new Error("Cinematic camera unavailable");

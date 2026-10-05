@@ -1186,3 +1186,7 @@
   animation:none!important;
 }
 
+
+/* A's front-effect layer ownership, limited to the registered dev integration. */
+html[data-dev-harness="star-gate-full"] .scene-celestial-gate-light,
+html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !important; }

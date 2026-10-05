@@ -4,11 +4,11 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 function fixture(){
  const listeners={};let instance;let clock=0,frameId=0;const frames=new Map();
- class FakeAudio {constructor(src){instance=this;this.src=src;this.paused=true;this.currentTime=12;this.volume=0;} setAttribute(){} addEventListener(){} pause(){this.paused=true;} play(){this.paused=false;return this.result||Promise.resolve();}}
+ class FakeAudio {constructor(src){instance=this;this.src=src;this.paused=true;this.currentTime=12;this.volume=0;} get volume(){return this._volume;} set volume(value){if(value<0||value>1)throw new RangeError("HTMLMediaElement volume outside [0,1]");this._volume=value;} setAttribute(){} addEventListener(){} pause(){this.paused=true;} play(){this.paused=false;return this.result||Promise.resolve();}}
  const window={addEventListener(n,f){listeners[n]=f;}};
  const document={hidden:false,currentScript:null,getElementById(){return null;},addEventListener(n,f){listeners[n]=f;}};
  vm.runInNewContext(fs.readFileSync('audio.js','utf8'),{window,document,Audio:FakeAudio,localStorage:{getItem(){return '1';},setItem(){}},performance:{now(){return clock;}},requestAnimationFrame(f){frames.set(++frameId,f);return frameId;},cancelAnimationFrame(id){frames.delete(id);},setTimeout,clearTimeout,console});
- return {api:window.TarotAudio,bgm:instance,listeners,step(ms){clock+=ms;const callbacks=[...frames.values()];frames.clear();callbacks.forEach(f=>f(clock));}};
+ return {api:window.TarotAudio,bgm:instance,listeners,rafAt(timestamp){const callbacks=[...frames.values()];frames.clear();callbacks.forEach(f=>f(timestamp));},step(ms){clock+=ms;const callbacks=[...frames.values()];frames.clear();callbacks.forEach(f=>f(clock));}};
 }
 test('default cinematic calls have no effect; independent event coefficient applies once',()=>{
  const {api,bgm,listeners}=fixture();api.setCinematicLevel(.1);assert.equal(bgm.volume,0);
@@ -45,4 +45,13 @@ test('front coefficient and silence duration interpolate; per-frame Stage3 level
 });
 test('P0 base restores independently from user mute and never overwrites preference',()=>{
  const {api,bgm,listeners}=fixture();const session=api.beginEventSession();const p0=session.capture();listeners['tarot-breaker:interaction-start']();assert.equal(bgm.volume,.16);session.setBase(p0.base);assert.equal(bgm.volume,.35);api.setEnabled(false);session.setBase(.16);assert.equal(bgm.volume,0);assert.equal(api.enabled,false);session.release();assert.equal(api.enabled,false);
+});
+
+test('event coefficient fades tolerate a queued RAF timestamp before their start',()=>{
+ const {api,bgm,step,rafAt}=fixture();const session=api.beginEventSession();step(1000);
+ api.setCinematicSilence(true,0);api.setCinematicSilence(false,200);
+ assert.doesNotThrow(()=>rafAt(900));assert.equal(bgm.volume,0);
+ step(100);assert.equal(bgm.volume,.175);step(100);assert.equal(bgm.volume,.35);
+ api.setCinematicLevel(0,200);assert.doesNotThrow(()=>rafAt(0));assert.equal(bgm.volume,.35);
+ step(100);assert.equal(bgm.volume,.175);step(100);assert.equal(bgm.volume,0);session.release();
 });

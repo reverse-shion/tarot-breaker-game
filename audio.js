@@ -199,7 +199,7 @@
       const startedAt = performance.now();
       const step = (now) => {
         if (!alive || ownToken !== coefficientToken) return;
-        const progress = duration > 0 ? Math.min(1, (now - startedAt) / duration) : 1;
+        const progress = duration > 0 ? Math.max(0, Math.min(1, (now - startedAt) / duration)) : 1;
         if (isSilence) silenceFactor = from + (to - from) * progress;
         else level = from + (to - from) * progress;
         apply();
