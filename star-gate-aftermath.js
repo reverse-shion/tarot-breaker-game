@@ -13,6 +13,20 @@
  const NAMES={shion:'シオン',shiopon:'しおぽん',lumiere:'リュミエール'};
  let session=null,consumed=false;
  const alive=s=>session===s&&!s.controller.signal.aborted;
+ function waitVisible(signal){
+  if(signal.aborted)return Promise.reject(new Error('Aftermath cancelled'));
+  if(!document.hidden)return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+   const cleanup=()=>{document.removeEventListener('visibilitychange',shown);signal.removeEventListener('abort',stopped);};
+   const shown=()=>{if(!document.hidden){cleanup();resolve();}};
+   const stopped=()=>{cleanup();reject(new Error('Aftermath cancelled'));};
+   document.addEventListener('visibilitychange',shown);signal.addEventListener('abort',stopped,{once:true});shown();
+  });
+ }
+ function aftermathClock(signal){
+  const clock=window.TarotFutureStage3.createClock(signal);
+  return {...clock,wait:async duration=>{await clock.wait(duration);await waitVisible(signal);clock.assert();}};
+ }
  function state(s,name){s.state=name;s.states.push({name,time:s.clock.now()});window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-state',{detail:{id:s.id,name}}));}
  function eligible(report){return !!(report&&Number.isFinite(report.id)&&report.scene&&report.completed===true&&report.restored===true&&!report.running&&!report.error&&!report.reason&&!report.recoveryError&&!report.scene?.owner&&!report.scene?.vision&&!report.scene?.absorption&&!document.querySelector('#star-gate-anomaly.active,.sga-v192-white,.sga-v192-black,.sga-arcana-detail'));}
  function makeUi(s){
@@ -24,7 +38,7 @@
   dismiss.addEventListener('click',event=>{event.stopPropagation();s.panel.hidden=true;});
   s.panel.append(s.objective,s.notice,dismiss);mount.append(s.panel);
   s.inspect=document.createElement('button');s.inspect.id='aftermath-inspect';s.inspect.type='button';s.inspect.textContent='星門を確かめる';s.inspect.hidden=true;
-  s.inspect.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(!alive(s)||s.state!=='GATE_WAIT'||!s.scene.nearGate())return;s.inspect.hidden=true;s.scene.lock(s.owner);s.scene.clearInput();s.resolveInspect?.();s.resolveInspect=null;});mount.append(s.inspect);
+  s.inspect.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(!alive(s)||document.hidden||s.state!=='GATE_WAIT'||!s.scene.nearGate())return;s.inspect.hidden=true;s.scene.lock(s.owner);s.scene.clearInput();s.resolveInspect?.();s.resolveInspect=null;});mount.append(s.inspect);
   s.ui=window.TarotDialogueUI.create({mount,ids:{layer:'aftermath-dialogue',advance:'aftermath-advance',speaker:'aftermath-speaker',text:'aftermath-text'},
    wait:ms=>s.clock.wait(ms).catch(()=>{}),onAdvance:()=>{if(!alive(s)||document.hidden)return;const next=s.resolveLine;s.resolveLine=null;s.ui.hide();next?.();}});
  }
@@ -33,10 +47,10 @@
   s.objective.textContent=text;s.notice.textContent=notice;s.panel.hidden=false;
  }
  async function say(s,index){
-  s.clock.assert();const [actor,text]=LINES[index];s.line=index+1;s.dialogues.push({id:`A${String(index+1).padStart(2,'0')}`,actor,text,time:s.clock.now()});
-  await new Promise((resolve,reject)=>{s.resolveLine=resolve;const stop=()=>{s.resolveLine=null;reject(new Error('Aftermath cancelled'));};s.controller.signal.addEventListener('abort',stop,{once:true});s.resolveLine=()=>{s.controller.signal.removeEventListener('abort',stop);resolve();};s.ui.show({actor,speaker:NAMES[actor],text});});s.clock.assert();
+  if(document.hidden)await s.clock.wait(0);s.clock.assert();const [actor,text]=LINES[index];s.line=index+1;s.dialogues.push({id:`A${String(index+1).padStart(2,'0')}`,actor,text,time:s.clock.now()});
+  await new Promise((resolve,reject)=>{s.resolveLine=resolve;const stop=()=>{s.resolveLine=null;reject(new Error('Aftermath cancelled'));};s.controller.signal.addEventListener('abort',stop,{once:true});s.resolveLine=()=>{s.controller.signal.removeEventListener('abort',stop);resolve();};s.ui.show({actor,speaker:NAMES[actor],text});});await s.clock.wait(0);s.clock.assert();
  }
- async function action(s,command){const task=s.scene.perform(command);if(task?.promise)await task.promise;s.clock.assert();}
+ async function action(s,command){const task=s.scene.perform(command);if(task?.promise)await task.promise;await s.clock.wait(0);s.clock.assert();}
  async function flight(s){
   state(s,'LUMIERE_DEPARTURE');
   const position=s.scene.getState().actors.lumiere;s.flightRoute=[{x:position.x,y:position.y}];if(position.y<240)await action(s,{type:'move',actor:'lumiere',target:{x:position.x,y:245},duration:450});
@@ -52,14 +66,14 @@
   s.clock.assert();
  }
  async function play(s){
-  state(s,'INTRODUCTION');s.scene.face('shiopon','shion');await say(s,0);s.scene.face('shion','shiopon');await say(s,1);await say(s,2);await s.clock.wait(180);
+  if(document.hidden)await s.clock.wait(0);state(s,'INTRODUCTION');s.scene.face('shiopon','shion');await say(s,0);s.scene.face('shion','shiopon');await say(s,1);await say(s,2);await s.clock.wait(180);
   s.scene.gameplayCamera();s.scene.clearInput();s.scene.unlock(s.owner);objective(s,'星門を確かめる');state(s,'GATE_WAIT');
-  await new Promise((resolve,reject)=>{s.resolveInspect=resolve;const stop=()=>reject(new Error('Aftermath cancelled'));s.controller.signal.addEventListener('abort',stop,{once:true});s.resolveInspect=()=>{s.controller.signal.removeEventListener('abort',stop);resolve();};});s.clock.assert();
+  await new Promise((resolve,reject)=>{s.resolveInspect=resolve;const stop=()=>reject(new Error('Aftermath cancelled'));s.controller.signal.addEventListener('abort',stop,{once:true});s.resolveInspect=()=>{s.controller.signal.removeEventListener('abort',stop);resolve();};});await s.clock.wait(0);s.clock.assert();
   state(s,'OBSERVATION');
   const nearby=s.scene.getState();if(nearby.lumiereRect&&(nearby.lumiereRect.right<0||nearby.lumiereRect.left>nearby.viewport.width||nearby.lumiereRect.bottom<0||nearby.lumiereRect.top>nearby.viewport.height))await action(s,{type:'approach',actor:'lumiere',target:'shion',distance:54,duration:500});
   for(const actor of ['shion','shiopon','lumiere'])s.scene.face(actor,'gate');s.focus=true;s.scene.focusGate();await s.clock.wait(1000);await say(s,3);await say(s,4);
   s.focus=false;s.scene.gameplayCamera();s.scene.face('lumiere','shion');await say(s,5);await say(s,6);await say(s,7);
-  await s.scene.moveAway();s.clock.assert();
+  await s.scene.moveAway();await s.clock.wait(0);s.clock.assert();
   state(s,'DECISION');s.scene.face('lumiere','shion');await say(s,8);s.scene.face('shion','lumiere');await say(s,9);s.scene.face('shiopon','lumiere');await say(s,10);
   await flight(s);s.scene.gameplayCamera();s.scene.clearInput();s.scene.unlock(s.owner);s.completed=true;state(s,'COMPLETED');
   s.ui.hide();s.ui.destroy();s.ui.elements.layer.remove();s.inspect.remove();objective(s,'アリエットに相談する','今回の確認範囲はここまで');
@@ -78,7 +92,7 @@
   if(consumed||!eligible(reportValue))return false;const scene=window.TarotAftermathScene;if(!scene)return false;
   // The preceding notification is synchronous after Stage 3 cleanup/unlock.
   const a0=scene.capture();a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
-  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[]};s.clock=window.TarotFutureStage3.createClock(s.controller.signal);
+  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[]};s.clock=aftermathClock(s.controller.signal);
   try{scene.lock(s.owner);scene.clearInput();document.getElementById('game-shell').classList.add('aftermath-weak-light');makeUi(s);
    s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
    s.hidden=()=>{scene.pause(document.hidden);if(!document.hidden){scene.clearInput();if(s.focus)scene.focusGate();}};
