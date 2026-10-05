@@ -5,6 +5,7 @@
  */
 (function (root) {
   "use strict";
+  if (root.__TAROT_DEV_STAGE3__ === true) return;
 
   const core = root.TarotProgressCore;
   if (!core) return;

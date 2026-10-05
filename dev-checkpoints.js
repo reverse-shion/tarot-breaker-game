@@ -76,6 +76,13 @@
       durableWritePolicy: "production writes forbidden; checkpoint-specific dev session only at authored event completion" });
   }
 
+  register("star-gate-full", {event:"star-gate-anomaly",segment:"future-fixation-stage3",map:"star_gate_garden",spawn:"south_gate",
+    temporaryState:Object.freeze({completedEvents:allEvents,companion:"joined_with_shion"}),
+    requiredRuntime:Object.freeze(["game.js","stage3-dev-bootstrap.js","future-stage3.js","star-gate-anomaly.js"]),
+    entryAction:"explicit dev investigation button",emittedSignal:"tarot-breaker:star-gate-investigate",
+    receivingRuntime:"star-gate-anomaly.js real resonance -> Stage1 -> Stage2 -> Stage3",
+    expectedFirstRuntimeState:"decoded present Garden fixture, explicit investigation then real resonance",
+    durableWritePolicy:"FORBIDDEN; in-memory fixture and Journey only"});
   Object.freeze(definitions);
   function get(id) { return Object.prototype.hasOwnProperty.call(definitions, id) ? definitions[id] : null; }
   function list() { return Object.values(definitions); }

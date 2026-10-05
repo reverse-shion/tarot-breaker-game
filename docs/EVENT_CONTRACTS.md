@@ -22,6 +22,7 @@ Segments:
 - star-gate-sky-release — NOT TESTED
 - star-gate-camera-return — NOT TESTED
 - star-gate-aftermath — NOT TESTED
+- future-fixation-stage3 — NOT TESTED / dev=star-gate-full v1.9.2 candidate; isolated memory only, productionEnabled remains false
 
 No Star Gate segment is DEVICE VERIFIED merely because historical branches contain implementations.
 
