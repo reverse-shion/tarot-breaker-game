@@ -91,3 +91,7 @@ game.jsのdev専用prepareBackgroundに縮小の逆変換から算出する描�
 通常Title→Alenonも追加ブラウザ確認: dev=false、接近選択ランタイムなし、標準空/内光幅190、pageErrors0。可変main画像は同一ローカル資源配信の試験transportを使用し、通常コードは変更していない。
 
 詳細カット表示中のviewport390×844→844×390変更、およびdocument.hidden/visibilitychangeによる合成背景化→再表示も追加確認: 演出中断→P0復帰、owned lockなし、詳細/白/黒残留0、音失敗/console例外/保存書込0。物理端末の回転・OS背景化ではなくChromiumのviewport変更／visibilityイベント試験として区別する。初回試験は1000ms表示中にスクリーンショットを取得したため、その後のDOM計測でレイヤーが消えた試験ハーネスエラー。演出不具合とは混同せず、計測を先に行う修正版で再試験し正常復帰を確認した。
+
+## Aftermath v1.3 continuation
+
+The continuation starts at8461475634e9d53bf6dd14ad82b6f5f3127ce1a3 without changing the repaired front, card assets or Stage3 cinematic. See [Aftermath implementation and verification record](future-vision-aftermath-v1.3.md). The same Draft PR and `dev=star-gate-full` entry now continue through author-approved11Box, explicit gate reinspection, Lumiere departure and Shion/Shiopon free movement. Physical iPhone evidence is still pending; the inherited ruins lower boundary remains unresolved. New browser observations of an inherited ordinary-audio fade exception are recorded separately from the previous baseline report.

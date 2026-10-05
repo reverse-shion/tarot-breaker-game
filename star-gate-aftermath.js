@@ -1,0 +1,92 @@
+/* Author-approved Aftermath v1.3; registered dev page only, never saved. */
+(() => {
+ 'use strict';
+ if(window.__TAROT_DEV_STAGE3__!==true)return;
+ const LINES=Object.freeze([
+  ['shiopon','……シオンさん？'],['shion','……大丈夫だ。'],['shion','今のは……'],
+  ['shiopon','……まだ、戻ってないの。'],['shiopon','星の声が……遠いの。'],
+  ['lumiere','……私にも、原因は分かりません。'],['lumiere','安全を確かめるまでは、使わない方がよさそうです。'],
+  ['shion','……そうだな。アリエットに相談しよう。'],
+  ['lumiere','では、先に星砂の準備をしてきます。お二人は、東側から来てください。'],
+  ['shion','分かった。頼む。'],['shiopon','リュミエール、またあとでね。']
+ ].map(line=>Object.freeze(line)));
+ const NAMES={shion:'シオン',shiopon:'しおぽん',lumiere:'リュミエール'};
+ let session=null,consumed=false;
+ const alive=s=>session===s&&!s.controller.signal.aborted;
+ function state(s,name){s.state=name;s.states.push({name,time:s.clock.now()});window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-state',{detail:{id:s.id,name}}));}
+ function eligible(report){return !!(report&&Number.isFinite(report.id)&&report.scene&&report.completed===true&&report.restored===true&&!report.running&&!report.error&&!report.reason&&!report.recoveryError&&!report.scene?.owner&&!report.scene?.vision&&!report.scene?.absorption&&!document.querySelector('#star-gate-anomaly.active,.sga-v192-white,.sga-v192-black,.sga-arcana-detail'));}
+ function makeUi(s){
+  const mount=document.getElementById('game-shell');
+  s.panel=document.createElement('aside');s.panel.id='aftermath-status';s.panel.hidden=true;
+  s.objective=document.createElement('span');s.objective.id='aftermath-objective';
+  s.notice=document.createElement('span');s.notice.id='aftermath-notice';
+  const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='閉じる';dismiss.setAttribute('aria-label','確認表示を閉じる');
+  dismiss.addEventListener('click',event=>{event.stopPropagation();s.panel.hidden=true;});
+  s.panel.append(s.objective,s.notice,dismiss);mount.append(s.panel);
+  s.inspect=document.createElement('button');s.inspect.id='aftermath-inspect';s.inspect.type='button';s.inspect.textContent='星門を確かめる';s.inspect.hidden=true;
+  s.inspect.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(!alive(s)||s.state!=='GATE_WAIT'||!s.scene.nearGate())return;s.inspect.hidden=true;s.scene.lock(s.owner);s.scene.clearInput();s.resolveInspect?.();s.resolveInspect=null;});mount.append(s.inspect);
+  s.ui=window.TarotDialogueUI.create({mount,ids:{layer:'aftermath-dialogue',advance:'aftermath-advance',speaker:'aftermath-speaker',text:'aftermath-text'},
+   wait:ms=>s.clock.wait(ms).catch(()=>{}),onAdvance:()=>{if(!alive(s)||document.hidden)return;const next=s.resolveLine;s.resolveLine=null;s.ui.hide();next?.();}});
+ }
+ function objective(s,text,notice=''){
+  if(!s.panel||!s.objective||!s.notice){s.panel?.remove();s.panel=document.createElement('aside');s.panel.id='aftermath-status';s.objective=document.createElement('span');s.notice=document.createElement('span');s.panel.append(s.objective,s.notice);(document.getElementById('game-shell')||document.body).append(s.panel);}
+  s.objective.textContent=text;s.notice.textContent=notice;s.panel.hidden=false;
+ }
+ async function say(s,index){
+  s.clock.assert();const [actor,text]=LINES[index];s.line=index+1;s.dialogues.push({id:`A${String(index+1).padStart(2,'0')}`,actor,text,time:s.clock.now()});
+  await new Promise((resolve,reject)=>{s.resolveLine=resolve;const stop=()=>{s.resolveLine=null;reject(new Error('Aftermath cancelled'));};s.controller.signal.addEventListener('abort',stop,{once:true});s.resolveLine=()=>{s.controller.signal.removeEventListener('abort',stop);resolve();};s.ui.show({actor,speaker:NAMES[actor],text});});s.clock.assert();
+ }
+ async function action(s,command){const task=s.scene.perform(command);if(task?.promise)await task.promise;s.clock.assert();}
+ async function flight(s){
+  state(s,'LUMIERE_DEPARTURE');
+  const position=s.scene.getState().actors.lumiere;s.flightRoute=[{x:position.x,y:position.y}];if(position.y<240)await action(s,{type:'move',actor:'lumiere',target:{x:position.x,y:245},duration:450});
+  s.scene.face('lumiere',{x:s.scene.getState().actors.lumiere.x+100,y:s.scene.getState().actors.lumiere.y});
+  s.scene.face('shion','lumiere');s.scene.face('shiopon','lumiere');
+  const start={...s.scene.getState().actors.lumiere};s.flightRoute.push({x:start.x,y:start.y});const begin=s.clock.now();let previous=begin,x=start.x;
+  while(alive(s)){
+   await s.clock.wait(16);const now=s.clock.now();x+=140*(now-previous)/1000;previous=now;
+   s.scene.flightPose({x,y:start.y},-8*Math.min(1,(now-begin)/300));
+   const view=s.scene.getState();s.flight={elapsed:now-begin,x,y:start.y,rect:view.lumiereRect,viewport:view.viewport};
+   if(view.lumiereRect&&view.lumiereRect.left>view.viewport.width){s.flightRoute.push({x,y:start.y});s.scene.setLumiereDeparted(true);return;}
+  }
+  s.clock.assert();
+ }
+ async function play(s){
+  state(s,'INTRODUCTION');s.scene.face('shiopon','shion');await say(s,0);s.scene.face('shion','shiopon');await say(s,1);await say(s,2);await s.clock.wait(180);
+  s.scene.gameplayCamera();s.scene.clearInput();s.scene.unlock(s.owner);objective(s,'星門を確かめる');state(s,'GATE_WAIT');
+  await new Promise((resolve,reject)=>{s.resolveInspect=resolve;const stop=()=>reject(new Error('Aftermath cancelled'));s.controller.signal.addEventListener('abort',stop,{once:true});s.resolveInspect=()=>{s.controller.signal.removeEventListener('abort',stop);resolve();};});s.clock.assert();
+  state(s,'OBSERVATION');
+  const nearby=s.scene.getState();if(nearby.lumiereRect&&(nearby.lumiereRect.right<0||nearby.lumiereRect.left>nearby.viewport.width||nearby.lumiereRect.bottom<0||nearby.lumiereRect.top>nearby.viewport.height))await action(s,{type:'approach',actor:'lumiere',target:'shion',distance:54,duration:500});
+  for(const actor of ['shion','shiopon','lumiere'])s.scene.face(actor,'gate');s.focus=true;s.scene.focusGate();await s.clock.wait(1000);await say(s,3);await say(s,4);
+  s.focus=false;s.scene.gameplayCamera();s.scene.face('lumiere','shion');await say(s,5);await say(s,6);await say(s,7);
+  await s.scene.moveAway();s.clock.assert();
+  state(s,'DECISION');s.scene.face('lumiere','shion');await say(s,8);s.scene.face('shion','lumiere');await say(s,9);s.scene.face('shiopon','lumiere');await say(s,10);
+  await flight(s);s.scene.gameplayCamera();s.scene.clearInput();s.scene.unlock(s.owner);s.completed=true;state(s,'COMPLETED');
+  s.ui.hide();s.ui.destroy();s.ui.elements.layer.remove();s.inspect.remove();objective(s,'アリエットに相談する','今回の確認範囲はここまで');
+  s.clock.dispose();removeListeners(s);window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-ended',{detail:report(s)}));
+ }
+ function removeListeners(s){window.removeEventListener('keydown',s.keyGuard,true);window.removeEventListener('keyup',s.keyRelease,true);document.removeEventListener('visibilitychange',s.hidden);window.removeEventListener('resize',s.resize);if(s.frame)cancelAnimationFrame(s.frame);}
+ async function cancel(reason='cancelled'){
+  const s=session;if(!s||s.completed||s.cancelled)return false;s.cancelled=true;s.reason=reason;s.ui?.hide();s.controller.abort();removeListeners(s);s.clock.dispose();s.scene.pause(false);
+  s.inspect?.remove();s.ui?.destroy();s.ui?.elements.layer.remove();
+  try{s.scene.lock(s.owner);await s.scene.restore(s.a0);document.getElementById('game-shell').classList.toggle('aftermath-weak-light',s.a0.weakLight);const verified=s.scene.verify(s.a0);if(verified===false||verified?.completed===false||verified?.ok===false)throw new Error('Aftermath A0 verification failed');s.scene.clearInput();s.scene.unlock(s.owner);s.restored=true;s.state='CANCELLED';objective(s,'','イベントを中断しました。再読み込みでやり直せます');}
+  catch(error){s.error=String(error);s.state='RESTORE_FAILED';try{s.scene.lock(s.owner);}catch(lockError){s.lockError=String(lockError);}objective(s,'','画面を復元できませんでした。再読み込みしてください。');}
+  window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-ended',{detail:report(s)}));return true;
+ }
+ function report(s){return s?{id:s.id,state:s.state,line:s.line,completed:!!s.completed,cancelled:!!s.cancelled,restored:!!s.restored,error:s.error,reason:s.reason,dialogues:s.dialogues,states:s.states,flight:s.flight,flightRoute:s.flightRoute,scene:s.scene.getState()}: {state:'NOT_STARTED',completed:false};}
+ function start(reportValue){
+  if(consumed||!eligible(reportValue))return false;const scene=window.TarotAftermathScene;if(!scene)return false;
+  // The preceding notification is synchronous after Stage 3 cleanup/unlock.
+  const a0=scene.capture();a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
+  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[]};s.clock=window.TarotFutureStage3.createClock(s.controller.signal);
+  try{scene.lock(s.owner);scene.clearInput();document.getElementById('game-shell').classList.add('aftermath-weak-light');makeUi(s);
+   s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
+   s.hidden=()=>{scene.pause(document.hidden);if(!document.hidden){scene.clearInput();if(s.focus)scene.focusGate();}};
+   s.resize=()=>{if(!alive(s))return;scene.clearInput();if(s.focus)scene.focusGate();};document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
+   const update=()=>{if(!alive(s)||s.completed)return;if(s.inspect)s.inspect.hidden=s.state!=='GATE_WAIT'||!scene.nearGate();s.frame=requestAnimationFrame(update);};update();
+   play(s).catch(error=>{if(!s.cancelled){s.error=String(error);cancel('error');}});return true;
+  }catch(error){s.error=String(error);cancel('error');return false;}
+ }
+ window.addEventListener('tarot-breaker:stage3-session-ended',event=>start(event.detail));
+ window.TarotStarGateAftermath=Object.freeze({getState:()=>report(session),cancel,dialogue:LINES});
+})();

@@ -1,0 +1,15 @@
+/* All selectors belong to the explicit dev Aftermath instance. */
+#aftermath-dialogue { z-index:2400; }
+#aftermath-inspect { position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1800;min-height:48px;min-width:176px;padding:12px 20px;border:1px solid #b7a86e;border-radius:9px;color:#fff8da;background:#172335;font:inherit; }
+#aftermath-inspect[hidden],#aftermath-status[hidden] { display:none; }
+#aftermath-status { position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;right:14px;z-index:1700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:rgba(10,17,28,.84);border-radius:8px;color:#eee9d7;font-size:14px;pointer-events:auto; }
+#aftermath-status button { margin-left:auto;min-width:44px;min-height:44px;color:inherit;background:transparent;border:1px solid #69737c;border-radius:6px; }
+#aftermath-objective { font-weight:600; }
+#aftermath-notice:empty { display:none; }
+/* A0 image is present at opacity 1. Normal flow brightness is 1.08;
+   this locally owned steady image uses .58 without re-firing resonance. */
+#game-shell.aftermath-weak-light .scene-gate-inner-light,
+#game-shell.aftermath-weak-light .scene-gate-inner-light > img { opacity:1!important;visibility:visible!important; }
+#game-shell.aftermath-weak-light .scene-gate-inner-light > img { filter:brightness(.58)!important;transition:none!important; }
+#game-shell.aftermath-weak-light .scene-gate-inner-light::before,
+#game-shell.aftermath-weak-light .scene-gate-inner-light::after { opacity:0!important; }

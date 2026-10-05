@@ -254,6 +254,14 @@
   };
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
+  // Page-local Aftermath ownership; absent from ordinary gameplay.
+  let aftermathPaused = false;
+  let aftermathFocusBaseline = null;
+  let aftermathOwner = null;
+  let aftermathLumiereEnabled = true;
+  const aftermathMotions = new Set();
+  const heldKeys = new Set(), heldPointers = new Set();
+  const releaseKeys = new Set(), releasePointers = new Set();
 
   const cinematicCamera = {
     active: false,
@@ -681,6 +689,7 @@
   function updateStageActor(actorId, dt) {
     const motion = stageMotions[actorId];
     if (!motion) return false;
+    if (stage3Dev && aftermathPaused && aftermathMotions.has(motion.id)) return true;
     const actor = stageActor(actorId);
 
     if (motion.kind === "bounce") {
@@ -747,12 +756,12 @@
     const npcBlocked =
       next.moving &&
       (shioponBlocked ||
-        movingIntoActor(
+        (!(stage3Dev && !aftermathLumiereEnabled) && movingIntoActor(
           from,
           next,
           lumiereRef(),
           LUMIERE_COLLISION_DISTANCE,
-        ));
+        )));
     if (npcBlocked) {
       setDirection(player, next.dx, next.dy);
       controls.cancel("npc-blocked");
@@ -1142,6 +1151,7 @@
   }
 
   function updateShiopon(dt) {
+    if (stage3Dev && aftermathPaused) return;
     if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
     if (shiopon.scripted) {
@@ -1217,6 +1227,7 @@
   }
 
   function updateLumiere(dt) {
+    if (stage3Dev && (aftermathPaused || !aftermathLumiereEnabled)) return;
     updateStageActor("lumiere", dt);
     lumiere.anim += dt;
     while (lumiere.anim >= lumiere.wingHold) {
@@ -1251,6 +1262,7 @@
   }
 
   function updateCamera(dt) {
+    if (stage3Dev && aftermathPaused && aftermathOwner) return;
     if (cinematicCamera.active) {
       cinematicCamera.elapsed += dt;
       const t = cinematicCamera.duration > 0 ? Math.min(1, cinematicCamera.elapsed / cinematicCamera.duration) : 1;
@@ -1541,7 +1553,7 @@
   }
 
   function drawActors() {
-    if (!visionWorld.active) drawGroundShadowAt(lumiere, 18, 0.2);
+    if (!visionWorld.active && (!stage3Dev || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
 
@@ -1577,7 +1589,8 @@
           visualOffsetY: player.stageOffsetY,
         },
       },
-    ].filter(entry => entry.actor !== shiopon || !shiopon.hidden).sort((a, b) => {
+    ].filter(entry => (entry.actor !== shiopon || !shiopon.hidden) &&
+      (entry.actor !== lumiere || !stage3Dev || aftermathLumiereEnabled)).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
@@ -1903,7 +1916,7 @@
   }
 
   function pointerDown(event) {
-    if (!running) return;
+    if (!running || (stage3Dev && releasePointers.has(event.pointerId))) return;
     event.preventDefault();
     if (!controls.pointerDown(pointerInfo(event))) return;
     window.TarotAudio?.startFromMovement();
@@ -1912,13 +1925,14 @@
   }
 
   function pointerMove(event) {
-    if (!running) return;
+    if (!running || (stage3Dev && releasePointers.has(event.pointerId))) return;
     event.preventDefault();
     controls.pointerMove(pointerInfo(event));
     syncStick();
   }
 
   function pointerEnd(event) {
+    if (stage3Dev && releasePointers.has(event.pointerId)) { releasePointers.delete(event.pointerId); clearInput("aftermath-release"); return; }
     if (!running) return;
     event.preventDefault();
     const action = controls.pointerEnd(
@@ -2102,6 +2116,80 @@
     },
     getState() {return {presentPrepared:!!(ready && running && map.complete && images.idle?.complete && collision && cssWidth>1 && cssHeight>1),vision:visionWorld.active,absorption:!!absorptionSurface,viewport:{width:cssWidth,height:cssHeight,dpr},owner:sceneLockOwner};},
   });
+
+  if (stage3Dev) {
+    // Observe physical releases independently of UI propagation. No time-based cooldown.
+    window.addEventListener("keydown", e => heldKeys.add(e.key), true);
+    window.addEventListener("keyup", e => heldKeys.delete(e.key), true);
+    window.addEventListener("pointerdown", e => heldPointers.add(e.pointerId), true);
+    for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, e => heldPointers.delete(e.pointerId), true);
+    for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, e => releasePointers.delete(e.pointerId));
+    window.addEventListener("blur",()=>{heldKeys.clear();heldPointers.clear();releaseKeys.clear();releasePointers.clear();});
+    function clearAftermathInput() {
+      for (const key of heldKeys) releaseKeys.add(key);
+      for (const id of heldPointers) releasePointers.add(id);
+      clearInput("aftermath");
+    }
+    function captureAftermath() {
+      if (!ready || !running || visionWorld.active || absorptionSurface || sceneLockOwner)
+        throw new Error("Aftermath requires a cleaned-up present garden");
+      return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id => {
+        const actor=stageActor(id); return [id,{...stageActorRef(id),dir:actor.dir,stageOffsetY:actor.stageOffsetY/scale.y}];
+      })), following:shiopon.following,hidden:shiopon.hidden,rotation:shiopon.rotation,
+      visualOffsetY:shiopon.visualOffsetY/scale.y,visibility:{...actorVisibility},camera:{...camera},cameraRef:{x:camera.x/scale.x,y:camera.y/scale.y},
+      lumiereEnabled:aftermathLumiereEnabled,inputSuspended:!!controls?.state.suspended,npcSuspended,owner:sceneLockOwner,viewport:{width:cssWidth,height:cssHeight}};
+    }
+    function lumiereRenderRect() {
+      const origin=viewportOrigin(), ratio=LUMIERE_DRAW_HEIGHT/lumiereFrame.h;
+      const w=LUMIERE_NORMALIZED_SIZE.w*ratio,h=LUMIERE_NORMALIZED_SIZE.h*ratio;
+      const x=(lumiere.x-origin.x)*camera.zoom,y=(lumiere.y-origin.y)*camera.zoom;
+      // Normalized composite includes wings; union with ground shadow and its small blur.
+      const left=Math.min(x-w*camera.zoom/2-2,x-18*camera.zoom);
+      const right=Math.max(x+w*camera.zoom/2+2,x+18*camera.zoom);
+      const top=Math.min(y+(-LUMIERE_BOTTOM_GAP*scale.y-h+lumiere.bobOffsetY+lumiere.stageOffsetY)*camera.zoom-2,y-5*camera.zoom);
+      const bottom=Math.max(y+(-LUMIERE_BOTTOM_GAP*scale.y+lumiere.bobOffsetY+lumiere.stageOffsetY)*camera.zoom+2,y+9*camera.zoom);
+      return {left,right,top,bottom,width:right-left,height:bottom-top};
+    }
+    window.TarotAftermathScene=Object.freeze({
+      capture:captureAftermath,captureA0:captureAftermath,
+      lock(owner){window.TarotStage3Scene.lock(owner);aftermathOwner=owner;clearAftermathInput();},
+      unlock(owner){clearAftermathInput();const released=window.TarotStage3Scene.unlock(owner);if(released)aftermathOwner=null;return released;},
+      clearInput:clearAftermathInput,
+      pause(value){aftermathPaused=!!value;},setHiddenPaused(value){aftermathPaused=!!value;},
+      face(actor,target){return performStageCommand({type:"face",actor,target});},
+      perform(command){const action=performStageCommand(command);aftermathMotions.add(action.id);action.promise.finally(()=>aftermathMotions.delete(action.id));return action;},
+      gameplayCamera(){aftermathFocusBaseline=null;window.TarotCinematicCamera.release();return Promise.resolve({completed:true});},
+      focusGate(){
+        window.TarotStage3Scene.freezeCamera();
+        // A small, clamped focus shift at the existing gameplay zoom, never an upper pan.
+        if(!aftermathFocusBaseline)aftermathFocusBaseline={x:camera.x/scale.x,y:camera.y/scale.y};
+        camera.zoom=normalCameraZoom;
+        const baselineY=aftermathFocusBaseline.y*scale.y,gateY=105*scale.y;
+        const desiredY=gateY-cssHeight*.30/camera.zoom+cssHeight/2/camera.zoom;
+        camera.y=Math.max(baselineY-36*scale.y,Math.min(baselineY+36*scale.y,desiredY));
+        camera.x=aftermathFocusBaseline.x*scale.x;draw();return Promise.resolve({completed:true});
+      },
+      nearGate(distance=46){return refDistance(playerRef(),{x:810,y:105})<=distance;},
+      moveAway(){return this.nearGate(62)?this.perform({type:"step",actor:"shion",direction:"down",distance:12,duration:240}).promise:Promise.resolve({completed:true});},
+      flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
+      setLumiereDeparted(value=true){aftermathLumiereEnabled=!value;},
+      setLumiereEnabled(value){aftermathLumiereEnabled=!!value;},
+      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended};},
+      async restore(a0){
+        for(const id of aftermathMotions){for(const actorId of Object.keys(stageMotions)){const motion=stageMotions[actorId];if(motion?.id===id)settleStageMotion(actorId,motion,{skipped:true});}}
+        aftermathMotions.clear();aftermathPaused=false;
+        for(const [id,saved] of Object.entries(a0.actors)){const actor=stageActor(id);actor.x=saved.x*scale.x;actor.y=saved.y*scale.y;actor.dir=saved.dir;actor.stageOffsetY=saved.stageOffsetY*scale.y;actor.moving=false;}
+        shiopon.following=a0.following;shiopon.hidden=a0.hidden;shiopon.rotation=a0.rotation;shiopon.visualOffsetY=a0.visualOffsetY*scale.y;shiopon.followRoute=[];shiopon.followTarget=null;
+        Object.assign(actorVisibility,a0.visibility);aftermathLumiereEnabled=a0.lumiereEnabled;
+        window.TarotStage3Scene.freezeCamera();Object.assign(camera,a0.camera);
+        camera.x=a0.cameraRef.x*scale.x;camera.y=a0.cameraRef.y*scale.y;
+        if(cssWidth!==a0.viewport.width||cssHeight!==a0.viewport.height)camera.zoom=normalCameraZoom;
+        aftermathFocusBaseline=null;clearAftermathInput();draw();
+        return {completed:this.verify(a0).completed};
+      },
+      verify(a0){return {completed:!!a0&&!visionWorld.active&&!absorptionSurface&&Object.entries(a0.actors).every(([id,saved])=>refDistance(stageActorRef(id),saved)<.01&&stageActor(id).dir===saved.dir&&Math.abs(stageActor(id).stageOffsetY/scale.y-saved.stageOffsetY)<.01)&&Object.keys(actorVisibility).every(id=>actorVisibility[id]===a0.visibility[id])&&aftermathLumiereEnabled===a0.lumiereEnabled&&shiopon.following===a0.following&&shiopon.hidden===a0.hidden&&Math.abs(shiopon.rotation-a0.rotation)<1e-6&&Math.abs(shiopon.visualOffsetY/scale.y-a0.visualOffsetY)<.01&&Math.abs(camera.x/scale.x-a0.cameraRef.x)<.01&&Math.abs(camera.y/scale.y-a0.cameraRef.y)<.01&&Math.abs(camera.zoom-((cssWidth!==a0.viewport.width||cssHeight!==a0.viewport.height)?normalCameraZoom:a0.camera.zoom))<1e-6&&sceneLockOwner===aftermathOwner&&!!aftermathOwner&&!!controls?.state.suspended&&npcSuspended&&sceneLockPrior?.suspended===a0.inputSuspended&&!!sceneLockPrior?.npcSuspended===!!a0.npcSuspended};},
+    });
+  }
 
   if (stage3Dev) {
   function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
@@ -2315,6 +2403,7 @@
   window.addEventListener(
     "keydown",
     (event) => {
+      if (stage3Dev && releaseKeys.has(event.key)) return;
       if (running && controls.keyDown(event.key)) {
         window.TarotAudio?.startFromMovement();
         guide.hidden = true;
@@ -2323,7 +2412,7 @@
     },
     { passive: false },
   );
-  window.addEventListener("keyup", (event) => controls?.keyUp(event.key));
+  window.addEventListener("keyup", (event) => { releaseKeys.delete(event.key); controls?.keyUp(event.key); });
   window.addEventListener("blur", () => clearInput("blur"));
   window.addEventListener("pagehide", () => clearInput("pagehide"));
   document.addEventListener("visibilitychange", () => {

@@ -78,9 +78,9 @@
 
   register("star-gate-full", {event:"star-gate-anomaly",segment:"future-fixation-stage3",map:"star_gate_garden",spawn:"gate approach (810,177)",
     temporaryState:Object.freeze({completedEvents:allEvents,companion:"joined_with_shion"}),
-    requiredRuntime:Object.freeze(["game.js","stage3-dev-bootstrap.js","star-gate-interaction.js","future-stage3.js","star-gate-anomaly.js"]),
+    requiredRuntime:Object.freeze(["game.js","stage3-dev-bootstrap.js","star-gate-interaction.js","future-stage3.js","star-gate-anomaly.js","star-gate-aftermath.js"]),
     entryAction:"approach gate, choose investigation or leave",emittedSignal:"tarot-breaker:star-gate-investigate",
-    receivingRuntime:"star-gate-anomaly.js real resonance -> Stage1 -> Stage2 -> Stage3",
+    receivingRuntime:"star-gate-anomaly.js real resonance -> Stage1 -> Stage2 -> Stage3 -> star-gate-aftermath.js",
     expectedFirstRuntimeState:"decoded present Garden gate-approach fixture, original choice then real resonance",
     durableWritePolicy:"FORBIDDEN; in-memory fixture and Journey only"});
   Object.freeze(definitions);
