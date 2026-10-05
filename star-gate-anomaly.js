@@ -2,6 +2,7 @@
 "use strict";
 if(!window.__TAROT_DEV_STAGE3__ || new URLSearchParams(location.search).get("dev")!=="star-gate-full")return;
 const ASSETS={
+ cardDetail:"./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
  sky:"./assets/maps/star-country-farthest-sky-background-extended.webp",
  ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
@@ -40,6 +41,18 @@ function mount(){
  root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
  root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><div class="sga-future-composition" aria-hidden="true"><div class="sga-future-shion-frame"><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div></div><div class="sga-future-card-frame"><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
+}
+async function showArcanaDetail(){
+ const current=session;
+ current.clock.assert();
+ const prepared=preparedImages.get(ASSETS.cardDetail);
+ if(!prepared?.naturalWidth||!prepared?.naturalHeight)throw new Error("Altered Arcana detail not decoded");
+ const layer=document.createElement("div");layer.className="sga-arcana-detail";layer.setAttribute("aria-hidden","true");
+ const card=prepared.cloneNode();card.className="sga-arcana-detail-image";card.alt="";layer.appendChild(card);
+ document.body.appendChild(layer);
+ current.cardDetail={source:ASSETS.cardDetail,startedAt:current.clock.now(),duration:1000};
+ try{await current.clock.wait(1000);current.clock.assert();}
+ finally{layer.remove();current.cardDetail.endedAt=current.clock.now();}
 }
 function makeUi(){
  if(ui)return ui;
@@ -562,6 +575,8 @@ async function futureFixationStage3(){
  setShion(3);await pause(560);
  session.r0={pose:3,source:ASSETS.shion[2],audio:session.audio.capture(),actorOpacity:vis?.getState().shion};
 
+ await showArcanaDetail();
+
  // SEQUENCE 02 — pose 03 has already completed the act of checking the Arcana.
  // Keep the low cinematic mix present; sound is removed later with the world itself.
  await pause(720);
@@ -680,7 +695,7 @@ async function runStage3Latter(before){
   state(name,time){current.states.push({name,time});current.phase=name;window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-state',{detail:{name,time}}));},
   async prepare(){
    current.clock.assert();if(!current.r0||!preparedImages.get(current.r0.source))throw new Error('R0 preparation missing');
-   surface=scene.prepareBackground();current.surface={width:surface.width,height:surface.height,dpr:scene.getState().viewport.dpr};
+   surface=scene.prepareBackground({anchor});current.surface={width:surface.width,height:surface.height,dpr:scene.getState().viewport.dpr,rgbaBytes:surface.width*surface.height*4,bounds:surface.stage3Preparation.bounds};
    // DOM images use already loaded and decoded resources; await initial paint before effects.
    await scene.waitDraw();current.clock.assert();
   },
@@ -689,7 +704,7 @@ async function runStage3Latter(before){
    assertGeometry(current.fixed,actorGeometry(5),['left','top','width','height','footX','footY']);assertGeometry(current.arcana,arcanaGeometry(),['x','y','width','height','rotation']);},
   rift(id,opacity,scale){const n=nodes[id];n.style.opacity=String(opacity);n.style.visibility=opacity>0?'visible':'hidden';n.style.transform='scale('+scale+')';},
   say:text=>say('shion',text),audioLevel:k=>audio.setLevel(k),
-  startAbsorption(){scene.activateAbsorption(surface);surface.style.transformOrigin=anchor.x+'px '+anchor.y+'px';},
+  startAbsorption(){scene.activateAbsorption(surface);},
   absorb(values){Object.assign(backgroundValues,values);surface.style.transform='scale('+backgroundValues.scale+')';surface.style.opacity=String(backgroundValues.opacity);surface.style.filter='saturate('+backgroundValues.saturation+') contrast('+backgroundValues.contrast+')';},
   white:k=>{white.style.opacity=String(k);},black:k=>{black.style.opacity=String(k);},
   pauseFutureAudio(){whiteSnapshot=audio.pause();},
@@ -772,11 +787,11 @@ async function run(){
 }
 function releasePresentation(){
  if(root){root.remove();root=null;}
- for(const n of document.querySelectorAll('.sga-v192-white,.sga-v192-black'))n.remove();
+ for(const n of document.querySelectorAll('.sga-v192-white,.sga-v192-black,.sga-arcana-detail'))n.remove();
  cleanupGateState({preserveFinal:false});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
 }
 function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
- states:current.states,dialogues:current.dialogues,holds:current.holds,audioFailures:current.audioFailures,
+ states:current.states,dialogues:current.dialogues,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});

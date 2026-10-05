@@ -1,0 +1,11 @@
+{
+  "before": {
+    "dev": false,
+    "interaction": false,
+    "sky": "./assets/maps/star-country-farthest-sky-background.webp",
+    "light": "190",
+    "start": "\n            \n            \n              物語をはじめる\n              BEGIN\n            \n          "
+  },
+  "destination": "http://127.0.0.1:8780/alenon.html?from=title&build=6bc2a38e",
+  "errors": []
+}

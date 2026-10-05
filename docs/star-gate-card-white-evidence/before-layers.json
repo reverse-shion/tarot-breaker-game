@@ -1,0 +1,154 @@
+[
+  {
+    "tag": "DIV",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "top": 0,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    },
+    "style": "position: absolute; inset: 0px; background: rgb(8, 10, 18); z-index: 0; pointer-events: none;",
+    "css": {
+      "opacity": "1",
+      "z": "0",
+      "filter": "none"
+    }
+  },
+  {
+    "tag": "CANVAS",
+    "rect": {
+      "x": 11.776565551757812,
+      "y": 3.84375,
+      "width": 351,
+      "height": 759.5999755859375,
+      "top": 3.84375,
+      "right": 362.7765655517578,
+      "bottom": 763.4437255859375,
+      "left": 11.776565551757812
+    },
+    "style": "position: absolute; left: 0px; top: 0px; width: 390px; height: 844px; pointer-events: none; z-index: 0; transform-origin: 117.766px 38.4375px; transform: scale(0.9); opacity: 0.12; filter: saturate(0.3) contrast(0.7);",
+    "css": {
+      "opacity": "0.12",
+      "z": "0",
+      "filter": "saturate(0.3) contrast(0.7)"
+    }
+  },
+  {
+    "tag": "rift-small",
+    "rect": {
+      "x": 69.015625,
+      "y": -34.21875,
+      "width": 96,
+      "height": 144,
+      "top": -34.21875,
+      "right": 165.015625,
+      "bottom": 109.78125,
+      "left": 69.015625
+    },
+    "style": "width: 96px; height: 144px; left: 69.0156px; top: -34.2188px; --wound-x: 48.75px; --wound-y: 72.65625px; opacity: 0; visibility: hidden; transform: scale(1);",
+    "css": {
+      "opacity": "0",
+      "z": "auto",
+      "filter": "none"
+    }
+  },
+  {
+    "tag": "rift-medium",
+    "rect": {
+      "x": 13.265625,
+      "y": -110,
+      "width": 200,
+      "height": 300,
+      "top": -110,
+      "right": 213.265625,
+      "bottom": 190,
+      "left": 13.265625
+    },
+    "style": "width: 200px; height: 300px; left: 13.2734px; top: -110px; --wound-x: 104.49218749999999px; --wound-y: 148.43749999999997px; opacity: 0; visibility: hidden; transform: scale(1);",
+    "css": {
+      "opacity": "0",
+      "z": "auto",
+      "filter": "none"
+    }
+  },
+  {
+    "tag": "rift-large",
+    "rect": {
+      "x": -58.8125,
+      "y": -214.0625,
+      "width": 338,
+      "height": 507,
+      "top": -214.0625,
+      "right": 279.1875,
+      "bottom": 292.9375,
+      "left": -58.8125
+    },
+    "style": "width: 338px; height: 507px; left: -58.8262px; top: -214.072px; --wound-x: 176.591796875px; --wound-y: 252.509765625px; opacity: 0.5; visibility: visible; transform: scale(1);",
+    "css": {
+      "opacity": "0.5",
+      "z": "auto",
+      "filter": "none"
+    }
+  },
+  {
+    "tag": "rift-vortex",
+    "rect": {
+      "x": -50.5625,
+      "y": -232.21875,
+      "width": 338,
+      "height": 507,
+      "top": -232.21875,
+      "right": 287.4375,
+      "bottom": 274.78125,
+      "left": -50.5625
+    },
+    "style": "width: 338px; height: 507px; left: -50.5742px; top: -232.227px; --wound-x: 168.33984375px; --wound-y: 270.6640625px; opacity: 1; visibility: visible; transform: scale(1);",
+    "css": {
+      "opacity": "1",
+      "z": "auto",
+      "filter": "none"
+    }
+  },
+  {
+    "tag": "sga-v192-white",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "top": 0,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    },
+    "style": "opacity: 0;",
+    "css": {
+      "opacity": "0",
+      "z": "2500",
+      "filter": "none"
+    }
+  },
+  {
+    "tag": "sga-v192-black",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "top": 0,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    },
+    "style": null,
+    "css": {
+      "opacity": "0",
+      "z": "2501",
+      "filter": "none"
+    }
+  }
+]

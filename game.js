@@ -320,6 +320,16 @@
 
 
 
+  // Keep the shrinking background plane's outer edge outside the viewport.
+  // Artwork registration and its scale are unchanged; only the drawing surface grows.
+  function stage3BackgroundBounds(width,height,anchor) {
+    const left=Math.floor(Math.min(0,-anchor.x/9))-1;
+    const top=Math.floor(Math.min(0,-anchor.y/9))-1;
+    const right=Math.ceil(Math.max(width,width+(width-anchor.x)/9))+1;
+    const bottom=Math.ceil(Math.max(height,height+(height-anchor.y)/9))+1;
+    return {left,top,width:right-left,height:bottom-top};
+  }
+
   let normalCameraZoom = 1;
   let absorptionSurface = null;
   let sceneLockOwner = null;
@@ -2023,21 +2033,24 @@
       return {...camera};
     },
     waitDraw({alive=()=>true}={}) { return new Promise(resolve => requestAnimationFrame(() => {if(alive())draw();resolve({completed:alive()});})); },
-    prepareBackground() {
+    prepareBackground({anchor={x:cssWidth/2,y:cssHeight/2}}={}) {
       if (!visionWorld.active || !visionWorld.image?.complete) throw new Error("Ruins not prepared");
       const surface = document.createElement("canvas");
-      surface.width = Math.round(cssWidth*dpr); surface.height = Math.round(cssHeight*dpr);
+      const bounds=stage3BackgroundBounds(cssWidth,cssHeight,anchor);
+      surface.width = Math.ceil(bounds.width*dpr); surface.height = Math.ceil(bounds.height*dpr);
+      surface.stage3Preparation={bounds,viewport:{width:cssWidth,height:cssHeight},anchor:{...anchor}};
       const target = surface.getContext("2d");
       target.setTransform(dpr,0,0,dpr,0,0); target.fillStyle = "#000";
-      target.fillRect(0,0,cssWidth,cssHeight);
+      target.fillRect(0,0,bounds.width,bounds.height);
+      target.translate(-bounds.left,-bounds.top);
       const origin = viewportOrigin(); target.scale(camera.zoom,camera.zoom); target.translate(-origin.x,-origin.y);
       const previous = ctx; ctx = target; try {drawVisionWorld();} finally {ctx=previous;}
-      Object.assign(surface.style, {position:"absolute",left:"0",top:"0",width:cssWidth+"px",height:cssHeight+"px",pointerEvents:"none",zIndex:"0"});
+      Object.assign(surface.style, {position:"absolute",left:bounds.left+"px",top:bounds.top+"px",width:bounds.width+"px",height:bounds.height+"px",pointerEvents:"none",zIndex:"0",transformOrigin:(anchor.x-bounds.left)+"px "+(anchor.y-bounds.top)+"px"});
       surface.dataset.stage3Background = "true";
       return surface;
     },
     activateAbsorption(surface) {
-      if (!surface || surface.width !== Math.round(cssWidth*dpr)) throw new Error("Invalid background preparation");
+      if (!surface?.stage3Preparation || surface.stage3Preparation.viewport.width!==cssWidth || surface.stage3Preparation.viewport.height!==cssHeight || surface.width!==Math.ceil(surface.stage3Preparation.bounds.width*dpr) || surface.height!==Math.ceil(surface.stage3Preparation.bounds.height*dpr)) throw new Error("Invalid background preparation");
       if (absorptionSurface) throw new Error("Background already active");
       absorptionSurface = surface;
       const substrate = document.createElement("div"); substrate.dataset.stage3Substrate="true";

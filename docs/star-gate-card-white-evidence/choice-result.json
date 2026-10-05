@@ -1,0 +1,267 @@
+{
+  "near": {
+    "player": {
+      "x": 810,
+      "y": 146,
+      "dir": "up"
+    },
+    "prompt": {
+      "active": true,
+      "completed": false,
+      "armed": true,
+      "promptLock": true
+    },
+    "event": {
+      "running": false
+    }
+  },
+  "left": {
+    "player": {
+      "x": 810,
+      "y": 146,
+      "dir": "up"
+    },
+    "prompt": {
+      "active": false,
+      "completed": false,
+      "armed": false,
+      "promptLock": false
+    },
+    "event": {
+      "running": false
+    }
+  },
+  "far": {
+    "player": {
+      "x": 844,
+      "y": 242,
+      "dir": "down"
+    },
+    "prompt": {
+      "active": false,
+      "completed": false,
+      "armed": true,
+      "promptLock": false
+    },
+    "event": {
+      "running": false
+    }
+  },
+  "reentered": {
+    "player": {
+      "x": 810,
+      "y": 145,
+      "dir": "up"
+    },
+    "prompt": {
+      "active": true,
+      "completed": false,
+      "armed": true,
+      "promptLock": true
+    },
+    "event": {
+      "running": false
+    }
+  },
+  "ended": {
+    "player": {
+      "x": 810,
+      "y": 145,
+      "dir": "up"
+    },
+    "prompt": {
+      "active": false,
+      "completed": true,
+      "armed": false,
+      "promptLock": false
+    },
+    "event": {
+      "id": 1,
+      "running": false,
+      "completed": false,
+      "restored": true,
+      "error": "AbortError: Stage 3 interrupted",
+      "recoveryError": null,
+      "reason": null,
+      "states": [],
+      "dialogues": [],
+      "holds": [],
+      "audioFailures": [],
+      "cardDetail": null,
+      "p0": {
+        "mapId": "star_gate_garden",
+        "player": {
+          "x": 810,
+          "y": 145,
+          "dir": "up"
+        },
+        "camera": {
+          "x": 809.9287311565676,
+          "y": 421.9999976477005,
+          "zoom": 1
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "owner": null,
+        "npcLogical": {
+          "companion": "joined_with_shion",
+          "story": {
+            "shioponDone": true,
+            "lumiereDone": true,
+            "joined": true
+          }
+        },
+        "actors": {
+          "shiopon": {
+            "x": 809.6030389946402,
+            "y": 208.7407396045161,
+            "dir": "up",
+            "stageOffsetY": 0,
+            "visualOffsetY": 0,
+            "rotation": 0,
+            "following": true
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down",
+            "stageOffsetY": 0
+          }
+        },
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "inputSuspended": false,
+        "npcSuspended": false,
+        "hidden": false,
+        "captured": 26655.599999999627,
+        "audio": {
+          "source": "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "time": 17.706918,
+          "playing": true,
+          "base": 0.35,
+          "coefficient": 1
+        }
+      },
+      "fixed": null,
+      "arcana": null,
+      "r1": null,
+      "scene": {
+        "presentPrepared": true,
+        "vision": false,
+        "absorption": false,
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "dpr": 1
+        },
+        "owner": null
+      }
+    }
+  },
+  "after": {
+    "player": {
+      "x": 810,
+      "y": 152.75,
+      "dir": "down"
+    },
+    "prompt": {
+      "active": false,
+      "completed": true,
+      "armed": false,
+      "promptLock": false
+    },
+    "event": {
+      "id": 1,
+      "running": false,
+      "completed": false,
+      "restored": true,
+      "error": "AbortError: Stage 3 interrupted",
+      "recoveryError": null,
+      "reason": null,
+      "states": [],
+      "dialogues": [],
+      "holds": [],
+      "audioFailures": [],
+      "cardDetail": null,
+      "p0": {
+        "mapId": "star_gate_garden",
+        "player": {
+          "x": 810,
+          "y": 145,
+          "dir": "up"
+        },
+        "camera": {
+          "x": 809.9287311565676,
+          "y": 421.9999976477005,
+          "zoom": 1
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "owner": null,
+        "npcLogical": {
+          "companion": "joined_with_shion",
+          "story": {
+            "shioponDone": true,
+            "lumiereDone": true,
+            "joined": true
+          }
+        },
+        "actors": {
+          "shiopon": {
+            "x": 809.6030389946402,
+            "y": 208.7407396045161,
+            "dir": "up",
+            "stageOffsetY": 0,
+            "visualOffsetY": 0,
+            "rotation": 0,
+            "following": true
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down",
+            "stageOffsetY": 0
+          }
+        },
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "inputSuspended": false,
+        "npcSuspended": false,
+        "hidden": false,
+        "captured": 26655.599999999627,
+        "audio": {
+          "source": "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "time": 17.706918,
+          "playing": true,
+          "base": 0.35,
+          "coefficient": 1
+        }
+      },
+      "fixed": null,
+      "arcana": null,
+      "r1": null,
+      "scene": {
+        "presentPrepared": true,
+        "vision": false,
+        "absorption": false,
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "dpr": 1
+        },
+        "owner": null
+      }
+    }
+  },
+  "writes": []
+}
