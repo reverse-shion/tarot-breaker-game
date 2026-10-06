@@ -5,10 +5,23 @@
 #aftermath-status button { margin-left:auto;min-width:44px;min-height:44px;color:inherit;background:transparent;border:1px solid #69737c;border-radius:6px; }
 #aftermath-objective { font-weight:600; }
 #aftermath-notice:empty { display:none; }
-/* A0 image is present at opacity 1. Normal flow brightness is 1.08;
-   this locally owned steady image uses .58 without re-firing resonance. */
+/* Ordinary A0 fallback uses a restrained steady light without re-firing resonance. */
 #game-shell.aftermath-weak-light .scene-gate-inner-light,
 #game-shell.aftermath-weak-light .scene-gate-inner-light > img { opacity:1!important;visibility:visible!important; }
 #game-shell.aftermath-weak-light .scene-gate-inner-light > img { filter:brightness(.58)!important;transition:none!important; }
 #game-shell.aftermath-weak-light .scene-gate-inner-light::before,
 #game-shell.aftermath-weak-light .scene-gate-inner-light::after { opacity:0!important; }
+
+/* Successful Future Fixation return keeps the exact pre-blackout anomaly-rest gate.
+   Aftermath weak-light must not wash the corrupted black-purple portal back toward normal. */
+#game-shell.sga-anomaly-rest.aftermath-weak-light .scene-gate-inner-light,
+#game-shell.sga-anomaly-rest.aftermath-weak-light .scene-gate-inner-light > img {
+  opacity:1!important;visibility:visible!important;
+}
+#game-shell.sga-anomaly-rest.aftermath-weak-light .scene-gate-inner-light > img {
+  animation:sgaAnomalyBreathe 7.2s ease-in-out infinite!important;
+  filter:brightness(.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)!important;
+  transition:none!important;
+}
+#game-shell.sga-anomaly-rest.aftermath-weak-light .scene-gate-inner-light::before,
+#game-shell.sga-anomaly-rest.aftermath-weak-light .scene-gate-inner-light::after { opacity:.28!important; }
