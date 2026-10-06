@@ -163,7 +163,7 @@
  async function talk(actor){
   const s=session;if(!s||s.completed||s.cancelled||s.state!=='CHECK_COMPANIONS'||!['shiopon','lumiere'].includes(actor))return false;
   const view=s.scene.getState();if(distance(view.actors.shion,view.actors[actor])>TALK_RADIUS+8)return false;
-  stopTalkScanner(s);lockForDialogue(s);state(s,`TALK_${actor.toUpperCase()}`);
+  lockForDialogue(s);state(s,`TALK_${actor.toUpperCase()}`);
   try{await individualConversation(s,actor);return true;}catch(error){if(!s.cancelled){s.error=String(error);await cancel('error');}return false;}
  }
  function removeListeners(s){removeTalkInput(s);window.removeEventListener('keydown',s.keyGuard,true);window.removeEventListener('keyup',s.keyRelease,true);document.removeEventListener('visibilitychange',s.hidden);window.removeEventListener('resize',s.resize);}
