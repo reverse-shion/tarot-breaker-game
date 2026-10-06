@@ -1,0 +1,32 @@
+[
+  {
+    "phase": "NORMAL_SETTLE",
+    "interruption": "hidden",
+    "restored": true,
+    "completed": false,
+    "aftermath": "NOT_STARTED",
+    "reason": "background",
+    "writes": [],
+    "errors": []
+  },
+  {
+    "phase": "TRANSFORM",
+    "interruption": "rotate",
+    "restored": true,
+    "completed": false,
+    "aftermath": "NOT_STARTED",
+    "reason": "viewport",
+    "writes": [],
+    "errors": []
+  },
+  {
+    "phase": "RE_HOLD",
+    "interruption": "cancel",
+    "restored": true,
+    "completed": false,
+    "aftermath": "NOT_STARTED",
+    "reason": null,
+    "writes": [],
+    "errors": []
+  }
+]

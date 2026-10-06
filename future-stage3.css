@@ -16,4 +16,5 @@
 
 /* Editorial card detail: independent of world Actors and their transforms. */
 .sga-arcana-detail{position:fixed;inset:0;z-index:2390;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(8,10,18,.88);padding:24px;box-sizing:border-box}
-.sga-arcana-detail-image{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;filter:none;box-shadow:none}
+.sga-arcana-detail-frame{position:relative;flex:none}
+.sga-arcana-detail-image{position:absolute;display:block;max-width:none;max-height:none;object-fit:contain;filter:none;box-shadow:none;transform:none}

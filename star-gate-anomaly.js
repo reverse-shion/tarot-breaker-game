@@ -2,6 +2,8 @@
 "use strict";
 if(!window.__TAROT_DEV_STAGE3__ || new URLSearchParams(location.search).get("dev")!=="star-gate-full")return;
 const ASSETS={
+ cardNormal:"./assets/tarot/backs/tarot-card-back.webp",
+ shionCheckRe:"./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
  cardDetail:"./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
  sky:"./assets/maps/star-country-farthest-sky-background-extended.webp",
  ruins:"./assets/events/gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
@@ -42,17 +44,44 @@ function mount(){
  root.innerHTML='<div class="sga-future-blackout" aria-hidden="true"></div><div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div></div><div class="sga-world-omen-layer" aria-hidden="true"></div><div class="sga-future-composition" aria-hidden="true"><div class="sga-future-shion-frame"><img class="sga-shion sga-shion-main" alt=""><img class="sga-shion sga-shion-transition" aria-hidden="true" alt=""><div class="sga-card-surge" aria-hidden="true"></div></div><div class="sga-future-card-frame"><div class="sga-card" aria-hidden="true"><img class="aura1" src="'+ASSETS.aura1+'" alt=""><img class="aura2" src="'+ASSETS.aura2+'" alt=""></div></div></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
  document.getElementById("game-shell")?.appendChild(root);return root;
 }
+// Alpha bounds measured from the unchanged source images; preserve aspect ratios.
+const ARCANA_DETAIL_REGISTRATION=Object.freeze({
+ normal:{width:1024,height:1536,bounds:{left:98,top:46,right:920,bottom:1458}},
+ re:{width:853,height:1280,bounds:{left:48,top:26,right:805,bottom:1247}}
+});
 async function showArcanaDetail(){
- const current=session;
- current.clock.assert();
- const prepared=preparedImages.get(ASSETS.cardDetail);
- if(!prepared?.naturalWidth||!prepared?.naturalHeight)throw new Error("Altered Arcana detail not decoded");
+ const current=session;current.clock.assert();
+ const normal=preparedImages.get(ASSETS.cardNormal),re=preparedImages.get(ASSETS.cardDetail);
+ for(const [image,key] of [[normal,'normal'],[re,'re']]){
+  const registration=ARCANA_DETAIL_REGISTRATION[key];
+  if(!image||image.naturalWidth!==registration.width||image.naturalHeight!==registration.height)throw new Error("Arcana detail not decoded or registration mismatch: "+key);
+ }
+ if(!preparedImages.get(ASSETS.shionCheckRe)?.naturalWidth)throw new Error("Re pose03 not decoded");
  const layer=document.createElement("div");layer.className="sga-arcana-detail";layer.setAttribute("aria-hidden","true");
- const card=prepared.cloneNode();card.className="sga-arcana-detail-image";card.alt="";layer.appendChild(card);
+ const frame=document.createElement("div");frame.className="sga-arcana-detail-frame";layer.appendChild(frame);
+ const k=Math.min((innerWidth-48)/853,(innerHeight-48)/1280);
+ Object.assign(frame.style,{width:853*k+"px",height:1280*k+"px"});
+ const images={};
+ for(const [key,prepared] of [['normal',normal],['re',re]]){
+  const card=prepared.cloneNode();card.className="sga-arcana-detail-image "+key;card.alt="";
+  const r=ARCANA_DETAIL_REGISTRATION[key],rb=ARCANA_DETAIL_REGISTRATION.re.bounds;
+  const scale=k*(rb.bottom-rb.top)/(r.bounds.bottom-r.bounds.top);
+  Object.assign(card.style,{width:r.width*scale+"px",height:r.height*scale+"px",left:((rb.left+rb.right)/2*k-(r.bounds.left+r.bounds.right)/2*scale)+"px",top:((rb.top+rb.bottom)/2*k-(r.bounds.top+r.bounds.bottom)/2*scale)+"px",opacity:key==='normal'?'1':'0'});
+  frame.appendChild(card);images[key]=card;
+ }
  document.body.appendChild(layer);
- current.cardDetail={source:ASSETS.cardDetail,startedAt:current.clock.now(),duration:1000};
- try{await current.clock.wait(1000);current.clock.assert();}
- finally{layer.remove();current.cardDetail.endedAt=current.clock.now();}
+ current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:2950,phases:[],registration:ARCANA_DETAIL_REGISTRATION};
+ const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
+ try{
+  phase('NORMAL_HOLD');await current.clock.wait(800);
+  phase('NORMAL_SETTLE');await current.clock.tween(350,p=>{images.normal.style.filter='brightness('+(1-.08*p)+')';});
+  phase('TRANSFORM');await current.clock.tween(800,p=>{images.normal.style.opacity=String(1-p);images.re.style.opacity=String(p);});
+  current.clock.assert();
+  const main=root.querySelector('.sga-shion-main');main.src=ASSETS.shionCheckRe;
+  // Same512 source canvas/03 anchor: replace only the image, retain all geometry.
+  images.normal.style.opacity='0';images.re.style.opacity='1';images.re.style.filter='none';
+  phase('RE_HOLD');await current.clock.wait(1000);current.clock.assert();
+ }finally{layer.remove();current.cardDetail.endedAt=current.clock.now();}
 }
 function makeUi(){
  if(ui)return ui;
@@ -573,7 +602,7 @@ async function futureFixationStage3(){
  await say("shion","……？");await pause(180);
  setShion(2);await pause(520);
  setShion(3);await pause(560);
- session.r0={pose:3,source:ASSETS.shion[2],audio:session.audio.capture(),actorOpacity:vis?.getState().shion};
+ session.r0={pose:3,source:ASSETS.shionCheckRe,audio:session.audio.capture(),actorOpacity:vis?.getState().shion};
 
  await showArcanaDetail();
 

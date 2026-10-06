@@ -1,15 +1,22 @@
-/* Author-approved Aftermath v1.5; registered dev page only, never saved. */
+/* Author-approved Aftermath v1.6; registered dev page only, never saved. */
 (() => {
  'use strict';
  if(window.__TAROT_DEV_STAGE3__!==true)return;
  const LINES=Object.freeze([
-  ['lumiere','シ……オンさま……'],['lumiere','シオンさま！'],['shion','……リュミエール？'],
-  ['shiopon','シオンさん、大丈夫なの？ ずっと呼んでたの……'],['shion','今のは……'],['shion','……いや。今は、それより――'],
-  ['shiopon','星の声が……食べられたの。'],['shion','食べられた？'],
-  ['lumiere','……こんなことは初めてで、私にも原因は分かりません。'],
-  ['lumiere','安全を確かめるまでは、星門は使わない方がよさそうです。'],
-  ['lumiere','アリエット様なら、何か分かるかもしれません。'],['shion','……そうだな。アリエットに相談しよう。'],
-  ['lumiere','地上へ降りるため、先に星砂の準備をしてきます。お二人は、東側から来てください。'],['shion','分かった。頼む。']
+  ["lumiere", "シ……オンさま……\nシオンさま！"],
+  ["shion", "……リュミエール？"],
+  ["shiopon", "シオンさま、大丈夫ぴょん？\nずっと呼んでたぴょん……"],
+  ["shion", "今のは……\n……いや。今は、それより――"],
+  ["shiopon", "……初めて、食べられたの。"],
+  ["shiopon", "星の声が……食べられたの。"],
+  ["shion", "食べられた？"],
+  ["lumiere", "……私にも、初めての事で。"],
+  ["lumiere", "少なくとも、安全を確かめるまでは星門は使わない方がよさそうです。"],
+  ["lumiere", "アリエット様なら、きっと原因がわかるかもしれません。"],
+  ["shion", "……そうだな。\nアリエットに相談しよう。"],
+  ["lumiere", "では、私は先に星砂の準備をしてきます。\nお二人は、東側から来てください。"],
+  ["shion", "分かった。頼む。"],
+  ["shiopon", "リュミエール、またあとでね。"]
  ].map(line=>Object.freeze(line)));
  const NAMES={shion:'シオン',shiopon:'しおぽん',lumiere:'リュミエール'};
  let session=null,consumed=false;
@@ -65,18 +72,16 @@
    throw new Error('Aftermath control return verification failed');
  }
  async function play(s){
-  state(s,'INTRODUCTION');await s.clock.wait(300);s.scene.face('lumiere','shion');await say(s,0);await s.clock.wait(300);await say(s,1);
-  s.scene.face('shion','lumiere');await say(s,2);
+  state(s,'INTRODUCTION');await s.clock.wait(300);s.scene.face('lumiere','shion');await say(s,0);await s.clock.wait(300);
+  s.scene.face('shion','lumiere');await say(s,1);
   const peers=s.scene.getState().actors;
   if(Math.abs(peers.shiopon.x-peers.lumiere.x)<28&&Math.abs(peers.shiopon.y-peers.lumiere.y)<32&&Math.hypot(peers.shiopon.x-peers.shion.x,peers.shiopon.y-peers.shion.y)>48)
    await action(s,{type:'move',actor:'shiopon',target:{x:peers.shion.x-32,y:peers.shion.y+40},duration:400});
-  s.scene.face('shiopon','shion');await say(s,3);await say(s,4);await s.clock.wait(250);
-  s.scene.face('shion','gate');await say(s,5);state(s,'OBSERVATION');
-  for(const actor of ['shion','shiopon','lumiere'])s.scene.face(actor,'gate');s.focus=true;s.scene.focusGate();await s.clock.wait(1000);await say(s,6);await say(s,7);
-  s.focus=false;s.scene.gameplayCamera();s.scene.face('lumiere','shion');await say(s,8);await say(s,9);await say(s,10);await say(s,11);
-  await s.scene.moveAway();await s.clock.wait(0);s.clock.assert();
-  state(s,'DECISION');s.scene.face('lumiere','shion');await say(s,12);
-  const east=s.scene.getState().actors.lumiere;s.scene.face('lumiere',{x:east.x+100,y:east.y});s.scene.face('shion','lumiere');await say(s,13);s.scene.face('shiopon','lumiere');
+  s.scene.face('shiopon','shion');await say(s,2);await say(s,3);await s.clock.wait(250);state(s,'OBSERVATION');
+  for(const actor of ['shion','shiopon','lumiere'])s.scene.face(actor,'gate');s.focus=true;s.scene.focusGate();await s.clock.wait(1000);await say(s,4);await say(s,5);await say(s,6);
+  s.focus=false;s.scene.gameplayCamera();await say(s,7);await say(s,8);await say(s,9);
+  s.scene.face('lumiere','shion');await say(s,10);await s.scene.moveAway();await s.clock.wait(0);s.clock.assert();
+  state(s,'DECISION');await say(s,11);s.scene.face('shion','lumiere');await say(s,12);s.scene.face('shiopon','lumiere');await say(s,13);
   await flight(s);state(s,'RETURN_HOLD');await s.clock.wait(300);s.scene.gameplayCamera();releaseControl(s);
   if(s.scene.getState().lumiereEnabled!==false)throw new Error('Aftermath departure verification failed');
   s.ui.hide();s.ui.destroy();s.ui.elements.layer.remove();s.clock.dispose();removeListeners(s);

@@ -99,3 +99,7 @@ The continuation starts at8461475634e9d53bf6dd14ad82b6f5f3127ce1a3 without chang
 ## Aftermath v1.5 revision
 
 The same PR now uses continuous14Box Aftermath with no intermediate gate inspection or normal status panels. See [current implementation and verification record](future-vision-aftermath-v1.5.md). The repaired gate front/Stage3/assets remain preserved; this revision ends with Lumiere departed and player-controlled Shion plus existing Shiopon Follow. Device evidence is still pending.
+
+## Author v1.6 integration
+
+Normal01–03 from97bfdb7 are preserved; the author now explicitly approves one large-cut normal→Re change and separate exact-old red03 for post-change/R0. This supersedes the previously halted reference conflict and old “already altered at initial03” contract. Continuous Aftermath ownership/return remains v1.5, dialogue table is v1.6. Fresh evidence and scope: [integration v1.6](future-vision-integration-v1.6.md). No main merge or ordinary-route publish.

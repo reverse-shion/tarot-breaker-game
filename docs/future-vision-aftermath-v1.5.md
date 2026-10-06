@@ -1,3 +1,5 @@
+> Historical v1.5 candidate evidence. The author v1.6 dialogue table/card contract supersedes its strings; see [integration v1.6](future-vision-integration-v1.6.md). These old counts are not new-SHA results.
+
 # Future Vision Aftermath v1.5 — dev candidate record
 
 Author-specified v1.5 replaces v1.3/v1.4 Aftermath flow. PR #114 and `fix/star-gate-front-stage3-integration` continue unchanged as the development location. Start-time local/remote PR HEAD was `8c1bc81b94e7e887425e23f59855f19945d54450`, clean worktree. Fresh fetched main: `5c33fb8ccf9a46321c1dc1c94ba1dfac125900f3`. Pre-Aftermath comparison: `8461475634e9d53bf6dd14ad82b6f5f3127ce1a3`. No reset or old-file replacement.
