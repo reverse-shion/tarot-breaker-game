@@ -31,7 +31,7 @@ test('Aftermath rotated A0 restoration verifies owned input, camera and actor di
 
 test('Aftermath actor hit test targets Shiopon/Lumiere directly without UI geometry',()=>{
   const {api}=scene();
-  assert.equal(api.hitTestActor(780*.63,180*.63),'shiopon');
-  assert.equal(api.hitTestActor(750*.63,200*.63),'lumiere');
+  assert.equal(api.hitTestActor(780*.63,(180-41)*.63),'shiopon');
+  assert.equal(api.hitTestActor(750*.63,(200-44)*.63),'lumiere');
   assert.equal(api.hitTestActor(20,20),null);
 });
