@@ -2174,6 +2174,19 @@
         camera.x=aftermathFocusBaseline.x*scale.x;draw();return Promise.resolve({completed:true});
       },
       nearGate(distance=46){return refDistance(playerRef(),{x:810,y:105})<=distance;},
+      hitTestActor(clientX,clientY){
+        const rect=canvas.getBoundingClientRect();
+        const px=clientX-rect.left,py=clientY-rect.top,origin=viewportOrigin();
+        const candidates=["lumiere","shiopon"].map(id=>{
+          const actor=stageActor(id),ref=stageActorRef(id);
+          const x=(ref.x*scale.x-origin.x)*camera.zoom;
+          const feetY=(actor.y+actor.stageOffsetY-origin.y)*camera.zoom;
+          const halfW=(id==="lumiere"?54:34)*camera.zoom;
+          const height=(id==="lumiere"?88:82)*camera.zoom;
+          return {id,left:x-halfW,right:x+halfW,top:feetY-height,bottom:feetY+10*camera.zoom};
+        });
+        return candidates.find(hit=>px>=hit.left&&px<=hit.right&&py>=hit.top&&py<=hit.bottom)?.id||null;
+      },
       moveAway(){return this.nearGate(62)?this.perform({type:"step",actor:"shion",direction:"down",distance:12,duration:240}).promise:Promise.resolve({completed:true});},
       flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
       setLumiereDeparted(value=true){aftermathLumiereEnabled=!value;},
