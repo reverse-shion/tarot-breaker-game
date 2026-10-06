@@ -72,7 +72,11 @@
    throw new Error('Aftermath control return verification failed');
  }
  async function play(s){
-  state(s,'INTRODUCTION');await s.clock.wait(300);s.scene.face('lumiere','shion');await say(s,0);await s.clock.wait(300);
+  state(s,'INTRODUCTION');
+  // The present reveal remains Shion-only for this beat; companions return only with the Aftermath dialogue.
+  await s.clock.wait(300);
+  s.scene.setActorVisibility?.('lumiere',1);s.scene.setActorVisibility?.('shiopon',1);s.scene.setActorVisibility?.('shion',1);
+  s.scene.face('lumiere','shion');await say(s,0);await s.clock.wait(300);
   s.scene.face('shion','lumiere');await say(s,1);
   const peers=s.scene.getState().actors;
   if(Math.abs(peers.shiopon.x-peers.lumiere.x)<28&&Math.abs(peers.shiopon.y-peers.lumiere.y)<32&&Math.hypot(peers.shiopon.x-peers.shion.x,peers.shiopon.y-peers.shion.y)>48)
@@ -99,7 +103,10 @@
  function start(reportValue){
   if(consumed||!eligible(reportValue))return false;const scene=window.TarotAftermathScene;if(!scene)return false;
   // The preceding notification is synchronous after Stage 3 cleanup/unlock.
-  const a0=scene.capture();a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
+  const a0=scene.capture();
+  // Stage3 intentionally hands off with both companions hidden. Cancellation restores the stable post-event Garden.
+  if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};
+  a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
   const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[]};s.clock=aftermathClock(s.controller.signal);
   try{scene.lock(s.owner);scene.clearInput();document.getElementById('game-shell').classList.add('aftermath-weak-light');makeUi(s);
    s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
