@@ -75,7 +75,7 @@ async function showArcanaDetail(){
  try{
   phase('NORMAL_HOLD');await current.clock.wait(800);
   phase('NORMAL_SETTLE');await current.clock.tween(350,p=>{images.normal.style.filter='brightness('+(1-.08*p)+')';});
-  phase('TRANSFORM');await current.clock.tween(800,p=>{images.normal.style.opacity=String(1-p);images.re.style.opacity=String(p);});
+  phase('TRANSFORM');current.futureAudio?.transformStart();await current.clock.tween(800,p=>{images.normal.style.opacity=String(1-p);images.re.style.opacity=String(p);current.futureAudio?.transform(p);});current.futureAudio?.transformEnd();
   current.clock.assert();
   const main=root.querySelector('.sga-shion-main');main.src=ASSETS.shionCheckRe;
   // Same512 source canvas/03 anchor: replace only the image, retain all geometry.
@@ -456,7 +456,7 @@ async function futureFixationStage1(){
  root.classList.remove("sga-future-blink-1");await pause(150);
  root.classList.add("sga-future-blink-2");await pause(150);
  root.classList.remove("sga-future-blink-2");await pause(200);
- window.TarotAudio?.setCinematicSilence?.(true,200);
+ session.audio.pause();session.futureAudio?.pause('ENTRY_BLACK');
  root.classList.add("sga-future-black");await pause(500);
  // Keep the world actor at its exact world coordinate; visibility is the only actor mutation.
  window.TarotActorVisibility?.set("shiopon",0);
@@ -503,6 +503,7 @@ async function futureFixationStage2(){
  for(let i=1;i<=20;i++){
   const progress=i/20;
   vision.setOpacity(progress);
+  if(i===1)session.futureAudio?.ruinsVisible();
   actorVisibility?.set("shion",1-(1-FUTURE_VISION_CURRENT_SHION_OPACITY)*progress);
   await pause(850/20);
  }
@@ -592,7 +593,7 @@ async function futureFixationStage3(){
  if(!card||!surge)throw new Error("Future Fixation Stage 3 anomaly layers unavailable");
 
  root.classList.add("sga-card-phase","sga-future-shion-settle");
- window.TarotAudio?.setCinematicSilence?.(false,240);
+ // Future tracks retain ownership; the ordinary BGM stays paused.
 
  // SEQUENCE 01 — Future Shion is visually distinct, but this effect never moves him.
  setShion(1);
@@ -717,7 +718,7 @@ async function runStage3Latter(before){
   rifts.append(img);nodes[registration.id]=img;
  }root.append(rifts);
  const white=document.createElement('div'),black=document.createElement('div');white.className='sga-v192-white';black.className='sga-v192-black';document.body.append(white,black);
- let surface=null,whiteSnapshot=null,backgroundValues={scale:1,opacity:1,saturation:1,contrast:1};
+ let surface=null,backgroundValues={scale:1,opacity:1,saturation:1,contrast:1};
  const safeResume=(snapshot,label)=>{audio.resume(snapshot).then(ok=>{if(!ok)current.audioFailures.push(label);});};
  const presentReady=()=>{if(!current.p0||current.p0.mapId!=='star_gate_garden'||!Number.isFinite(current.p0.player.x)||!preparedImages.get(ASSETS.ruins)||!current.scene.getState().owner||!current.scene.getState().presentPrepared)throw new Error('P0 not prepared');};
  const adapter={
@@ -732,11 +733,11 @@ async function runStage3Latter(before){
   checkFixed(){if(current.phase==='FULL_WHITE'||current.phase==='FUTURE_RESTORE'||current.phase==='MEMORY_GAP'||current.phase==='MISSION_RESUME'||current.phase==='FUTURE_FADE'||current.phase==='BLACK_CUT'||current.phase==='PRESENT_RESTORE')return;
    assertGeometry(current.fixed,actorGeometry(5),['left','top','width','height','footX','footY']);assertGeometry(current.arcana,arcanaGeometry(),['x','y','width','height','rotation']);},
   rift(id,opacity,scale){const n=nodes[id];n.style.opacity=String(opacity);n.style.visibility=opacity>0?'visible':'hidden';n.style.transform='scale('+scale+')';},
-  say:text=>say('shion',text),audioLevel:k=>audio.setLevel(k),
+  say:text=>say('shion',text),audioLevel:k=>current.futureAudio?.setLevel(k),
   startAbsorption(){scene.activateAbsorption(surface);},
   absorb(values){Object.assign(backgroundValues,values);surface.style.transform='scale('+backgroundValues.scale+')';surface.style.opacity=String(backgroundValues.opacity);surface.style.filter='saturate('+backgroundValues.saturation+') contrast('+backgroundValues.contrast+')';},
   white:k=>{white.style.opacity=String(k);},black:k=>{black.style.opacity=String(k);},
-  pauseFutureAudio(){whiteSnapshot=audio.pause();},
+  pauseFutureAudio(){current.futureAudio?.pause(current.phase);audio.pause();},
   async restoreFuture(ctx){
    current.clock.assert();scene.removeAbsorption();rifts.remove();card.remove();
    root.classList.remove('sga-card-handed-off');main.src=current.r0.source;
@@ -748,11 +749,11 @@ async function runStage3Latter(before){
    if(root.querySelector('.sga-card')||document.querySelector('[data-stage3-background]'))throw new Error('R1 layers remained');
   },
   draw:ctx=>scene.waitDraw(ctx),recordHold:(which,result)=>current.holds.push({which,...result}),
-  resumeFutureAudio(){safeResume({...whiteSnapshot,playing:whiteSnapshot.playing&&current.r0.audio.playing},'R1');},
+  resumeFutureAudio(){current.futureAudio?.resumeWhite();},
   assertPresentPrepared:presentReady,
   async restorePresent(ctx){current.clock.assert();root.classList.add('sga-present-restored');await scene.restore(current.p0,ctx);current.clock.assert();if(!ctx.alive())throw new Error("P0 restoration expired");
-   if(!scene.verify(current.p0).completed)throw new Error('P0 verification failed');current.restored=true;},
-  resumePresentAudio(){audio.setBase(current.p0.audio.base);safeResume(current.p0.audio,'P0');},
+   if(!scene.verify(current.p0).completed)throw new Error('P0 verification failed');current.restored=true;await preparePresentAudio(current);},
+  resumePresentAudio(){current.futureAudio?.pause('PRESENT');audio.setBase(current.p0.audio.base);audio.setLevel(0);safeResume(current.p0.audio,'P0');},
   presentAudioLevel:p=>audio.setLevel(p*current.p0.audio.coefficient),
   async reaction(){const flinch=flinchVectorForDir(current.p0.player.dir),original=faceVectorForDir(current.p0.player.dir),p=current.p0.player;
    await window.TarotStage.perform({type:'face',actor:'shion',target:{x:p.x+flinch.x,y:p.y+flinch.y}}).promise;await pause(140);
@@ -761,9 +762,17 @@ async function runStage3Latter(before){
  };
  await window.TarotFutureStage3.run(adapter,current.clock);
 }
+async function preparePresentAudio(current){
+ current.clock.assert();
+ // Retain the original ordinary source/position, silently seek under black.
+ // Actual play remains owned by resumePresentAudio at the existing reveal cue.
+ current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);
+ try{if(!await current.audio.resume({...current.p0.audio,playing:false}))current.audioFailures.push('P0-prepare');}
+ catch(e){current.audioFailures.push('P0-prepare: '+String(e));}
+}
 async function recoverPresent(current){
  current.restored=false;
- resolveAdvance=null;ui?.hide();current.audio?.pause();window.TarotStage?.cancelAll();
+ resolveAdvance=null;ui?.hide();current.futureAudio?.dispose();current.audio?.pause();window.TarotStage?.cancelAll();
  for(const n of document.querySelectorAll('.sga-v192-white'))n.remove();
  let black=document.querySelector('.sga-v192-black');if(!black){black=document.createElement('div');black.className='sga-v192-black';document.body.append(black);}black.style.opacity='1';
  const recoveryClock=window.TarotFutureStage3.createClock(null);
@@ -801,6 +810,7 @@ async function run(){
  try{
  current.p0=current.scene.capture();current.audio=window.TarotAudio.beginEventSession();current.p0.audio=current.audio.capture();
  current.scene.lock(current.id);current.audio.setBase(.16);
+ current.futureAudio=window.TarotFutureVisionAudio?.create({clock:current.clock,signal:current.controller.signal,failures:current.audioFailures,id:current.id});
   await preload();current.clock.assert();mount();root.className='active sga-v192';root.setAttribute('aria-hidden','false');
   await resonance();current.clock.assert();
   // P0 was captured once before all presentation/audio/visibility changes.
@@ -809,7 +819,7 @@ async function run(){
  }catch(e){current.error=String(e);console.warn('Stage 3 interrupted',e);current.scene?.freezeCamera();current.controller.abort();await recoverPresent(current);}
  finally{
   document.removeEventListener('visibilitychange',hidden);window.removeEventListener('resize',resized);
-  resolveAdvance=null;ui?.hide();current.clock.dispose();
+  resolveAdvance=null;ui?.hide();current.futureAudio?.dispose();current.clock.dispose();
   if(current.restored){releasePresentation();current.scene.unlock(current.id);current.audio?.release();}
   running=false;lastResult=report(current);window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
  }
@@ -820,7 +830,7 @@ function releasePresentation(){
  cleanupGateState({preserveFinal:false});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
 }
 function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
- states:current.states,dialogues:current.dialogues,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
+ futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});

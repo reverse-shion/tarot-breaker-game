@@ -20,5 +20,5 @@
  // Existing production Progress observer must not see a production backend.
  window.TarotGardenDevTransit=Object.freeze({ok:true,context:window.TarotStage3DevFixture.context,projection:Object.freeze({gardenStory:state.gardenStory})});
  document.write('<link rel="stylesheet" href="./star-gate-anomaly.css?v=stage3-v192"><link rel="stylesheet" href="./future-stage3.css?v=stage3-v192"><link rel="stylesheet" href="./star-gate-interaction.css?v=front-integration"><link rel="stylesheet" href="./star-gate-aftermath.css?v=aftermath-v13">');
- document.write('<script src="./dev-checkpoints.js?v=stage3-v192" defer><\/script><script src="./future-stage3.js?v=stage3-v192" defer><\/script><script src="./star-gate-anomaly.js?v=stage3-v192" defer><\/script><script src="./star-gate-interaction.js?v=front-integration" defer><\/script><script src="./star-gate-aftermath.js?v=aftermath-v13" defer><\/script>');
+ document.write('<script src="./dev-checkpoints.js?v=stage3-v192" defer><\/script><script src="./future-stage3.js?v=stage3-v192" defer><\/script><script src="./future-vision-audio.js?v=audio-v1" defer><\/script><script src="./star-gate-anomaly.js?v=stage3-v192" defer><\/script><script src="./star-gate-interaction.js?v=front-integration" defer><\/script><script src="./star-gate-aftermath.js?v=aftermath-v13" defer><\/script>');
 })();
