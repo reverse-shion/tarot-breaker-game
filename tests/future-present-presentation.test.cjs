@@ -13,9 +13,9 @@ test('successful present return hands off from Shion-only Stage3 and preserves a
 
 test('Present Return v1.3 reveals both companions before optional checks and returns free control',()=>{
  assert.match(aftermath,/state\(s,'RETURN_RECOGNITION'\);[\s\S]*setActorVisibility\?\.\('shion',1\);[\s\S]*setActorVisibility\?\.\('shiopon',1\);[\s\S]*setActorVisibility\?\.\('lumiere',1\)/);
- assert.match(aftermath,/await s\.clock\.wait\(900\);[\s\S]*releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\);startTalkScanner\(s\)/);
- assert.match(aftermath,/if\(s\.checked\.size<2\)\{releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\);startTalkScanner\(s\);return;\}[\s\S]*await groupConversation\(s\)/);
- assert.match(aftermath,/if\(a0\.visibility\)a0\.visibility=\{\.\.\.a0\.visibility,shion:1,shiopon:1,lumiere:1\}/);
+ assert.match(aftermath,/await s\.clock\.wait\(900\);[\s\S]*releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\)/);
+ assert.match(aftermath,/if\(s\.checked\.size<2\)\{releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\);return;\}[\s\S]*await groupConversation\(s\)/);
+ assert.match(aftermath,/if\(a0\.visibility\)a0\.visibility=\{\.\.\.a0\.visibility,shion:1,shiopon:1,lumiere:1\}/);assert.match(aftermath,/installTalkInput\(s\)/);assert.doesNotMatch(aftermath,/aftermath-talk|startTalkScanner|話しかける/);
 });
 
 test('Aftermath weak-light cannot overwrite the corrupted black-purple gate',()=>{
