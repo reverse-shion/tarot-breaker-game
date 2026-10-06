@@ -9,8 +9,8 @@ function harness({abortAt=null,decoded=true}={}){
  const node=()=>({style:{},children:[],classList:classList(),setAttribute(){},appendChild(card){this.children.push(card)},remove(){attached=attached.filter(n=>n!==this)}});
  const session={clock:null,futureAudio:{
   arcanaAnomalyStart(){audioCalls.push(['micro',time])},
+  arcanaInfectionStart(){audioCalls.push(['infection-start',time])},
   arcanaInfection(p){audioCalls.push(['infection',time,p])},
-  arcanaBreak(){audioCalls.push(['break',time])},
   arcanaRewrite(){audioCalls.push(['rewrite',time])}
  }};
  const snapshot=()=>{const frame=attached[0]?.children[0];if(!frame)return;frames.push({time,phase:session.cardDetail?.phase,normal:{...frame.children[0].style},re:{...frame.children[1].style},classes:[...frame.classList.items]});};
@@ -21,42 +21,45 @@ function harness({abortAt=null,decoded=true}={}){
  vm.createContext(context);vm.runInContext(functionSource+';this.show=showArcanaDetail;',context);
  return {run:()=>context.show(),session,waits,frames,switches,audioCalls,worldClasses,attached:()=>attached};
 }
-test('semantic erosion cut lasts2790ms and rewrites Arcana atomically after the140ms break',async()=>{
+test('edge erosion lasts4600ms and holds completed Re Arcana for1800ms',async()=>{
  const h=harness();await h.run();
- assert.deepEqual(h.waits,[550,650,800,140,650]);
- assert.equal(h.session.cardDetail.endedAt-h.session.cardDetail.startedAt,2790);
- assert.deepEqual(h.switches,[{time:2140,value:'pose.webp'}]);
+ assert.deepEqual(h.waits,[550,650,1600,1800]);
+ assert.equal(h.session.cardDetail.endedAt-h.session.cardDetail.startedAt,4600);
+ assert.deepEqual(h.switches,[{time:2800,value:'pose.webp'}]);
  assert.deepEqual(Array.from(h.session.cardDetail.phases,p=>[p.name,p.time]),[
-  ['NORMAL_HOLD',0],['MICRO_ANOMALY',550],['LOCAL_EROSION',1200],['SEMANTIC_BREAK',2000],['REWRITE',2140],['RE_HOLD',2140]
+  ['NORMAL_HOLD',0],['MICRO_ANOMALY',550],['EDGE_EROSION',1200],['RE_COMPLETE',2800],['RE_HOLD',2800]
  ]);
  assert.equal(h.attached().length,0);assert.equal(h.worldClasses.contains('sga-rewrite-world-tension'),true);
 });
-test('micro anomaly and local erosion never opacity-crossfade normal and Re cards',async()=>{
+test('Re Arcana eats inward from an angled card edge with a soft feather, never a central circular wipe',async()=>{
  const h=harness();await h.run();
- const micro=h.frames.find(f=>f.phase==='MICRO_ANOMALY'),erosion=h.frames.find(f=>f.phase==='LOCAL_EROSION');
+ const micro=h.frames.find(f=>f.phase==='MICRO_ANOMALY'),erosion=h.frames.find(f=>f.phase==='EDGE_EROSION');
  assert.equal(micro.normal.opacity,'1');assert.equal(micro.re.opacity,'0');
  assert.equal(erosion.normal.opacity,'1');assert.equal(erosion.re.opacity,'1');
- assert.match(erosion.re.clipPath,/^circle\(/);assert.notEqual(erosion.re.clipPath,'none');
+ assert.match(erosion.re.maskImage,/linear-gradient\(103deg/);
+ assert.match(erosion.re.maskImage,/rgba\(0,0,0,\.72\)/);
+ assert.match(erosion.re.maskImage,/rgba\(0,0,0,\.22\)/);
+ assert.doesNotMatch(erosion.re.maskImage,/circle/);
  assert.ok(Math.abs(parseFloat(micro.normal.transform.match(/translate\(([-\d.]+)px/)[1]))<=1.5);
- assert.doesNotMatch(source,/images\.normal\.style\.opacity=String\(1-p\)/);
- assert.doesNotMatch(source,/images\.re\.style\.opacity=String\(p\)/);
- assert.doesNotMatch(source,/phase\('TRANSFORM'\)/);
+ assert.doesNotMatch(source,/clipPath='circle/);
+ assert.doesNotMatch(source,/phase\('SEMANTIC_BREAK'\)/);
+ assert.doesNotMatch(source,/arcanaBreak/);
 });
-test('detail cards preserve authored registration while erosion changes only rendering properties',async()=>{
+test('detail cards preserve authored registration while edge mask changes only rendering properties',async()=>{
  const h=harness();await h.run();const {normal,re}=h.frames[0],n=parseFloat(normal.width)/1024,r=parseFloat(re.width)/853;
  assert.ok(Math.abs(parseFloat(normal.height)/1536-n)<1e-8);assert.ok(Math.abs(parseFloat(re.height)/1280-r)<1e-8);assert.ok(Math.abs(1412*n-1221*r)<1e-8);
  assert.ok(Math.abs(parseFloat(normal.left)+509*n-(parseFloat(re.left)+426.5*r))<1e-8);assert.ok(Math.abs(parseFloat(normal.top)+752*n-(parseFloat(re.top)+636.5*r))<1e-8);
  for(const frame of h.frames)for(const key of ['width','height','left','top'])assert.equal(frame.normal[key],h.frames[0].normal[key]);
 });
-test('audio removes the normal world sound, creates a semantic gap, then switches to fix without transform crossfade',async()=>{
+test('audio stays continuous: infection begins at erosion start and rewrite follows with no silent-break cue',async()=>{
  const h=harness();await h.run();
- assert.deepEqual(h.audioCalls.map(x=>x[0]),['micro','infection','infection','infection','break','rewrite']);
- assert.equal(h.audioCalls.find(x=>x[0]==='break')[1],2000);
- assert.equal(h.audioCalls.find(x=>x[0]==='rewrite')[1],2140);
- assert.doesNotMatch(source,/futureAudio\?\.transform(Start|End)?/);
+ assert.deepEqual(h.audioCalls.map(x=>x[0]),['micro','infection-start','infection','infection','infection','rewrite']);
+ assert.equal(h.audioCalls.find(x=>x[0]==='infection-start')[1],1200);
+ assert.equal(h.audioCalls.find(x=>x[0]==='rewrite')[1],2800);
+ assert.doesNotMatch(source,/futureAudio\?\.arcanaBreak/);
 });
 test('each cancelled phase releases overlay and never rewrites early',async()=>{
- for(const abortAt of [0,550,1200,2000,2140]){const h=harness({abortAt});await assert.rejects(h.run(),/cancelled/);assert.equal(h.attached().length,0);assert.equal(h.switches.length,abortAt===2140?1:0);}
+ for(const abortAt of [0,550,1200,2800]){const h=harness({abortAt});await assert.rejects(h.run(),/cancelled/);assert.equal(h.attached().length,0);assert.equal(h.switches.length,abortAt===2800?1:0);}
 });
 test('detail refuses an unprepared image before mounting or advancing',async()=>{
  const h=harness({decoded:false});await assert.rejects(h.run(),/not decoded/);assert.equal(h.attached().length,0);assert.deepEqual(h.waits,[]);assert.deepEqual(h.switches,[]);
