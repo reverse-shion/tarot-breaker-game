@@ -45,9 +45,26 @@ function create({clock,signal,failures,id}){
  function pause(reason){phase=reason;for(const t of Object.values(tracks))stop(t);record('pause');}
  const api={unlock,
   ruinsVisible(){phase='RUINS';play('ruins',1.8,.70);const start=clock.now();const ramp=()=>{if(!alive||signal.aborted||phase!=='RUINS')return;tracks.ruins.weight=Math.min(1,(clock.now()-start)/250);apply();if(tracks.ruins.weight<1)requestAnimationFrame(ramp);};ramp();},
-  transformStart(){phase='TRANSFORM';play('fix',20,.50);},
-  transform(p){tracks.ruins.weight=1-p;tracks.fix.weight=p;apply();},
-  transformEnd(){stop(tracks.ruins);tracks.fix.weight=1;phase='FIX';apply();},
+  arcanaAnomalyStart(){
+   phase='ARCANA_MICRO';
+   // Remove a little of the existing world sound; do not announce a transformation.
+   tracks.ruins.weight=Math.min(tracks.ruins.weight||1,.94);apply();
+  },
+  arcanaInfection(p){
+   phase='ARCANA_INFECTION';
+   const progress=Math.max(0,Math.min(1,p));
+   // The normal sound is being taken away. The replacement track does not enter yet.
+   tracks.ruins.weight=.94-.44*progress;apply();
+  },
+  arcanaBreak(){
+   phase='ARCANA_BREAK';
+   // 100–200ms semantic gap: almost silence, but no hard global audio stop.
+   tracks.ruins.weight=.06;apply();
+  },
+  arcanaRewrite(){
+   // Atomic visual rewrite owns the musical answer too: no ruins/fix crossfade.
+   stop(tracks.ruins);phase='FIX';play('fix',20,.50);tracks.fix.weight=1;apply();
+  },
   setLevel(k){level=Math.max(0,Math.min(1,k));apply();},
   pause,
   resumeWhite(){phase='POST_WHITE';level=0;play('ruins',1.8,.25);tracks.ruins.weight=1;apply();},
