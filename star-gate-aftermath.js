@@ -68,26 +68,39 @@
   s.ui=window.TarotDialogueUI.create({mount,ids:{layer:'aftermath-dialogue',advance:'aftermath-advance',speaker:'aftermath-speaker',text:'aftermath-text'},
    wait:ms=>s.clock.wait(ms).catch(()=>{}),onAdvance:()=>{if(!alive(s)||document.hidden)return;const next=s.resolveLine;s.resolveLine=null;s.ui.hide();next?.();}});
  }
- function makeTalkPrompt(s){
-  const mount=document.getElementById('game-shell')||document.body;
-  const panel=document.createElement('aside');panel.id='aftermath-talk';panel.hidden=true;panel.setAttribute('aria-label','仲間との会話');
-  const label=document.createElement('span');label.id='aftermath-talk-label';
-  const button=document.createElement('button');button.id='aftermath-talk-button';button.type='button';button.textContent='話す';
-  panel.append(label,button);mount.append(panel);s.talkPanel=panel;s.talkLabel=label;s.talkButton=button;
-  button.addEventListener('click',event=>{event.preventDefault?.();event.stopPropagation?.();const actor=s.nearActor;if(actor)talk(actor);});
+ function tappedActor(s,event){
+  if(!alive(s)||s.state!=='CHECK_COMPANIONS'||document.hidden||event.isPrimary===false)return null;
+  const actor=s.scene.hitTestActor?.(event.clientX,event.clientY);
+  if(!actor||!['shiopon','lumiere'].includes(actor))return null;
+  const view=s.scene.getState();
+  return distance(view.actors.shion,view.actors[actor])<=TALK_RADIUS+8?actor:null;
  }
- function hideTalk(s){if(!s?.talkPanel)return;s.talkPanel.hidden=true;s.nearActor=null;}
- function scanTalk(s){
-  if(!alive(s)||s.state!=='CHECK_COMPANIONS'||document.hidden){hideTalk(s);return;}
-  const view=s.scene.getState(),player=view.actors.shion;
-  const candidates=['shiopon','lumiere'].map(actor=>({actor,d:distance(player,view.actors[actor]),seen:s.checked.has(actor)})).filter(x=>x.d<=TALK_RADIUS).sort((a,b)=>(a.seen-b.seen)||(a.d-b.d));
-  if(!candidates.length){hideTalk(s);return;}
-  const actor=candidates[0].actor;s.nearActor=actor;s.talkLabel.textContent=`${NAMES[actor]}に話しかける`;s.talkPanel.hidden=false;
+ function installTalkInput(s){
+  const canvas=document.getElementById('game');if(!canvas)return;
+  s.talkCanvas=canvas;
+  s.talkDown=event=>{
+   const actor=tappedActor(s,event);if(!actor)return;
+   s.pendingTalk={pointerId:event.pointerId,actor};event.preventDefault?.();event.stopImmediatePropagation?.();
+  };
+  s.talkUp=event=>{
+   const pending=s.pendingTalk;s.pendingTalk=null;
+   if(!pending||pending.pointerId!==event.pointerId)return;
+   const actor=tappedActor(s,event);
+   if(actor!==pending.actor)return;
+   event.preventDefault?.();event.stopImmediatePropagation?.();talk(actor);
+  };
+  s.talkCancel=event=>{if(s.pendingTalk?.pointerId===event.pointerId)s.pendingTalk=null;};
+  canvas.addEventListener('pointerdown',s.talkDown,true);
+  canvas.addEventListener('pointerup',s.talkUp,true);
+  canvas.addEventListener('pointercancel',s.talkCancel,true);
  }
- function startTalkScanner(s){
-  stopTalkScanner(s);scanTalk(s);s.talkTimer=window.setInterval(()=>scanTalk(s),120);
+ function removeTalkInput(s){
+  if(!s?.talkCanvas)return;
+  s.talkCanvas.removeEventListener('pointerdown',s.talkDown,true);
+  s.talkCanvas.removeEventListener('pointerup',s.talkUp,true);
+  s.talkCanvas.removeEventListener('pointercancel',s.talkCancel,true);
+  s.pendingTalk=null;s.talkCanvas=null;
  }
- function stopTalkScanner(s){if(s?.talkTimer!=null){window.clearInterval(s.talkTimer);s.talkTimer=null;}hideTalk(s);}
  function objective(s,text,notice=''){
   if(!s.panel||!s.objective||!s.notice){s.panel?.remove();s.panel=document.createElement('aside');s.panel.id='aftermath-status';s.objective=document.createElement('span');s.objective.id='aftermath-objective';s.notice=document.createElement('span');s.notice.id='aftermath-notice';s.panel.append(s.objective,s.notice);(document.getElementById('game-shell')||document.body).append(s.panel);}
   s.objective.textContent=text;s.notice.textContent=notice;s.panel.hidden=false;
@@ -120,14 +133,14 @@
   s.scene.setActorVisibility?.('shion',1);s.scene.setActorVisibility?.('shiopon',1);s.scene.setActorVisibility?.('lumiere',1);
   window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
   s.scene.face('shion','gate');s.scene.face('shiopon','shion');s.scene.face('lumiere','gate');
-  await s.clock.wait(900);s.scene.gameplayCamera();releaseControl(s,false);state(s,'CHECK_COMPANIONS');startTalkScanner(s);
+  await s.clock.wait(900);s.scene.gameplayCamera();releaseControl(s,false);state(s,'CHECK_COMPANIONS');
  }
  async function individualConversation(s,actor){
-  if(s.checked.has(actor)){await sayLine(s,`R-${actor}`,REPEAT[actor]);releaseControl(s,false);state(s,'CHECK_COMPANIONS');startTalkScanner(s);return;}
+  if(s.checked.has(actor)){await sayLine(s,`R-${actor}`,REPEAT[actor]);releaseControl(s,false);state(s,'CHECK_COMPANIONS');return;}
   if(actor==='shiopon'){s.scene.face('shion','shiopon');s.scene.face('shiopon','shion');}
   else{s.scene.face('shion','lumiere');s.scene.face('lumiere','shion');}
   await sayBlock(s,actor==='shiopon'?'S':'L',INDIVIDUAL[actor]);s.checked.add(actor);
-  if(s.checked.size<2){releaseControl(s,false);state(s,'CHECK_COMPANIONS');startTalkScanner(s);return;}
+  if(s.checked.size<2){releaseControl(s,false);state(s,'CHECK_COMPANIONS');return;}
   await groupConversation(s);
  }
  async function groupConversation(s){
@@ -144,7 +157,7 @@
   if(s.a0.following)window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-start'));else window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
   releaseControl(s,s.a0.following);
   if(s.scene.getState().lumiereEnabled!==false)throw new Error('Aftermath departure verification failed');
-  s.ui.hide();s.ui.destroy();s.ui.elements.layer.remove();stopTalkScanner(s);s.clock.dispose();removeListeners(s);
+  s.ui.hide();s.ui.destroy();s.ui.elements.layer.remove();s.clock.dispose();removeListeners(s);
   s.completed=true;state(s,'COMPLETED');window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-ended',{detail:report(s)}));
  }
  async function talk(actor){
@@ -153,9 +166,9 @@
   stopTalkScanner(s);lockForDialogue(s);state(s,`TALK_${actor.toUpperCase()}`);
   try{await individualConversation(s,actor);return true;}catch(error){if(!s.cancelled){s.error=String(error);await cancel('error');}return false;}
  }
- function removeListeners(s){stopTalkScanner(s);window.removeEventListener('keydown',s.keyGuard,true);window.removeEventListener('keyup',s.keyRelease,true);document.removeEventListener('visibilitychange',s.hidden);window.removeEventListener('resize',s.resize);}
+ function removeListeners(s){removeTalkInput(s);window.removeEventListener('keydown',s.keyGuard,true);window.removeEventListener('keyup',s.keyRelease,true);document.removeEventListener('visibilitychange',s.hidden);window.removeEventListener('resize',s.resize);}
  async function cancel(reason='cancelled'){
-  const s=session;if(!s||s.completed||s.cancelled)return false;s.cancelled=true;s.reason=reason;s.ui?.hide();s.controller.abort();removeListeners(s);s.clock.dispose();s.scene.pause(false);s.ui?.destroy();s.ui?.elements.layer.remove();s.talkPanel?.remove();
+  const s=session;if(!s||s.completed||s.cancelled)return false;s.cancelled=true;s.reason=reason;s.ui?.hide();s.controller.abort();removeListeners(s);s.clock.dispose();s.scene.pause(false);s.ui?.destroy();s.ui?.elements.layer.remove();
   try{s.scene.lock(s.owner);await s.scene.restore(s.a0);document.getElementById('game-shell').classList.toggle('aftermath-weak-light',s.a0.weakLight);const verified=s.scene.verify(s.a0);if(verified===false||verified?.completed===false||verified?.ok===false)throw new Error('Aftermath A0 verification failed');releaseControl(s,s.a0.following);s.restored=true;s.state='CANCELLED';objective(s,'','イベントを中断しました。再読み込みでやり直せます');}
   catch(error){s.error=String(error);s.state='RESTORE_FAILED';try{s.scene.lock(s.owner);}catch(lockError){s.lockError=String(lockError);}objective(s,'','画面を復元できませんでした。再読み込みしてください。');}
   window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-ended',{detail:report(s)}));return true;
@@ -164,12 +177,12 @@
  function start(reportValue){
   if(consumed||!eligible(reportValue))return false;const scene=window.TarotAftermathScene;if(!scene)return false;
   const a0=scene.capture();if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
-  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[],checked:new Set(),talkTimer:null};s.clock=aftermathClock(s.controller.signal);
+  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[],checked:new Set()};s.clock=aftermathClock(s.controller.signal);
   try{
-   scene.lock(s.owner);scene.clearInput();document.getElementById('game-shell').classList.add('aftermath-weak-light');makeUi(s);makeTalkPrompt(s);
+   scene.lock(s.owner);scene.clearInput();document.getElementById('game-shell').classList.add('aftermath-weak-light');makeUi(s);installTalkInput(s);
    s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
-   s.hidden=()=>{scene.pause(document.hidden);if(document.hidden)hideTalk(s);else{scene.clearInput();if(s.focus)scene.focusGate();scanTalk(s);}};
-   s.resize=()=>{if(!alive(s))return;scene.clearInput();if(s.focus)scene.focusGate();scanTalk(s);};document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
+   s.hidden=()=>{scene.pause(document.hidden);if(document.hidden)s.pendingTalk=null;else{scene.clearInput();if(s.focus)scene.focusGate();}};
+   s.resize=()=>{if(!alive(s))return;scene.clearInput();if(s.focus)scene.focusGate();};document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
    opening(s).catch(error=>{if(!s.cancelled){s.error=String(error);cancel('error');}});return true;
   }catch(error){s.error=String(error);cancel('error');return false;}
  }
