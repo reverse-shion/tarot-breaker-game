@@ -74,20 +74,30 @@ async function showArcanaDetail(){
   });
   frame.appendChild(card);images[key]=card;
  }
- images.re.style.clipPath='circle(0% at 50% 50%)';
- images.re.style.webkitClipPath='circle(0% at 50% 50%)';
+ // Re:Arcana starts completely hidden. It will eat in from the outer edge with a soft mask,
+ // never from a clean circular wipe or a hard-edged clip.
+ const setErosionMask=p=>{
+  const progress=Math.max(0,Math.min(1,p));
+  const advance=-10+120*progress;
+  const solid=Math.max(0,Math.min(100,advance-7));
+  const mid=Math.max(0,Math.min(100,advance+1));
+  const feather=Math.max(0,Math.min(100,advance+11));
+  const clear=Math.max(0,Math.min(100,advance+15));
+  const mask='linear-gradient(103deg,rgba(0,0,0,1) 0%,rgba(0,0,0,1) '+solid.toFixed(2)+'%,rgba(0,0,0,.72) '+mid.toFixed(2)+'%,rgba(0,0,0,.22) '+feather.toFixed(2)+'%,rgba(0,0,0,0) '+clear.toFixed(2)+'%)';
+  images.re.style.webkitMaskImage=mask;images.re.style.maskImage=mask;
+ };
+ setErosionMask(0);
  document.body.appendChild(layer);
- current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:2790,phases:[],registration:ARCANA_DETAIL_REGISTRATION};
+ current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:4600,phases:[],registration:ARCANA_DETAIL_REGISTRATION};
  const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
  const curve=(p,points)=>{
   const scaled=Math.max(0,Math.min(1,p))*(points.length-1),i=Math.min(points.length-2,Math.floor(scaled)),local=scaled-i;
   return points[i]+(points[i+1]-points[i])*local;
  };
  try{
-  // 0. Nothing "transforms": let the normal Arcana exist long enough to register as immutable.
   phase('NORMAL_HOLD');await current.clock.wait(550);
 
-  // 1. Micro anomaly: one broken light rhythm and a <=1.5px coordinate slip.
+  // Tiny law-of-the-world mismatch before the erosion becomes visible.
   phase('MICRO_ANOMALY');current.futureAudio?.arcanaAnomalyStart?.();
   await current.clock.tween(650,p=>{
    const brightness=curve(p,[1,.88,1.03,.95]);
@@ -97,34 +107,30 @@ async function showArcanaDetail(){
   });
   images.normal.style.transform='translate(0,0)';
 
-  // 2. Local semantic erosion: normal colour drains while Re markings leak through one central symbol region.
-  phase('LOCAL_EROSION');
-  await current.clock.tween(800,p=>{
-   const radius=(2+22*p).toFixed(2)+'%';
-   images.normal.style.filter='brightness('+( .95-.20*p).toFixed(3)+') saturate('+( .92-.78*p).toFixed(3)+') contrast('+(1+.04*p).toFixed(3)+')';
-   images.re.style.opacity='1';
-   images.re.style.clipPath='circle('+radius+' at 50% 50%)';
-   images.re.style.webkitClipPath='circle('+radius+' at 50% 50%)';
-   images.re.style.filter='brightness('+( .70+.06*p).toFixed(3)+') saturate('+( .44+.10*p).toFixed(3)+') contrast(1.05)';
+  // Re markings eat inward from the card edge. The advancing boundary is feathered,
+  // so the player sees an infection front rather than an image wipe.
+  phase('EDGE_EROSION');current.futureAudio?.arcanaInfectionStart?.();
+  images.re.style.opacity='1';
+  await current.clock.tween(1600,p=>{
+   setErosionMask(p);
+   images.normal.style.filter='brightness('+( .95-.16*p).toFixed(3)+') saturate('+( .92-.58*p).toFixed(3)+') contrast('+(1+.035*p).toFixed(3)+')';
+   images.re.style.filter='brightness('+( .73+.10*p).toFixed(3)+') saturate('+( .48+.18*p).toFixed(3)+') contrast(1.045)';
    current.futureAudio?.arcanaInfection?.(p);
   });
 
-  // 3. Meaning discontinuity: only the card vanishes into near-black; the ruined world stays visible.
-  phase('SEMANTIC_BREAK');current.futureAudio?.arcanaBreak?.();frame.classList.add('sga-semantic-break');
-  await current.clock.wait(140);
-
-  // 4. One-frame rewrite. No opacity crossfade, rotation, burst, particles or full-screen glitch.
-  phase('REWRITE');
+  // Cleanup is atomic but visually continuous: by this point the soft erosion front has already
+  // consumed the whole card. No blackout and no silent gap are inserted at the switch.
+  phase('RE_COMPLETE');
   images.normal.style.opacity='0';
   images.re.style.opacity='1';
-  images.re.style.clipPath='none';images.re.style.webkitClipPath='none';
+  images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
   images.re.style.filter='brightness(.86) saturate(.72) contrast(1.04)';
-  frame.classList.remove('sga-semantic-break');frame.classList.add('sga-rewrite-push','sga-re-residual');
+  frame.classList.add('sga-rewrite-push','sga-re-residual');
   current.futureAudio?.arcanaRewrite?.();
   const main=root.querySelector('.sga-shion-main');main.src=ASSETS.shionCheckRe;
 
-  // 5. Do not celebrate the result. Hold the changed card still so the player can register "it changed".
-  phase('RE_HOLD');await current.clock.wait(650);current.clock.assert();
+  // Give the player time to actually inspect the changed Arcana before the world answers.
+  phase('RE_HOLD');await current.clock.wait(1800);current.clock.assert();
   root.classList.add('sga-rewrite-world-tension');
  }finally{layer.remove();current.cardDetail.endedAt=current.clock.now();}
 }
