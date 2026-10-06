@@ -652,9 +652,10 @@ async function futureFixationStage3(){
 
  await showArcanaDetail();
 
- // SEQUENCE 02 — pose 03 has already completed the act of checking the Arcana.
- // Keep the low cinematic mix present; sound is removed later with the world itself.
+ // SEQUENCE 02 — Re:Arcana holds still first. 650ms after the rewrite the world answers
+ // with one restrained 720ms desaturation pulse; it must remain below the later Rift.
  await pause(720);
+ root.classList.remove('sga-rewrite-world-tension');
  await say("shion","……アルカナが……？");
  await pause(260);
 
