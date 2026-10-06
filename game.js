@@ -2156,6 +2156,10 @@
       unlock(owner){clearAftermathInput();const released=window.TarotStage3Scene.unlock(owner);if(released)aftermathOwner=null;return released;},
       clearInput:clearAftermathInput,
       pause(value){aftermathPaused=!!value;},setHiddenPaused(value){aftermathPaused=!!value;},
+      setActorVisibility(actorId,value){
+        if(!(actorId in actorVisibility))return false;
+        actorVisibility[actorId]=clamp(Number(value)||0,0,1);draw();return true;
+      },
       face(actor,target){return performStageCommand({type:"face",actor,target});},
       perform(command){const action=performStageCommand(command);aftermathMotions.add(action.id);action.promise.finally(()=>aftermathMotions.delete(action.id));return action;},
       gameplayCamera(){aftermathFocusBaseline=null;window.TarotCinematicCamera.release();return Promise.resolve({completed:true});},
@@ -2174,7 +2178,7 @@
       flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
       setLumiereDeparted(value=true){aftermathLumiereEnabled=!value;},
       setLumiereEnabled(value){aftermathLumiereEnabled=!!value;},
-      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended,npcSuspended};},
+      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,visibility:{...actorVisibility},lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended,npcSuspended};},
       async restore(a0){
         for(const id of aftermathMotions){for(const actorId of Object.keys(stageMotions)){const motion=stageMotions[actorId];if(motion?.id===id)settleStageMotion(actorId,motion,{skipped:true});}}
         aftermathMotions.clear();aftermathPaused=false;
