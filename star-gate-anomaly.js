@@ -66,21 +66,66 @@ async function showArcanaDetail(){
   const card=prepared.cloneNode();card.className="sga-arcana-detail-image "+key;card.alt="";
   const r=ARCANA_DETAIL_REGISTRATION[key],rb=ARCANA_DETAIL_REGISTRATION.re.bounds;
   const scale=k*(rb.bottom-rb.top)/(r.bounds.bottom-r.bounds.top);
-  Object.assign(card.style,{width:r.width*scale+"px",height:r.height*scale+"px",left:((rb.left+rb.right)/2*k-(r.bounds.left+r.bounds.right)/2*scale)+"px",top:((rb.top+rb.bottom)/2*k-(r.bounds.top+r.bounds.bottom)/2*scale)+"px",opacity:key==='normal'?'1':'0'});
+  Object.assign(card.style,{
+   width:r.width*scale+"px",height:r.height*scale+"px",
+   left:((rb.left+rb.right)/2*k-(r.bounds.left+r.bounds.right)/2*scale)+"px",
+   top:((rb.top+rb.bottom)/2*k-(r.bounds.top+r.bounds.bottom)/2*scale)+"px",
+   opacity:key==='normal'?'1':'0'
+  });
   frame.appendChild(card);images[key]=card;
  }
+ images.re.style.clipPath='circle(0% at 50% 50%)';
+ images.re.style.webkitClipPath='circle(0% at 50% 50%)';
  document.body.appendChild(layer);
- current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:2950,phases:[],registration:ARCANA_DETAIL_REGISTRATION};
+ current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:2790,phases:[],registration:ARCANA_DETAIL_REGISTRATION};
  const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
+ const curve=(p,points)=>{
+  const scaled=Math.max(0,Math.min(1,p))*(points.length-1),i=Math.min(points.length-2,Math.floor(scaled)),local=scaled-i;
+  return points[i]+(points[i+1]-points[i])*local;
+ };
  try{
-  phase('NORMAL_HOLD');await current.clock.wait(800);
-  phase('NORMAL_SETTLE');await current.clock.tween(350,p=>{images.normal.style.filter='brightness('+(1-.08*p)+')';});
-  phase('TRANSFORM');current.futureAudio?.transformStart();await current.clock.tween(800,p=>{images.normal.style.opacity=String(1-p);images.re.style.opacity=String(p);current.futureAudio?.transform(p);});current.futureAudio?.transformEnd();
-  current.clock.assert();
+  // 0. Nothing "transforms": let the normal Arcana exist long enough to register as immutable.
+  phase('NORMAL_HOLD');await current.clock.wait(550);
+
+  // 1. Micro anomaly: one broken light rhythm and a <=1.5px coordinate slip.
+  phase('MICRO_ANOMALY');current.futureAudio?.arcanaAnomalyStart?.();
+  await current.clock.tween(650,p=>{
+   const brightness=curve(p,[1,.88,1.03,.95]);
+   const slip=Math.sin(p*Math.PI*4)*1.35*(1-p);
+   images.normal.style.filter='brightness('+brightness.toFixed(3)+') saturate('+Math.max(.92,1-.06*p).toFixed(3)+')';
+   images.normal.style.transform='translate('+slip.toFixed(2)+'px,'+(-slip*.45).toFixed(2)+'px)';
+  });
+  images.normal.style.transform='translate(0,0)';
+
+  // 2. Local semantic erosion: normal colour drains while Re markings leak through one central symbol region.
+  phase('LOCAL_EROSION');
+  await current.clock.tween(800,p=>{
+   const radius=(2+22*p).toFixed(2)+'%';
+   images.normal.style.filter='brightness('+( .95-.20*p).toFixed(3)+') saturate('+( .92-.78*p).toFixed(3)+') contrast('+(1+.04*p).toFixed(3)+')';
+   images.re.style.opacity='1';
+   images.re.style.clipPath='circle('+radius+' at 50% 50%)';
+   images.re.style.webkitClipPath='circle('+radius+' at 50% 50%)';
+   images.re.style.filter='brightness('+( .70+.06*p).toFixed(3)+') saturate('+( .44+.10*p).toFixed(3)+') contrast(1.05)';
+   current.futureAudio?.arcanaInfection?.(p);
+  });
+
+  // 3. Meaning discontinuity: only the card vanishes into near-black; the ruined world stays visible.
+  phase('SEMANTIC_BREAK');current.futureAudio?.arcanaBreak?.();frame.classList.add('sga-semantic-break');
+  await current.clock.wait(140);
+
+  // 4. One-frame rewrite. No opacity crossfade, rotation, burst, particles or full-screen glitch.
+  phase('REWRITE');
+  images.normal.style.opacity='0';
+  images.re.style.opacity='1';
+  images.re.style.clipPath='none';images.re.style.webkitClipPath='none';
+  images.re.style.filter='brightness(.86) saturate(.72) contrast(1.04)';
+  frame.classList.remove('sga-semantic-break');frame.classList.add('sga-rewrite-push','sga-re-residual');
+  current.futureAudio?.arcanaRewrite?.();
   const main=root.querySelector('.sga-shion-main');main.src=ASSETS.shionCheckRe;
-  // Same512 source canvas/03 anchor: replace only the image, retain all geometry.
-  images.normal.style.opacity='0';images.re.style.opacity='1';images.re.style.filter='none';
-  phase('RE_HOLD');await current.clock.wait(1000);current.clock.assert();
+
+  // 5. Do not celebrate the result. Hold the changed card still so the player can register "it changed".
+  phase('RE_HOLD');await current.clock.wait(650);current.clock.assert();
+  root.classList.add('sga-rewrite-world-tension');
  }finally{layer.remove();current.cardDetail.endedAt=current.clock.now();}
 }
 function makeUi(){
