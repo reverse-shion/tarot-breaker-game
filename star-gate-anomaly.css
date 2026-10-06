@@ -524,6 +524,14 @@
   backdrop-filter:saturate(.82) brightness(.92);
   transition:opacity .60s ease,-webkit-backdrop-filter .80s ease,backdrop-filter .80s ease;
 }
+
+/* Re:Arcana first world response: smaller than any Rift beat. */
+#star-gate-anomaly.sga-rewrite-world-tension .sga-world-omen-layer{
+  opacity:.18;
+  -webkit-backdrop-filter:saturate(.95) brightness(.985);
+  backdrop-filter:saturate(.95) brightness(.985);
+  transition:opacity .45s ease,-webkit-backdrop-filter .45s ease,backdrop-filter .45s ease;
+}
 .sga-world-omen .sga-world-omen-layer{opacity:.74}
 .sga-card-blackening .sga-world-omen-layer{
   opacity:.86;
