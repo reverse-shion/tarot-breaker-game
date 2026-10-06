@@ -752,13 +752,23 @@ async function runStage3Latter(before){
   resumeFutureAudio(){current.futureAudio?.resumeWhite();},
   assertPresentPrepared:presentReady,
   async restorePresent(ctx){current.clock.assert();root.classList.add('sga-present-restored');await scene.restore(current.p0,ctx);current.clock.assert();if(!ctx.alive())throw new Error("P0 restoration expired");
-   if(!scene.verify(current.p0).completed)throw new Error('P0 verification failed');current.restored=true;await preparePresentAudio(current);},
+   if(!scene.verify(current.p0).completed)throw new Error('P0 verification failed');
+   // Restore P0 under full black, then keep the companions visually absent until Aftermath begins.
+   const visibility=window.TarotActorVisibility;
+   visibility?.set('shion',1);visibility?.set('shiopon',0);visibility?.set('lumiere',0);
+   current.presentIsolation=true;current.restored=true;await preparePresentAudio(current);},
   resumePresentAudio(){current.futureAudio?.pause('PRESENT');audio.setBase(current.p0.audio.base);audio.setLevel(0);safeResume(current.p0.audio,'P0');},
   presentAudioLevel:p=>audio.setLevel(p*current.p0.audio.coefficient),
   async reaction(){const flinch=flinchVectorForDir(current.p0.player.dir),original=faceVectorForDir(current.p0.player.dir),p=current.p0.player;
    await window.TarotStage.perform({type:'face',actor:'shion',target:{x:p.x+flinch.x,y:p.y+flinch.y}}).promise;await pause(140);
    await window.TarotStage.perform({type:'face',actor:'shion',target:{x:p.x+original.x,y:p.y+original.y}}).promise;await pause(220);},
-  returnControl(){if(!scene.verify(current.p0).completed)throw new Error('Unsafe control return');current.restored=true;}
+  returnControl(){
+   const stageState=window.TarotStage?.getState?.(),visibility=window.TarotActorVisibility?.getState?.(),sceneState=scene.getState();
+   const player=stageState?.actors?.shion;
+   if(!player||!samePoint(current.p0.player,player)||sceneState.vision||sceneState.absorption||
+     visibility?.shion!==1||visibility?.shiopon!==0||visibility?.lumiere!==0)throw new Error('Unsafe control return');
+   current.restored=true;
+  }
  };
  await window.TarotFutureStage3.run(adapter,current.clock);
 }
@@ -820,14 +830,15 @@ async function run(){
  finally{
   document.removeEventListener('visibilitychange',hidden);window.removeEventListener('resize',resized);
   resolveAdvance=null;ui?.hide();current.futureAudio?.dispose();current.clock.dispose();
-  if(current.restored){releasePresentation();current.scene.unlock(current.id);current.audio?.release();}
+  if(current.restored){releasePresentation({preserveGateAnomaly:!!current.completed});current.scene.unlock(current.id);current.audio?.release();}
   running=false;lastResult=report(current);window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
  }
 }
-function releasePresentation(){
+function releasePresentation({preserveGateAnomaly=false}={}){
  if(root){root.remove();root=null;}
  for(const n of document.querySelectorAll('.sga-v192-white,.sga-v192-black,.sga-arcana-detail'))n.remove();
- cleanupGateState({preserveFinal:false});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
+ // Successful completion retains the exact pre-Future blackout anomaly-rest gate; recovery still clears it.
+ cleanupGateState({preserveFinal:preserveGateAnomaly});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
 }
 function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
  futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
