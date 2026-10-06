@@ -12,7 +12,9 @@ function create({clock,signal,failures,id}){
  const enabled=()=>window.TarotAudio?.enabled!==false;
  const resumeContext=()=>{if(!context)return;Promise.resolve(context.resume()).then(()=>{if(alive&&!signal.aborted&&context.state!=='running'){for(const t of Object.values(tracks)){t.failed=true;stop(t);}fail('context-state',context.state);}},e=>{if(alive&&!signal.aborted){for(const t of Object.values(tracks)){t.failed=true;stop(t);}fail('context-resume',e);}});};
  for(const [name,config] of Object.entries(TRACKS)){
-  const media=new Audio(config.source);media.preload='auto';media.loop=false;
+  // Hosted MP3 requests can redirect across origins. Set CORS before src so
+  // MediaElementAudioSourceNode receives usable samples rather than silence.
+  const media=new Audio();media.crossOrigin='anonymous';media.src=config.source;media.preload='auto';media.loop=false;
   const track=tracks[name]={media,config,gain:null,sourceNode:null,weight:0,mix:config.mix,token:0,desired:false,failed:false};
   try{if(!context)throw new Error('No gain graph');const source=context.createMediaElementSource(media);track.sourceNode=source;track.gain=context.createGain();track.gain.gain.value=0;source.connect(track.gain);track.gain.connect(context.destination);}
   catch(e){track.failed=true;fail(name,e);}
