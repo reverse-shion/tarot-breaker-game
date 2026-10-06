@@ -61,7 +61,7 @@ test('T13/T14/T17/T29 restoration under independent covers precedes dialogue/con
  }
  assert.deepEqual(h.events.filter(e=>e.kind==='say').map(e=>e.values[0]),DIALOGUE.slice(3));
  assert.equal(h.view.white,0);assert.equal(h.view.black,0);assert.equal(h.view.restored,'P0');assert.equal(h.view.control,true);
- near(event(h,'reaction').time-state(h,'PRESENT_SILENCE').time,650);assert.equal(h.events.filter(e=>e.kind==='reaction').length,1);
+ near(event(h,'reaction').time-state(h,'PRESENT_VISIBLE').time,650);assert.equal(h.events.filter(e=>e.kind==='reaction').length,1);
 });
 test('T26 envelope values interpolate and audio pause/resume brackets covered restoration',async()=>{
  const h=harness();await run(h.adapter,h.clock);
@@ -71,6 +71,9 @@ test('T26 envelope values interpolate and audio pause/resume brackets covered re
  const pauses=h.events.filter(e=>e.kind==='pause');assert.equal(pauses.length,2);
  near(pauses[0].time,state(h,'FULL_WHITE').time);near(pauses[1].time,state(h,'BLACK_CUT').time);
  assert.ok(event(h,'resumeFuture').time>event(h,'restoreFuture').time);assert.ok(event(h,'resumePresent').time>event(h,'restorePresent').time);
+ const blackFrames=h.events.filter(e=>e.kind==='black');const cleared=blackFrames.at(-1);near(cleared.values[0],0);
+ assert.ok(event(h,'resumePresent').time>=cleared.time);
+ const present=h.events.filter(e=>e.kind==='presentAudio');assert.deepEqual(present.map(e=>e.values[0]),[1]);assert.ok(present[0].time>=cleared.time);
 });
 test('T22 preparation and covered restoration exceptions propagate without control return',async()=>{
  for(const key of ['prepareError','restoreError']){const failure=new Error(key);const h=harness({[key]:failure});await assert.rejects(run(h.adapter,h.clock),e=>e===failure);assert.equal(h.view.control,false);assert.equal(event(h,'reaction'),undefined);if(key==='prepareError')assert.equal(event(h,'state'),undefined);}
@@ -80,7 +83,7 @@ test('T30 restoration deadline is separate from minimum and rejects unresolved w
  const next=harness();await assert.rejects(coveredRestore(next.clock,180,()=>{throw new Error('switch-failed');},()=>{}),/switch-failed/);assert.ok(next.time()<2000);
 });
 test('T23 cancellation prevents sequence actions and reaction/control after abort',async()=>{
- for(const abortAt of ['RIFT_SMALL','VORTEX_EMERGENCE','FUTURE_WHITEOUT','PRESENT_SILENCE']){
+ for(const abortAt of ['RIFT_SMALL','VORTEX_EMERGENCE','FUTURE_WHITEOUT','PRESENT_VISIBLE']){
   const h=harness({abortAt});await assert.rejects(run(h.adapter,h.clock),{name:'AbortError'});const count=h.events.length;await Promise.resolve();assert.equal(h.events.length,count);assert.equal(h.view.control,false);assert.equal(event(h,'reaction'),undefined);
  }
 });
