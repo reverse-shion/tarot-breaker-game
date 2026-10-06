@@ -2183,9 +2183,11 @@
           const feetY=(actor.y+actor.stageOffsetY-origin.y)*camera.zoom;
           const halfW=(id==="lumiere"?54:34)*camera.zoom;
           const height=(id==="lumiere"?88:82)*camera.zoom;
-          return {id,left:x-halfW,right:x+halfW,top:feetY-height,bottom:feetY+10*camera.zoom};
-        });
-        return candidates.find(hit=>px>=hit.left&&px<=hit.right&&py>=hit.top&&py<=hit.bottom)?.id||null;
+          const top=feetY-height,bottom=feetY+10*camera.zoom;
+          return {id,x,centerY:(top+bottom)/2,left:x-halfW,right:x+halfW,top,bottom};
+        }).filter(hit=>px>=hit.left&&px<=hit.right&&py>=hit.top&&py<=hit.bottom);
+        candidates.sort((a,b)=>Math.hypot(px-a.x,py-a.centerY)-Math.hypot(px-b.x,py-b.centerY));
+        return candidates[0]?.id||null;
       },
       moveAway(){return this.nearGate(62)?this.perform({type:"step",actor:"shion",direction:"down",distance:12,duration:240}).promise:Promise.resolve({completed:true});},
       flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
