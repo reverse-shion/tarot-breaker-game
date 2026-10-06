@@ -47,23 +47,30 @@ function create({clock,signal,failures,id}){
   ruinsVisible(){phase='RUINS';play('ruins',1.8,.70);const start=clock.now();const ramp=()=>{if(!alive||signal.aborted||phase!=='RUINS')return;tracks.ruins.weight=Math.min(1,(clock.now()-start)/250);apply();if(tracks.ruins.weight<1)requestAnimationFrame(ramp);};ramp();},
   arcanaAnomalyStart(){
    phase='ARCANA_MICRO';
-   // Remove a little of the existing world sound; do not announce a transformation.
    tracks.ruins.weight=Math.min(tracks.ruins.weight||1,.94);apply();
+  },
+  arcanaInfectionStart(){
+   phase='ARCANA_INFECTION';
+   // The erosion itself owns the musical peak. Start the fixation cue here,
+   // while the ruins track remains underneath; do not insert a silent break.
+   play('fix',20,.50);tracks.fix.weight=0;tracks.ruins.weight=.94;apply();
   },
   arcanaInfection(p){
    phase='ARCANA_INFECTION';
    const progress=Math.max(0,Math.min(1,p));
-   // The normal sound is being taken away. The replacement track does not enter yet.
-   tracks.ruins.weight=.94-.44*progress;apply();
-  },
-  arcanaBreak(){
-   phase='ARCANA_BREAK';
-   // 100–200ms semantic gap: almost silence, but no hard global audio stop.
-   tracks.ruins.weight=.06;apply();
+   const eased=progress*progress*(3-2*progress);
+   // Let both layers build tension across the eating front. The combined level is highest
+   // near completion, then settles once Re:Arcana is fully visible.
+   tracks.ruins.weight=.94-.48*eased;
+   tracks.fix.weight=Math.min(1,.08+.92*eased);
+   apply();
   },
   arcanaRewrite(){
-   // Atomic visual rewrite owns the musical answer too: no ruins/fix crossfade.
-   stop(tracks.ruins);phase='FIX';play('fix',20,.50);tracks.fix.weight=1;apply();
+   // No restart and no silence at completion. Keep the already-running fixation cue,
+   // drop the old ruins layer, and let the completed Re:Arcana hold on the calmer tail.
+   stop(tracks.ruins);phase='FIX';
+   if(!tracks.fix.desired)play('fix',20,.50);
+   tracks.fix.weight=1;apply();
   },
   setLevel(k){level=Math.max(0,Math.min(1,k));apply();},
   pause,
