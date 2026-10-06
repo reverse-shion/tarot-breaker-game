@@ -2174,7 +2174,7 @@
       flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
       setLumiereDeparted(value=true){aftermathLumiereEnabled=!value;},
       setLumiereEnabled(value){aftermathLumiereEnabled=!!value;},
-      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended};},
+      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended,npcSuspended};},
       async restore(a0){
         for(const id of aftermathMotions){for(const actorId of Object.keys(stageMotions)){const motion=stageMotions[actorId];if(motion?.id===id)settleStageMotion(actorId,motion,{skipped:true});}}
         aftermathMotions.clear();aftermathPaused=false;

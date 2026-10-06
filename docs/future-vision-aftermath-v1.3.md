@@ -1,4 +1,6 @@
-# Future Vision Aftermath v1.3 — dev implementation record
+# Future Vision Aftermath v1.3 — historical dev implementation record
+
+Current author-directed flow is [Aftermath v1.5](future-vision-aftermath-v1.5.md). The interaction/11Box/normal-status instructions below describe the historical8c1bc81 baseline and are superseded.
 
 PR #114 / `fix/star-gate-front-stage3-integration`. Implementation starts at `8461475634e9d53bf6dd14ad82b6f5f3127ce1a3`; inspected remote main is `5c33fb8ccf9a46321c1dc1c94ba1dfac125900f3`. Both matched the requested versions before editing. No reset, whole-file replacement, main merge, production connection, new checkpoint, map, route or asset.
 

@@ -95,3 +95,7 @@ game.jsのdev専用prepareBackgroundに縮小の逆変換から算出する描�
 ## Aftermath v1.3 continuation
 
 The continuation starts at8461475634e9d53bf6dd14ad82b6f5f3127ce1a3 without changing the repaired front, card assets or Stage3 cinematic. See [Aftermath implementation and verification record](future-vision-aftermath-v1.3.md). The same Draft PR and `dev=star-gate-full` entry now continue through author-approved11Box, explicit gate reinspection, Lumiere departure and Shion/Shiopon free movement. Physical iPhone evidence is still pending; the inherited ruins lower boundary remains unresolved. New browser observations of an inherited ordinary-audio fade exception are recorded separately from the previous baseline report.
+
+## Aftermath v1.5 revision
+
+The same PR now uses continuous14Box Aftermath with no intermediate gate inspection or normal status panels. See [current implementation and verification record](future-vision-aftermath-v1.5.md). The repaired gate front/Stage3/assets remain preserved; this revision ends with Lumiere departed and player-controlled Shion plus existing Shiopon Follow. Device evidence is still pending.
