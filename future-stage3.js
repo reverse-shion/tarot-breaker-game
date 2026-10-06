@@ -78,8 +78,11 @@
   a.assertPresentPrepared();state('FUTURE_FADE');await tween(550,1,0,p=>a.black(p));
   state('BLACK_CUT');a.pauseFutureAudio();
   state('PRESENT_RESTORE');const blackHold=await coveredRestore(clock,180,ctx=>a.restorePresent(ctx),ctx=>a.draw(ctx));a.recordHold?.('black',blackHold);
-  a.resumePresentAudio();await clock.tween(550,p=>{a.presentAudioLevel(p);a.black(1-p);});
-  state('PRESENT_SILENCE');await clock.wait(650);state('SHION_REACTION');await a.reaction();
+  // Keep the blackout completely silent. Reveal the restored Garden first,
+  // then start the ordinary Garden BGM only after black has fully cleared.
+  await clock.tween(550,p=>a.black(1-p));
+  state('PRESENT_VISIBLE');a.resumePresentAudio();a.presentAudioLevel(1);
+  await clock.wait(650);state('SHION_REACTION');await a.reaction();
   state('CONTROL_RETURN');a.returnControl();
  }
  return Object.freeze({DIALOGUE,ASSETS,createClock,coveredRestore,run,interpolate});
