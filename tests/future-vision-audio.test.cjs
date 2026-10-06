@@ -12,42 +12,46 @@ function harness({off=false,reject=false,seekFail=false,late=false,unloaded=fals
  return{api,media,failures,window,document,listeners,step(ms){now+=ms;const jobs=[...callbacks.values()];callbacks.clear();jobs.forEach(f=>f(now));}};
 }
 const flush=async()=>{await Promise.resolve();await Promise.resolve();};
-test('Arcana audio loses the normal world, nearly vanishes, then atomically switches to fix',async()=>{
+test('Arcana audio remains continuous and reaches its strongest combined mix during edge erosion',async()=>{
  const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();let s=h.api.getState();
- assert.equal(s.tracks.ruins.time,1.8);assert.ok(Math.abs(s.tracks.ruins.gain-.70*10**(-6.48/20))<1e-8);
+ const base=s.tracks.ruins.gain;assert.equal(s.tracks.ruins.time,1.8);assert.ok(base>0);
  h.api.arcanaAnomalyStart();s=h.api.getState();assert.equal(s.phase,'ARCANA_MICRO');assert.equal(s.tracks.ruins.weight,.94);assert.equal(s.tracks.fix.weight,0);
- h.api.arcanaInfection(.5);s=h.api.getState();assert.equal(s.phase,'ARCANA_INFECTION');assert.ok(Math.abs(s.tracks.ruins.weight-.72)<1e-8);assert.equal(s.tracks.fix.weight,0);assert.equal(s.tracks.fix.paused,true);
- h.api.arcanaBreak();s=h.api.getState();assert.equal(s.phase,'ARCANA_BREAK');assert.equal(s.tracks.ruins.weight,.06);assert.equal(s.tracks.fix.weight,0);
- h.api.arcanaRewrite();await flush();s=h.api.getState();assert.equal(s.phase,'FIX');assert.equal(h.media[0].paused,true);assert.equal(s.tracks.fix.time,20);assert.equal(s.tracks.fix.weight,1);assert.ok(Math.abs(s.tracks.fix.gain-.50*10**(-5.23/20))<1e-8);
- h.api.setLevel(.125);h.api.pause('FULL_WHITE');assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.fix.gain,0);
- h.api.resumeWhite();h.api.setLevel(1);await flush();s=h.api.getState();assert.equal(s.tracks.ruins.time,1.8);assert.equal(s.tracks.ruins.mix,.25);assert.equal(s.tracks.fix.paused,true);
- h.api.pause('BLACK_CUT');assert.ok(h.media.every(m=>m.paused));h.api.dispose();
-});test('OFF never starts media; errors degrade to silence',async()=>{const off=harness({off:true});off.api.ruinsVisible();off.step(250);assert.ok(off.media.every(m=>m.plays===0&&m.paused));assert.equal(off.api.getState().tracks.ruins.gain,0);off.api.dispose();for(const options of [{reject:true},{seekFail:true}]){const h=harness(options);await flush();h.api.ruinsVisible();await flush();assert.ok(h.failures.length);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();}});
+ h.api.arcanaInfectionStart();await flush();s=h.api.getState();assert.equal(s.phase,'ARCANA_INFECTION');assert.equal(s.tracks.fix.time,20);assert.equal(s.tracks.fix.weight,0);
+ h.api.arcanaInfection(.5);await flush();s=h.api.getState();const midCombined=s.tracks.ruins.gain+s.tracks.fix.gain;assert.ok(midCombined>0);assert.ok(s.tracks.fix.weight>0&&s.tracks.fix.weight<1);
+ h.api.arcanaInfection(1);await flush();s=h.api.getState();const peakCombined=s.tracks.ruins.gain+s.tracks.fix.gain;assert.ok(peakCombined>midCombined);assert.ok(peakCombined>base);
+ h.api.arcanaRewrite();await flush();s=h.api.getState();assert.equal(s.phase,'FIX');assert.equal(h.media[0].paused,true);assert.equal(s.tracks.fix.weight,1);assert.ok(s.tracks.fix.gain<peakCombined);
+ h.api.pause('FULL_WHITE');assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.fix.gain,0);
+ h.api.resumeWhite();h.api.setLevel(1);await flush();s=h.api.getState();assert.equal(s.tracks.ruins.time,1.8);assert.equal(s.tracks.ruins.mix,.25);assert.equal(s.tracks.fix.paused,true);h.api.dispose();
+});
+test('OFF never starts media; errors degrade to silence',async()=>{const off=harness({off:true});off.api.ruinsVisible();off.step(250);assert.ok(off.media.every(m=>m.plays===0&&m.paused));assert.equal(off.api.getState().tracks.ruins.gain,0);off.api.dispose();for(const options of [{reject:true},{seekFail:true}]){const h=harness(options);await flush();h.api.ruinsVisible();await flush();assert.ok(h.failures.length);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();}});
 test('pagehide pauses even when hidden is false; disposal prevents delayed play resurrection',async()=>{const h=harness({late:true});h.api.ruinsVisible();h.step(250);h.listeners.pagehide();assert.ok(h.media.every(m=>m.paused));h.api.dispose();h.media.forEach(m=>m.complete?.());await flush();assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.ruins.gain,0);});
 test('end of track falls over last1500ms without looping; bounded rewrite play fails silent',async()=>{
  const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.media[0]._time=209.25;h.step(1);const s=h.api.getState();assert.ok(Math.abs(s.tracks.ruins.gain-.5*.70*10**(-6.48/20))<1e-8);assert.equal(h.media[0].loop,false);h.api.dispose();
  const late=harness({late:true});late.api.arcanaRewrite();late.step(10001);assert.ok(late.failures.some(f=>f.includes('timeout')));assert.equal(late.api.getState().tracks.fix.gain,0);late.api.dispose();
-});test('integration routes semantic erosion cues without ordinary BGM source replacement',()=>{
+});test('integration routes continuous edge-erosion audio without a silent break or ordinary BGM source replacement',()=>{
  const s=fs.readFileSync('star-gate-anomaly.js','utf8');
  assert.match(s,/if\(i===1\)session\.futureAudio\?\.ruinsVisible\(\)/);
  assert.match(s,/phase\('MICRO_ANOMALY'\);current\.futureAudio\?\.arcanaAnomalyStart\?\.\(\)/);
+ assert.match(s,/phase\('EDGE_EROSION'\);current\.futureAudio\?\.arcanaInfectionStart\?\.\(\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaInfection\?\.\(p\)/);
- assert.match(s,/phase\('SEMANTIC_BREAK'\);current\.futureAudio\?\.arcanaBreak\?\.\(\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaRewrite\?\.\(\)/);
- assert.doesNotMatch(s,/futureAudio\?\.transform(Start|End)?/);
+ assert.doesNotMatch(s,/arcanaBreak/);assert.doesNotMatch(s,/SEMANTIC_BREAK/);
  assert.match(s,/audioLevel:k=>current\.futureAudio\?\.setLevel\(k\)/);assert.match(s,/resumeFutureAudio\(\)\{current\.futureAudio\?\.resumeWhite\(\)/);assert.match(s,/audio\.setLevel\(0\);safeResume\(current\.p0\.audio,'P0'\)/);assert.doesNotMatch(s,/audio\.src\s*=/);
-});test('unloaded metadata deadline invalidates late callbacks and malformed seek stays silent',async()=>{const h=harness({unloaded:true});await flush();h.api.ruinsVisible();h.step(10001);assert.ok(h.failures.some(f=>f.includes('timeout')));h.media[0].readyState=1;h.media[0].listeners.loadedmetadata?.();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();for(const options of [{mismatch:true},{syncThrow:true},{noContext:true}]){const f=harness(options);await flush();f.api.ruinsVisible();f.media[0].listeners.seeked?.();f.step(250);await flush();assert.ok(f.failures.length);assert.equal(f.api.getState().tracks.ruins.gain,0);assert.equal(f.media[0].paused,true);f.api.dispose();}});
-test('mid-erosion musicOFF pauses the desired source and rewrite later owns only fix',async()=>{
- const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.api.arcanaAnomalyStart();h.api.arcanaInfection(.5);await flush();
+});
+test('unloaded metadata deadline invalidates late callbacks and malformed seek stays silent',async()=>{const h=harness({unloaded:true});await flush();h.api.ruinsVisible();h.step(10001);assert.ok(h.failures.some(f=>f.includes('timeout')));h.media[0].readyState=1;h.media[0].listeners.loadedmetadata?.();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();for(const options of [{mismatch:true},{syncThrow:true},{noContext:true}]){const f=harness(options);await flush();f.api.ruinsVisible();f.media[0].listeners.seeked?.();f.step(250);await flush();assert.ok(f.failures.length);assert.equal(f.api.getState().tracks.ruins.gain,0);assert.equal(f.media[0].paused,true);f.api.dispose();}});
+test('mid-erosion musicOFF pauses both desired layers and resumes them without introducing a silent phase',async()=>{
+ const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.api.arcanaAnomalyStart();h.api.arcanaInfectionStart();h.api.arcanaInfection(.5);await flush();
  h.window.TarotAudio.enabled=false;h.step(10);assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.fix.gain,0);
- h.window.TarotAudio.enabled=true;h.listeners.click();await flush();assert.equal(h.media[0].paused,false);assert.equal(h.media[1].paused,true);
- h.api.arcanaBreak();h.api.arcanaRewrite();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.media[1].paused,false);h.api.dispose();
-});test('hidden preserves atomic rewrite phase and does not seek or restart the fixed track',async()=>{
- const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.api.arcanaAnomalyStart();h.api.arcanaInfection(1);h.api.arcanaBreak();h.api.arcanaRewrite();await flush();
+ h.window.TarotAudio.enabled=true;h.listeners.click();await flush();assert.equal(h.media[0].paused,false);assert.equal(h.media[1].paused,false);
+ h.api.arcanaInfection(1);h.api.arcanaRewrite();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.media[1].paused,false);assert.equal(h.api.getState().phase,'FIX');h.api.dispose();
+});
+test('hidden preserves erosion/rewrite state and does not restart the completed fix cue',async()=>{
+ const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.api.arcanaAnomalyStart();h.api.arcanaInfectionStart();h.api.arcanaInfection(1);h.api.arcanaRewrite();await flush();
  const before=h.api.getState();assert.equal(before.phase,'FIX');assert.equal(before.tracks.fix.time,20);assert.equal(before.tracks.fix.weight,1);
  h.document.hidden=true;h.listeners.visibilitychange();assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().phase,'FIX');
  h.document.hidden=false;h.listeners.visibilitychange();h.listeners.click();await flush();const after=h.api.getState();assert.equal(after.phase,'FIX');assert.equal(after.tracks.fix.time,20);assert.equal(after.tracks.fix.weight,1);assert.equal(h.media[0].paused,true);h.api.dispose();
-});test('native seeking is gain0 until seeked and stalled seek times out; suspended graph is degradation',async()=>{const h=harness({seeking:true});await flush();h.api.ruinsVisible();h.step(250);assert.equal(h.api.getState().tracks.ruins.gain,0);h.media[0].seeking=false;h.media[0].listeners.seeked();await flush();h.step(1);assert.ok(h.api.getState().tracks.ruins.gain>0);h.api.dispose();const stalled=harness({seeking:true});await flush();stalled.api.ruinsVisible();stalled.step(10001);assert.ok(stalled.failures.some(f=>f.includes('timeout')));assert.equal(stalled.api.getState().tracks.ruins.gain,0);stalled.api.dispose();const suspended=harness({suspended:true});await flush();assert.ok(suspended.failures.some(f=>f.includes('context-state')));assert.ok(suspended.media.every(m=>m.paused));suspended.api.dispose();});
+});
+test('native seeking is gain0 until seeked and stalled seek times out; suspended graph is degradation',async()=>{const h=harness({seeking:true});await flush();h.api.ruinsVisible();h.step(250);assert.equal(h.api.getState().tracks.ruins.gain,0);h.media[0].seeking=false;h.media[0].listeners.seeked();await flush();h.step(1);assert.ok(h.api.getState().tracks.ruins.gain>0);h.api.dispose();const stalled=harness({seeking:true});await flush();stalled.api.ruinsVisible();stalled.step(10001);assert.ok(stalled.failures.some(f=>f.includes('timeout')));assert.equal(stalled.api.getState().tracks.ruins.gain,0);stalled.api.dispose();const suspended=harness({suspended:true});await flush();assert.ok(suspended.failures.some(f=>f.includes('context-state')));assert.ok(suspended.media.every(m=>m.paused));suspended.api.dispose();});
 test('old play fulfillment does not pause a newer allowed request; disposed error cannot rewrite report',async()=>{const h=harness({late:true});h.api.ruinsVisible();const older=h.media[0].complete;h.document.hidden=true;h.listeners.visibilitychange();h.document.hidden=false;h.listeners.visibilitychange();h.listeners.click();await flush();const newer=h.media[0].complete;newer();await flush();assert.equal(h.media[0].paused,false);older();await flush();assert.equal(h.media[0].paused,false);h.api.dispose();const before=h.failures.length;h.media[0].listeners.error();assert.equal(h.failures.length,before);});
 
 test('pagehide with hiddenfalse rejects late play before disposal, and pageshow restores saved position',async()=>{const h=harness({late:true});h.api.ruinsVisible();h.step(250);const pending=h.media[0].complete;h.listeners.pagehide();pending();await flush();h.step(16);assert.equal(h.media[0].paused,true);assert.equal(h.api.getState().tracks.ruins.gain,0);assert.equal(h.api.getState().suspended,true);h.listeners.pageshow();h.media[0].complete();await flush();h.step(16);assert.equal(h.media[0].paused,false);assert.equal(h.media[0].currentTime,1.8);assert.ok(h.api.getState().tracks.ruins.gain>0);h.api.dispose();});
