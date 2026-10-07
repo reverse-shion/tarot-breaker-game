@@ -14,7 +14,7 @@ function harness({abortAt=null,decoded=true}={}){
   arcanaInfection(p){audioCalls.push(['infection',time,p])},
   arcanaRewrite(){audioCalls.push(['rewrite',time])}
  }};
- const snapshot=()=>{const frame=attached[0]?.children[0];if(!frame)return;frames.push({time,phase:session.cardDetail?.phase,frameTransform:frame.style.transform,normal:{...frame.children[0].style},re:{...frame.children[1].style},contamination:{...frame.children[2]?.style},classes:[...frame.classList.items]});};
+ const snapshot=()=>{const frame=attached[0]?.children[0];if(!frame)return;frames.push({time,phase:session.cardDetail?.phase,frameTransform:frame.style.transform,normal:{...frame.children[0].style},re:{...frame.children[1].style},contamination:{...frame.children[2]?.style},breachGlow:{...frame.children[3]?.style},classes:[...frame.classList.items]});};
  const clock={now:()=>time,assert(){},async wait(ms){waits.push(ms);if(time===abortAt)throw new Error('cancelled');time+=ms;},async tween(ms,step){waits.push(ms);step(0);time+=ms/2;step(.5);snapshot();if(time-ms/2===abortAt)throw new Error('cancelled');time+=ms/2;step(1);}};
  session.clock=clock;
  const main={set src(value){switches.push({time,value})}};
@@ -24,17 +24,20 @@ function harness({abortAt=null,decoded=true}={}){
 }
 test('three finite Arcana pulses lead into edge erosion and completed Re hold',async()=>{
  const h=harness();await h.run();
- assert.deepEqual(h.waits,[550,210,90,230,100,260,1600,1800]);
- assert.equal(h.session.cardDetail.endedAt-h.session.cardDetail.startedAt,4840);
- assert.deepEqual(h.switches,[{time:3040,value:'pose.webp'}]);
+ assert.deepEqual(h.waits,[550,300,240,340,300,430,240,1750,1800]);
+ assert.equal(h.session.cardDetail.endedAt-h.session.cardDetail.startedAt,5950);
+ assert.deepEqual(h.switches,[{time:4150,value:'pose.webp'}]);
  assert.deepEqual(Array.from(h.session.cardDetail.phases,p=>[p.name,p.time]),[
-  ['NORMAL_HOLD',0],['MICRO_ANOMALY',550],['EDGE_EROSION',1440],['RE_COMPLETE',3040],['RE_HOLD',3040]
+  ['NORMAL_HOLD',0],['MICRO_ANOMALY',550],['BREACH_GLOW',2160],['EDGE_EROSION',2400],['RE_COMPLETE',4150],['RE_HOLD',4150]
  ]);
  assert.deepEqual(Array.from(h.session.cardDetail.pulses,p=>p.number),[1,2,3]);
  const pulseFrames=h.frames.filter(f=>f.phase==='MICRO_ANOMALY');
- assert.deepEqual(pulseFrames.map(f=>Number(Number(f.frameTransform.match(/scale\(([\d.]+)/)[1]).toFixed(3))),[1.012,1.018,1.026]);
+ const pulseScales=pulseFrames.map(f=>Number(f.frameTransform.match(/scale\(([\d.]+)/)[1]));
+ assert.equal(pulseScales.length,3);assert.ok(pulseScales[0]>1&&pulseScales[0]<pulseScales[1]&&pulseScales[1]<pulseScales[2]&&pulseScales[2]<1.024);
  assert.ok(Number(pulseFrames[0].contamination.opacity)<Number(pulseFrames[1].contamination.opacity));
  assert.ok(Number(pulseFrames[1].contamination.opacity)<Number(pulseFrames[2].contamination.opacity));
+ assert.equal(Number(pulseFrames[0].breachGlow.opacity||0),0);assert.equal(Number(pulseFrames[1].breachGlow.opacity||0),0);assert.ok(Number(pulseFrames[2].breachGlow.opacity)>.3);
+ const breach=h.frames.find(f=>f.phase==='BREACH_GLOW');assert.ok(Number(breach.breachGlow.opacity)>.3);
  assert.equal(h.attached().length,0);assert.equal(h.worldClasses.contains('sga-rewrite-world-tension'),true);
 });
 test('Re Arcana eats inward from the contaminated card edge with a soft feather, never a central circular wipe',async()=>{
@@ -46,8 +49,8 @@ test('Re Arcana eats inward from the contaminated card edge with a soft feather,
  assert.match(erosion.re.maskImage,/rgba\(0,0,0,\.72\)/);
  assert.match(erosion.re.maskImage,/rgba\(0,0,0,\.22\)/);
  assert.doesNotMatch(erosion.re.maskImage,/circle/);
- assert.ok(parseFloat(erosion.contamination.left)>-4);
- assert.match(css,/\.sga-arcana-contamination\{/);
+ assert.ok(parseFloat(erosion.contamination.left)>-4);assert.ok(parseFloat(erosion.breachGlow.left)>-6);assert.ok(Number(erosion.breachGlow.opacity)>0);
+ assert.match(css,/\.sga-arcana-contamination\{/);assert.match(css,/\.sga-arcana-breach-glow\{/);
  assert.match(css,/rgba\(37,12,48,\.42\)/);
  assert.doesNotMatch(source,/clipPath='circle/);
  assert.doesNotMatch(source,/phase\('SEMANTIC_BREAK'\)/);
@@ -63,12 +66,12 @@ test('audio stays continuous: infection begins at erosion start and rewrite foll
  const h=harness();await h.run();
  assert.deepEqual(h.audioCalls.map(x=>x[0]),['micro','pulse','pulse','pulse','infection-start','infection','infection','infection','rewrite']);
  assert.deepEqual(h.audioCalls.filter(x=>x[0]==='pulse').map(x=>x[2]),[1,2,3]);
- assert.equal(h.audioCalls.find(x=>x[0]==='infection-start')[1],1440);
- assert.equal(h.audioCalls.find(x=>x[0]==='rewrite')[1],3040);
+ assert.equal(h.audioCalls.find(x=>x[0]==='infection-start')[1],2400);
+ assert.equal(h.audioCalls.find(x=>x[0]==='rewrite')[1],4150);
  assert.doesNotMatch(source,/futureAudio\?\.arcanaBreak/);
 });
 test('each cancelled phase releases overlay and never rewrites early',async()=>{
- for(const abortAt of [0,550,850,1180,1440,3040]){const h=harness({abortAt});await assert.rejects(h.run(),/cancelled/);assert.equal(h.attached().length,0);assert.equal(h.switches.length,abortAt===3040?1:0);}
+ for(const abortAt of [0,550,850,1090,1430,1730,2160,2400,4150]){const h=harness({abortAt});await assert.rejects(h.run(),/cancelled/);assert.equal(h.attached().length,0);assert.equal(h.switches.length,abortAt===4150?1:0);}
 });
 test('detail refuses an unprepared image before mounting or advancing',async()=>{
  const h=harness({decoded:false});await assert.rejects(h.run(),/not decoded/);assert.equal(h.attached().length,0);assert.deepEqual(h.waits,[]);assert.deepEqual(h.switches,[]);
