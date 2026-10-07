@@ -531,7 +531,7 @@ async function futureFixationStage1(){
  root.classList.remove("sga-future-blink-1");await pause(150);
  root.classList.add("sga-future-blink-2");await pause(150);
  root.classList.remove("sga-future-blink-2");await pause(200);
- session.audio.pause();session.futureAudio?.pause('ENTRY_BLACK');
+ session.audio.holdSilent();session.futureAudio?.pause('ENTRY_BLACK');
  root.classList.add("sga-future-black");await pause(500);
  // Keep the world actor at its exact world coordinate; visibility is the only actor mutation.
  window.TarotActorVisibility?.set("shiopon",0);
@@ -795,7 +795,6 @@ async function runStage3Latter(before){
  }root.append(rifts);
  const white=document.createElement('div'),black=document.createElement('div');white.className='sga-v192-white';black.className='sga-v192-black';document.body.append(white,black);
  let surface=null,backgroundValues={scale:1,opacity:1,saturation:1,contrast:1};
- const safeResume=(snapshot,label)=>{audio.resume(snapshot).then(ok=>{if(!ok)current.audioFailures.push(label);});};
  const presentReady=()=>{if(!current.p0||current.p0.mapId!=='star_gate_garden'||!Number.isFinite(current.p0.player.x)||!preparedImages.get(ASSETS.ruins)||!current.scene.getState().owner||!current.scene.getState().presentPrepared)throw new Error('P0 not prepared');};
  const adapter={
   state(name,time){current.states.push({name,time});current.phase=name;window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-state',{detail:{name,time}}));},
@@ -813,7 +812,7 @@ async function runStage3Latter(before){
   startAbsorption(){scene.activateAbsorption(surface);},
   absorb(values){Object.assign(backgroundValues,values);surface.style.transform='scale('+backgroundValues.scale+')';surface.style.opacity=String(backgroundValues.opacity);surface.style.filter='saturate('+backgroundValues.saturation+') contrast('+backgroundValues.contrast+')';},
   white:k=>{white.style.opacity=String(k);},black:k=>{black.style.opacity=String(k);},
-  pauseFutureAudio(){current.futureAudio?.pause(current.phase);audio.pause();},
+  pauseFutureAudio(){current.futureAudio?.pause(current.phase);audio.holdSilent();},
   async restoreFuture(ctx){
    current.clock.assert();scene.removeAbsorption();rifts.remove();card.remove();
    root.classList.remove('sga-card-handed-off');main.src=current.r0.source;
@@ -838,9 +837,11 @@ async function runStage3Latter(before){
    current.futureAudio?.pause('PRESENT');
    audio.setBase(current.p0.audio.base);
    audio.setLevel(0);
-   safeResume(current.p0.audio,'P0');
-   // Fade only after the Garden has painted; this is non-blocking so control can return immediately.
-   audio.tweenCoefficient(current.p0.audio.coefficient,320,false);
+   // iOS: do not call play() here. The ordinary BGM transport stayed alive
+   // at zero audible gain throughout the vision, so the painted Garden can
+   // restore sound automatically without requiring another touch.
+   if(!audio.revealSilent(current.p0.audio))current.audioFailures.push('P0-transport-lost');
+   audio.tweenCoefficient(current.p0.audio.coefficient,360,false);
   },
   presentAudioLevel:p=>audio.setLevel(p*current.p0.audio.coefficient),
   returnControl(){
@@ -855,15 +856,15 @@ async function runStage3Latter(before){
 }
 async function preparePresentAudio(current){
  current.clock.assert();
- // Retain the original ordinary source/position, silently seek under black.
- // Actual play remains owned by resumePresentAudio at the existing reveal cue.
- current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);
- try{if(!await current.audio.resume({...current.p0.audio,playing:false}))current.audioFailures.push('P0-prepare');}
+ // Keep the already user-started ordinary BGM transport alive but inaudible.
+ // Re-seek under full black; no new play() call is allowed on the reveal path.
+ current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);current.audio.holdSilent();
+ try{if(!current.audio.prepareSilent(current.p0.audio))current.audioFailures.push('P0-prepare-transport');}
  catch(e){current.audioFailures.push('P0-prepare: '+String(e));}
 }
 async function recoverPresent(current){
  current.restored=false;
- resolveAdvance=null;ui?.hide();current.futureAudio?.dispose();current.audio?.pause();window.TarotStage?.cancelAll();
+ resolveAdvance=null;ui?.hide();current.futureAudio?.dispose();current.audio?.holdSilent();window.TarotStage?.cancelAll();
  for(const n of document.querySelectorAll('.sga-v192-white'))n.remove();
  let black=document.querySelector('.sga-v192-black');if(!black){black=document.createElement('div');black.className='sga-v192-black';document.body.append(black);}black.style.opacity='1';
  const recoveryClock=window.TarotFutureStage3.createClock(null);
@@ -875,12 +876,12 @@ async function recoverPresent(current){
   if(!current.scene.verify(current.p0).completed)throw new Error('P0 recovery verification failed');
   // Recovery obeys the same contract as the normal path: prepare silently under black,
   // reveal and paint the Garden, then resume ordinary BGM.
-  current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);
-  if(!await current.audio.resume({...current.p0.audio,playing:false}))current.audioFailures.push('P0-recovery-prepare');
+  current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);current.audio.holdSilent();
+  if(!current.audio.prepareSilent(current.p0.audio))current.audioFailures.push('P0-recovery-prepare-transport');
   await recoveryClock.tween(550,p=>{black.style.opacity=String(1-p);});
   await current.scene.waitDraw();await current.scene.waitDraw();
-  current.audio.resume(current.p0.audio).then(ok=>{if(!ok)current.audioFailures.push('P0-recovery');});
-  current.audio.tweenCoefficient(current.p0.audio.coefficient,320,false);
+  if(!current.audio.revealSilent(current.p0.audio))current.audioFailures.push('P0-recovery-transport-lost');
+  current.audio.tweenCoefficient(current.p0.audio.coefficient,360,false);
   current.restored=true;
  }catch(e){current.recoveryError=String(e);black.remove();showRecovery(current);}finally{recoveryClock.dispose();}
 }
