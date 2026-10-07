@@ -2164,9 +2164,9 @@
         const shion=playerRef();
         // Stage the two companions while still hidden. Keep enough space for one
         // character between Shion and the pair, and keep their tap rectangles distinct.
-        const y=shion.y+118;
-        const shioponDesired={x:shion.x-64,y};
-        const lumiereDesired={x:shion.x+64,y};
+        const y=shion.y+88;
+        const shioponDesired={x:shion.x-50,y};
+        const lumiereDesired={x:shion.x+50,y};
         const shioponPlaced=isWalkableRef(shioponDesired.x,shioponDesired.y)
           ?shioponDesired:(collision.nearestWalkable(shioponDesired)||shioponDesired);
         shiopon.x=shioponPlaced.x*scale.x;shiopon.y=shioponPlaced.y*scale.y;
