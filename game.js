@@ -1250,7 +1250,7 @@
     if (hover) {
       // These names are canonical after the original front/back content swap.
       const imageKey = actor.dir === "down"
-        ? (actor.bobRising ? "down" : "idle")
+        ? (actor.bobRising ? "idle" : "down")
         : actor.dir === "up" ? (actor.bobRising ? "back" : "up") : actor.dir;
       const key = imageKey === "idle" ? "idle" : `hover_${imageKey}`;
       const pose = lumiereManifest.poses[key];
