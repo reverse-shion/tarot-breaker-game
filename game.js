@@ -1296,7 +1296,8 @@
     } = {},
   ) {
     const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
-    const scaleDraw = drawHeight /\n      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : frameSpec.h);
+    const scaleDraw = drawHeight /
+      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : frameSpec.h);
     const sourceRect = normalizedLumiere || {
       x: 0,
       y: 0,
