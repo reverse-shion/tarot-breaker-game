@@ -36,25 +36,25 @@ test('pagehide pauses even when hidden is false; disposal prevents delayed play 
 test('end of track falls over last1500ms without looping; bounded rewrite play fails silent',async()=>{
  const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.media[0]._time=209.25;h.step(1);const s=h.api.getState();assert.ok(Math.abs(s.tracks.ruins.gain-.5*.70*10**(-6.48/20))<1e-8);assert.equal(h.media[0].loop,false);h.api.dispose();
  const late=harness({late:true});late.api.arcanaRewrite();late.step(10001);assert.ok(late.failures.some(f=>f.includes('timeout')));assert.equal(late.api.getState().tracks.fix.gain,0);late.api.dispose();
-});test('integration routes continuous edge-erosion audio without a silent break or ordinary BGM source replacement',()=>{
+});test('integration routes continuous Re-emergence audio without a silent break or ordinary BGM source replacement',()=>{
  const s=fs.readFileSync('star-gate-anomaly.js','utf8');
  assert.match(s,/if\(i===1\)session\.futureAudio\?\.ruinsVisible\(\)/);
  assert.match(s,/phase\('MICRO_ANOMALY'\);current\.futureAudio\?\.arcanaAnomalyStart\?\.\(\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaPulse\?\.\(number\)/);
- assert.match(s,/phase\('EDGE_EROSION'\);current\.futureAudio\?\.arcanaInfectionStart\?\.\(\)/);
+ assert.match(s,/phase\('RE_EMERGENCE'\);current\.futureAudio\?\.arcanaInfectionStart\?\.\(\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaInfection\?\.\(eased\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaRewrite\?\.\(\)/);
  assert.doesNotMatch(s,/arcanaBreak/);assert.doesNotMatch(s,/SEMANTIC_BREAK/);
  assert.match(s,/audioLevel:k=>current\.futureAudio\?\.setLevel\(k\)/);assert.match(s,/resumeFutureAudio\(\)\{current\.futureAudio\?\.resumeWhite\(\)/);assert.match(s,/async presentVisible\(\)\{await scene\.waitDraw\(\);current\.clock\.assert\(\);await scene\.waitDraw\(\);current\.clock\.assert\(\);\}/);assert.match(s,/audio\.setLevel\(0\);[\s\S]*audio\.revealSilent\(current\.p0\.audio\)[\s\S]*audio\.tweenCoefficient\(current\.p0\.audio\.coefficient,360,false\)/);assert.match(s,/session\.audio\.holdSilent\(\);session\.futureAudio\?\.pause\('ENTRY_BLACK'\)/);assert.doesNotMatch(s,/audio\.src\s*=/);
 });
 test('unloaded metadata deadline invalidates late callbacks and malformed seek stays silent',async()=>{const h=harness({unloaded:true});await flush();h.api.ruinsVisible();h.step(10001);assert.ok(h.failures.some(f=>f.includes('timeout')));h.media[0].readyState=1;h.media[0].listeners.loadedmetadata?.();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();for(const options of [{mismatch:true},{syncThrow:true},{noContext:true}]){const f=harness(options);await flush();f.api.ruinsVisible();f.media[0].listeners.seeked?.();f.step(250);await flush();assert.ok(f.failures.length);assert.equal(f.api.getState().tracks.ruins.gain,0);assert.equal(f.media[0].paused,true);f.api.dispose();}});
-test('mid-erosion musicOFF pauses both desired layers and resumes them without introducing a silent phase',async()=>{
+test('mid-emergence musicOFF pauses both desired layers and resumes them without introducing a silent phase',async()=>{
  const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.api.arcanaAnomalyStart();h.api.arcanaInfectionStart();h.api.arcanaInfection(.5);await flush();
  h.window.TarotAudio.enabled=false;h.step(10);assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.fix.gain,0);
  h.window.TarotAudio.enabled=true;h.listeners.click();await flush();assert.equal(h.media[0].paused,false);assert.equal(h.media[1].paused,false);
  h.api.arcanaInfection(1);h.api.arcanaRewrite();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.media[1].paused,false);assert.equal(h.api.getState().phase,'FIX');h.api.dispose();
 });
-test('hidden preserves erosion/rewrite state and does not restart the completed fix cue',async()=>{
+test('hidden preserves emergence/rewrite state and does not restart the completed fix cue',async()=>{
  const h=harness();await flush();h.api.ruinsVisible();h.step(250);await flush();h.api.arcanaAnomalyStart();h.api.arcanaInfectionStart();h.api.arcanaInfection(1);h.api.arcanaRewrite();await flush();
  const before=h.api.getState();assert.equal(before.phase,'FIX');assert.equal(before.tracks.fix.time,20);assert.equal(before.tracks.fix.weight,1);
  h.document.hidden=true;h.listeners.visibilitychange();assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().phase,'FIX');
