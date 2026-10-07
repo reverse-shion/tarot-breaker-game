@@ -74,97 +74,71 @@ async function showArcanaDetail(){
   });
   frame.appendChild(card);images[key]=card;
  }
- // A restrained black-purple contamination sits only on the entering edge.
- // It is a stain/front, not a full-card smoke aura or a magical ring.
+ // Full-card abnormality layer. It is intentionally uneven and low-contrast:
+ // the Arcana should look contaminated from within, not covered by a flat purple filter.
  const contamination=document.createElement("div");
  contamination.className="sga-arcana-contamination";
  contamination.setAttribute("aria-hidden","true");
  frame.appendChild(contamination);
- const breachGlow=document.createElement("div");
- breachGlow.className="sga-arcana-breach-glow";
- breachGlow.setAttribute("aria-hidden","true");
- frame.appendChild(breachGlow);
- // Re:Arcana starts completely hidden. It will eat in from the outer edge with a soft mask,
- // never from a clean circular wipe or a hard-edged clip.
- const setErosionMask=p=>{
-  const progress=Math.max(0,Math.min(1,p));
-  // Slightly irregular advance prevents the transition reading as a clean UI wipe.
-  // Amplitude remains small enough to avoid visible jitter on iPhone.
-  const irregular=(Math.sin(progress*Math.PI*5.4)*1.55+Math.sin(progress*Math.PI*2.7+1.1)*.85)*(1-progress);
-  const advance=-10+120*progress+irregular;
-  const featherWidth=10.5+1.6*Math.sin(progress*Math.PI*3.2);
-  const solid=Math.max(0,Math.min(100,advance-7.5));
-  const mid=Math.max(0,Math.min(100,advance+.5));
-  const feather=Math.max(0,Math.min(100,advance+featherWidth));
-  const clear=Math.max(0,Math.min(100,advance+featherWidth+5));
-  const mask='linear-gradient(103deg,rgba(0,0,0,1) 0%,rgba(0,0,0,1) '+solid.toFixed(2)+'%,rgba(0,0,0,.72) '+mid.toFixed(2)+'%,rgba(0,0,0,.22) '+feather.toFixed(2)+'%,rgba(0,0,0,0) '+clear.toFixed(2)+'%)';
-  images.re.style.webkitMaskImage=mask;images.re.style.maskImage=mask;
- };
- setErosionMask(0);
  document.body.appendChild(layer);
- current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:5950,phases:[],pulses:[],registration:ARCANA_DETAIL_REGISTRATION};
+ current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:5870,phases:[],pulses:[],registration:ARCANA_DETAIL_REGISTRATION};
  const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
  const pulseSpecs=[
-  {duration:300,gap:240,scale:.009,mist:.055},
-  {duration:340,gap:300,scale:.015,mist:.095},
-  {duration:430,gap:0,scale:.023,mist:.22}
+  {duration:300,gap:240,scale:.009,stain:.075},
+  {duration:340,gap:300,scale:.015,stain:.135},
+  {duration:430,gap:0,scale:.022,stain:.235}
  ];
  try{
   phase('NORMAL_HOLD');await current.clock.wait(550);
 
-  // Deliberate three-beat warning: quick pressure in, slower release, then a
-  // third beat that leaves a visible breach instead of snapping straight to erosion.
   phase('MICRO_ANOMALY');current.futureAudio?.arcanaAnomalyStart?.();
   for(let i=0;i<pulseSpecs.length;i++){
    const spec=pulseSpecs[i],number=i+1;
-   current.cardDetail.pulses.push({number,time:current.clock.now(),scale:spec.scale,mist:spec.mist});
+   current.cardDetail.pulses.push({number,time:current.clock.now(),scale:spec.scale,stain:spec.stain});
    current.futureAudio?.arcanaPulse?.(number);
    await current.clock.tween(spec.duration,p=>{
     const attack=.34;
     const beat=p<=attack
       ?Math.sin((p/attack)*Math.PI/2)
       :Math.cos(((p-attack)/(1-attack))*Math.PI/2);
-    const scale=1+spec.scale*Math.max(0,beat);
-    frame.style.transform='scale('+scale.toFixed(4)+')';
-    images.normal.style.filter='brightness('+(1-.038*number*beat).toFixed(3)+') saturate('+(1-.026*number*beat).toFixed(3)+')';
-    contamination.style.opacity=String(Math.max(.025,spec.mist*(.34+.66*beat)));
-    contamination.style.transform='translateX('+(-5+number*1.25).toFixed(2)+'%) scaleX('+(1+.07*beat).toFixed(3)+')';
-    if(number===3){
-     breachGlow.style.opacity=String((.10+.34*beat).toFixed(3));
-     breachGlow.style.transform='translateX(-3%) scale('+(1+.045*beat).toFixed(3)+')';
-    }
+    const pressure=Math.max(0,beat);
+    frame.style.transform='scale('+(1+spec.scale*pressure).toFixed(4)+')';
+    images.normal.style.filter='brightness('+(1-.030*number*pressure).toFixed(3)+') saturate('+(1-.024*number*pressure).toFixed(3)+')';
+    contamination.style.opacity=String((spec.stain*(.52+.48*pressure)).toFixed(3));
+    contamination.style.transform='scale('+(1+.008*pressure).toFixed(4)+')';
    });
    frame.style.transform='scale(1)';
-   contamination.style.opacity=String(spec.mist);
-   if(number<3)breachGlow.style.opacity='0';
+   contamination.style.opacity=String(spec.stain);
    if(spec.gap)await current.clock.wait(spec.gap);
   }
-  images.normal.style.filter='brightness(.93) saturate(.89)';
 
-  // Let the third beat leave a short, readable black-purple breach. This is
-  // the causal bridge: the exact same edge then starts eating the Arcana.
-  phase('BREACH_GLOW');
-  await current.clock.tween(240,p=>{
-   const settle=1-p;
-   breachGlow.style.opacity=String((.31+.10*settle).toFixed(3));
-   breachGlow.style.transform='translateX(-2%) scale('+(1.035-.02*p).toFixed(3)+')';
-   contamination.style.opacity=String((.22+.035*settle).toFixed(3));
+  // The third beat leaves the entire Arcana faintly stained for a moment.
+  // This hold makes the accumulated abnormality readable before the meaning changes.
+  phase('ABNORMAL_HOLD');
+  images.normal.style.filter='brightness(.91) saturate(.86) contrast(1.015)';
+  await current.clock.tween(260,p=>{
+   const breathe=.5-.5*Math.cos(Math.PI*p);
+   contamination.style.opacity=String((.225+.025*breathe).toFixed(3));
+   contamination.style.transform='scale('+(1+.004*breathe).toFixed(4)+')';
   });
 
-  phase('EDGE_EROSION');current.futureAudio?.arcanaInfectionStart?.();
-  images.re.style.opacity='1';
-  await current.clock.tween(1750,p=>{
+  // Re:Arcana emerges through the accumulated full-card stain. This is neither
+  // an instant swap nor a simple crossfade: the normal meaning holds briefly,
+  // then its light collapses while the altered markings become readable.
+  phase('RE_EMERGENCE');current.futureAudio?.arcanaInfectionStart?.();
+  images.re.style.opacity='0';
+  images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
+  await current.clock.tween(1650,p=>{
    const eased=p*p*(3-2*p);
-   setErosionMask(eased);
-   images.normal.style.filter='brightness('+( .93-.17*eased).toFixed(3)+') saturate('+( .89-.56*eased).toFixed(3)+') contrast('+(1+.045*eased).toFixed(3)+')';
-   images.re.style.filter='brightness('+( .71+.12*eased).toFixed(3)+') saturate('+( .46+.20*eased).toFixed(3)+') contrast(1.05)';
-   const front=-4+74*eased;
-   contamination.style.left=front.toFixed(2)+'%';
-   contamination.style.opacity=String((.30*(1-eased)+.075*Math.sin(Math.PI*eased)).toFixed(3));
-   contamination.style.transform='scaleX('+(1+.07*Math.sin(Math.PI*eased)).toFixed(3)+')';
-   breachGlow.style.left=(front-2).toFixed(2)+'%';
-   breachGlow.style.opacity=String((.34*Math.pow(1-eased,.72)+.035).toFixed(3));
-   breachGlow.style.transform='scale('+(1+.03*Math.sin(Math.PI*eased)).toFixed(3)+')';
+   const reveal=Math.max(0,Math.min(1,(eased-.10)/.90));
+   const normalFade=Math.max(0,Math.min(1,(eased-.28)/.72));
+   images.re.style.opacity=String(reveal.toFixed(3));
+   images.normal.style.opacity=String((1-normalFade).toFixed(3));
+   images.normal.style.filter='brightness('+( .91-.18*eased).toFixed(3)+') saturate('+( .86-.50*eased).toFixed(3)+') contrast('+(1.015+.035*eased).toFixed(3)+')';
+   images.re.style.filter='brightness('+( .68+.18*reveal).toFixed(3)+') saturate('+( .48+.22*reveal).toFixed(3)+') contrast('+(1.055-.015*reveal).toFixed(3)+')';
+   const stain=.235*(1-.72*eased)+.055*Math.sin(Math.PI*eased);
+   contamination.style.opacity=String(Math.max(.045,stain).toFixed(3));
+   contamination.style.transform='scale('+(1+.006*Math.sin(Math.PI*eased)).toFixed(4)+')';
    current.futureAudio?.arcanaInfection?.(eased);
   });
 
@@ -173,7 +147,6 @@ async function showArcanaDetail(){
   phase('RE_COMPLETE');
   frame.style.transform='scale(1)';
   contamination.style.opacity='0';
-  breachGlow.style.opacity='0';
   images.normal.style.opacity='0';
   images.re.style.opacity='1';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
