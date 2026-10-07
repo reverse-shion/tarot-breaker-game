@@ -80,64 +80,92 @@ async function showArcanaDetail(){
  contamination.className="sga-arcana-contamination";
  contamination.setAttribute("aria-hidden","true");
  frame.appendChild(contamination);
+ const breachGlow=document.createElement("div");
+ breachGlow.className="sga-arcana-breach-glow";
+ breachGlow.setAttribute("aria-hidden","true");
+ frame.appendChild(breachGlow);
  // Re:Arcana starts completely hidden. It will eat in from the outer edge with a soft mask,
  // never from a clean circular wipe or a hard-edged clip.
  const setErosionMask=p=>{
   const progress=Math.max(0,Math.min(1,p));
-  const advance=-10+120*progress;
-  const solid=Math.max(0,Math.min(100,advance-7));
-  const mid=Math.max(0,Math.min(100,advance+1));
-  const feather=Math.max(0,Math.min(100,advance+11));
-  const clear=Math.max(0,Math.min(100,advance+15));
+  // Slightly irregular advance prevents the transition reading as a clean UI wipe.
+  // Amplitude remains small enough to avoid visible jitter on iPhone.
+  const irregular=(Math.sin(progress*Math.PI*5.4)*1.55+Math.sin(progress*Math.PI*2.7+1.1)*.85)*(1-progress);
+  const advance=-10+120*progress+irregular;
+  const featherWidth=10.5+1.6*Math.sin(progress*Math.PI*3.2);
+  const solid=Math.max(0,Math.min(100,advance-7.5));
+  const mid=Math.max(0,Math.min(100,advance+.5));
+  const feather=Math.max(0,Math.min(100,advance+featherWidth));
+  const clear=Math.max(0,Math.min(100,advance+featherWidth+5));
   const mask='linear-gradient(103deg,rgba(0,0,0,1) 0%,rgba(0,0,0,1) '+solid.toFixed(2)+'%,rgba(0,0,0,.72) '+mid.toFixed(2)+'%,rgba(0,0,0,.22) '+feather.toFixed(2)+'%,rgba(0,0,0,0) '+clear.toFixed(2)+'%)';
   images.re.style.webkitMaskImage=mask;images.re.style.maskImage=mask;
  };
  setErosionMask(0);
  document.body.appendChild(layer);
- current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:4840,phases:[],pulses:[],registration:ARCANA_DETAIL_REGISTRATION};
+ current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:5950,phases:[],pulses:[],registration:ARCANA_DETAIL_REGISTRATION};
  const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
  const pulseSpecs=[
-  {duration:210,gap:90,scale:.012,mist:.09},
-  {duration:230,gap:100,scale:.018,mist:.17},
-  {duration:260,gap:0,scale:.026,mist:.28}
+  {duration:300,gap:240,scale:.009,mist:.055},
+  {duration:340,gap:300,scale:.015,mist:.095},
+  {duration:430,gap:0,scale:.023,mist:.22}
  ];
  try{
   phase('NORMAL_HOLD');await current.clock.wait(550);
 
-  // Three finite, increasingly legible pulses make the Arcana feel wrong before it is eaten.
-  // The motion is intentionally small: the player should feel a beat, not see a zoom effect.
+  // Deliberate three-beat warning: quick pressure in, slower release, then a
+  // third beat that leaves a visible breach instead of snapping straight to erosion.
   phase('MICRO_ANOMALY');current.futureAudio?.arcanaAnomalyStart?.();
   for(let i=0;i<pulseSpecs.length;i++){
    const spec=pulseSpecs[i],number=i+1;
    current.cardDetail.pulses.push({number,time:current.clock.now(),scale:spec.scale,mist:spec.mist});
    current.futureAudio?.arcanaPulse?.(number);
    await current.clock.tween(spec.duration,p=>{
-    const beat=Math.sin(Math.PI*p);
-    const scale=1+spec.scale*beat;
+    const attack=.34;
+    const beat=p<=attack
+      ?Math.sin((p/attack)*Math.PI/2)
+      :Math.cos(((p-attack)/(1-attack))*Math.PI/2);
+    const scale=1+spec.scale*Math.max(0,beat);
     frame.style.transform='scale('+scale.toFixed(4)+')';
-    images.normal.style.filter='brightness('+(1-.055*number*beat).toFixed(3)+') saturate('+(1-.035*number*beat).toFixed(3)+')';
-    contamination.style.opacity=String(Math.max(.035,spec.mist*(.42+.58*beat)));
-    contamination.style.transform='translateX('+(-5+number*1.5).toFixed(2)+'%) scaleX('+(1+.10*beat).toFixed(3)+')';
+    images.normal.style.filter='brightness('+(1-.038*number*beat).toFixed(3)+') saturate('+(1-.026*number*beat).toFixed(3)+')';
+    contamination.style.opacity=String(Math.max(.025,spec.mist*(.34+.66*beat)));
+    contamination.style.transform='translateX('+(-5+number*1.25).toFixed(2)+'%) scaleX('+(1+.07*beat).toFixed(3)+')';
+    if(number===3){
+     breachGlow.style.opacity=String((.10+.34*beat).toFixed(3));
+     breachGlow.style.transform='translateX(-3%) scale('+(1+.045*beat).toFixed(3)+')';
+    }
    });
    frame.style.transform='scale(1)';
    contamination.style.opacity=String(spec.mist);
+   if(number<3)breachGlow.style.opacity='0';
    if(spec.gap)await current.clock.wait(spec.gap);
   }
-  images.normal.style.filter='brightness(.95) saturate(.92)';
+  images.normal.style.filter='brightness(.93) saturate(.89)';
 
-  // Re markings eat inward from the same contaminated card edge. The feathered
-  // black-purple front travels with the rewrite so the pulse and erosion read as one event.
+  // Let the third beat leave a short, readable black-purple breach. This is
+  // the causal bridge: the exact same edge then starts eating the Arcana.
+  phase('BREACH_GLOW');
+  await current.clock.tween(240,p=>{
+   const settle=1-p;
+   breachGlow.style.opacity=String((.31+.10*settle).toFixed(3));
+   breachGlow.style.transform='translateX(-2%) scale('+(1.035-.02*p).toFixed(3)+')';
+   contamination.style.opacity=String((.22+.035*settle).toFixed(3));
+  });
+
   phase('EDGE_EROSION');current.futureAudio?.arcanaInfectionStart?.();
   images.re.style.opacity='1';
-  await current.clock.tween(1600,p=>{
-   setErosionMask(p);
-   images.normal.style.filter='brightness('+( .95-.16*p).toFixed(3)+') saturate('+( .92-.58*p).toFixed(3)+') contrast('+(1+.035*p).toFixed(3)+')';
-   images.re.style.filter='brightness('+( .73+.10*p).toFixed(3)+') saturate('+( .48+.18*p).toFixed(3)+') contrast(1.045)';
-   const front=-4+72*p;
+  await current.clock.tween(1750,p=>{
+   const eased=p*p*(3-2*p);
+   setErosionMask(eased);
+   images.normal.style.filter='brightness('+( .93-.17*eased).toFixed(3)+') saturate('+( .89-.56*eased).toFixed(3)+') contrast('+(1+.045*eased).toFixed(3)+')';
+   images.re.style.filter='brightness('+( .71+.12*eased).toFixed(3)+') saturate('+( .46+.20*eased).toFixed(3)+') contrast(1.05)';
+   const front=-4+74*eased;
    contamination.style.left=front.toFixed(2)+'%';
-   contamination.style.opacity=String((.28*(1-p)+.08*Math.sin(Math.PI*p)).toFixed(3));
-   contamination.style.transform='scaleX('+(1+.08*Math.sin(Math.PI*p)).toFixed(3)+')';
-   current.futureAudio?.arcanaInfection?.(p);
+   contamination.style.opacity=String((.30*(1-eased)+.075*Math.sin(Math.PI*eased)).toFixed(3));
+   contamination.style.transform='scaleX('+(1+.07*Math.sin(Math.PI*eased)).toFixed(3)+')';
+   breachGlow.style.left=(front-2).toFixed(2)+'%';
+   breachGlow.style.opacity=String((.34*Math.pow(1-eased,.72)+.035).toFixed(3));
+   breachGlow.style.transform='scale('+(1+.03*Math.sin(Math.PI*eased)).toFixed(3)+')';
+   current.futureAudio?.arcanaInfection?.(eased);
   });
 
   // Cleanup is atomic but visually continuous: by this point the soft erosion front has already
@@ -145,6 +173,7 @@ async function showArcanaDetail(){
   phase('RE_COMPLETE');
   frame.style.transform='scale(1)';
   contamination.style.opacity='0';
+  breachGlow.style.opacity='0';
   images.normal.style.opacity='0';
   images.re.style.opacity='1';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
