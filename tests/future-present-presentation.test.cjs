@@ -21,6 +21,6 @@ test('Present Return v1.3 stages separated companions before reveal and returns 
 
 test('Aftermath weak-light cannot overwrite the corrupted black-purple gate',()=>{
  assert.match(css,/#game-shell\.sga-anomaly-rest\.aftermath-weak-light \.scene-gate-inner-light > img/);
- assert.match(css,/brightness\(\.18\) saturate\(1\.35\) hue-rotate\(28deg\) contrast\(1\.18\)/);
+ assert.match(css,/mix-blend-mode:normal!important/);assert.match(css,/radial-gradient\(ellipse at 50% 38%,rgba\(58,22,72,\.96\)/);assert.match(css,/brightness\(\.32\) saturate\(1\.18\) hue-rotate\(28deg\) contrast\(1\.16\)/);
  assert.match(css,/sgaAnomalyBreathe 7\.2s ease-in-out infinite!important/);
 });
