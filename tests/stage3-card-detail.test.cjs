@@ -32,7 +32,7 @@ test('three finite Arcana pulses lead into edge erosion and completed Re hold',a
  ]);
  assert.deepEqual(Array.from(h.session.cardDetail.pulses,p=>p.number),[1,2,3]);
  const pulseFrames=h.frames.filter(f=>f.phase==='MICRO_ANOMALY');
- assert.deepEqual(pulseFrames.map(f=>Number(f.frameTransform.match(/scale\(([\d.]+)/)[1]).toFixed(3)),[1.012,1.018,1.026]);
+ assert.deepEqual(pulseFrames.map(f=>Number(Number(f.frameTransform.match(/scale\(([\d.]+)/)[1]).toFixed(3))),[1.012,1.018,1.026]);
  assert.ok(Number(pulseFrames[0].contamination.opacity)<Number(pulseFrames[1].contamination.opacity));
  assert.ok(Number(pulseFrames[1].contamination.opacity)<Number(pulseFrames[2].contamination.opacity));
  assert.equal(h.attached().length,0);assert.equal(h.worldClasses.contains('sga-rewrite-world-tension'),true);
