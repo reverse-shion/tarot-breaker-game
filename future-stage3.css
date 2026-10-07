@@ -22,61 +22,35 @@
 .sga-arcana-contamination{
   position:absolute;
   z-index:4;
-  left:-4%;
-  top:3%;
-  width:34%;
-  height:94%;
+  inset:0;
   opacity:0;
   pointer-events:none;
-  transform-origin:0 50%;
-  border-radius:46% 58% 54% 42%;
+  transform-origin:50% 50%;
+  border-radius:4.5%;
   background:
-    radial-gradient(ellipse at 12% 26%,rgba(8,2,12,.78) 0 13%,rgba(37,12,48,.42) 34%,rgba(66,30,78,.16) 57%,transparent 73%),
-    radial-gradient(ellipse at 18% 72%,rgba(5,1,9,.72) 0 12%,rgba(44,14,55,.38) 31%,rgba(75,34,88,.13) 55%,transparent 75%);
-  filter:blur(5px) saturate(.82);
+    radial-gradient(ellipse at 24% 22%,rgba(41,12,52,.44) 0 18%,rgba(25,7,34,.22) 42%,transparent 68%),
+    radial-gradient(ellipse at 73% 31%,rgba(55,18,68,.36) 0 16%,rgba(29,8,38,.18) 40%,transparent 70%),
+    radial-gradient(ellipse at 44% 67%,rgba(48,14,61,.38) 0 19%,rgba(26,7,35,.20) 44%,transparent 72%),
+    radial-gradient(ellipse at 76% 79%,rgba(35,10,47,.32) 0 15%,rgba(20,5,29,.16) 40%,transparent 68%),
+    linear-gradient(180deg,rgba(16,4,24,.16),rgba(38,10,50,.24) 52%,rgba(12,3,20,.20));
+  filter:saturate(.88) contrast(1.015);
   mix-blend-mode:multiply;
-  will-change:left,opacity,transform,filter;
+  box-shadow:inset 0 0 24px rgba(24,5,34,.18);
+  will-change:opacity,transform,filter;
 }
 .sga-arcana-contamination::after{
   content:"";
   position:absolute;
-  inset:7% 13% 5% 0;
-  border-radius:50%;
-  background:linear-gradient(96deg,rgba(2,0,5,.62),rgba(39,13,50,.25) 46%,rgba(70,34,82,.08) 70%,transparent);
-  filter:blur(3px);
-  opacity:.72;
-}
-
-.sga-arcana-breach-glow{
-  position:absolute;
-  z-index:5;
-  left:-6%;
-  top:5%;
-  width:30%;
-  height:90%;
-  opacity:0;
-  pointer-events:none;
-  transform-origin:18% 50%;
-  border-radius:42% 58% 55% 45%;
+  inset:2.5%;
+  border-radius:4%;
   background:
-    radial-gradient(ellipse at 20% 28%,rgba(164,92,190,.34) 0 8%,rgba(112,53,139,.22) 26%,rgba(74,29,95,.10) 48%,transparent 70%),
-    radial-gradient(ellipse at 24% 70%,rgba(137,70,169,.28) 0 9%,rgba(91,37,117,.18) 28%,rgba(61,22,80,.08) 50%,transparent 72%),
-    linear-gradient(96deg,rgba(88,37,112,.22),rgba(54,20,72,.10) 52%,transparent 82%);
-  filter:blur(4.8px) saturate(.9) drop-shadow(0 0 5px rgba(108,54,137,.24));
+    radial-gradient(ellipse at 50% 18%,rgba(126,72,145,.08),transparent 34%),
+    radial-gradient(ellipse at 33% 52%,rgba(115,61,137,.07),transparent 28%),
+    radial-gradient(ellipse at 70% 64%,rgba(135,77,154,.075),transparent 30%),
+    linear-gradient(180deg,rgba(107,56,129,.035),transparent 28%,rgba(98,49,119,.04) 72%,transparent);
   mix-blend-mode:screen;
-  will-change:left,opacity,transform;
-}
-.sga-arcana-breach-glow::after{
-  content:"";
-  position:absolute;
-  left:4%;
-  top:10%;
-  bottom:10%;
-  width:14%;
-  border-radius:50%;
-  background:rgba(164,92,190,.20);
-  filter:blur(3px);
-  opacity:.72;
+  filter:blur(1.4px);
+  opacity:.78;
 }
 
 
@@ -104,5 +78,4 @@
 @media (prefers-reduced-motion:reduce){
  .sga-arcana-detail-frame.sga-rewrite-push{animation:none;transform:scale(1.008)}
  .sga-arcana-detail-frame.sga-re-residual .sga-arcana-detail-image.re{animation:none}
- .sga-arcana-breach-glow{filter:blur(4px) saturate(.85)}
 }
