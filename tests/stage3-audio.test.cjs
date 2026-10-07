@@ -17,6 +17,13 @@ test('default cinematic calls have no effect; independent event coefficient appl
  const state=session.capture();assert.equal(state.base,.16);assert.equal(state.coefficient,.5);assert.equal(state.playing,true);
  session.release();assert.equal(bgm.volume,.16);
 });
+test('iOS-safe event silence keeps native transport alive and reveal needs no play call',()=>{
+ const {api,bgm}=fixture();bgm.paused=false;const session=api.beginEventSession();const p0=session.capture();let plays=0;const originalPlay=bgm.play.bind(bgm);bgm.play=()=>{plays++;return originalPlay();};
+ assert.equal(session.holdSilent(),true);assert.equal(bgm.paused,false);assert.equal(bgm.volume,0);
+ bgm.currentTime=99;assert.equal(session.prepareSilent(p0),true);assert.equal(bgm.currentTime,12);assert.equal(bgm.paused,false);assert.equal(bgm.volume,0);
+ session.setLevel(0);assert.equal(session.revealSilent(p0),true);assert.equal(plays,0);assert.equal(bgm.paused,false);assert.equal(bgm.volume,0);
+ session.setLevel(1);assert.equal(bgm.volume,.35);session.release();
+});
 test('pause snapshots actual time and resume preserves mute settings and stopped state',async()=>{
  const {api,bgm}=fixture();bgm.paused=false;const session=api.beginEventSession();const snapshot=session.pause();assert.equal(snapshot.time,12);assert.equal(bgm.paused,true);assert.equal(bgm.volume,0);
  bgm.currentTime=99;assert.equal(await session.resume(snapshot),true);assert.equal(bgm.currentTime,12);assert.equal(bgm.paused,false);
