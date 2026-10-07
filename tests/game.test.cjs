@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
+const lumiereManifest = require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
 const { gardenRuntime } = require('./helpers/garden-runtime.cjs');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false,
@@ -75,8 +76,10 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     set src(src) {
       this.url = src;
       if (src.includes('lumiere_')) {
-        this.naturalWidth = 2172;
-        this.naturalHeight = 724;
+        const key = src.match(/lumiere_(idle|hover_down|hover_up|hover_left|hover_right)\.webp$/)?.[1];
+        const pose = lumiereManifest.poses[key];
+        this.naturalWidth = pose.width;
+        this.naturalHeight = pose.height;
       }
       queueMicrotask(() => this.onload?.());
     }
@@ -88,7 +91,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   window.CustomEvent = CustomEvent;
   const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search },
     performance: { now: () => now }, requestAnimationFrame: fn => { rafQueue.push(fn); return rafQueue.length; }, setTimeout() { return 1; }, clearTimeout() {},
-    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
+    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('lumiere_sprite_manifest') ? lumiereManifest : url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
@@ -155,15 +158,18 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   const shionDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shion_'));
   const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
   const lumiereDraws = h.drawCalls.filter(call => call[0]?.url?.includes('lumiere_'));
-  const lumiereMotionDraws = lumiereDraws;
-  const lumiereCoreDraws = h.surfaceCalls.filter(call => call.operation === 'drawImage' && call.args[3] === 243);
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
   assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
   assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
-  assert.ok(lumiereMotionDraws.length > 0); assert.ok(lumiereCoreDraws.length > 0);
-  assert.ok(lumiereMotionDraws.every(call => call[3] === 493));
-  assert.ok(lumiereMotionDraws.every(call => call[4] === 596));
-  assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
+  assert.ok(lumiereDraws.length > 0);
+  for (const call of lumiereDraws) {
+    const pose = lumiereManifest.poses.idle;
+    assert.ok(call[0].url.endsWith('lumiere_idle.webp'));
+    assert.deepEqual(call.slice(1,5), [0,0,pose.width,pose.height]);
+    assert.ok(Math.abs(call[8] * (pose.baseline_y - pose.body_top) / pose.height - 420*78/512) < 1e-6);
+    assert.ok(Math.abs(call[7]/call[8] - pose.width/pose.height) < 1e-6);
+  }
+
 });
 test('Garden direct Continue boots the real runtime at exact authored spawn with restored follower state',async()=>{
   const transit={ok:true,context:{mapId:'star_gate_garden',spawnId:'south_gate',companion:'joined_with_shion'},spawn:{x:724,y:944}};
@@ -187,31 +193,60 @@ test('failed isolated Garden transit never falls back to production Journey or n
   assert.equal(h.controls.state.cancelReason,'dev-return-blocked');
   h.window.emit('keyup',{key:'s'});
 });
-test('Lumiere replaces the old torso once and draws one cached silhouette per tick', async () => {
+test('Lumiere draws the complete final pose once, without legacy canvas/body replacement', async () => {
   const h = await boot();
   for (let i = 0; i < 420; i++) {
     const start = h.drawCalls.length;
     h.tick();
     const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
     assert.equal(calls.length, 1);
-    assert.equal(calls[0][0].url, 'lumiere_composite');
+    assert.ok(calls[0][0].url.endsWith('lumiere_idle.webp'));
+    assert.deepEqual(calls[0].slice(1,5), [0,0,1254,1254]);
   }
-  const surfaces = new Set(h.surfaceCalls.map(call => call.element));
-  assert.equal(surfaces.size, 4);
-  for (const surface of surfaces) {
-    const ops = h.surfaceCalls.filter(call => call.element === surface);
-    assert.deepEqual(ops.map(call => call.operation), ['drawImage', 'clearRect', 'drawImage']);
-    assert.deepEqual(ops[1].args, [129, 32, 243, 564]);
-  }
+  assert.equal(h.surfaceCalls.length, 0);
 });
-test('Lumiere bobs as one body while slow wing frames change independently', async () => {
-  const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
-  assert.equal(after.x, before.x); assert.equal(after.y, before.y);
-  assert.deepEqual(after.homeRef, { x: 810, y: 212 }); assert.equal(after.moving, false);
-  assert.notEqual(after.frame, before.frame);
-  assert.notEqual(after.bobOffsetY, before.bobOffsetY);
-  assert.ok(Math.abs(after.bobOffsetY) <= 2.4);
-  assert.ok(after.wingHold >= 0.7 && after.wingHold <= 1.35);
+test('Lumiere preserves the smooth 2.4px / 5.2s bob without wing-frame cycling', async () => {
+  const h = await boot(); const before = h.state().lumiere;
+  let previous = before.bobOffsetY;
+  const values=[];
+  for (let i=0; i<624; i++) {
+    h.tick(); const actor=h.state().lumiere; values.push(actor.bobOffsetY);
+    assert.equal(actor.x,before.x); assert.equal(actor.y,before.y);
+    assert.equal(actor.frame,0); assert.equal(actor.moving,false);
+    assert.ok(Math.abs(actor.bobOffsetY)<=2.4);
+    assert.ok(Math.abs(actor.bobOffsetY-previous)<0.05);
+    previous=actor.bobOffsetY;
+  }
+  assert.ok(Math.max(...values)>2.39); assert.ok(Math.min(...values)<-2.39);
+  for(let i=0;i<312;i++) assert.ok(Math.abs(values[i]-values[i+312])<1e-8);
+});
+test('Lumiere retains full sources, body scale and anchors in every direction and viewport', async () => {
+  for (const [width,height] of [[390,844],[844,390]]) {
+    const h=await boot({width,height});
+    assert.ok(h.fetched.some(url=>url.endsWith('lumiere_sprite_manifest.json')));
+    for(const dir of ['down','up','left','right']) {
+      const point=h.state().lumiere;
+      const delta={down:[0,10],up:[0,-10],left:[-10,0],right:[10,0]}[dir];
+      await h.window.TarotStage.perform({type:'face',actor:'lumiere',target:{x:point.x+delta[0],y:point.y+delta[1]}}).promise;
+      const start=h.drawCalls.length; h.tick();
+      const actor=h.state().lumiere;
+      const key=dir==='down'?'idle':`hover_${dir}`;
+      const pose=lumiereManifest.poses[key];
+      const call=h.drawCalls.slice(start).find(c=>c[0]?.url?.endsWith(`lumiere_${key}.webp`));
+      assert.ok(call,`missing ${key}`);
+      assert.deepEqual(call.slice(1,5),[0,0,pose.width,pose.height]);
+      const ratio=call[8]/pose.height;
+      assert.ok(Math.abs(call[7]/pose.width-ratio)<1e-8);
+      assert.ok(Math.abs((pose.baseline_y-pose.body_top)*ratio-420*78/512)<1e-8);
+      assert.ok(Math.abs(call[5]+pose.center_x*ratio-actor.x)<1e-8);
+      assert.ok(Math.abs(call[6]+pose.baseline_y*ratio-(actor.y-2.7+actor.bobOffsetY))<1e-8);
+    }
+    const action=h.window.TarotStage.perform({type:'step',actor:'lumiere',direction:'down',distance:10,duration:1000});
+    const start=h.drawCalls.length;h.tick();
+    assert.equal(h.state().lumiere.moving,true);
+    assert.ok(h.drawCalls.slice(start).some(c=>c[0]?.url?.endsWith('lumiere_hover_down.webp')));
+    action.cancel();
+  }
 });
 test('Lumiere has solid collision while remaining fixed at the gate', async () => {
   const h = await boot();
@@ -382,13 +417,13 @@ test('stage commands face actors, animate safe steps and expose a skip-to-end ha
   h.tick();
   assert.equal(h.state().shiopon.dir, 'right');
 
-  const lumiereDrawStart = h.surfaceCalls.length;
+  const lumiereDrawStart = h.drawCalls.length;
   await h.window.TarotStage.perform({ type: 'face', actor: 'lumiere', target: 'gate' }).promise;
   h.tick();
   assert.equal(h.state().lumiere.dir, 'up');
   assert.ok(
-    h.surfaceCalls.slice(lumiereDrawStart).some(call =>
-      call.operation === 'drawImage' && call.args[0]?.url?.endsWith('lumiere_hover_up.png')),
+    h.drawCalls.slice(lumiereDrawStart).some(call =>
+      call[0]?.url?.endsWith('lumiere_hover_up.webp')),
   );
 
   const before = h.state().player;

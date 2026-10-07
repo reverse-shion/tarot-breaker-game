@@ -7,6 +7,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const scene = fs.readFileSync('scene-effects.js', 'utf8');
 const collision = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
+const lumiereManifest = require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
 const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
 function deferred() { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return {promise,resolve,reject}; }
 function harness({arrival=true, imageDelay, decodeDelay, decodeMissing=false, badImage=false, sceneDelay, badJson=false}={}) {
@@ -30,13 +31,13 @@ function harness({arrival=true, imageDelay, decodeDelay, decodeMissing=false, ba
   const images=[];
   class Image extends Element {
     constructor(){super();this.complete=false;this.naturalWidth=0;this.naturalHeight=0;images.push(this);if(decodeMissing)this.decode=undefined;}
-    set src(v){this.url=v;this._src=v;Promise.resolve(imageDelay?.promise).then(()=>{this.complete=true;this.naturalWidth=badImage?0:v.includes('lumiere')?2172:1536;this.naturalHeight=v.includes('lumiere')?724:512;this.emit(badImage?'error':'load');});}
+    set src(v){this.url=v;this._src=v;Promise.resolve(imageDelay?.promise).then(()=>{this.complete=true;const pose=v.includes('lumiere')?lumiereManifest.poses[v.match(/lumiere_(idle|hover_down|hover_up|hover_left|hover_right)\.webp$/)[1]]:null;this.naturalWidth=badImage?0:pose?.width||1536;this.naturalHeight=pose?.height||512;this.emit(badImage?'error':'load');});}
     get src(){return this._src;}
     decode(){return decodeDelay?.promise || Promise.resolve();}
   }
   const window=new Element();window.devicePixelRatio=2;window.dispatchEvent=e=>{events.push(e.type);window.emit(e.type,e);};
   window.TarotRuntimeEntry={requireInternal:()=>({ok:true}),navigate:target=>(sandbox.location.href=target,{ok:true})};
-  const sandbox={document,window,Image,URLSearchParams,CustomEvent:class {constructor(type,init){this.type=type;this.detail=init?.detail;}},location:{search:arrival?'?from=landing&navDebug=1':'?navDebug=1',href:''},performance:{now:()=>now},console:{error:e=>errors.push(e),warn(){},log(){}},requestAnimationFrame:f=>frames.push(f),setTimeout:(f,ms)=>{timers.set(++timerId,{f,ms});return timerId;},clearTimeout:id=>timers.delete(id),fetch:async url=>({ok:!badJson,json:async()=>url.includes('manifest')?manifest:collision})};
+  const sandbox={document,window,Image,URLSearchParams,CustomEvent:class {constructor(type,init){this.type=type;this.detail=init?.detail;}},location:{search:arrival?'?from=landing&navDebug=1':'?navDebug=1',href:''},performance:{now:()=>now},console:{error:e=>errors.push(e),warn(){},log(){}},requestAnimationFrame:f=>frames.push(f),setTimeout:(f,ms)=>{timers.set(++timerId,{f,ms});return timerId;},clearTimeout:id=>timers.delete(id),fetch:async url=>({ok:!badJson,json:async()=>url.includes('lumiere_sprite_manifest')?lumiereManifest:url.includes('manifest')?manifest:collision})};
   Object.assign(window,{setTimeout:sandbox.setTimeout,clearTimeout:sandbox.clearTimeout});
   vm.createContext(sandbox);
   vm.runInContext([...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][0][1],sandbox);

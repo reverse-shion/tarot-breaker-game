@@ -19,7 +19,7 @@
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
   const DRAW_HEIGHT = 78;
   const SHIOPON_DRAW_HEIGHT = 76;
-  const LUMIERE_DRAW_HEIGHT = 78;
+  const LUMIERE_DRAW_HEIGHT = DRAW_HEIGHT * (420 / FRAME.h);
   const ACTOR_OUTLINES = {
     player: { color: "rgba(54,31,34,.92)", width: 0.72, opacity: 0.72 },
     shiopon: { color: "rgba(43,25,78,.96)", width: 1.05, opacity: 0.9 },
@@ -47,17 +47,7 @@
   const LUMIERE_BOB_PERIOD = 5.2;
   const LUMIERE_WING_HOLD_MIN = 0.7;
   const LUMIERE_WING_HOLD_RANGE = 0.65;
-  // The supplied frames have different transparent margins. Crop each one to
-  // the character silhouette, then render every crop into the same box so the
-  // head and lower body stay together while hair, wings and drapery animate.
-  const LUMIERE_FRAME_RECTS = [
-    { x: 21, y: 58, w: 493, h: 596 },
-    { x: 23, y: 76, w: 493, h: 567 },
-    { x: 24, y: 92, w: 490, h: 567 },
-    { x: 23, y: 68, w: 495, h: 586 },
-  ];
-  const LUMIERE_NORMALIZED_SIZE = { w: 493, h: 596 };
-  const LUMIERE_BODY_CORE = { x: 150, y: 90, w: 243, h: 564 };
+  // Full-pose body landmarks come from the final-art manifest, not old sheet crops.
   const LUMIERE_BOTTOM_GAP = 2.7;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
@@ -108,7 +98,7 @@
     "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/";
   const LUMIERE_BASE =
     config.lumiereBase ||
-    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/";
+    "./assets/sprites/lumiere/";
 
   const { createCollision, createNavigator } = window.TarotNavigation;
   const { createControls } = window.TarotControls;
@@ -135,7 +125,7 @@
   let gardenExitRef = { ...DEFAULT_SPAWN };
   let last = 0;
   let anim = 0;
-  let lumiereFrame = { ...FRAME };
+  let lumiereManifest;
 
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
@@ -166,44 +156,15 @@
     right: SHIOPON_BASE + "shiopon_walk_right.png",
   };
   const lumiereFiles = {
-    down: LUMIERE_BASE + "lumiere_hover_down.png",
-    up: LUMIERE_BASE + "lumiere_hover_up.png",
-    left: LUMIERE_BASE + "lumiere_hover_left.png",
-    right: LUMIERE_BASE + "lumiere_hover_right.png",
+    idle: LUMIERE_BASE + "lumiere_idle.webp",
+    down: LUMIERE_BASE + "lumiere_hover_down.webp",
+    up: LUMIERE_BASE + "lumiere_hover_up.webp",
+    left: LUMIERE_BASE + "lumiere_hover_left.webp",
+    right: LUMIERE_BASE + "lumiere_hover_right.webp",
   };
   const images = {};
   const shioponImages = {};
   const lumiereImages = {};
-  const lumiereComposites = new Map();
-
-  // Every directional pose must come from one frame only. The old body-core
-  // replacement is kept only for the original down sheet it was calibrated
-  // against; applying that frame-0 core to up/left/right creates a second,
-  // cropped head that moves with the hover animation.
-  function lumiereComposite(direction, frame) {
-    const key = `${direction}:${frame}`;
-    if (lumiereComposites.has(key)) return lumiereComposites.get(key);
-    const surface = document.createElement("canvas");
-    surface.width = LUMIERE_NORMALIZED_SIZE.w;
-    surface.height = LUMIERE_NORMALIZED_SIZE.h;
-    const paint = surface.getContext("2d");
-    const rect = LUMIERE_FRAME_RECTS[frame];
-    const base = LUMIERE_FRAME_RECTS[0];
-    paint.imageSmoothingEnabled = false;
-    const image = lumiereImages[direction] || lumiereImages.down;
-    paint.drawImage(image,
-      frame * lumiereFrame.w + rect.x, rect.y, rect.w, rect.h,
-      0, 0, surface.width, surface.height);
-    if (direction === "down") {
-      const core = LUMIERE_BODY_CORE;
-      paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
-      paint.drawImage(image, core.x, core.y, core.w, core.h,
-        core.x - base.x, core.y - base.y, core.w, core.h);
-    }
-    lumiereComposites.set(key, surface);
-    return surface;
-  }
-
   const player = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y,
@@ -1135,24 +1096,7 @@
 
   function updateLumiere(dt) {
     updateStageActor("lumiere", dt);
-    lumiere.anim += dt;
-    while (lumiere.anim >= lumiere.wingHold) {
-      lumiere.anim -= lumiere.wingHold;
-      if (
-        lumiere.frame + lumiere.wingDirection < 0 ||
-        lumiere.frame + lumiere.wingDirection >= lumiereFrame.count ||
-        Math.random() < 0.18
-      ) {
-        lumiere.wingDirection *= -1;
-      }
-      lumiere.frame = clamp(
-        lumiere.frame + lumiere.wingDirection,
-        0,
-        lumiereFrame.count - 1,
-      );
-      lumiere.wingHold =
-        LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
-    }
+    // Single-pose artwork keeps the wings fixed; only the existing sine bob animates.
     lumiere.bobPhase =
       (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
       (Math.PI * 2);
@@ -1295,24 +1239,35 @@
       outline = ACTOR_OUTLINES.player,
     } = {},
   ) {
+    if (hover) {
+      const key = actor.dir === "down" && !actor.moving ? "idle" : `hover_${actor.dir}`;
+      const pose = lumiereManifest.poses[key];
+      const image = actorImages[key === "idle" ? "idle" : actor.dir];
+      const ratio = drawHeight / (pose.baseline_y - pose.body_top);
+      const drawW = image.naturalWidth * ratio;
+      const drawH = image.naturalHeight * ratio;
+      const dx = actor.x - pose.center_x * ratio;
+      const dy = actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * ratio + visualOffsetY;
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = "rgba(53,46,96,.90)";
+      ctx.shadowBlur = 1.05 / camera.zoom;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      // Preserve every source pixel, including safety margins around hair/wings.
+      ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight,
+        dx, dy, drawW, drawH);
+      ctx.restore();
+      return;
+    }
     const scaleDraw = drawHeight / frameSpec.h;
-    const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
-    const sourceRect = normalizedLumiere || {
-      x: 0,
-      y: 0,
-      w: frameSpec.w,
-      h: frameSpec.h,
-    };
-    const drawW =
-      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.w : sourceRect.w) *
-      scaleDraw;
-    const drawH =
-      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : sourceRect.h) *
-      scaleDraw;
+    const sourceRect = { x: 0, y: 0, w: frameSpec.w, h: frameSpec.h };
+    const drawW = sourceRect.w * scaleDraw;
+    const drawH = sourceRect.h * scaleDraw;
     const dx = actor.x - drawW / 2;
-    const dy = normalizedLumiere
-      ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH + visualOffsetY
-      : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    const dy = actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
     const rotated = Math.abs(rotation) > 1e-6;
     if (rotated) {
       ctx.save();
@@ -1320,27 +1275,7 @@
       ctx.rotate(rotation);
       ctx.translate(-actor.x, -actor.y);
     }
-    if (normalizedLumiere) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 1;
-      ctx.shadowColor = "rgba(54,41,58,.65)";
-      ctx.shadowBlur = 0.7 / camera.zoom;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      ctx.drawImage(lumiereComposite(actor.dir, actor.frame), 0, 0,
-        LUMIERE_NORMALIZED_SIZE.w, LUMIERE_NORMALIZED_SIZE.h,
-        dx, dy, drawW, drawH);
-      ctx.restore();
-      if (rotated) ctx.restore();
-      return;
-    }
-    const { image, sourceX } = hover
-      ? {
-          image: actorImages.hover,
-          sourceX: actor.frame * frameSpec.w + sourceRect.x,
-        }
-      : spriteFrame(actor, actorImages, frameSpec);
+    const { image, sourceX } = spriteFrame(actor, actorImages, frameSpec);
     drawOutlinePass(
       image,
       sourceX,
@@ -1426,7 +1361,6 @@
         drawHeight: LUMIERE_DRAW_HEIGHT,
         glowColor: "rgba(226,210,255,.34)",
         options: {
-          frameSpec: lumiereFrame,
           hover: true,
           visualOffsetY: lumiere.bobOffsetY + lumiere.stageOffsetY,
         },
@@ -1956,6 +1890,12 @@
         throw new Error("スプライト設定が実装仕様と一致しません");
       }
 
+      const lumiereResponse = await fetch(LUMIERE_BASE + "lumiere_sprite_manifest.json");
+      if (!lumiereResponse.ok) throw new Error("リュミエール設定を読み込めません");
+      lumiereManifest = await lumiereResponse.json();
+      if (lumiereManifest.layout !== "single_pose")
+        throw new Error("リュミエール最終画像形式不正");
+
       await loadCollision();
       const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
       if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
@@ -2024,22 +1964,15 @@
       )
         throw new Error("しおぽん待機画像サイズ不正");
 
-      for (const dir of ["down", "up", "left", "right"]) {
-        if (
-          lumiereImages[dir].naturalWidth % FRAME.count !== 0 ||
-          lumiereImages[dir].naturalHeight <= 0 ||
-          lumiereImages[dir].naturalWidth !== lumiereImages.down.naturalWidth ||
-          lumiereImages[dir].naturalHeight !== lumiereImages.down.naturalHeight
-        )
-          throw new Error("リュミエール" + dir + "浮遊画像サイズ不正");
+      for (const [key, image] of Object.entries(lumiereImages)) {
+        const pose = lumiereManifest.poses[key === "idle" ? key : `hover_${key}`];
+        if (!pose || image.naturalWidth !== pose.width || image.naturalHeight !== pose.height ||
+            !Number.isFinite(pose.body_top) || !Number.isFinite(pose.baseline_y) ||
+            !Number.isFinite(pose.center_x) || pose.body_top < 0 ||
+            pose.baseline_y <= pose.body_top || pose.baseline_y > pose.height ||
+            pose.center_x < 0 || pose.center_x > pose.width)
+          throw new Error("リュミエール" + key + "最終画像設定不正");
       }
-      lumiereFrame = {
-        w: lumiereImages.down.naturalWidth / FRAME.count,
-        h: lumiereImages.down.naturalHeight,
-        baseline:
-          lumiereImages.down.naturalHeight * (FRAME.baseline / FRAME.h),
-        count: FRAME.count,
-      };
 
       if (document.body.classList.contains("scene-load-error")) return;
       if (gardenResumePublic) {
