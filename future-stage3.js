@@ -81,7 +81,7 @@
   // Keep the blackout completely silent. First clear the black overlay,
   // then wait until the restored Garden has actually painted before any ordinary BGM resumes.
   await clock.tween(550,p=>a.black(1-p));
-  state('PRESENT_VISIBLE');if(a.presentVisible)await a.presentVisible();
+  state('PRESENT_VISIBLE');clock.assert();if(a.presentVisible)await a.presentVisible();clock.assert();
   a.resumePresentAudio();
   state('CONTROL_RETURN');a.returnControl();
  }
