@@ -833,11 +833,16 @@ async function runStage3Latter(before){
    const visibility=window.TarotActorVisibility;
    visibility?.set('shion',1);visibility?.set('shiopon',0);visibility?.set('lumiere',0);
    current.presentIsolation=true;current.restored=true;await preparePresentAudio(current);},
-  resumePresentAudio(){current.futureAudio?.pause('PRESENT');audio.setBase(current.p0.audio.base);audio.setLevel(0);safeResume(current.p0.audio,'P0');},
+  async presentVisible(){await scene.waitDraw();current.clock.assert();},
+  resumePresentAudio(){
+   current.futureAudio?.pause('PRESENT');
+   audio.setBase(current.p0.audio.base);
+   audio.setLevel(0);
+   safeResume(current.p0.audio,'P0');
+   // Fade only after the Garden has painted; this is non-blocking so control can return immediately.
+   audio.tweenCoefficient(current.p0.audio.coefficient,320,false);
+  },
   presentAudioLevel:p=>audio.setLevel(p*current.p0.audio.coefficient),
-  async reaction(){const flinch=flinchVectorForDir(current.p0.player.dir),original=faceVectorForDir(current.p0.player.dir),p=current.p0.player;
-   await window.TarotStage.perform({type:'face',actor:'shion',target:{x:p.x+flinch.x,y:p.y+flinch.y}}).promise;await pause(140);
-   await window.TarotStage.perform({type:'face',actor:'shion',target:{x:p.x+original.x,y:p.y+original.y}}).promise;await pause(220);},
   returnControl(){
    const stageState=window.TarotStage?.getState?.(),visibility=window.TarotActorVisibility?.getState?.(),sceneState=scene.getState();
    const player=stageState?.actors?.shion;
@@ -868,8 +873,15 @@ async function recoverPresent(current){
   root?.classList.add('sga-present-restored');root?.querySelector('.sga-future-rift')?.remove();
   await window.TarotFutureStage3.coveredRestore(recoveryClock,180,ctx=>current.scene.restore(current.p0,ctx),ctx=>current.scene.waitDraw(ctx));
   if(!current.scene.verify(current.p0).completed)throw new Error('P0 recovery verification failed');
-  current.audio.setBase(current.p0.audio.base);current.audio.setLevel(current.p0.audio.coefficient);current.audio.resume(current.p0.audio).then(ok=>{if(!ok)current.audioFailures.push('P0-recovery');});
-  await recoveryClock.tween(550,p=>{black.style.opacity=String(1-p);});current.restored=true;
+  // Recovery obeys the same contract as the normal path: prepare silently under black,
+  // reveal and paint the Garden, then resume ordinary BGM.
+  current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);
+  if(!await current.audio.resume({...current.p0.audio,playing:false}))current.audioFailures.push('P0-recovery-prepare');
+  await recoveryClock.tween(550,p=>{black.style.opacity=String(1-p);});
+  await current.scene.waitDraw();
+  current.audio.resume(current.p0.audio).then(ok=>{if(!ok)current.audioFailures.push('P0-recovery');});
+  current.audio.tweenCoefficient(current.p0.audio.coefficient,320,false);
+  current.restored=true;
  }catch(e){current.recoveryError=String(e);black.remove();showRecovery(current);}finally{recoveryClock.dispose();}
 }
 function showRecovery(current){
