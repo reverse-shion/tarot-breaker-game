@@ -6,14 +6,16 @@
     "hover_down": 1,
     "hover_up": 1,
     "hover_left": 1,
-    "hover_right": 1
+    "hover_right": 1,
+    "hover_back": 1
   },
   "files": {
     "idle": "lumiere_idle.webp",
     "hover_down": "lumiere_hover_down.webp",
     "hover_up": "lumiere_hover_up.webp",
     "hover_left": "lumiere_hover_left.webp",
-    "hover_right": "lumiere_hover_right.webp"
+    "hover_right": "lumiere_hover_right.webp",
+    "hover_back": "lumiere_hover-back.webp"
   },
   "movement_type": "hover",
   "visual_rules": {
@@ -33,8 +35,8 @@
     "Lossless WebP encoding preserves decoded source RGBA pixels.",
     "Body crown/toe landmarks set person scale independently of wings, hair and ornaments.",
     "Draw the full image with uniform X/Y scale and the per-pose body-center/toe anchor.",
-    "Front stationary uses idle; other stationary directions retain their corresponding hover pose.",
-    "The supplied single poses have fixed wings; retain the slow vertical sine bob without sheet-frame animation."
+    "The supplied single poses have fixed wings; retain the slow vertical sine bob without sheet-frame animation.",
+    "Bob velocity selects front rising=hover_down (original up), falling=idle; rear rising=hover_back, falling=hover_up (original down). Left/right remain directional single poses."
   ],
   "layout": "single_pose",
   "render": {
@@ -79,6 +81,13 @@
       "body_top": 58,
       "baseline_y": 1158,
       "center_x": 785
+    },
+    "hover_back": {
+      "width": 1254,
+      "height": 1254,
+      "body_top": 74,
+      "baseline_y": 1127,
+      "center_x": 628
     }
   }
 }

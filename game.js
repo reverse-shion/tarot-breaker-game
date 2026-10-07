@@ -159,6 +159,7 @@
     idle: LUMIERE_BASE + "lumiere_idle.webp",
     down: LUMIERE_BASE + "lumiere_hover_down.webp",
     up: LUMIERE_BASE + "lumiere_hover_up.webp",
+    back: LUMIERE_BASE + "lumiere_hover-back.webp",
     left: LUMIERE_BASE + "lumiere_hover_left.webp",
     right: LUMIERE_BASE + "lumiere_hover_right.webp",
   };
@@ -204,6 +205,7 @@
     wingDirection: 1,
     wingHold: LUMIERE_WING_HOLD_MIN,
     bobPhase: 0,
+    bobRising: false,
     bobOffsetY: 0,
     stageOffsetY: 0,
   };
@@ -326,6 +328,7 @@
     lumiere.wingHold =
       LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
     lumiere.bobPhase = 0;
+    lumiere.bobRising = false;
     lumiere.bobOffsetY = 0;
     lumiere.stageOffsetY = 0;
   }
@@ -1096,12 +1099,17 @@
 
   function updateLumiere(dt) {
     updateStageActor("lumiere", dt);
-    // Single-pose artwork keeps the wings fixed; only the existing sine bob animates.
+    // Pose changes follow the same bob phase; no independent image timer.
     lumiere.bobPhase =
       (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
       (Math.PI * 2);
     lumiere.bobOffsetY =
       Math.sin(lumiere.bobPhase) * LUMIERE_BOB_AMPLITUDE * scale.y;
+    // Canvas Y grows downward: negative derivative means rising. Retain the
+    // previous state at the extrema instead of switching on floating-point noise.
+    const bobVelocity = Math.cos(lumiere.bobPhase);
+    if (bobVelocity < -1e-6) lumiere.bobRising = true;
+    else if (bobVelocity > 1e-6) lumiere.bobRising = false;
   }
 
   function cameraOffsetY() {
@@ -1240,9 +1248,13 @@
     } = {},
   ) {
     if (hover) {
-      const key = actor.dir === "down" && !actor.moving ? "idle" : `hover_${actor.dir}`;
+      // These names are canonical after the original front/back content swap.
+      const imageKey = actor.dir === "down"
+        ? (actor.bobRising ? "down" : "idle")
+        : actor.dir === "up" ? (actor.bobRising ? "back" : "up") : actor.dir;
+      const key = imageKey === "idle" ? "idle" : `hover_${imageKey}`;
       const pose = lumiereManifest.poses[key];
-      const image = actorImages[key === "idle" ? "idle" : actor.dir];
+      const image = actorImages[imageKey];
       const ratio = drawHeight / (pose.baseline_y - pose.body_top);
       const drawW = image.naturalWidth * ratio;
       const drawH = image.naturalHeight * ratio;
@@ -1557,6 +1569,8 @@
         frame: lumiere.frame,
         wingDirection: lumiere.wingDirection,
         wingHold: lumiere.wingHold,
+        bobPhase: lumiere.bobPhase,
+        bobRising: lumiere.bobRising,
         bobOffsetY: lumiere.bobOffsetY,
         stageOffsetY: lumiere.stageOffsetY,
         homeRef: lumiere.homeRef,

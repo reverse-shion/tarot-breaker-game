@@ -44,6 +44,7 @@ const required = [
   'assets/sprites/lumiere/lumiere_idle.webp',
   'assets/sprites/lumiere/lumiere_hover_down.webp',
   'assets/sprites/lumiere/lumiere_hover_up.webp',
+  'assets/sprites/lumiere/lumiere_hover-back.webp',
   'assets/sprites/lumiere/lumiere_hover_left.webp',
   'assets/sprites/lumiere/lumiere_hover_right.webp'
 ];
@@ -58,7 +59,7 @@ for (const key of ['idle','walk_down','walk_up','walk_left','walk_right']) {
   if (manifest.frame_count?.[key] !== 4) throw new Error(`Unexpected frame count: ${key}`);
 }
 const lumiereManifest = JSON.parse(fs.readFileSync(path.join(root, 'assets/sprites/lumiere/lumiere_sprite_manifest.json'), 'utf8'));
-for (const key of ['idle','hover_down','hover_up','hover_left','hover_right']) {
+for (const key of ['idle','hover_down','hover_up','hover_left','hover_right','hover_back']) {
   if (lumiereManifest.frame_count?.[key] !== 1) throw new Error(`Unexpected Lumiere frame count: ${key}`);
 }
 if (lumiereManifest.movement_type !== 'hover') throw new Error('Lumiere must use hover movement');
@@ -95,8 +96,8 @@ function webpSize(rel) {
   throw new Error(`Expected lossless WebP pose: ${rel}`);
 }
 if (lumiereManifest.layout !== 'single_pose') throw new Error('Expected single-pose Lumiere artwork');
-for (const key of ['idle','hover_down','hover_up','hover_left','hover_right']) {
-  const name = `lumiere_${key}.webp`;
+for (const key of ['idle','hover_down','hover_up','hover_left','hover_right','hover_back']) {
+  const name = key === 'hover_back' ? 'lumiere_hover-back.webp' : `lumiere_${key}.webp`;
   if (lumiereManifest.files[key] !== name) throw new Error(`Unexpected Lumiere filename: ${key}`);
   const size = webpSize(`assets/sprites/lumiere/${name}`);
   const pose = lumiereManifest.poses[key];
@@ -134,5 +135,5 @@ console.log('TAROT BREAKER validation passed');
 console.log('Required files:', required.length);
 console.log('Dynamic Star Gate Garden assets: static far sky + celestial overlay + repeating clouds');
 console.log('Shion / Shiopon sheets: 1536x512, 4 frames each');
-console.log('Lumiere: five full lossless WebP poses, per-pose body landmarks');
+console.log('Lumiere: six existing full lossless WebP poses, phase-synced front/back');
 console.log('Manifest: 384x512 cells, baseline_y=480');

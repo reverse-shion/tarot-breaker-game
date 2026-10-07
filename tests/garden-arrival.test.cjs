@@ -31,7 +31,7 @@ function harness({arrival=true, imageDelay, decodeDelay, decodeMissing=false, ba
   const images=[];
   class Image extends Element {
     constructor(){super();this.complete=false;this.naturalWidth=0;this.naturalHeight=0;images.push(this);if(decodeMissing)this.decode=undefined;}
-    set src(v){this.url=v;this._src=v;Promise.resolve(imageDelay?.promise).then(()=>{this.complete=true;const pose=v.includes('lumiere')?lumiereManifest.poses[v.match(/lumiere_(idle|hover_down|hover_up|hover_left|hover_right)\.webp$/)[1]]:null;this.naturalWidth=badImage?0:pose?.width||1536;this.naturalHeight=pose?.height||512;this.emit(badImage?'error':'load');});}
+    set src(v){this.url=v;this._src=v;Promise.resolve(imageDelay?.promise).then(()=>{this.complete=true;const pose=v.includes('lumiere')?lumiereManifest.poses[v.match(/lumiere_(idle|hover_down|hover_up|hover_left|hover_right|hover-back)\.webp$/)[1].replace('-', '_')]:null;this.naturalWidth=badImage?0:pose?.width||1536;this.naturalHeight=pose?.height||512;this.emit(badImage?'error':'load');});}
     get src(){return this._src;}
     decode(){return decodeDelay?.promise || Promise.resolve();}
   }

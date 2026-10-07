@@ -76,7 +76,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     set src(src) {
       this.url = src;
       if (src.includes('lumiere_')) {
-        const key = src.match(/lumiere_(idle|hover_down|hover_up|hover_left|hover_right)\.webp$/)?.[1];
+        const key = src.match(/lumiere_(idle|hover_down|hover_up|hover_left|hover_right|hover-back)\.webp$/)?.[1]?.replace('-', '_');
         const pose = lumiereManifest.poses[key];
         this.naturalWidth = pose.width;
         this.naturalHeight = pose.height;
@@ -107,6 +107,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   const resetAnchor = '  function reset() {';
   assert.equal(gameSource.split(resetAnchor).length, 2);
   vm.runInContext(gameSource.replace('  const player = {','  const player = window.__gardenPlayer = {')
+    .replace('  const lumiere = {','  const lumiere = window.__gardenLumiere = {')
     .replace('  function chooseShioponTarget() {','  window.__testGardenExit = {updatePlayer, arm(){gardenExitArmed=true;}};\n\n  function chooseShioponTarget() {')
     .replace(resetAnchor, '  window.__gardenReset = reset;\n' + resetAnchor), sandbox, { filename: 'game.js' });
   for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
@@ -135,7 +136,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
+  return { lumiere: window.__gardenLumiere, elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -163,8 +164,9 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
   assert.ok(lumiereDraws.length > 0);
   for (const call of lumiereDraws) {
-    const pose = lumiereManifest.poses.idle;
-    assert.ok(call[0].url.endsWith('lumiere_idle.webp'));
+    const key=call[0].url.endsWith('lumiere_idle.webp')?'idle':'hover_down';
+    const pose = lumiereManifest.poses[key];
+    assert.ok(call[0].url.endsWith(`lumiere_${key}.webp`));
     assert.deepEqual(call.slice(1,5), [0,0,pose.width,pose.height]);
     assert.ok(Math.abs(call[8] * (pose.baseline_y - pose.body_top) / pose.height - 420*78/512) < 1e-6);
     assert.ok(Math.abs(call[7]/call[8] - pose.width/pose.height) < 1e-6);
@@ -200,7 +202,7 @@ test('Lumiere draws the complete final pose once, without legacy canvas/body rep
     h.tick();
     const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
     assert.equal(calls.length, 1);
-    assert.ok(calls[0][0].url.endsWith('lumiere_idle.webp'));
+    assert.ok(/lumiere_(idle|hover_down)\.webp$/.test(calls[0][0].url));
     assert.deepEqual(calls[0].slice(1,5), [0,0,1254,1254]);
   }
   assert.equal(h.surfaceCalls.length, 0);
@@ -230,9 +232,10 @@ test('Lumiere retains full sources, body scale and anchors in every direction an
       await h.window.TarotStage.perform({type:'face',actor:'lumiere',target:{x:point.x+delta[0],y:point.y+delta[1]}}).promise;
       const start=h.drawCalls.length; h.tick();
       const actor=h.state().lumiere;
-      const key=dir==='down'?'idle':`hover_${dir}`;
+      const key=dir==='down'?(actor.bobRising?'hover_down':'idle'):dir==='up'?(actor.bobRising?'hover_back':'hover_up'):`hover_${dir}`;
       const pose=lumiereManifest.poses[key];
-      const call=h.drawCalls.slice(start).find(c=>c[0]?.url?.endsWith(`lumiere_${key}.webp`));
+      const name=lumiereManifest.files[key];
+      const call=h.drawCalls.slice(start).find(c=>c[0]?.url?.endsWith(name));
       assert.ok(call,`missing ${key}`);
       assert.deepEqual(call.slice(1,5),[0,0,pose.width,pose.height]);
       const ratio=call[8]/pose.height;
@@ -244,9 +247,61 @@ test('Lumiere retains full sources, body scale and anchors in every direction an
     const action=h.window.TarotStage.perform({type:'step',actor:'lumiere',direction:'down',distance:10,duration:1000});
     const start=h.drawCalls.length;h.tick();
     assert.equal(h.state().lumiere.moving,true);
-    assert.ok(h.drawCalls.slice(start).some(c=>c[0]?.url?.endsWith('lumiere_hover_down.webp')));
+    const expected=h.state().lumiere.bobRising?'lumiere_hover_down.webp':'lumiere_idle.webp';
+    assert.ok(h.drawCalls.slice(start).some(c=>c[0]?.url?.endsWith(expected)));
     action.cancel();
   }
+});
+test('Lumiere front/back phase images follow velocity in both idle and stage movement', async () => {
+  const h=await boot(); const phaseStep=2*Math.PI/(5.2*60);
+  for (const moving of [false,true]) {
+    for (const [dir,rising,expected] of [
+      ['down',true,'hover_down'],['down',false,'idle'],
+      ['up',true,'hover_back'],['up',false,'hover_up'],
+      ['left',true,'hover_left'],['left',false,'hover_left'],
+      ['right',true,'hover_right'],['right',false,'hover_right'],
+    ]) {
+      const delta={down:[0,10],up:[0,-10],left:[-10,0],right:[10,0]}[dir];
+      let motion;
+      if(moving) motion=h.window.TarotStage.perform({type:'step',actor:'lumiere',direction:dir,distance:10,duration:1000});
+      else await h.window.TarotStage.perform({type:'face',actor:'lumiere',target:{x:h.lumiere.x+delta[0],y:h.lumiere.y+delta[1]}}).promise;
+      h.lumiere.bobPhase=(rising?Math.PI:2*Math.PI)-phaseStep;
+      const start=h.drawCalls.length;h.tick();
+      const actor=h.state().lumiere;
+      assert.equal(actor.bobRising,rising);assert.equal(actor.moving,moving);
+      const calls=h.drawCalls.slice(start).filter(c=>c[0]?.url?.includes('lumiere_'));
+      assert.equal(calls.length,1);
+      assert.ok(calls[0][0].url.endsWith(lumiereManifest.files[expected]));
+      const pose=lumiereManifest.poses[expected], call=calls[0], ratio=call[8]/pose.height;
+      assert.deepEqual(call.slice(1,5),[0,0,pose.width,pose.height]);
+      assert.ok(Math.abs(ratio-call[7]/pose.width)<1e-8);
+      assert.ok(Math.abs((pose.baseline_y-pose.body_top)*ratio-63.984375)<1e-8);
+      assert.ok(Math.abs(call[5]+pose.center_x*ratio-actor.x)<1e-8);
+      assert.ok(Math.abs(call[6]+pose.baseline_y*ratio-(actor.y-2.7+actor.bobOffsetY+actor.stageOffsetY))<1e-8);
+      motion?.cancel();
+    }
+  }
+});
+test('Lumiere extrema retain the previous pose near zero speed, then switch once', async () => {
+  const h=await boot();const step=2*Math.PI/(5.2*60);
+  for (const [extremum,before,after] of [[Math.PI/2,false,true],[3*Math.PI/2,true,false]]) {
+    for (const jitter of [-1e-8,0,1e-8]) {
+      h.lumiere.bobPhase=extremum-step+jitter;h.lumiere.bobRising=before;h.tick();
+      assert.equal(h.state().lumiere.bobRising,before);
+    }
+    h.tick();assert.equal(h.state().lumiere.bobRising,after);
+    h.tick();assert.equal(h.state().lumiere.bobRising,after);
+  }
+  h.lumiere.bobPhase=0;h.lumiere.bobRising=false;
+  const switches=[];let last=false;
+  for(let i=1;i<=624;i++) {
+    h.tick();const actor=h.state().lumiere;
+    if(actor.bobRising!==last) {switches.push(i);last=actor.bobRising;}
+    if(Math.abs(Math.cos(actor.bobPhase))>1e-6) assert.equal(actor.bobRising,Math.cos(actor.bobPhase)<0);
+  }
+  assert.equal(switches.length,4);
+  for(let i=1;i<switches.length;i++) assert.ok(Math.abs(switches[i]-switches[i-1]-156)<=1);
+  h.window.__gardenReset();h.tick();assert.equal(h.state().lumiere.bobRising,false);
 });
 test('Lumiere has solid collision while remaining fixed at the gate', async () => {
   const h = await boot();
@@ -423,7 +478,7 @@ test('stage commands face actors, animate safe steps and expose a skip-to-end ha
   assert.equal(h.state().lumiere.dir, 'up');
   assert.ok(
     h.drawCalls.slice(lumiereDrawStart).some(call =>
-      call[0]?.url?.endsWith('lumiere_hover_up.webp')),
+      call[0]?.url?.endsWith(h.state().lumiere.bobRising?'lumiere_hover-back.webp':'lumiere_hover_up.webp')),
   );
 
   const before = h.state().player;

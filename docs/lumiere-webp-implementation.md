@@ -31,3 +31,32 @@ uniform aspect ratio, stable body-center/toe anchor across directions, matching
 body heights, continuous slow bob, portrait/landscape browser smoke, existing
 326-test baseline preserved. Independent review required. Browser/numeric checks
 cannot establish iPhone PASS. Draft PR only; no merge or production deployment.
+
+
+## Phase-synchronized front/back amendment
+
+Amendment base: `095585a736d9551105d2b2726cc08148eca8dedf`.
+The original five-pose implementation above is historical; this amendment
+supersedes its stationary-front-only idle selection.
+
+Use existing `bobPhase` velocity (`cos(phase)`) to select rising/falling artwork.
+Negative canvas-Y velocity rises. Retain the previous rising flag while the
+normalized derivative is within ±1e-6 of zero; no new timer is introduced.
+
+| Facing | Rising | Falling |
+| --- | --- | --- |
+| Front | hover_down (user's original up) | idle |
+| Rear | existing hover-back | hover_up (user's original down) |
+| Left/right | unchanged directional image | unchanged directional image |
+
+The existing back image is losslessly encoded in place, not newly generated.
+Its crown/toe/body-axis landmarks are y74/y1127/x628. The body span remains
+63.984375px and the full-image height is 76.197917px. All prior image landmarks,
+left/right selection, full-source drawing, 2.4px/5.2s trajectory and 2.7px gap
+remain unchanged. No extra wing motion or image deformation is added.
+
+Targeted tests must cover both phase directions, extrema/deadband stability,
+phase switches under stationary/moving states, all four normalized body anchors,
+left/right preservation, and the full existing regression suite. Chromium
+portrait/landscape smoke is required; iPhone and integration PASS remain PENDING.
+Update the same Draft PR #122; no merge or Production publication.
