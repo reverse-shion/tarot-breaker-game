@@ -2171,7 +2171,10 @@
           ?shioponDesired:(collision.nearestWalkable(shioponDesired)||shioponDesired);
         shiopon.x=shioponPlaced.x*scale.x;shiopon.y=shioponPlaced.y*scale.y;
         shiopon.stageOffsetY=0;shiopon.visualOffsetY=0;shiopon.rotation=0;
-        shiopon.moving=false;shiopon.frame=0;shiopon.followRoute=[];shiopon.followTarget=null;
+        shiopon.moving=false;shiopon.frame=0;shiopon.followRoute=[];shiopon.followTarget=null;shiopon.target=null;
+        // Keep the authored return formation stable while the player freely checks both companions.
+        // The final follow-start/follow-stop event restores the ordinary post-scene behaviour.
+        shiopon.wait=Number.POSITIVE_INFINITY;
         lumiere.x=lumiereDesired.x*scale.x;lumiere.y=lumiereDesired.y*scale.y;
         lumiere.stageOffsetY=0;lumiere.moving=false;lumiere.frame=0;
         setDirection(player,0,1);
