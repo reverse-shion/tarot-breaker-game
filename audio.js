@@ -229,6 +229,44 @@
         apply();
         return snapshot;
       },
+      // Event-only iOS-safe silence path. Keep an already user-started media
+      // transport alive at zero audible gain so a later scripted reveal does
+      // not depend on a fresh play() permission.
+      holdSilent() {
+        if (!alive) return false;
+        cancelCoefficientFade();
+        token += 1;
+        cancelFade();
+        silent = true;
+        silenceFactor = 0;
+        apply();
+        return !bgm.paused;
+      },
+      // Rewind/seek the still-running ordinary BGM while it remains inaudible.
+      // This preserves the captured return position without pausing transport.
+      prepareSilent(snapshot) {
+        if (!alive || snapshot?.source !== BGM_SRC) return false;
+        cancelCoefficientFade();
+        token += 1;
+        silent = true;
+        silenceFactor = 0;
+        failed = false;
+        try { bgm.currentTime = snapshot.time; }
+        catch { failed = true; apply(); return false; }
+        apply();
+        return !snapshot.playing || !bgm.paused;
+      },
+      // Reveal-only unmute. Never calls play(): if transport was unexpectedly
+      // lost, report failure rather than silently relying on the next tap.
+      revealSilent(snapshot) {
+        if (!alive || snapshot?.source !== BGM_SRC) return false;
+        if (snapshot.playing && (bgm.paused || !enabled || document.hidden)) return false;
+        silent = false;
+        silenceFactor = 1;
+        failed = false;
+        apply();
+        return true;
+      },
       async resume(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
         const ownToken = ++token;
