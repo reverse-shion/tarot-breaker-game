@@ -42,18 +42,20 @@ function create({clock,signal,failures,id}){
   try{
    const osc=context.createOscillator(),gain=context.createGain(),now=context.currentTime;
    const strength=Math.max(1,Math.min(3,Number(index)||1));
-   const peak=(.022+.006*strength)*level;
+   const durations=[0,.34,.39,.47],starts=[0,48,45,42],ends=[0,31,29,27],peaks=[0,.026,.033,.041];
+   const duration=durations[strength],peak=peaks[strength]*level;
    osc.type='sine';
-   osc.frequency.setValueAtTime(52-2*strength,now);
-   osc.frequency.exponentialRampToValueAtTime(34,now+.23);
+   osc.frequency.setValueAtTime(starts[strength],now);
+   osc.frequency.exponentialRampToValueAtTime(ends[strength],now+duration*.88);
    gain.gain.setValueAtTime(.0001,now);
-   gain.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),now+.028);
-   gain.gain.exponentialRampToValueAtTime(.0001,now+.24);
+   gain.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),now+duration*.14);
+   gain.gain.exponentialRampToValueAtTime(Math.max(.00015,peak*.42),now+duration*.38);
+   gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
    osc.connect(gain);gain.connect(context.destination);
    const node={osc,gain};pulseNodes.add(node);
    osc.onended=()=>{pulseNodes.delete(node);try{osc.disconnect?.();gain.disconnect?.();}catch{}};
-   osc.start(now);osc.stop(now+.245);
-   events.push({type:'pulse',index:strength,phase,time:clock.now()});
+   osc.start(now);osc.stop(now+duration+.01);
+   events.push({type:'pulse',index:strength,duration,phase,time:clock.now()});
    return true;
   }catch(e){fail('arcana-pulse',e);return false;}
  }
