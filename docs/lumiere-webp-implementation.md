@@ -45,7 +45,7 @@ normalized derivative is within ±1e-6 of zero; no new timer is introduced.
 
 | Facing | Rising | Falling |
 | --- | --- | --- |
-| Front | hover_down (user's original up) | idle |
+| Front | idle | hover_down (hair-spread pose) |
 | Rear | existing hover-back | hover_up (user's original down) |
 | Left/right | unchanged directional image | unchanged directional image |
 
