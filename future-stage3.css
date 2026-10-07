@@ -19,6 +19,34 @@
 .sga-arcana-detail-frame{position:relative;flex:none}
 .sga-arcana-detail-image{position:absolute;display:block;max-width:none;max-height:none;object-fit:contain;filter:none;box-shadow:none;transform:none}
 
+.sga-arcana-contamination{
+  position:absolute;
+  z-index:4;
+  left:-4%;
+  top:3%;
+  width:34%;
+  height:94%;
+  opacity:0;
+  pointer-events:none;
+  transform-origin:0 50%;
+  border-radius:46% 58% 54% 42%;
+  background:
+    radial-gradient(ellipse at 12% 26%,rgba(8,2,12,.78) 0 13%,rgba(37,12,48,.42) 34%,rgba(66,30,78,.16) 57%,transparent 73%),
+    radial-gradient(ellipse at 18% 72%,rgba(5,1,9,.72) 0 12%,rgba(44,14,55,.38) 31%,rgba(75,34,88,.13) 55%,transparent 75%);
+  filter:blur(5px) saturate(.82);
+  mix-blend-mode:multiply;
+  will-change:left,opacity,transform,filter;
+}
+.sga-arcana-contamination::after{
+  content:"";
+  position:absolute;
+  inset:7% 13% 5% 0;
+  border-radius:50%;
+  background:linear-gradient(96deg,rgba(2,0,5,.62),rgba(39,13,50,.25) 46%,rgba(70,34,82,.08) 70%,transparent);
+  filter:blur(3px);
+  opacity:.72;
+}
+
 
 /* Arcana semantic erosion v1.0: restrained meaning rewrite, never a transformation. */
 .sga-arcana-detail-frame{transform-origin:50% 50%;will-change:transform,filter}
