@@ -11,9 +11,10 @@ test('successful present return hands off from Shion-only Stage3 and preserves a
  assert.match(anomaly,/visibility\?\.shion!==1\|\|visibility\?\.shiopon!==0\|\|visibility\?\.lumiere!==0/);
 });
 
-test('Present Return v1.3 reveals both companions before optional checks and returns free control',()=>{
- assert.match(aftermath,/state\(s,'RETURN_RECOGNITION'\);[\s\S]*setActorVisibility\?\.\('shion',1\);[\s\S]*setActorVisibility\?\.\('shiopon',1\);[\s\S]*setActorVisibility\?\.\('lumiere',1\)/);
- assert.match(aftermath,/await s\.clock\.wait\(900\);[\s\S]*releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\)/);
+test('Present Return v1.3 stages separated companions before reveal and returns free control immediately',()=>{
+ assert.match(aftermath,/state\(s,'RETURN_RECOGNITION'\);[\s\S]*placeReturnFormation\?\.\(\);[\s\S]*setActorVisibility\?\.\('shion',1\);[\s\S]*setActorVisibility\?\.\('shiopon',1\);[\s\S]*setActorVisibility\?\.\('lumiere',1\)/);
+ assert.match(aftermath,/s\.scene\.gameplayCamera\(\);releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\)/);
+ assert.doesNotMatch(aftermath,/RETURN_RECOGNITION'[\s\S]{0,900}wait\(900\)/);
  assert.match(aftermath,/if\(s\.checked\.size<2\)\{releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\);return;\}[\s\S]*await groupConversation\(s\)/);
  assert.match(aftermath,/if\(a0\.visibility\)a0\.visibility=\{\.\.\.a0\.visibility,shion:1,shiopon:1,lumiere:1\}/);assert.match(aftermath,/installTalkInput\(s\)/);assert.doesNotMatch(aftermath,/aftermath-talk|startTalkScanner|話しかける/);
 });
