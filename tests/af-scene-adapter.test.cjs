@@ -35,14 +35,12 @@ test('Aftermath actor hit test targets Shiopon/Lumiere directly without UI geome
   assert.equal(api.hitTestActor(750*.63,(200-44)*.63),'lumiere');
   assert.equal(api.hitTestActor(20,20),null);
 });
-test('Aftermath return formation keeps Shion fixed and separates companions horizontally',()=>{
-  const {c,api}=scene();const before={x:c.actors.shion.x,y:c.actors.shion.y};
+test('Aftermath return formation preserves restored Lumiere and places Shiopon beside her',()=>{
+  const {c,api}=scene();const shionBefore={x:c.actors.shion.x,y:c.actors.shion.y},lumiereBefore={x:c.actors.lumiere.x,y:c.actors.lumiere.y};
   const placed=api.placeReturnFormation();
-  assert.equal(placed.shion.x,before.x);assert.equal(placed.shion.y,before.y);
-  assert.equal(placed.shiopon.y,placed.lumiere.y);
-  assert.equal(placed.shiopon.x,before.x-50);
-  assert.equal(placed.lumiere.x,before.x+50);
-  assert.equal(placed.shiopon.y,before.y+88);
-  assert.ok(Math.hypot(before.x-placed.shiopon.x,before.y-placed.shiopon.y)>95);assert.equal(placed.lumiere.x-placed.shiopon.x,100);
+  assert.equal(placed.shion.x,shionBefore.x);assert.equal(placed.shion.y,shionBefore.y);
+  assert.equal(placed.lumiere.x,lumiereBefore.x);assert.equal(placed.lumiere.y,lumiereBefore.y);
+  assert.equal(placed.shiopon.x,lumiereBefore.x-62);assert.equal(placed.shiopon.y,lumiereBefore.y);
+  assert.equal(placed.lumiere.x-placed.shiopon.x,62);
   assert.equal(c.actors.shiopon.followRoute.length,0);assert.equal(c.actors.shiopon.wait,Number.POSITIVE_INFINITY);
 });
