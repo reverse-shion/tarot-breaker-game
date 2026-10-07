@@ -4,7 +4,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 function fixture(){
  const listeners={};let instance;let clock=0,frameId=0;const frames=new Map();
- class FakeAudio {constructor(src){instance=this;this.src=src;this.paused=true;this.currentTime=12;this.volume=0;} get volume(){return this._volume;} set volume(value){if(value<0||value>1)throw new RangeError("HTMLMediaElement volume outside [0,1]");this._volume=value;} setAttribute(){} addEventListener(){} pause(){this.paused=true;} play(){this.paused=false;return this.result||Promise.resolve();}}
+ class FakeAudio {constructor(src){instance=this;this.src=src;this.paused=true;this.currentTime=12;this.muted=false;this.volume=0;} get volume(){return this._volume;} set volume(value){if(value<0||value>1)throw new RangeError("HTMLMediaElement volume outside [0,1]");this._volume=value;} setAttribute(){} addEventListener(){} pause(){this.paused=true;} play(){this.paused=false;return this.result||Promise.resolve();}}
  const window={addEventListener(n,f){listeners[n]=f;}};
  const document={hidden:false,currentScript:null,getElementById(){return null;},addEventListener(n,f){listeners[n]=f;}};
  vm.runInNewContext(fs.readFileSync('audio.js','utf8'),{window,document,Audio:FakeAudio,localStorage:{getItem(){return '1';},setItem(){}},performance:{now(){return clock;}},requestAnimationFrame(f){frames.set(++frameId,f);return frameId;},cancelAnimationFrame(id){frames.delete(id);},setTimeout,clearTimeout,console});
@@ -17,15 +17,15 @@ test('default cinematic calls have no effect; independent event coefficient appl
  const state=session.capture();assert.equal(state.base,.16);assert.equal(state.coefficient,.5);assert.equal(state.playing,true);
  session.release();assert.equal(bgm.volume,.16);
 });
-test('iOS-safe event silence keeps native transport alive and reveal needs no play call',()=>{
+test('iOS-safe event silence hard-mutes native transport and reveal needs no play call',()=>{
  const {api,bgm}=fixture();bgm.paused=false;const session=api.beginEventSession();const p0=session.capture();let plays=0;const originalPlay=bgm.play.bind(bgm);bgm.play=()=>{plays++;return originalPlay();};
- assert.equal(session.holdSilent(),true);assert.equal(bgm.paused,false);assert.equal(bgm.volume,0);
- bgm.currentTime=99;assert.equal(session.prepareSilent(p0),true);assert.equal(bgm.currentTime,12);assert.equal(bgm.paused,false);assert.equal(bgm.volume,0);
- session.setLevel(0);assert.equal(session.revealSilent(p0),true);assert.equal(plays,0);assert.equal(bgm.paused,false);assert.equal(bgm.volume,0);
- session.setLevel(1);assert.equal(bgm.volume,.35);session.release();
+ assert.equal(session.holdSilent(),true);assert.equal(bgm.paused,false);assert.equal(bgm.muted,true);assert.equal(bgm.volume,0);
+ bgm.currentTime=99;assert.equal(session.prepareSilent(p0),true);assert.equal(bgm.currentTime,12);assert.equal(bgm.paused,false);assert.equal(bgm.muted,true);assert.equal(bgm.volume,0);
+ session.setLevel(0);assert.equal(session.revealSilent(p0),true);assert.equal(plays,0);assert.equal(bgm.paused,false);assert.equal(bgm.muted,false);assert.equal(bgm.volume,0);
+ session.setLevel(1);assert.equal(bgm.volume,.35);session.release();assert.equal(bgm.muted,false);
 });
 test('pause snapshots actual time and resume preserves mute settings and stopped state',async()=>{
- const {api,bgm}=fixture();bgm.paused=false;const session=api.beginEventSession();const snapshot=session.pause();assert.equal(snapshot.time,12);assert.equal(bgm.paused,true);assert.equal(bgm.volume,0);
+ const {api,bgm}=fixture();bgm.paused=false;const session=api.beginEventSession();const snapshot=session.pause();assert.equal(snapshot.time,12);assert.equal(bgm.paused,true);assert.equal(bgm.muted,true);assert.equal(bgm.volume,0);
  bgm.currentTime=99;assert.equal(await session.resume(snapshot),true);assert.equal(bgm.currentTime,12);assert.equal(bgm.paused,false);
  session.pause();api.setEnabled(false);assert.equal(await session.resume(snapshot),true);assert.equal(bgm.paused,true);assert.equal(bgm.volume,0);
  api.setEnabled(true);const stopped=session.capture();assert.equal(await session.resume(stopped),true);assert.equal(bgm.paused,true);session.release();assert.equal(api.enabled,true);
