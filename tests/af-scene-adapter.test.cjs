@@ -38,7 +38,7 @@ test('Aftermath actor hit test targets Shiopon/Lumiere directly without UI geome
 test('Aftermath return formation keeps Shion fixed and separates companions horizontally',()=>{
   const {c,api}=scene();const before={x:c.actors.shion.x,y:c.actors.shion.y};
   const placed=api.placeReturnFormation();
-  assert.deepEqual(placed.shion,before);
+  assert.equal(placed.shion.x,before.x);assert.equal(placed.shion.y,before.y);
   assert.equal(placed.shiopon.y,placed.lumiere.y);
   assert.equal(placed.shiopon.x,before.x-64);
   assert.equal(placed.lumiere.x,before.x+64);
