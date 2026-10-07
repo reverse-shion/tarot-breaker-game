@@ -225,6 +225,7 @@
         token += 1;
         cancelFade();
         bgm.pause();
+        bgm.muted = true;
         silent = true;
         apply();
         return snapshot;
@@ -237,6 +238,9 @@
         cancelCoefficientFade();
         token += 1;
         cancelFade();
+        // iOS Safari does not reliably honor programmatic HTMLMediaElement.volume.
+        // Native muted is the hard audible gate; volume/gain remains secondary.
+        bgm.muted = true;
         silent = true;
         silenceFactor = 0;
         apply();
@@ -248,6 +252,7 @@
         if (!alive || snapshot?.source !== BGM_SRC) return false;
         cancelCoefficientFade();
         token += 1;
+        bgm.muted = true;
         silent = true;
         silenceFactor = 0;
         failed = false;
@@ -264,12 +269,15 @@
         silent = false;
         silenceFactor = 1;
         failed = false;
+        // Only the painted present Garden is allowed to make the ordinary BGM audible again.
+        bgm.muted = false;
         apply();
         return true;
       },
       async resume(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
         const ownToken = ++token;
+        bgm.muted = false;
         silent = false;
         silenceFactor = 1;
         failed = false;
@@ -302,6 +310,8 @@
         cancelFade();
         eventSession = null;
         // Preserve restored play state; do not start a previously stopped source.
+        // Event hard-mute must never leak into normal gameplay after release.
+        bgm.muted = false;
         bgm.volume = enabled && !failed ? targetVolume : 0;
       },
     };
