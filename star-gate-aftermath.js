@@ -130,10 +130,11 @@
  function lockForDialogue(s){s.scene.lock(s.owner);s.scene.clearInput();}
  async function opening(s){
   state(s,'RETURN_RECOGNITION');
-  // Place the companions while they are still hidden so the player never sees them overlap.
+  // Stop follow first, then place the companions while hidden so no normal wander/follow
+  // update can immediately undo the authored return formation.
+  window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
   s.returnFormation=s.scene.placeReturnFormation?.();
   s.scene.setActorVisibility?.('shion',1);s.scene.setActorVisibility?.('shiopon',1);s.scene.setActorVisibility?.('lumiere',1);
-  window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
   s.scene.face('shion',{x:s.scene.getState().actors.shion.x,y:s.scene.getState().actors.shion.y+100});
   s.scene.face('shiopon','shion');s.scene.face('lumiere','shion');
   s.scene.gameplayCamera();releaseControl(s,false);state(s,'CHECK_COMPANIONS');
