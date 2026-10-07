@@ -40,9 +40,9 @@ test('Aftermath return formation keeps Shion fixed and separates companions hori
   const placed=api.placeReturnFormation();
   assert.equal(placed.shion.x,before.x);assert.equal(placed.shion.y,before.y);
   assert.equal(placed.shiopon.y,placed.lumiere.y);
-  assert.equal(placed.shiopon.x,before.x-64);
-  assert.equal(placed.lumiere.x,before.x+64);
-  assert.equal(placed.shiopon.y,before.y+118);
-  assert.ok(Math.hypot(before.x-placed.shiopon.x,before.y-placed.shiopon.y)>110);
+  assert.equal(placed.shiopon.x,before.x-50);
+  assert.equal(placed.lumiere.x,before.x+50);
+  assert.equal(placed.shiopon.y,before.y+88);
+  assert.ok(Math.hypot(before.x-placed.shiopon.x,before.y-placed.shiopon.y)>95);assert.equal(placed.lumiere.x-placed.shiopon.x,100);
   assert.equal(c.actors.shiopon.followRoute.length,0);assert.equal(c.actors.shiopon.wait,Number.POSITIVE_INFINITY);
 });
