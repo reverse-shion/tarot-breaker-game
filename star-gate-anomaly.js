@@ -833,7 +833,7 @@ async function runStage3Latter(before){
    const visibility=window.TarotActorVisibility;
    visibility?.set('shion',1);visibility?.set('shiopon',0);visibility?.set('lumiere',0);
    current.presentIsolation=true;current.restored=true;await preparePresentAudio(current);},
-  async presentVisible(){await scene.waitDraw();current.clock.assert();},
+  async presentVisible(){await scene.waitDraw();current.clock.assert();await scene.waitDraw();current.clock.assert();},
   resumePresentAudio(){
    current.futureAudio?.pause('PRESENT');
    audio.setBase(current.p0.audio.base);
@@ -878,7 +878,7 @@ async function recoverPresent(current){
   current.audio.setBase(current.p0.audio.base);current.audio.setLevel(0);
   if(!await current.audio.resume({...current.p0.audio,playing:false}))current.audioFailures.push('P0-recovery-prepare');
   await recoveryClock.tween(550,p=>{black.style.opacity=String(1-p);});
-  await current.scene.waitDraw();
+  await current.scene.waitDraw();await current.scene.waitDraw();
   current.audio.resume(current.p0.audio).then(ok=>{if(!ok)current.audioFailures.push('P0-recovery');});
   current.audio.tweenCoefficient(current.p0.audio.coefficient,320,false);
   current.restored=true;
