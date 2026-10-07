@@ -47,6 +47,38 @@
   opacity:.72;
 }
 
+.sga-arcana-breach-glow{
+  position:absolute;
+  z-index:5;
+  left:-6%;
+  top:5%;
+  width:30%;
+  height:90%;
+  opacity:0;
+  pointer-events:none;
+  transform-origin:18% 50%;
+  border-radius:42% 58% 55% 45%;
+  background:
+    radial-gradient(ellipse at 20% 28%,rgba(164,92,190,.34) 0 8%,rgba(112,53,139,.22) 26%,rgba(74,29,95,.10) 48%,transparent 70%),
+    radial-gradient(ellipse at 24% 70%,rgba(137,70,169,.28) 0 9%,rgba(91,37,117,.18) 28%,rgba(61,22,80,.08) 50%,transparent 72%),
+    linear-gradient(96deg,rgba(88,37,112,.22),rgba(54,20,72,.10) 52%,transparent 82%);
+  filter:blur(4.8px) saturate(.9) drop-shadow(0 0 5px rgba(108,54,137,.24));
+  mix-blend-mode:screen;
+  will-change:left,opacity,transform;
+}
+.sga-arcana-breach-glow::after{
+  content:"";
+  position:absolute;
+  left:4%;
+  top:10%;
+  bottom:10%;
+  width:14%;
+  border-radius:50%;
+  background:rgba(164,92,190,.20);
+  filter:blur(3px);
+  opacity:.72;
+}
+
 
 /* Arcana semantic erosion v1.0: restrained meaning rewrite, never a transformation. */
 .sga-arcana-detail-frame{transform-origin:50% 50%;will-change:transform,filter}
@@ -72,4 +104,5 @@
 @media (prefers-reduced-motion:reduce){
  .sga-arcana-detail-frame.sga-rewrite-push{animation:none;transform:scale(1.008)}
  .sga-arcana-detail-frame.sga-re-residual .sga-arcana-detail-image.re{animation:none}
+ .sga-arcana-breach-glow{filter:blur(4px) saturate(.85)}
 }
