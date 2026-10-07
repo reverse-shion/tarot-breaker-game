@@ -78,11 +78,11 @@
   a.assertPresentPrepared();state('FUTURE_FADE');await tween(550,1,0,p=>a.black(p));
   state('BLACK_CUT');a.pauseFutureAudio();
   state('PRESENT_RESTORE');const blackHold=await coveredRestore(clock,180,ctx=>a.restorePresent(ctx),ctx=>a.draw(ctx));a.recordHold?.('black',blackHold);
-  // Keep the blackout completely silent. Reveal the restored Garden first,
-  // then start the ordinary Garden BGM only after black has fully cleared.
+  // Keep the blackout completely silent. First clear the black overlay,
+  // then wait until the restored Garden has actually painted before any ordinary BGM resumes.
   await clock.tween(550,p=>a.black(1-p));
-  state('PRESENT_VISIBLE');a.resumePresentAudio();a.presentAudioLevel(1);
-  await clock.wait(650);state('SHION_REACTION');await a.reaction();
+  state('PRESENT_VISIBLE');if(a.presentVisible)await a.presentVisible();
+  a.resumePresentAudio();
   state('CONTROL_RETURN');a.returnControl();
  }
  return Object.freeze({DIALOGUE,ASSETS,createClock,coveredRestore,run,interpolate});
