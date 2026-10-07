@@ -36,7 +36,7 @@
     "Body crown/toe landmarks set person scale independently of wings, hair and ornaments.",
     "Draw the full image with uniform X/Y scale and the per-pose body-center/toe anchor.",
     "The supplied single poses have fixed wings; retain the slow vertical sine bob without sheet-frame animation.",
-    "Bob velocity selects front rising=hover_down (original up), falling=idle; rear rising=hover_back, falling=hover_up (original down). Left/right remain directional single poses."
+    "Bob velocity selects front rising=idle, falling=hover_down (hair-spread pose); rear rising=hover_back, falling=hover_up (hair-spread pose). Left/right remain directional single poses."
   ],
   "layout": "single_pose",
   "render": {
