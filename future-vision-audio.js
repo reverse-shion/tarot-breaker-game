@@ -5,7 +5,7 @@ const TRACKS=Object.freeze({ruins:{source:'./assets/audio/bgm/future_ruins.mp3',
 let context=null;
 function create({clock,signal,failures,id}){
  let alive=true,suspended=false,level=1,phase='PREPARED',frame=0;
- const events=[],tracks={};
+ const events=[],tracks={},pulseNodes=new Set();
  const fail=(name,error)=>{failures.push('future-'+name+': '+String(error));events.push({type:'failure',name,error:String(error),time:clock.now()});};
  try{const C=window.AudioContext||window.webkitAudioContext;if(!C)throw new Error('AudioContext unavailable');context ||=new C();}
  catch(e){fail('context',e);}
@@ -36,19 +36,41 @@ function create({clock,signal,failures,id}){
  // Called synchronously from the existing investigate gesture, before any await.
  function unlock(){if(!enabled())return;resumeContext();for(const t of Object.values(tracks)){if(t.failed)continue;const token=++t.token;try{Promise.resolve(t.media.play()).then(()=>{if(token===t.token||!alive||signal.aborted||suspended||document.hidden||!enabled()||!t.desired)t.media.pause();},e=>{if(alive&&token===t.token)fail('gesture',e);});}catch(e){fail('gesture',e);}}}
  function monitor(){if(!alive)return;apply();for(const [name,t] of Object.entries(tracks)){if(t.pendingSince!=null&&clock.now()-t.pendingSince>10000){t.pendingSince=null;t.failed=true;stop(t);fail(name+'-timeout','load/seek/play deadline');}}frame=requestAnimationFrame(monitor);}
- const forcePause=()=>{suspended=true;for(const t of Object.values(tracks)){t.token++;t.pendingSince=null;t.media.pause();if(t.gain){t.gain.gain.cancelScheduledValues(context.currentTime);t.gain.gain.value=0;}}};
+ function stopPulses(){for(const node of pulseNodes){try{node.osc.stop();}catch{}try{node.osc.disconnect?.();node.gain.disconnect?.();}catch{}}pulseNodes.clear();}
+ function playPulse(index=1){
+  if(!alive||signal.aborted||suspended||document.hidden||!enabled()||!context||context.state!=='running'||level<=0)return false;
+  try{
+   const osc=context.createOscillator(),gain=context.createGain(),now=context.currentTime;
+   const strength=Math.max(1,Math.min(3,Number(index)||1));
+   const peak=(.022+.006*strength)*level;
+   osc.type='sine';
+   osc.frequency.setValueAtTime(52-2*strength,now);
+   osc.frequency.exponentialRampToValueAtTime(34,now+.23);
+   gain.gain.setValueAtTime(.0001,now);
+   gain.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),now+.028);
+   gain.gain.exponentialRampToValueAtTime(.0001,now+.24);
+   osc.connect(gain);gain.connect(context.destination);
+   const node={osc,gain};pulseNodes.add(node);
+   osc.onended=()=>{pulseNodes.delete(node);try{osc.disconnect?.();gain.disconnect?.();}catch{}};
+   osc.start(now);osc.stop(now+.245);
+   events.push({type:'pulse',index:strength,phase,time:clock.now()});
+   return true;
+  }catch(e){fail('arcana-pulse',e);return false;}
+ }
+ const forcePause=()=>{suspended=true;stopPulses();for(const t of Object.values(tracks)){t.token++;t.pendingSince=null;t.media.pause();if(t.gain){t.gain.gain.cancelScheduledValues(context.currentTime);t.gain.gain.value=0;}}};
  const hidden=()=>{if(document.hidden)forcePause();else restoreVisible();};
  const restoreVisible=()=>{if(!alive||signal.aborted||document.hidden)return;suspended=false;resumeContext();for(const [name,t] of Object.entries(tracks))if(t.desired&&!t.failed&&t.media.paused&&!t.media.ended){const weight=t.weight;play(name,t.started?t.media.currentTime:t.start,t.mix,t.started);t.weight=weight;}apply();};
  const gesture=()=>{queueMicrotask(()=>{if(!alive||signal.aborted||!enabled()||document.hidden)return;resumeContext();for(const [name,t] of Object.entries(tracks))if(t.desired&&!t.failed&&t.media.paused&&!t.media.ended){const weight=t.weight;play(name,t.started?t.media.currentTime:t.start,t.mix,t.started);t.weight=weight;apply();}});};
  document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',forcePause);window.addEventListener('pageshow',restoreVisible);document.addEventListener('click',gesture);
  const abort=()=>pause('ABORT');signal.addEventListener('abort',abort,{once:true});
- function pause(reason){phase=reason;for(const t of Object.values(tracks))stop(t);record('pause');}
+ function pause(reason){phase=reason;stopPulses();for(const t of Object.values(tracks))stop(t);record('pause');}
  const api={unlock,
   ruinsVisible(){phase='RUINS';play('ruins',1.8,.70);const start=clock.now();const ramp=()=>{if(!alive||signal.aborted||phase!=='RUINS')return;tracks.ruins.weight=Math.min(1,(clock.now()-start)/250);apply();if(tracks.ruins.weight<1)requestAnimationFrame(ramp);};ramp();},
   arcanaAnomalyStart(){
    phase='ARCANA_MICRO';
    tracks.ruins.weight=Math.min(tracks.ruins.weight||1,.94);apply();
   },
+  arcanaPulse(index){phase='ARCANA_MICRO';return playPulse(index);},
   arcanaInfectionStart(){
    phase='ARCANA_INFECTION';
    // The erosion itself owns the musical peak. Start the fixation cue here,
