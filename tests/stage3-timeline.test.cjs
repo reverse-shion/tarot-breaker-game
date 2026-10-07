@@ -15,7 +15,7 @@ function harness(options={}) {
   audioLevel:v=>emit('audio',v),rift:(id,opacity,scale)=>{view.rifts[id]={opacity,scale};emit('rift',id,opacity,scale);},
   async say(text){emit('say',text);await clock.wait(options.readTime||700);const close=time;emit('close',text);await clock.wait(100);return close;},
   startAbsorption:()=>emit('absorption'),absorb:v=>emit('absorb',v),white:v=>{view.white=v;emit('white',v);},black:v=>{view.black=v;emit('black',v);},
-  pauseFutureAudio:()=>emit('pause'),resumeFutureAudio:()=>emit('resumeFuture'),resumePresentAudio:()=>emit('resumePresent'),presentAudioLevel:v=>emit('presentAudio',v),
+  pauseFutureAudio:()=>emit('pause'),resumeFutureAudio:()=>emit('resumeFuture'),presentVisible:async()=>emit('presentVisible'),resumePresentAudio:()=>emit('resumePresent'),presentAudioLevel:v=>emit('presentAudio',v),
   restoreFuture:async()=>{emit('restoreFuture');if(options.restoreError)throw options.restoreError;view.restored='R1';view.rifts={};},
   restorePresent:async()=>{emit('restorePresent');view.restored='P0';},draw:async()=>emit('draw',view.restored),recordHold:(name,result)=>emit('hold',name,result),
   assertPresentPrepared:()=>emit('presentPrepared'),reaction:async()=>emit('reaction'),returnControl:()=>{view.control=true;emit('control');}};
@@ -61,7 +61,9 @@ test('T13/T14/T17/T29 restoration under independent covers precedes dialogue/con
  }
  assert.deepEqual(h.events.filter(e=>e.kind==='say').map(e=>e.values[0]),DIALOGUE.slice(3));
  assert.equal(h.view.white,0);assert.equal(h.view.black,0);assert.equal(h.view.restored,'P0');assert.equal(h.view.control,true);
- near(event(h,'reaction').time-state(h,'PRESENT_VISIBLE').time,650);assert.equal(h.events.filter(e=>e.kind==='reaction').length,1);
+ assert.equal(h.events.filter(e=>e.kind==='reaction').length,0);
+ assert.ok(event(h,'presentVisible').time>=state(h,'PRESENT_VISIBLE').time);
+ assert.ok(event(h,'control').time>=event(h,'resumePresent').time);
 });
 test('T26 envelope values interpolate and audio pause/resume brackets covered restoration',async()=>{
  const h=harness();await run(h.adapter,h.clock);
@@ -72,8 +74,9 @@ test('T26 envelope values interpolate and audio pause/resume brackets covered re
  near(pauses[0].time,state(h,'FULL_WHITE').time);near(pauses[1].time,state(h,'BLACK_CUT').time);
  assert.ok(event(h,'resumeFuture').time>event(h,'restoreFuture').time);assert.ok(event(h,'resumePresent').time>event(h,'restorePresent').time);
  const blackFrames=h.events.filter(e=>e.kind==='black');const cleared=blackFrames.at(-1);near(cleared.values[0],0);
- assert.ok(event(h,'resumePresent').time>=cleared.time);
- const present=h.events.filter(e=>e.kind==='presentAudio');assert.deepEqual(present.map(e=>e.values[0]),[1]);assert.ok(present[0].time>=cleared.time);
+ assert.ok(event(h,'presentVisible').time>=cleared.time);
+ assert.ok(event(h,'resumePresent').time>=event(h,'presentVisible').time);
+ assert.deepEqual(h.events.filter(e=>e.kind==='presentAudio'),[]);
 });
 test('T22 preparation and covered restoration exceptions propagate without control return',async()=>{
  for(const key of ['prepareError','restoreError']){const failure=new Error(key);const h=harness({[key]:failure});await assert.rejects(run(h.adapter,h.clock),e=>e===failure);assert.equal(h.view.control,false);assert.equal(event(h,'reaction'),undefined);if(key==='prepareError')assert.equal(event(h,'state'),undefined);}
@@ -82,7 +85,7 @@ test('T30 restoration deadline is separate from minimum and rejects unresolved w
  const h=harness();await assert.rejects(coveredRestore(h.clock,240,()=>new Promise(()=>{}),()=>{}),/covered-restore-timeout/);near(h.time(),2000);
  const next=harness();await assert.rejects(coveredRestore(next.clock,180,()=>{throw new Error('switch-failed');},()=>{}),/switch-failed/);assert.ok(next.time()<2000);
 });
-test('T23 cancellation prevents sequence actions and reaction/control after abort',async()=>{
+test('T23 cancellation prevents sequence actions and control after abort',async()=>{
  for(const abortAt of ['RIFT_SMALL','VORTEX_EMERGENCE','FUTURE_WHITEOUT','PRESENT_VISIBLE']){
   const h=harness({abortAt});await assert.rejects(run(h.adapter,h.clock),{name:'AbortError'});const count=h.events.length;await Promise.resolve();assert.equal(h.events.length,count);assert.equal(h.view.control,false);assert.equal(event(h,'reaction'),undefined);
  }
