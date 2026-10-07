@@ -19,7 +19,7 @@
   const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
   const DRAW_HEIGHT = 78;
   const SHIOPON_DRAW_HEIGHT = 76;
-  const LUMIERE_DRAW_HEIGHT = 78;
+  const LUMIERE_DRAW_HEIGHT = 67; // 596px normalized crop -> ~78px rendered height, matching Shion
   const ACTOR_OUTLINES = {
     player: { color: "rgba(54,31,34,.92)", width: 0.72, opacity: 0.72 },
     shiopon: { color: "rgba(43,25,78,.96)", width: 1.05, opacity: 0.9 },
