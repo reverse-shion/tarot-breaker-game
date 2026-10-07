@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const anomaly=fs.readFileSync('star-gate-anomaly.js','utf8');
 const aftermath=fs.readFileSync('star-gate-aftermath.js','utf8');
-const css=fs.readFileSync('star-gate-aftermath.css','utf8');
+const css=fs.readFileSync('star-gate-aftermath.css','utf8');const anomalyCss=fs.readFileSync('star-gate-anomaly.css','utf8');const html=fs.readFileSync('index.html','utf8');
 
 test('successful present return hands off from Shion-only Stage3 and preserves anomaly-rest gate',()=>{
  assert.match(anomaly,/visibility\?\.set\('shion',1\);visibility\?\.set\('shiopon',0\);visibility\?\.set\('lumiere',0\)/);
@@ -19,8 +19,11 @@ test('Present Return v1.3 stages separated companions before reveal and returns 
  assert.match(aftermath,/if\(a0\.visibility\)a0\.visibility=\{\.\.\.a0\.visibility,shion:1,shiopon:1,lumiere:1\}/);assert.match(aftermath,/installTalkInput\(s\)/);assert.doesNotMatch(aftermath,/aftermath-talk|startTalkScanner|話しかける/);
 });
 
-test('Aftermath weak-light cannot overwrite the corrupted black-purple gate',()=>{
- assert.match(css,/#game-shell\.sga-anomaly-rest\.aftermath-weak-light \.scene-gate-inner-light > img/);
- assert.match(css,/mix-blend-mode:normal!important/);assert.match(css,/radial-gradient\(ellipse at 50% 38%,rgba\(58,22,72,\.96\)/);assert.match(css,/brightness\(\.32\) saturate\(1\.18\) hue-rotate\(28deg\) contrast\(1\.16\)/);
- assert.match(css,/sgaAnomalyBreathe 7\.2s ease-in-out infinite!important/);
+test('Present return reuses the real inner-light asset and does not add a black backing or Aftermath anomaly override',()=>{
+ assert.match(html,/scene-gate-inner-light[\s\S]*star-country-gate-garden-star-gate-inner-light\.webp/);
+ assert.match(anomalyCss,/#game-shell\.sga-anomaly-rest \.scene-gate-inner-light > img[\s\S]*sgaAnomalyBreathe 7\.2s/);
+ assert.doesNotMatch(anomalyCss,/rgba\(58,22,72,\.96\)|box-shadow:inset 0 0 24px/);
+ assert.match(css,/aftermath-weak-light:not\(\.sga-anomaly-rest\)/);
+ assert.doesNotMatch(css,/sga-anomaly-rest\.aftermath-weak-light/);
+ assert.match(aftermath,/if\(!shell\.classList\.contains\('sga-anomaly-rest'\)\)shell\.classList\.add\('aftermath-weak-light'\)/);
 });
