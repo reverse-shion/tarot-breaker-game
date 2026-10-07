@@ -27,7 +27,7 @@ test('three Arcana pulse calls synthesize finite low beats and respect music OFF
  const h=harness();await flush();h.api.arcanaAnomalyStart();
  assert.equal(h.api.arcanaPulse(1),true);assert.equal(h.api.arcanaPulse(2),true);assert.equal(h.api.arcanaPulse(3),true);
  assert.equal(h.oscillators.length,3);assert.ok(h.oscillators.every(o=>o.started&&o.stopped));
- assert.deepEqual(Array.from(h.api.getState().events.filter(e=>e.type==='pulse'),e=>e.index),[1,2,3]);
+ const pulseEvents=Array.from(h.api.getState().events.filter(e=>e.type==='pulse'));assert.deepEqual(pulseEvents.map(e=>e.index),[1,2,3]);assert.deepEqual(pulseEvents.map(e=>e.duration),[.34,.39,.47]);
  h.api.dispose();
  const off=harness({off:true});await flush();off.api.arcanaAnomalyStart();assert.equal(off.api.arcanaPulse(1),false);assert.equal(off.oscillators.length,0);off.api.dispose();
 });
@@ -42,10 +42,10 @@ test('end of track falls over last1500ms without looping; bounded rewrite play f
  assert.match(s,/phase\('MICRO_ANOMALY'\);current\.futureAudio\?\.arcanaAnomalyStart\?\.\(\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaPulse\?\.\(number\)/);
  assert.match(s,/phase\('EDGE_EROSION'\);current\.futureAudio\?\.arcanaInfectionStart\?\.\(\)/);
- assert.match(s,/current\.futureAudio\?\.arcanaInfection\?\.\(p\)/);
+ assert.match(s,/current\.futureAudio\?\.arcanaInfection\?\.\(eased\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaRewrite\?\.\(\)/);
  assert.doesNotMatch(s,/arcanaBreak/);assert.doesNotMatch(s,/SEMANTIC_BREAK/);
- assert.match(s,/audioLevel:k=>current\.futureAudio\?\.setLevel\(k\)/);assert.match(s,/resumeFutureAudio\(\)\{current\.futureAudio\?\.resumeWhite\(\)/);assert.match(s,/async presentVisible\(\)\{await scene\.waitDraw\(\);current\.clock\.assert\(\);await scene\.waitDraw\(\);current\.clock\.assert\(\);\}/);assert.match(s,/audio\.setLevel\(0\);[\s\S]*safeResume\(current\.p0\.audio,'P0'\);[\s\S]*audio\.tweenCoefficient\(current\.p0\.audio\.coefficient,320,false\)/);assert.doesNotMatch(s,/audio\.src\s*=/);
+ assert.match(s,/audioLevel:k=>current\.futureAudio\?\.setLevel\(k\)/);assert.match(s,/resumeFutureAudio\(\)\{current\.futureAudio\?\.resumeWhite\(\)/);assert.match(s,/async presentVisible\(\)\{await scene\.waitDraw\(\);current\.clock\.assert\(\);await scene\.waitDraw\(\);current\.clock\.assert\(\);\}/);assert.match(s,/audio\.setLevel\(0\);[\s\S]*audio\.revealSilent\(current\.p0\.audio\)[\s\S]*audio\.tweenCoefficient\(current\.p0\.audio\.coefficient,360,false\)/);assert.match(s,/session\.audio\.holdSilent\(\);session\.futureAudio\?\.pause\('ENTRY_BLACK'\)/);assert.doesNotMatch(s,/audio\.src\s*=/);
 });
 test('unloaded metadata deadline invalidates late callbacks and malformed seek stays silent',async()=>{const h=harness({unloaded:true});await flush();h.api.ruinsVisible();h.step(10001);assert.ok(h.failures.some(f=>f.includes('timeout')));h.media[0].readyState=1;h.media[0].listeners.loadedmetadata?.();await flush();assert.equal(h.media[0].paused,true);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();for(const options of [{mismatch:true},{syncThrow:true},{noContext:true}]){const f=harness(options);await flush();f.api.ruinsVisible();f.media[0].listeners.seeked?.();f.step(250);await flush();assert.ok(f.failures.length);assert.equal(f.api.getState().tracks.ruins.gain,0);assert.equal(f.media[0].paused,true);f.api.dispose();}});
 test('mid-erosion musicOFF pauses both desired layers and resumes them without introducing a silent phase',async()=>{
