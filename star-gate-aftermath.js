@@ -183,7 +183,7 @@
   const a0=scene.capture();if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
   const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[],checked:new Set()};s.clock=aftermathClock(s.controller.signal);
   try{
-   scene.lock(s.owner);scene.clearInput();document.getElementById('game-shell').classList.add('aftermath-weak-light');makeUi(s);installTalkInput(s);
+   scene.lock(s.owner);scene.clearInput();const shell=document.getElementById('game-shell');if(!shell.classList.contains('sga-anomaly-rest'))shell.classList.add('aftermath-weak-light');makeUi(s);installTalkInput(s);
    s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
    s.hidden=()=>{scene.pause(document.hidden);if(document.hidden)s.pendingTalk=null;else{scene.clearInput();if(s.focus)scene.focusGate();}};
    s.resize=()=>{if(!alive(s))return;scene.clearInput();if(s.focus)scene.focusGate();};document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
