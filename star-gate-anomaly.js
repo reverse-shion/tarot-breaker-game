@@ -74,6 +74,12 @@ async function showArcanaDetail(){
   });
   frame.appendChild(card);images[key]=card;
  }
+ // A restrained black-purple contamination sits only on the entering edge.
+ // It is a stain/front, not a full-card smoke aura or a magical ring.
+ const contamination=document.createElement("div");
+ contamination.className="sga-arcana-contamination";
+ contamination.setAttribute("aria-hidden","true");
+ frame.appendChild(contamination);
  // Re:Arcana starts completely hidden. It will eat in from the outer edge with a soft mask,
  // never from a clean circular wipe or a hard-edged clip.
  const setErosionMask=p=>{
@@ -88,39 +94,57 @@ async function showArcanaDetail(){
  };
  setErosionMask(0);
  document.body.appendChild(layer);
- current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:4600,phases:[],registration:ARCANA_DETAIL_REGISTRATION};
+ current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:4840,phases:[],pulses:[],registration:ARCANA_DETAIL_REGISTRATION};
  const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
- const curve=(p,points)=>{
-  const scaled=Math.max(0,Math.min(1,p))*(points.length-1),i=Math.min(points.length-2,Math.floor(scaled)),local=scaled-i;
-  return points[i]+(points[i+1]-points[i])*local;
- };
+ const pulseSpecs=[
+  {duration:210,gap:90,scale:.012,mist:.09},
+  {duration:230,gap:100,scale:.018,mist:.17},
+  {duration:260,gap:0,scale:.026,mist:.28}
+ ];
  try{
   phase('NORMAL_HOLD');await current.clock.wait(550);
 
-  // Tiny law-of-the-world mismatch before the erosion becomes visible.
+  // Three finite, increasingly legible pulses make the Arcana feel wrong before it is eaten.
+  // The motion is intentionally small: the player should feel a beat, not see a zoom effect.
   phase('MICRO_ANOMALY');current.futureAudio?.arcanaAnomalyStart?.();
-  await current.clock.tween(650,p=>{
-   const brightness=curve(p,[1,.88,1.03,.95]);
-   const slip=Math.sin(p*Math.PI*4)*1.35*(1-p);
-   images.normal.style.filter='brightness('+brightness.toFixed(3)+') saturate('+Math.max(.92,1-.06*p).toFixed(3)+')';
-   images.normal.style.transform='translate('+slip.toFixed(2)+'px,'+(-slip*.45).toFixed(2)+'px)';
-  });
-  images.normal.style.transform='translate(0,0)';
+  for(let i=0;i<pulseSpecs.length;i++){
+   const spec=pulseSpecs[i],number=i+1;
+   current.cardDetail.pulses.push({number,time:current.clock.now(),scale:spec.scale,mist:spec.mist});
+   current.futureAudio?.arcanaPulse?.(number);
+   await current.clock.tween(spec.duration,p=>{
+    const beat=Math.sin(Math.PI*p);
+    const scale=1+spec.scale*beat;
+    frame.style.transform='scale('+scale.toFixed(4)+')';
+    images.normal.style.filter='brightness('+(1-.055*number*beat).toFixed(3)+') saturate('+(1-.035*number*beat).toFixed(3)+')';
+    contamination.style.opacity=String(Math.max(.035,spec.mist*(.42+.58*beat)));
+    contamination.style.transform='translateX('+(-5+number*1.5).toFixed(2)+'%) scaleX('+(1+.10*beat).toFixed(3)+')';
+   });
+   frame.style.transform='scale(1)';
+   contamination.style.opacity=String(spec.mist);
+   if(spec.gap)await current.clock.wait(spec.gap);
+  }
+  images.normal.style.filter='brightness(.95) saturate(.92)';
 
-  // Re markings eat inward from the card edge. The advancing boundary is feathered,
-  // so the player sees an infection front rather than an image wipe.
+  // Re markings eat inward from the same contaminated card edge. The feathered
+  // black-purple front travels with the rewrite so the pulse and erosion read as one event.
   phase('EDGE_EROSION');current.futureAudio?.arcanaInfectionStart?.();
   images.re.style.opacity='1';
   await current.clock.tween(1600,p=>{
    setErosionMask(p);
    images.normal.style.filter='brightness('+( .95-.16*p).toFixed(3)+') saturate('+( .92-.58*p).toFixed(3)+') contrast('+(1+.035*p).toFixed(3)+')';
    images.re.style.filter='brightness('+( .73+.10*p).toFixed(3)+') saturate('+( .48+.18*p).toFixed(3)+') contrast(1.045)';
+   const front=-4+72*p;
+   contamination.style.left=front.toFixed(2)+'%';
+   contamination.style.opacity=String((.28*(1-p)+.08*Math.sin(Math.PI*p)).toFixed(3));
+   contamination.style.transform='scaleX('+(1+.08*Math.sin(Math.PI*p)).toFixed(3)+')';
    current.futureAudio?.arcanaInfection?.(p);
   });
 
   // Cleanup is atomic but visually continuous: by this point the soft erosion front has already
   // consumed the whole card. No blackout and no silent gap are inserted at the switch.
   phase('RE_COMPLETE');
+  frame.style.transform='scale(1)';
+  contamination.style.opacity='0';
   images.normal.style.opacity='0';
   images.re.style.opacity='1';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
