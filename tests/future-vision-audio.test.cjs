@@ -2,14 +2,14 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const code=fs.readFileSync('future-vision-audio.js','utf8');
 function harness({off=false,reject=false,seekFail=false,late=false,unloaded=false,mismatch=false,syncThrow=false,noContext=false,seeking=false,suspended=false,asyncSeek=false}={}){
- let now=0,frame=0;const callbacks=new Map(),listeners={},media=[];const signal=new AbortController().signal;
+ let now=0,frame=0;const callbacks=new Map(),listeners={},media=[],oscillators=[];const signal=new AbortController().signal;
  const window={__TAROT_DEV_STAGE3__:true,TarotAudio:{enabled:!off},addEventListener:(n,f)=>listeners[n]=f,removeEventListener:()=>{}};
  class Audio{constructor(src){this.src=src;this.paused=true;this.readyState=unloaded?0:1;this.duration=210;this._time=0;this.seeking=seeking;this.plays=0;this.listeners={};media.push(this);}get currentTime(){return this._time}set currentTime(t){if(seekFail)throw Error('seek');if(asyncSeek){this.seekTarget=t;this.seeking=true;}else if(!mismatch)this._time=t;}pause(){this.paused=true;}play(){this.plays++;if(syncThrow)throw Error('syncplay');this.paused=false;if(reject)return Promise.reject(Error('denied'));if(late)return new Promise(r=>this.complete=()=>{this.paused=false;r();});return Promise.resolve();}addEventListener(n,f){this.listeners[n]=f}removeEventListener(n){delete this.listeners[n]}}
- class Context{constructor(){this.currentTime=0;this.state=suspended?'suspended':'running';this.destination={}}resume(){return Promise.resolve()}createMediaElementSource(){return{connect(){}}}createGain(){return{connect(){},gain:{value:0,cancelScheduledValues(){}}}}}
+ class Context{constructor(){this.currentTime=0;this.state=suspended?'suspended':'running';this.destination={}}resume(){this.state='running';return Promise.resolve()}createMediaElementSource(){return{connect(){}}}createGain(){return{connect(){},disconnect(){},gain:{value:0,cancelScheduledValues(){},setValueAtTime(v){this.value=v},exponentialRampToValueAtTime(v){this.value=v}}}}createOscillator(){const o={type:'',frequency:{value:0,setValueAtTime(v){this.value=v},exponentialRampToValueAtTime(v){this.value=v}},connect(){},disconnect(){},start(){this.started=true},stop(){this.stopped=true;this.onended?.()}};oscillators.push(o);return o}}
  if(!noContext)window.AudioContext=Context;const document={hidden:false,addEventListener:(n,f)=>listeners[n]=f,removeEventListener:()=>{}};
  const ctx={window,document,location:{search:'?dev=star-gate-full'},URLSearchParams,Audio,queueMicrotask,requestAnimationFrame:f=>{callbacks.set(++frame,f);return frame},cancelAnimationFrame:i=>callbacks.delete(i)};vm.runInNewContext(code,ctx);
  const failures=[],api=window.TarotFutureVisionAudio.create({clock:{now:()=>now},signal,failures,id:1});
- return{api,media,failures,window,document,listeners,step(ms){now+=ms;const jobs=[...callbacks.values()];callbacks.clear();jobs.forEach(f=>f(now));}};
+ return{api,media,oscillators,failures,window,document,listeners,step(ms){now+=ms;const jobs=[...callbacks.values()];callbacks.clear();jobs.forEach(f=>f(now));}};
 }
 const flush=async()=>{await Promise.resolve();await Promise.resolve();};
 test('Arcana audio remains continuous and reaches its strongest combined mix during edge erosion',async()=>{
@@ -23,6 +23,14 @@ test('Arcana audio remains continuous and reaches its strongest combined mix dur
  h.api.pause('FULL_WHITE');assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.fix.gain,0);
  h.api.resumeWhite();h.api.setLevel(1);await flush();s=h.api.getState();assert.equal(s.tracks.ruins.time,1.8);assert.equal(s.tracks.ruins.mix,.25);assert.equal(s.tracks.fix.paused,true);h.api.dispose();
 });
+test('three Arcana pulse calls synthesize finite low beats and respect music OFF',async()=>{
+ const h=harness();await flush();h.api.arcanaAnomalyStart();
+ assert.equal(h.api.arcanaPulse(1),true);assert.equal(h.api.arcanaPulse(2),true);assert.equal(h.api.arcanaPulse(3),true);
+ assert.equal(h.oscillators.length,3);assert.ok(h.oscillators.every(o=>o.started&&o.stopped));
+ assert.deepEqual(h.api.getState().events.filter(e=>e.type==='pulse').map(e=>e.index),[1,2,3]);
+ h.api.dispose();
+ const off=harness({off:true});await flush();off.api.arcanaAnomalyStart();assert.equal(off.api.arcanaPulse(1),false);assert.equal(off.oscillators.length,0);off.api.dispose();
+});
 test('OFF never starts media; errors degrade to silence',async()=>{const off=harness({off:true});off.api.ruinsVisible();off.step(250);assert.ok(off.media.every(m=>m.plays===0&&m.paused));assert.equal(off.api.getState().tracks.ruins.gain,0);off.api.dispose();for(const options of [{reject:true},{seekFail:true}]){const h=harness(options);await flush();h.api.ruinsVisible();await flush();assert.ok(h.failures.length);assert.equal(h.api.getState().tracks.ruins.gain,0);h.api.dispose();}});
 test('pagehide pauses even when hidden is false; disposal prevents delayed play resurrection',async()=>{const h=harness({late:true});h.api.ruinsVisible();h.step(250);h.listeners.pagehide();assert.ok(h.media.every(m=>m.paused));h.api.dispose();h.media.forEach(m=>m.complete?.());await flush();assert.ok(h.media.every(m=>m.paused));assert.equal(h.api.getState().tracks.ruins.gain,0);});
 test('end of track falls over last1500ms without looping; bounded rewrite play fails silent',async()=>{
@@ -32,6 +40,7 @@ test('end of track falls over last1500ms without looping; bounded rewrite play f
  const s=fs.readFileSync('star-gate-anomaly.js','utf8');
  assert.match(s,/if\(i===1\)session\.futureAudio\?\.ruinsVisible\(\)/);
  assert.match(s,/phase\('MICRO_ANOMALY'\);current\.futureAudio\?\.arcanaAnomalyStart\?\.\(\)/);
+ assert.match(s,/current\.futureAudio\?\.arcanaPulse\?\.\(number\)/);
  assert.match(s,/phase\('EDGE_EROSION'\);current\.futureAudio\?\.arcanaInfectionStart\?\.\(\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaInfection\?\.\(p\)/);
  assert.match(s,/current\.futureAudio\?\.arcanaRewrite\?\.\(\)/);
