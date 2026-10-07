@@ -2160,6 +2160,26 @@
         if(!(actorId in actorVisibility))return false;
         actorVisibility[actorId]=clamp(Number(value)||0,0,1);draw();return true;
       },
+      placeReturnFormation(){
+        const shion=playerRef();
+        // Stage the two companions while still hidden. Keep enough space for one
+        // character between Shion and the pair, and keep their tap rectangles distinct.
+        const y=shion.y+118;
+        const shioponDesired={x:shion.x-64,y};
+        const lumiereDesired={x:shion.x+64,y};
+        const shioponPlaced=isWalkableRef(shioponDesired.x,shioponDesired.y)
+          ?shioponDesired:(collision.nearestWalkable(shioponDesired)||shioponDesired);
+        shiopon.x=shioponPlaced.x*scale.x;shiopon.y=shioponPlaced.y*scale.y;
+        shiopon.stageOffsetY=0;shiopon.visualOffsetY=0;shiopon.rotation=0;
+        shiopon.moving=false;shiopon.frame=0;shiopon.followRoute=[];shiopon.followTarget=null;
+        lumiere.x=lumiereDesired.x*scale.x;lumiere.y=lumiereDesired.y*scale.y;
+        lumiere.stageOffsetY=0;lumiere.moving=false;lumiere.frame=0;
+        setDirection(player,0,1);
+        setDirection(shiopon,shion.x-shioponPlaced.x,shion.y-shioponPlaced.y);
+        setDirection(lumiere,shion.x-lumiereDesired.x,shion.y-lumiereDesired.y);
+        draw();
+        return {shion:{...shion},shiopon:{...shioponPlaced},lumiere:{...lumiereDesired}};
+      },
       face(actor,target){return performStageCommand({type:"face",actor,target});},
       perform(command){const action=performStageCommand(command);aftermathMotions.add(action.id);action.promise.finally(()=>aftermathMotions.delete(action.id));return action;},
       gameplayCamera(){aftermathFocusBaseline=null;window.TarotCinematicCamera.release();return Promise.resolve({completed:true});},
