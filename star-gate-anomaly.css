@@ -217,14 +217,6 @@
 #game-shell.sga-anomaly-rest .sga-gate-sparkles i:nth-child(8) { opacity: 0; animation: none; }
 
 .scene-gate-inner-light { overflow: hidden; clip-path: polygon(50% 0%, 67% 4%, 82% 15%, 93% 31%, 100% 54%, 100% 100%, 0% 100%, 0% 54%, 7% 31%, 18% 15%, 33% 4%); }\n.scene-gate-inner-light > img { width:100%; height:100%; object-fit:cover; transform-origin:50% 0% !important; transition: opacity .55s ease, filter .55s ease, transform .55s ease; }
-#game-shell.sga-anomaly .scene-gate-inner-light,
-#game-shell.sga-anomaly-rest .scene-gate-inner-light {
-  mix-blend-mode:normal !important;
-  isolation:isolate;
-  background:
-    radial-gradient(ellipse at 50% 38%,rgba(58,22,72,.96) 0%,rgba(26,9,36,.985) 46%,rgba(8,3,13,.995) 78%,#030207 100%);
-  box-shadow:inset 0 0 24px rgba(0,0,0,.72),inset 0 -18px 30px rgba(8,2,13,.55);
-}
 #game-shell.sga-normal-flow .scene-gate-inner-light > img {
   animation: sgaInnerReceive 1.35s ease-out both !important;
 }
