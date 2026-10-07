@@ -232,7 +232,7 @@ test('Lumiere retains full sources, body scale and anchors in every direction an
       await h.window.TarotStage.perform({type:'face',actor:'lumiere',target:{x:point.x+delta[0],y:point.y+delta[1]}}).promise;
       const start=h.drawCalls.length; h.tick();
       const actor=h.state().lumiere;
-      const key=dir==='down'?(actor.bobRising?'hover_down':'idle'):dir==='up'?(actor.bobRising?'hover_back':'hover_up'):`hover_${dir}`;
+      const key=dir==='down'?(actor.bobRising?'idle':'hover_down'):dir==='up'?(actor.bobRising?'hover_back':'hover_up'):`hover_${dir}`;
       const pose=lumiereManifest.poses[key];
       const name=lumiereManifest.files[key];
       const call=h.drawCalls.slice(start).find(c=>c[0]?.url?.endsWith(name));
@@ -247,7 +247,7 @@ test('Lumiere retains full sources, body scale and anchors in every direction an
     const action=h.window.TarotStage.perform({type:'step',actor:'lumiere',direction:'down',distance:10,duration:1000});
     const start=h.drawCalls.length;h.tick();
     assert.equal(h.state().lumiere.moving,true);
-    const expected=h.state().lumiere.bobRising?'lumiere_hover_down.webp':'lumiere_idle.webp';
+    const expected=h.state().lumiere.bobRising?'lumiere_idle.webp':'lumiere_hover_down.webp';
     assert.ok(h.drawCalls.slice(start).some(c=>c[0]?.url?.endsWith(expected)));
     action.cancel();
   }
@@ -256,7 +256,7 @@ test('Lumiere front/back phase images follow velocity in both idle and stage mov
   const h=await boot(); const phaseStep=2*Math.PI/(5.2*60);
   for (const moving of [false,true]) {
     for (const [dir,rising,expected] of [
-      ['down',true,'hover_down'],['down',false,'idle'],
+      ['down',true,'idle'],['down',false,'hover_down'],
       ['up',true,'hover_back'],['up',false,'hover_up'],
       ['left',true,'hover_left'],['left',false,'hover_left'],
       ['right',true,'hover_right'],['right',false,'hover_right'],
