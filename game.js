@@ -2162,26 +2162,28 @@
       },
       placeReturnFormation(){
         const shion=playerRef();
-        // Stage the two companions while still hidden. Keep enough space for one
-        // character between Shion and the pair, and keep their tap rectangles distinct.
-        const y=shion.y+88;
-        const shioponDesired={x:shion.x-50,y};
-        const lumiereDesired={x:shion.x+50,y};
-        const shioponPlaced=isWalkableRef(shioponDesired.x,shioponDesired.y)
-          ?shioponDesired:(collision.nearestWalkable(shioponDesired)||shioponDesired);
+        // Preserve Lumiere's restored pre-blackout world position exactly.
+        // Only Shiopon is repositioned beside her; this avoids the artificial
+        // Shion-centered symmetry that looked staged on device.
+        const lumiereAnchor={...stageActorRef("lumiere")};
+        const preferred={x:lumiereAnchor.x-62,y:lumiereAnchor.y};
+        const alternate={x:lumiereAnchor.x+62,y:lumiereAnchor.y};
+        let shioponPlaced=preferred;
+        if(!isWalkableRef(preferred.x,preferred.y)){
+          shioponPlaced=isWalkableRef(alternate.x,alternate.y)
+            ?alternate:(collision.nearestWalkable(preferred)||preferred);
+        }
         shiopon.x=shioponPlaced.x*scale.x;shiopon.y=shioponPlaced.y*scale.y;
         shiopon.stageOffsetY=0;shiopon.visualOffsetY=0;shiopon.rotation=0;
         shiopon.moving=false;shiopon.frame=0;shiopon.followRoute=[];shiopon.followTarget=null;shiopon.target=null;
         // Keep the authored return formation stable while the player freely checks both companions.
-        // The final follow-start/follow-stop event restores the ordinary post-scene behaviour.
         shiopon.wait=Number.POSITIVE_INFINITY;
-        lumiere.x=lumiereDesired.x*scale.x;lumiere.y=lumiereDesired.y*scale.y;
         lumiere.stageOffsetY=0;lumiere.moving=false;lumiere.frame=0;
         setDirection(player,0,1);
-        setDirection(shiopon,shion.x-shioponPlaced.x,shion.y-shioponPlaced.y);
-        setDirection(lumiere,shion.x-lumiereDesired.x,shion.y-lumiereDesired.y);
+        setDirection(shiopon,lumiereAnchor.x-shioponPlaced.x,lumiereAnchor.y-shioponPlaced.y);
+        setDirection(lumiere,shion.x-lumiereAnchor.x,shion.y-lumiereAnchor.y);
         draw();
-        return {shion:{...shion},shiopon:{...shioponPlaced},lumiere:{...lumiereDesired}};
+        return {shion:{...shion},shiopon:{...shioponPlaced},lumiere:{...lumiereAnchor}};
       },
       face(actor,target){return performStageCommand({type:"face",actor,target});},
       perform(command){const action=performStageCommand(command);aftermathMotions.add(action.id);action.promise.finally(()=>aftermathMotions.delete(action.id));return action;},
