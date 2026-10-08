@@ -46,6 +46,7 @@
   const LUMIERE_BOB_AMPLITUDE = 2.4;
   const LUMIERE_BOB_PERIOD = 5.2;
   const LUMIERE_HYSTERESIS = 0.15;
+  const LUMIERE_CROSSFADE_SECONDS = 0.1;
   // Dev-only comparisons: ?lumiereEffects=before or individual effect=0/1.
   // Keep all five switches independent; no player-facing settings UI.
   const lumiereEffectParams = new URLSearchParams(location.search);
@@ -219,6 +220,10 @@
     bobRising: false,
     bobOffsetY: 0,
     stageOffsetY: 0,
+    poseKey: "down",
+    poseDirection: "down",
+    previousPoseKey: null,
+    poseFadeStarted: 0,
   };
   const camera = {
     x: DEFAULT_SPAWN.x,
@@ -342,6 +347,10 @@
     lumiere.bobRising = false;
     lumiere.bobOffsetY = 0;
     lumiere.stageOffsetY = 0;
+    lumiere.poseKey = "down";
+    lumiere.poseDirection = "down";
+    lumiere.previousPoseKey = null;
+    lumiere.poseFadeStarted = 0;
   }
 
   function reset() {
@@ -1122,6 +1131,23 @@
     const threshold = lumiereEffects.hysteresis ? LUMIERE_HYSTERESIS : 1e-6;
     if (bobVelocity < -threshold) lumiere.bobRising = true;
     else if (bobVelocity > threshold) lumiere.bobRising = false;
+    const nextPose = lumierePoseKey(lumiere);
+    if (nextPose !== lumiere.poseKey) {
+      // Facing changes are immediate: never mix front/back or lateral poses.
+      lumiere.previousPoseKey = lumiereEffects.crossfade &&
+        lumiere.poseDirection === lumiere.dir &&
+        (lumiere.dir === "down" || lumiere.dir === "up") ? lumiere.poseKey : null;
+      lumiere.poseKey = nextPose;
+      lumiere.poseDirection = lumiere.dir;
+      lumiere.poseFadeStarted = performance.now();
+    }
+    if (performance.now() - lumiere.poseFadeStarted >= LUMIERE_CROSSFADE_SECONDS * 1000)
+      lumiere.previousPoseKey = null;
+  }
+
+  function lumierePoseKey(actor) {
+    return actor.dir === "down" ? (actor.bobRising ? "idle" : "down")
+      : actor.dir === "up" ? (actor.bobRising ? "back" : "up") : actor.dir;
   }
 
   function cameraOffsetY() {
@@ -1261,28 +1287,33 @@
   ) {
     if (hover) {
       // These names are canonical after the original front/back content swap.
-      const imageKey = actor.dir === "down"
-        ? (actor.bobRising ? "idle" : "down")
-        : actor.dir === "up" ? (actor.bobRising ? "back" : "up") : actor.dir;
-      const key = imageKey === "idle" ? "idle" : `hover_${imageKey}`;
-      const pose = lumiereManifest.poses[key];
-      const image = actorImages[imageKey];
-      const ratio = drawHeight / (pose.baseline_y - pose.body_top);
-      const drawW = image.naturalWidth * ratio;
-      const drawH = image.naturalHeight * ratio;
-      const dx = actor.x - pose.center_x * ratio;
-      const dy = actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * ratio + visualOffsetY;
+      const imageKey = lumierePoseKey(actor);
+      const previous = actor.poseDirection === actor.dir && lumiereEffects.crossfade
+        ? actor.previousPoseKey : null;
+      const fade = previous ? clamp((performance.now() - actor.poseFadeStarted) /
+        (LUMIERE_CROSSFADE_SECONDS * 1000), 0, 1) : 1;
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.globalAlpha = 1;
       ctx.shadowColor = "rgba(53,46,96,.90)";
       ctx.shadowBlur = 1.05 / camera.zoom;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      // Preserve every source pixel, including safety margins around hair/wings.
-      ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight,
-        dx, dy, drawW, drawH);
+      const paintPose = (poseKey, opacity) => {
+        if (opacity <= 0) return;
+        const key = poseKey === "idle" ? "idle" : `hover_${poseKey}`;
+        const pose = lumiereManifest.poses[key];
+        const image = actorImages[poseKey];
+        const ratio = drawHeight / (pose.baseline_y - pose.body_top);
+        const dx = actor.x - pose.center_x * ratio;
+        const dy = actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * ratio + visualOffsetY;
+        ctx.globalAlpha = opacity;
+        // One current actor/bob anchor for both poses; only opacity interpolates.
+        ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight,
+          dx, dy, image.naturalWidth * ratio, image.naturalHeight * ratio);
+      };
+      if (previous) paintPose(previous, 1 - fade);
+      paintPose(imageKey, fade);
       ctx.restore();
       return;
     }
