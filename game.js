@@ -47,6 +47,7 @@
   const LUMIERE_BOB_PERIOD = 5.2;
   const LUMIERE_HYSTERESIS = 0.15;
   const LUMIERE_CROSSFADE_SECONDS = 0.1;
+  const LUMIERE_OUTLINE = Object.freeze({ color: [55, 48, 94], opacity: 0.42, width: 1.25, density: 2 });
   // Dev-only comparisons: ?lumiereEffects=before or individual effect=0/1.
   // Keep all five switches independent; no player-facing settings UI.
   const lumiereEffectParams = new URLSearchParams(location.search);
@@ -178,6 +179,7 @@
   const images = {};
   const shioponImages = {};
   const lumiereImages = {};
+  const lumiereOutlines = {};
   const player = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y,
@@ -1150,6 +1152,60 @@
       : actor.dir === "up" ? (actor.bobRising ? "back" : "up") : actor.dir;
   }
 
+  // Only edge-connected transparency is eligible: enclosed holes stay clear.
+  function lumiereExteriorOutline(alpha, width, height, radius) {
+    const exterior = new Uint8Array(width * height);
+    const queue = new Int32Array(width * height);
+    let head = 0, tail = 0;
+    const visit = i => {
+      if (!exterior[i] && alpha[i * 4 + 3] === 0) {
+        exterior[i] = 1;
+        queue[tail++] = i;
+      }
+    };
+    for (let x = 0; x < width; x++) { visit(x); visit((height - 1) * width + x); }
+    for (let y = 0; y < height; y++) { visit(y * width); visit(y * width + width - 1); }
+    while (head < tail) {
+      const i = queue[head++], x = i % width, y = Math.floor(i / width);
+      if (x > 0) visit(i - 1);
+      if (x + 1 < width) visit(i + 1);
+      if (y > 0) visit(i - width);
+      if (y + 1 < height) visit(i + width);
+    }
+    const result = new Uint8ClampedArray(alpha.length);
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (!exterior[i]) continue;
+      let edge = 0;
+      for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (dx * dx + dy * dy <= radius * radius && nx >= 0 && nx < width && ny >= 0 && ny < height)
+          edge = Math.max(edge, alpha[(ny * width + nx) * 4 + 3]);
+      }
+      result.set(LUMIERE_OUTLINE.color, i * 4);
+      result[i * 4 + 3] = edge * LUMIERE_OUTLINE.opacity;
+    }
+    return result;
+  }
+
+  function cacheLumiereOutlines() {
+    const { density, width } = LUMIERE_OUTLINE;
+    const radius = Math.ceil(width * density);
+    for (const [imageKey, image] of Object.entries(lumiereImages)) {
+      const pose = lumiereManifest.poses[imageKey === "idle" ? "idle" : `hover_${imageKey}`];
+      const ratio = LUMIERE_DRAW_HEIGHT / (pose.baseline_y - pose.body_top);
+      const surface = document.createElement("canvas");
+      surface.width = Math.ceil(image.naturalWidth * ratio * density) + radius * 2;
+      surface.height = Math.ceil(image.naturalHeight * ratio * density) + radius * 2;
+      const paint = surface.getContext("2d");
+      paint.drawImage(image, radius, radius, image.naturalWidth * ratio * density, image.naturalHeight * ratio * density);
+      const pixels = paint.getImageData(0, 0, surface.width, surface.height);
+      pixels.data.set(lumiereExteriorOutline(pixels.data, surface.width, surface.height, radius));
+      paint.putImageData(pixels, 0, 0);
+      lumiereOutlines[imageKey] = { surface, padding: radius / density };
+    }
+  }
+
   function cameraOffsetY() {
     let offset = CAMERA_BASE_OFFSET_Y;
     if (player.moving && player.dir === "up") offset += CAMERA_LOOK_AHEAD_Y;
@@ -1295,10 +1351,22 @@
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.shadowColor = "rgba(53,46,96,.90)";
-      ctx.shadowBlur = 1.05 / camera.zoom;
+      // Comparison mode retains the original blur. The new rim is cached.
+      ctx.shadowColor = lumiereEffects.outline ? "transparent" : "rgba(53,46,96,.90)";
+      ctx.shadowBlur = lumiereEffects.outline ? 0 : 1.05 / camera.zoom;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
+      if (lumiereEffects.outline) {
+        const pose = lumiereManifest.poses[imageKey === "idle" ? "idle" : `hover_${imageKey}`];
+        const ratio = drawHeight / (pose.baseline_y - pose.body_top);
+        const { surface, padding } = lumiereOutlines[imageKey];
+        ctx.globalAlpha = 1;
+        // Rim is a single pass, excluded from the body crossfade.
+        ctx.drawImage(surface,
+          actor.x - pose.center_x * ratio - padding,
+          actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * ratio + visualOffsetY - padding,
+          surface.width / LUMIERE_OUTLINE.density, surface.height / LUMIERE_OUTLINE.density);
+      }
       const paintPose = (poseKey, opacity) => {
         if (opacity <= 0) return;
         const key = poseKey === "idle" ? "idle" : `hover_${poseKey}`;
@@ -2031,6 +2099,7 @@
           throw new Error("リュミエール" + key + "最終画像設定不正");
       }
 
+      if (lumiereEffects.outline) cacheLumiereOutlines();
       if (document.body.classList.contains("scene-load-error")) return;
       if (gardenResumePublic) {
         const fresh = window.TarotGardenPublicContinue?.revalidate(window.TarotGardenContinueTransit, {
