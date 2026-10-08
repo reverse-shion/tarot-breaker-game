@@ -48,6 +48,7 @@
   const LUMIERE_HYSTERESIS = 0.15;
   const LUMIERE_CROSSFADE_SECONDS = 0.1;
   const LUMIERE_OUTLINE = Object.freeze({ color: [55, 48, 94], opacity: 0.42, width: 1.25, density: 2 });
+  const LUMIERE_SHADOW = Object.freeze({ color: "66,59,97", opacity: 0.16, offsetY: 5, width: 40, height: 16 });
   // Dev-only comparisons: ?lumiereEffects=before or individual effect=0/1.
   // Keep all five switches independent; no player-facing settings UI.
   const lumiereEffectParams = new URLSearchParams(location.search);
@@ -180,6 +181,7 @@
   const shioponImages = {};
   const lumiereImages = {};
   const lumiereOutlines = {};
+  let lumiereShadow;
   const player = {
     x: DEFAULT_SPAWN.x,
     y: DEFAULT_SPAWN.y,
@@ -1472,8 +1474,32 @@
     ctx.restore();
   }
 
+  function cacheLumiereShadow() {
+    lumiereShadow = document.createElement("canvas");
+    lumiereShadow.width = LUMIERE_SHADOW.width * 2;
+    lumiereShadow.height = LUMIERE_SHADOW.height * 2;
+    const paint = lumiereShadow.getContext("2d");
+    paint.scale(lumiereShadow.width / 2, lumiereShadow.height / 2);
+    paint.translate(1, 1);
+    const gradient = paint.createRadialGradient(0, 0, 0, 0, 0, 1);
+    gradient.addColorStop(0, `rgba(${LUMIERE_SHADOW.color},${LUMIERE_SHADOW.opacity})`);
+    gradient.addColorStop(0.55, `rgba(${LUMIERE_SHADOW.color},${LUMIERE_SHADOW.opacity * 0.5})`);
+    gradient.addColorStop(1, `rgba(${LUMIERE_SHADOW.color},0)`);
+    paint.fillStyle = gradient;
+    paint.beginPath();
+    paint.arc(0, 0, 1, 0, Math.PI * 2);
+    paint.fill();
+  }
+
   function drawActors() {
-    drawGroundShadowAt(lumiere, 18, 0.2);
+    if (lumiereEffects.shadow) {
+      ctx.drawImage(lumiereShadow,
+        lumiere.x - LUMIERE_SHADOW.width * scale.x / 2,
+        lumiere.y + LUMIERE_SHADOW.offsetY * scale.y - LUMIERE_SHADOW.height * scale.y / 2,
+        LUMIERE_SHADOW.width * scale.x, LUMIERE_SHADOW.height * scale.y);
+    } else if (lumiereEffectParams.get("lumiereEffects") === "before") {
+      drawGroundShadowAt(lumiere, 18, 0.2);
+    }
     if (!shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     drawGroundShadowAt(player, 20, 0.46);
 
@@ -2100,6 +2126,7 @@
       }
 
       if (lumiereEffects.outline) cacheLumiereOutlines();
+      if (lumiereEffects.shadow) cacheLumiereShadow();
       if (document.body.classList.contains("scene-load-error")) return;
       if (gardenResumePublic) {
         const fresh = window.TarotGardenPublicContinue?.revalidate(window.TarotGardenContinueTransit, {
