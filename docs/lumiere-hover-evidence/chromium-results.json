@@ -1,0 +1,386 @@
+[
+  {
+    "name": "portrait",
+    "version": "before",
+    "errors": [],
+    "samples": [
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "down",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 1.1660979855415246,
+          "bobPhase": 0,
+          "bobRising": false,
+          "bobOffsetY": 0,
+          "stageOffsetY": 0
+        },
+        "origin": {
+          "x": 614.9999999999999,
+          "y": 5.684341886080802e-14
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 1.1660979855415246,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0
+        },
+        "origin": {
+          "x": 614.9999999999999,
+          "y": 5.684341886080802e-14
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 204,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 1.1660979855415246,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0
+        },
+        "origin": {
+          "x": 614.9999999999999,
+          "y": 5.684341886080802e-14
+        },
+        "zoom": 1
+      }
+    ],
+    "timing": {
+      "frames": 32,
+      "elapsedMs": 11132.899999999998,
+      "drawMedianMs": 0.9000000001396984,
+      "drawP95Ms": 1.2999999998137355,
+      "frameMedianMs": 350,
+      "frameP95Ms": 450.10000000000036
+    }
+  },
+  {
+    "name": "portrait",
+    "version": "after",
+    "errors": [],
+    "samples": [
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "down",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 0.9090037429473168,
+          "bobPhase": 0,
+          "bobRising": false,
+          "bobOffsetY": 0,
+          "stageOffsetY": 0,
+          "poseKey": "down",
+          "poseDirection": "down",
+          "previousPoseKey": null,
+          "poseFadeStarted": 0
+        },
+        "origin": {
+          "x": 614.9999999999999,
+          "y": 5.684341886080802e-14
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 0.9090037429473168,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0,
+          "poseKey": "back",
+          "poseDirection": "up",
+          "previousPoseKey": null,
+          "poseFadeStarted": 4686
+        },
+        "origin": {
+          "x": 614.9999999999999,
+          "y": 5.684341886080802e-14
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 204,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 0.9090037429473168,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0,
+          "poseKey": "back",
+          "poseDirection": "up",
+          "previousPoseKey": null,
+          "poseFadeStarted": 4686
+        },
+        "origin": {
+          "x": 614.9999999999999,
+          "y": 5.684341886080802e-14
+        },
+        "zoom": 1
+      }
+    ],
+    "timing": {
+      "frames": 36,
+      "elapsedMs": 11266.2,
+      "drawMedianMs": 0.8999999999068677,
+      "drawP95Ms": 3.8999999999068677,
+      "frameMedianMs": 316.7000000000007,
+      "frameP95Ms": 400
+    }
+  },
+  {
+    "name": "landscape",
+    "version": "before",
+    "errors": [],
+    "samples": [
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "down",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 1.0828275805412055,
+          "bobPhase": 0,
+          "bobRising": false,
+          "bobOffsetY": 0,
+          "stageOffsetY": 0
+        },
+        "origin": {
+          "x": 387.9999999999999,
+          "y": 47.00000000000003
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 1.0828275805412055,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0
+        },
+        "origin": {
+          "x": 387.9999999999999,
+          "y": 47.00000000000003
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 204,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 1.0828275805412055,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0
+        },
+        "origin": {
+          "x": 387.9999999999999,
+          "y": 47.00000000000003
+        },
+        "zoom": 1
+      }
+    ],
+    "timing": {
+      "frames": 34,
+      "elapsedMs": 11082.800000000001,
+      "drawMedianMs": 0.8000000000465661,
+      "drawP95Ms": 2.5999999998603016,
+      "frameMedianMs": 333.3000000000002,
+      "frameP95Ms": 483.2999999999993
+    }
+  },
+  {
+    "name": "landscape",
+    "version": "after",
+    "errors": [],
+    "samples": [
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "down",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 0.9479860112618151,
+          "bobPhase": 0,
+          "bobRising": false,
+          "bobOffsetY": 0,
+          "stageOffsetY": 0,
+          "poseKey": "down",
+          "poseDirection": "down",
+          "previousPoseKey": null,
+          "poseFadeStarted": 0
+        },
+        "origin": {
+          "x": 387.9999999999999,
+          "y": 47.00000000000003
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 212,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 0.9479860112618151,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0,
+          "poseKey": "back",
+          "poseDirection": "up",
+          "previousPoseKey": null,
+          "poseFadeStarted": 4819.899999999907
+        },
+        "origin": {
+          "x": 387.9999999999999,
+          "y": 47.00000000000003
+        },
+        "zoom": 1
+      },
+      {
+        "actor": {
+          "x": 810,
+          "y": 204,
+          "homeRef": {
+            "x": 810,
+            "y": 212
+          },
+          "dir": "up",
+          "moving": false,
+          "frame": 0,
+          "anim": 0,
+          "wingDirection": 1,
+          "wingHold": 0.9479860112618151,
+          "bobPhase": 3.141592653589793,
+          "bobRising": true,
+          "bobOffsetY": 2.9391523179536476e-16,
+          "stageOffsetY": 0,
+          "poseKey": "back",
+          "poseDirection": "up",
+          "previousPoseKey": null,
+          "poseFadeStarted": 4819.899999999907
+        },
+        "origin": {
+          "x": 387.9999999999999,
+          "y": 47.00000000000003
+        },
+        "zoom": 1
+      }
+    ],
+    "timing": {
+      "frames": 33,
+      "elapsedMs": 11249.5,
+      "drawMedianMs": 1,
+      "drawP95Ms": 1.4000000001396984,
+      "frameMedianMs": 350,
+      "frameP95Ms": 433.3000000000011
+    }
+  }
+]

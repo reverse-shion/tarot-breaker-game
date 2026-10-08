@@ -86,3 +86,84 @@ Network-capable execution is required by subprocess tests in this sandbox.
 Device Gate = PENDING. Ghost judgement, perceived smoothness, silhouette
 readability and same-iPhone normal/low-power fps comparison require human device
 evidence. No intermediate images will be created or added.
+
+## Implemented settings and validation
+
+- Subpixel: existing fractional final Y preserved, no actor/world/collision edits.
+- Hysteresis: final initial threshold ±0.15; previous state held inclusively in
+  the deadband. No device adjustment has been claimed.
+- Crossfade: 100ms using `performance.now()`; front pair and back pair only.
+  A direction change/reset cancels the old pose. Both poses use the same current
+  actor and bob offset with their existing manifest correction; body opacity is
+  the only interpolated quantity. No position interpolation or second trajectory.
+- Outline: exterior-connected transparent alpha mask, disk dilation followed by
+  source alpha exclusion. Enclosed transparent holes are excluded by flood fill.
+  RGB (55,48,94), opacity .42. Configured radius 1.25 reference px is rounded
+  outward to 3 cache pixels at density2: effective display radius 1.5px at zoom1.
+  Six canvases generated once after decoded/validated assets, full-source body
+  draws unchanged. One rim pass per frame, excluded from crossfade; no filters.
+- Shadow: cached soft elliptical radial gradient, RGB (66,59,97), center opacity
+  .16, 40×16 reference px, center at logical actor foot Y+5. No bob or stage
+  visual offset. Normal camera/scale path retained. Existing Shion/Shiopon shadow
+  code is untouched.
+- Aura: not implemented; background is medium/bright and adding white light is
+  unnecessary. `aura` switch is reserved; it has no rendering effect in v1.2.
+  No aura/image/intermediate-pose assets were added.
+
+### A/B links and switches
+
+Use the exact candidate SHA from PR #122's `DEVICE_RUNTIME_SHA` in:
+`https://raw.githack.com/reverse-shion/tarot-breaker-game/<SHA>/index.html?dev=garden-resume-after-shiopon`.
+
+Append `&lumiereEffects=before` for baseline-equivalent effects (old velocity
+threshold, no crossfade/cache, original body blur/ground shadow).
+Independent overrides: `lumiereHysteresis=0`, `lumiereCrossfade=0`,
+`lumiereOutline=0`, `lumiereShadow=0` (or `=1`). Outline=0 retains original blur;
+shadow=0 removes the new shadow; comparison-before mode retains the old shadow.
+No Production UI or release configuration was added.
+
+### Automated / Chromium evidence
+
+- main `b3c49fb`: 326/326; pre-change `306fb4a`: 329/329;
+  implementation `d6b2f84`: 333/333, no new failures.
+- Full available regression suite includes Save/Continue, Garden resume,
+  audio, routes, collision/navigation, dialogue, stage commands and events.
+- Asset, background and audio validation PASS; JavaScript syntax and
+  `git diff --check` PASS. GitHub CI result is recorded on PR #122 separately.
+- Chromium portrait 390×844 and landscape 844×390, DPR2: all three contexts
+  captured at identical actor positions/facing/bob phase with fixed camera.
+  Page errors: 0 in each pre/post run. Existing remote main Shiopon/audio
+  requests use identical local baseline bytes for reproducible comparison.
+- Screenshot comparison: silhouette visible at home, conversation and gate step
+  in both orientations; no clipping or body-anchor displacement observed.
+  Hair/wings/shoulders/hem remain light. These are Chromium judgements only.
+- Comparison boards: [portrait](lumiere-hover-evidence/portrait-comparison.png),
+  [landscape](lumiere-hover-evidence/landscape-comparison.png).
+  These are screenshot evidence, not new game/sprite images.
+- Full screenshots and short pre/post videos are in the shared workspace
+  `/workspace/lumiere-evidence`. Videos include startup and an 11s hover sample.
+  Headless rAF is too slow for full wall-clock bob-cycle/ghost evaluation;
+  engine dt cap .05 remains unchanged, so simulation time advances more slowly.
+- Draw CPU median ms, pre → post: portrait .9 → .9, landscape .8 → 1.0.
+  P95: portrait 1.3 → 3.9, landscape 2.6 → 1.4. rAF median ms:
+  portrait 350 → 316.7, landscape 333.3 → 350. Recorded-video headless timings
+  are noisy and are **not** same-iPhone fps evidence. See raw
+  [results](lumiere-hover-evidence/chromium-results.json).
+
+### Required device record — all PENDING
+
+| Check | Status |
+| --- | --- |
+| Movement smoother than base, unchanged 2.4px/5.2s | PENDING |
+| Pose switching improved / unchanged / worse | PENDING |
+| Face/hair/wing/outline ghosts acceptable | PENDING |
+| Hair, wings, shoulders, hem discernible at all three contexts | PENDING |
+| Light lines, soft shadow, floating angel-like impression | PENDING |
+| Same-iPhone normal / optional low-power fps comparison | PENDING |
+
+Device Gate = PENDING; this is an implementation candidate, not final PASS.
+If iPhone ghosts dominate, retest the exact SHA with `lumiereCrossfade=0` and
+report the result. If popping persists or ghosts are worse, propose one
+intermediate pose each for front/back as a separate next specification. Do not
+create images or change assets in this task. Main merge / Production remain
+prohibited, regardless of CI or independent technical review outcome.
