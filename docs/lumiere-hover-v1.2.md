@@ -167,3 +167,28 @@ report the result. If popping persists or ghosts are worse, propose one
 intermediate pose each for front/back as a separate next specification. Do not
 create images or change assets in this task. Main merge / Production remain
 prohibited, regardless of CI or independent technical review outcome.
+
+## Dev-link repair after device access failure
+
+The original raw.githack/rawcdn entry could return HTTP200 while browser startup
+failed. Real browser navigation reproduced the hosting confirmation page,
+aborted stylesheet/script requests and `TarotNavigation` undefined; a subsequent
+retry returned the host's HTTP429 page. File-download checks were insufficient.
+
+A dedicated `lumiere-dev-a324d10.html` now bundles the exact source from
+`a324d10f4711d15c45502510969850bb5e57d6ca` for the Garden dev checkpoint. It does
+not modify the original game/index/save/movement/dialogue/event files. Rebuild:
+`python scripts/build-lumiere-device-preview.py <exact-source-sha>`.
+
+Preview-specific transport changes are recorded in the embedded source metadata:
+- Inline script dependencies and stylesheet bytes (retain link/data guard markers).
+- Inline Garden dev dependency modules instead of CDN document.write requests.
+- Pin static images/JSON and Shiopon source to the source commit on raw GitHub.
+- Admit images with anonymous CORS so cached outline readback is not tainted.
+- Rebase stylesheet image URLs to that same immutable asset origin.
+
+No new asset, gameplay logic, main change, hosting workflow or Production
+deployment. Local Chromium with actual external pinned assets reached
+`scene-ready`, page errors0 and failed resource requests0. External-host startup
+must also be checked before supplying the repaired link. This is a browser
+startup validation, not an iPhone visual/fps PASS. Device Gate remains PENDING.
