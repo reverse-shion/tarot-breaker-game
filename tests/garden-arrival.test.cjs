@@ -27,7 +27,7 @@ function harness({arrival=true, imageDelay, decodeDelay, decodeMissing=false, ba
   elements['load-error'].hidden=true;
   Object.assign(elements['map-layer'],{complete:true,naturalWidth:1448,naturalHeight:1086,src:'map.webp'});
   const document=new Element();document.body=new Element();document.body.classList.add('scene-booting');
-  document.currentScript={dataset:{}};document.getElementById=k=>elements[k];document.createElement=()=>new Element();
+  document.currentScript={dataset:{}};document.getElementById=k=>elements[k];document.createElement=()=>{const e=new Element();e.getContext=()=>new Proxy({}, {get:(_,k)=>k==='getImageData'?()=>({data:new Uint8ClampedArray(e.width*e.height*4)}):k.includes('Gradient')?()=>({addColorStop(){}}):()=>{},set:()=>true});return e;};
   const images=[];
   class Image extends Element {
     constructor(){super();this.complete=false;this.naturalWidth=0;this.naturalHeight=0;images.push(this);if(decodeMissing)this.decode=undefined;}

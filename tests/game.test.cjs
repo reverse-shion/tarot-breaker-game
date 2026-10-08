@@ -13,7 +13,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   search = '?from=landing&navDebug=1', devTransit = null, dialogueState = null } = {}) {
   const rafQueue = []; let now = 1000;
   const { layout: sceneLayout, collision: runtimeCollision } = gardenRuntime();
-  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
+  const drawDetails = []; const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
@@ -30,11 +30,15 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     releasePointerCapture(id) { captured.delete(id); }
   }
   const elements = Object.fromEntries(['game', 'map-layer', 'start', 'start-screen', 'load-note', 'guide', 'joystick', 'joystick-knob', 'reset', 'game-shell', 'load-error'].map(id => [id, new Element()]));
-  const context = new Proxy({}, { get(_, key) {
-    if (key === 'drawImage') return (...args) => drawCalls.push(args);
+  const contextState = {globalAlpha:1}, contextStack=[];
+  const context = new Proxy(contextState, { get(target, key) {
+    if (key === 'save') return () => contextStack.push({...target});
+    if (key === 'restore') return () => Object.assign(target, contextStack.pop());
+    if (key === 'globalAlpha') return target.globalAlpha;
+    if (key === 'drawImage') return (...args) => {drawCalls.push(args);drawDetails.push({args,alpha:target.globalAlpha});};
     if (key === 'createRadialGradient') return () => ({ addColorStop() {} });
     return () => {};
-  }, set() { return true; } });
+  }, set(target,key,value) { target[key]=value;return true; } });
   elements.game.getContext = () => context;
   Object.assign(elements['map-layer'], { complete: true, naturalWidth: 1469, naturalHeight: 1071 });
   const document = new Element();
@@ -49,9 +53,13 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   document.getElementById = id => elements[id]; document.createElement = tag => {
     const element = new Element();
     if (tag === 'canvas') {
-      element.url = 'lumiere_composite';
+      element.url = 'cached_visual_effect';
       element.getContext = () => new Proxy({}, {
-        get: (_, operation) => (...args) => surfaceCalls.push({ element, operation, args }),
+        get: (_, operation) => (...args) => {
+          surfaceCalls.push({element, operation, args});
+          if (operation === 'getImageData') return {data:new Uint8ClampedArray(element.width*element.height*4)};
+          if (operation === 'createRadialGradient') return {addColorStop(){}};
+        },
         set: () => true,
       });
     }
@@ -109,7 +117,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   vm.runInContext(gameSource.replace('  const player = {','  const player = window.__gardenPlayer = {')
     .replace('  const lumiere = {','  const lumiere = window.__gardenLumiere = {')
     .replace('  function chooseShioponTarget() {','  window.__testGardenExit = {updatePlayer, arm(){gardenExitArmed=true;}};\n\n  function chooseShioponTarget() {')
-    .replace(resetAnchor, '  window.__gardenReset = reset;\n' + resetAnchor), sandbox, { filename: 'game.js' });
+    .replace(resetAnchor, '  window.__gardenReset = reset; window.__outlineMask = lumiereExteriorOutline;\n' + resetAnchor), sandbox, { filename: 'game.js' });
   for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
     now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now));
@@ -136,7 +144,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { lumiere: window.__gardenLumiere, elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
+  return { lumiere: window.__gardenLumiere, elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, drawDetails, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -195,17 +203,18 @@ test('failed isolated Garden transit never falls back to production Journey or n
   assert.equal(h.controls.state.cancelReason,'dev-return-blocked');
   h.window.emit('keyup',{key:'s'});
 });
-test('Lumiere draws the complete final pose once, without legacy canvas/body replacement', async () => {
-  const h = await boot();
+test('Lumiere draws complete final poses and caches effects only at load', async () => {
+  const h = await boot(); const generated=h.surfaceCalls.length;
   for (let i = 0; i < 420; i++) {
     const start = h.drawCalls.length;
     h.tick();
     const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
-    assert.equal(calls.length, 1);
+    assert.ok(calls.length===1 || calls.length===2);
     assert.ok(/lumiere_(idle|hover_down)\.webp$/.test(calls[0][0].url));
     assert.deepEqual(calls[0].slice(1,5), [0,0,1254,1254]);
   }
-  assert.equal(h.surfaceCalls.length, 0);
+  assert.equal(h.surfaceCalls.filter(c=>c.operation==='getImageData').length,6);
+  assert.equal(h.surfaceCalls.length,generated,'no frame-time cache generation');
 });
 test('Lumiere preserves the smooth 2.4px / 5.2s bob without wing-frame cycling', async () => {
   const h = await boot(); const before = h.state().lumiere;
@@ -266,7 +275,7 @@ test('Lumiere front/back phase images follow velocity in both idle and stage mov
       if(moving) motion=h.window.TarotStage.perform({type:'step',actor:'lumiere',direction:dir,distance:10,duration:1000});
       else await h.window.TarotStage.perform({type:'face',actor:'lumiere',target:{x:h.lumiere.x+delta[0],y:h.lumiere.y+delta[1]}}).promise;
       h.lumiere.bobPhase=(rising?Math.PI:2*Math.PI)-phaseStep;
-      const start=h.drawCalls.length;h.tick();
+      h.tick(7); const start=h.drawCalls.length;h.tick();
       const actor=h.state().lumiere;
       assert.equal(actor.bobRising,rising);assert.equal(actor.moving,moving);
       const calls=h.drawCalls.slice(start).filter(c=>c[0]?.url?.includes('lumiere_'));
@@ -289,7 +298,7 @@ test('Lumiere extrema retain the previous pose near zero speed, then switch once
       h.lumiere.bobPhase=extremum-step+jitter;h.lumiere.bobRising=before;h.tick();
       assert.equal(h.state().lumiere.bobRising,before);
     }
-    h.tick();assert.equal(h.state().lumiere.bobRising,after);
+    h.tick(8);assert.equal(h.state().lumiere.bobRising,after);
     h.tick();assert.equal(h.state().lumiere.bobRising,after);
   }
   h.lumiere.bobPhase=0;h.lumiere.bobRising=false;
@@ -297,7 +306,7 @@ test('Lumiere extrema retain the previous pose near zero speed, then switch once
   for(let i=1;i<=624;i++) {
     h.tick();const actor=h.state().lumiere;
     if(actor.bobRising!==last) {switches.push(i);last=actor.bobRising;}
-    if(Math.abs(Math.cos(actor.bobPhase))>1e-6) assert.equal(actor.bobRising,Math.cos(actor.bobPhase)<0);
+    if(Math.abs(Math.cos(actor.bobPhase))>0.15) assert.equal(actor.bobRising,Math.cos(actor.bobPhase)<0);
   }
   assert.equal(switches.length,4);
   for(let i=1;i<switches.length;i++) assert.ok(Math.abs(switches[i]-switches[i-1]-156)<=1);
@@ -313,6 +322,83 @@ test('Lumiere has solid collision while remaining fixed at the gate', async () =
   assert.ok(s.lumiereGap >= s.lumiereCollisionDistance);
   assert.ok(s.lumiereGap < s.lumiereCollisionDistance + 8, `gap=${s.lumiereGap} reason=${s.reason}`);
   assert.equal(s.lumiere.x, 810); assert.equal(s.lumiere.y, 212);
+});
+
+test('Lumiere crossfade shares current body anchors and only interpolates opacity for 100ms', async () => {
+  for (const dir of ['down','up']) {
+    const h=await boot();
+    h.lumiere.dir=dir;h.lumiere.bobPhase=0;h.tick(8);
+    h.lumiere.bobPhase=Math.PI;h.tick();
+    assert.ok(h.lumiere.previousPoseKey);
+    h.lumiere.stageOffsetY=3.25;
+    for(let frame=1;frame<=7;frame++) {
+      const start=h.drawDetails.length;h.tick();
+      const calls=h.drawDetails.slice(start).filter(c=>c.args[0]?.url?.includes('lumiere_'));
+      if(frame===6) assert.ok(calls.length===1||calls.length===2);
+      else assert.equal(calls.length,frame<6?2:1);
+      assert.ok(Math.abs(calls.reduce((n,c)=>n+c.alpha,0)-1)<1e-8);
+      for(const {args,alpha} of calls) {
+        assert.ok(alpha>0&&alpha<=1);
+        const key=args[0].url.match(/lumiere_(idle|hover_down|hover_up|hover-back)\.webp$/)[1].replace('-','_');
+        const pose=lumiereManifest.poses[key], ratio=args[8]/pose.height;
+        assert.ok(Math.abs(args[5]+pose.center_x*ratio-h.lumiere.x)<1e-8);
+        assert.ok(Math.abs(args[6]+pose.baseline_y*ratio-(h.lumiere.y-2.7+h.lumiere.bobOffsetY+3.25))<1e-8);
+        assert.ok(Math.abs((pose.baseline_y-pose.body_top)*ratio-63.984375)<1e-8);
+      }
+      const current=calls.at(-1);
+      assert.ok(Math.abs(current.alpha-Math.min(1,frame/6))<1e-8);
+    }
+    h.lumiere.dir='left';const start=h.drawDetails.length;h.tick();
+    const left=h.drawDetails.slice(start).filter(c=>c.args[0]?.url?.includes('lumiere_'));
+    assert.equal(left.length,1);assert.equal(left[0].alpha,1);
+    assert.ok(left[0].args[0].url.endsWith('hover_left.webp'));
+    assert.equal(h.lumiere.previousPoseKey,null);
+    h.window.__gardenReset();assert.equal(h.lumiere.previousPoseKey,null);
+  }
+});
+
+test('Lumiere hysteresis holds both states inside the deadband and has independent comparison switches', async () => {
+  const h=await boot(), step=2*Math.PI/(5.2*60);
+  for(const rising of [false,true]) for(const velocity of [-.149,0,.149]) {
+    h.lumiere.bobRising=rising;h.lumiere.bobPhase=Math.acos(velocity)-step;h.tick();
+    assert.equal(h.lumiere.bobRising,rising);
+  }
+  for(const [velocity,rising] of [[-.151,true],[.151,false]]) {
+    h.lumiere.bobPhase=Math.acos(velocity)-step;h.tick();assert.equal(h.lumiere.bobRising,rising);
+  }
+  const legacy=await boot({search:'?from=landing&navDebug=1&lumiereEffects=before'});
+  legacy.lumiere.bobRising=false;legacy.lumiere.bobPhase=Math.acos(-.01)-step;legacy.tick();
+  assert.equal(legacy.lumiere.bobRising,true);assert.equal(legacy.lumiere.previousPoseKey,null);
+  assert.equal(legacy.surfaceCalls.length,0);
+  const off=await boot({search:'?from=landing&navDebug=1&lumiereCrossfade=0&lumiereOutline=0&lumiereShadow=0'});
+  off.lumiere.bobPhase=Math.PI;off.tick();assert.equal(off.lumiere.previousPoseKey,null);
+  assert.equal(off.surfaceCalls.length,0);
+});
+
+test('Lumiere cached exterior mask leaves source alpha and enclosed holes untouched', async () => {
+  const h=await boot(), width=9, pixels=new Uint8ClampedArray(9*9*4);
+  // Hollow 5x5 ring: its central transparent area must not receive rim colour.
+  for(let y=2;y<=6;y++)for(let x=2;x<=6;x++)if(x===2||x===6||y===2||y===6)pixels[(y*width+x)*4+3]=255;
+  const rim=h.window.__outlineMask(pixels,9,9,1);
+  assert.equal(rim[(4*width+4)*4+3],0);
+  assert.equal(rim[(3*width+3)*4+3],0);
+  assert.equal(rim[(2*width+2)*4+3],0);
+  assert.ok(rim[(1*width+4)*4+3]>0);
+  assert.deepEqual(Array.from(rim.slice((1*width+4)*4,(1*width+4)*4+3)),[55,48,94]);
+  assert.equal(rim[(0*width+4)*4+3],0);
+  assert.equal(pixels[(2*width+2)*4+3],255,'source remains intact');
+});
+
+test('Lumiere ground shadow stays at logical Y+5 through bob and stage visual offsets', async () => {
+  const h=await boot(), generated=h.surfaceCalls.length;
+  for(const phase of [0,Math.PI/2,Math.PI,3*Math.PI/2]) {
+    h.lumiere.bobPhase=phase;h.lumiere.stageOffsetY=10;
+    const start=h.drawCalls.length;h.tick();
+    const shadow=h.drawCalls.slice(start).find(c=>c[0]?.width===80&&c[0]?.height===32);
+    assert.ok(shadow);assert.equal(shadow[1],h.lumiere.x-20);
+    assert.equal(shadow[2]+shadow[4]/2,h.lumiere.y+5);
+  }
+  assert.equal(h.surfaceCalls.length,generated);
 });
 test('Garden pointer payload is accepted by the production controls contract', async () => {
   const h = await boot();
