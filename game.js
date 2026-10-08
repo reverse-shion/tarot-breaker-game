@@ -45,6 +45,17 @@
   const LUMIERE_COLLISION_DISTANCE = 32;
   const LUMIERE_BOB_AMPLITUDE = 2.4;
   const LUMIERE_BOB_PERIOD = 5.2;
+  const LUMIERE_HYSTERESIS = 0.15;
+  // Dev-only comparisons: ?lumiereEffects=before or individual effect=0/1.
+  // Keep all five switches independent; no player-facing settings UI.
+  const lumiereEffectParams = new URLSearchParams(location.search);
+  const lumiereEffects = Object.freeze(Object.fromEntries(
+    ["hysteresis", "crossfade", "outline", "shadow", "aura"].map(name => [name,
+      lumiereEffectParams.get(`lumiere${name[0].toUpperCase()}${name.slice(1)}`) === "1" ||
+      (lumiereEffectParams.get(`lumiere${name[0].toUpperCase()}${name.slice(1)}`) !== "0" &&
+       lumiereEffectParams.get("lumiereEffects") !== "before" && name !== "aura"),
+    ]),
+  ));
   const LUMIERE_WING_HOLD_MIN = 0.7;
   const LUMIERE_WING_HOLD_RANGE = 0.65;
   // Full-pose body landmarks come from the final-art manifest, not old sheet crops.
@@ -1108,8 +1119,9 @@
     // Canvas Y grows downward: negative derivative means rising. Retain the
     // previous state at the extrema instead of switching on floating-point noise.
     const bobVelocity = Math.cos(lumiere.bobPhase);
-    if (bobVelocity < -1e-6) lumiere.bobRising = true;
-    else if (bobVelocity > 1e-6) lumiere.bobRising = false;
+    const threshold = lumiereEffects.hysteresis ? LUMIERE_HYSTERESIS : 1e-6;
+    if (bobVelocity < -threshold) lumiere.bobRising = true;
+    else if (bobVelocity > threshold) lumiere.bobRising = false;
   }
 
   function cameraOffsetY() {
