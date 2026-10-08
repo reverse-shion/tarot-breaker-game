@@ -175,7 +175,7 @@ failed. Real browser navigation reproduced the hosting confirmation page,
 aborted stylesheet/script requests and `TarotNavigation` undefined; a subsequent
 retry returned the host's HTTP429 page. File-download checks were insufficient.
 
-A dedicated `lumiere-dev-a324d10.html` now bundles the exact source from
+A dedicated `docs/lumiere-hover-evidence/lumiere-dev-a324d10.html` now bundles the exact source from
 `a324d10f4711d15c45502510969850bb5e57d6ca` for the Garden dev checkpoint. It does
 not modify the original game/index/save/movement/dialogue/event files. Rebuild:
 `python scripts/build-lumiere-device-preview.py <exact-source-sha>`.
@@ -192,3 +192,11 @@ deployment. Local Chromium with actual external pinned assets reached
 `scene-ready`, page errors0 and failed resource requests0. External-host startup
 must also be checked before supplying the repaired link. This is a browser
 startup validation, not an iPhone visual/fps PASS. Device Gate remains PENDING.
+
+The bundle is Garden visual verification evidence, not a normal application
+entry. No normal route links/imports it. Relative page handoffs point to raw
+GitHub, and public Continue/Landing bootstrap is not supported. Do not use it
+for Save/Continue or route regression evidence. Those use the unchanged runtime
+and existing regression suite. The first root-level artifact placement caused
+two entry/import allowlist test failures; the evidence artifact was relocated
+here without editing tests or allowlists.

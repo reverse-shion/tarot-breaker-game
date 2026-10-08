@@ -63,6 +63,7 @@ metadata = {"source_sha": sha, "files": records, "preview_transforms": [
     "anonymous_image_cors", "preserve_stylesheet_guard_markers"]}
 html = html.replace("</head>", '<script type="application/json" id="lumiere-preview-source">' +
                     json.dumps(metadata, ensure_ascii=False) + "</script>\n</head>")
-output = root / f"lumiere-dev-{sha[:7]}.html"
+output = root / "docs" / "lumiere-hover-evidence" / f"lumiere-dev-{sha[:7]}.html"
+output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(html)
 print(f"Built {output.name}: {len(html.encode())} bytes, source {sha}")
