@@ -163,7 +163,7 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.ok(lumiereMotionDraws.length > 0); assert.ok(lumiereCoreDraws.length > 0);
   assert.ok(lumiereMotionDraws.every(call => call[3] === 493));
   assert.ok(lumiereMotionDraws.every(call => call[4] === 596));
-  assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
+  assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - 78) < 1e-6));
 });
 test('Garden direct Continue boots the real runtime at exact authored spawn with restored follower state',async()=>{
   const transit={ok:true,context:{mapId:'star_gate_garden',spawnId:'south_gate',companion:'joined_with_shion'},spawn:{x:724,y:944}};

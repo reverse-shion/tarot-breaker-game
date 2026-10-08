@@ -1295,8 +1295,9 @@
       outline = ACTOR_OUTLINES.player,
     } = {},
   ) {
-    const scaleDraw = drawHeight / frameSpec.h;
     const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
+    const scaleDraw = drawHeight /
+      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : frameSpec.h);
     const sourceRect = normalizedLumiere || {
       x: 0,
       y: 0,
