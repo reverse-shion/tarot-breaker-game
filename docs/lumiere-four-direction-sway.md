@@ -56,3 +56,8 @@ DEVICE_RESULT: PENDING
 The GitHub runtime tree `b2d7bb8f011bb8bb80c37dbf8adf08af3af5a799` equals the locally reviewed runtime tree exactly. Fixed dev preview: `lumiere-hover-evidence/lumiere-sway-5e60732.html?dev=garden-resume-after-lumiere`. Generated page has 32 syntactically valid scripts and 40 source hashes checked against that exact runtime. Transient G3-only ON/OFF control passed isolated admission/toggle tests; this is not a browser/device test.
 
 After opening, choose 「確認位置へ」, then 正面／背面／左／右 and 「揺れ：ON/OFF」. Keep each direction visible for about 10.4 seconds. OFF retains the same continuous whole-body hover and same rendering density; ON adds only localized terminal motion. Independent Reviewer found no technical blocker for Draft/device review. Final integration remains STOP/PENDING until required exact-build human evidence exists.
+
+## GitHub validation handoff
+
+GitHub Validate TAROT BREAKER 2D passed on the Phase 2 candidate. The first merge-gate run captured the old Phase 1 PR-body runtime SHA before metadata was updated, and correctly rejected changed runtime files. PR #130 now declares the Phase 2 runtime SHA above; this evidence-only follow-up triggers a fresh gate with synchronized metadata. Required real-device evidence is still absent and must keep the merge gate blocked. No guard, registry, historical PASS or production file is changed to bypass it.
+
