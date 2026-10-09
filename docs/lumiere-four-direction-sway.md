@@ -61,3 +61,7 @@ After opening, choose 「確認位置へ」, then 正面／背面／左／右 an
 
 GitHub Validate TAROT BREAKER 2D passed on the Phase 2 candidate. The first merge-gate run captured the old Phase 1 PR-body runtime SHA before metadata was updated, and correctly rejected changed runtime files. PR #130 now declares the Phase 2 runtime SHA above; this evidence-only follow-up triggers a fresh gate with synchronized metadata. Required real-device evidence is still absent and must keep the merge gate blocked. No guard, registry, historical PASS or production file is changed to bypass it.
 
+
+## Preview panel visibility fix — 2026-10-09
+
+Product owner screenshot showed the developer panel covering Lumiere. Moved only preview controls to the safe-area bottom, initially folded; toggle remains available during readiness/movement and successful staging folds automatically. Runtime and assets stay pinned to 5e60732c5d94de1519a30bf7cd39ebf3746b85ff. Control source is independently pinned to 0af236cdde9b10b1cc1358f5d3d73476a9c4c17d through per-file source_commits metadata. Generated page passed 32-script syntax and 40 source hash checks. Independent readonly review accepted the admission, toggle/readiness and Stage-only behavior. Screenshot is not animation/device PASS. Main remains unchanged.
