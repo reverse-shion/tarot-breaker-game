@@ -47,3 +47,12 @@ Full regression: main 326/326, Phase 1 327/327, Phase 2 330/330 PASS. Independen
 `node scripts/check-lumiere-sway-pixels.cjs` reproduces the software proof when the analysis environment supplies @napi-rs/canvas. It is a development-only tool, no production/CI dependency or package change. Node's dependency-free tests cover bounds, roots, periodicity, cache reuse, anatomical exclusions and malformed capacity. These checks do not measure Safari FPS, color management or perceived smoothness.
 
 The exact-source verification page exposes transient 「揺れ：ON/OFF」 alongside four-direction controls, only at existing G3 checkpoint. Compare each direction for two 5.2s cycles. A/B keeps the same density and body hover phase; no save or production state is changed. Device status remains PENDING. Draft PR only; no main merge or Production deployment.
+
+## Exact runtime handoff
+
+DEVICE_RUNTIME_SHA: 5e60732c5d94de1519a30bf7cd39ebf3746b85ff
+DEVICE_RESULT: PENDING
+
+The GitHub runtime tree `b2d7bb8f011bb8bb80c37dbf8adf08af3af5a799` equals the locally reviewed runtime tree exactly. Fixed dev preview: `lumiere-hover-evidence/lumiere-sway-5e60732.html?dev=garden-resume-after-lumiere`. Generated page has 32 syntactically valid scripts and 40 source hashes checked against that exact runtime. Transient G3-only ON/OFF control passed isolated admission/toggle tests; this is not a browser/device test.
+
+After opening, choose 「確認位置へ」, then 正面／背面／左／右 and 「揺れ：ON/OFF」. Keep each direction visible for about 10.4 seconds. OFF retains the same continuous whole-body hover and same rendering density; ON adds only localized terminal motion. Independent Reviewer found no technical blocker for Draft/device review. Final integration remains STOP/PENDING until required exact-build human evidence exists.
