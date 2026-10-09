@@ -11,15 +11,20 @@ import sys
 
 root = pathlib.Path(__file__).resolve().parent.parent
 sha = sys.argv[1] if len(sys.argv) > 1 else ""
+controls_sha = sys.argv[2] if len(sys.argv) > 2 else sha
 if not re.fullmatch(r"[0-9a-f]{40}", sha):
     raise ValueError("Provide one exact source commit SHA")
+if not re.fullmatch(r"[0-9a-f]{40}", controls_sha):
+    raise ValueError("Provide one exact preview-controls commit SHA")
 asset_base = f"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/{sha}/"
 records = {}
+source_commits = {}
 
 
-def source(path):
-    text = subprocess.check_output(["git", "show", f"{sha}:{path}"], cwd=root).decode()
+def source(path, commit=sha):
+    text = subprocess.check_output(["git", "show", f"{commit}:{path}"], cwd=root).decode()
     records[path] = hashlib.sha256(text.encode()).hexdigest()
+    source_commits[path] = commit
     return text
 
 
@@ -61,15 +66,14 @@ html = html.replace("https://raw.githubusercontent.com/reverse-shion/tarot-break
 html = re.sub(r"<img(?![^>]*crossorigin)", '<img crossorigin="anonymous"', html)
 html = html.replace('rel="preload" as="image"', 'rel="preload" as="image" crossorigin="anonymous"')
 html = html.replace("<!doctype html>", f"<!doctype html>\n<!-- DEV ONLY. Runtime source: {sha}. No Production deployment. -->")
-source("docs/lumiere-four-direction-preview-controls.html")
+controls = source("docs/lumiere-four-direction-preview-controls.html", controls_sha)
 manifest = json.loads(source("assets/sprites/lumiere/lumiere_sprite_manifest.json"))
-metadata = {"source_sha": sha, "files": records, "preview_transforms": [
+metadata = {"source_sha": sha, "files": records, "source_commits": source_commits, "preview_transforms": [
     "inline_scripts_and_styles", "inline_garden_dev_dependencies", "pin_asset_base",
     "anonymous_image_cors", "preserve_stylesheet_guard_markers",
     "g3_only_direction_controls_and_public_stage_staging"]}
 html = html.replace("</head>", '<script type="application/json" id="lumiere-preview-source">' +
                     json.dumps(metadata, ensure_ascii=False) + "</script>\n</head>")
-controls = source("docs/lumiere-four-direction-preview-controls.html")
 html = html.replace("</body>", controls + "\n</body>")
 prefix = "lumiere-sway" if manifest.get("localized_sway") else "lumiere-fixed"
 output = root / "docs" / "lumiere-hover-evidence" / f"{prefix}-{sha[:7]}.html"

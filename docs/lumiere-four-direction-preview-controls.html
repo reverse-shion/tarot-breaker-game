@@ -1,5 +1,7 @@
 <!-- Verification-only controls. Never loaded by the normal index.html. -->
 <aside id="lumiere-fixed-check" hidden aria-label="リュミエール4方向の実装確認">
+  <button type="button" id="lumiere-check-panel-toggle" aria-expanded="false" aria-controls="lumiere-check-panel-content">確認パネルを開く</button>
+  <div id="lumiere-check-panel-content" hidden>
   <div>DEV：4方向の浮遊・毛先・裾先確認</div>
   <small>顔・身体・翼は固定／毛先0.4px・裾先0.25px</small>
   <div class="lumiere-fixed-check-buttons">
@@ -11,10 +13,13 @@
     <button type="button" id="lumiere-check-sway" disabled aria-pressed="true">揺れ：ON</button>
   </div>
   <output id="lumiere-fixed-check-status" aria-live="polite">読み込み中</output>
+  </div>
 </aside>
 <style>
-#lumiere-fixed-check {position:fixed;top:8px;left:8px;right:8px;z-index:1500;padding:9px 12px;background:rgba(15,17,37,.94);color:#f7f3ed;border:1px solid #807292;border-radius:10px;font:14px/1.5 system-ui,sans-serif;max-width:500px}
+#lumiere-fixed-check {position:fixed;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:8px;right:8px;z-index:1500;padding:6px 9px;background:rgba(15,17,37,.94);color:#f7f3ed;border:1px solid #807292;border-radius:10px;font:13px/1.4 system-ui,sans-serif;max-width:500px;max-height:35vh;overflow:auto;box-sizing:border-box}
 #lumiere-fixed-check[hidden] {display:none}
+#lumiere-check-panel-content[hidden] {display:none}
+#lumiere-check-panel-content {padding-top:5px}
 #lumiere-fixed-check small {display:block;color:#e1dbe9}
 #lumiere-fixed-check .lumiere-fixed-check-buttons {display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}
 #lumiere-fixed-check button {min-height:40px;padding:6px 10px;background:#302843;color:#f7f3ed;border:1px solid #8b7ba4;border-radius:6px;font:inherit}
@@ -28,7 +33,15 @@
   if (params.getAll("dev").length !== 1 || params.get("dev") !== "garden-resume-after-lumiere" || params.has("from")) return;
   const panel = document.getElementById("lumiere-fixed-check");
   const status = document.getElementById("lumiere-fixed-check-status");
-  const buttons = [...panel.querySelectorAll("button")];
+  const buttons = [...panel.querySelectorAll(".lumiere-fixed-check-buttons button")];
+  const panelContent = document.getElementById("lumiere-check-panel-content");
+  const panelToggle = document.getElementById("lumiere-check-panel-toggle");
+  function setPanelOpen(open) {
+    panelContent.hidden = !open;
+    panelToggle.setAttribute("aria-expanded", String(open));
+    panelToggle.textContent = open ? "確認パネルを閉じる" : "確認パネルを開く";
+  }
+  panelToggle.addEventListener("click", () => setPanelOpen(panelContent.hidden));
   panel.hidden = false;
   const ready = () => {
     if (!document.body.classList.contains("scene-ready") || !window.TarotStage) return;
@@ -45,6 +58,7 @@
     const result = await action.promise;
     buttons.forEach(button => { button.disabled = false; });
     status.textContent = result.completed ? "各方向を約10秒。揺れON/OFFで比較できます" : "確認位置へ移動できませんでした";
+    if (result.completed) setPanelOpen(false);
   });
   document.getElementById("lumiere-check-sway").addEventListener("click", event => {
     const sway = window.TarotLumiereSway;
