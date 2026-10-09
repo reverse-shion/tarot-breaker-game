@@ -41,6 +41,7 @@ const required = [
   'assets/sprites/shiopon/shiopon_walk_up.png',
   'assets/sprites/shiopon/shiopon_walk_left.png',
   'assets/sprites/shiopon/shiopon_walk_right.png',
+  'lumiere-sway.js',
   'assets/sprites/lumiere/lumiere_sprite_manifest.json',
   'assets/sprites/lumiere/lumiere_idle.webp',
   'assets/sprites/lumiere/lumiere_hover-back.webp',
@@ -64,7 +65,7 @@ for (const key of ['idle','walk_down','walk_up','walk_left','walk_right']) {
 }
 const lumiereManifest = JSON.parse(fs.readFileSync(path.join(root, 'assets/sprites/lumiere/lumiere_sprite_manifest.json'), 'utf8'));
 if (lumiereManifest.format !== 'RGBA WebP (lossless)' || lumiereManifest.layout !== 'single_pose' ||
-    lumiereManifest.phase !== 1 || lumiereManifest.movement_type !== 'hover')
+    lumiereManifest.phase !== 2 || lumiereManifest.localized_sway !== true || lumiereManifest.movement_type !== 'hover')
   throw new Error('Lumiere must use four fixed WebP single poses');
 const expectedLumiere = {
   down: ['lumiere_idle.webp', 60, 1168, 620],
@@ -120,6 +121,7 @@ for (const ref of [
   './game.css',
   './sky-atmosphere.css',
   './game.js',
+  './lumiere-sway.js',
   './scene-effects.js',
   './assets/maps/star-country-farthest-sky-background.webp',
   './assets/maps/star-country-world-islands.webp',
@@ -141,5 +143,5 @@ console.log('TAROT BREAKER validation passed');
 console.log('Required files:', required.length);
 console.log('Dynamic Star Gate Garden assets: static far sky + celestial overlay + repeating clouds');
 console.log('Shion / Shiopon sheets: 1536x512, 4 frames each');
-console.log('Lumiere: four fixed lossless RGBA WebP poses; body reference height 63.984375px');
+console.log('Lumiere: four fixed lossless RGBA WebP poses plus local terminal sway; body reference height 63.984375px');
 console.log('Manifest: 384x512 cells, baseline_y=480');

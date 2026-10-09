@@ -1,4 +1,4 @@
-"""Build the four-direction fixed-pose verification page from an exact commit.
+"""Build the four-direction hover verification page from an exact commit.
 The page uses the existing G3 receiver; preview staging uses the public Stage API.
 """
 import base64
@@ -62,6 +62,7 @@ html = re.sub(r"<img(?![^>]*crossorigin)", '<img crossorigin="anonymous"', html)
 html = html.replace('rel="preload" as="image"', 'rel="preload" as="image" crossorigin="anonymous"')
 html = html.replace("<!doctype html>", f"<!doctype html>\n<!-- DEV ONLY. Runtime source: {sha}. No Production deployment. -->")
 source("docs/lumiere-four-direction-preview-controls.html")
+manifest = json.loads(source("assets/sprites/lumiere/lumiere_sprite_manifest.json"))
 metadata = {"source_sha": sha, "files": records, "preview_transforms": [
     "inline_scripts_and_styles", "inline_garden_dev_dependencies", "pin_asset_base",
     "anonymous_image_cors", "preserve_stylesheet_guard_markers",
@@ -70,7 +71,8 @@ html = html.replace("</head>", '<script type="application/json" id="lumiere-prev
                     json.dumps(metadata, ensure_ascii=False) + "</script>\n</head>")
 controls = source("docs/lumiere-four-direction-preview-controls.html")
 html = html.replace("</body>", controls + "\n</body>")
-output = root / "docs" / "lumiere-hover-evidence" / f"lumiere-fixed-{sha[:7]}.html"
+prefix = "lumiere-sway" if manifest.get("localized_sway") else "lumiere-fixed"
+output = root / "docs" / "lumiere-hover-evidence" / f"{prefix}-{sha[:7]}.html"
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(html)
 print(f"Built {output.name}: {len(html.encode())} bytes, source {sha}")

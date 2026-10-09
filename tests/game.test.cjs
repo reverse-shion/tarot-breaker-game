@@ -9,11 +9,11 @@ const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
 const lumiereManifest = require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
 const { gardenRuntime } = require('./helpers/garden-runtime.cjs');
 
-async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, badLumiere = false, badLumiereManifest = false,
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, badLumiere = false, badLumiereManifest = false, missingSway = false, badSway = false,
   search = '?from=landing&navDebug=1', devTransit = null, dialogueState = null } = {}) {
   const rafQueue = []; let now = 1000;
   const { layout: sceneLayout, collision: runtimeCollision } = gardenRuntime();
-  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
+  const drawCalls = [], surfaceCalls = [], swayCreates = [], swayDraws = [], errors = [], captured = new Set(), inputTrace = [];
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
@@ -71,6 +71,13 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     syncCamera() {},
     drawDebug() {},
   };
+  if (!missingSway) window.TarotLumiereSway = { create(image, pose) {
+    if (badSway) throw new Error('sway composition unavailable');
+    const density=3*63.984375/(pose.baseline_y-pose.body_top);
+    const canvas={url:'lumiere_sway/'+image.url.split('/').at(-1),width:Math.ceil(pose.width*density),height:Math.ceil(pose.height*density)};
+    swayCreates.push({image,pose,canvas});
+    return {canvas,width:canvas.width,height:canvas.height,draw(phase){swayDraws.push({canvas,phase});return canvas;}};
+  }};
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
@@ -89,7 +96,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   window.CustomEvent = CustomEvent;
   const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search },
     performance: { now: () => now }, requestAnimationFrame: fn => { rafQueue.push(fn); return rafQueue.length; }, setTimeout() { return 1; }, clearTimeout() {},
-    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('lumiere_sprite_manifest') ? (badLumiereManifest ? {...lumiereManifest, phase:2} : lumiereManifest) : url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
+    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('lumiere_sprite_manifest') ? (badLumiereManifest ? {...lumiereManifest, phase:1} : lumiereManifest) : url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
@@ -112,7 +119,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     await new Promise(setImmediate);
     now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now));
   }
-  if (!badCollision && !badLumiere && !badLumiereManifest) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
+  if (!badCollision && !badLumiere && !badLumiereManifest && !missingSway && !badSway) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now)); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
 
@@ -134,7 +141,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, swayCreates, swayDraws, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -163,7 +170,8 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
   assert.ok(lumiereMotionDraws.length > 0);
   assert.equal(h.surfaceCalls.length, 0, 'no legacy body-core or sheet composites');
-  assert.ok(lumiereMotionDraws.every(call => call[3] === 1254 && call[4] === 1254));
+  assert.equal(h.swayCreates.length,4,'one cached compositor per direction');
+  assert.ok(lumiereMotionDraws.every(call => call[3] === h.swayCreates[0].canvas.width && call[4] === h.swayCreates[0].canvas.height));
   assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] * (1168 - 60) / 1254 - 63.984375) < 1e-6));
 });
 test('Garden direct Continue boots the real runtime at exact authored spawn with restored follower state',async()=>{
@@ -196,7 +204,9 @@ test('Lumiere draws one fixed full pose per tick without sheet slicing or whole-
     const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
     assert.equal(calls.length, 1);
     assert.ok(calls[0][0].url.endsWith('lumiere_idle.webp'));
-    assert.deepEqual(calls[0].slice(1, 5), [0, 0, 1254, 1254]);
+    assert.deepEqual(calls[0].slice(1, 5), [0, 0, h.swayCreates[0].canvas.width, h.swayCreates[0].canvas.height]);
+    assert.equal(h.swayCreates.length,4,'no per-frame compositor allocation');
+    assert.equal(h.swayDraws.at(-1).phase,h.window.__gardenLumiere.bobPhase,'one shared phase drives local sway');
   }
   assert.equal(h.surfaceCalls.length, 0);
 });
@@ -217,6 +227,8 @@ test('four directions preserve scale, float continuously and keep phase through 
       assert.equal(actor.x,fixed.x); assert.equal(actor.y,fixed.y);
       const calls=h.drawCalls.slice(start).filter(call=>call[0]?.url?.includes('lumiere_'));
       assert.equal(calls.length,1);
+      assert.equal(h.swayCreates.length,4);
+      assert.equal(h.swayDraws.at(-1).phase,actor.bobPhase);
       const pose=lumiereManifest.poses[dir], call=calls[0];
       assert.ok(call[0].url.endsWith(lumiereManifest.files[dir]));
       assert.ok(Math.abs(call[8] * (pose.baseline_y-pose.body_top)/pose.height - 63.984375)<1e-9);
@@ -236,8 +248,8 @@ test('four directions preserve scale, float continuously and keep phase through 
   assert.equal(actor.bobPhase,0); assert.equal(actor.bobOffsetY,0);
   assert.equal(actor.stageOffsetY,0);assert.equal(actor.dir,'down');assert.equal(actor.frame,0);
 });
-test('Lumiere invalid dimensions or manifest never become scene-ready', async () => {
-  for(const options of [{badLumiere:true},{badLumiereManifest:true}]){
+test('Lumiere invalid images, manifest or compositor dependency never become scene-ready', async () => {
+  for(const options of [{badLumiere:true},{badLumiereManifest:true},{missingSway:true},{badSway:true}]){
     const h=await boot(options);
     assert.equal(h.document.body.classList.contains('scene-ready'),false);
     assert.equal(h.document.body.classList.contains('scene-load-error'),true);

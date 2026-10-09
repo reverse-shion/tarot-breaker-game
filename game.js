@@ -161,11 +161,12 @@
   const images = {};
   const shioponImages = {};
   const lumiereImages = {};
+  const lumiereCompositors = {};
 
   function validateLumiereManifest(value) {
     const render = value?.render;
     if (value?.format !== "RGBA WebP (lossless)" || value.layout !== "single_pose" ||
-        value.movement_type !== "hover" || value.phase !== 1 ||
+        value.movement_type !== "hover" || value.phase !== 2 || value.localized_sway !== true ||
         render?.reference_body_height !== 420 || render.reference_cell_height !== FRAME.h ||
         render.draw_cell_height !== DRAW_HEIGHT || render.bottom_gap !== LUMIERE_BOTTOM_GAP ||
         render.bob_amplitude !== LUMIERE_BOB_AMPLITUDE || render.bob_period !== LUMIERE_BOB_PERIOD)
@@ -1252,7 +1253,8 @@
   ) {
     if (hover) {
       const dir = actorImages[actor.dir] ? actor.dir : "down";
-      const image = actorImages[dir];
+      const compositor = lumiereCompositors[dir];
+      const image = compositor.draw(actor.bobPhase);
       const pose = lumiereManifest.poses[dir];
       const bodyHeight = DRAW_HEIGHT * lumiereManifest.render.reference_body_height / FRAME.h;
       const poseScale = bodyHeight / (pose.baseline_y - pose.body_top);
@@ -1265,7 +1267,7 @@
       ctx.shadowBlur = 0.7 / camera.zoom;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      ctx.drawImage(image, 0, 0, pose.width, pose.height,
+      ctx.drawImage(image, 0, 0, compositor.width, compositor.height,
         actor.x - pose.center_x * poseScale,
         actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * poseScale + visualOffsetY,
         pose.width * poseScale, pose.height * poseScale);
@@ -1982,6 +1984,18 @@
         if (lumiereImages[dir].naturalWidth !== pose.width ||
             lumiereImages[dir].naturalHeight !== pose.height)
           throw new Error("リュミエール" + dir + "浮遊画像サイズ不正");
+      }
+
+      if (typeof window.TarotLumiereSway?.create !== "function")
+        throw new Error("リュミエール揺れ描画を読み込めません");
+      for (const dir of ["down", "up", "left", "right"]) {
+        const compositor = window.TarotLumiereSway.create(lumiereImages[dir], lumiereManifest.poses[dir]);
+        if (!compositor?.canvas || typeof compositor.draw !== "function" ||
+            !Number.isInteger(compositor.width) || compositor.width <= 0 ||
+            !Number.isInteger(compositor.height) || compositor.height <= 0 ||
+            compositor.canvas.width !== compositor.width || compositor.canvas.height !== compositor.height)
+          throw new Error("リュミエール" + dir + "揺れ描画設定不正");
+        lumiereCompositors[dir] = compositor;
       }
 
       if (document.body.classList.contains("scene-load-error")) return;

@@ -1,13 +1,14 @@
 <!-- Verification-only controls. Never loaded by the normal index.html. -->
 <aside id="lumiere-fixed-check" hidden aria-label="リュミエール4方向の実装確認">
-  <div>DEV：4方向の上下移動確認</div>
-  <small>髪・衣装は固定／分離素材は次工程</small>
+  <div>DEV：4方向の浮遊・毛先・裾先確認</div>
+  <small>顔・身体・翼は固定／毛先0.4px・裾先0.25px</small>
   <div class="lumiere-fixed-check-buttons">
     <button type="button" id="lumiere-check-position" disabled>確認位置へ</button>
     <button type="button" data-lumiere-face="down" disabled>正面</button>
     <button type="button" data-lumiere-face="up" disabled>背面</button>
     <button type="button" data-lumiere-face="left" disabled>左</button>
     <button type="button" data-lumiere-face="right" disabled>右</button>
+    <button type="button" id="lumiere-check-sway" disabled aria-pressed="true">揺れ：ON</button>
   </div>
   <output id="lumiere-fixed-check-status" aria-live="polite">読み込み中</output>
 </aside>
@@ -43,7 +44,15 @@
     const action = window.TarotStage.perform({ type: "move", actor: "shion", target: { x: 810, y: 290 }, duration: 1400 });
     const result = await action.promise;
     buttons.forEach(button => { button.disabled = false; });
-    status.textContent = result.completed ? "4方向を切替えて確認できます。髪・衣装の揺れは未実装" : "確認位置へ移動できませんでした";
+    status.textContent = result.completed ? "各方向を約10秒。揺れON/OFFで比較できます" : "確認位置へ移動できませんでした";
+  });
+  document.getElementById("lumiere-check-sway").addEventListener("click", event => {
+    const sway = window.TarotLumiereSway;
+    if (!sway) return;
+    sway.setEnabled(!sway.isEnabled());
+    event.currentTarget.textContent = "揺れ：" + (sway.isEnabled() ? "ON" : "OFF");
+    event.currentTarget.setAttribute("aria-pressed", String(sway.isEnabled()));
+    status.textContent = "上下浮遊の位相は維持。毛先と裾先だけを比較";
   });
   for (const button of panel.querySelectorAll("[data-lumiere-face]")) {
     button.addEventListener("click", async () => {

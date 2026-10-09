@@ -3,7 +3,7 @@
   "format": "RGBA WebP (lossless)",
   "layout": "single_pose",
   "movement_type": "hover",
-  "phase": 1,
+  "phase": 2,
   "files": {
     "down": "lumiere_idle.webp",
     "up": "lumiere_hover-back.webp",
@@ -70,8 +70,9 @@
     "policy": "Existing decoded source RGBA preserved exactly; only these four true WebP encodings copied. Unused candidates retained unchanged."
   },
   "notes": [
-    "Four directional fixed poses. No whole-body pose transitions, wing animation, crossfade or sway in Phase 1.",
+    "Four fixed directional source poses. Continuous local terminal hair/garment sway only; no whole-body pose transitions, wing animation or crossfade.",
     "Anchors are PR122 calibration values; independent precise visual validation remains pending.",
-    "Phase 2 requires approved separated hair/garment layers or masks with fixed attachment points and overlap quality evidence."
-  ]
+    "Local regions, fixed perimeter roots, phase lag and compositor density are defined in lumiere-sway.js. Face, body, legs and wings remain fixed."
+  ],
+  "localized_sway": true
 }
