@@ -57,6 +57,7 @@ html = re.sub(r'<link rel="stylesheet" href="(\./([^"?]+)(?:\?[^" ]*)?)"[^>]*>',
 html = html.replace("<head>", f'<head>\n    <base href="{asset_base}" />')
 html = html.replace('data-shiopon-base="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/"',
                     f'data-shiopon-base="{asset_base}assets/sprites/shiopon/"')
+html = html.replace("https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/", asset_base)
 html = re.sub(r"<img(?![^>]*crossorigin)", '<img crossorigin="anonymous"', html)
 html = html.replace('rel="preload" as="image"', 'rel="preload" as="image" crossorigin="anonymous"')
 html = html.replace("<!doctype html>", f"<!doctype html>\n<!-- DEV ONLY. Runtime source: {sha}. No Production deployment. -->")

@@ -55,3 +55,14 @@ Full-alpha silhouette bounds mapped into the existing actor mask, including bob 
 | Right | -44.44 | -85.47 | 26.23 | 4.35 |
 
 The fixed preview builder embeds exact-commit script/style sources, pins assets to that commit and exposes direction controls only for the existing G3 dev query. Preview staging uses the existing public Stage API, not production spawn changes. Its source manifest is embedded as `lumiere-preview-source`; preview-only transforms are listed there. Neither the controls nor generated page is loaded by the production entry. Browser executable installation failed in this environment; no local browser or iPhone run is claimed.
+
+## Runtime identity and independent review
+
+DEVICE_RUNTIME_SHA: ba126a2dbbac5fb19490a916d33420b9d1ab4594
+DEVICE_RESULT: PENDING
+
+Independent Reviewer reconstructed actual main/candidate diff, ran targeted 35/35 and full 327/327, validators and source RGBA comparison. No technical implementation blocker found; candidate acceptable for Draft and human device review. Final integration gate is STOP/PENDING until CI and required Device evidence exist. Preview follow-up verification is separate from browser/device execution.
+
+Fixed preview: `docs/lumiere-hover-evidence/lumiere-fixed-ba126a2.html?dev=garden-resume-after-lumiere`. After opening, choose 「確認位置へ」, then each of 正面／背面／左／右 for about 10.4 seconds (two periods). Direction controls preserve bob phase through public Stage face commands. The generated page has 31 syntactically valid inline scripts, 38 source hashes verified against the runtime commit, and no variable main asset URL. This evidence-only follow-up does not change production runtime.
+
+GitHub connector materialized the runtime commit with identical Git tree `f9d22b533a178ecf862a51783552fc339708373b` to the locally reviewed runtime. Commit identity changed because connector commit metadata differs; production files are byte-for-byte identical. Independent generated-preview follow-up accepted exact sources/hashes and script syntax for Draft/device review. GitHub CI and Device result remain pending at this evidence commit.
