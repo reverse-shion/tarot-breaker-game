@@ -1,0 +1,57 @@
+<!-- Verification-only controls. Never loaded by the normal index.html. -->
+<aside id="lumiere-fixed-check" hidden aria-label="リュミエール4方向の実装確認">
+  <div>DEV：4方向の上下移動確認</div>
+  <small>髪・衣装は固定／分離素材は次工程</small>
+  <div class="lumiere-fixed-check-buttons">
+    <button type="button" id="lumiere-check-position" disabled>確認位置へ</button>
+    <button type="button" data-lumiere-face="down" disabled>正面</button>
+    <button type="button" data-lumiere-face="up" disabled>背面</button>
+    <button type="button" data-lumiere-face="left" disabled>左</button>
+    <button type="button" data-lumiere-face="right" disabled>右</button>
+  </div>
+  <output id="lumiere-fixed-check-status" aria-live="polite">読み込み中</output>
+</aside>
+<style>
+#lumiere-fixed-check {position:fixed;top:8px;left:8px;right:8px;z-index:1500;padding:9px 12px;background:rgba(15,17,37,.94);color:#f7f3ed;border:1px solid #807292;border-radius:10px;font:14px/1.5 system-ui,sans-serif;max-width:500px}
+#lumiere-fixed-check[hidden] {display:none}
+#lumiere-fixed-check small {display:block;color:#e1dbe9}
+#lumiere-fixed-check .lumiere-fixed-check-buttons {display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}
+#lumiere-fixed-check button {min-height:40px;padding:6px 10px;background:#302843;color:#f7f3ed;border:1px solid #8b7ba4;border-radius:6px;font:inherit}
+#lumiere-fixed-check button:disabled {opacity:.5}
+#lumiere-fixed-check output {display:block;font-size:12px}
+</style>
+<script>
+(function () {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  if (params.getAll("dev").length !== 1 || params.get("dev") !== "garden-resume-after-lumiere" || params.has("from")) return;
+  const panel = document.getElementById("lumiere-fixed-check");
+  const status = document.getElementById("lumiere-fixed-check-status");
+  const buttons = [...panel.querySelectorAll("button")];
+  panel.hidden = false;
+  const ready = () => {
+    if (!document.body.classList.contains("scene-ready") || !window.TarotStage) return;
+    buttons.forEach(button => { button.disabled = false; });
+    status.textContent = "確認位置へ → 各方向で約10秒ずつ確認";
+    observer.disconnect();
+  };
+  const observer = new MutationObserver(ready);
+  observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  ready();
+  document.getElementById("lumiere-check-position").addEventListener("click", async () => {
+    buttons.forEach(button => { button.disabled = true; });
+    const action = window.TarotStage.perform({ type: "move", actor: "shion", target: { x: 810, y: 290 }, duration: 1400 });
+    const result = await action.promise;
+    buttons.forEach(button => { button.disabled = false; });
+    status.textContent = result.completed ? "4方向を切替えて確認できます。髪・衣装の揺れは未実装" : "確認位置へ移動できませんでした";
+  });
+  for (const button of panel.querySelectorAll("[data-lumiere-face]")) {
+    button.addEventListener("click", async () => {
+      const actor = window.TarotStage.getState().actors.lumiere;
+      const delta = { down: [0, 10], up: [0, -10], left: [-10, 0], right: [10, 0] }[button.dataset.lumiereFace];
+      await window.TarotStage.perform({ type: "face", actor: "lumiere", target: { x: actor.x + delta[0], y: actor.y + delta[1] } }).promise;
+      status.textContent = button.textContent + "：上下運動の位相を維持して表示";
+    });
+  }
+})();
+</script>

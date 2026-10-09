@@ -1,67 +1,77 @@
 {
   "character": "Lumiere",
-  "format": "RGBA PNG",
-  "cell_size": {
-    "width": 384,
-    "height": 512
-  },
-  "baseline_y": 480,
-
-  "frame_count": {
-    "idle": 4,
-    "hover_down": 4,
-    "hover_up": 4,
-    "hover_left": 4,
-    "hover_right": 4
-  },
-
-  "idle_frame_order": [
-    "down",
-    "up",
-    "left",
-    "right"
-  ],
-
-  "hover_frame_order": [
-    0,
-    1,
-    2,
-    3
-  ],
-
-  "files": {
-    "idle": "lumiere_idle.png",
-    "hover_down": "lumiere_hover_down.png",
-    "hover_up": "lumiere_hover_up.png",
-    "hover_left": "lumiere_hover_left.png",
-    "hover_right": "lumiere_hover_right.png"
-  },
-
+  "format": "RGBA WebP (lossless)",
+  "layout": "single_pose",
   "movement_type": "hover",
-
-  "visual_rules": {
-    "barefoot": true,
-    "floating": true,
-    "ground_contact": false,
-    "heterochromia": {
-      "viewer_left_eye": "violet",
-      "viewer_right_eye": "azure",
-      "left_facing_visible_eye": "azure",
-      "right_facing_visible_eye": "violet"
+  "phase": 1,
+  "files": {
+    "down": "lumiere_idle.webp",
+    "up": "lumiere_hover-back.webp",
+    "left": "lumiere_hover_left.webp",
+    "right": "lumiere_hover_right.webp"
+  },
+  "poses": {
+    "down": {
+      "width": 1254,
+      "height": 1254,
+      "body_top": 60,
+      "baseline_y": 1168,
+      "center_x": 620,
+      "sha256": "e1af4771a667986830f9b02a22ecfd815f8fde2a6f0ee81a34d7c6f679f6b3c3",
+      "source_sha256": "ff5cea8f8a0b3e37cf1e5af1455561a5e55d2001600996027a9cf4930dd8678f",
+      "decoded_rgba_sha256": "c71d23b3473a5547302c0574825142afa200aeea9c525f493a385effa3ecc0ed",
+      "actual_direction": "down"
+    },
+    "up": {
+      "width": 1254,
+      "height": 1254,
+      "body_top": 74,
+      "baseline_y": 1127,
+      "center_x": 628,
+      "sha256": "1fb1fe0f43efe71eb59106a9f71d26ebb9342faa24cae38e0203321c47046b95",
+      "source_sha256": "d8937024ed4e98950bed1b24ff87980649153691faa39e922053c71b5a9b412b",
+      "decoded_rgba_sha256": "f322fd91e49fd0b34cabde18f4823948b3314086a8064c86d5f0c62d00ece78a",
+      "actual_direction": "up"
+    },
+    "left": {
+      "width": 1254,
+      "height": 1254,
+      "body_top": 97,
+      "baseline_y": 1144,
+      "center_x": 480,
+      "sha256": "a44d19636ad714191c1b256169d0bb8f7a99b55ec56fb9b66666681b18d35bd6",
+      "source_sha256": "ea56c443f8213d93811d24188ffd237859517edee28017088d6d9d9975712048",
+      "decoded_rgba_sha256": "c1dcd3e8963c6b3b3bf4de13f7a2a60410d9fdb8ae16ec3cb90f5d5831a53f8c",
+      "actual_direction": "left"
+    },
+    "right": {
+      "width": 1254,
+      "height": 1254,
+      "body_top": 58,
+      "baseline_y": 1158,
+      "center_x": 785,
+      "sha256": "bae0502a923d3ad27bc9a0705faf0668b94f36847862308ede29f0a45e597999",
+      "source_sha256": "cbd36b98f5b7b9a51b7dd69092de09f225fae254bab439a19ec6ba9a803a5404",
+      "decoded_rgba_sha256": "3440194a86c06a3dd3cf6b691f893916803b265732fbbe416f33bd6f2433675e",
+      "actual_direction": "right"
     }
   },
-
+  "render": {
+    "reference_body_height": 420,
+    "reference_cell_height": 512,
+    "draw_cell_height": 78,
+    "bottom_gap": 2.7,
+    "bob_amplitude": 2.4,
+    "bob_period": 5.2
+  },
+  "provenance": {
+    "main": "cf9e8363575e6d96f458d870cbbdefbd96ef197f",
+    "encoding_source": "85caa984dddf54280de0be30ef2cc782d00bf1a3",
+    "policy": "Existing decoded source RGBA preserved exactly; only these four true WebP encodings copied. Unused candidates retained unchanged."
+  },
   "notes": [
-    "All sheets use true transparent alpha.",
-    "Every frame uses the same 384x512 cell.",
-    "Implementation alignment uses baseline_y=480.",
-    "Lumiere visually floats slightly above the baseline and does not make direct ground contact.",
-    "Movement animation uses hovering instead of walking.",
-    "Hover motion is expressed through subtle vertical bobbing, wing movement, hair sway, and flowing drapery.",
-    "Bare feet must remain visible.",
-    "Heterochromia must remain consistent in every visible-eye frame.",
-    "Front view: viewer-left eye is violet and viewer-right eye is azure.",
-    "Left-facing profile: visible eye is azure.",
-    "Right-facing profile: visible eye is violet."
+    "Four directional fixed poses. No whole-body pose transitions, wing animation, crossfade or sway in Phase 1.",
+    "Anchors are PR122 calibration values; independent precise visual validation remains pending.",
+    "Phase 2 requires approved separated hair/garment layers or masks with fixed attachment points and overlap quality evidence."
   ]
 }

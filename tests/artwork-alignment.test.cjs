@@ -53,7 +53,7 @@ test('latest uploaded artwork URLs are cache-busted independently', () => {
   }
   assert.notEqual(new URL(islands, 'https://example.test').search, new URL(foreground, 'https://example.test').search);
   assert.match(html, /scene-preview41-fix\.js\?v=native-foreground-v7/);
-  assert.match(html, /game\.js\?v=garden-arrival-v1/);
+  assert.match(html, /game\.js\?v=garden-arrival-v1-lumiere-fixed-v1/);
 });
 
 test('replacement islands fit completely inside the canonical scene', () => {
