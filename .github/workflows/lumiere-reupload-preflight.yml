@@ -5,6 +5,9 @@ on:
       - fix/lumiere-reupload-20261010
 permissions:
   contents: write
+concurrency:
+  group: lumiere-reupload-candidate
+  cancel-in-progress: true
 jobs:
   prepare:
     if: github.actor != 'github-actions[bot]'
