@@ -201,3 +201,14 @@ This human PASS is **limited** to the tested exact-runtime Lumiere visual candid
 ### Verification boundary
 
 This is a limited product-owner visual acceptance of the exact Lumiere candidate reached through the corrected standalone preview, **not** full device certification of every directional animation frame or the whole game. No new validation of save, audio, Title/Alenon/PAD, mobile frame rate or unrelated events is inferred. The game runtime files (four images and manifest) are unchanged after the recorded runtime SHA; later commits are documentation, tests and temporary tooling/preview files only. Existing historical device records remain unchanged. CI, lineage/scope audit and GitHub merge protections remain mandatory.
+
+
+## PR #142 — Audio fade timestamp/volume bounds, explicit owner acceptance (2026-10-10)
+
+| Scope | Commit SHA | Device | Result | Human-confirmed observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| Standalone candidate BGM smoke: music start; interaction start/end; audio OFF/ON; return from background; repeated controls | 0884d760acb50545818f94c7195dcfe5f32f122d | iPhone test context; device/browser version not independently restated in final reply | PASS | Owner reported all five requested sound-smoke checks passed after receiving the immutable standalone candidate audio test page. Acceptance is for the observed operation and listening checklist, not an instrumentation trace, decibel measurement, or full in-game route | Product owner explicitly replied in ChatGPT: 「問題ない全て合格」 in direct response to PR #142 candidate audio verification checklist | Exact page `docs/audio-fade-20261010/iphone-audio-check.html` from preview SHA `bf735b5c76d0e782b706ef100c8a663e57d9fb65`; it loads `audio.js` and original BGM from exact runtime SHA `0884d760acb50545818f94c7195dcfe5f32f122d`. URL/readability verification run `38050517238` returned page+JS HTTP 200 and MP3 partial content HTTP 206 |
+
+### Scope boundary for PR #142
+
+This is **device acceptance of the standalone BGM fade smoke only**. It does not imply successful full game progression, game dialogue integration, Safari console monitoring, underlying iOS media volume implementation correctness, or other tracks/stages. The test page reports user actions but does not expose an audio-error event recorder. The pre-fix strict volume exception was reproduced and prevented in automated tests, which separately verified valid [0,1] volume writes, cancellation, and visibility handling. Later branch changes following the runtime SHA consist exclusively of tests, fixtures, documentation, and test-only workflow clean-up; no runtime source modifications. All historic device evidence remains unchanged.
