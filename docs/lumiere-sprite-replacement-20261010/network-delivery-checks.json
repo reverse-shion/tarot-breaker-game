@@ -1,8 +1,8 @@
 {
   "runtime_sha": "43575846ece577693c26cc4ac1910e15336ecd92",
-  "preview_source_sha": "5cbe3608d099f85fc167ecd657ced3fb965eb4b0",
-  "preview_url": "https://raw.githack.com/reverse-shion/tarot-breaker-game/5cbe3608d099f85fc167ecd657ced3fb965eb4b0/docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html?dev=garden-resume-after-lumiere",
-  "preview_sha256": "fb9e1dc5f5b1283db9203483224048078c3833a69509dce1fc9721de79a56cda",
+  "preview_source_sha": "8eb3840278aa0b9026eecdc5d3102c9c193c5d6b",
+  "preview_url": "https://raw.githack.com/reverse-shion/tarot-breaker-game/8eb3840278aa0b9026eecdc5d3102c9c193c5d6b/docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html?dev=garden-resume-after-lumiere",
+  "preview_sha256": "8dee2f3080788f7e6344d0e3646a7c01ff7efd62772516c69c10e69becfdbae0",
   "resources": [
     {
       "path": "assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
@@ -337,5 +337,7 @@
       "sha256": "6562b88d93b50293edd0659e79c01f1678caaaaaddb7980ace9a820bce4729c5",
       "matches_exact_local_source": true
     }
-  ]
+  ],
+  "preview_http_status": 200,
+  "preview_matches_exact_local_source": true
 }

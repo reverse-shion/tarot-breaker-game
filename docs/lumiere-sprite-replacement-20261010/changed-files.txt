@@ -21,7 +21,6 @@ docs/lumiere-sprite-replacement-20261010/fixed-preview-portrait.png
 docs/lumiere-sprite-replacement-20261010/fixed-preview-touch-checks.json
 docs/lumiere-sprite-replacement-20261010/garden-four-directions.png
 docs/lumiere-sprite-replacement-20261010/implementation-contract.md
-docs/lumiere-sprite-replacement-20261010/independent-region-proof.json
 docs/lumiere-sprite-replacement-20261010/independent-review.md
 docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html
 docs/lumiere-sprite-replacement-20261010/measure-final-landmarks.py

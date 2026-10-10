@@ -1,10 +1,10 @@
 {
-  "reviewed_head": "5cbe3608d099f85fc167ecd657ced3fb965eb4b0",
+  "reviewed_head": "8eb3840278aa0b9026eecdc5d3102c9c193c5d6b",
   "runtime_sha": "43575846ece577693c26cc4ac1910e15336ecd92",
   "validation": {
-    "url": "https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38044039949",
+    "url": "https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38045485149",
     "conclusion": "success",
-    "job_id": 114189849049,
+    "job_id": 114194036928,
     "steps": [
       {
         "name": "Set up job",
@@ -63,9 +63,9 @@
     ]
   },
   "merge_gate": {
-    "url": "https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38044039952",
+    "url": "https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38045485153",
     "conclusion": "failure",
-    "job_id": 114189848933,
+    "job_id": 114194037098,
     "main_lineage": "PASS",
     "device_registry": "FAIL / PENDING HUMAN DEVICE EVIDENCE",
     "reason": "DEVICE_RUNTIME_SHA is not recorded in the Device Verification Registry.",
