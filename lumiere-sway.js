@@ -22,13 +22,21 @@
   const BODY_HEIGHT = 78 * 420 / 512;
   let enabled = true;
 
+  function smooth01(value) {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+  }
   function weight(u, v) {
     if (u <= 0 || u >= 1 || v <= 0 || v >= 1) return 0;
-    return Math.sin(Math.PI * u) ** 2 * Math.sin(Math.PI * v) ** 2;
+    // The old central sine mask barely moved recognizable hair/hem tips.
+    // Anchor the upper/root section, then let the terminal part follow while
+    // fading to zero at the tile's one-pixel safety perimeter.
+    return smooth01(u / 0.19) * smooth01((1-u) / 0.19) *
+      smooth01(v / 0.52) * smooth01((1-v) / 0.12);
   }
   function motion(kind, phase) {
     if (!Number.isFinite(phase)) throw new Error("Invalid Lumiere sway phase");
-    const lag = kind === "hair" ? 0.22 : 0.35;
+    const lag = kind === "hair" ? 0.28 : 0.47;
     return Math.sin(phase - lag * Math.PI * 2 / PERIOD);
   }
   function surface(width, height) {
@@ -64,15 +72,19 @@
       const x = Math.floor(sx * sourceScale), y = Math.floor(sy * sourceScale);
       const w = Math.ceil((sx + sw) * sourceScale) - x;
       const h = Math.ceil((sy + sh) * sourceScale) - y;
-      const amplitude = (kind === "hair" ? 0.4 : 0.25) * density;
-      return { x,y,w,h,kind,amplitude };
+      // Measured in reference pixels, before the fixed 3x local cache.
+      // Increased enough to read at character scale, not enough to shift
+      // the attachment or any protected body/wing pixel.
+      const amplitude = (kind === "hair" ? 0.85 : 0.55) * density;
+      const verticalRatio = kind === "hair" ? -0.18 : 0.16;
+      return { x,y,w,h,kind,amplitude,verticalRatio };
     });
     // Pack all displacement samples into one atlas per direction. Hundreds of
     // tiny Canvas contexts would add unnecessary Safari backing-store overhead.
     const atlas = surface(Math.max(...geometry.map(t => t.w)) * (STEPS+1),
       geometry.reduce((n,t) => n+t.h,0));
     let atlasY = 0;
-    const tiles = geometry.map(({x,y,w,h,kind,amplitude}) => {
+    const tiles = geometry.map(({x,y,w,h,kind,amplitude,verticalRatio}) => {
       const sampleY = atlasY;
       atlasY += h;
       for (let step = 0; step <= STEPS; step++) {
@@ -80,23 +92,40 @@
         const pixels = atlas.ctx.createImageData(w, h);
         for (let row = 0; row < h; row++) {
           for (let col = 0; col < w; col++) {
-            // Invert the smooth local warp. Mapping is identity at every edge;
-            // derivative stays positive at these bounded amplitudes.
-            let sourceX = col;
-            for (let iteration = 0; iteration < 6; iteration++)
-              sourceX = col - amount * weight(sourceX / (w-1), row / (h-1));
+            // Inverse 2D deformation. The tiny vertical follow-through
+            // shares the tile's delayed phase; no extra animation clock or
+            // per-frame resampling is introduced. Borders remain identity.
+            let sourceX = col, sourceY = row;
+            for (let iteration = 0; iteration < 8; iteration++) {
+              const influence = weight(sourceX / (w-1), sourceY / (h-1));
+              sourceX = col - amount * influence;
+              sourceY = row - amount * verticalRatio * influence;
+            }
             sourceX = Math.max(0, Math.min(w-1, sourceX));
-            const a = Math.floor(sourceX), b = Math.min(w-1, a+1);
-            const mix = sourceX - a;
-            const i = ((y + row) * width + x + a) * 4;
-            const j = ((y + row) * width + x + b) * 4;
+            sourceY = Math.max(0, Math.min(h-1, sourceY));
+            const x0 = Math.floor(sourceX), x1 = Math.min(w-1, x0+1);
+            const y0 = Math.floor(sourceY), y1 = Math.min(h-1, y0+1);
+            const fx = sourceX - x0, fy = sourceY - y0;
+            const factors = [
+              [x0,y0,(1-fx)*(1-fy)], [x1,y0,fx*(1-fy)],
+              [x0,y1,(1-fx)*fy], [x1,y1,fx*fy],
+            ];
             const target = (row * w + col) * 4;
-            const alpha = original[i+3] * (1-mix) + original[j+3] * mix;
+            let alpha = 0, red = 0, green = 0, blue = 0;
+            for (const [sourceCol,sourceRow,mix] of factors) {
+              const i = ((y + sourceRow) * width + x + sourceCol) * 4;
+              const a = original[i+3] * mix;
+              alpha += a;
+              red += original[i] * a;
+              green += original[i+1] * a;
+              blue += original[i+2] * a;
+            }
             pixels.data[target+3] = alpha;
-            for (let channel = 0; channel < 3; channel++)
-              pixels.data[target+channel] = alpha > 0 ?
-                (original[i+channel] * original[i+3] * (1-mix) +
-                 original[j+channel] * original[j+3] * mix) / alpha : 0;
+            if (alpha > 0) {
+              pixels.data[target] = red / alpha;
+              pixels.data[target+1] = green / alpha;
+              pixels.data[target+2] = blue / alpha;
+            }
           }
         }
         atlas.ctx.putImageData(pixels, step*w, sampleY);
@@ -124,7 +153,7 @@
         // otherwise introduce an 8-bit rounding change at the join.
         ctx.clearRect(tile.x+1, tile.y+1, tile.w-2, tile.h-2);
         // Interpolate adjacent subpixel displacements, NOT distinct poses.
-        // Sample spacing is <=0.025 reference px. Additive premultiplied RGBA
+        // Adjacent precomputed samples are smoothly interpolated each frame. Additive premultiplied RGBA
         // in an empty tile preserves opacity (source-over fades would not).
         ctx.globalCompositeOperation = "lighter";
         ctx.globalAlpha = 1 - blend;
