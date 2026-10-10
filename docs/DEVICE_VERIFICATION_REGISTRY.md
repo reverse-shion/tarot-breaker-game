@@ -179,3 +179,14 @@ This PASS covers the exact production-Continue regression and the locked histori
 
 
 PR #99 gate refresh note — 2026-10-03: metadata now records the exact-runtime device result as PASS. This is evidence-only; runtime content is unchanged.
+
+
+## PR #130 — Lumiere four-direction hover, exact-runtime product owner verification (2026-10-10)
+
+| Scope | Commit SHA | Device | Result | Human-confirmed observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| Star Gate Garden G3 — after Lumiere, four-direction art and restrained floating / hair / hem, editor-free visual inspection | 9e8a85dff39e33e0eb802369228fcab4d512e035 | iPhone testing context; specific OS/browser and model not restated with final reply | PASS | The owner used the immutable exact-runtime preview after the prior direct index link failed, then explicitly said the new version had no problem and requested a merge. This confirms acceptance of that viewed candidate, including the subtle aesthetic and absence of a disruptive verification/editor panel, without specifying every individual angle or navigation operation. | Product owner in ChatGPT: 「問題ないのでmainにマージして」 in direct response to the exact-runtime pinned preview link provided immediately beforehand | Verified preview `docs/lumiere-hover-evidence/lumiere-release-9e8a85d.html?dev=garden-resume-after-lumiere`, pinned to the exact runtime SHA above by 39 source digests and 31 executable inline scripts. Other legacy map/editor scripts are unchanged from main and query-guarded; no full-game/route/low-power/Safari-FPS PASS is inferred. Follow-up commits to branch are registry/docs/tests only. |
+
+### Verification boundary
+
+This human PASS is **limited** to the tested exact-runtime Lumiere visual candidate and the displayed playable G3 scene. It does not certify unrelated Title/Alenon/PAD routes, event replay, saving, iOS/browser version, all four directional cycles, frame rate, or a full regression playthrough. Automated CI and scope audit are separate, mandatory for merge. It does not alter any previously recorded device PASS or authorize changes outside Lumiere visuals.

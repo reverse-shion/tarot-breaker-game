@@ -1,0 +1,218 @@
+<!-- Verification-only controls. Never loaded by the normal index.html. -->
+<aside id="lumiere-fixed-check" hidden aria-label="リュミエール4方向の実装確認">
+  <button type="button" id="lumiere-check-panel-toggle" aria-expanded="false" aria-controls="lumiere-check-panel-content">確認パネルを開く</button>
+  <div id="lumiere-check-panel-content" hidden>
+  <div>DEV：4方向の浮遊・毛先・裾先確認</div>
+  <small id="lumiere-check-spec">設定読み込み中（更新候補の値を表示します）</small>
+  <small id="lumiere-check-diagnostics">毛先・裾先の画素変化を測定中</small>
+  <div class="lumiere-fixed-check-buttons">
+    <button type="button" id="lumiere-check-position" disabled>確認位置へ</button>
+    <button type="button" data-lumiere-face="down" disabled>正面</button>
+    <button type="button" data-lumiere-face="up" disabled>背面</button>
+    <button type="button" data-lumiere-face="left" disabled>左</button>
+    <button type="button" data-lumiere-face="right" disabled>右</button>
+    <button type="button" id="lumiere-check-sway" disabled aria-pressed="true">揺れ：ON</button>
+    <button type="button" id="lumiere-check-magnify" disabled>髪・裾を拡大診断</button>
+  </div>
+  <output id="lumiere-fixed-check-status" aria-live="polite">読み込み中</output>
+  </div>
+</aside>
+<section id="lumiere-region-inspector" hidden aria-label="髪束と裾の拡大診断">
+  <button id="lumiere-region-close" type="button">閉じてゲームへ戻る</button>
+  <div id="lumiere-region-summary" role="status">解析待ち</div>
+  <p>黄色枠＝揺らす候補範囲。左が元画像、右が実際の揺れ描画。ゲーム用画像は変更しません。</p>
+  <canvas id="lumiere-region-overview" width="260" height="260" aria-label="元画像の動作範囲"></canvas>
+  <div id="lumiere-region-crops"></div>
+</section>
+<style>
+#lumiere-fixed-check {position:fixed;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:8px;right:8px;z-index:1500;padding:6px 9px;background:rgba(15,17,37,.94);color:#f7f3ed;border:1px solid #807292;border-radius:10px;font:13px/1.4 system-ui,sans-serif;max-width:500px;max-height:35vh;overflow:auto;box-sizing:border-box}
+#lumiere-fixed-check[hidden] {display:none}
+#lumiere-check-panel-content[hidden] {display:none}
+#lumiere-check-panel-content {padding-top:5px}
+#lumiere-fixed-check small {display:block;color:#e1dbe9}
+#lumiere-fixed-check .lumiere-fixed-check-buttons {display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}
+#lumiere-fixed-check button {min-height:40px;padding:6px 10px;background:#302843;color:#f7f3ed;border:1px solid #8b7ba4;border-radius:6px;font:inherit}
+#lumiere-fixed-check button:disabled {opacity:.5}
+#lumiere-fixed-check output {display:block;font-size:12px}
+#lumiere-region-inspector {position:fixed;z-index:1700;inset:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px));overflow:auto;background:rgba(14,16,31,.98);color:#f9f5ed;border:1px solid #b5a9d8;border-radius:12px;padding:12px;font:13px/1.5 system-ui,sans-serif}
+#lumiere-region-inspector[hidden] {display:none}
+#lumiere-region-inspector button {min-height:42px;background:#393047;color:white;padding:8px 12px;border:1px solid #ab98ce;border-radius:8px}
+#lumiere-region-overview,#lumiere-region-crops canvas {background:repeating-conic-gradient(#474057 0 25%,#28253c 0 50%) 0/16px 16px;border:1px solid #6e618d;max-width:100%;height:auto}
+#lumiere-region-crops>div {padding:10px 0;border-bottom:1px solid #635d75}
+#lumiere-region-crops>div>div {display:flex;gap:7px;align-items:flex-start;overflow-x:auto}
+#lumiere-region-crops figure {flex:none;margin:0}
+#lumiere-region-crops figcaption {font-size:12px;color:#e6defa}
+</style>
+<script>
+(function () {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  if (params.getAll("dev").length !== 1 || params.get("dev") !== "garden-resume-after-lumiere" || params.has("from")) return;
+  const panel = document.getElementById("lumiere-fixed-check");
+  const status = document.getElementById("lumiere-fixed-check-status");
+  const buttons = [...panel.querySelectorAll(".lumiere-fixed-check-buttons button")];
+  const panelContent = document.getElementById("lumiere-check-panel-content");
+  const panelToggle = document.getElementById("lumiere-check-panel-toggle");
+  const inspector = document.getElementById("lumiere-region-inspector");
+  const summary = document.getElementById("lumiere-region-summary");
+  const overview = document.getElementById("lumiere-region-overview");
+  const crops = document.getElementById("lumiere-region-crops");
+  let inspectorInterval = null;
+  let inspectedDirection = "down";
+  let cards = [];
+  const labels = {down:"正面",up:"背面",left:"左",right:"右"};
+  function closeInspector() {
+    inspector.hidden = true;
+    if (inspectorInterval !== null) clearInterval(inspectorInterval);
+    inspectorInterval = null;
+  }
+  document.getElementById("lumiere-region-close").addEventListener("click", closeInspector);
+  function initInspector(direction) {
+    const sway = window.TarotLumiereSway;
+    const frame = sway?.getDebugFrame?.(direction);
+    const diag = sway?.getDiagnostics?.(direction);
+    if (!frame || !diag || !window.TarotStage) {
+      summary.textContent = "診断画像を取得できません。実装または素材を確認してください";
+      return;
+    }
+    inspectedDirection = direction;
+    crops.replaceChildren();
+    cards = [];
+    const cx = overview.getContext("2d");
+    cx.clearRect(0,0,260,260);
+    cx.drawImage(frame.base,0,0,260,260);
+    cx.strokeStyle="#ffd560";
+    cx.lineWidth=2;
+    for(const region of frame.regions) {
+      cx.strokeRect(region.x*260/frame.base.width,
+        region.y*260/frame.base.height,
+        region.w*260/frame.base.width,
+        region.h*260/frame.base.height);
+    }
+    for(let i=0;i<frame.regions.length;i++) {
+      const region=frame.regions[i], data=diag.regions[i];
+      const wrapper=document.createElement("div"), head=document.createElement("strong");
+      head.textContent=(region.kind==="hair"?"髪束":"裾")+" "+(i+1)+
+        "：変化画素"+data.changed+"／輪郭"+data.silhouette+
+        "／実効最大"+data.maxReference.toFixed(2)+"px";
+      wrapper.append(head);
+      const pair=document.createElement("div");
+      const canvases=[];
+      for(const [captionName,source] of [["元画像",frame.base],["現在の描画",frame.active]]) {
+        const fig=document.createElement("figure");
+        const cv=document.createElement("canvas");
+        const ratio=4;
+        cv.width=region.w*ratio;
+        cv.height=region.h*ratio;
+        const title=document.createElement("figcaption");
+        title.textContent=captionName;
+        fig.append(cv,title);
+        pair.append(fig);
+        canvases.push({ctx:cv.getContext("2d"),source});
+      }
+      wrapper.append(pair);
+      crops.append(wrapper);
+      cards.push({region,canvases});
+    }
+  }
+  function drawInspector() {
+    if(inspector.hidden)return;
+    const state=window.TarotStage?.getState?.();
+    const dir=state?.actors?.lumiere?.dir || inspectedDirection;
+    if(dir!==inspectedDirection)initInspector(dir);
+    const frame=window.TarotLumiereSway?.getDebugFrame?.(inspectedDirection);
+    if(!frame)return;
+    for(const card of cards) {
+      const {x,y,w,h}=card.region;
+      for(const target of card.canvases) {
+        target.ctx.clearRect(0,0,target.ctx.canvas.width,target.ctx.canvas.height);
+        target.ctx.imageSmoothingEnabled=true;
+        target.ctx.drawImage(target.source,x,y,w,h,0,0,target.ctx.canvas.width,target.ctx.canvas.height);
+      }
+    }
+    const phase=Number(state?.actors?.lumiere?.bobPhase);
+    summary.textContent="方向："+labels[inspectedDirection]+
+      "／候補："+(window.TarotLumiereSway?.config?.candidate||"?")+
+      "／揺れ："+(window.TarotLumiereSway?.isEnabled?.()?"ON":"OFF")+
+      "／位相："+(Number.isFinite(phase)?phase.toFixed(2):"取得不可");
+  }
+  document.getElementById("lumiere-check-magnify").addEventListener("click",()=>{
+    if(!window.TarotLumiereSway?.getDebugFrame){
+      status.textContent="診断フレーム未対応の古いランタイムです";
+      return;
+    }
+    inspector.hidden=false;
+    initInspector(window.TarotStage.getState().actors.lumiere.dir);
+    drawInspector();
+    if(inspectorInterval!==null)clearInterval(inspectorInterval);
+    inspectorInterval=setInterval(drawInspector,120);
+  });
+  function setPanelOpen(open) {
+    panelContent.hidden = !open;
+    panelToggle.setAttribute("aria-expanded", String(open));
+    panelToggle.textContent = open ? "確認パネルを閉じる" : "確認パネルを開く";
+  }
+  panelToggle.addEventListener("click", () => setPanelOpen(panelContent.hidden));
+  panel.hidden = false;
+  const ready = () => {
+    if (!document.body.classList.contains("scene-ready") || !window.TarotStage) return;
+    buttons.forEach(button => { button.disabled = false; });
+    const sway = window.TarotLumiereSway;
+    if (!sway?.config || !sway?.getDiagnostics) {
+      status.textContent = "揺れモジュールを読み込めません。動作確認は不可";
+      return;
+    }
+    const c = sway.config;
+    document.getElementById("lumiere-check-spec").textContent =
+      "候補" + c.candidate + "／毛先" + c.amplitude.hair + "px・裾先" +
+      c.amplitude.hem + "px（全身浮遊は" + c.bobPeriod + "秒周期）";
+    const report = ["down", "up", "left", "right"].map(dir => sway.getDiagnostics(dir));
+    if (report.some(value => !value)) {
+      status.textContent = "4方向の画素診断が揃っていません。動作確認は不可";
+      return;
+    }
+    function display(dir) {
+      const d = sway.getDiagnostics(dir);
+      const label = {down:"正面",up:"背面",left:"左",right:"右"}[dir];
+      const lines = d?.regions?.map(r => r.kind + ":" + r.changed).join(" / ");
+      document.getElementById("lumiere-check-diagnostics").textContent =
+        label + "：変化画素" + (d?.changed ?? "?") +
+        "（輪郭" + (d?.silhouette ?? "?") + "） " + lines;
+      if (!d?.changed || !d.silhouette) status.textContent =
+        "注意：動く輪郭が測定できません。領域と素材を再確認";
+    }
+    window.lumiereDevicePreviewReport = display;
+    status.textContent = "確認位置へ → 実機で髪束と裾の揺れを確認";
+    display("down");
+    observer.disconnect();
+  };
+  const observer = new MutationObserver(ready);
+  observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  ready();
+  document.getElementById("lumiere-check-position").addEventListener("click", async () => {
+    buttons.forEach(button => { button.disabled = true; });
+    const action = window.TarotStage.perform({ type: "move", actor: "shion", target: { x: 810, y: 290 }, duration: 1400 });
+    const result = await action.promise;
+    buttons.forEach(button => { button.disabled = false; });
+    status.textContent = result.completed ? "各方向を約10秒。揺れON/OFFで比較できます" : "確認位置へ移動できませんでした";
+    if (result.completed) setPanelOpen(false);
+  });
+  document.getElementById("lumiere-check-sway").addEventListener("click", event => {
+    const sway = window.TarotLumiereSway;
+    if (!sway) return;
+    sway.setEnabled(!sway.isEnabled());
+    event.currentTarget.textContent = "揺れ：" + (sway.isEnabled() ? "ON" : "OFF");
+    event.currentTarget.setAttribute("aria-pressed", String(sway.isEnabled()));
+    status.textContent = "上下浮遊の位相は維持。毛先と裾先だけを比較";
+  });
+  for (const button of panel.querySelectorAll("[data-lumiere-face]")) {
+    button.addEventListener("click", async () => {
+      const actor = window.TarotStage.getState().actors.lumiere;
+      const delta = { down: [0, 10], up: [0, -10], left: [-10, 0], right: [10, 0] }[button.dataset.lumiereFace];
+      await window.TarotStage.perform({ type: "face", actor: "lumiere", target: { x: actor.x + delta[0], y: actor.y + delta[1] } }).promise;
+      window.lumiereDevicePreviewReport?.(button.dataset.lumiereFace);
+      status.textContent = button.textContent + "：上下運動の位相を維持して表示";
+    });
+  }
+})();
+</script>
