@@ -26,9 +26,14 @@ test("Clean candidate preview pins game source and contains no visible editor sc
     // without changing Lumiere. Normalize only that index for old preview hash.
     let content = fs.readFileSync(path.join(root, file));
     if (file === "index.html") {
-      const lines = content.toString("utf8").split("\\n").filter(line =>
-        !/src="\\.\\/(?:fountain-position-editor|title-layout-editor|waterfall-position-editor)\\.js/.test(line));
-      content = Buffer.from(lines.join("\\n"));
+      const preservedEditors = [
+        "fountain-position-editor.js",
+        "title-layout-editor.js",
+        "waterfall-position-editor.js",
+      ];
+      const lines = content.toString("utf8").split(String.fromCharCode(10))
+        .filter(line => !preservedEditors.some(editor => line.includes('src="./'+editor)));
+      content = Buffer.from(lines.join(String.fromCharCode(10)));
     }
     assert.equal(crypto.createHash("sha256").update(content).digest("hex"), digest,
       file + " must match its exact git source");
