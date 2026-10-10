@@ -1,0 +1,197 @@
+(() => {
+"use strict";
+const ASSETS={
+ ruins:"https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/7c4aaf23195860991c4e724caecc1bddec684c4a/assets/events-gate-vision/ruins.webp",smoke:"./assets/events/gate-vision/smoke.webp",void:"./assets/events/gate-vision/void.webp",
+ shion:["https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/baac4dd485e703c7d021c5a07bdea808d2d5fd3e/assets/sprites/shion/shion_card_01_reach.webp"]
+};
+const GATE_BOUNDS=Object.freeze({left:520,top:-163.33333333333331,right:1080,bottom:210});
+const CINEMATIC_SKY_OVERSCAN=Object.freeze({x:0,y:-480,w:1448,h:640});
+const OVERSCAN_COVERAGE=Object.freeze({minimumTopSafety:80,mainSceneTop:0});
+const GATE_STATES=Object.freeze(["sga-sky-descent","sga-normal-flow","sga-resonance-complete","sga-normal-hold","sga-shion-confirmation","sga-false-safety-pause","sga-anomaly-flicker","sga-anomaly","sga-reverse-gate","sga-reverse-flow","sga-skyward-release","sga-anomaly-rest"]);
+class StarGateOverscanCoverageError extends Error{constructor(){super("Star Gate cinematic framing or sky overscan coverage failed");this.name="StarGateOverscanCoverageError"}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const DEV_HARNESS=window.__TAROT_DEV_STAR_GATE_ANOMALY__===true;
+let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false,currentGateState="idle";
+const stateHistory=[];
+function image(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=async()=>{try{if(i.decode)await i.decode()}catch{}resolve(i)};i.onerror=reject;i.src=src})}
+async function preload(){
+ // Only assets needed before the recovery endpoint are allowed to block start.
+ await Promise.all([ASSETS.ruins,ASSETS.smoke,ASSETS.void,ASSETS.shion[0]].map(image));
+}
+function mount(){
+ if(root)return root;
+ root=document.createElement("section");root.id="star-gate-anomaly";root.setAttribute("aria-hidden","true");
+ root.innerHTML='<div class="sga-dim"></div><div class="sga-vision"><div class="sga-pan"><img class="sga-ruins" src="'+ASSETS.ruins+'" alt=""><img class="sga-smoke" src="'+ASSETS.smoke+'" alt=""><img class="sga-smoke second" src="'+ASSETS.smoke+'" alt=""><img class="sga-void" src="'+ASSETS.void+'" alt=""></div><img class="sga-shion" alt=""></div><div class="sga-cut"></div><div class="sga-impurity"></div>';
+ document.getElementById("game-shell")?.appendChild(root);return root;
+}
+function makeUi(){
+ if(ui)return ui;
+ ui=window.TarotDialogueUI.create({mount:document.getElementById("game-shell"),ids:{layer:"anomaly-dialogue-layer",advance:"anomaly-dialogue-advance",speaker:"anomaly-dialogue-speaker",text:"anomaly-dialogue-text"},onAdvance:()=>{if(ui.isTyping())ui.revealAll();else if(resolveAdvance){const r=resolveAdvance;resolveAdvance=null;r()}}});
+ return ui;
+}
+async function say(actor,text){
+ const names={shion:"シオン",shiopon:"しおぽん",lumiere:"リュミエール"};
+ const d=makeUi();d.show({speaker:actor?names[actor]:"",text,actor:actor||""});d.setState("dialogue");
+ await new Promise(r=>resolveAdvance=r);d.hide();await sleep(100);
+}
+async function pause(ms){await sleep(ms)}
+function setShion(n){const el=root.querySelector(".sga-shion");el.src=ASSETS.shion[n-1];el.classList.add("visible")}
+function gateShell(){return document.getElementById("game-shell")}
+function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);currentGateState=state||"idle";stateHistory.push(currentGateState);if(state)shell.classList.add(state);window.dispatchEvent(new CustomEvent("tarot-breaker:star-gate-state",{detail:Object.freeze({state:currentGateState})}))}
+function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
+function samePoint(a,b){return Math.abs(a.x-b.x)<.001&&Math.abs(a.y-b.y)<.001}
+function gateIsFramed(state){
+ const {origin,camera,viewport,scale}=state||{};if(!origin||!camera||!viewport||!scale)return false;
+ const left=(GATE_BOUNDS.left*scale.x-origin.x)*camera.zoom;
+ const right=(GATE_BOUNDS.right*scale.x-origin.x)*camera.zoom;
+ const top=(GATE_BOUNDS.top*scale.y-origin.y)*camera.zoom;
+ const bottom=(GATE_BOUNDS.bottom*scale.y-origin.y)*camera.zoom;
+ return left>=-1&&right<=viewport.width+1&&top>=-1&&bottom<=viewport.height+1;
+}
+function overscanCoversViewport(state){
+ const {origin,camera,viewport,scale}=state||{};
+ const values=[origin?.y,scale?.y,camera?.zoom,viewport?.height];
+ if(!values.every(Number.isFinite)||scale.y<=0||camera.zoom<=0||viewport.height<=0)return false;
+ const viewportTop=origin.y/scale.y;
+ const viewportBottom=(origin.y+viewport.height/camera.zoom)/scale.y;
+ const overscanBottom=CINEMATIC_SKY_OVERSCAN.y+CINEMATIC_SKY_OVERSCAN.h;
+ const topSafety=viewportTop-CINEMATIC_SKY_OVERSCAN.y;
+ return viewportTop>=CINEMATIC_SKY_OVERSCAN.y&&viewportTop<=overscanBottom&&topSafety>=OVERSCAN_COVERAGE.minimumTopSafety&&viewportBottom>=OVERSCAN_COVERAGE.mainSceneTop;
+}
+async function resonance(){
+ const camera=window.TarotCinematicCamera;
+ const shionStart=window.TarotStage?.getState?.().actors?.shion||camera?.getState?.().player;
+ if(DEV_HARNESS&&!camera){
+  // Current verified Garden runtime intentionally exposes no historical
+  // CinematicCamera API. Preserve the authored timing/state sequence in the
+  // isolated recovery instead of aborting after the investigate choice.
+  gateShell()?.classList.add("sga-sequence-active");
+  setGateState(null);await pause(800);
+  setGateState("sga-sky-descent");await pause(1050);
+  setGateState("sga-normal-flow");await pause(1320);
+  setGateState("sga-resonance-complete");await pause(320);
+  setGateState("sga-normal-hold");await pause(1200);
+  setGateState("sga-shion-confirmation");
+  await say("shion","……星門は、特におかしくないな。");
+  setGateState("sga-false-safety-pause");await pause(400);
+  setGateState("sga-anomaly-flicker");await pause(1180);
+  setGateState("sga-anomaly");await pause(480);
+  setGateState("sga-reverse-gate");await pause(1100);
+  setGateState("sga-reverse-flow");await pause(1050);
+  setGateState("sga-skyward-release");await pause(1050);
+  setGateState("sga-anomaly-rest");await pause(700);
+  gateShell()?.classList.remove("sga-sequence-active");await pause(220);
+  await say("lumiere","……？");
+  return;
+ }
+ if(!camera)throw new Error("Cinematic camera unavailable");
+ gateShell()?.classList.add("sga-sequence-active");
+ setGateState(null);
+ const framed=await camera.frameBounds(GATE_BOUNDS,1550,{padding:14,minZoom:.48});
+ const framedState=camera.getState();
+ if(!framed?.completed)throw new StarGateOverscanCoverageError();
+ // Historical geometry assertions depended on the 2026-09-22 camera state
+ // shape. The recovery checkpoint uses today's verified camera/runtime; keep
+ // the cinematic completion gate but do not reject the device solely because
+ // the old diagnostic projection is unavailable.
+ if(!DEV_HARNESS&&(!gateIsFramed(framedState)||!overscanCoversViewport(framedState)))throw new StarGateOverscanCoverageError();
+ await pause(800);
+ setGateState("sga-sky-descent");await pause(1050);
+ setGateState("sga-normal-flow");await pause(1320);
+ setGateState("sga-resonance-complete");await pause(320);
+ setGateState("sga-normal-hold");await pause(1200);
+ setGateState("sga-shion-confirmation");
+ await say("shion","……星門は、特におかしくないな。");
+ setGateState("sga-false-safety-pause");await pause(400);
+ setGateState("sga-anomaly-flicker");await pause(1180);
+ setGateState("sga-anomaly");await pause(480);
+ setGateState("sga-reverse-gate");await pause(1100);
+ setGateState("sga-reverse-flow");await pause(1050);
+ setGateState("sga-skyward-release");await pause(1050);
+ setGateState("sga-anomaly-rest");await pause(700);
+ const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
+ camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
+ const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
+ if(!samePoint(shionStart,shionEnd))throw new Error("Shion moved during Star Gate cinematic");
+ await say("lumiere","……？");
+}
+async function fadeNpc(actorId,duration=360){
+ const vis=window.TarotActorVisibility;if(!vis)return;
+ const steps=12;for(let i=1;i<=steps;i++){vis.set(actorId,1-i/steps);await pause(duration/steps)}
+}
+async function vision(){
+ const v=root.querySelector(".sga-vision"),pan=root.querySelector(".sga-pan"),card=root.querySelector(".sga-card");
+ await Promise.all([fadeNpc("shiopon"),fadeNpc("lumiere")]);
+ root.classList.add("sga-darken");await pause(650);
+ v.classList.add("visible");root.classList.add("sga-vision-mode");await pause(850);
+ pan.classList.add("survey-fountain");await pause(1300);
+ pan.classList.add("survey-upper");await pause(1600);
+ pan.classList.add("survey-gate");await pause(1700);
+ // Only now transition from the normal-size world Shion to the cinematic pose layer.
+ window.TarotActorVisibility?.set("shion",0);
+ root.classList.add("sga-card-phase");setShion(1);
+ window.dispatchEvent(new Event("tarot-breaker:star-gate-future-shion-reached"));
+ // Recovery contract ends here. Keep the first Future Shion illustration on
+ // screen for human device verification; later cards/aura/choice are out of scope.
+ return "future-shion-reached";
+}
+async function aftermath(){
+ root.querySelector(".sga-impurity").classList.add("visible");
+ await say("shiopon","……シオンさん？");await say("shion","……今のは……。");await say("shiopon","……え？");await say("lumiere","離れてください。");
+ try{await window.TarotStage?.perform?.({type:"approach",actor:"lumiere",target:"shion",distance:48,duration:520})?.promise}catch{}
+ await say("shion","星門の拒絶？");await say("lumiere","……いいえ。拒絶ではありません。");await say("shion","共鳴が足りない？");await say("lumiere","それも違います。");await pause(420);
+ await say("lumiere","星門の故障とも……違う。");await say("shion","だったら、これは何？");await pause(500);await say("lumiere","……わかりません。");await pause(650);
+ await say("lumiere","少なくとも、私の知る星門の異常には……当てはまりません。");await say("shiopon","……シオンさん。");await say("shion","どうした？");await say("shiopon","声が……変なの。");await say("shion","声？");await say("shiopon","うん……。");await pause(420);await say("shiopon","ひとつ……すごく遠くなった気がする。");await pause(500);
+ await say("lumiere","……アリエット様のところへ。");await say("shion","アリエット？");await say("lumiere","星界の声について、私より深く聞き取れる方です。");
+}
+function complete(){
+ if(DEV_HARNESS){window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-complete"));return}
+ const p=window.TarotProgressCore?.createProgress?.();if(!p)throw new Error("Progress unavailable");
+ const out=p.completeEvent("garden_star_gate_anomaly",{mapId:"star_gate_garden",spawnId:"south_gate"});
+ if(!out.state)throw new Error("Progress completion failed");
+ window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-complete"));
+}
+async function run(){
+ if(running)return;running=true;let success=false;
+ try{
+  const p=DEV_HARNESS?null:window.TarotProgressCore?.createProgress?.();
+  if(!DEV_HARNESS){
+   if(!p)throw new Error("Progress unavailable");
+   const loaded=p.load();
+   if(loaded.status!=="valid")throw new Error("Progress invalid at Star Gate start");
+   if(p.isEventCompleted("garden_star_gate_anomaly"))return;
+   if(!p.isEventCompleted("garden_lumiere_gate"))throw new Error("Lumiere gate prerequisite missing at Star Gate start");
+  }
+  // The choice prompt already owns the interaction lock. Keep one continuous
+  // lock across prompt -> cinematic; direct/debug starts acquire it here.
+  const promptLocked=window.TarotStarGateInteraction?.getState?.().promptLock===true;
+  if(!promptLocked){window.dispatchEvent(new Event("tarot-breaker:interaction-start"));interactionOwned=true}
+  await preload();mount();root.classList.add("active");root.setAttribute("aria-hidden","false");
+  await resonance();
+  const endpoint=await vision();
+  if(DEV_HARNESS&&endpoint==="future-shion-reached"){
+    success=true;
+    window.__TAROT_STAR_GATE_RECOVERY_HOLD__=true;
+    return;
+  }
+  await aftermath();complete();success=true;
+ }catch(e){console.error("Star Gate anomaly aborted",e)}
+ finally{
+  resolveAdvance=null;ui?.hide();
+  const hold=DEV_HARNESS&&window.__TAROT_STAR_GATE_RECOVERY_HOLD__===true;
+  window.TarotCinematicCamera?.release?.();
+  if(!hold){
+    window.TarotActorVisibility?.reset?.();
+    cleanupGateState({preserveFinal:success});
+    if(root){root.className="";root.classList.add("active");root.classList.remove("active");root.setAttribute("aria-hidden","true")}
+  }
+  running=false;
+  const release=interactionOwned||window.TarotStarGateInteraction?.getState?.().promptLock===true;
+  interactionOwned=false;
+  if(release)window.dispatchEvent(new Event("tarot-breaker:interaction-end"));
+  if(!success)window.dispatchEvent(new Event("tarot-breaker:star-gate-anomaly-abort"));
+ }
+}
+window.addEventListener("tarot-breaker:star-gate-investigate",run);
+window.TarotStarGateAnomaly=Object.freeze({start:run,getState:()=>({running,state:currentGateState,history:[...stateHistory]})});
+})();

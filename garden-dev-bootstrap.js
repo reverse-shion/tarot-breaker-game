@@ -13,6 +13,14 @@
   if (!landingTransit && !gardenResume && !publicGardenResume) return;
   if (landingTransit || gardenResume)
     document.write('<script src="./dev-checkpoints.js?v=phase-2a-5c-1"><\/script>');
+  if (id === "garden-resume-after-lumiere" && gardenResume) {
+    window.__TAROT_DEV_STAR_GATE_ANOMALY__ = true;
+    document.write('<link rel="stylesheet" href="./star-gate-interaction.css?v=recovery-v4">');
+    document.write('<link rel="stylesheet" href="./star-gate-anomaly.css?v=recovery-v4">');
+    document.write('<script src="./star-gate-recovery-adapter.js?v=4" defer><\/script>');
+    document.write('<script src="./star-gate-interaction.js?v=recovery-v4" defer><\/script>');
+    document.write('<script src="./star-gate-anomaly.js?v=recovery-v4" defer><\/script>');
+  }
   document.write('<script src="./progress-resume.js?v=phase-2a-6c-garden"><\/script>');
   if (publicGardenResume) {
     document.write('<script src="./garden-resume.js?v=phase-2a-6c-garden"><\/script>');
