@@ -1,0 +1,81 @@
+/* Latter-half surfaces are isolated from Actor/UI parents. */
+#stage3-dev-controls{position:fixed;top:12px;right:12px;z-index:2600}
+#stage3-dev-controls[hidden]{display:none}
+#stage3-dev-controls button{padding:12px 18px;color:#f1eef9;background:#191629;border:1px solid #a49ab7;border-radius:6px}
+.sga-future-rift{position:absolute;inset:0;z-index:20;pointer-events:none}
+.sga-future-rift img{position:absolute;opacity:0;visibility:hidden;pointer-events:none;transform-origin:var(--wound-x) var(--wound-y);object-fit:fill}
+.sga-v192-white,.sga-v192-black{position:fixed;inset:0;opacity:0;pointer-events:none;transition:none}
+.sga-v192-white{background:#fff;z-index:2500}
+.sga-v192-black{background:#000;z-index:2501}
+#star-gate-anomaly.sga-v192{transition:none}
+#star-gate-anomaly.sga-v192 .sga-world-loss,#star-gate-anomaly.sga-v192 .sga-world-rift,#star-gate-anomaly.sga-v192 .sga-world-omen-layer{display:none!important}
+#star-gate-anomaly.sga-v192~.tb-dialogue-layer{z-index:2400}
+#anomaly-dialogue-layer{z-index:2400}
+.sga-recovery{position:fixed;inset:0;z-index:2700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#080a12;color:#eee;padding:24px;text-align:center}
+.sga-recovery button,.sga-recovery a{color:#fff;background:#242031;padding:14px 20px;border:1px solid #bdb3d3;border-radius:6px;text-decoration:none}
+
+/* Editorial card detail: independent of world Actors and their transforms. */
+.sga-arcana-detail{position:fixed;inset:0;z-index:2390;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(8,10,18,.88);padding:24px;box-sizing:border-box}
+.sga-arcana-detail-frame{position:relative;flex:none}
+.sga-arcana-detail-image{position:absolute;display:block;max-width:none;max-height:none;object-fit:contain;filter:none;box-shadow:none;transform:none}
+
+.sga-arcana-contamination{
+  position:absolute;
+  z-index:4;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  transform-origin:50% 50%;
+  border-radius:4.5%;
+  background:
+    radial-gradient(ellipse at 24% 22%,rgba(41,12,52,.44) 0 18%,rgba(25,7,34,.22) 42%,transparent 68%),
+    radial-gradient(ellipse at 73% 31%,rgba(55,18,68,.36) 0 16%,rgba(29,8,38,.18) 40%,transparent 70%),
+    radial-gradient(ellipse at 44% 67%,rgba(48,14,61,.38) 0 19%,rgba(26,7,35,.20) 44%,transparent 72%),
+    radial-gradient(ellipse at 76% 79%,rgba(35,10,47,.32) 0 15%,rgba(20,5,29,.16) 40%,transparent 68%),
+    linear-gradient(180deg,rgba(16,4,24,.16),rgba(38,10,50,.24) 52%,rgba(12,3,20,.20));
+  filter:saturate(.88) contrast(1.015);
+  mix-blend-mode:multiply;
+  box-shadow:inset 0 0 24px rgba(24,5,34,.18);
+  will-change:opacity,transform,filter;
+}
+.sga-arcana-contamination::after{
+  content:"";
+  position:absolute;
+  inset:2.5%;
+  border-radius:4%;
+  background:
+    radial-gradient(ellipse at 50% 18%,rgba(126,72,145,.08),transparent 34%),
+    radial-gradient(ellipse at 33% 52%,rgba(115,61,137,.07),transparent 28%),
+    radial-gradient(ellipse at 70% 64%,rgba(135,77,154,.075),transparent 30%),
+    linear-gradient(180deg,rgba(107,56,129,.035),transparent 28%,rgba(98,49,119,.04) 72%,transparent);
+  mix-blend-mode:screen;
+  filter:blur(1.4px);
+  opacity:.78;
+}
+
+
+/* Arcana semantic erosion v1.0: restrained meaning rewrite, never a transformation. */
+.sga-arcana-detail-frame{transform-origin:50% 50%;will-change:transform,filter}
+.sga-arcana-detail-image{will-change:filter,transform,clip-path,opacity}
+.sga-arcana-detail-frame.sga-semantic-break{
+  filter:brightness(.045) saturate(0) contrast(1.08);
+  transition:filter 45ms linear;
+}
+.sga-arcana-detail-frame.sga-rewrite-push{
+  animation:sgaSemanticRewritePush 260ms cubic-bezier(.18,.72,.24,1) 1 both;
+}
+.sga-arcana-detail-frame.sga-re-residual .sga-arcana-detail-image.re{
+  animation:sgaReResidual 3.8s ease-in-out infinite;
+}
+@keyframes sgaSemanticRewritePush{
+  from{transform:scale(1)}
+  to{transform:scale(1.012)}
+}
+@keyframes sgaReResidual{
+  0%,100%{opacity:1;filter:brightness(.86) saturate(.72) contrast(1.04) drop-shadow(0 0 1px rgba(62,35,78,.10))}
+  50%{opacity:.985;filter:brightness(.83) saturate(.69) contrast(1.045) drop-shadow(0 0 2px rgba(62,35,78,.16))}
+}
+@media (prefers-reduced-motion:reduce){
+ .sga-arcana-detail-frame.sga-rewrite-push{animation:none;transform:scale(1.008)}
+ .sga-arcana-detail-frame.sga-re-residual .sga-arcana-detail-image.re{animation:none}
+}

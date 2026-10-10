@@ -185,6 +185,26 @@ function bootDialogue() {
   };
 }
 
+test('instance-local dialogue clock pauses letters without changing default timer behavior', async () => {
+  const h = bootDialogue();
+  h.window.matchMedia = () => ({ matches: false });
+  const pending = [];
+  const ui = h.window.TarotDialogueUI.create({ mount: h.elements['game-shell'], wait: ms => new Promise(resolve => pending.push({ms,resolve})) });
+  ui.show({text:'あい'});
+  const chars = ui.elements.text.children[0].children;
+  assert.equal(chars[0].classList.contains('revealed'), true);
+  assert.equal(chars[1].classList.contains('revealed'), false);
+  await flush();
+  assert.equal(chars[1].classList.contains('revealed'), false);
+  pending.shift().resolve(); await flush();
+  assert.equal(chars[1].classList.contains('revealed'), true);
+  ui.hide(); pending.shift().resolve(); await flush();
+  assert.equal(ui.isActive(), false);
+  const ordinary = h.window.TarotDialogueUI.create({mount:h.elements['game-shell']});
+  const count = h.timers.size; ordinary.show({text:'あい'});
+  assert.ok(h.timers.size > count, 'ordinary instance retains setTimeout');
+});
+
 async function flush() {
   for (let i = 0; i < 8; i++) await Promise.resolve();
 }

@@ -1,0 +1,130 @@
+[
+  {
+    "version": "B",
+    "viewport": [
+      844,
+      390
+    ],
+    "samples_during_pan_sequence": 55,
+    "max_sky_top": 172.375,
+    "min_sky_right": 1050.3286743164062,
+    "max_sky_left": -302.16497802734375,
+    "inner_registration": {
+      "sceneObject": "",
+      "worldX": "705",
+      "worldY": "-74.814453125",
+      "worldW": "190",
+      "worldH": "284.814453125",
+      "gatePositionRevision": "native-foreground-v6"
+    },
+    "page_errors_before_audio_repair": [],
+    "writes": []
+  },
+  {
+    "version": "B",
+    "viewport": [
+      390,
+      844
+    ],
+    "samples_during_pan_sequence": 72,
+    "max_sky_top": 177.90333557128906,
+    "min_sky_right": 613.8857116699219,
+    "max_sky_left": -322.1428527832031,
+    "inner_registration": {
+      "sceneObject": "",
+      "worldX": "705",
+      "worldY": "-74.814453125",
+      "worldW": "190",
+      "worldH": "284.814453125",
+      "gatePositionRevision": "native-foreground-v6"
+    },
+    "page_errors_before_audio_repair": [],
+    "writes": []
+  },
+  {
+    "version": "A",
+    "viewport": [
+      844,
+      390
+    ],
+    "samples_during_pan_sequence": 67,
+    "max_sky_top": -326.0214538574219,
+    "min_sky_right": 1050.3286743164062,
+    "max_sky_left": -353.71429443359375,
+    "inner_registration": {
+      "sceneObject": "",
+      "worldX": "684.5699999999999",
+      "worldY": "-136.06455078125003",
+      "worldW": "230.86",
+      "worldH": "346.06455078125003",
+      "gatePositionRevision": "inner-light-gate-frame-v3"
+    },
+    "page_errors_before_audio_repair": [],
+    "writes": []
+  },
+  {
+    "version": "A",
+    "viewport": [
+      390,
+      844
+    ],
+    "samples_during_pan_sequence": 71,
+    "max_sky_top": -154.36094665527344,
+    "min_sky_right": 613.8857116699219,
+    "max_sky_left": -322.1428527832031,
+    "inner_registration": {
+      "sceneObject": "",
+      "worldX": "684.5699999999999",
+      "worldY": "-136.06455078125003",
+      "worldW": "230.86",
+      "worldH": "346.06455078125003",
+      "gatePositionRevision": "inner-light-gate-frame-v3"
+    },
+    "page_errors_before_audio_repair": [],
+    "writes": []
+  },
+  {
+    "version": "candidate",
+    "viewport": [
+      844,
+      390
+    ],
+    "samples_during_pan_sequence": 65,
+    "max_sky_top": -326.0214538574219,
+    "min_sky_right": 1050.3286743164062,
+    "max_sky_left": -353.71429443359375,
+    "inner_registration": {
+      "sceneObject": "",
+      "worldX": "684.5699999999999",
+      "worldY": "-136.06455078125003",
+      "worldW": "230.86",
+      "worldH": "346.06455078125003",
+      "gatePositionRevision": "native-foreground-v6"
+    },
+    "page_errors_before_audio_repair": [],
+    "writes": []
+  },
+  {
+    "version": "candidate",
+    "viewport": [
+      390,
+      844
+    ],
+    "samples_during_pan_sequence": 75,
+    "max_sky_top": -154.36094665527344,
+    "min_sky_right": 613.8857116699219,
+    "max_sky_left": -322.1428527832031,
+    "inner_registration": {
+      "sceneObject": "",
+      "worldX": "684.5699999999999",
+      "worldY": "-136.06455078125003",
+      "worldW": "230.86",
+      "worldH": "346.06455078125003",
+      "gatePositionRevision": "native-foreground-v6"
+    },
+    "page_errors_before_audio_repair": [
+      "Failed to set the 'volume' property on 'HTMLMediaElement': The volume provided (-0.686951) is outside the range [0, 1]."
+    ],
+    "writes": []
+  }
+]

@@ -23,6 +23,7 @@
   let targetVolume = NORMAL_VOLUME;
   let fadeFrame = 0;
   let fadeToken = 0;
+  let eventSession = null;
 
   function readPreference() {
     try {
@@ -88,11 +89,12 @@
   }
 
   async function resumeBgm() {
-    if (!enteredWorld || !enabled || document.hidden || playPending || !bgm.paused) return;
+    if (eventSession || !enteredWorld || !enabled || document.hidden || playPending || !bgm.paused) return;
     playPending = true;
     try {
       const playResult = bgm.play();
       if (playResult?.then) await playResult;
+      if (eventSession) return;
       if (!enabled || document.hidden) {
         bgm.pause();
         return;
@@ -119,6 +121,10 @@
     enabled = Boolean(nextEnabled);
     savePreference();
     renderToggle();
+    if (eventSession) {
+      eventSession.userChanged();
+      return;
+    }
     if (!enteredWorld) return;
     if (enabled) resumeBgm();
     else pauseBgm();
@@ -137,11 +143,13 @@
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
     targetVolume = INTERACTION_VOLUME;
-    if (enteredWorld && enabled) fadeTo(targetVolume);
+    if (eventSession) eventSession.userChanged();
+    else if (enteredWorld && enabled) fadeTo(targetVolume);
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
     targetVolume = NORMAL_VOLUME;
-    if (enteredWorld && enabled) fadeTo(targetVolume);
+    if (eventSession) eventSession.userChanged();
+    else if (enteredWorld && enabled) fadeTo(targetVolume);
   });
 
   document.addEventListener("visibilitychange", () => {
@@ -161,6 +169,157 @@
     console.warn("BGMファイルを読み込めません", BGM_SRC);
   });
 
+  // Explicitly owned by the isolated dev event; ordinary callers never enter it.
+  function beginEventSession() {
+    if (eventSession) throw new Error("Audio event session already active");
+    cancelFade();
+    let alive = true;
+    let level = 1;
+    let silent = false;
+    let token = 0;
+    let failed = false;
+    let pendingResumes = 0;
+    let silenceFactor = 1;
+    let coefficientFrame = 0;
+    let coefficientToken = 0;
+    const cancelCoefficientFade = () => {
+      coefficientToken += 1;
+      if (coefficientFrame) cancelAnimationFrame(coefficientFrame);
+      coefficientFrame = 0;
+    };
+    const apply = () => {
+      if (alive) bgm.volume = enabled && !silent && !failed ? targetVolume * level * silenceFactor : 0;
+    };
+    const tweenCoefficient = (value, duration, isSilence) => {
+      if (!alive) return;
+      cancelCoefficientFade();
+      const ownToken = coefficientToken;
+      const from = isSilence ? silenceFactor : level;
+      const to = Math.max(0, Math.min(1, Number(value) || 0));
+      const startedAt = performance.now();
+      const step = (now) => {
+        if (!alive || ownToken !== coefficientToken) return;
+        const progress = duration > 0 ? Math.max(0, Math.min(1, (now - startedAt) / duration)) : 1;
+        if (isSilence) silenceFactor = from + (to - from) * progress;
+        else level = from + (to - from) * progress;
+        apply();
+        if (progress < 1) coefficientFrame = requestAnimationFrame(step);
+        else coefficientFrame = 0;
+      };
+      if (duration > 0) coefficientFrame = requestAnimationFrame(step);
+      else step(startedAt);
+    };
+    const capture = () => Object.freeze({
+      source: BGM_SRC, time: bgm.currentTime, playing: !bgm.paused,
+      base: targetVolume, coefficient: level,
+    });
+    const session = {
+      capture,
+      setBase(value) { if (!alive) return; targetVolume = Math.max(0, Math.min(1, Number(value) || 0)); apply(); },
+      tweenCoefficient,
+      setLevel(value) { if (!alive) return; cancelCoefficientFade(); level = Math.max(0, Math.min(1, Number(value) || 0)); apply(); },
+      setSilence(value) { tweenCoefficient(value ? 0 : 1, 0, true); },
+      pause() {
+        const snapshot = capture();
+        cancelCoefficientFade();
+        token += 1;
+        cancelFade();
+        bgm.pause();
+        bgm.muted = true;
+        silent = true;
+        apply();
+        return snapshot;
+      },
+      // Event-only iOS-safe silence path. Keep an already user-started media
+      // transport alive at zero audible gain so a later scripted reveal does
+      // not depend on a fresh play() permission.
+      holdSilent() {
+        if (!alive) return false;
+        cancelCoefficientFade();
+        token += 1;
+        cancelFade();
+        // iOS Safari does not reliably honor programmatic HTMLMediaElement.volume.
+        // Native muted is the hard audible gate; volume/gain remains secondary.
+        bgm.muted = true;
+        silent = true;
+        silenceFactor = 0;
+        apply();
+        return !bgm.paused;
+      },
+      // Rewind/seek the still-running ordinary BGM while it remains inaudible.
+      // This preserves the captured return position without pausing transport.
+      prepareSilent(snapshot) {
+        if (!alive || snapshot?.source !== BGM_SRC) return false;
+        cancelCoefficientFade();
+        token += 1;
+        bgm.muted = true;
+        silent = true;
+        silenceFactor = 0;
+        failed = false;
+        try { bgm.currentTime = snapshot.time; }
+        catch { failed = true; apply(); return false; }
+        apply();
+        return !snapshot.playing || !bgm.paused;
+      },
+      // Reveal-only unmute. Never calls play(): if transport was unexpectedly
+      // lost, report failure rather than silently relying on the next tap.
+      revealSilent(snapshot) {
+        if (!alive || snapshot?.source !== BGM_SRC) return false;
+        if (snapshot.playing && (bgm.paused || !enabled || document.hidden)) return false;
+        silent = false;
+        silenceFactor = 1;
+        failed = false;
+        // Only the painted present Garden is allowed to make the ordinary BGM audible again.
+        bgm.muted = false;
+        apply();
+        return true;
+      },
+      async resume(snapshot) {
+        if (!alive || snapshot?.source !== BGM_SRC) return false;
+        const ownToken = ++token;
+        bgm.muted = false;
+        silent = false;
+        silenceFactor = 1;
+        failed = false;
+        try { bgm.currentTime = snapshot.time; } catch { failed = true; apply(); return false; }
+        if (!snapshot.playing || !enabled || document.hidden) { bgm.pause(); apply(); return true; }
+        let timeout;
+        pendingResumes += 1;
+        try {
+          const pending = Promise.resolve(bgm.play());
+          // A late native play fulfillment must never revive an invalidated run.
+          pending.then(() => { if (!alive || token !== ownToken || failed || !enabled || document.hidden) bgm.pause(); }, () => {});
+          await Promise.race([pending, new Promise((_, reject) => {
+            timeout = setTimeout(() => reject(new Error("Event BGM resume timeout")), 500);
+          })]);
+          if (!alive || token !== ownToken || !enabled || document.hidden) { bgm.pause(); return false; }
+          apply();
+          return true;
+        } catch {
+          if (alive && token === ownToken) { failed = true; bgm.pause(); apply(); }
+          return false;
+        } finally { pendingResumes -= 1; clearTimeout(timeout); }
+      },
+      userChanged() { if (!enabled) { token += 1; bgm.pause(); } apply(); },
+      release() {
+        if (!alive) return;
+        token += 1;
+        if (pendingResumes) bgm.pause();
+        alive = false;
+        cancelCoefficientFade();
+        cancelFade();
+        eventSession = null;
+        // Preserve restored play state; do not start a previously stopped source.
+        // Event hard-mute must never leak into normal gameplay after release.
+        bgm.muted = false;
+        bgm.volume = enabled && !failed ? targetVolume : 0;
+      },
+    };
+    eventSession = session;
+    apply();
+    return Object.freeze(session);
+  }
+
   renderToggle();
 
   window.TarotAudio = Object.freeze({
@@ -172,5 +331,8 @@
     },
     setEnabled,
     startFromMovement,
+    beginEventSession,
+    setCinematicLevel(value, duration = 0) { eventSession?.tweenCoefficient(value, duration, false); },
+    setCinematicSilence(value, duration = 0) { eventSession?.tweenCoefficient(value ? 0 : 1, duration, true); },
   });
 })();

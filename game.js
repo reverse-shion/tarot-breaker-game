@@ -86,9 +86,10 @@
   }
 
   const params = new URLSearchParams(location.search);
+  const stage3Dev = params.get("dev") === "star-gate-full" && window.__TAROT_DEV_STAGE3__ === true;
   const enteringFromLanding = params.get("from") === "landing";
-  const gardenResumeDev = params.get("from") === null &&
-    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+  const gardenResumeDev = stage3Dev || (params.get("from") === null &&
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || ""));
   const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
     !params.has("from") && !params.has("dev");
   const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic;
@@ -103,12 +104,12 @@
   const COLLISION_URL =
     config.collisionUrl || "./assets/maps/star-country-gate-garden-collision.json";
   const SPRITE_BASE = config.spriteBase || "./assets/sprites/shion/";
-  const SHIOPON_BASE =
+  const SHIOPON_BASE = stage3Dev ? "./assets/sprites/shiopon/" : (
     config.shioponBase ||
-    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/";
-  const LUMIERE_BASE =
+    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/");
+  const LUMIERE_BASE = stage3Dev ? "./assets/sprites/lumiere/" : (
     config.lumiereBase ||
-    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/";
+    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/lumiere/");
 
   const { createCollision, createNavigator } = window.TarotNavigation;
   const { createControls } = window.TarotControls;
@@ -253,6 +254,95 @@
   };
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
+  // Page-local Aftermath ownership; absent from ordinary gameplay.
+  let aftermathPaused = false;
+  let aftermathFocusBaseline = null;
+  let aftermathOwner = null;
+  let aftermathLumiereEnabled = true;
+  const aftermathMotions = new Set();
+  const heldKeys = new Set(), heldPointers = new Set();
+  const releaseKeys = new Set(), releasePointers = new Set();
+
+  const cinematicCamera = {
+    active: false,
+    owned: false,
+    allowOverscan: false,
+    startX: 0,
+    startY: 0,
+    startZoom: 1,
+    targetX: 0,
+    targetY: 0,
+    targetZoom: 1,
+    elapsed: 0,
+    duration: 0,
+    resolve: null,
+  };
+  const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
+  const VISION_REGISTRATION = Object.freeze({
+    // Static cinematic plate registration. Coverage safety is validated
+    // against every reachable Future Vision camera shot, not unused world edges.
+    // Keep the authored gate / stair / fountain axis centered while revealing
+    // more of the ruins above the player.
+    scale: 1.10,
+    offsetX: -72,
+    offsetY: -330,
+  });
+  const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
+
+  function loadVisionWorld(src) {
+    if (visionWorld.image && visionWorld.src === src && visionWorld.image.complete)
+      return Promise.resolve(visionWorld.image);
+    const token = ++visionWorld.token;
+    const image = new Image();
+    image.decoding = "async";
+    return new Promise((resolve, reject) => {
+      image.onload = async () => {
+        try { await image.decode(); } catch (error) { reject(error); return; }
+        if (token !== visionWorld.token) return resolve(image);
+        visionWorld.image = image;
+        visionWorld.src = src;
+        resolve(image);
+      };
+      image.onerror = () => reject(new Error("Future Vision world image failed to load"));
+      image.src = src;
+    });
+  }
+
+  function drawVisionWorld() {
+    if (!visionWorld.active || !visionWorld.image || visionWorld.opacity <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = visionWorld.opacity;
+    ctx.imageSmoothingEnabled = true;
+    // Cinematic Vision is a single authored plate registered once into the
+    // multi-layer garden world. Registration is immutable for the whole vision.
+    const r = VISION_REGISTRATION;
+    ctx.drawImage(
+      visionWorld.image,
+      r.offsetX * scale.x,
+      r.offsetY * scale.y,
+      world.w * r.scale,
+      world.h * r.scale,
+    );
+    ctx.restore();
+  }
+
+
+
+  // Keep the shrinking background plane's outer edge outside the viewport.
+  // Artwork registration and its scale are unchanged; only the drawing surface grows.
+  function stage3BackgroundBounds(width,height,anchor) {
+    const left=Math.floor(Math.min(0,-anchor.x/9))-1;
+    const top=Math.floor(Math.min(0,-anchor.y/9))-1;
+    const right=Math.ceil(Math.max(width,width+(width-anchor.x)/9))+1;
+    const bottom=Math.ceil(Math.max(height,height+(height-anchor.y)/9))+1;
+    return {left,top,width:right-left,height:bottom-top};
+  }
+
+  let normalCameraZoom = 1;
+  let absorptionSurface = null;
+  let sceneLockOwner = null;
+  let sceneLockPrior = null;
+  let outsideInteraction = false;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomDirection = () =>
@@ -323,11 +413,12 @@
     canvas.width = Math.round(cssWidth * dpr);
     canvas.height = Math.round(cssHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    camera.zoom = clamp(
+    normalCameraZoom = clamp(
       Math.min(cssWidth / 620, cssHeight / 560),
       CAMERA_MIN_ZOOM,
       CAMERA_MAX_ZOOM,
     );
+    if (!cinematicCamera.owned) camera.zoom = normalCameraZoom;
   }
 
   function resetShiopon() {
@@ -598,6 +689,7 @@
   function updateStageActor(actorId, dt) {
     const motion = stageMotions[actorId];
     if (!motion) return false;
+    if (stage3Dev && aftermathPaused && aftermathMotions.has(motion.id)) return true;
     const actor = stageActor(actorId);
 
     if (motion.kind === "bounce") {
@@ -664,12 +756,12 @@
     const npcBlocked =
       next.moving &&
       (shioponBlocked ||
-        movingIntoActor(
+        (!(stage3Dev && !aftermathLumiereEnabled) && movingIntoActor(
           from,
           next,
           lumiereRef(),
           LUMIERE_COLLISION_DISTANCE,
-        ));
+        )));
     if (npcBlocked) {
       setDirection(player, next.dx, next.dy);
       controls.cancel("npc-blocked");
@@ -689,7 +781,7 @@
     // the lower corners cannot trigger a map transition.
     const gardenPos = { x: next.x, y: next.y };
     if (
-      enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
+      !stage3Dev && enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
       !window.TarotDialogue?.getState().active &&
       next.dy > 0 && gardenPos.y >= gardenExitRef.y - 4 &&
       gardenPos.x >= 610 &&
@@ -1059,6 +1151,7 @@
   }
 
   function updateShiopon(dt) {
+    if (stage3Dev && aftermathPaused) return;
     if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
     if (shiopon.scripted) {
@@ -1134,6 +1227,7 @@
   }
 
   function updateLumiere(dt) {
+    if (stage3Dev && (aftermathPaused || !aftermathLumiereEnabled)) return;
     updateStageActor("lumiere", dt);
     lumiere.anim += dt;
     while (lumiere.anim >= lumiere.wingHold) {
@@ -1168,6 +1262,25 @@
   }
 
   function updateCamera(dt) {
+    if (stage3Dev && aftermathPaused && aftermathOwner) return;
+    if (cinematicCamera.active) {
+      cinematicCamera.elapsed += dt;
+      const t = cinematicCamera.duration > 0 ? Math.min(1, cinematicCamera.elapsed / cinematicCamera.duration) : 1;
+      const eased = t * t * (3 - 2 * t);
+      camera.x = cinematicCamera.startX + (cinematicCamera.targetX - cinematicCamera.startX) * eased;
+      camera.y = cinematicCamera.startY + (cinematicCamera.targetY - cinematicCamera.startY) * eased;
+      camera.zoom = cinematicCamera.startZoom + (cinematicCamera.targetZoom - cinematicCamera.startZoom) * eased;
+      if (t >= 1) {
+        cinematicCamera.active = false;
+        const done = cinematicCamera.resolve;
+        cinematicCamera.resolve = null;
+        done?.({ completed: true });
+      }
+      return;
+    }
+    if (cinematicCamera.owned) return;
+
+
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
     const halfW = viewW / 2;
@@ -1190,6 +1303,7 @@
   function viewportOrigin() {
     const viewW = cssWidth / camera.zoom;
     const viewH = cssHeight / camera.zoom;
+    if (cinematicCamera.owned && cinematicCamera.allowOverscan) return {x: camera.x - viewW / 2, y: camera.y - viewH / 2};
     return {
       x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
       y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
@@ -1414,10 +1528,34 @@
     ctx.restore();
   }
 
+  let futureCurrentShionSurface = null;
+  function drawFutureCurrentShionComposite(entry, opacity) {
+    futureCurrentShionSurface ||= document.createElement("canvas");
+    const surface = futureCurrentShionSurface;
+    const density = Math.min(2, dpr * camera.zoom);
+    const left = player.x - 84 * scale.x;
+    const top = player.y + player.stageOffsetY - 110 * scale.y;
+    const width = 168 * scale.x, height = 142 * scale.y;
+    const pixelWidth = Math.ceil(width * density), pixelHeight = Math.ceil(height * density);
+    if (surface.width !== pixelWidth || surface.height !== pixelHeight) {surface.width=pixelWidth; surface.height=pixelHeight;}
+    const target=surface.getContext("2d");
+    target.setTransform(1,0,0,1,0,0); target.clearRect(0,0,pixelWidth,pixelHeight);
+    target.setTransform(pixelWidth/width,0,0,pixelHeight/height,-left*pixelWidth/width,-top*pixelHeight/height);
+    target.globalAlpha=1;
+    const previous=ctx; ctx=target;
+    try {
+      drawGroundShadowAt({x:player.x,y:player.y+player.stageOffsetY},20,.46);
+      drawActor(entry.actor,entry.actorImages,entry.drawHeight,entry.glowColor,entry.options);
+    } finally {ctx=previous;}
+    ctx.save(); ctx.globalAlpha *= opacity;
+    ctx.drawImage(surface,0,0,pixelWidth,pixelHeight,left,top,width,height);
+    ctx.restore();
+  }
+
   function drawActors() {
-    drawGroundShadowAt(lumiere, 18, 0.2);
-    if (!shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
-    drawGroundShadowAt(player, 20, 0.46);
+    if (!visionWorld.active && (!stage3Dev || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
+    if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
+    if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
 
     const actors = [
       {
@@ -1451,7 +1589,8 @@
           visualOffsetY: player.stageOffsetY,
         },
       },
-    ].filter(entry => entry.actor !== shiopon || !shiopon.hidden).sort((a, b) => {
+    ].filter(entry => (entry.actor !== shiopon || !shiopon.hidden) &&
+      (entry.actor !== lumiere || !stage3Dev || aftermathLumiereEnabled)).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
@@ -1460,6 +1599,12 @@
     });
 
     for (const entry of actors) {
+      const actorId = entry.actor === player ? "shion" : entry.actor === shiopon ? "shiopon" : "lumiere";
+      if (visionWorld.active && actorId !== "shion") continue;
+      const opacity = stage3Dev ? actorVisibility[actorId] : 1;
+      if (opacity <= 0) continue;
+      if (visionWorld.active && actorId === "shion") {drawFutureCurrentShionComposite(entry,opacity); continue;}
+      ctx.save(); ctx.globalAlpha *= opacity;
       const paint = (target) => {
         const original = ctx;
         ctx = target;
@@ -1468,10 +1613,11 @@
             entry.glowColor, entry.options);
         } finally { ctx = original; }
       };
-      if (window.TarotSceneEffects) {
+      if (window.TarotSceneEffects && !visionWorld.active) {
         window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
           Math.min(2, dpr * camera.zoom), paint);
       } else paint(ctx);
+      ctx.restore();
     }
   }
 
@@ -1664,10 +1810,12 @@
     window.TarotSceneEffects?.syncCamera({ world, origin, zoom: camera.zoom });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssWidth, cssHeight);
+    if (visionWorld.active && !absorptionSurface) {ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cssWidth, cssHeight);}
     ctx.save();
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-origin.x, -origin.y);
-    drawTapEffect();
+    if (!absorptionSurface) drawVisionWorld();
+    if (!visionWorld.active) drawTapEffect();
     drawActors();
     drawCollisionDebug();
     drawNavDebug();
@@ -1768,7 +1916,7 @@
   }
 
   function pointerDown(event) {
-    if (!running) return;
+    if (!running || (stage3Dev && releasePointers.has(event.pointerId))) return;
     event.preventDefault();
     if (!controls.pointerDown(pointerInfo(event))) return;
     window.TarotAudio?.startFromMovement();
@@ -1777,13 +1925,14 @@
   }
 
   function pointerMove(event) {
-    if (!running) return;
+    if (!running || (stage3Dev && releasePointers.has(event.pointerId))) return;
     event.preventDefault();
     controls.pointerMove(pointerInfo(event));
     syncStick();
   }
 
   function pointerEnd(event) {
+    if (stage3Dev && releasePointers.has(event.pointerId)) { releasePointers.delete(event.pointerId); clearInput("aftermath-release"); return; }
     if (!running) return;
     event.preventDefault();
     const action = controls.pointerEnd(
@@ -1860,6 +2009,398 @@
     shiopon.wait = 0.9 + Math.random() * 1.4;
   }
 
+  const sceneryPrior = new Map();
+  function setVisionScenery(hidden) {
+    for (const node of [map, ...document.querySelectorAll("[data-scene-world], [data-scene-object]")]) {
+      if (hidden) {
+        if (!sceneryPrior.has(node)) sceneryPrior.set(node, node.style.visibility);
+        node.style.visibility = "hidden";
+      } else if (sceneryPrior.has(node)) {
+        node.style.visibility = sceneryPrior.get(node); sceneryPrior.delete(node);
+      }
+    }
+  }
+  if (stage3Dev) window.TarotStage3Scene = Object.freeze({
+    capture() {
+      if (!ready || !running || !map.complete || !images.idle?.complete || !collision || cssWidth <= 1 || cssHeight <= 1) throw new Error("P0 current resources not prepared");
+      if (visionWorld.active) throw new Error("P0 must precede Future Vision");
+      return { mapId: "star_gate_garden", player: {...playerRef(), dir: player.dir},
+        camera: {...camera}, viewport: {width:cssWidth,height:cssHeight}, owner:sceneLockOwner, npcLogical: {companion:window.TarotStage3DevFixture.context.companion, story:{...window.TarotJourney?.get("gardenStory")}}, actors: {shiopon: {...shioponRef(), dir:shiopon.dir, stageOffsetY:shiopon.stageOffsetY, visualOffsetY:shiopon.visualOffsetY, rotation:shiopon.rotation, following:shiopon.following}, lumiere: {...lumiereRef(), dir:lumiere.dir, stageOffsetY:lumiere.stageOffsetY}}, visibility: {...actorVisibility}, inputSuspended: !!controls?.state.suspended,
+        npcSuspended, hidden: shiopon.hidden, captured: performance.now() };
+    },
+    lock(owner) {
+      if (sceneLockOwner && sceneLockOwner !== owner) throw new Error("Scene lock already owned");
+      if (!sceneLockOwner) sceneLockPrior = {suspended: !!controls?.state.suspended, npcSuspended};
+      sceneLockOwner = owner; controls?.suspend(); npcSuspended = true; clearInput("stage3-dev");
+    },
+    unlock(owner) {
+      if (sceneLockOwner !== owner) return false;
+      sceneLockOwner = null;
+      if (!sceneLockPrior?.suspended && !outsideInteraction) controls?.resume();
+      npcSuspended = !!sceneLockPrior?.npcSuspended || outsideInteraction;
+      cinematicCamera.owned=false; cinematicCamera.allowOverscan=false;
+      sceneLockPrior = null; return true;
+    },
+    freezeCamera() {
+      if (cinematicCamera.resolve) cinematicCamera.resolve({completed:false,interrupted:true});
+      cinematicCamera.resolve = null; cinematicCamera.active = false; cinematicCamera.owned = true;
+      return {...camera};
+    },
+    waitDraw({alive=()=>true}={}) { return new Promise(resolve => requestAnimationFrame(() => {if(alive())draw();resolve({completed:alive()});})); },
+    prepareBackground({anchor={x:cssWidth/2,y:cssHeight/2}}={}) {
+      if (!visionWorld.active || !visionWorld.image?.complete) throw new Error("Ruins not prepared");
+      const surface = document.createElement("canvas");
+      const bounds=stage3BackgroundBounds(cssWidth,cssHeight,anchor);
+      surface.width = Math.ceil(bounds.width*dpr); surface.height = Math.ceil(bounds.height*dpr);
+      surface.stage3Preparation={bounds,viewport:{width:cssWidth,height:cssHeight},anchor:{...anchor}};
+      const target = surface.getContext("2d");
+      target.setTransform(dpr,0,0,dpr,0,0); target.fillStyle = "#000";
+      target.fillRect(0,0,bounds.width,bounds.height);
+      target.translate(-bounds.left,-bounds.top);
+      const origin = viewportOrigin(); target.scale(camera.zoom,camera.zoom); target.translate(-origin.x,-origin.y);
+      const previous = ctx; ctx = target; try {drawVisionWorld();} finally {ctx=previous;}
+      Object.assign(surface.style, {position:"absolute",left:bounds.left+"px",top:bounds.top+"px",width:bounds.width+"px",height:bounds.height+"px",pointerEvents:"none",zIndex:"0",transformOrigin:(anchor.x-bounds.left)+"px "+(anchor.y-bounds.top)+"px"});
+      surface.dataset.stage3Background = "true";
+      return surface;
+    },
+    activateAbsorption(surface) {
+      if (!surface?.stage3Preparation || surface.stage3Preparation.viewport.width!==cssWidth || surface.stage3Preparation.viewport.height!==cssHeight || surface.width!==Math.ceil(surface.stage3Preparation.bounds.width*dpr) || surface.height!==Math.ceil(surface.stage3Preparation.bounds.height*dpr)) throw new Error("Invalid background preparation");
+      if (absorptionSurface) throw new Error("Background already active");
+      absorptionSurface = surface;
+      const substrate = document.createElement("div"); substrate.dataset.stage3Substrate="true";
+      Object.assign(substrate.style,{position:"absolute",inset:"0",background:"#080A12",zIndex:"0",pointerEvents:"none"});
+      canvas.parentNode.insertBefore(substrate,canvas); canvas.parentNode.insertBefore(surface,canvas);
+      draw(); return surface;
+    },
+    removeAbsorption() {
+      absorptionSurface?.remove(); absorptionSurface=null;
+      document.querySelectorAll("[data-stage3-substrate]").forEach(node=>node.remove());
+    },
+    async restore(p0, {alive=()=>true}={}) {
+      if(!alive())throw new Error("Expired P0 restoration");
+      if (!p0 || p0.mapId !== "star_gate_garden" || !ready) throw new Error("P0 unavailable");
+      cancelAllStageMotions(false);
+      this.removeAbsorption();
+      visionWorld.active=false; visionWorld.opacity=0; visionWorld.token++;
+      setVisionScenery(false);
+      player.x=p0.player.x*scale.x; player.y=p0.player.y*scale.y; player.dir=p0.player.dir;
+      player.stageOffsetY=0; player.moving=false; player.frame=0;
+      for (const [id, actor] of [["shiopon",shiopon],["lumiere",lumiere]]) {
+        const saved=p0.actors[id]; actor.x=saved.x*scale.x; actor.y=saved.y*scale.y; actor.dir=saved.dir;
+        actor.stageOffsetY=saved.stageOffsetY; actor.moving=false; actor.frame=0;
+      }
+      shiopon.visualOffsetY=p0.actors.shiopon.visualOffsetY; shiopon.rotation=p0.actors.shiopon.rotation;
+      shiopon.following=p0.actors.shiopon.following; shiopon.followRoute=[]; shiopon.followTarget=null;
+      shiopon.hidden=p0.npcLogical.companion === "waiting_at_landing";
+      for (const id of Object.keys(actorVisibility)) actorVisibility[id]=p0.visibility[id];
+      if (cinematicCamera.resolve) cinematicCamera.resolve({completed:false,interrupted:true});
+      cinematicCamera.active=false; cinematicCamera.resolve=null; cinematicCamera.owned=true;
+      cinematicCamera.allowOverscan=false; Object.assign(camera,p0.camera);
+      if (cssWidth !== p0.viewport.width || cssHeight !== p0.viewport.height) camera.zoom=normalCameraZoom;
+      await this.waitDraw({alive});
+      if(!alive())throw new Error("Expired P0 restoration");
+      if (!this.verify(p0).completed) throw new Error("P0 verification failed");
+      return {completed:true};
+    },
+    verify(p0) {
+      const logical = window.TarotJourney?.get("gardenStory");
+      const expectedHidden = p0?.npcLogical.companion === "waiting_at_landing";
+      const logicalMatch = !!p0 && ["shioponDone","lumiereDone","joined"].every(key=>logical?.[key] === p0.npcLogical.story[key]);
+      return {completed: !!p0 && ready && !visionWorld.active && !absorptionSurface &&
+        Math.abs(playerRef().x-p0.player.x)<.01 && Math.abs(playerRef().y-p0.player.y)<.01 &&
+        Object.keys(actorVisibility).every(id=>actorVisibility[id]===p0.visibility[id]) &&
+        shiopon.hidden===expectedHidden && logicalMatch &&
+        !!controls && controls.state.suspended && !!sceneLockOwner && cinematicCamera.owned,
+        mapId:"star_gate_garden", player:{...playerRef(),dir:player.dir},
+        npc:{shioponHidden:shiopon.hidden,logical}, camera:{...camera}, owner:sceneLockOwner};
+    },
+    getState() {return {presentPrepared:!!(ready && running && map.complete && images.idle?.complete && collision && cssWidth>1 && cssHeight>1),vision:visionWorld.active,absorption:!!absorptionSurface,viewport:{width:cssWidth,height:cssHeight,dpr},owner:sceneLockOwner};},
+  });
+
+  if (stage3Dev) {
+    // Observe physical releases independently of UI propagation. No time-based cooldown.
+    window.addEventListener("keydown", e => heldKeys.add(e.key), true);
+    window.addEventListener("keyup", e => heldKeys.delete(e.key), true);
+    window.addEventListener("pointerdown", e => heldPointers.add(e.pointerId), true);
+    for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, e => heldPointers.delete(e.pointerId), true);
+    for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, e => releasePointers.delete(e.pointerId));
+    window.addEventListener("blur",()=>{heldKeys.clear();heldPointers.clear();releaseKeys.clear();releasePointers.clear();});
+    function clearAftermathInput() {
+      for (const key of heldKeys) releaseKeys.add(key);
+      for (const id of heldPointers) releasePointers.add(id);
+      clearInput("aftermath");
+    }
+    function captureAftermath() {
+      if (!ready || !running || visionWorld.active || absorptionSurface || sceneLockOwner)
+        throw new Error("Aftermath requires a cleaned-up present garden");
+      return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id => {
+        const actor=stageActor(id); return [id,{...stageActorRef(id),dir:actor.dir,stageOffsetY:actor.stageOffsetY/scale.y}];
+      })), following:shiopon.following,hidden:shiopon.hidden,rotation:shiopon.rotation,
+      visualOffsetY:shiopon.visualOffsetY/scale.y,visibility:{...actorVisibility},camera:{...camera},cameraRef:{x:camera.x/scale.x,y:camera.y/scale.y},
+      lumiereEnabled:aftermathLumiereEnabled,inputSuspended:!!controls?.state.suspended,npcSuspended,owner:sceneLockOwner,viewport:{width:cssWidth,height:cssHeight}};
+    }
+    function lumiereRenderRect() {
+      const origin=viewportOrigin(), ratio=LUMIERE_DRAW_HEIGHT/lumiereFrame.h;
+      const w=LUMIERE_NORMALIZED_SIZE.w*ratio,h=LUMIERE_NORMALIZED_SIZE.h*ratio;
+      const x=(lumiere.x-origin.x)*camera.zoom,y=(lumiere.y-origin.y)*camera.zoom;
+      // Normalized composite includes wings; union with ground shadow and its small blur.
+      const left=Math.min(x-w*camera.zoom/2-2,x-18*camera.zoom);
+      const right=Math.max(x+w*camera.zoom/2+2,x+18*camera.zoom);
+      const top=Math.min(y+(-LUMIERE_BOTTOM_GAP*scale.y-h+lumiere.bobOffsetY+lumiere.stageOffsetY)*camera.zoom-2,y-5*camera.zoom);
+      const bottom=Math.max(y+(-LUMIERE_BOTTOM_GAP*scale.y+lumiere.bobOffsetY+lumiere.stageOffsetY)*camera.zoom+2,y+9*camera.zoom);
+      return {left,right,top,bottom,width:right-left,height:bottom-top};
+    }
+    window.TarotAftermathScene=Object.freeze({
+      capture:captureAftermath,captureA0:captureAftermath,
+      lock(owner){window.TarotStage3Scene.lock(owner);aftermathOwner=owner;clearAftermathInput();},
+      unlock(owner){clearAftermathInput();const released=window.TarotStage3Scene.unlock(owner);if(released)aftermathOwner=null;return released;},
+      clearInput:clearAftermathInput,
+      pause(value){aftermathPaused=!!value;},setHiddenPaused(value){aftermathPaused=!!value;},
+      setActorVisibility(actorId,value){
+        if(!(actorId in actorVisibility))return false;
+        actorVisibility[actorId]=clamp(Number(value)||0,0,1);draw();return true;
+      },
+      placeReturnFormation(){
+        const shion=playerRef();
+        // Preserve Lumiere's restored pre-blackout world position exactly.
+        // Only Shiopon is repositioned beside her; this avoids the artificial
+        // Shion-centered symmetry that looked staged on device.
+        const lumiereAnchor={...stageActorRef("lumiere")};
+        const preferred={x:lumiereAnchor.x-62,y:lumiereAnchor.y};
+        const alternate={x:lumiereAnchor.x+62,y:lumiereAnchor.y};
+        let shioponPlaced=preferred;
+        if(!isWalkableRef(preferred.x,preferred.y)){
+          shioponPlaced=isWalkableRef(alternate.x,alternate.y)
+            ?alternate:(collision.nearestWalkable(preferred)||preferred);
+        }
+        shiopon.x=shioponPlaced.x*scale.x;shiopon.y=shioponPlaced.y*scale.y;
+        shiopon.stageOffsetY=0;shiopon.visualOffsetY=0;shiopon.rotation=0;
+        shiopon.moving=false;shiopon.frame=0;shiopon.followRoute=[];shiopon.followTarget=null;shiopon.target=null;
+        // Keep the authored return formation stable while the player freely checks both companions.
+        shiopon.wait=Number.POSITIVE_INFINITY;
+        lumiere.stageOffsetY=0;lumiere.moving=false;lumiere.frame=0;
+        setDirection(player,0,1);
+        setDirection(shiopon,lumiereAnchor.x-shioponPlaced.x,lumiereAnchor.y-shioponPlaced.y);
+        setDirection(lumiere,shion.x-lumiereAnchor.x,shion.y-lumiereAnchor.y);
+        draw();
+        return {shion:{...shion},shiopon:{...shioponPlaced},lumiere:{...lumiereAnchor}};
+      },
+      face(actor,target){return performStageCommand({type:"face",actor,target});},
+      perform(command){const action=performStageCommand(command);aftermathMotions.add(action.id);action.promise.finally(()=>aftermathMotions.delete(action.id));return action;},
+      gameplayCamera(){aftermathFocusBaseline=null;window.TarotCinematicCamera.release();return Promise.resolve({completed:true});},
+      focusGate(){
+        window.TarotStage3Scene.freezeCamera();
+        // A small, clamped focus shift at the existing gameplay zoom, never an upper pan.
+        if(!aftermathFocusBaseline)aftermathFocusBaseline={x:camera.x/scale.x,y:camera.y/scale.y};
+        camera.zoom=normalCameraZoom;
+        const baselineY=aftermathFocusBaseline.y*scale.y,gateY=105*scale.y;
+        const desiredY=gateY-cssHeight*.30/camera.zoom+cssHeight/2/camera.zoom;
+        camera.y=Math.max(baselineY-36*scale.y,Math.min(baselineY+36*scale.y,desiredY));
+        camera.x=aftermathFocusBaseline.x*scale.x;draw();return Promise.resolve({completed:true});
+      },
+      nearGate(distance=46){return refDistance(playerRef(),{x:810,y:105})<=distance;},
+      hitTestActor(clientX,clientY){
+        const rect=canvas.getBoundingClientRect();
+        const px=clientX-rect.left,py=clientY-rect.top,origin=viewportOrigin();
+        const candidates=["lumiere","shiopon"].map(id=>{
+          const actor=stageActor(id),ref=stageActorRef(id);
+          const x=(ref.x*scale.x-origin.x)*camera.zoom;
+          const feetY=(actor.y+actor.stageOffsetY-origin.y)*camera.zoom;
+          const halfW=(id==="lumiere"?54:34)*camera.zoom;
+          const height=(id==="lumiere"?88:82)*camera.zoom;
+          const top=feetY-height,bottom=feetY+10*camera.zoom;
+          return {id,x,centerY:(top+bottom)/2,left:x-halfW,right:x+halfW,top,bottom};
+        }).filter(hit=>px>=hit.left&&px<=hit.right&&py>=hit.top&&py<=hit.bottom);
+        candidates.sort((a,b)=>Math.hypot(px-a.x,py-a.centerY)-Math.hypot(px-b.x,py-b.centerY));
+        return candidates[0]?.id||null;
+      },
+      moveAway(){return this.nearGate(62)?this.perform({type:"step",actor:"shion",direction:"down",distance:12,duration:240}).promise:Promise.resolve({completed:true});},
+      flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
+      setLumiereDeparted(value=true){aftermathLumiereEnabled=!value;},
+      setLumiereEnabled(value){aftermathLumiereEnabled=!!value;},
+      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,visibility:{...actorVisibility},lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended,npcSuspended};},
+      async restore(a0){
+        for(const id of aftermathMotions){for(const actorId of Object.keys(stageMotions)){const motion=stageMotions[actorId];if(motion?.id===id)settleStageMotion(actorId,motion,{skipped:true});}}
+        aftermathMotions.clear();aftermathPaused=false;
+        for(const [id,saved] of Object.entries(a0.actors)){const actor=stageActor(id);actor.x=saved.x*scale.x;actor.y=saved.y*scale.y;actor.dir=saved.dir;actor.stageOffsetY=saved.stageOffsetY*scale.y;actor.moving=false;}
+        shiopon.following=a0.following;shiopon.hidden=a0.hidden;shiopon.rotation=a0.rotation;shiopon.visualOffsetY=a0.visualOffsetY*scale.y;shiopon.followRoute=[];shiopon.followTarget=null;
+        Object.assign(actorVisibility,a0.visibility);aftermathLumiereEnabled=a0.lumiereEnabled;
+        window.TarotStage3Scene.freezeCamera();Object.assign(camera,a0.camera);
+        camera.x=a0.cameraRef.x*scale.x;camera.y=a0.cameraRef.y*scale.y;
+        if(cssWidth!==a0.viewport.width||cssHeight!==a0.viewport.height)camera.zoom=normalCameraZoom;
+        aftermathFocusBaseline=null;clearAftermathInput();draw();
+        return {completed:this.verify(a0).completed};
+      },
+      verify(a0){return {completed:!!a0&&!visionWorld.active&&!absorptionSurface&&Object.entries(a0.actors).every(([id,saved])=>refDistance(stageActorRef(id),saved)<.01&&stageActor(id).dir===saved.dir&&Math.abs(stageActor(id).stageOffsetY/scale.y-saved.stageOffsetY)<.01)&&Object.keys(actorVisibility).every(id=>actorVisibility[id]===a0.visibility[id])&&aftermathLumiereEnabled===a0.lumiereEnabled&&shiopon.following===a0.following&&shiopon.hidden===a0.hidden&&Math.abs(shiopon.rotation-a0.rotation)<1e-6&&Math.abs(shiopon.visualOffsetY/scale.y-a0.visualOffsetY)<.01&&Math.abs(camera.x/scale.x-a0.cameraRef.x)<.01&&Math.abs(camera.y/scale.y-a0.cameraRef.y)<.01&&Math.abs(camera.zoom-((cssWidth!==a0.viewport.width||cssHeight!==a0.viewport.height)?normalCameraZoom:a0.camera.zoom))<1e-6&&sceneLockOwner===aftermathOwner&&!!aftermathOwner&&!!controls?.state.suspended&&npcSuspended&&sceneLockPrior?.suspended===a0.inputSuspended&&!!sceneLockPrior?.npcSuspended===!!a0.npcSuspended};},
+    });
+  }
+
+  if (stage3Dev) {
+  function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
+    if (cinematicCamera.resolve)
+      cinematicCamera.resolve({ completed: false, interrupted: true });
+    cinematicCamera.active = true;
+    cinematicCamera.owned = true;
+    cinematicCamera.allowOverscan = allowOverscan;
+    cinematicCamera.startX = camera.x;
+    cinematicCamera.startY = camera.y;
+    cinematicCamera.startZoom = camera.zoom;
+    cinematicCamera.targetX = targetX;
+    cinematicCamera.targetY = targetY;
+    cinematicCamera.targetZoom = targetZoom;
+    cinematicCamera.elapsed = 0;
+    cinematicCamera.duration = Math.max(0, duration / 1000);
+    return new Promise(resolve => { cinematicCamera.resolve = resolve; });
+  }
+
+  function normalCameraTarget() {
+    const viewW = cssWidth / normalCameraZoom;
+    const viewH = cssHeight / normalCameraZoom;
+    const halfW = viewW / 2;
+    const halfH = viewH / 2;
+    return {
+      x: clamp(player.x, halfW, Math.max(halfW, world.w - halfW)),
+      y: clamp(player.y - cameraOffsetY(), halfH, Math.max(halfH, world.h - halfH)),
+    };
+  }
+
+  window.TarotCinematicCamera = Object.freeze({
+    panTo(target = {}, duration = 1200, options = {}) {
+      const ref = stageTargetRef(target);
+      if (!ref) return Promise.resolve({ completed: false });
+      const zoom = Number.isFinite(options.zoom) && options.zoom > 0
+        ? options.zoom
+        : camera.zoom;
+      return beginCinematicPan(
+        ref.x * scale.x,
+        ref.y * scale.y,
+        zoom,
+        duration,
+        options.allowOverscan === true,
+      );
+    },
+    frameBounds(bounds = {}, duration = 1200, options = {}) {
+      const left = Number(bounds.left);
+      const top = Number(bounds.top);
+      const right = Number(bounds.right);
+      const bottom = Number(bounds.bottom);
+      if (![left, top, right, bottom].every(Number.isFinite) || right <= left || bottom <= top)
+        return Promise.resolve({ completed: false });
+      const padding = clamp(Number(options.padding) || 16, 0, Math.min(cssWidth, cssHeight) / 3);
+      const boundsW = (right - left) * scale.x;
+      const boundsH = (bottom - top) * scale.y;
+      const fitZoom = Math.min(
+        (cssWidth - padding * 2) / boundsW,
+        (cssHeight - padding * 2) / boundsH,
+        normalCameraZoom,
+      );
+      const minZoom = Number.isFinite(options.minZoom) ? options.minZoom : 0.55;
+      const zoom = clamp(fitZoom, Math.min(minZoom, normalCameraZoom), normalCameraZoom);
+      const renderedHeight = boundsH * zoom;
+      const topInset = clamp(
+        Number(options.topInset) || (cssHeight - renderedHeight) * 0.12,
+        padding,
+        Math.max(padding, cssHeight * 0.12),
+      );
+      const originX = ((left + right) * 0.5) * scale.x - cssWidth / zoom / 2;
+      const originY = top * scale.y - topInset / zoom;
+      return beginCinematicPan(
+        originX + cssWidth / zoom / 2,
+        originY + cssHeight / zoom / 2,
+        zoom,
+        duration,
+        true,
+      );
+    },
+    returnToPlayer(duration = 1200) {
+      const target = normalCameraTarget();
+      return beginCinematicPan(target.x, target.y, normalCameraZoom, duration, true);
+    },
+    release() {
+      if (cinematicCamera.resolve)
+        cinematicCamera.resolve({ completed: false, interrupted: true });
+      cinematicCamera.active = false;
+      cinematicCamera.owned = false;
+      cinematicCamera.allowOverscan = false;
+      cinematicCamera.resolve = null;
+      camera.zoom = normalCameraZoom;
+      const target = normalCameraTarget();
+      camera.x = target.x;
+      camera.y = target.y;
+    },
+    getState: () => ({
+      active: cinematicCamera.active,
+      owned: cinematicCamera.owned,
+      allowOverscan: cinematicCamera.allowOverscan,
+      camera: { ...camera },
+      origin: viewportOrigin(),
+      viewport: { width: cssWidth, height: cssHeight, normalZoom: normalCameraZoom },
+      world: { ...world },
+      scale: { ...scale },
+      player: playerRef(),
+    }),
+    isViewportInsideWorld() {
+      const origin = viewportOrigin();
+      const viewW = cssWidth / camera.zoom;
+      const viewH = cssHeight / camera.zoom;
+      const epsilon = 0.5;
+      return origin.x >= -epsilon && origin.y >= -epsilon &&
+        origin.x + viewW <= world.w + epsilon &&
+        origin.y + viewH <= world.h + epsilon;
+    },
+  });
+  window.TarotVisionWorld = Object.freeze({
+    async begin(src) {
+      await loadVisionWorld(src);
+      visionWorld.active = true;
+      setVisionScenery(true);
+      visionWorld.opacity = 0;
+      return { completed: true };
+    },
+    setOpacity(opacity) {
+      visionWorld.opacity = clamp(Number(opacity) || 0, 0, 1);
+    },
+    end() {
+      visionWorld.active = false;
+      setVisionScenery(false);
+      visionWorld.opacity = 0;
+      visionWorld.image = null;
+      visionWorld.src = "";
+      visionWorld.token += 1;
+    },
+    getState: () => ({
+      active: visionWorld.active,
+      opacity: visionWorld.opacity,
+      src: visionWorld.src,
+      world: { width: world.w / scale.x, height: world.h / scale.y },
+      registration: { ...VISION_REGISTRATION },
+    }),
+  });
+
+  window.TarotActorScreenAnchor = Object.freeze({
+    get(actorId = "shion") {
+      if (actorId !== "shion") return null;
+      const origin = viewportOrigin();
+      const scaleDraw = DRAW_HEIGHT / FRAME.h;
+      const drawW = FRAME.w * scaleDraw;
+      const drawH = FRAME.h * scaleDraw;
+      const feetY = player.y + player.stageOffsetY;
+      return {
+        x: (player.x - origin.x) * camera.zoom,
+        feetY: (feetY - origin.y) * camera.zoom,
+        width: drawW * camera.zoom,
+        height: drawH * camera.zoom,
+      };
+    },
+  });
+  window.TarotActorVisibility = Object.freeze({
+    set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
+    reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
+    getState: () => ({ ...actorVisibility }),
+  });
+
+  }
+
   window.TarotStage = Object.freeze({
     perform: performStageCommand,
     finishAll: () => cancelAllStageMotions(true),
@@ -1906,6 +2447,7 @@
   window.addEventListener(
     "keydown",
     (event) => {
+      if (stage3Dev && releaseKeys.has(event.key)) return;
       if (running && controls.keyDown(event.key)) {
         window.TarotAudio?.startFromMovement();
         guide.hidden = true;
@@ -1914,7 +2456,7 @@
     },
     { passive: false },
   );
-  window.addEventListener("keyup", (event) => controls?.keyUp(event.key));
+  window.addEventListener("keyup", (event) => { releaseKeys.delete(event.key); controls?.keyUp(event.key); });
   window.addEventListener("blur", () => clearInput("blur"));
   window.addEventListener("pagehide", () => clearInput("pagehide"));
   document.addEventListener("visibilitychange", () => {
@@ -1923,14 +2465,15 @@
   });
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
+    outsideInteraction = true;
     controls?.suspend();
     npcSuspended = true;
     syncStick();
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
+    outsideInteraction = false;
     cancelAllStageMotions(true);
-    controls?.resume();
-    npcSuspended = false;
+    if (!sceneLockOwner) { controls?.resume(); npcSuspended = false; }
   });
   window.addEventListener("tarot-breaker:shiopon-face-player", faceShioponTowardPlayer);
   window.addEventListener("tarot-breaker:shiopon-race-start", startShioponRace);
@@ -1960,7 +2503,10 @@
       const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
       if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
         throw new Error("garden-south-exit-unavailable");
-      if (gardenResumeDev || gardenResumePublic) {
+      if (stage3Dev) {
+        spawnRef = {...window.TarotStage3DevFixture.context.spawn};
+        gardenExitRef = {...spawnRef};
+      } else if (gardenResumeDev || gardenResumePublic) {
         const session = gardenResumePublic ? window.TarotGardenContinueTransit : window.TarotGardenDevTransit;
         if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
             session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||

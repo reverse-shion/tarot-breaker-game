@@ -1,0 +1,48 @@
+[
+  {
+    "path": "assets/sprites/shion/shion_card_01_reach.webp",
+    "blob": "83bc1147926825205081820c8f88215abfce8c42",
+    "preserved": true
+  },
+  {
+    "path": "assets/sprites/shion/shion_card_02_draw.webp",
+    "blob": "d989c2cae8843785c47453c66a2f01163dba8c8b",
+    "preserved": true
+  },
+  {
+    "path": "assets/sprites/shion/shion_card_03_check.webp",
+    "blob": "c309fba18bbe2165f31be5b207110b1155dc01b5",
+    "preserved": true
+  },
+  {
+    "path": "assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
+    "blob": "85f33ec9a1b778d7943ca5c74d2994b94aa12d4a",
+    "exactOldBlob": true
+  },
+  {
+    "path": "assets/tarot/backs/tarot-card-back.webp",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "alphaBounds": [
+      98,
+      46,
+      920,
+      1458
+    ]
+  },
+  {
+    "path": "assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+    "dimensions": [
+      853,
+      1280
+    ],
+    "alphaBounds": [
+      48,
+      26,
+      805,
+      1247
+    ]
+  }
+]

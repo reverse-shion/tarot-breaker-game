@@ -1,0 +1,37 @@
+[
+  {
+    "phase": "INTRODUCTION",
+    "hiddenTypingFreeze": true,
+    "rotationSameBox": true,
+    "hiddenCancelA0": true
+  },
+  {
+    "phase": "OBSERVATION",
+    "hiddenSameBox": true,
+    "repeatedFocusRotationStable": true,
+    "cancelA0": true
+  },
+  {
+    "phase": "DECISION",
+    "hiddenRotationSameBox": true,
+    "cancelA0": true
+  },
+  {
+    "phase": "LUMIERE_DEPARTURE",
+    "repeatedHiddenPositionFreeze": true,
+    "rotationHiddenCancelRestoresNPC": true
+  },
+  {
+    "phase": "RETURN_HOLD",
+    "hiddenPreserves300msAndOwner": true,
+    "rotatedHiddenCancelRestoresNPC": true
+  },
+  {
+    "phase": "RESTORE_FAILED",
+    "ownerRetained": true,
+    "reloadNoticeVisible": true
+  },
+  {
+    "normalPageNoLeak": true
+  }
+]

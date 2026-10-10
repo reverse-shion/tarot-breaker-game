@@ -1,0 +1,17 @@
+{
+  "originalSha256": "fe746d9f34fc7e7af939be69f1e93a95c87af7df4234da5f4d4933f63d1184d2",
+  "pngSha256": "6b04a3e555e1e0066f1457eead128157524924d0244f00ddf2585f07d5503b1f",
+  "width": 853,
+  "height": 1280,
+  "rgbaBytes": 4367360,
+  "bounds": [
+    48,
+    26,
+    804,
+    1246
+  ],
+  "rgbPixelsIdentical": true,
+  "method": "largest exterior-separated card component, interior holes filled; original RGB retained exactly; no resampling",
+  "transparentPixels": 168699,
+  "borderAlphaMax": 0
+}
