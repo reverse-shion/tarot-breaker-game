@@ -2,7 +2,7 @@
 "use strict";
 if(!window.__TAROT_DEV_STAGE3__ || new URLSearchParams(location.search).get("dev")!=="star-gate-full")return;
 const ASSETS={
- cardNormal:"./assets/tarot/major/15-the-devil.webp",
+ cardNormal:"./assets/tarot/backs/tarot-card-back.webp",
  shionCheckRe:"./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
  cardDetail:"./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
  sky:"./assets/maps/star-country-farthest-sky-background-extended.webp",
@@ -236,12 +236,13 @@ async function showArcanaDetail(){
   infection.classList.add('active');
   await current.clock.tween(1650,p=>{
    const eased=p*p*(3-2*p);
-   const reveal=Math.max(0,Math.min(1,(eased-.10)/.90));
-   const normalFade=Math.max(0,Math.min(1,(eased-.28)/.72));
-   images.re.style.opacity=String(reveal.toFixed(3));
-   images.normal.style.opacity=String((1-normalFade).toFixed(3));
-   images.normal.style.filter='brightness('+(1-.33*eased).toFixed(3)+') saturate('+(1-.72*eased).toFixed(3)+') contrast('+(1+.07*eased).toFixed(3)+')';
-   images.re.style.filter='brightness('+( .60+.24*reveal).toFixed(3)+') saturate('+( .40+.28*reveal).toFixed(3)+') contrast('+(1.08-.025*reveal).toFixed(3)+')';
+   // Keep the Arcana back unchanged while the infection front travels inward.
+   // Only once the front has effectively reached the center does Re:Arcana appear.
+   const swap=Math.max(0,Math.min(1,(eased-.925)/.075));
+   images.re.style.opacity=String(swap.toFixed(3));
+   images.normal.style.opacity=String((1-swap).toFixed(3));
+   images.normal.style.filter='none';
+   images.re.style.filter='brightness('+( .60+.24*swap).toFixed(3)+') saturate('+( .40+.28*swap).toFixed(3)+') contrast('+(1.08-.025*swap).toFixed(3)+')';
    const stain=.30*Math.sin(Math.PI*Math.min(1,eased*1.08));
    contamination.style.opacity=String(Math.max(0,stain).toFixed(3));
    contamination.style.transform='scale('+(1+.006*Math.sin(Math.PI*eased)).toFixed(4)+')';
