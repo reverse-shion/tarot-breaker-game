@@ -17,9 +17,9 @@
       "body_top": 60,
       "baseline_y": 1168,
       "center_x": 620,
-      "sha256": "e1af4771a667986830f9b02a22ecfd815f8fde2a6f0ee81a34d7c6f679f6b3c3",
-      "source_sha256": "ff5cea8f8a0b3e37cf1e5af1455561a5e55d2001600996027a9cf4930dd8678f",
-      "decoded_rgba_sha256": "c71d23b3473a5547302c0574825142afa200aeea9c525f493a385effa3ecc0ed",
+      "sha256": "6bd7f477eeb1af929d01cc83b53f82ac8611d9fb402b4b7b70253d9ee213ac46",
+      "source_sha256": "9e623cbc2f04d0966f30aec7c0cce84b7a0b359733a547479fc792ef8dadf724",
+      "decoded_rgba_sha256": "62534dff2c3dac7942bfb6b4ffb9628e9bba3bb27f932dc4de4b5fa5c161dd03",
       "actual_direction": "down"
     },
     "up": {
@@ -28,9 +28,9 @@
       "body_top": 74,
       "baseline_y": 1127,
       "center_x": 628,
-      "sha256": "1fb1fe0f43efe71eb59106a9f71d26ebb9342faa24cae38e0203321c47046b95",
-      "source_sha256": "d8937024ed4e98950bed1b24ff87980649153691faa39e922053c71b5a9b412b",
-      "decoded_rgba_sha256": "f322fd91e49fd0b34cabde18f4823948b3314086a8064c86d5f0c62d00ece78a",
+      "sha256": "fe4d22c5e72ea1b8bbb09b29dd48bde82bf1c244574e1893056025ef43648602",
+      "source_sha256": "a3c759f7cee915425bb398439da42907952f23f859355520be31af3364c0b63e",
+      "decoded_rgba_sha256": "1cb5da12bc0454bf5afe0f449b8187815e2bf18ad8f5011d1049cb04b9c778b2",
       "actual_direction": "up"
     },
     "left": {
@@ -39,9 +39,9 @@
       "body_top": 97,
       "baseline_y": 1144,
       "center_x": 480,
-      "sha256": "a44d19636ad714191c1b256169d0bb8f7a99b55ec56fb9b66666681b18d35bd6",
-      "source_sha256": "ea56c443f8213d93811d24188ffd237859517edee28017088d6d9d9975712048",
-      "decoded_rgba_sha256": "c1dcd3e8963c6b3b3bf4de13f7a2a60410d9fdb8ae16ec3cb90f5d5831a53f8c",
+      "sha256": "d7dae3d676287aba1d4a62a93e33efef33be2873e683907fc01538739c806dae",
+      "source_sha256": "cdd005299ba5a1de294d56622cac681af99eed5aaea773716bce204ac3cb4357",
+      "decoded_rgba_sha256": "14cad483af3bd09b91d8c04687817fe32ff8555ffb22c18358b2deb203916c2a",
       "actual_direction": "left"
     },
     "right": {
@@ -50,9 +50,9 @@
       "body_top": 58,
       "baseline_y": 1158,
       "center_x": 785,
-      "sha256": "bae0502a923d3ad27bc9a0705faf0668b94f36847862308ede29f0a45e597999",
-      "source_sha256": "cbd36b98f5b7b9a51b7dd69092de09f225fae254bab439a19ec6ba9a803a5404",
-      "decoded_rgba_sha256": "3440194a86c06a3dd3cf6b691f893916803b265732fbbe416f33bd6f2433675e",
+      "sha256": "50ba44cd184520343586058abf5e4df5ab9d52973332eb1a2c7cb978ab5542bd",
+      "source_sha256": "201d5656b2cdaa011bbfa4fa43782a269864374d3a8d85c600a0bd25ee356931",
+      "decoded_rgba_sha256": "7c156c13a5d97dc43460aaba4a8e38d1963c6eabd4d6d90e106809a37a1524b3",
       "actual_direction": "right"
     }
   },
@@ -65,13 +65,69 @@
     "bob_period": 5.2
   },
   "provenance": {
-    "main": "cf9e8363575e6d96f458d870cbbdefbd96ef197f",
-    "encoding_source": "85caa984dddf54280de0be30ef2cc782d00bf1a3",
-    "policy": "Existing decoded source RGBA preserved exactly; only these four true WebP encodings copied. Unused candidates retained unchanged."
+    "main": "aa65642bd9cfb771ea06f1a5ad3c9e6d1dbfddac",
+    "policy": "Only the four specified Git Blob inputs. Uniform image-side registration to existing anatomical landmarks, four isolated low-alpha source speckles and tiny disconnected interpolation lobes (alpha at most 2/255) removed, then RGBA-exact lossless WebP encoding. source_sha256 hashes uploaded PNG bytes; sha256 hashes deployed WebP bytes; decoded_rgba_sha256 hashes deployed row-major RGBA bytes. Full processing ledger in docs/lumiere-sprite-replacement-20261010/registration.json.",
+    "sources": {
+      "down": {
+        "source_commit": "925cf3a297874b15384fec86a2bdc8c38c536318",
+        "source_blob_sha": "99579abeca9a2673b5785902f6fea27985d7b8e9",
+        "source_decoded_rgba_sha256": "ea2d135c1d4abd61f89119c8f956b49f25788a887f73e3dafaf963873383e022",
+        "uniform_scale": 0.9616055846422339,
+        "translate_x": 26.60408809564194,
+        "translate_y": 37.03664921465969,
+        "removed_isolated_source_pixels": [
+          [
+            663,
+            992
+          ]
+        ]
+      },
+      "up": {
+        "source_commit": "f980b92706da9361f25e0195083f768b941ffcb8",
+        "source_blob_sha": "d052a34cab6179e5dbb9dd5273cb5dc0190d0395",
+        "source_decoded_rgba_sha256": "9f55936154a7019db1187ef7081c020c63543e7672b856f581d9e3fe9b1d6f49",
+        "uniform_scale": 0.971375807940905,
+        "translate_x": 21.60858915026074,
+        "translate_y": 31.259464450600184,
+        "removed_isolated_source_pixels": [
+          [
+            729,
+            77
+          ],
+          [
+            729,
+            78
+          ]
+        ]
+      },
+      "left": {
+        "source_commit": "ab3fc22d8128ff28432871f3a2fa00887bb88e21",
+        "source_blob_sha": "378a91e0dbaa10b5226442f78fee0c0d6ead2b1c",
+        "source_decoded_rgba_sha256": "8f38705bfafbae6b24c4ef5c6d9dc89add434bf6729d34d2ba1837bec0ac7b6b",
+        "uniform_scale": 0.9886148007590133,
+        "translate_x": 12.355517031032434,
+        "translate_y": 38.705882352941174,
+        "removed_isolated_source_pixels": []
+      },
+      "right": {
+        "source_commit": "559eba6d64b0fffb3cb0d7e28938bf0f62389ee3",
+        "source_blob_sha": "7e83bd65bdb13405d0ba226db9a92a05ecc3a41d",
+        "source_decoded_rgba_sha256": "419aac48a20c2aa8201cc8fe1e62eeff63fd993b7361ba8df4f2856163171fb7",
+        "uniform_scale": 0.9963536918869644,
+        "translate_x": -32.09010575038019,
+        "translate_y": 3.2114858705560607,
+        "removed_isolated_source_pixels": [
+          [
+            302,
+            1005
+          ]
+        ]
+      }
+    }
   },
   "notes": [
     "Four fixed directional source poses. Continuous local terminal hair/garment sway only; no whole-body pose transitions, wing animation or crossfade.",
-    "Anchors are PR122 calibration values; independent precise visual validation remains pending.",
+    "PR122 anchors and 63.984375px body reference retained. Registered crown/foot/face landmarks are documented in docs/lumiere-sprite-replacement-20261010; iPhone device validation pending.",
     "Local regions, fixed perimeter roots, phase lag and compositor density are defined in lumiere-sway.js. Face, body, legs and wings remain fixed."
   ],
   "localized_sway": true

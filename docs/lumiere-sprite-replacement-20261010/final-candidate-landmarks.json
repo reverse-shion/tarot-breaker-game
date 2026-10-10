@@ -1,0 +1,454 @@
+{
+  "algorithm": "same anatomy-only ROI definitions, alpha>=200, minimum4 opaque pixels per row for crown/foot; same saturated iris masks; foot axis from final12 opaque rows. Threshold probes are not transparent bounds. Source coordinates and RGBA hashes retained.",
+  "body_reference_px": 63.984375,
+  "rois": {
+    "down": {
+      "head": [
+        520,
+        0,
+        730,
+        160
+      ],
+      "foot": [
+        570,
+        1070,
+        660,
+        1200
+      ]
+    },
+    "up": {
+      "head": [
+        540,
+        0,
+        710,
+        160
+      ],
+      "foot": [
+        580,
+        1070,
+        675,
+        1155
+      ]
+    },
+    "left": {
+      "head": [
+        410,
+        0,
+        600,
+        160
+      ],
+      "foot": [
+        575,
+        1050,
+        655,
+        1160
+      ]
+    },
+    "right": {
+      "head": [
+        700,
+        0,
+        850,
+        160
+      ],
+      "foot": [
+        560,
+        1080,
+        670,
+        1180
+      ]
+    }
+  },
+  "face_rois": {
+    "down": [
+      500,
+      230,
+      750,
+      345
+    ],
+    "left": [
+      370,
+      240,
+      490,
+      370
+    ],
+    "right": [
+      770,
+      245,
+      920,
+      345
+    ]
+  },
+  "results": [
+    {
+      "direction": "down",
+      "file": "lumiere_idle.webp",
+      "baseline": {
+        "crown_y": 63,
+        "foot_y": 1165,
+        "anatomical_height": 1102,
+        "axis_landmark": {
+          "method": "equal-weight midpoint of separate saturated iris centroids",
+          "x": 624.9277618168355,
+          "y": 301.35221526932503,
+          "iris_centroids": [
+            {
+              "x": 572.4622144112478,
+              "y": 302.0281195079086,
+              "pixels": 569
+            },
+            {
+              "x": 677.3933092224231,
+              "y": 300.67631103074143,
+              "pixels": 1106
+            }
+          ]
+        },
+        "foot_tip_x": 630.4738372093024,
+        "rgba_sha256": "c71d23b3473a5547302c0574825142afa200aeea9c525f493a385effa3ecc0ed"
+      },
+      "candidate": {
+        "crown_y": 63,
+        "foot_y": 1165,
+        "anatomical_height": 1102,
+        "axis_landmark": {
+          "method": "equal-weight midpoint of separate saturated iris centroids",
+          "x": 624.8097122343024,
+          "y": 291.2010684707406,
+          "iris_centroids": [
+            {
+              "x": 573.1890710382513,
+              "y": 292.12459016393444,
+              "pixels": 915
+            },
+            {
+              "x": 676.4303534303534,
+              "y": 290.2775467775468,
+              "pixels": 962
+            }
+          ]
+        },
+        "foot_tip_x": 630.0983050847458,
+        "rgba_sha256": "62534dff2c3dac7942bfb6b4ffb9628e9bba3bb27f932dc4de4b5fa5c161dd03"
+      },
+      "runtime_reference_px_per_source_px": 0.057747630866425995,
+      "residual_reference_px": {
+        "crown_y": 0.0,
+        "foot_y": 0.0,
+        "anatomical_height": 0.0,
+        "face_or_crown_axis_x": -0.0068170837160573565,
+        "face_or_crown_axis_y": -0.5862046781955551,
+        "foot_tip_x": -0.021686090507377572
+      },
+      "baseline_anatomical_height_reference_px": 63.63788921480145,
+      "candidate_anatomical_height_reference_px": 63.63788921480145,
+      "sway_regions": [
+        {
+          "index": 0,
+          "kind": "hair",
+          "rect": [
+            160,
+            790,
+            150,
+            220
+          ],
+          "foreground_alpha_gt32": 16440
+        },
+        {
+          "index": 1,
+          "kind": "hair",
+          "rect": [
+            940,
+            790,
+            160,
+            220
+          ],
+          "foreground_alpha_gt32": 17945
+        },
+        {
+          "index": 2,
+          "kind": "hem",
+          "rect": [
+            350,
+            1040,
+            150,
+            175
+          ],
+          "foreground_alpha_gt32": 10628
+        },
+        {
+          "index": 3,
+          "kind": "hem",
+          "rect": [
+            750,
+            1040,
+            150,
+            175
+          ],
+          "foreground_alpha_gt32": 9912
+        }
+      ],
+      "conservative_protected_rectangle_overlaps": [],
+      "automated_landmark_result": "PASS"
+    },
+    {
+      "direction": "up",
+      "file": "lumiere_hover-back.webp",
+      "baseline": {
+        "crown_y": 74,
+        "foot_y": 1126,
+        "anatomical_height": 1052,
+        "axis_landmark": {
+          "method": "opaque crown-band centroid",
+          "x": 627.7620704654198,
+          "y": 84.84949978251413,
+          "pixels": 2299
+        },
+        "foot_tip_x": 638.731778425656,
+        "rgba_sha256": "f322fd91e49fd0b34cabde18f4823948b3314086a8064c86d5f0c62d00ece78a"
+      },
+      "candidate": {
+        "crown_y": 74,
+        "foot_y": 1126,
+        "anatomical_height": 1052,
+        "axis_landmark": {
+          "method": "opaque crown-band centroid",
+          "x": 627.9963702359347,
+          "y": 85.42059891107078,
+          "pixels": 2204
+        },
+        "foot_tip_x": 639.0177514792899,
+        "rgba_sha256": "1cb5da12bc0454bf5afe0f449b8187815e2bf18ad8f5011d1049cb04b9c778b2"
+      },
+      "runtime_reference_px_per_source_px": 0.06076388888888889,
+      "residual_reference_px": {
+        "crown_y": 0.0,
+        "foot_y": 0.0,
+        "anatomical_height": 0.0,
+        "face_or_crown_axis_x": 0.01423696522225922,
+        "face_or_crown_axis_y": 0.03470220399215777,
+        "foot_tip_x": 0.017376834856228898
+      },
+      "baseline_anatomical_height_reference_px": 63.92361111111111,
+      "candidate_anatomical_height_reference_px": 63.92361111111111,
+      "sway_regions": [
+        {
+          "index": 0,
+          "kind": "hair",
+          "rect": [
+            175,
+            790,
+            145,
+            190
+          ],
+          "foreground_alpha_gt32": 16949
+        },
+        {
+          "index": 1,
+          "kind": "hair",
+          "rect": [
+            950,
+            790,
+            145,
+            190
+          ],
+          "foreground_alpha_gt32": 15770
+        },
+        {
+          "index": 2,
+          "kind": "hem",
+          "rect": [
+            350,
+            1060,
+            175,
+            160
+          ],
+          "foreground_alpha_gt32": 10057
+        },
+        {
+          "index": 3,
+          "kind": "hem",
+          "rect": [
+            725,
+            1060,
+            175,
+            160
+          ],
+          "foreground_alpha_gt32": 9943
+        }
+      ],
+      "conservative_protected_rectangle_overlaps": [],
+      "automated_landmark_result": "PASS"
+    },
+    {
+      "direction": "left",
+      "file": "lumiere_hover_left.webp",
+      "baseline": {
+        "crown_y": 100,
+        "foot_y": 1142,
+        "anatomical_height": 1042,
+        "axis_landmark": {
+          "method": "saturated iris centroid",
+          "x": 428.90084985835693,
+          "y": 330.9971671388102,
+          "iris_centroids": [
+            {
+              "x": 428.90084985835693,
+              "y": 330.9971671388102,
+              "pixels": 706
+            }
+          ]
+        },
+        "foot_tip_x": 610.3908045977012,
+        "rgba_sha256": "c1dcd3e8963c6b3b3bf4de13f7a2a60410d9fdb8ae16ec3cb90f5d5831a53f8c"
+      },
+      "candidate": {
+        "crown_y": 100,
+        "foot_y": 1142,
+        "anatomical_height": 1042,
+        "axis_landmark": {
+          "method": "saturated iris centroid",
+          "x": 428.54901960784315,
+          "y": 319.3790849673203,
+          "iris_centroids": [
+            {
+              "x": 428.54901960784315,
+              "y": 319.3790849673203,
+              "pixels": 612
+            }
+          ]
+        },
+        "foot_tip_x": 619.5305164319249,
+        "rgba_sha256": "14cad483af3bd09b91d8c04687817fe32ff8555ffb22c18358b2deb203916c2a"
+      },
+      "runtime_reference_px_per_source_px": 0.061112106017191976,
+      "residual_reference_px": {
+        "crown_y": 0.0,
+        "foot_y": 0.0,
+        "anatomical_height": 0.0,
+        "face_or_crown_axis_x": -0.021501087569453663,
+        "face_or_crown_axis_y": -0.7100054693805389,
+        "foot_tip_x": 0.5585470385796631
+      },
+      "baseline_anatomical_height_reference_px": 63.67881446991404,
+      "candidate_anatomical_height_reference_px": 63.67881446991404,
+      "sway_regions": [
+        {
+          "index": 0,
+          "kind": "hair",
+          "rect": [
+            958,
+            720,
+            110,
+            166
+          ],
+          "foreground_alpha_gt32": 15425
+        },
+        {
+          "index": 1,
+          "kind": "hem",
+          "rect": [
+            877,
+            1040,
+            155,
+            160
+          ],
+          "foreground_alpha_gt32": 3268
+        }
+      ],
+      "conservative_protected_rectangle_overlaps": [],
+      "automated_landmark_result": "PASS"
+    },
+    {
+      "direction": "right",
+      "file": "lumiere_hover_right.webp",
+      "baseline": {
+        "crown_y": 61,
+        "foot_y": 1154,
+        "anatomical_height": 1093,
+        "axis_landmark": {
+          "method": "saturated iris centroid",
+          "x": 832.7377049180328,
+          "y": 303.948087431694,
+          "iris_centroids": [
+            {
+              "x": 832.7377049180328,
+              "y": 303.948087431694,
+              "pixels": 366
+            }
+          ]
+        },
+        "foot_tip_x": 589.2490842490843,
+        "rgba_sha256": "3440194a86c06a3dd3cf6b691f893916803b265732fbbe416f33bd6f2433675e"
+      },
+      "candidate": {
+        "crown_y": 61,
+        "foot_y": 1154,
+        "anatomical_height": 1093,
+        "axis_landmark": {
+          "method": "saturated iris centroid",
+          "x": 833.0734463276837,
+          "y": 301.77024482109226,
+          "iris_centroids": [
+            {
+              "x": 833.0734463276837,
+              "y": 301.77024482109226,
+              "pixels": 531
+            }
+          ]
+        },
+        "foot_tip_x": 587.2206405693951,
+        "rgba_sha256": "7c156c13a5d97dc43460aaba4a8e38d1963c6eabd4d6d90e106809a37a1524b3"
+      },
+      "runtime_reference_px_per_source_px": 0.058167613636363635,
+      "residual_reference_px": {
+        "crown_y": 0.0,
+        "foot_y": 0.0,
+        "anatomical_height": 0.0,
+        "face_or_crown_axis_x": 0.019529276598297944,
+        "face_or_crown_axis_y": -0.1266799075342901,
+        "foot_tip_x": -0.11798972824328453
+      },
+      "baseline_anatomical_height_reference_px": 63.57720170454545,
+      "candidate_anatomical_height_reference_px": 63.57720170454545,
+      "sway_regions": [
+        {
+          "index": 0,
+          "kind": "hair",
+          "rect": [
+            160,
+            770,
+            130,
+            160
+          ],
+          "foreground_alpha_gt32": 12132
+        },
+        {
+          "index": 1,
+          "kind": "hem",
+          "rect": [
+            340,
+            1060,
+            105,
+            165
+          ],
+          "foreground_alpha_gt32": 9423
+        },
+        {
+          "index": 2,
+          "kind": "hem",
+          "rect": [
+            735,
+            1015,
+            90,
+            140
+          ],
+          "foreground_alpha_gt32": 5333
+        }
+      ],
+      "conservative_protected_rectangle_overlaps": [],
+      "automated_landmark_result": "PASS"
+    }
+  ],
+  "limitation": "Conservative rectangles plus semantic visual inspection support exclusion; these static measurements do not replace actual-motion pixel proof or device validation."
+}

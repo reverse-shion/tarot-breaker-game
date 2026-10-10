@@ -1,0 +1,229 @@
+{
+  "baseline": "aa65642bd9cfb771ea06f1a5ad3c9e6d1dbfddac",
+  "render": {
+    "reference_body_height": 420,
+    "reference_cell_height": 512,
+    "draw_cell_height": 78,
+    "bottom_gap": 2.7,
+    "bob_amplitude": 2.4,
+    "bob_period": 5.2
+  },
+  "records": [
+    {
+      "direction": "down",
+      "file": "lumiere_idle.webp",
+      "source_commit": "925cf3a297874b15384fec86a2bdc8c38c536318",
+      "old_blob": "c66c0aad1fc456a55744e8d5c766a7b745498b62",
+      "input_blob": "99579abeca9a2673b5785902f6fea27985d7b8e9",
+      "anchor": {
+        "body_top": 60,
+        "baseline_y": 1168,
+        "center_x": 620
+      },
+      "old": {
+        "bytes": 1145548,
+        "sha256": "e1af4771a667986830f9b02a22ecfd815f8fde2a6f0ee81a34d7c6f679f6b3c3",
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          0,
+          12,
+          1214,
+          1230
+        ],
+        "decoded_rgba_sha256": "c71d23b3473a5547302c0574825142afa200aeea9c525f493a385effa3ecc0ed"
+      },
+      "input": {
+        "bytes": 1769761,
+        "sha256": "9e623cbc2f04d0966f30aec7c0cce84b7a0b359733a547479fc792ef8dadf724",
+        "format": "PNG",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          95,
+          27,
+          1158,
+          1212
+        ],
+        "decoded_rgba_sha256": "ea2d135c1d4abd61f89119c8f956b49f25788a887f73e3dafaf963873383e022"
+      }
+    },
+    {
+      "direction": "up",
+      "file": "lumiere_hover-back.webp",
+      "source_commit": "f980b92706da9361f25e0195083f768b941ffcb8",
+      "old_blob": "48152b68ecf23944bacb286fa2cabc6087d0cf72",
+      "input_blob": "d052a34cab6179e5dbb9dd5273cb5dc0190d0395",
+      "anchor": {
+        "body_top": 74,
+        "baseline_y": 1127,
+        "center_x": 628
+      },
+      "old": {
+        "bytes": 1144816,
+        "sha256": "1fb1fe0f43efe71eb59106a9f71d26ebb9342faa24cae38e0203321c47046b95",
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          0,
+          9,
+          1210,
+          1238
+        ],
+        "decoded_rgba_sha256": "f322fd91e49fd0b34cabde18f4823948b3314086a8064c86d5f0c62d00ece78a"
+      },
+      "input": {
+        "bytes": 1920580,
+        "sha256": "a3c759f7cee915425bb398439da42907952f23f859355520be31af3364c0b63e",
+        "format": "PNG",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          40,
+          44,
+          1212,
+          1201
+        ],
+        "decoded_rgba_sha256": "9f55936154a7019db1187ef7081c020c63543e7672b856f581d9e3fe9b1d6f49"
+      }
+    },
+    {
+      "direction": "left",
+      "file": "lumiere_hover_left.webp",
+      "source_commit": "ab3fc22d8128ff28432871f3a2fa00887bb88e21",
+      "old_blob": "541a45eb8166d597362ed669b2fdd015fc670eb7",
+      "input_blob": "378a91e0dbaa10b5226442f78fee0c0d6ead2b1c",
+      "anchor": {
+        "body_top": 97,
+        "baseline_y": 1144,
+        "center_x": 480
+      },
+      "old": {
+        "bytes": 949688,
+        "sha256": "a44d19636ad714191c1b256169d0bb8f7a99b55ec56fb9b66666681b18d35bd6",
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          45,
+          31,
+          1218,
+          1214
+        ],
+        "decoded_rgba_sha256": "c1dcd3e8963c6b3b3bf4de13f7a2a60410d9fdb8ae16ec3cb90f5d5831a53f8c"
+      },
+      "input": {
+        "bytes": 1376610,
+        "sha256": "cdd005299ba5a1de294d56622cac681af99eed5aaea773716bce204ac3cb4357",
+        "format": "PNG",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          254,
+          61,
+          1124,
+          1159
+        ],
+        "decoded_rgba_sha256": "8f38705bfafbae6b24c4ef5c6d9dc89add434bf6729d34d2ba1837bec0ac7b6b"
+      }
+    },
+    {
+      "direction": "right",
+      "file": "lumiere_hover_right.webp",
+      "source_commit": "559eba6d64b0fffb3cb0d7e28938bf0f62389ee3",
+      "old_blob": "aa87b7a7469846e71ff21571e4a32b4a5a3b001f",
+      "input_blob": "7e83bd65bdb13405d0ba226db9a92a05ecc3a41d",
+      "anchor": {
+        "body_top": 58,
+        "baseline_y": 1158,
+        "center_x": 785
+      },
+      "old": {
+        "bytes": 1050786,
+        "sha256": "bae0502a923d3ad27bc9a0705faf0668b94f36847862308ede29f0a45e597999",
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          21,
+          17,
+          1236,
+          1238
+        ],
+        "decoded_rgba_sha256": "3440194a86c06a3dd3cf6b691f893916803b265732fbbe416f33bd6f2433675e"
+      },
+      "input": {
+        "bytes": 1580931,
+        "sha256": "201d5656b2cdaa011bbfa4fa43782a269864374d3a8d85c600a0bd25ee356931",
+        "format": "PNG",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "bbox": [
+          112,
+          58,
+          1074,
+          1199
+        ],
+        "decoded_rgba_sha256": "419aac48a20c2aa8201cc8fe1e62eeff63fd993b7361ba8df4f2856163171fb7"
+      }
+    }
+  ]
+}

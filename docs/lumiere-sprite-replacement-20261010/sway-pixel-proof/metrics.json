@@ -1,0 +1,974 @@
+{
+  "engine": "@napi-rs/canvas software rendering, NOT Safari or Device PASS",
+  "moduleSha256": "3d82c7acd1207e2e30feb0882545c9c6167f10da74b76207c79d485fc1dfcc19",
+  "directions": [
+    {
+      "direction": "down",
+      "width": 218,
+      "height": 218,
+      "cacheBytes": 923768,
+      "originalAssetSha256": "6bd7f477eeb1af929d01cc83b53f82ac8611d9fb402b4b7b70253d9ee213ac46",
+      "regions": [
+        {
+          "x": 27,
+          "y": 137,
+          "w": 27,
+          "h": 39,
+          "kind": "hair"
+        },
+        {
+          "x": 163,
+          "y": 137,
+          "w": 29,
+          "h": 39,
+          "kind": "hair"
+        },
+        {
+          "x": 60,
+          "y": 180,
+          "w": 27,
+          "h": 32,
+          "kind": "hem"
+        },
+        {
+          "x": 130,
+          "y": 180,
+          "w": 27,
+          "h": 32,
+          "kind": "hem"
+        }
+      ],
+      "zeroMotionIdentical": true,
+      "perFrameAllocations": 0,
+      "perFrameReadbacks": 0,
+      "perFramePixelWrites": 0,
+      "samples": [
+        {
+          "phase": 0,
+          "outside": 0,
+          "border": 0,
+          "inside": 1900
+        },
+        {
+          "phase": 0.19634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 1812
+        },
+        {
+          "phase": 0.39269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 1581
+        },
+        {
+          "phase": 0.5890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 1717
+        },
+        {
+          "phase": 0.7853981633974483,
+          "outside": 0,
+          "border": 0,
+          "inside": 1791
+        },
+        {
+          "phase": 0.9817477042468103,
+          "outside": 0,
+          "border": 0,
+          "inside": 1904
+        },
+        {
+          "phase": 1.1780972450961724,
+          "outside": 0,
+          "border": 0,
+          "inside": 1953
+        },
+        {
+          "phase": 1.3744467859455345,
+          "outside": 0,
+          "border": 0,
+          "inside": 2003
+        },
+        {
+          "phase": 1.5707963267948966,
+          "outside": 0,
+          "border": 0,
+          "inside": 2030
+        },
+        {
+          "phase": 1.7671458676442586,
+          "outside": 0,
+          "border": 0,
+          "inside": 2044
+        },
+        {
+          "phase": 1.9634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 2036
+        },
+        {
+          "phase": 2.1598449493429825,
+          "outside": 0,
+          "border": 0,
+          "inside": 2048
+        },
+        {
+          "phase": 2.356194490192345,
+          "outside": 0,
+          "border": 0,
+          "inside": 2050
+        },
+        {
+          "phase": 2.552544031041707,
+          "outside": 0,
+          "border": 0,
+          "inside": 2031
+        },
+        {
+          "phase": 2.748893571891069,
+          "outside": 0,
+          "border": 0,
+          "inside": 2004
+        },
+        {
+          "phase": 2.945243112740431,
+          "outside": 0,
+          "border": 0,
+          "inside": 1973
+        },
+        {
+          "phase": 3.141592653589793,
+          "outside": 0,
+          "border": 0,
+          "inside": 1896
+        },
+        {
+          "phase": 3.3379421944391554,
+          "outside": 0,
+          "border": 0,
+          "inside": 1818
+        },
+        {
+          "phase": 3.5342917352885173,
+          "outside": 0,
+          "border": 0,
+          "inside": 1598
+        },
+        {
+          "phase": 3.730641276137879,
+          "outside": 0,
+          "border": 0,
+          "inside": 1775
+        },
+        {
+          "phase": 3.9269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 1795
+        },
+        {
+          "phase": 4.123340357836604,
+          "outside": 0,
+          "border": 0,
+          "inside": 1888
+        },
+        {
+          "phase": 4.319689898685965,
+          "outside": 0,
+          "border": 0,
+          "inside": 1946
+        },
+        {
+          "phase": 4.516039439535327,
+          "outside": 0,
+          "border": 0,
+          "inside": 2004
+        },
+        {
+          "phase": 4.71238898038469,
+          "outside": 0,
+          "border": 0,
+          "inside": 2015
+        },
+        {
+          "phase": 4.908738521234052,
+          "outside": 0,
+          "border": 0,
+          "inside": 2056
+        },
+        {
+          "phase": 5.105088062083414,
+          "outside": 0,
+          "border": 0,
+          "inside": 2033
+        },
+        {
+          "phase": 5.301437602932776,
+          "outside": 0,
+          "border": 0,
+          "inside": 2058
+        },
+        {
+          "phase": 5.497787143782138,
+          "outside": 0,
+          "border": 0,
+          "inside": 2052
+        },
+        {
+          "phase": 5.6941366846315,
+          "outside": 0,
+          "border": 0,
+          "inside": 2042
+        },
+        {
+          "phase": 5.890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 2008
+        },
+        {
+          "phase": 6.086835766330224,
+          "outside": 0,
+          "border": 0,
+          "inside": 1966
+        },
+        {
+          "phase": 1.8366233974832635,
+          "outside": 0,
+          "border": 0,
+          "inside": 2041
+        },
+        {
+          "phase": 4.978216051073057,
+          "outside": 0,
+          "border": 0,
+          "inside": 2051
+        }
+      ]
+    },
+    {
+      "direction": "up",
+      "width": 229,
+      "height": 229,
+      "cacheBytes": 985808,
+      "originalAssetSha256": "fe4d22c5e72ea1b8bbb09b29dd48bde82bf1c244574e1893056025ef43648602",
+      "regions": [
+        {
+          "x": 31,
+          "y": 144,
+          "w": 28,
+          "h": 35,
+          "kind": "hair"
+        },
+        {
+          "x": 173,
+          "y": 144,
+          "w": 27,
+          "h": 35,
+          "kind": "hair"
+        },
+        {
+          "x": 63,
+          "y": 193,
+          "w": 33,
+          "h": 30,
+          "kind": "hem"
+        },
+        {
+          "x": 132,
+          "y": 193,
+          "w": 33,
+          "h": 30,
+          "kind": "hem"
+        }
+      ],
+      "zeroMotionIdentical": true,
+      "perFrameAllocations": 0,
+      "perFrameReadbacks": 0,
+      "perFramePixelWrites": 0,
+      "samples": [
+        {
+          "phase": 0,
+          "outside": 0,
+          "border": 0,
+          "inside": 1913
+        },
+        {
+          "phase": 0.19634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 1806
+        },
+        {
+          "phase": 0.39269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 1589
+        },
+        {
+          "phase": 0.5890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 1729
+        },
+        {
+          "phase": 0.7853981633974483,
+          "outside": 0,
+          "border": 0,
+          "inside": 1825
+        },
+        {
+          "phase": 0.9817477042468103,
+          "outside": 0,
+          "border": 0,
+          "inside": 1939
+        },
+        {
+          "phase": 1.1780972450961724,
+          "outside": 0,
+          "border": 0,
+          "inside": 2010
+        },
+        {
+          "phase": 1.3744467859455345,
+          "outside": 0,
+          "border": 0,
+          "inside": 2056
+        },
+        {
+          "phase": 1.5707963267948966,
+          "outside": 0,
+          "border": 0,
+          "inside": 2083
+        },
+        {
+          "phase": 1.7671458676442586,
+          "outside": 0,
+          "border": 0,
+          "inside": 2121
+        },
+        {
+          "phase": 1.9634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 2108
+        },
+        {
+          "phase": 2.1598449493429825,
+          "outside": 0,
+          "border": 0,
+          "inside": 2131
+        },
+        {
+          "phase": 2.356194490192345,
+          "outside": 0,
+          "border": 0,
+          "inside": 2120
+        },
+        {
+          "phase": 2.552544031041707,
+          "outside": 0,
+          "border": 0,
+          "inside": 2105
+        },
+        {
+          "phase": 2.748893571891069,
+          "outside": 0,
+          "border": 0,
+          "inside": 2056
+        },
+        {
+          "phase": 2.945243112740431,
+          "outside": 0,
+          "border": 0,
+          "inside": 2022
+        },
+        {
+          "phase": 3.141592653589793,
+          "outside": 0,
+          "border": 0,
+          "inside": 1947
+        },
+        {
+          "phase": 3.3379421944391554,
+          "outside": 0,
+          "border": 0,
+          "inside": 1853
+        },
+        {
+          "phase": 3.5342917352885173,
+          "outside": 0,
+          "border": 0,
+          "inside": 1607
+        },
+        {
+          "phase": 3.730641276137879,
+          "outside": 0,
+          "border": 0,
+          "inside": 1784
+        },
+        {
+          "phase": 3.9269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 1797
+        },
+        {
+          "phase": 4.123340357836604,
+          "outside": 0,
+          "border": 0,
+          "inside": 1903
+        },
+        {
+          "phase": 4.319689898685965,
+          "outside": 0,
+          "border": 0,
+          "inside": 1980
+        },
+        {
+          "phase": 4.516039439535327,
+          "outside": 0,
+          "border": 0,
+          "inside": 2028
+        },
+        {
+          "phase": 4.71238898038469,
+          "outside": 0,
+          "border": 0,
+          "inside": 2047
+        },
+        {
+          "phase": 4.908738521234052,
+          "outside": 0,
+          "border": 0,
+          "inside": 2087
+        },
+        {
+          "phase": 5.105088062083414,
+          "outside": 0,
+          "border": 0,
+          "inside": 2069
+        },
+        {
+          "phase": 5.301437602932776,
+          "outside": 0,
+          "border": 0,
+          "inside": 2094
+        },
+        {
+          "phase": 5.497787143782138,
+          "outside": 0,
+          "border": 0,
+          "inside": 2092
+        },
+        {
+          "phase": 5.6941366846315,
+          "outside": 0,
+          "border": 0,
+          "inside": 2074
+        },
+        {
+          "phase": 5.890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 2042
+        },
+        {
+          "phase": 6.086835766330224,
+          "outside": 0,
+          "border": 0,
+          "inside": 1993
+        },
+        {
+          "phase": 1.8366233974832635,
+          "outside": 0,
+          "border": 0,
+          "inside": 2118
+        },
+        {
+          "phase": 4.978216051073057,
+          "outside": 0,
+          "border": 0,
+          "inside": 2082
+        }
+      ]
+    },
+    {
+      "direction": "left",
+      "width": 230,
+      "height": 230,
+      "cacheBytes": 668720,
+      "originalAssetSha256": "d7dae3d676287aba1d4a62a93e33efef33be2873e683907fc01538739c806dae",
+      "regions": [
+        {
+          "x": 175,
+          "y": 132,
+          "w": 21,
+          "h": 31,
+          "kind": "hair"
+        },
+        {
+          "x": 160,
+          "y": 190,
+          "w": 30,
+          "h": 31,
+          "kind": "hem"
+        }
+      ],
+      "zeroMotionIdentical": true,
+      "perFrameAllocations": 0,
+      "perFrameReadbacks": 0,
+      "perFramePixelWrites": 0,
+      "samples": [
+        {
+          "phase": 0,
+          "outside": 0,
+          "border": 0,
+          "inside": 593
+        },
+        {
+          "phase": 0.19634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 554
+        },
+        {
+          "phase": 0.39269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 446
+        },
+        {
+          "phase": 0.5890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 536
+        },
+        {
+          "phase": 0.7853981633974483,
+          "outside": 0,
+          "border": 0,
+          "inside": 561
+        },
+        {
+          "phase": 0.9817477042468103,
+          "outside": 0,
+          "border": 0,
+          "inside": 597
+        },
+        {
+          "phase": 1.1780972450961724,
+          "outside": 0,
+          "border": 0,
+          "inside": 611
+        },
+        {
+          "phase": 1.3744467859455345,
+          "outside": 0,
+          "border": 0,
+          "inside": 620
+        },
+        {
+          "phase": 1.5707963267948966,
+          "outside": 0,
+          "border": 0,
+          "inside": 620
+        },
+        {
+          "phase": 1.7671458676442586,
+          "outside": 0,
+          "border": 0,
+          "inside": 627
+        },
+        {
+          "phase": 1.9634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 618
+        },
+        {
+          "phase": 2.1598449493429825,
+          "outside": 0,
+          "border": 0,
+          "inside": 627
+        },
+        {
+          "phase": 2.356194490192345,
+          "outside": 0,
+          "border": 0,
+          "inside": 625
+        },
+        {
+          "phase": 2.552544031041707,
+          "outside": 0,
+          "border": 0,
+          "inside": 626
+        },
+        {
+          "phase": 2.748893571891069,
+          "outside": 0,
+          "border": 0,
+          "inside": 613
+        },
+        {
+          "phase": 2.945243112740431,
+          "outside": 0,
+          "border": 0,
+          "inside": 606
+        },
+        {
+          "phase": 3.141592653589793,
+          "outside": 0,
+          "border": 0,
+          "inside": 593
+        },
+        {
+          "phase": 3.3379421944391554,
+          "outside": 0,
+          "border": 0,
+          "inside": 556
+        },
+        {
+          "phase": 3.5342917352885173,
+          "outside": 0,
+          "border": 0,
+          "inside": 461
+        },
+        {
+          "phase": 3.730641276137879,
+          "outside": 0,
+          "border": 0,
+          "inside": 536
+        },
+        {
+          "phase": 3.9269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 554
+        },
+        {
+          "phase": 4.123340357836604,
+          "outside": 0,
+          "border": 0,
+          "inside": 582
+        },
+        {
+          "phase": 4.319689898685965,
+          "outside": 0,
+          "border": 0,
+          "inside": 594
+        },
+        {
+          "phase": 4.516039439535327,
+          "outside": 0,
+          "border": 0,
+          "inside": 609
+        },
+        {
+          "phase": 4.71238898038469,
+          "outside": 0,
+          "border": 0,
+          "inside": 603
+        },
+        {
+          "phase": 4.908738521234052,
+          "outside": 0,
+          "border": 0,
+          "inside": 614
+        },
+        {
+          "phase": 5.105088062083414,
+          "outside": 0,
+          "border": 0,
+          "inside": 609
+        },
+        {
+          "phase": 5.301437602932776,
+          "outside": 0,
+          "border": 0,
+          "inside": 618
+        },
+        {
+          "phase": 5.497787143782138,
+          "outside": 0,
+          "border": 0,
+          "inside": 621
+        },
+        {
+          "phase": 5.6941366846315,
+          "outside": 0,
+          "border": 0,
+          "inside": 618
+        },
+        {
+          "phase": 5.890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 611
+        },
+        {
+          "phase": 6.086835766330224,
+          "outside": 0,
+          "border": 0,
+          "inside": 600
+        },
+        {
+          "phase": 1.8366233974832635,
+          "outside": 0,
+          "border": 0,
+          "inside": 628
+        },
+        {
+          "phase": 4.978216051073057,
+          "outside": 0,
+          "border": 0,
+          "inside": 620
+        }
+      ]
+    },
+    {
+      "direction": "right",
+      "width": 219,
+      "height": 219,
+      "cacheBytes": 646632,
+      "originalAssetSha256": "50ba44cd184520343586058abf5e4df5ab9d52973332eb1a2c7cb978ab5542bd",
+      "regions": [
+        {
+          "x": 27,
+          "y": 134,
+          "w": 24,
+          "h": 29,
+          "kind": "hair"
+        },
+        {
+          "x": 59,
+          "y": 185,
+          "w": 19,
+          "h": 29,
+          "kind": "hem"
+        },
+        {
+          "x": 128,
+          "y": 177,
+          "w": 17,
+          "h": 25,
+          "kind": "hem"
+        }
+      ],
+      "zeroMotionIdentical": true,
+      "perFrameAllocations": 0,
+      "perFrameReadbacks": 0,
+      "perFramePixelWrites": 0,
+      "samples": [
+        {
+          "phase": 0,
+          "outside": 0,
+          "border": 0,
+          "inside": 925
+        },
+        {
+          "phase": 0.19634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 892
+        },
+        {
+          "phase": 0.39269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 802
+        },
+        {
+          "phase": 0.5890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 807
+        },
+        {
+          "phase": 0.7853981633974483,
+          "outside": 0,
+          "border": 0,
+          "inside": 821
+        },
+        {
+          "phase": 0.9817477042468103,
+          "outside": 0,
+          "border": 0,
+          "inside": 870
+        },
+        {
+          "phase": 1.1780972450961724,
+          "outside": 0,
+          "border": 0,
+          "inside": 911
+        },
+        {
+          "phase": 1.3744467859455345,
+          "outside": 0,
+          "border": 0,
+          "inside": 908
+        },
+        {
+          "phase": 1.5707963267948966,
+          "outside": 0,
+          "border": 0,
+          "inside": 919
+        },
+        {
+          "phase": 1.7671458676442586,
+          "outside": 0,
+          "border": 0,
+          "inside": 936
+        },
+        {
+          "phase": 1.9634954084936207,
+          "outside": 0,
+          "border": 0,
+          "inside": 928
+        },
+        {
+          "phase": 2.1598449493429825,
+          "outside": 0,
+          "border": 0,
+          "inside": 945
+        },
+        {
+          "phase": 2.356194490192345,
+          "outside": 0,
+          "border": 0,
+          "inside": 939
+        },
+        {
+          "phase": 2.552544031041707,
+          "outside": 0,
+          "border": 0,
+          "inside": 938
+        },
+        {
+          "phase": 2.748893571891069,
+          "outside": 0,
+          "border": 0,
+          "inside": 913
+        },
+        {
+          "phase": 2.945243112740431,
+          "outside": 0,
+          "border": 0,
+          "inside": 896
+        },
+        {
+          "phase": 3.141592653589793,
+          "outside": 0,
+          "border": 0,
+          "inside": 878
+        },
+        {
+          "phase": 3.3379421944391554,
+          "outside": 0,
+          "border": 0,
+          "inside": 861
+        },
+        {
+          "phase": 3.5342917352885173,
+          "outside": 0,
+          "border": 0,
+          "inside": 784
+        },
+        {
+          "phase": 3.730641276137879,
+          "outside": 0,
+          "border": 0,
+          "inside": 844
+        },
+        {
+          "phase": 3.9269908169872414,
+          "outside": 0,
+          "border": 0,
+          "inside": 831
+        },
+        {
+          "phase": 4.123340357836604,
+          "outside": 0,
+          "border": 0,
+          "inside": 894
+        },
+        {
+          "phase": 4.319689898685965,
+          "outside": 0,
+          "border": 0,
+          "inside": 947
+        },
+        {
+          "phase": 4.516039439535327,
+          "outside": 0,
+          "border": 0,
+          "inside": 961
+        },
+        {
+          "phase": 4.71238898038469,
+          "outside": 0,
+          "border": 0,
+          "inside": 983
+        },
+        {
+          "phase": 4.908738521234052,
+          "outside": 0,
+          "border": 0,
+          "inside": 996
+        },
+        {
+          "phase": 5.105088062083414,
+          "outside": 0,
+          "border": 0,
+          "inside": 991
+        },
+        {
+          "phase": 5.301437602932776,
+          "outside": 0,
+          "border": 0,
+          "inside": 1010
+        },
+        {
+          "phase": 5.497787143782138,
+          "outside": 0,
+          "border": 0,
+          "inside": 1000
+        },
+        {
+          "phase": 5.6941366846315,
+          "outside": 0,
+          "border": 0,
+          "inside": 1007
+        },
+        {
+          "phase": 5.890486225480862,
+          "outside": 0,
+          "border": 0,
+          "inside": 976
+        },
+        {
+          "phase": 6.086835766330224,
+          "outside": 0,
+          "border": 0,
+          "inside": 955
+        },
+        {
+          "phase": 1.8366233974832635,
+          "outside": 0,
+          "border": 0,
+          "inside": 930
+        },
+        {
+          "phase": 4.978216051073057,
+          "outside": 0,
+          "border": 0,
+          "inside": 992
+        }
+      ]
+    }
+  ],
+  "totalCacheBytes": 3224928
+}
