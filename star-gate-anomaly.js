@@ -33,52 +33,62 @@ let session=null,sessionId=0,lastResult=null;
 const preparedImages=new Map();
 function createGateSfx(signal){
  const tracks=new Map(),active=new Set();
- const volumes={lightDown:.90,lightCycle:.86,corruptSpread:1,darkUp:.96};
- const duckLevels={lightDown:.26,lightCycle:.30,corruptSpread:.14,darkUp:.20};
- const restoreLevel=()=>session?.p0?.audio?.coefficient??1;
- const applyDuck=()=>{
-  const level=active.size
-   ?Math.min(...[...active].map(name=>duckLevels[name]??.28))
-   :restoreLevel();
-  session?.audio?.tweenCoefficient?.(level,active.size?150:420,false);
+ const volumes={lightDown:1,lightCycle:1,corruptSpread:1,darkUp:1};
+ let bgmSnapshot=null,bgmHardMuted=false;
+ const hardMuteBgm=()=>{
+  const audio=session?.audio;if(!audio||bgmHardMuted)return;
+  bgmSnapshot=audio.capture();audio.holdSilent();bgmHardMuted=true;
  };
- const ended=name=>{active.delete(name);const media=tracks.get(name);if(media)media.loop=false;applyDuck();};
+ const restoreBgm=()=>{
+  if(active.size||!bgmHardMuted)return;
+  const audio=session?.audio,snapshot=bgmSnapshot;
+  bgmHardMuted=false;bgmSnapshot=null;
+  if(!audio||!snapshot)return;
+  audio.setBase(snapshot.base);audio.setLevel(snapshot.coefficient);
+  if(!audio.revealSilent(snapshot))session?.audioFailures?.push?.("gate-sfx:bgm-restore-failed");
+ };
+ const clearWithoutRestore=()=>{
+  for(const media of tracks.values()){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
+  active.clear();bgmHardMuted=false;bgmSnapshot=null;
+ };
+ const ended=name=>{active.delete(name);const media=tracks.get(name);if(media)media.loop=false;restoreBgm();};
  const get=name=>{
   if(tracks.has(name))return tracks.get(name);
   const src=GATE_SFX[name];if(!src)throw new Error("Unknown Star Gate SFX: "+name);
   const media=new Audio(src);media.preload="auto";media.loop=false;media.setAttribute("playsinline","");
-  media.volume=volumes[name]??.86;
+  media.volume=volumes[name]??1;
   media.addEventListener("ended",()=>ended(name));
   tracks.set(name,media);return media;
  };
  const prepare=()=>{for(const name of Object.keys(GATE_SFX)){const media=get(name);try{media.load()}catch{}}};
  const stop=name=>{
   const media=tracks.get(name);if(media){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
-  active.delete(name);applyDuck();
+  active.delete(name);restoreBgm();
  };
  const stopAll=()=>{
   for(const media of tracks.values()){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
-  active.clear();applyDuck();
+  active.clear();restoreBgm();
  };
  const play=(name,{loop=false}={})=>{
   if(signal?.aborted||window.TarotAudio?.enabled===false)return false;
   const media=get(name);media.pause();try{media.currentTime=0}catch{}
-  media.loop=!!loop;media.muted=false;media.volume=volumes[name]??.86;
-  active.add(name);applyDuck();
+  media.loop=!!loop;media.muted=false;media.volume=volumes[name]??1;
+  active.add(name);hardMuteBgm();
   try{
    const pending=media.play();
    pending?.catch?.(()=>{
-    active.delete(name);applyDuck();
+    active.delete(name);restoreBgm();
     if(!signal?.aborted&&window.TarotAudio?.enabled!==false)session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed");
    });
    return true;
   }catch{
-   active.delete(name);applyDuck();
+   active.delete(name);restoreBgm();
    session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed");return false
   }
  };
- const dispose=()=>{stopAll();signal?.removeEventListener?.("abort",stopAll)};
- signal?.addEventListener?.("abort",stopAll,{once:true});
+ const abort=()=>clearWithoutRestore();
+ const dispose=()=>{if(signal?.aborted)clearWithoutRestore();else stopAll();signal?.removeEventListener?.("abort",abort)};
+ signal?.addEventListener?.("abort",abort,{once:true});
  return Object.freeze({prepare,play,stop,stopAll,dispose});
 }
 function image(src){
@@ -526,13 +536,15 @@ async function playDarkEnergyReverse(){
  shell.classList.remove("sga-dark-01-02-overlap");await pause(400);
  setGateState("sga-dark-frame-03");shell.classList.add("sga-dark-02-03-overlap");await pause(180);
  shell.classList.remove("sga-dark-02-03-overlap");await pause(420);
+ session?.gateSfx?.play("darkUp");
+ session?.gateSfx?.stop("corruptSpread");
  setGateState("sga-dark-frame-04");shell.classList.add("sga-dark-03-04-overlap");await pause(150);
  shell.classList.remove("sga-dark-03-04-overlap");await pause(450);
- session?.gateSfx?.stop("corruptSpread");
- setGateState("sga-dark-frame-rise");session?.gateSfx?.play("darkUp");
+ setGateState("sga-dark-frame-rise");
  await pause(850);
  setGateState("sga-dark-afterglow");
  await pause(360);
+ session?.gateSfx?.stop("darkUp");
 }
 function gateIsFramed(state){
  const {origin,camera,viewport,scale}=state||{};if(!origin||!camera||!viewport||!scale)return false;
@@ -592,7 +604,7 @@ async function resonance(){
  setGateState("sga-anomaly-rest");await pause(700);
  await say("lumiere","……？");
  const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
- camera.release();gateShell()?.classList.remove("sga-sequence-active");session?.gateSfx?.stop("darkUp");await pause(220);
+ camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
  const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
  if(!samePoint(shionStart,shionEnd))throw new Error("Shion moved during Star Gate cinematic");
 }
