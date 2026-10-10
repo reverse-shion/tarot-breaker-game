@@ -1,0 +1,54 @@
+[
+  {
+    "direction": "down",
+    "file": "lumiere_idle.webp",
+    "format": "WEBP",
+    "mode": "RGBA",
+    "width": 1254,
+    "height": 1254,
+    "transparent_pixels": 846418,
+    "partial_alpha_pixels": 14654,
+    "opaque_pixels": 711444,
+    "tiny_disconnected_components": 0,
+    "image_sha256": "6bd7f477eeb1af929d01cc83b53f82ac8611d9fb402b4b7b70253d9ee213ac46"
+  },
+  {
+    "direction": "up",
+    "file": "lumiere_hover-back.webp",
+    "format": "WEBP",
+    "mode": "RGBA",
+    "width": 1254,
+    "height": 1254,
+    "transparent_pixels": 780930,
+    "partial_alpha_pixels": 15937,
+    "opaque_pixels": 775649,
+    "tiny_disconnected_components": 0,
+    "image_sha256": "fe4d22c5e72ea1b8bbb09b29dd48bde82bf1c244574e1893056025ef43648602"
+  },
+  {
+    "direction": "left",
+    "file": "lumiere_hover_left.webp",
+    "format": "WEBP",
+    "mode": "RGBA",
+    "width": 1254,
+    "height": 1254,
+    "transparent_pixels": 1002288,
+    "partial_alpha_pixels": 11432,
+    "opaque_pixels": 558796,
+    "tiny_disconnected_components": 0,
+    "image_sha256": "d7dae3d676287aba1d4a62a93e33efef33be2873e683907fc01538739c806dae"
+  },
+  {
+    "direction": "right",
+    "file": "lumiere_hover_right.webp",
+    "format": "WEBP",
+    "mode": "RGBA",
+    "width": 1254,
+    "height": 1254,
+    "transparent_pixels": 890686,
+    "partial_alpha_pixels": 12370,
+    "opaque_pixels": 669460,
+    "tiny_disconnected_components": 0,
+    "image_sha256": "50ba44cd184520343586058abf5e4df5ab9d52973332eb1a2c7cb978ab5542bd"
+  }
+]

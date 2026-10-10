@@ -1,0 +1,90 @@
+{
+  "engine": "Chromium with controlled clock, NOT device performance or iPhone PASS",
+  "issues": [],
+  "directions": [
+    {
+      "direction": "down",
+      "simulatedMs": 10500,
+      "frames": 656,
+      "bobPeakToPeakReferencePx": 4.799940432123947,
+      "measured_peak_period_ms": [
+        5200
+      ],
+      "peak_times_ms": [
+        6624,
+        11824
+      ]
+    },
+    {
+      "direction": "up",
+      "simulatedMs": 10500,
+      "frames": 656,
+      "bobPeakToPeakReferencePx": 4.799940432123947,
+      "measured_peak_period_ms": [
+        5200
+      ],
+      "peak_times_ms": [
+        17024,
+        22224
+      ]
+    },
+    {
+      "direction": "left",
+      "simulatedMs": 10500,
+      "frames": 656,
+      "bobPeakToPeakReferencePx": 4.799940432123947,
+      "measured_peak_period_ms": [
+        5200
+      ],
+      "peak_times_ms": [
+        27424,
+        32624
+      ]
+    },
+    {
+      "direction": "right",
+      "simulatedMs": 10500,
+      "frames": 657,
+      "bobPeakToPeakReferencePx": 4.799940432123947,
+      "measured_peak_period_ms": [
+        5200
+      ],
+      "peak_times_ms": [
+        37824,
+        43024
+      ]
+    }
+  ],
+  "movement": {
+    "actors": {
+      "shion": {
+        "x": 810,
+        "y": 366.88000000000056,
+        "dir": "down"
+      },
+      "shiopon": {
+        "x": 800.4879957581969,
+        "y": 409.8395364884675,
+        "dir": "down"
+      },
+      "lumiere": {
+        "x": 810,
+        "y": 212,
+        "dir": "right"
+      }
+    },
+    "motions": {
+      "shion": null,
+      "shiopon": null,
+      "lumiere": null
+    }
+  },
+  "runtime_sha": "43575846ece577693c26cc4ac1910e15336ecd92",
+  "asset_sha256": {
+    "down": "6bd7f477eeb1af929d01cc83b53f82ac8611d9fb402b4b7b70253d9ee213ac46",
+    "up": "fe4d22c5e72ea1b8bbb09b29dd48bde82bf1c244574e1893056025ef43648602",
+    "left": "d7dae3d676287aba1d4a62a93e33efef33be2873e683907fc01538739c806dae",
+    "right": "50ba44cd184520343586058abf5e4df5ab9d52973332eb1a2c7cb978ab5542bd"
+  },
+  "full_samples_sha256": "bc36a3243da6195b9bbc730e9f7480e5cd38f35a90eb50c08d281c15622765fa"
+}
