@@ -1,0 +1,143 @@
+{
+  "baseline_main_sha": "aa65642bd9cfb771ea06f1a5ad3c9e6d1dbfddac",
+  "runtime_sha": "43575846ece577693c26cc4ac1910e15336ecd92",
+  "reviewed_snapshot_sha": "5cbe3608d099f85fc167ecd657ced3fb965eb4b0",
+  "changes": [
+    "assets/sprites/lumiere/lumiere_hover-back.webp",
+    "assets/sprites/lumiere/lumiere_hover_left.webp",
+    "assets/sprites/lumiere/lumiere_hover_right.webp",
+    "assets/sprites/lumiere/lumiere_idle.webp",
+    "assets/sprites/lumiere/lumiere_sprite_manifest.json",
+    "docs/lumiere-sprite-replacement-20261010/README.md",
+    "docs/lumiere-sprite-replacement-20261010/anatomical-landmarks.json",
+    "docs/lumiere-sprite-replacement-20261010/baseline-input.json",
+    "docs/lumiere-sprite-replacement-20261010/build-clean-preview.py",
+    "docs/lumiere-sprite-replacement-20261010/final-anatomical-contact.png",
+    "docs/lumiere-sprite-replacement-20261010/final-candidate-anatomy-report.md",
+    "docs/lumiere-sprite-replacement-20261010/final-candidate-landmarks.json",
+    "docs/lumiere-sprite-replacement-20261010/final-region-crops.png",
+    "docs/lumiere-sprite-replacement-20261010/fixed-preview-checks.json",
+    "docs/lumiere-sprite-replacement-20261010/fixed-preview-portrait.png",
+    "docs/lumiere-sprite-replacement-20261010/implementation-contract.md",
+    "docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html",
+    "docs/lumiere-sprite-replacement-20261010/measure-final-landmarks.py",
+    "docs/lumiere-sprite-replacement-20261010/preview-controls.html",
+    "docs/lumiere-sprite-replacement-20261010/register-images.py",
+    "docs/lumiere-sprite-replacement-20261010/registration.json",
+    "docs/lumiere-sprite-replacement-20261010/sway-pixel-proof/contact.png",
+    "docs/lumiere-sprite-replacement-20261010/sway-pixel-proof/metrics.json",
+    "tests/fixtures/lumiere-preview-manifest-9e8a85d.json",
+    "tests/lumiere-b-preview.test.cjs",
+    "tests/lumiere-official-replacement.test.cjs",
+    "tests/lumiere-release-preview.test.cjs"
+  ],
+  "unexpected_changes": [],
+  "protected_files": {
+    "index.html": {
+      "baseline_blob": "180cb23f206f8715bb996e8a9296e90eda634e24",
+      "candidate_blob": "180cb23f206f8715bb996e8a9296e90eda634e24",
+      "byte_identical": true
+    },
+    "game.js": {
+      "baseline_blob": "00bb3030a63aafda563e84d86348edf807185227",
+      "candidate_blob": "00bb3030a63aafda563e84d86348edf807185227",
+      "byte_identical": true
+    },
+    "lumiere-sway.js": {
+      "baseline_blob": "6ab0801d1959b6f995983a8cef033a3378ffac96",
+      "candidate_blob": "6ab0801d1959b6f995983a8cef033a3378ffac96",
+      "byte_identical": true
+    },
+    "audio.js": {
+      "baseline_blob": "21a8c303105746765021901981bcb1bb64842be7",
+      "candidate_blob": "21a8c303105746765021901981bcb1bb64842be7",
+      "byte_identical": true
+    },
+    "scripts/validate.mjs": {
+      "baseline_blob": "a423007b0d98e9e2703e13b3a4aa972509b7d332",
+      "candidate_blob": "a423007b0d98e9e2703e13b3a4aa972509b7d332",
+      "byte_identical": true
+    },
+    "tests/known-failures.json": {
+      "baseline_blob": "b79a1122165697fcacf973a245913f6e45851809",
+      "candidate_blob": "b79a1122165697fcacf973a245913f6e45851809",
+      "byte_identical": true
+    },
+    "docs/DEVICE_VERIFICATION_REGISTRY.md": {
+      "baseline_blob": "ac4b3fa9f2b335aba8f5d10f671739b7b99d01c4",
+      "candidate_blob": "ac4b3fa9f2b335aba8f5d10f671739b7b99d01c4",
+      "byte_identical": true
+    },
+    "docs/regression-lock-v1.md": {
+      "baseline_blob": "eb76491cb4ef68749c8846261390238232843ebd",
+      "candidate_blob": "eb76491cb4ef68749c8846261390238232843ebd",
+      "byte_identical": true
+    }
+  },
+  "runtime_after_source_unchanged": true,
+  "baseline_regression": {
+    "tests": 337,
+    "pass": 337,
+    "fail": 0
+  },
+  "candidate_regression": {
+    "tests": 342,
+    "pass": 342,
+    "fail": 0
+  },
+  "targeted_sway": {
+    "tests": 8,
+    "pass": 8,
+    "fail": 0
+  },
+  "targeted_replacement": {
+    "tests": 5,
+    "pass": 5,
+    "fail": 0
+  },
+  "reviewed_head": "final working tree after 5cbe360; runtime unchanged",
+  "changed_files": [
+    "assets/sprites/lumiere/lumiere_hover-back.webp",
+    "assets/sprites/lumiere/lumiere_hover_left.webp",
+    "assets/sprites/lumiere/lumiere_hover_right.webp",
+    "assets/sprites/lumiere/lumiere_idle.webp",
+    "assets/sprites/lumiere/lumiere_sprite_manifest.json",
+    "docs/lumiere-sprite-replacement-20261010/README.md",
+    "docs/lumiere-sprite-replacement-20261010/anatomical-landmarks.json",
+    "docs/lumiere-sprite-replacement-20261010/audio-timestamp-diagnostic.json",
+    "docs/lumiere-sprite-replacement-20261010/baseline-input.json",
+    "docs/lumiere-sprite-replacement-20261010/build-clean-preview.py",
+    "docs/lumiere-sprite-replacement-20261010/changed-files.txt",
+    "docs/lumiere-sprite-replacement-20261010/ci-checks.json",
+    "docs/lumiere-sprite-replacement-20261010/controlled-clock-browser.json",
+    "docs/lumiere-sprite-replacement-20261010/final-anatomical-contact.png",
+    "docs/lumiere-sprite-replacement-20261010/final-candidate-anatomy-report.md",
+    "docs/lumiere-sprite-replacement-20261010/final-candidate-landmarks.json",
+    "docs/lumiere-sprite-replacement-20261010/final-region-crops.png",
+    "docs/lumiere-sprite-replacement-20261010/final-report.md",
+    "docs/lumiere-sprite-replacement-20261010/fixed-preview-checks.json",
+    "docs/lumiere-sprite-replacement-20261010/fixed-preview-portrait.png",
+    "docs/lumiere-sprite-replacement-20261010/fixed-preview-touch-checks.json",
+    "docs/lumiere-sprite-replacement-20261010/garden-four-directions.png",
+    "docs/lumiere-sprite-replacement-20261010/implementation-contract.md",
+    "docs/lumiere-sprite-replacement-20261010/independent-region-proof.json",
+    "docs/lumiere-sprite-replacement-20261010/independent-review.md",
+    "docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html",
+    "docs/lumiere-sprite-replacement-20261010/measure-final-landmarks.py",
+    "docs/lumiere-sprite-replacement-20261010/network-delivery-checks.json",
+    "docs/lumiere-sprite-replacement-20261010/preservation-checks.json",
+    "docs/lumiere-sprite-replacement-20261010/preview-controls.html",
+    "docs/lumiere-sprite-replacement-20261010/register-images.py",
+    "docs/lumiere-sprite-replacement-20261010/registration.json",
+    "docs/lumiere-sprite-replacement-20261010/sway-pixel-proof/contact.png",
+    "docs/lumiere-sprite-replacement-20261010/sway-pixel-proof/metrics.json",
+    "docs/lumiere-sprite-replacement-20261010/transparency-checks.json",
+    "tests/fixtures/lumiere-preview-manifest-9e8a85d.json",
+    "tests/lumiere-b-preview.test.cjs",
+    "tests/lumiere-official-replacement.test.cjs",
+    "tests/lumiere-release-preview.test.cjs"
+  ],
+  "remote_main_rechecked": "aa65642bd9cfb771ea06f1a5ad3c9e6d1dbfddac",
+  "device_result": "PENDING",
+  "integration_result": "STOP"
+}

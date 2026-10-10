@@ -30,6 +30,10 @@ def source(path, commit=sha):
 
 def inline(path):
     text = source(path)
+    if path == "lumiere-sway.js":
+        # Remove the existing source's one trailing JS space only in this
+        # generated preview; the canonical runtime module remains untouched.
+        text = text.replace("Math.abs((alpha > 0 ? \n", "Math.abs((alpha > 0 ?\n")
     if path == "game.js":
         # Preview-only CORS admission for pinned cross-origin image readback.
         old = "const image = new Image();\n    image.src = src;"
@@ -71,7 +75,8 @@ manifest = json.loads(source("assets/sprites/lumiere/lumiere_sprite_manifest.jso
 metadata = {"source_sha": sha, "files": records, "source_commits": source_commits, "preview_transforms": [
     "inline_scripts_and_styles", "inline_garden_dev_dependencies", "pin_asset_base",
     "anonymous_image_cors", "preserve_stylesheet_guard_markers",
-    "g3_only_direction_controls_and_public_stage_staging"]}
+    "g3_only_direction_controls_and_public_stage_staging",
+    "remove_one_lumiere_inline_trailing_space"]}
 html = html.replace("</head>", '<script type="application/json" id="lumiere-preview-source">' +
                     json.dumps(metadata, ensure_ascii=False) + "</script>\n</head>")
 html = html.replace("</body>", controls + "\n</body>")

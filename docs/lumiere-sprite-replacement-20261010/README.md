@@ -37,11 +37,15 @@ manifestの`files`、12アンカー、幅高さ、render、phase、localized_swa
 
 ## テストと保全
 
-基準mainの回帰テスト337/337 PASS。候補の既存回帰337件と追加の画像・証拠検査はPASS（最終件数・CIはPRおよび最終レポート参照）。既存のvalidator、既知failure一覧、回帰基準は変更していない。
+基準mainの回帰テスト337/337 PASS。候補の回帰テスト342/342 PASS（既存337＋専用5）、リュミエール揺れテスト8/8 PASS。validate・背景・音声検証もPASS。既存のvalidator、既知failure一覧、回帰基準は変更していない。
 
 歴史的な固定プレビュー2件は、旧commitのmanifestを現在のmanifestと比較していた。その1ファイルだけを正確な旧Gitソースのfixtureへ切り替え、過去の固定ハッシュとの一致検査を保持した。他の全ソース・JS解析・エディタ検査は保持し、新候補の素材・ハッシュ・アンカー・実測証拠は別テストで固定している。
 
 長時間のChromium計測1回でBGMの負のvolume例外を観測した。main画像の同手順では再現しなかったが、実際のmainと候補の同一`audio.js`を分離実行し、RAF時刻がfade開始`performance.now()`より1ms古い条件で両方とも同一行・同一値の例外を再現した。該当処理は一切変更していない。これを全ゲームの音声PASSやiPhone実機PASSとは扱わない。
+
+制御時計による実ゲーム描画では、全4方向を各10.5秒・656〜657フレーム確認し、周期5200ms、上下幅4.79994基準px、JS例外0、通常のキー移動を確認した（[controlled-clock-browser.json](controlled-clock-browser.json)）。固定プレビューで4方向・ON/OFF・縦画面・非表示エディタを確認した初回は例外0。追加のタップ移動・touchCancel確認では移動は成立したが、同じ負のvolume例外を観測したため、この追加試行全体はFAILとして記録した（[fixed-preview-touch-checks.json](fixed-preview-touch-checks.json)、[音声比較](audio-timestamp-diagnostic.json)）。
+
+GitHubの通常検証CIはPASS。Main LineageもPASS。Device Registry Guardは正確なruntimeのiPhone実機記録がないためFAILで、統合判定はSTOPである。全CI PASSとは報告しない。[ci-checks.json](ci-checks.json)に実行URLと理由を記録した。
 
 ## 固定プレビューとiPhone確認
 

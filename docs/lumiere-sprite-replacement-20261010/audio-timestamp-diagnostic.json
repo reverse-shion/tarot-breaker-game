@@ -1,0 +1,17 @@
+{
+  "engine": "Isolated existing-audio timing diagnostic, NOT device/normal movement PASS",
+  "condition": "RAF timestamp 9999 precedes performance.now() fade start10000 by1ms; browser-compliant volume setter",
+  "baselineSha256": "9e5e815079b9b5286a9e5d4052208b1ca40acdc9a77ecdd2dcf2ceaec63ac894",
+  "candidateSha256": "9e5e815079b9b5286a9e5d4052208b1ca40acdc9a77ecdd2dcf2ceaec63ac894",
+  "sourcesByteIdentical": true,
+  "baseline": {
+    "threw": true,
+    "message": "HTMLMediaElement.volume outside [0,1]: -0.003291514587402422",
+    "stack": "RangeError: HTMLMediaElement.volume outside [0,1]: -0.003291514587402422\n    at set volume (/workspace/lumiere-evidence/audio-timestamp-diagnostic.cjs:11:47)\n    at step (audio.js:79:18)\n    at probe (/workspace/lumiere-evidence/audio-timestamp-diagnostic.cjs:19:20)\n    at async /workspace/lumiere-evidence/audio-timestamp-diagnostic.cjs:21:340"
+  },
+  "candidate": {
+    "threw": true,
+    "message": "HTMLMediaElement.volume outside [0,1]: -0.003291514587402422",
+    "stack": "RangeError: HTMLMediaElement.volume outside [0,1]: -0.003291514587402422\n    at set volume (/workspace/lumiere-evidence/audio-timestamp-diagnostic.cjs:11:47)\n    at step (audio.js:79:18)\n    at probe (/workspace/lumiere-evidence/audio-timestamp-diagnostic.cjs:19:20)\n    at async /workspace/lumiere-evidence/audio-timestamp-diagnostic.cjs:21:372"
+  }
+}

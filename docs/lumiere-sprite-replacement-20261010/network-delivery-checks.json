@@ -1,0 +1,341 @@
+{
+  "runtime_sha": "43575846ece577693c26cc4ac1910e15336ecd92",
+  "preview_source_sha": "5cbe3608d099f85fc167ecd657ced3fb965eb4b0",
+  "preview_url": "https://raw.githack.com/reverse-shion/tarot-breaker-game/5cbe3608d099f85fc167ecd657ced3fb965eb4b0/docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html?dev=garden-resume-after-lumiere",
+  "preview_sha256": "fb9e1dc5f5b1283db9203483224048078c3833a69509dce1fc9721de79a56cda",
+  "resources": [
+    {
+      "path": "assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+      "status": 200,
+      "content_type": "audio/mpeg",
+      "cors": "*",
+      "bytes": 4555024,
+      "sha256": "cb2c8481fb37908636f2be417a9c18bd43493e03ca7a38127800953c4a79ff71",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-farthest-sky-background.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 425892,
+      "sha256": "f80fea109715daf485bbce4bb48d12328338b81ae7c3aa220327e1e5d1fd62e3",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-collision.json",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "cors": "*",
+      "bytes": 3641,
+      "sha256": "f05cef4869e7c195b1277cc0eb6222dbd782bcad70c475084ff938ece87474c4",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-depth.json",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "cors": "*",
+      "bytes": 3292,
+      "sha256": "eafd998124e3fd668c656c9025840c64a314d1cca2dcc0aedcb553aeb65a21c3",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-fountain-base.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1466926,
+      "sha256": "4b821b196fef9db8a1cc909b0f41c0288c70013c6ec687f50f54f19bdf340c50",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1172170,
+      "sha256": "cc757ebe75381a82911696d9a11bbeb4c820a5d3aaf7877ce818b06b9f1c9152",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-fountain-crystal.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 803492,
+      "sha256": "765e6ad5970669a6f3eff2e1e03e0ace91a40033d2aae7b51df9fb1f00ce300f",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1036510,
+      "sha256": "1ff6a2632907157090efed1756d845e27263c2419552d52544edb73ab734ded9",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-fountain-water.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1237452,
+      "sha256": "87500c3fd1f844a6028cfcf33596016c53e00d2f6f4227989fd534d3aa798864",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-star-gate-base.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1423548,
+      "sha256": "6783433a764d1a9a1bf3d28d40222a6724170e7850bc318e6a4b5baec326528e",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1450472,
+      "sha256": "bf1caf2ad74aad4b72b767f2f422aabc973dfcf8f5af7fcee68a959bc45dfa63",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-star-gate-inner-light.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 112248,
+      "sha256": "69c738852f1e960188c8bf2996a1f5313b67b97e1db02e24951e5350f00fc78e",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-star-gate-particle.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 543626,
+      "sha256": "6f03ba744bdaac9fddc02e3224e4b55d819885200af293c3a08068cfb9a95d9b",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-star-gate.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 400250,
+      "sha256": "465e5537437ca1b45bdd2e5b98b72c837e070ca396febc9d9969ce6963988282",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-star-sky.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1348736,
+      "sha256": "1c4b990078b4ac2bdab6f5d1d63138e1f64239af41a2f89f9bcf37469f25c02f",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-transparent.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 434630,
+      "sha256": "b1eb430481cbd5ff86e7a4f1286212ec6e32c2ea61fde5c6fa7d9c70eb39f2b6",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-gate-garden-waterfall.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1216866,
+      "sha256": "dff3d138e291765a4802e634cd642a45c2d24259dbaad598855747d8fb8bad2f",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-world-clouds.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1306408,
+      "sha256": "5f465aaf184c9868289dfaa0a3977b0f3c27362dd5f80890bd5a39b4135bccef",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/maps/star-country-world-islands.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 412906,
+      "sha256": "d8538336304e01398a818eb17f7edfe789bc7cb6894c0404324344edf3aea95b",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/lumiere/lumiere_hover-back.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1186130,
+      "sha256": "fe4d22c5e72ea1b8bbb09b29dd48bde82bf1c244574e1893056025ef43648602",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/lumiere/lumiere_hover_left.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 873428,
+      "sha256": "d7dae3d676287aba1d4a62a93e33efef33be2873e683907fc01538739c806dae",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/lumiere/lumiere_hover_right.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1016426,
+      "sha256": "50ba44cd184520343586058abf5e4df5ab9d52973332eb1a2c7cb978ab5542bd",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/lumiere/lumiere_idle.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 1077932,
+      "sha256": "6bd7f477eeb1af929d01cc83b53f82ac8611d9fb402b4b7b70253d9ee213ac46",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/lumiere/lumiere_sprite_manifest.json",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "cors": "*",
+      "bytes": 5440,
+      "sha256": "8fd06f1fb151cd3261bc77d0d1ad44a85a8e685dee5a6bf93994c683fdbf3752",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shion/shion_idle.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 508784,
+      "sha256": "5e758838a2571a17ed3a3f5c13a3f13b02c7684b589892260a014d045a2e4899",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shion/shion_sprite_manifest.json",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "cors": "*",
+      "bytes": 640,
+      "sha256": "9d2c85575e9ca5362ef3a94baf5291447d1005765a733d0953d1fe5d7e2ddc58",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shion/shion_walk_down.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 406260,
+      "sha256": "2a2102c1234bba4249437cadafc55630bbd0c49283056252bc54f2168c73e005",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shion/shion_walk_left.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 428311,
+      "sha256": "43ecda1eaf3e2ae27280be806a3983f3dc057039e5558d8cd4c9f2dce8e2402d",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shion/shion_walk_right.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 421613,
+      "sha256": "775b6cecd14b1c75c8176ff78af72529eac831cd9a4d465a690e19f7a8e77242",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shion/shion_walk_up.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 379006,
+      "sha256": "3c1b9ff757530cffbc438f2798520d770609183ea016bcf577f38646c0405517",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shiopon/shiopon_idle.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 346415,
+      "sha256": "bf08f520fefaa05b10f55ad5ecdc364251aab67c5250a455a4f0c2ae2af56440",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shiopon/shiopon_walk_down.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 358886,
+      "sha256": "091b8c649798c901b3be0bee03b6c2190f956a211d6af6b5d682311cc11477db",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shiopon/shiopon_walk_left.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 343252,
+      "sha256": "2e9fb60f43bbee1df275f121991c78d190e01fd5b3b4a0e94809f59bd8deabd8",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shiopon/shiopon_walk_right.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 350337,
+      "sha256": "95713002a96a94b4185baa3c7bdb96ecedf6bf6c81ffb947e86de284b710b0c5",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/sprites/shiopon/shiopon_walk_up.png",
+      "status": 200,
+      "content_type": "image/png",
+      "cors": "*",
+      "bytes": 344685,
+      "sha256": "da41981cc62c21f64fdee4ddd5f2d2fc6fb51fa89f9ae11db794008fbe3cfdf6",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/ui/title/tarot-breaker-logo.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 2204382,
+      "sha256": "3ee4b0113bdde5c8dc8bb7ebd4fb6d8a55c17cee4bc11a3d9170cec56b881df5",
+      "matches_exact_local_source": true
+    },
+    {
+      "path": "assets/ui/title/title-background.webp",
+      "status": 200,
+      "content_type": "image/webp",
+      "cors": "*",
+      "bytes": 3690656,
+      "sha256": "6562b88d93b50293edd0659e79c01f1678caaaaaddb7980ace9a820bce4729c5",
+      "matches_exact_local_source": true
+    }
+  ]
+}
