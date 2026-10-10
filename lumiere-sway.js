@@ -80,7 +80,11 @@
       // Measured in reference pixels, before the fixed 3x local cache.
       // Increased enough to read at character scale, not enough to shift
       // the attachment or any protected body/wing pixel.
-      const amplitude = AMPLITUDE[kind] * density;
+      // A large shift inside a narrow curl can fold the inverse mesh.
+      // d(sin(pi*u))/dx <= pi/(w-1); keep the Jacobian positive even
+      // at the strongest left/right extreme, including vertical follow.
+      const geometricLimit = 0.80 * (w-1) / Math.PI;
+      const amplitude = Math.min(AMPLITUDE[kind] * density, geometricLimit);
       const verticalRatio = kind === "hair" ? -0.13 : 0.12;
       return { x,y,w,h,kind,amplitude,verticalRatio };
     });
@@ -147,7 +151,8 @@
         }
         atlas.ctx.putImageData(pixels, step*w, sampleY);
       }
-      return { x,y,w,h,kind,sampleY,foreground,changed,silhouette };
+      return { x,y,w,h,kind,sampleY,foreground,changed,silhouette,
+        maxReference: amplitude / density };
     });
     diagnostics[pose.actual_direction] = Object.freeze({
       direction: pose.actual_direction,
@@ -157,6 +162,7 @@
       regions: Object.freeze(tiles.map(t => Object.freeze({
         kind: t.kind, foreground: t.foreground,
         changed: t.changed, silhouette: t.silhouette,
+        maxReference: t.maxReference,
       }))),
     });
     let previousPhase;
