@@ -6,8 +6,8 @@ const crypto = require("node:crypto");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
-const relativePage = "docs/lumiere-hover-evidence/lumiere-sway-ce3c31b.html";
-const runtime = "ce3c31bfcabb5226c01405b12411167e571fe221";
+const relativePage = "docs/lumiere-hover-evidence/lumiere-sway-8e7b89b.html";
+const runtime = "8e7b89b7afa479e2a66a6c8487b10a65ab1dcb4c";
 
 test("Candidate C fixed iPhone preview sources match pinned source digests and inline scripts parse", () => {
   const html = fs.readFileSync(path.join(root, relativePage), "utf8");
