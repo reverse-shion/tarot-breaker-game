@@ -85,3 +85,31 @@ test("sway caches build only at readiness and reuse capacity during two cycles a
   assert.throws(()=>api.create({naturalWidth:1254,naturalHeight:1254},
     {...manifest.poses.down,body_top:1167}),/capacity/);
 });
+
+test("Option B envelope keeps visible motion close to the free tips, not the anchor", () => {
+  const {api} = harness();
+  for (const direction of ["down","up","left","right"]) {
+    for (const region of api.getRegions(direction)) {
+      const nearRoot=api.weight(0.5,0.15);
+      const nearTip=api.weight(0.5,0.8);
+      assert(nearTip > nearRoot*4, direction+" free tip should move more than root");
+      assert.equal(api.weight(0.5,1),0);
+      assert.equal(api.weight(0,0.8),0);
+      assert.equal(api.weight(1,0.8),0);
+    }
+  }
+});
+
+test("Option B uses one periodic phase with distinct hair and hem follow delays", () => {
+  const {api} = harness();
+  let different=false;
+  for (let step=0; step<=520; step++) {
+    const phase=step*Math.PI*2/520;
+    const a=api.motion("hair",phase);
+    const b=api.motion("hem",phase);
+    if(Math.abs(a-b)>0.01)different=true;
+    assert(Math.abs(a-api.motion("hair",phase+2*Math.PI))<1e-12);
+    assert(Math.abs(b-api.motion("hem",phase+2*Math.PI))<1e-12);
+  }
+  assert(different,"the hem should follow the hair at its own phase delay");
+});
