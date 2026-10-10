@@ -22,4 +22,9 @@ jobs:
              echo "URL: $url"
              curl -L -s -o /tmp/preview.html -w "HTTP_CODE=%{http_code} CONTENT_TYPE=%{content_type} REDIRECT=%{redirect_url} SIZE=%{size_download}\n" --max-time 25 "$url"
              head -c 110 /tmp/preview.html | tr '\n' ' '; echo
+           "https://raw.githack.com/reverse-shion/tarot-breaker-game/942b6cec82d820163c77bbe4f0de6f7cc1f11ee0/docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html?dev=garden-resume-after-lumiere" \
+           "https://rawcdn.githack.com/reverse-shion/tarot-breaker-game/942b6cec82d820163c77bbe4f0de6f7cc1f11ee0/docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html?dev=garden-resume-after-lumiere"; do
+             echo "URL: $url"
+             curl -L -s -o /tmp/preview.html -w "HTTP_CODE=%{http_code} CONTENT_TYPE=%{content_type} SIZE=%{size_download}\n" --max-time 25 "$url"
+             head -c 120 /tmp/preview.html | tr '\n' ' '; echo
           done
