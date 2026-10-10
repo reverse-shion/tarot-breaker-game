@@ -203,29 +203,31 @@ async function showArcanaDetail(){
       :Math.cos(((p-attack)/(1-attack))*Math.PI/2);
     const pressure=Math.max(0,beat);
     frame.style.transform='scale('+(1+spec.scale*pressure).toFixed(4)+')';
-    images.normal.style.filter='brightness('+(1-.030*number*pressure).toFixed(3)+') saturate('+(1-.024*number*pressure).toFixed(3)+')';
-    contamination.style.opacity=String((spec.stain*(.52+.48*pressure)).toFixed(3));
-    contamination.style.transform='scale('+(1+.008*pressure).toFixed(4)+')';
+    images.normal.style.filter='none';
+    contamination.style.opacity='0';
+    contamination.style.transform='scale(1)';
    });
    frame.style.transform='scale(1)';
-   contamination.style.opacity=String(spec.stain);
+   images.normal.style.filter='none';
+   contamination.style.opacity='0';
    if(spec.gap)await current.clock.wait(spec.gap);
   }
 
-  // The third beat leaves the entire Arcana faintly stained for a moment.
-  // This hold makes the accumulated abnormality readable before the meaning changes.
+  // The third beat is still the original Arcana. Do not visually corrupt the card
+  // until the Re:Arcana transformation actually begins.
   phase('ABNORMAL_HOLD');
-  images.normal.style.filter='brightness(.91) saturate(.86) contrast(1.015)';
-  await current.clock.tween(260,p=>{
-   const breathe=.5-.5*Math.cos(Math.PI*p);
-   contamination.style.opacity=String((.225+.025*breathe).toFixed(3));
-   contamination.style.transform='scale('+(1+.004*breathe).toFixed(4)+')';
-  });
+  images.normal.style.filter='none';
+  contamination.style.opacity='0';
+  contamination.style.transform='scale(1)';
+  infection.style.opacity='0';
+  await current.clock.wait(260);
 
   // Re:Arcana emerges through the accumulated full-card stain. This is neither
   // an instant swap nor a simple crossfade: the normal meaning holds briefly,
   // then its light collapses while the altered markings become readable.
   phase('RE_EMERGENCE');current.futureAudio?.arcanaInfectionStart?.();
+  images.normal.style.filter='none';
+  contamination.style.opacity='0';
   images.re.style.opacity='0';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
   infection.classList.add('active');
@@ -235,10 +237,10 @@ async function showArcanaDetail(){
    const normalFade=Math.max(0,Math.min(1,(eased-.28)/.72));
    images.re.style.opacity=String(reveal.toFixed(3));
    images.normal.style.opacity=String((1-normalFade).toFixed(3));
-   images.normal.style.filter='brightness('+( .91-.24*eased).toFixed(3)+') saturate('+( .86-.58*eased).toFixed(3)+') contrast('+(1.015+.055*eased).toFixed(3)+')';
+   images.normal.style.filter='brightness('+(1-.33*eased).toFixed(3)+') saturate('+(1-.72*eased).toFixed(3)+') contrast('+(1+.07*eased).toFixed(3)+')';
    images.re.style.filter='brightness('+( .60+.24*reveal).toFixed(3)+') saturate('+( .40+.28*reveal).toFixed(3)+') contrast('+(1.08-.025*reveal).toFixed(3)+')';
-   const stain=.235*(1-.72*eased)+.055*Math.sin(Math.PI*eased);
-   contamination.style.opacity=String(Math.max(.045,stain).toFixed(3));
+   const stain=.30*Math.sin(Math.PI*Math.min(1,eased*1.08));
+   contamination.style.opacity=String(Math.max(0,stain).toFixed(3));
    contamination.style.transform='scale('+(1+.006*Math.sin(Math.PI*eased)).toFixed(4)+')';
    const safe=Math.max(0,68*(1-eased));
    const peak=eased<.74?eased/.74:1-(eased-.74)/.26*.58;
