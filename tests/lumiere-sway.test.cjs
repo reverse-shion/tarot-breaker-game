@@ -156,3 +156,22 @@ test("Candidate C never folds a narrow curl: horizontal inverse-mesh slope stays
     }
   }
 });
+
+test("inspector exposes already-built pose canvases with no extra per-frame allocations", () => {
+  const {api,counts}=harness();
+  assert.equal(api.getDebugFrame("down"),null);
+  const poses=JSON.parse(fs.readFileSync(path.join(root,
+    "assets/sprites/lumiere/lumiere_sprite_manifest.json"))).poses;
+  for (const direction of ["down","up","left","right"]) {
+    const comp=api.create({naturalWidth:1254,naturalHeight:1254},poses[direction]);
+    const debug=api.getDebugFrame(direction);
+    assert.equal(debug.active,comp.canvas);
+    assert.equal(debug.regions.length,api.getRegions(direction).length);
+    const baseline=counts();
+    for(let n=0;n<200;n++) {
+      comp.draw(n/200*2*Math.PI);
+      assert.equal(api.getDebugFrame(direction),debug);
+    }
+    assert.deepEqual(counts(),baseline);
+  }
+});
