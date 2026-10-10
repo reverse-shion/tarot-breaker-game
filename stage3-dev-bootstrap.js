@@ -3,6 +3,14 @@
  'use strict';
  const q=new URLSearchParams(location.search);
  if(q.get('dev')!=='star-gate-full'||q.getAll('dev').length!==1||q.has('entry')||q.has('from'))return;
+ const recordBootError=value=>{
+   const message=value?.message||value?.reason?.message||value?.reason||String(value||'unknown error');
+   window.__lastGardenBootError=message;
+   const node=document.getElementById('load-error');
+   if(node&&!node.hidden)node.textContent='読み込み失敗: '+message;
+ };
+ window.addEventListener('error',event=>recordBootError(event.error||event.message));
+ window.addEventListener('unhandledrejection',event=>recordBootError(event));
  window.__TAROT_DEV_STAGE3__=true;
  document.body.dataset.enteringFromLanding='true';document.body.dataset.devEntry='star-gate-full';
  document.documentElement.dataset.devHarness='star-gate-full';

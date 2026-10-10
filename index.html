@@ -76,7 +76,12 @@
             document.body.classList.remove("scene-booting", "scene-ready", "scene-rendered");
             document.body.classList.add("scene-load-error");
             var error = document.getElementById("load-error");
-            if (error) error.hidden = false;
+            if (error) {
+              error.hidden = false;
+              if (window.__lastGardenBootError) {
+                error.textContent = "読み込み失敗: " + window.__lastGardenBootError;
+              }
+            }
           };
           window.gardenArrivalTimeout = setTimeout(window.failGardenArrival, 45000);
         }
