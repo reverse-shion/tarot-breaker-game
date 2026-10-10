@@ -74,11 +74,9 @@
     const startedAt = performance.now();
     const step = (now) => {
       if (token !== fadeToken) return;
-      // RAF's frame timestamp can precede performance.now() at fade creation.
-      // Clamp both interpolation progress and the HTMLMediaElement volume.
-      const progress = Math.max(0, Math.min(1, (now - startedAt) / duration));
+      const progress = Math.min(1, (now - startedAt) / duration);
       const eased = 1 - Math.pow(1 - progress, 3);
-      bgm.volume = Math.max(0, Math.min(1, from + (to - from) * eased));
+      bgm.volume = from + (to - from) * eased;
       if (progress < 1) {
         fadeFrame = requestAnimationFrame(step);
         return;
