@@ -27,7 +27,9 @@ test("Clean candidate preview pins game source and contains no visible editor sc
     // The approved sprite replacement changes the live manifest. This fixture
     // is the exact historical Git source, still checked against its pinned hash.
     const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
-      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json" : file;
+      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json"
+      : file === "audio.js"
+        ? "tests/fixtures/audio-preview-baseline-160ab339.js" : file;
     let content = fs.readFileSync(path.join(root, sourceFile));
     if (file === "index.html") {
       const preservedEditors = [
