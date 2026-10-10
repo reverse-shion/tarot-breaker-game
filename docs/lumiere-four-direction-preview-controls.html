@@ -3,7 +3,8 @@
   <button type="button" id="lumiere-check-panel-toggle" aria-expanded="false" aria-controls="lumiere-check-panel-content">確認パネルを開く</button>
   <div id="lumiere-check-panel-content" hidden>
   <div>DEV：4方向の浮遊・毛先・裾先確認</div>
-  <small>顔・身体・翼は固定／毛先0.4px・裾先0.25px</small>
+  <small id="lumiere-check-spec">設定読み込み中（更新候補の値を表示します）</small>
+  <small id="lumiere-check-diagnostics">毛先・裾先の画素変化を測定中</small>
   <div class="lumiere-fixed-check-buttons">
     <button type="button" id="lumiere-check-position" disabled>確認位置へ</button>
     <button type="button" data-lumiere-face="down" disabled>正面</button>
@@ -46,7 +47,33 @@
   const ready = () => {
     if (!document.body.classList.contains("scene-ready") || !window.TarotStage) return;
     buttons.forEach(button => { button.disabled = false; });
-    status.textContent = "確認位置へ → 各方向で約10秒ずつ確認";
+    const sway = window.TarotLumiereSway;
+    if (!sway?.config || !sway?.getDiagnostics) {
+      status.textContent = "揺れモジュールを読み込めません。動作確認は不可";
+      return;
+    }
+    const c = sway.config;
+    document.getElementById("lumiere-check-spec").textContent =
+      "候補" + c.candidate + "／毛先" + c.amplitude.hair + "px・裾先" +
+      c.amplitude.hem + "px（全身浮遊は" + c.bobPeriod + "秒周期）";
+    const report = ["down", "up", "left", "right"].map(dir => sway.getDiagnostics(dir));
+    if (report.some(value => !value)) {
+      status.textContent = "4方向の画素診断が揃っていません。動作確認は不可";
+      return;
+    }
+    function display(dir) {
+      const d = sway.getDiagnostics(dir);
+      const label = {down:"正面",up:"背面",left:"左",right:"右"}[dir];
+      const lines = d?.regions?.map(r => r.kind + ":" + r.changed).join(" / ");
+      document.getElementById("lumiere-check-diagnostics").textContent =
+        label + "：変化画素" + (d?.changed ?? "?") +
+        "（輪郭" + (d?.silhouette ?? "?") + "） " + lines;
+      if (!d?.changed || !d.silhouette) status.textContent =
+        "注意：動く輪郭が測定できません。領域と素材を再確認";
+    }
+    window.lumiereDevicePreviewReport = display;
+    display("down");
+    status.textContent = "確認位置へ → 実機で髪束と裾の揺れを確認";
     observer.disconnect();
   };
   const observer = new MutationObserver(ready);
@@ -73,6 +100,7 @@
       const actor = window.TarotStage.getState().actors.lumiere;
       const delta = { down: [0, 10], up: [0, -10], left: [-10, 0], right: [10, 0] }[button.dataset.lumiereFace];
       await window.TarotStage.perform({ type: "face", actor: "lumiere", target: { x: actor.x + delta[0], y: actor.y + delta[1] } }).promise;
+      window.lumiereDevicePreviewReport?.(button.dataset.lumiereFace);
       status.textContent = button.textContent + "：上下運動の位相を維持して表示";
     });
   }
