@@ -72,8 +72,8 @@
         "注意：動く輪郭が測定できません。領域と素材を再確認";
     }
     window.lumiereDevicePreviewReport = display;
-    display("down");
     status.textContent = "確認位置へ → 実機で髪束と裾の揺れを確認";
+    display("down");
     observer.disconnect();
   };
   const observer = new MutationObserver(ready);
