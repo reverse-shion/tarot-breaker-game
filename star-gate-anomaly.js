@@ -723,7 +723,13 @@ async function futureFixationStage2(){
   await pause(850/20);
  }
  await say("shion","……星門庭園……？");
- await pause(420);
+ // The garden pan follows this line. Return current Shion to a front-facing
+ // neutral pose first so the camera does not begin the establishing shot with
+ // him still looking toward the previous search direction.
+ const front=stage.perform({type:"face",actor:"shion",target:{x:before.x,y:before.y+1}});
+ const frontResult=await front.promise;
+ if(!frontResult?.completed||!samePoint(before,stage.getState().actors.shion))throw new Error("Shion moved while facing front before Future Garden pan");
+ await pause(220);
  // Real camera tour over the Vision World. Let the player inspect the ruin instead
  // of explaining it through repeated dialogue.
  const verifyCoverage=(shot)=>{
