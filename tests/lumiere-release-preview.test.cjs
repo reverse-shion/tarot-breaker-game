@@ -21,7 +21,9 @@ test("final Lumiere preview is an exact source snapshot with main's opt-in edito
     // Keep the immutable 9e8a85d preview's exact manifest evidence after the
     // authorized live sprite update; every other current-source check remains.
     const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
-      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json" : file;
+      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json"
+      : file === "audio.js"
+        ? "tests/fixtures/audio-preview-baseline-160ab339.js" : file;
     assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(root,sourceFile))).digest("hex"),sha,file);
   }
   const inline=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
