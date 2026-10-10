@@ -37,11 +37,11 @@ test("local sway has fixed roots/perimeter and bounded smooth displacement", () 
     assert(Math.abs(api.motion(kind,phase))<=1);
     assert(Math.abs(api.motion(kind,phase)-api.motion(kind,phase+2*Math.PI))<1e-12);
   }
-  // Option B shifts visually readable motion toward the free tips.
+  // Candidate C shifts visually readable motion toward the free tips.
   // The root and entire tile perimeter must remain strictly fixed.
   assert(api.weight(.5,.8) > .95, "free-tip band should move strongly");
   assert(api.weight(.5,.15) < .25, "attachment region must be quiet");
-  assert(api.weight(.5,.96) < .3, "end boundary must taper smoothly");
+  assert(api.weight(.5,.96) < .4, "end boundary must taper smoothly");
   assert(api.weight(.05,.8) < .25, "side seams must remain stable");
   assert.notEqual(api.motion("hair",1.2),api.motion("hem",1.2),
     "hair and hem should follow at different delays");
@@ -86,7 +86,7 @@ test("sway caches build only at readiness and reuse capacity during two cycles a
     {...manifest.poses.down,body_top:1167}),/capacity/);
 });
 
-test("Option B envelope keeps visible motion close to the free tips, not the anchor", () => {
+test("Candidate C envelope keeps visible motion close to the free tips, not the anchor", () => {
   const {api} = harness();
   for (const direction of ["down","up","left","right"]) {
     for (const region of api.getRegions(direction)) {
@@ -100,7 +100,7 @@ test("Option B envelope keeps visible motion close to the free tips, not the anc
   }
 });
 
-test("Option B uses one periodic phase with distinct hair and hem follow delays", () => {
+test("Candidate C uses one periodic phase with distinct hair and hem follow delays", () => {
   const {api} = harness();
   let different=false;
   for (let step=0; step<=520; step++) {
@@ -112,4 +112,27 @@ test("Option B uses one periodic phase with distinct hair and hem follow delays"
     assert(Math.abs(b-api.motion("hem",phase+2*Math.PI))<1e-12);
   }
   assert(different,"the hem should follow the hair at its own phase delay");
+});
+
+test("Candidate C exposes actual amplitudes and initialization-only pixel diagnostics", () => {
+  const {api,counts} = harness();
+  assert.equal(api.config.candidate,"C");
+  assert.equal(api.config.amplitude.hair,2.2);
+  assert.equal(api.config.amplitude.hem,1.35);
+  assert.equal(api.config.bobPeriod,5.2);
+  assert.equal(api.getDiagnostics("down"),null);
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,
+    "assets/sprites/lumiere/lumiere_sprite_manifest.json")));
+  const compositor=api.create({naturalWidth:1254,naturalHeight:1254},manifest.poses.down);
+  const result=api.getDiagnostics("down");
+  assert.equal(result.direction,"down");
+  assert(result.foreground>0);
+  assert.equal(result.regions.length,4);
+  // Uniform mock RGBA means no visible differences; only a real source asset
+  // can establish active hair/hem silhouettes.
+  assert.equal(result.changed,0);
+  assert.equal(result.silhouette,0);
+  const before=counts();
+  for(let i=0;i<625;i++) compositor.draw(i*2*Math.PI/312);
+  assert.deepEqual(counts(),before);
 });
