@@ -1469,6 +1469,31 @@
     ctx.restore();
   }
 
+  let futureCurrentShionSurface = null;
+  function drawFutureCurrentShionComposite(entry, opacity) {
+    futureCurrentShionSurface ||= document.createElement("canvas");
+    const surface = futureCurrentShionSurface;
+    const density = Math.min(2, dpr * camera.zoom);
+    const left = player.x - 84 * scale.x;
+    const top = player.y + player.stageOffsetY - 110 * scale.y;
+    const width = 168 * scale.x, height = 142 * scale.y;
+    const pixelWidth = Math.ceil(width * density), pixelHeight = Math.ceil(height * density);
+    if (surface.width !== pixelWidth || surface.height !== pixelHeight) {surface.width=pixelWidth; surface.height=pixelHeight;}
+    const target=surface.getContext("2d");
+    target.setTransform(1,0,0,1,0,0); target.clearRect(0,0,pixelWidth,pixelHeight);
+    target.setTransform(pixelWidth/width,0,0,pixelHeight/height,-left*pixelWidth/width,-top*pixelHeight/height);
+    target.globalAlpha=1;
+    const previous=ctx; ctx=target;
+    try {
+      drawGroundShadowAt({x:player.x,y:player.y+player.stageOffsetY},20,.46);
+      drawActor(entry.actor,entry.actorImages,entry.drawHeight,entry.glowColor,entry.options);
+    } finally {ctx=previous;}
+    ctx.save(); ctx.globalAlpha *= opacity;
+    ctx.drawImage(surface,0,0,pixelWidth,pixelHeight,left,top,width,height);
+    ctx.restore();
+  }
+
+
   function drawActors() {
     if (!visionWorld.active && (!stage3Dev || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
