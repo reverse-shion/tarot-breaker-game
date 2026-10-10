@@ -136,3 +136,23 @@ test("Candidate C exposes actual amplitudes and initialization-only pixel diagno
   for(let i=0;i<625;i++) compositor.draw(i*2*Math.PI/312);
   assert.deepEqual(counts(),before);
 });
+
+test("Candidate C never folds a narrow curl: horizontal inverse-mesh slope stays bounded", () => {
+  const {api} = harness();
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,
+    "assets/sprites/lumiere/lumiere_sprite_manifest.json")));
+  for(const direction of ["down","up","left","right"]) {
+    const pose=manifest.poses[direction];
+    const compositor=api.create({naturalWidth:1254,naturalHeight:1254},pose);
+    const density=(compositor.width/1254)/(63.984375/(pose.baseline_y-pose.body_top));
+    const diag=api.getDiagnostics(direction);
+    assert.equal(diag.regions.length,api.getRegions(direction).length);
+    for(let i=0;i<diag.regions.length;i++) {
+      const m=diag.regions[i], region=compositor.regions[i];
+      assert(m.maxReference<=api.config.amplitude[m.kind]+1e-12);
+      assert(m.maxReference*density*Math.PI/(region.w-1) <= 0.801,
+        direction+" "+m.kind+" can fold its inverse mesh");
+      assert(m.maxReference>0);
+    }
+  }
+});
