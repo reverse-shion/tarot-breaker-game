@@ -32,3 +32,7 @@ Frozen preview:
 `https://raw.githack.com/reverse-shion/tarot-breaker-game/8aa2c6090368dfdf67b61b91363ffb2b2df88565/docs/lumiere-hover-evidence/lumiere-sway-8e7b89b.html?dev=garden-resume-after-lumiere`
 
 Open bottom verification panel → move to inspection position → verify each direction 10.4s → compare sway ON/OFF. If the panel reads 0.4/0.25 or does not say candidate C, the wrong page was opened; do not report a false device test.
+
+## CI verification status — 2026-10-10
+
+On GitHub Actions Validate TAROT BREAKER 2D, commit `459548629747797138a860bea675fadc297a24e0` passed 335/335 automated tests, with zero new regression-baseline failures. The immutable candidate C preview and 40 current source-file digests are checked in CI. A follow-up documentation-only commit follows the synchronized PR-body runtime SHA to let the guarded workflow evaluate the final candidate. A merge gate requiring Device registry evidence must remain BLOCKED until a real iPhone verification record is provided.
