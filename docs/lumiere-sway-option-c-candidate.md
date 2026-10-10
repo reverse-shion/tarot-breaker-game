@@ -54,3 +54,12 @@ The branch's latest production/game entry `index.html` omits opt-in editor scrip
 The matching **no-editor** immutable preview is `docs/lumiere-hover-evidence/lumiere-clean-b99f3d4.html` (built and source-digest checked with game scripts and artwork from the same SHA). The direct product/visual acceptance was expressed before this exact editor-free commit; device verification of the final SHA is **PENDING**. No reviewer or automation may infer a Device PASS or merge until exact-runtime human smoke evidence is provided, including which directions and UI/camera/occlusion checks were actually observed.
 
 Repository lock audit: main `cf9e8363575e6d96f458d870cbbdefbd96ef197f`; no Audio/Route/Save/Collision/Dialogue touched by editor cleanup. Runtime files after `b99f3d4` must not change without publishing a new exact-runtime candidate.
+
+
+## Scope-lock before main merge — 2026-10-10
+
+The user expressly requires **no change to any existing non-Lumiere main behavior or content**. Strict main audit on `cf9e8363575e6d96f458d870cbbdefbd96ef197f` detected removal of the opt-in `fountain-position-editor.js`, `title-layout-editor.js`, and `waterfall-position-editor.js` loading tags from `index.html`. They have been restored **identically to main** at production runtime `9e8a85dff39e33e0eb802369228fcab4d512e035`. These remain dormant under the exact Garden dev-resume query and normal gameplay. There are no other changes to the existing `index.html` outside loading new `lumiere-sway.js` and switching Lumiere's game loading assets.
+
+The owner's preceding real-device "問題ない" applied to the prior editor-free exact runtime `b99f3d443dc6969af48850776ad2ee9b89eafd43`; it **must not be silently transferred** to the restored opt-in editor-loader SHA. The new exact-sha review URL is `https://raw.githack.com/reverse-shion/tarot-breaker-game/9e8a85dff39e33e0eb802369228fcab4d512e035/index.html?dev=garden-resume-after-lumiere`. Require an explicit real iPhone PASS for this exact candidate before recording registry evidence and merging. No override of the existing HIGH-risk Device Gate is authorized.
+
+CI source tests additionally lock the 3 original editor script references on `index.html`, preserve prior clean-preview digests after normalizing only those 3 references, and continue exercising full available regression coverage. PR must remain Draft until all safeguards are satisfied.
