@@ -1,0 +1,29 @@
+name: Audio fade smoke page URL check (one-time)
+on:
+  push:
+    paths:
+      - '.github/workflows/audio-preview-url-check-once.yml'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify pinned iPhone page and corrected audio source can be fetched
+        run: |
+          set -euo pipefail
+          for domain in raw.githack.com rawcdn.githack.com; do
+            url="https://$domain/reverse-shion/tarot-breaker-game/bf735b5c76d0e782b706ef100c8a663e57d9fb65/docs/audio-fade-20261010/iphone-audio-check.html"
+            status=$(curl -L -sS --retry 3 --max-time 30 -o /tmp/audio-page.html -w '%{http_code}' "$url")
+            echo "iPhone preview $domain HTTP $status; $(wc -c < /tmp/audio-page.html) bytes"
+            test "$status" = 200
+            grep -q 'BGM独立実機確認' /tmp/audio-page.html
+            grep -q '0884d760acb50545818f94c7195dcfe5f32f122d' /tmp/audio-page.html
+          done
+          audio="https://raw.githack.com/reverse-shion/tarot-breaker-game/0884d760acb50545818f94c7195dcfe5f32f122d/audio.js"
+          status=$(curl -L -sS --retry 3 --max-time 30 -o /tmp/candidate-audio.js -w '%{http_code}' "$audio")
+          echo "Audio runtime HTTP $status"; test "$status" = 200
+          grep -q 'Math.max(0, Math.min(1, (now - startedAt) / duration))' /tmp/candidate-audio.js
+          song="https://raw.githack.com/reverse-shion/tarot-breaker-game/0884d760acb50545818f94c7195dcfe5f32f122d/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3"
+          status=$(curl -L -sS --retry 3 --max-time 30 -r 0-127 -o /tmp/sound-head -w '%{http_code}' "$song")
+          echo "BGM original source HTTP $status"; test "$status" = 200 || test "$status" = 206
