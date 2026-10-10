@@ -47,17 +47,6 @@
   const LUMIERE_BOB_PERIOD = 5.2;
   const LUMIERE_WING_HOLD_MIN = 0.7;
   const LUMIERE_WING_HOLD_RANGE = 0.65;
-  // The supplied frames have different transparent margins. Crop each one to
-  // the character silhouette, then render every crop into the same box so the
-  // head and lower body stay together while hair, wings and drapery animate.
-  const LUMIERE_FRAME_RECTS = [
-    { x: 21, y: 58, w: 493, h: 596 },
-    { x: 23, y: 76, w: 493, h: 567 },
-    { x: 24, y: 92, w: 490, h: 567 },
-    { x: 23, y: 68, w: 495, h: 586 },
-  ];
-  const LUMIERE_NORMALIZED_SIZE = { w: 493, h: 596 };
-  const LUMIERE_BODY_CORE = { x: 150, y: 90, w: 243, h: 564 };
   const LUMIERE_BOTTOM_GAP = 2.7;
   const CAMERA_MIN_ZOOM = 1.0;
   const CAMERA_MAX_ZOOM = 1.22;
@@ -136,7 +125,7 @@
   let gardenExitRef = { ...DEFAULT_SPAWN };
   let last = 0;
   let anim = 0;
-  let lumiereFrame = { ...FRAME };
+  let lumiereManifest;
 
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
@@ -167,42 +156,34 @@
     right: SHIOPON_BASE + "shiopon_walk_right.png",
   };
   const lumiereFiles = {
-    down: LUMIERE_BASE + "lumiere_hover_down.png",
-    up: LUMIERE_BASE + "lumiere_hover_up.png",
-    left: LUMIERE_BASE + "lumiere_hover_left.png",
-    right: LUMIERE_BASE + "lumiere_hover_right.png",
+    down: LUMIERE_BASE + "lumiere_idle.webp",
+    up: LUMIERE_BASE + "lumiere_hover-back.webp",
+    left: LUMIERE_BASE + "lumiere_hover_left.webp",
+    right: LUMIERE_BASE + "lumiere_hover_right.webp",
   };
   const images = {};
   const shioponImages = {};
   const lumiereImages = {};
-  const lumiereComposites = new Map();
+  const lumiereCompositors = {};
 
-  // Every directional pose must come from one frame only. The old body-core
-  // replacement is kept only for the original down sheet it was calibrated
-  // against; applying that frame-0 core to up/left/right creates a second,
-  // cropped head that moves with the hover animation.
-  function lumiereComposite(direction, frame) {
-    const key = `${direction}:${frame}`;
-    if (lumiereComposites.has(key)) return lumiereComposites.get(key);
-    const surface = document.createElement("canvas");
-    surface.width = LUMIERE_NORMALIZED_SIZE.w;
-    surface.height = LUMIERE_NORMALIZED_SIZE.h;
-    const paint = surface.getContext("2d");
-    const rect = LUMIERE_FRAME_RECTS[frame];
-    const base = LUMIERE_FRAME_RECTS[0];
-    paint.imageSmoothingEnabled = false;
-    const image = lumiereImages[direction] || lumiereImages.down;
-    paint.drawImage(image,
-      frame * lumiereFrame.w + rect.x, rect.y, rect.w, rect.h,
-      0, 0, surface.width, surface.height);
-    if (direction === "down") {
-      const core = LUMIERE_BODY_CORE;
-      paint.clearRect(core.x - base.x, core.y - base.y, core.w, core.h);
-      paint.drawImage(image, core.x, core.y, core.w, core.h,
-        core.x - base.x, core.y - base.y, core.w, core.h);
+  function validateLumiereManifest(value) {
+    const render = value?.render;
+    if (value?.format !== "RGBA WebP (lossless)" || value.layout !== "single_pose" ||
+        value.movement_type !== "hover" || value.phase !== 2 || value.localized_sway !== true ||
+        render?.reference_body_height !== 420 || render.reference_cell_height !== FRAME.h ||
+        render.draw_cell_height !== DRAW_HEIGHT || render.bottom_gap !== LUMIERE_BOTTOM_GAP ||
+        render.bob_amplitude !== LUMIERE_BOB_AMPLITUDE || render.bob_period !== LUMIERE_BOB_PERIOD)
+      throw new Error("リュミエール設定が実装仕様と一致しません");
+    for (const dir of ["down", "up", "left", "right"]) {
+      const pose = value.poses?.[dir];
+      if (LUMIERE_BASE + value.files?.[dir] !== lumiereFiles[dir] ||
+          pose?.actual_direction !== dir || !Number.isInteger(pose.width) || pose.width <= 0 ||
+          !Number.isInteger(pose.height) || pose.height <= 0 ||
+          !Number.isFinite(pose.body_top) || !Number.isFinite(pose.baseline_y) ||
+          pose.body_top < 0 || pose.baseline_y <= pose.body_top || pose.baseline_y > pose.height ||
+          !Number.isFinite(pose.center_x) || pose.center_x < 0 || pose.center_x > pose.width)
+        throw new Error("リュミエール" + dir + "アンカー設定不正");
     }
-    lumiereComposites.set(key, surface);
-    return surface;
   }
 
   const player = {
@@ -1229,24 +1210,6 @@
   function updateLumiere(dt) {
     if (stage3Dev && (aftermathPaused || !aftermathLumiereEnabled)) return;
     updateStageActor("lumiere", dt);
-    lumiere.anim += dt;
-    while (lumiere.anim >= lumiere.wingHold) {
-      lumiere.anim -= lumiere.wingHold;
-      if (
-        lumiere.frame + lumiere.wingDirection < 0 ||
-        lumiere.frame + lumiere.wingDirection >= lumiereFrame.count ||
-        Math.random() < 0.18
-      ) {
-        lumiere.wingDirection *= -1;
-      }
-      lumiere.frame = clamp(
-        lumiere.frame + lumiere.wingDirection,
-        0,
-        lumiereFrame.count - 1,
-      );
-      lumiere.wingHold =
-        LUMIERE_WING_HOLD_MIN + Math.random() * LUMIERE_WING_HOLD_RANGE;
-    }
     lumiere.bobPhase =
       (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
       (Math.PI * 2);
@@ -1409,45 +1372,41 @@
       outline = ACTOR_OUTLINES.player,
     } = {},
   ) {
+    if (hover) {
+      const dir = actorImages[actor.dir] ? actor.dir : "down";
+      const compositor = lumiereCompositors[dir];
+      const image = compositor.draw(actor.bobPhase);
+      const pose = lumiereManifest.poses[dir];
+      const bodyHeight = DRAW_HEIGHT * lumiereManifest.render.reference_body_height / FRAME.h;
+      const poseScale = bodyHeight / (pose.baseline_y - pose.body_top);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.globalAlpha = 1;
+      // Keep the existing Lumiere shadow; do not add outlines or glow effects.
+      ctx.shadowColor = "rgba(54,41,58,.65)";
+      ctx.shadowBlur = 0.7 / camera.zoom;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.drawImage(image, 0, 0, compositor.width, compositor.height,
+        actor.x - pose.center_x * poseScale,
+        actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * poseScale + visualOffsetY,
+        pose.width * poseScale, pose.height * poseScale);
+      ctx.restore();
+      return;
+    }
     const scaleDraw = drawHeight / frameSpec.h;
-    const normalizedLumiere = hover && LUMIERE_FRAME_RECTS[actor.frame];
-    const sourceRect = normalizedLumiere || {
-      x: 0,
-      y: 0,
-      w: frameSpec.w,
-      h: frameSpec.h,
-    };
-    const drawW =
-      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.w : sourceRect.w) *
-      scaleDraw;
-    const drawH =
-      (normalizedLumiere ? LUMIERE_NORMALIZED_SIZE.h : sourceRect.h) *
-      scaleDraw;
+    const sourceRect = { x: 0, y: 0, w: frameSpec.w, h: frameSpec.h };
+    const drawW = sourceRect.w * scaleDraw;
+    const drawH = sourceRect.h * scaleDraw;
     const dx = actor.x - drawW / 2;
-    const dy = normalizedLumiere
-      ? actor.y - LUMIERE_BOTTOM_GAP * scale.y - drawH + visualOffsetY
-      : actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    const dy = actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
     const rotated = Math.abs(rotation) > 1e-6;
     if (rotated) {
       ctx.save();
       ctx.translate(actor.x, actor.y);
       ctx.rotate(rotation);
       ctx.translate(-actor.x, -actor.y);
-    }
-    if (normalizedLumiere) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 1;
-      ctx.shadowColor = "rgba(54,41,58,.65)";
-      ctx.shadowBlur = 0.7 / camera.zoom;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      ctx.drawImage(lumiereComposite(actor.dir, actor.frame), 0, 0,
-        LUMIERE_NORMALIZED_SIZE.w, LUMIERE_NORMALIZED_SIZE.h,
-        dx, dy, drawW, drawH);
-      ctx.restore();
-      if (rotated) ctx.restore();
-      return;
     }
     const { image, sourceX } = hover
       ? {
@@ -1528,30 +1487,6 @@
     ctx.restore();
   }
 
-  let futureCurrentShionSurface = null;
-  function drawFutureCurrentShionComposite(entry, opacity) {
-    futureCurrentShionSurface ||= document.createElement("canvas");
-    const surface = futureCurrentShionSurface;
-    const density = Math.min(2, dpr * camera.zoom);
-    const left = player.x - 84 * scale.x;
-    const top = player.y + player.stageOffsetY - 110 * scale.y;
-    const width = 168 * scale.x, height = 142 * scale.y;
-    const pixelWidth = Math.ceil(width * density), pixelHeight = Math.ceil(height * density);
-    if (surface.width !== pixelWidth || surface.height !== pixelHeight) {surface.width=pixelWidth; surface.height=pixelHeight;}
-    const target=surface.getContext("2d");
-    target.setTransform(1,0,0,1,0,0); target.clearRect(0,0,pixelWidth,pixelHeight);
-    target.setTransform(pixelWidth/width,0,0,pixelHeight/height,-left*pixelWidth/width,-top*pixelHeight/height);
-    target.globalAlpha=1;
-    const previous=ctx; ctx=target;
-    try {
-      drawGroundShadowAt({x:player.x,y:player.y+player.stageOffsetY},20,.46);
-      drawActor(entry.actor,entry.actorImages,entry.drawHeight,entry.glowColor,entry.options);
-    } finally {ctx=previous;}
-    ctx.save(); ctx.globalAlpha *= opacity;
-    ctx.drawImage(surface,0,0,pixelWidth,pixelHeight,left,top,width,height);
-    ctx.restore();
-  }
-
   function drawActors() {
     if (!visionWorld.active && (!stage3Dev || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
@@ -1564,7 +1499,6 @@
         drawHeight: LUMIERE_DRAW_HEIGHT,
         glowColor: "rgba(226,210,255,.34)",
         options: {
-          frameSpec: lumiereFrame,
           hover: true,
           visualOffsetY: lumiere.bobOffsetY + lumiere.stageOffsetY,
         },
@@ -2140,15 +2074,23 @@
       lumiereEnabled:aftermathLumiereEnabled,inputSuspended:!!controls?.state.suspended,npcSuspended,owner:sceneLockOwner,viewport:{width:cssWidth,height:cssHeight}};
     }
     function lumiereRenderRect() {
-      const origin=viewportOrigin(), ratio=LUMIERE_DRAW_HEIGHT/lumiereFrame.h;
-      const w=LUMIERE_NORMALIZED_SIZE.w*ratio,h=LUMIERE_NORMALIZED_SIZE.h*ratio;
+      const origin=viewportOrigin();
+      const pose=lumiereManifest?.poses?.[lumiere.dir]||lumiereManifest?.poses?.down;
+      if(!pose)return {left:0,right:0,top:0,bottom:0,width:0,height:0};
+      const bodyHeight=DRAW_HEIGHT*lumiereManifest.render.reference_body_height/FRAME.h;
+      const poseScale=bodyHeight/(pose.baseline_y-pose.body_top);
+      const visualOffset=lumiere.bobOffsetY+lumiere.stageOffsetY;
+      const left=(lumiere.x-pose.center_x*poseScale-origin.x)*camera.zoom;
+      const top=(lumiere.y-LUMIERE_BOTTOM_GAP*scale.y-pose.baseline_y*poseScale+visualOffset-origin.y)*camera.zoom;
+      const right=left+pose.width*poseScale*camera.zoom;
+      const imageBottom=top+pose.height*poseScale*camera.zoom;
       const x=(lumiere.x-origin.x)*camera.zoom,y=(lumiere.y-origin.y)*camera.zoom;
-      // Normalized composite includes wings; union with ground shadow and its small blur.
-      const left=Math.min(x-w*camera.zoom/2-2,x-18*camera.zoom);
-      const right=Math.max(x+w*camera.zoom/2+2,x+18*camera.zoom);
-      const top=Math.min(y+(-LUMIERE_BOTTOM_GAP*scale.y-h+lumiere.bobOffsetY+lumiere.stageOffsetY)*camera.zoom-2,y-5*camera.zoom);
-      const bottom=Math.max(y+(-LUMIERE_BOTTOM_GAP*scale.y+lumiere.bobOffsetY+lumiere.stageOffsetY)*camera.zoom+2,y+9*camera.zoom);
-      return {left,right,top,bottom,width:right-left,height:bottom-top};
+      const unionLeft=Math.min(left-2,x-18*camera.zoom);
+      const unionRight=Math.max(right+2,x+18*camera.zoom);
+      const unionTop=Math.min(top-2,y-5*camera.zoom);
+      const unionBottom=Math.max(imageBottom+2,y+9*camera.zoom);
+      return {left:unionLeft,right:unionRight,top:unionTop,bottom:unionBottom,
+        width:unionRight-unionLeft,height:unionBottom-unionTop};
     }
     window.TarotAftermathScene=Object.freeze({
       capture:captureAftermath,captureA0:captureAftermath,
@@ -2499,6 +2441,11 @@
         throw new Error("スプライト設定が実装仕様と一致しません");
       }
 
+      const lumiereResponse = await fetch(LUMIERE_BASE + "lumiere_sprite_manifest.json");
+      if (!lumiereResponse.ok) throw new Error("リュミエール設定を読み込めません");
+      lumiereManifest = await lumiereResponse.json();
+      validateLumiereManifest(lumiereManifest);
+
       await loadCollision();
       const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
       if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
@@ -2571,21 +2518,23 @@
         throw new Error("しおぽん待機画像サイズ不正");
 
       for (const dir of ["down", "up", "left", "right"]) {
-        if (
-          lumiereImages[dir].naturalWidth % FRAME.count !== 0 ||
-          lumiereImages[dir].naturalHeight <= 0 ||
-          lumiereImages[dir].naturalWidth !== lumiereImages.down.naturalWidth ||
-          lumiereImages[dir].naturalHeight !== lumiereImages.down.naturalHeight
-        )
+        const pose = lumiereManifest.poses[dir];
+        if (lumiereImages[dir].naturalWidth !== pose.width ||
+            lumiereImages[dir].naturalHeight !== pose.height)
           throw new Error("リュミエール" + dir + "浮遊画像サイズ不正");
       }
-      lumiereFrame = {
-        w: lumiereImages.down.naturalWidth / FRAME.count,
-        h: lumiereImages.down.naturalHeight,
-        baseline:
-          lumiereImages.down.naturalHeight * (FRAME.baseline / FRAME.h),
-        count: FRAME.count,
-      };
+
+      if (typeof window.TarotLumiereSway?.create !== "function")
+        throw new Error("リュミエール揺れ描画を読み込めません");
+      for (const dir of ["down", "up", "left", "right"]) {
+        const compositor = window.TarotLumiereSway.create(lumiereImages[dir], lumiereManifest.poses[dir]);
+        if (!compositor?.canvas || typeof compositor.draw !== "function" ||
+            !Number.isInteger(compositor.width) || compositor.width <= 0 ||
+            !Number.isInteger(compositor.height) || compositor.height <= 0 ||
+            compositor.canvas.width !== compositor.width || compositor.canvas.height !== compositor.height)
+          throw new Error("リュミエール" + dir + "揺れ描画設定不正");
+        lumiereCompositors[dir] = compositor;
+      }
 
       if (document.body.classList.contains("scene-load-error")) return;
       if (gardenResumePublic) {
