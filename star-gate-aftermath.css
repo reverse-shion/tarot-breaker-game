@@ -13,3 +13,34 @@
 #game-shell.aftermath-weak-light:not(.sga-anomaly-rest) .scene-gate-inner-light > img { filter:brightness(.58)!important;transition:none!important; }
 #game-shell.aftermath-weak-light:not(.sga-anomaly-rest) .scene-gate-inner-light::before,
 #game-shell.aftermath-weak-light:not(.sga-anomaly-rest) .scene-gate-inner-light::after { opacity:0!important; }
+.aftermath-dual-call{
+  position:absolute;
+  inset:0;
+  z-index:2450;
+  pointer-events:none;
+}
+.aftermath-call{
+  position:absolute;
+  top:56%;
+  max-width:42%;
+  padding:9px 12px;
+  border-radius:12px;
+  background:rgba(12,14,22,.88);
+  border:1px solid rgba(223,228,245,.72);
+  color:#fff;
+  font-size:clamp(14px,3.8vw,18px);
+  font-weight:700;
+  line-height:1.25;
+  text-shadow:0 1px 2px rgba(0,0,0,.65);
+  box-shadow:0 4px 18px rgba(0,0,0,.28);
+  animation:aftermathCallIn 140ms ease-out both;
+}
+.aftermath-call-shiopon{left:7%;}
+.aftermath-call-lumiere{right:7%;}
+@keyframes aftermathCallIn{
+  from{opacity:0;transform:translateY(8px) scale(.97);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+@media (prefers-reduced-motion:reduce){
+  .aftermath-call{animation:none;}
+}

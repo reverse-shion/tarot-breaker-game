@@ -2128,7 +2128,6 @@
         // Keep the authored return formation stable while the player freely checks both companions.
         shiopon.wait=Number.POSITIVE_INFINITY;
         lumiere.stageOffsetY=0;lumiere.moving=false;lumiere.frame=0;
-        setDirection(player,0,1);
         setDirection(shiopon,lumiereAnchor.x-shioponPlaced.x,lumiereAnchor.y-shioponPlaced.y);
         setDirection(lumiere,shion.x-lumiereAnchor.x,shion.y-lumiereAnchor.y);
         draw();

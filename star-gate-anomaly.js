@@ -2,7 +2,7 @@
 "use strict";
 if(!window.__TAROT_DEV_STAGE3__ || new URLSearchParams(location.search).get("dev")!=="star-gate-full")return;
 const ASSETS={
- cardNormal:"./assets/tarot/backs/tarot-card-back.webp",
+ cardNormal:"./assets/tarot/major/15-the-devil.webp",
  shionCheckRe:"./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
  cardDetail:"./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
  sky:"./assets/maps/star-country-farthest-sky-background-extended.webp",
@@ -165,7 +165,10 @@ async function showArcanaDetail(){
    width:r.width*scale+"px",height:r.height*scale+"px",
    left:((rb.left+rb.right)/2*k-(r.bounds.left+r.bounds.right)/2*scale)+"px",
    top:((rb.top+rb.bottom)/2*k-(r.bounds.top+r.bounds.bottom)/2*scale)+"px",
-   opacity:key==='normal'?'1':'0'
+   opacity:key==='normal'?'1':'0',
+   zIndex:key==='re'?'3':'2',
+   visibility:'visible',
+   display:'block'
   });
   frame.appendChild(card);images[key]=card;
  }
@@ -258,6 +261,10 @@ async function showArcanaDetail(){
   infection.classList.remove('active');
   infection.style.opacity='0';
   images.normal.style.opacity='0';
+  images.normal.style.visibility='hidden';
+  images.re.style.visibility='visible';
+  images.re.style.display='block';
+  images.re.style.zIndex='3';
   images.re.style.opacity='1';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
   images.re.style.filter='brightness(.86) saturate(.72) contrast(1.04)';
