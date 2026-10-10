@@ -44,3 +44,13 @@ On GitHub Actions Validate TAROT BREAKER 2D, commit `459548629747797138a860bea67
 The pinned game runtime with read-only diagnostic source/display canvases is `28aed680aec11cc547cc59a831c2ec5581217da2`. Dev-only controls expose a 4x paired original/live crop, yellow candidate-region overview, live bob phase, per-region changed/alpha-silhouette counts, and effective motion limits. No new texture allocations on the game animation path. The page is in `docs/lumiere-hover-evidence/lumiere-sway-28aed68-inspector.html`.
 
 Before changing amplitudes or region geometry again, inspect four angles on a real iPhone and determine whether the yellow ROI intersects the exact free hair/hem silhouette and whether its right-hand crop differs from its fixed left-hand crop. If not, choose new anatomical masks/layers based on actual artwork and retest. Avoid further blind multiplier increases, preserving face, body, wings and actor location. No Device PASS or merge without verified visual acceptability.
+
+## Product approval and editor-free release candidate — 2026-10-10
+
+The owner clarified the intended degree of motion: subtle enough that attentive players notice it, with no larger deformation requested ("これでいいよ あんまり大きく変化させるとおかしいし 気づく人は気づくぐらいで"). This **supersedes the earlier subjective STOP on perceptual subtlety**, not the exact-runtime Device Gate.
+
+The branch's latest production/game entry `index.html` omits opt-in editor scripts for fountain, title layout and waterfall. Their source files, historical diagnostic documentation and artwork are retained. Lumiere rendering itself was not altered by this cleanup. The exact production/runtime candidate after removing editor loads is `b99f3d443dc6969af48850776ad2ee9b89eafd43`.
+
+The matching **no-editor** immutable preview is `docs/lumiere-hover-evidence/lumiere-clean-b99f3d4.html` (built and source-digest checked with game scripts and artwork from the same SHA). The direct product/visual acceptance was expressed before this exact editor-free commit; device verification of the final SHA is **PENDING**. No reviewer or automation may infer a Device PASS or merge until exact-runtime human smoke evidence is provided, including which directions and UI/camera/occlusion checks were actually observed.
+
+Repository lock audit: main `cf9e8363575e6d96f458d870cbbdefbd96ef197f`; no Audio/Route/Save/Collision/Dialogue touched by editor cleanup. Runtime files after `b99f3d4` must not change without publishing a new exact-runtime candidate.
