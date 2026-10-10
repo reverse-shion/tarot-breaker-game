@@ -147,36 +147,34 @@
   layer.append(left,right);mount.appendChild(layer);
   try{await s.clock.wait(900);}finally{layer.remove();}
  }
- async function finishReturn(s){
-  state(s,'CONTROL_RETURN');
-  if(s.a0.following)window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-start'));
-  else window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
-  releaseControl(s,s.a0.following);
-  s.ui?.hide();s.ui?.destroy();s.ui?.elements?.layer?.remove();
-  removeListeners(s);s.clock.dispose();s.completed=true;
-  state(s,'COMPLETED');
-  window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-ended',{detail:report(s)}));
- }
  async function opening(s){
   state(s,'RETURN_RECOGNITION');
+  // Freeze the companions in the restored formation before the blackout is released.
+  // Shion keeps the restored gate-facing direction; do not snap him to front.
   window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
   s.returnFormation=s.scene.placeReturnFormation?.();
   s.scene.setActorVisibility?.('shion',1);
   s.scene.setActorVisibility?.('shiopon',1);
   s.scene.setActorVisibility?.('lumiere',1);
-  // Preserve Shion's restored gate-facing direction. He is dazed, not snapping to front.
   s.scene.face('shiopon','shion');
   s.scene.face('lumiere','shion');
   await s.scene.gameplayCamera();
+
   state(s,'SHION_DAZED');
   await s.clock.wait(700);
+
   state(s,'SIMULTANEOUS_CALL');
   await showDualCall(s);
   await s.clock.wait(180);
+
   state(s,'SHION_CONFUSED');
   await sayLine(s,'R01',['shion','わ、私は何をしてたんだ……']);
-  await s.clock.wait(180);
-  await finishReturn(s);
+  await s.clock.wait(220);
+
+  // Shion regains control here. Shiopon and Lumiere remain at their authored
+  // return positions; the player must approach/tap each companion as before.
+  releaseControl(s,false);
+  state(s,'CHECK_COMPANIONS');
  }
  async function individualConversation(s,actor){
   if(s.checked.has(actor)){await sayLine(s,`R-${actor}`,REPEAT[actor]);releaseControl(s,false);state(s,'CHECK_COMPANIONS');return;}
@@ -222,7 +220,7 @@
   const a0=scene.capture();if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
   const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[],checked:new Set()};s.clock=aftermathClock(s.controller.signal);
   try{
-   scene.lock(s.owner);scene.clearInput();const shell=document.getElementById('game-shell');if(!shell.classList.contains('sga-anomaly-rest'))shell.classList.add('aftermath-weak-light');makeUi(s);
+   scene.lock(s.owner);scene.clearInput();const shell=document.getElementById('game-shell');if(!shell.classList.contains('sga-anomaly-rest'))shell.classList.add('aftermath-weak-light');makeUi(s);installTalkInput(s);
    s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
    s.hidden=()=>{scene.pause(document.hidden);if(document.hidden)s.pendingTalk=null;else{scene.clearInput();if(s.focus)scene.focusGate();}};
    s.resize=()=>{if(!alive(s))return;scene.clearInput();if(s.focus)scene.focusGate();};document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);

@@ -21,8 +21,8 @@
 }
 .aftermath-call{
   position:absolute;
-  top:56%;
-  max-width:42%;
+  top:52%;
+  max-width:38%;
   padding:9px 12px;
   border-radius:12px;
   background:rgba(12,14,22,.88);
@@ -35,8 +35,8 @@
   box-shadow:0 4px 18px rgba(0,0,0,.28);
   animation:aftermathCallIn 140ms ease-out both;
 }
-.aftermath-call-shiopon{left:7%;}
-.aftermath-call-lumiere{right:7%;}
+.aftermath-call-shiopon{left:18%;}
+.aftermath-call-lumiere{right:18%;}
 @keyframes aftermathCallIn{
   from{opacity:0;transform:translateY(8px) scale(.97);}
   to{opacity:1;transform:translateY(0) scale(1);}
