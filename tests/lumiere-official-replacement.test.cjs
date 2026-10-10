@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const base = 'assets/sprites/lumiere/';
 const evidence = 'docs/lumiere-sprite-replacement-20261010/';
@@ -83,4 +84,28 @@ test('official replacement anatomy and pixel evidence belong to these exact depl
   assert.equal(p.samples.length,34);
   for(const sample of p.samples){assert.equal(sample.outside,0);assert.equal(sample.border,0);assert(sample.inside>0);}
  }
+});
+
+test('official Lumiere device preview pins exact runtime and has compact G3-only controls',()=>{
+ const runtime='43575846ece577693c26cc4ac1910e15336ecd92';
+ const html=read(evidence+'lumiere-official-4357584.html').toString('utf8');
+ const metadata=JSON.parse(html.match(/<script type="application\/json" id="lumiere-preview-source">([\s\S]*?)<\/script>/)[1]);
+ assert.equal(metadata.source_sha,runtime);assert.equal(Object.keys(metadata.files).length,40);
+ for(const [file,sha] of Object.entries(metadata.files)){
+  assert.equal(metadata.source_commits[file],runtime);assert.equal(digest(read(file)),sha,file);
+ }
+ assert(html.includes('<base href="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/'+runtime+'/"'));
+ assert(!html.includes('tarot-breaker-game/main/'));
+ const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+ const js=scripts.filter(v=>!v[1].includes('type="application/json"'));
+ assert.equal(js.length,32);for(const [, ,body] of js)new vm.Script(body);
+ assert(!/<script[^>]+\bsrc=/.test(html),'all scripts inline');
+ for(const id of ['lumiere-fixed-check','lumiere-region-inspector','lumiere-check-diagnostics'])assert(!html.includes('id="'+id+'"'));
+ const controls=read(evidence+'preview-controls.html').toString('utf8');
+ for(const dir of Object.keys(expected))assert(controls.includes('data-lumiere-direction="'+dir+'"'));
+ assert(controls.includes("params.getAll('dev').length!==1"));
+ assert(controls.includes("params.get('dev')!=='garden-resume-after-lumiere'"));
+ assert(controls.includes("params.has('from')"));
+ assert(controls.includes('window.TarotStage.perform'));
+ assert(!controls.includes('bobPhase')&&!controls.includes('resetLumiere'));
 });
