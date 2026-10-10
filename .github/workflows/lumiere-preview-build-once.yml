@@ -1,0 +1,29 @@
+name: Build latest Lumiere standalone iPhone preview
+on:
+  push:
+    paths:
+      - '.github/workflows/lumiere-preview-build-once.yml'
+permissions:
+  contents: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Build self-contained-script 4-direction review using immutable candidate
+        run: |
+          set -euo pipefail
+          python3 docs/lumiere-sprite-replacement-20261010/build-clean-preview.py 37247552f7885650dfa937a8d2228a7dc0053ad2
+          OUT=docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html
+          test -s "$OUT"
+          grep -q 'data-lumiere-direction="down"' "$OUT"
+          grep -q 'data-lumiere-direction="right"' "$OUT"
+          grep -q 'source_sha' "$OUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"
+          git commit -m "docs(lumiere): add immutable standalone 4-direction device preview"
+          git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
