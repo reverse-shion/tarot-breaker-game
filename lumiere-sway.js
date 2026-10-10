@@ -106,25 +106,23 @@
             const x0 = Math.floor(sourceX), x1 = Math.min(w-1, x0+1);
             const y0 = Math.floor(sourceY), y1 = Math.min(h-1, y0+1);
             const fx = sourceX - x0, fy = sourceY - y0;
-            const factors = [
-              [x0,y0,(1-fx)*(1-fy)], [x1,y0,fx*(1-fy)],
-              [x0,y1,(1-fx)*fy], [x1,y1,fx*fy],
-            ];
-            const target = (row * w + col) * 4;
-            let alpha = 0, red = 0, green = 0, blue = 0;
-            for (const [sourceCol,sourceRow,mix] of factors) {
-              const i = ((y + sourceRow) * width + x + sourceCol) * 4;
-              const a = original[i+3] * mix;
-              alpha += a;
-              red += original[i] * a;
-              green += original[i+1] * a;
-              blue += original[i+2] * a;
-            }
+            // Four bilinear neighbors with no per-pixel temporary arrays.
+            const i00 = ((y+y0)*width+x+x0)*4;
+            const i10 = ((y+y0)*width+x+x1)*4;
+            const i01 = ((y+y1)*width+x+x0)*4;
+            const i11 = ((y+y1)*width+x+x1)*4;
+            const a00 = original[i00+3]*(1-fx)*(1-fy);
+            const a10 = original[i10+3]*fx*(1-fy);
+            const a01 = original[i01+3]*(1-fx)*fy;
+            const a11 = original[i11+3]*fx*fy;
+            const alpha = a00+a10+a01+a11;
+            const target = (row*w+col)*4;
             pixels.data[target+3] = alpha;
             if (alpha > 0) {
-              pixels.data[target] = red / alpha;
-              pixels.data[target+1] = green / alpha;
-              pixels.data[target+2] = blue / alpha;
+              for (let channel=0; channel<3; channel++)
+                pixels.data[target+channel] =
+                  (original[i00+channel]*a00 + original[i10+channel]*a10 +
+                   original[i01+channel]*a01 + original[i11+channel]*a11) / alpha;
             }
           }
         }
