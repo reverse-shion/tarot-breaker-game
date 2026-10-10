@@ -1,0 +1,52 @@
+<!-- Lumiere-only G3 device preview. Uses existing public Stage commands. -->
+<nav id="lumiere-official-controls" hidden aria-label="リュミエール実機確認">
+ <button type="button" id="lumiere-official-position">並べる</button>
+ <button type="button" data-lumiere-direction="down">正面</button>
+ <button type="button" data-lumiere-direction="up">背面</button>
+ <button type="button" data-lumiere-direction="left">左</button>
+ <button type="button" data-lumiere-direction="right">右</button>
+ <button type="button" id="lumiere-official-sway" aria-pressed="true">揺れON</button>
+ <span id="lumiere-official-status" role="status" class="lumiere-official-sr"></span>
+</nav>
+<style>
+#lumiere-official-controls {position:fixed;bottom:calc(6px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:1500;display:flex;gap:3px;padding:4px;border-radius:8px;background:rgba(15,17,37,.85);max-width:calc(100vw - 12px);box-sizing:border-box}
+#lumiere-official-controls[hidden] {display:none}
+#lumiere-official-controls button {min-height:44px;min-width:42px;padding:4px 7px;border:1px solid #a998bd;border-radius:5px;background:#302843;color:#fff;font:12px system-ui;white-space:nowrap;touch-action:manipulation}
+#lumiere-official-controls button:disabled {opacity:.5}
+.lumiere-official-sr {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+</style>
+<script>
+(function(){
+ "use strict";
+ const params=new URLSearchParams(location.search);
+ if(params.getAll('dev').length!==1||params.get('dev')!=='garden-resume-after-lumiere'||params.has('from'))return;
+ const nav=document.getElementById('lumiere-official-controls');
+ const status=document.getElementById('lumiere-official-status');
+ const buttons=[...nav.querySelectorAll('button')];
+ async function stage(){
+  buttons.forEach(b=>b.disabled=true);
+  const result=await window.TarotStage.perform({type:'move',actor:'shion',target:{x:810,y:290},duration:1400}).promise;
+  buttons.forEach(b=>b.disabled=false);
+  status.textContent=result.completed?'シオンと同じ画面で確認できます':'移動を完了できませんでした';
+ }
+ document.getElementById('lumiere-official-position').addEventListener('click',stage);
+ for(const button of nav.querySelectorAll('[data-lumiere-direction]'))button.addEventListener('click',async()=>{
+  const a=window.TarotStage.getState().actors.lumiere;
+  const [dx,dy]={down:[0,10],up:[0,-10],left:[-10,0],right:[10,0]}[button.dataset.lumiereDirection];
+  await window.TarotStage.perform({type:'face',actor:'lumiere',target:{x:a.x+dx,y:a.y+dy}}).promise;
+  status.textContent=button.textContent+'を表示';
+ });
+ document.getElementById('lumiere-official-sway').addEventListener('click',event=>{
+  const api=window.TarotLumiereSway;api.setEnabled(!api.isEnabled());
+  event.currentTarget.setAttribute('aria-pressed',String(api.isEnabled()));
+  event.currentTarget.textContent='揺れ'+(api.isEnabled()?'ON':'OFF');
+ });
+ let admitted=false;
+ function ready(){
+  if(admitted||!document.body.classList.contains('scene-ready')||!window.TarotStage||!window.TarotLumiereSway)return;
+  admitted=true;observer.disconnect();nav.hidden=false;stage();
+ }
+ const observer=new MutationObserver(ready);
+ observer.observe(document.body,{attributes:true,attributeFilter:['class']});ready();
+})();
+</script>
