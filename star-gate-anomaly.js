@@ -32,7 +32,7 @@ let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 let session=null,sessionId=0,lastResult=null;
 const preparedImages=new Map();
 function createGateSfx(signal){
- const tracks=new Map(),active=new Set();
+ const tracks=new Map(),active=new Set(),fades=new Map();
  const volumes={lightDown:1,lightCycle:1,corruptSpread:1,darkUp:1};
  let bgmSnapshot=null,bgmHardMuted=false;
  const hardMuteBgm=()=>{
@@ -47,11 +47,38 @@ function createGateSfx(signal){
   audio.setBase(snapshot.base);audio.setLevel(snapshot.coefficient);
   if(!audio.revealSilent(snapshot))session?.audioFailures?.push?.("gate-sfx:bgm-restore-failed");
  };
+ const cancelFade=name=>{
+  const id=fades.get(name);if(id)cancelAnimationFrame(id);fades.delete(name);
+ };
+ const finishStop=name=>{
+  const media=tracks.get(name);if(media){cancelFade(name);media.pause();media.loop=false;try{media.currentTime=0}catch{}}
+  active.delete(name);restoreBgm();
+ };
+ const fadeTo=(name,target,duration,{stopWhenDone=false}={})=>{
+  const media=tracks.get(name);if(!media)return Promise.resolve(false);
+  cancelFade(name);
+  const from=media.volume,to=Math.max(0,Math.min(1,target)),start=performance.now();
+  return new Promise(resolve=>{
+   const step=now=>{
+    if(signal?.aborted){fades.delete(name);resolve(false);return}
+    const p=duration>0?Math.max(0,Math.min(1,(now-start)/duration)):1;
+    const eased=p*p*(3-2*p);
+    media.volume=from+(to-from)*eased;
+    if(p<1){const id=requestAnimationFrame(step);fades.set(name,id);}
+    else{
+     fades.delete(name);
+     if(stopWhenDone)finishStop(name);
+     resolve(true);
+    }
+   };
+   const id=requestAnimationFrame(step);fades.set(name,id);
+  });
+ };
  const clearWithoutRestore=()=>{
-  for(const media of tracks.values()){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
+  for(const name of tracks.keys()){cancelFade(name);const media=tracks.get(name);media.pause();media.loop=false;try{media.currentTime=0}catch{}}
   active.clear();bgmHardMuted=false;bgmSnapshot=null;
  };
- const ended=name=>{active.delete(name);const media=tracks.get(name);if(media)media.loop=false;restoreBgm();};
+ const ended=name=>{cancelFade(name);active.delete(name);const media=tracks.get(name);if(media)media.loop=false;restoreBgm();};
  const get=name=>{
   if(tracks.has(name))return tracks.get(name);
   const src=GATE_SFX[name];if(!src)throw new Error("Unknown Star Gate SFX: "+name);
@@ -61,22 +88,24 @@ function createGateSfx(signal){
   tracks.set(name,media);return media;
  };
  const prepare=()=>{for(const name of Object.keys(GATE_SFX)){const media=get(name);try{media.load()}catch{}}};
- const stop=name=>{
-  const media=tracks.get(name);if(media){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
-  active.delete(name);restoreBgm();
+ const stop=(name,{fadeOut=0}={})=>{
+  const media=tracks.get(name);if(!media)return;
+  if(fadeOut>0&&!media.paused){fadeTo(name,0,fadeOut,{stopWhenDone:true});return}
+  finishStop(name);
  };
  const stopAll=()=>{
-  for(const media of tracks.values()){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
-  active.clear();restoreBgm();
+  for(const name of tracks.keys())finishStop(name);
+  restoreBgm();
  };
- const play=(name,{loop=false}={})=>{
+ const play=(name,{loop=false,fadeIn=0}={})=>{
   if(signal?.aborted||window.TarotAudio?.enabled===false)return false;
-  const media=get(name);media.pause();try{media.currentTime=0}catch{}
-  media.loop=!!loop;media.muted=false;media.volume=volumes[name]??1;
+  const media=get(name);cancelFade(name);media.pause();try{media.currentTime=0}catch{}
+  media.loop=!!loop;media.muted=false;
+  const target=volumes[name]??1;media.volume=fadeIn>0?0:target;
   active.add(name);hardMuteBgm();
   try{
    const pending=media.play();
-   pending?.catch?.(()=>{
+   pending?.then(()=>{if(fadeIn>0)fadeTo(name,target,fadeIn);}).catch?.(()=>{
     active.delete(name);restoreBgm();
     if(!signal?.aborted&&window.TarotAudio?.enabled!==false)session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed");
    });
@@ -89,7 +118,7 @@ function createGateSfx(signal){
  const abort=()=>clearWithoutRestore();
  const dispose=()=>{if(signal?.aborted)clearWithoutRestore();else stopAll();signal?.removeEventListener?.("abort",abort)};
  signal?.addEventListener?.("abort",abort,{once:true});
- return Object.freeze({prepare,play,stop,stopAll,dispose});
+ return Object.freeze({prepare,play,stop,stopAll,fadeTo,dispose});
 }
 function image(src){
  if(preparedImages.has(src))return Promise.resolve(preparedImages.get(src));
@@ -531,20 +560,21 @@ async function playCelestialGateLight(){
 async function playDarkEnergyReverse(){
  const shell=gateShell(),el=document.querySelector(".sga-dark-energy-frame");
  if(!shell||!el)throw new Error("Dark energy reverse-flow unavailable");
+ session?.gateSfx?.play("darkUp",{fadeIn:900});
  darkEnergyFrame(1);setGateState("sga-dark-frame-01");await pause(600);
  setGateState("sga-dark-frame-02");shell.classList.add("sga-dark-01-02-overlap");await pause(200);
  shell.classList.remove("sga-dark-01-02-overlap");await pause(400);
- setGateState("sga-dark-frame-03");shell.classList.add("sga-dark-02-03-overlap");await pause(180);
+ setGateState("sga-dark-frame-03");shell.classList.add("sga-dark-02-03-overlap");
+ session?.gateSfx?.stop("corruptSpread",{fadeOut:1200});
+ await pause(180);
  shell.classList.remove("sga-dark-02-03-overlap");await pause(420);
- session?.gateSfx?.play("darkUp");
- session?.gateSfx?.stop("corruptSpread");
  setGateState("sga-dark-frame-04");shell.classList.add("sga-dark-03-04-overlap");await pause(150);
  shell.classList.remove("sga-dark-03-04-overlap");await pause(450);
  setGateState("sga-dark-frame-rise");
  await pause(850);
  setGateState("sga-dark-afterglow");
- await pause(360);
- session?.gateSfx?.stop("darkUp");
+ session?.gateSfx?.stop("darkUp",{fadeOut:420});
+ await pause(420);
 }
 function gateIsFramed(state){
  const {origin,camera,viewport,scale}=state||{};if(!origin||!camera||!viewport||!scale)return false;
@@ -589,13 +619,17 @@ async function resonance(){
  if(!framed?.completed||!gateIsFramed(framedState)||!overscanCoversViewport(framedState))throw new StarGateOverscanCoverageError();
  await pause(800);
  await playCelestialGateLight();
- session?.gateSfx?.stop("lightDown");
- setGateState("sga-normal-flow");session?.gateSfx?.play("lightCycle");await pause(520);
+ setGateState("sga-normal-flow");
+ session?.gateSfx?.play("lightCycle",{loop:true,fadeIn:420});
+ session?.gateSfx?.stop("lightDown",{fadeOut:800});
+ await pause(520);
  setGateState("sga-resonance-complete");await pause(1200);
  await say("shion","……星門は、特におかしくないな。");
  await pause(400);
- session?.gateSfx?.stop("lightCycle");
- setGateState("sga-anomaly-flicker");session?.gateSfx?.play("corruptSpread",{loop:true});await pause(720);
+ setGateState("sga-anomaly-flicker");
+ session?.gateSfx?.play("corruptSpread",{loop:true,fadeIn:480});
+ session?.gateSfx?.stop("lightCycle",{fadeOut:820});
+ await pause(720);
  const lumiereDuringAnomaly=stage.getState().actors.lumiere;
  if(!samePoint(lumiereStart,lumiereDuringAnomaly))throw new Error("Lumiere moved during Star Gate anomaly");
  setGateState("sga-anomaly");await pause(480);
