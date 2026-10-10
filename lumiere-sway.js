@@ -24,6 +24,9 @@
   const AMPLITUDE = Object.freeze({ hair: 2.2, hem: 1.35 });
   const FOLLOW_LAG = Object.freeze({ hair: 0.34, hem: 0.58 });
   const diagnostics = Object.create(null);
+  // These references point to the already-allocated fixed canvases.
+  // Read-only debug views do not create any extra runtime surfaces.
+  const debugFrames = Object.create(null);
 
   function smooth01(value) {
     const t = Math.max(0, Math.min(1, value));
@@ -165,6 +168,11 @@
         maxReference: t.maxReference,
       }))),
     });
+    debugFrames[pose.actual_direction] = Object.freeze({
+      base: base.canvas, active: output.canvas,
+      regions: Object.freeze(tiles.map(({x,y,w,h,kind}) =>
+        Object.freeze({x,y,w,h,kind}))),
+    });
     let previousPhase;
     let previousEnabled;
     function draw(phase) {
@@ -210,6 +218,7 @@
   global.TarotLumiereSway = Object.freeze({ create, weight, motion,
     getRegions: direction => regions[direction],
     getDiagnostics: direction => diagnostics[direction] || null,
+    getDebugFrame: direction => debugFrames[direction] || null,
     config: Object.freeze({ amplitude: AMPLITUDE, lag: FOLLOW_LAG,
       bobPeriod: PERIOD, candidate: "C" }),
     setEnabled: value => { enabled = Boolean(value); },
