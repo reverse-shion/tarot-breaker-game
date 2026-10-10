@@ -81,8 +81,7 @@ function harness() {
   async function start() {
     window.TarotAudio.startFromMovement();
     // Allow the already-resolved HTMLMediaElement.play() promise to finish.
-    await Promise.resolve();
-    await Promise.resolve();
+    await new Promise(resolve => setImmediate(resolve));
     assert.equal(playCalls, 1);
     assert.equal(frameQueue.size, 1);
   }
@@ -159,8 +158,7 @@ test("hidden-tab pause remains immediate; resuming still fades within range", as
   assert.equal(h.frameQueue.size, 0);
   h.document.hidden = false;
   h.dispatch("document", "visibilitychange");
-  await Promise.resolve();
-  await Promise.resolve();
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(h.counts().playCalls, 2);
   assert.doesNotThrow(() => h.deliverAt(13999));
   assert.equal(h.bgm.volume, 0);
