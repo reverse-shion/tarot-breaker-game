@@ -37,7 +37,15 @@ test("local sway has fixed roots/perimeter and bounded smooth displacement", () 
     assert(Math.abs(api.motion(kind,phase))<=1);
     assert(Math.abs(api.motion(kind,phase)-api.motion(kind,phase+2*Math.PI))<1e-12);
   }
-  assert.throws(()=>api.motion("hair",NaN),/phase/);
+  // Option B shifts visually readable motion toward the free tips.
+  // The root and entire tile perimeter must remain strictly fixed.
+  assert(api.weight(.5,.8) > .95, "free-tip band should move strongly");
+  assert(api.weight(.5,.15) < .25, "attachment region must be quiet");
+  assert(api.weight(.5,.96) < .3, "end boundary must taper smoothly");
+  assert(api.weight(.05,.8) < .25, "side seams must remain stable");
+  assert.notEqual(api.motion("hair",1.2),api.motion("hem",1.2),
+    "hair and hem should follow at different delays");
+    assert.throws(()=>api.motion("hair",NaN),/phase/);
 });
 
 test("all four source regions exclude conservative fixed face/torso/legs/wings areas", () => {
