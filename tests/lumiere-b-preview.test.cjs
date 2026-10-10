@@ -6,10 +6,10 @@ const crypto = require("node:crypto");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
-const relativePage = "docs/lumiere-hover-evidence/lumiere-sway-8e7b89b.html";
-const runtime = "8e7b89b7afa479e2a66a6c8487b10a65ab1dcb4c";
+const relativePage = "docs/lumiere-hover-evidence/lumiere-sway-28aed68-inspector.html";
+const runtime = "28aed680aec11cc547cc59a831c2ec5581217da2";
 
-test("Candidate C fixed iPhone preview sources match pinned source digests and inline scripts parse", () => {
+test("Hair/hem inspector fixed iPhone preview sources match pinned source digests and inline scripts parse", () => {
   const html = fs.readFileSync(path.join(root, relativePage), "utf8");
   const match = html.match(/<script type="application\/json" id="lumiere-preview-source">([\s\S]*?)<\/script>/);
   assert(match, "source metadata must exist");
@@ -33,6 +33,11 @@ test("Candidate C fixed iPhone preview sources match pinned source digests and i
   assert(html.includes('candidate: "C"'));
   assert(html.includes('id="lumiere-check-spec"'));
   assert(html.includes('id="lumiere-check-diagnostics"'));
+  assert(html.includes('id="lumiere-region-inspector"'));
+  assert(html.includes('id="lumiere-region-crops"'));
+  assert(html.includes("getDebugFrame"));
+  assert(html.includes("確認位置へ"));
+  assert(html.includes("髪・裾を拡大診断"));
   assert(!html.includes("毛先0.4px・裾先0.25px"));
   assert(html.includes("lumiere-check-sway"));
   assert(html.includes("確認パネルを開く"));
