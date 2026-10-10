@@ -36,3 +36,11 @@ Open bottom verification panel → move to inspection position → verify each d
 ## CI verification status — 2026-10-10
 
 On GitHub Actions Validate TAROT BREAKER 2D, commit `459548629747797138a860bea675fadc297a24e0` passed 335/335 automated tests, with zero new regression-baseline failures. The immutable candidate C preview and 40 current source-file digests are checked in CI. A follow-up documentation-only commit follows the synchronized PR-body runtime SHA to let the guarded workflow evaluate the final candidate. A merge gate requiring Device registry evidence must remain BLOCKED until a real iPhone verification record is provided.
+
+## Independent perceptual diagnosis after owner feedback — 2026-10-10
+
+**Owner observation: STILL NOT VISIBLE. Verdict: STOP / DEVICE PENDING.** Do not equate passing 4-direction pixel-difference tests with a visually convincing hair/hem movement. Most importantly, the selected image rectangles may not follow recognizable strands or silhouettes.
+
+The pinned game runtime with read-only diagnostic source/display canvases is `28aed680aec11cc547cc59a831c2ec5581217da2`. Dev-only controls expose a 4x paired original/live crop, yellow candidate-region overview, live bob phase, per-region changed/alpha-silhouette counts, and effective motion limits. No new texture allocations on the game animation path. The page is in `docs/lumiere-hover-evidence/lumiere-sway-28aed68-inspector.html`.
+
+Before changing amplitudes or region geometry again, inspect four angles on a real iPhone and determine whether the yellow ROI intersects the exact free hair/hem silhouette and whether its right-hand crop differs from its fixed left-hand crop. If not, choose new anatomical masks/layers based on actual artwork and retest. Avoid further blind multiplier increases, preserving face, body, wings and actor location. No Device PASS or merge without verified visual acceptability.
