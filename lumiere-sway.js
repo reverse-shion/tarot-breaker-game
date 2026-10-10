@@ -21,6 +21,9 @@
   const PERIOD = 5.2;
   const BODY_HEIGHT = 78 * 420 / 512;
   let enabled = true;
+  const AMPLITUDE = Object.freeze({ hair: 2.2, hem: 1.35 });
+  const FOLLOW_LAG = Object.freeze({ hair: 0.34, hem: 0.58 });
+  const diagnostics = Object.create(null);
 
   function smooth01(value) {
     const t = Math.max(0, Math.min(1, value));
@@ -31,12 +34,12 @@
     // The old central sine mask barely moved recognizable hair/hem tips.
     // Anchor the upper/root section, then let the terminal part follow while
     // fading to zero at the tile's one-pixel safety perimeter.
-    return smooth01(u / 0.19) * smooth01((1-u) / 0.19) *
-      smooth01(v / 0.52) * smooth01((1-v) / 0.12);
+    return smooth01(u / 0.18) * smooth01((1-u) / 0.18) *
+      smooth01(v / 0.43) * smooth01((1-v) / 0.10);
   }
   function motion(kind, phase) {
     if (!Number.isFinite(phase)) throw new Error("Invalid Lumiere sway phase");
-    const lag = kind === "hair" ? 0.28 : 0.47;
+    const lag = FOLLOW_LAG[kind];
     return Math.sin(phase - lag * Math.PI * 2 / PERIOD);
   }
   function surface(width, height) {
@@ -75,8 +78,8 @@
       // Measured in reference pixels, before the fixed 3x local cache.
       // Increased enough to read at character scale, not enough to shift
       // the attachment or any protected body/wing pixel.
-      const amplitude = (kind === "hair" ? 0.85 : 0.55) * density;
-      const verticalRatio = kind === "hair" ? -0.18 : 0.16;
+      const amplitude = AMPLITUDE[kind] * density;
+      const verticalRatio = kind === "hair" ? -0.13 : 0.12;
       return { x,y,w,h,kind,amplitude,verticalRatio };
     });
     // Pack all displacement samples into one atlas per direction. Hundreds of
@@ -85,6 +88,9 @@
       geometry.reduce((n,t) => n+t.h,0));
     let atlasY = 0;
     const tiles = geometry.map(({x,y,w,h,kind,amplitude,verticalRatio}) => {
+      let foreground = 0;
+      let changed = 0;
+      let silhouette = 0;
       const sampleY = atlasY;
       atlasY += h;
       for (let step = 0; step <= STEPS; step++) {
@@ -118,6 +124,17 @@
             const alpha = a00+a10+a01+a11;
             const target = (row*w+col)*4;
             pixels.data[target+3] = alpha;
+            if (step === STEPS) {
+              const reference = ((y+row)*width+x+col)*4;
+              if (original[reference+3] > 32) foreground++;
+              const alphaDelta = Math.abs(alpha-original[reference+3]);
+              if (alphaDelta > 12) silhouette++;
+              if (alphaDelta > 12 ||
+                  Math.abs((alpha > 0 ? 
+                    (original[i00]*a00 + original[i10]*a10 +
+                     original[i01]*a01 + original[i11]*a11) / alpha : 0) -
+                    original[reference]) > 10) changed++;
+            }
             if (alpha > 0) {
               for (let channel=0; channel<3; channel++)
                 pixels.data[target+channel] =
@@ -128,7 +145,17 @@
         }
         atlas.ctx.putImageData(pixels, step*w, sampleY);
       }
-      return { x,y,w,h,kind,sampleY };
+      return { x,y,w,h,kind,sampleY,foreground,changed,silhouette };
+    });
+    diagnostics[pose.actual_direction] = Object.freeze({
+      direction: pose.actual_direction,
+      foreground: tiles.reduce((sum,t) => sum + t.foreground, 0),
+      changed: tiles.reduce((sum,t) => sum + t.changed, 0),
+      silhouette: tiles.reduce((sum,t) => sum + t.silhouette, 0),
+      regions: Object.freeze(tiles.map(t => Object.freeze({
+        kind: t.kind, foreground: t.foreground,
+        changed: t.changed, silhouette: t.silhouette,
+      }))),
     });
     let previousPhase;
     let previousEnabled;
@@ -174,6 +201,9 @@
   }
   global.TarotLumiereSway = Object.freeze({ create, weight, motion,
     getRegions: direction => regions[direction],
+    getDiagnostics: direction => diagnostics[direction] || null,
+    config: Object.freeze({ amplitude: AMPLITUDE, lag: FOLLOW_LAG,
+      bobPeriod: PERIOD, candidate: "C" }),
     setEnabled: value => { enabled = Boolean(value); },
     isEnabled: () => enabled,
     density: DENSITY, steps: STEPS,
