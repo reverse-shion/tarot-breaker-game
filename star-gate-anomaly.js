@@ -32,25 +32,50 @@ let running=false,ui=null,root=null,resolveAdvance=null,interactionOwned=false;
 let session=null,sessionId=0,lastResult=null;
 const preparedImages=new Map();
 function createGateSfx(signal){
- const tracks=new Map();
- const volumes={lightDown:.58,lightCycle:.52,corruptSpread:.62,darkUp:.66};
+ const tracks=new Map(),active=new Set();
+ const volumes={lightDown:.90,lightCycle:.86,corruptSpread:1,darkUp:.96};
+ const duckLevels={lightDown:.26,lightCycle:.30,corruptSpread:.14,darkUp:.20};
+ const restoreLevel=()=>session?.p0?.audio?.coefficient??1;
+ const applyDuck=()=>{
+  const level=active.size
+   ?Math.min(...[...active].map(name=>duckLevels[name]??.28))
+   :restoreLevel();
+  session?.audio?.tweenCoefficient?.(level,active.size?150:420,false);
+ };
+ const ended=name=>{active.delete(name);const media=tracks.get(name);if(media)media.loop=false;applyDuck();};
  const get=name=>{
   if(tracks.has(name))return tracks.get(name);
   const src=GATE_SFX[name];if(!src)throw new Error("Unknown Star Gate SFX: "+name);
   const media=new Audio(src);media.preload="auto";media.loop=false;media.setAttribute("playsinline","");
-  media.volume=volumes[name]??.6;tracks.set(name,media);return media;
+  media.volume=volumes[name]??.86;
+  media.addEventListener("ended",()=>ended(name));
+  tracks.set(name,media);return media;
  };
  const prepare=()=>{for(const name of Object.keys(GATE_SFX)){const media=get(name);try{media.load()}catch{}}};
- const stop=name=>{const media=tracks.get(name);if(!media)return;media.pause();try{media.currentTime=0}catch{}};
- const stopAll=()=>{for(const name of tracks.keys())stop(name)};
- const play=name=>{
+ const stop=name=>{
+  const media=tracks.get(name);if(media){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
+  active.delete(name);applyDuck();
+ };
+ const stopAll=()=>{
+  for(const media of tracks.values()){media.pause();media.loop=false;try{media.currentTime=0}catch{}}
+  active.clear();applyDuck();
+ };
+ const play=(name,{loop=false}={})=>{
   if(signal?.aborted||window.TarotAudio?.enabled===false)return false;
-  const media=get(name);media.pause();try{media.currentTime=0}catch{}media.muted=false;
+  const media=get(name);media.pause();try{media.currentTime=0}catch{}
+  media.loop=!!loop;media.muted=false;media.volume=volumes[name]??.86;
+  active.add(name);applyDuck();
   try{
    const pending=media.play();
-   pending?.catch?.(()=>{if(!signal?.aborted&&window.TarotAudio?.enabled!==false)session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed")});
+   pending?.catch?.(()=>{
+    active.delete(name);applyDuck();
+    if(!signal?.aborted&&window.TarotAudio?.enabled!==false)session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed");
+   });
    return true;
-  }catch{session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed");return false}
+  }catch{
+   active.delete(name);applyDuck();
+   session?.audioFailures?.push?.("gate-sfx:"+name+":play-failed");return false
+  }
  };
  const dispose=()=>{stopAll();signal?.removeEventListener?.("abort",stopAll)};
  signal?.addEventListener?.("abort",stopAll,{once:true});
@@ -111,6 +136,11 @@ async function showArcanaDetail(){
  contamination.className="sga-arcana-contamination";
  contamination.setAttribute("aria-hidden","true");
  frame.appendChild(contamination);
+ const infection=document.createElement("div");
+ infection.className="sga-re-infection";
+ infection.setAttribute("aria-hidden","true");
+ infection.style.setProperty("--sga-re-safe","68%");
+ frame.appendChild(infection);
  document.body.appendChild(layer);
  current.cardDetail={source:ASSETS.cardDetail,normalSource:ASSETS.cardNormal,startedAt:current.clock.now(),duration:5870,phases:[],pulses:[],registration:ARCANA_DETAIL_REGISTRATION};
  const phase=name=>{current.clock.assert();current.cardDetail.phase=name;current.cardDetail.phases.push({name,time:current.clock.now()});};
@@ -159,17 +189,23 @@ async function showArcanaDetail(){
   phase('RE_EMERGENCE');current.futureAudio?.arcanaInfectionStart?.();
   images.re.style.opacity='0';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
+  infection.classList.add('active');
   await current.clock.tween(1650,p=>{
    const eased=p*p*(3-2*p);
    const reveal=Math.max(0,Math.min(1,(eased-.10)/.90));
    const normalFade=Math.max(0,Math.min(1,(eased-.28)/.72));
    images.re.style.opacity=String(reveal.toFixed(3));
    images.normal.style.opacity=String((1-normalFade).toFixed(3));
-   images.normal.style.filter='brightness('+( .91-.18*eased).toFixed(3)+') saturate('+( .86-.50*eased).toFixed(3)+') contrast('+(1.015+.035*eased).toFixed(3)+')';
-   images.re.style.filter='brightness('+( .68+.18*reveal).toFixed(3)+') saturate('+( .48+.22*reveal).toFixed(3)+') contrast('+(1.055-.015*reveal).toFixed(3)+')';
+   images.normal.style.filter='brightness('+( .91-.24*eased).toFixed(3)+') saturate('+( .86-.58*eased).toFixed(3)+') contrast('+(1.015+.055*eased).toFixed(3)+')';
+   images.re.style.filter='brightness('+( .60+.24*reveal).toFixed(3)+') saturate('+( .40+.28*reveal).toFixed(3)+') contrast('+(1.08-.025*reveal).toFixed(3)+')';
    const stain=.235*(1-.72*eased)+.055*Math.sin(Math.PI*eased);
    contamination.style.opacity=String(Math.max(.045,stain).toFixed(3));
    contamination.style.transform='scale('+(1+.006*Math.sin(Math.PI*eased)).toFixed(4)+')';
+   const safe=Math.max(0,68*(1-eased));
+   const peak=eased<.74?eased/.74:1-(eased-.74)/.26*.58;
+   infection.style.setProperty('--sga-re-safe',safe.toFixed(2)+'%');
+   infection.style.opacity=String(Math.max(.18,Math.min(.94,.18+.76*peak)).toFixed(3));
+   infection.style.transform='scale('+(1+.012*Math.sin(Math.PI*eased)).toFixed(4)+')';
    current.futureAudio?.arcanaInfection?.(eased);
   });
 
@@ -178,6 +214,8 @@ async function showArcanaDetail(){
   phase('RE_COMPLETE');
   frame.style.transform='scale(1)';
   contamination.style.opacity='0';
+  infection.classList.remove('active');
+  infection.style.opacity='0';
   images.normal.style.opacity='0';
   images.re.style.opacity='1';
   images.re.style.webkitMaskImage='none';images.re.style.maskImage='none';
@@ -545,7 +583,7 @@ async function resonance(){
  await say("shion","……星門は、特におかしくないな。");
  await pause(400);
  session?.gateSfx?.stop("lightCycle");
- setGateState("sga-anomaly-flicker");session?.gateSfx?.play("corruptSpread");await pause(720);
+ setGateState("sga-anomaly-flicker");session?.gateSfx?.play("corruptSpread",{loop:true});await pause(720);
  const lumiereDuringAnomaly=stage.getState().actors.lumiere;
  if(!samePoint(lumiereStart,lumiereDuringAnomaly))throw new Error("Lumiere moved during Star Gate anomaly");
  setGateState("sga-anomaly");await pause(480);
@@ -821,12 +859,20 @@ async function runStage3Latter(before){
  const card=root.querySelector('.sga-card');
  if(!current.fixed)current.fixed=actorGeometry(5);
  current.arcana=arcanaGeometry();scene.freezeCamera();
- const bounds=root.getBoundingClientRect(),anchor={x:current.arcana.x-bounds.left,y:current.arcana.y-bounds.top};
+ const bounds=root.getBoundingClientRect();
+ const arcanaAnchor={x:current.arcana.x-bounds.left,y:current.arcana.y-bounds.top};
+ const effectCenter={x:bounds.width*.50,y:bounds.height*.47};
+ const centerMix={small:.30,medium:.65,large:1,vortex:1};
  const rifts=document.createElement('div');rifts.className='sga-future-rift';
  const nodes={};for(const registration of window.TarotFutureStage3.ASSETS){
   const img=document.createElement('img');img.className='rift-'+registration.id;img.alt='';img.src=registration.path;
   const width=bounds.width*registration.viewportWidth,height=width*1.5,k=width/registration.width;
-  Object.assign(img.style,{width:width+'px',height:height+'px',left:(anchor.x-registration.anchor.x*k)+'px',top:(anchor.y-registration.anchor.y*k)+'px'});
+  const mix=centerMix[registration.id]??1;
+  const wound={
+   x:arcanaAnchor.x+(effectCenter.x-arcanaAnchor.x)*mix,
+   y:arcanaAnchor.y+(effectCenter.y-arcanaAnchor.y)*mix
+  };
+  Object.assign(img.style,{width:width+'px',height:height+'px',left:(wound.x-registration.anchor.x*k)+'px',top:(wound.y-registration.anchor.y*k)+'px'});
   img.style.setProperty('--wound-x',registration.anchor.x*k+'px');img.style.setProperty('--wound-y',registration.anchor.y*k+'px');
   rifts.append(img);nodes[registration.id]=img;
  }root.append(rifts);
@@ -837,7 +883,7 @@ async function runStage3Latter(before){
   state(name,time){current.states.push({name,time});current.phase=name;window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-state',{detail:{name,time}}));},
   async prepare(){
    current.clock.assert();if(!current.r0||!preparedImages.get(current.r0.source))throw new Error('R0 preparation missing');
-   surface=scene.prepareBackground({anchor});current.surface={width:surface.width,height:surface.height,dpr:scene.getState().viewport.dpr,rgbaBytes:surface.width*surface.height*4,bounds:surface.stage3Preparation.bounds};
+   surface=scene.prepareBackground({anchor:effectCenter});current.surface={width:surface.width,height:surface.height,dpr:scene.getState().viewport.dpr,rgbaBytes:surface.width*surface.height*4,bounds:surface.stage3Preparation.bounds};
    // DOM images use already loaded and decoded resources; await initial paint before effects.
    await scene.waitDraw();current.clock.assert();
   },

@@ -54,6 +54,39 @@
 }
 
 
+
+.sga-re-infection{
+  --sga-re-safe:68%;
+  position:absolute;
+  z-index:6;
+  inset:-1.5%;
+  opacity:0;
+  pointer-events:none;
+  transform-origin:50% 50%;
+  border-radius:5%;
+  background:
+    radial-gradient(ellipse at 13% 22%,rgba(53,16,68,.78) 0 9%,rgba(15,4,22,.92) 28%,transparent 55%),
+    radial-gradient(ellipse at 89% 35%,rgba(65,20,78,.70) 0 10%,rgba(12,3,18,.92) 30%,transparent 58%),
+    radial-gradient(ellipse at 25% 84%,rgba(47,11,61,.75) 0 12%,rgba(8,2,13,.94) 34%,transparent 61%),
+    radial-gradient(ellipse at 82% 80%,rgba(59,16,72,.68) 0 10%,rgba(7,2,12,.94) 34%,transparent 60%),
+    linear-gradient(135deg,rgba(4,1,8,.98),rgba(30,7,39,.96) 48%,rgba(3,1,7,.99));
+  -webkit-mask-image:radial-gradient(ellipse at 50% 48%,transparent 0 var(--sga-re-safe),rgba(0,0,0,.22) calc(var(--sga-re-safe) + 3%),#000 calc(var(--sga-re-safe) + 13%));
+  mask-image:radial-gradient(ellipse at 50% 48%,transparent 0 var(--sga-re-safe),rgba(0,0,0,.22) calc(var(--sga-re-safe) + 3%),#000 calc(var(--sga-re-safe) + 13%));
+  mix-blend-mode:multiply;
+  filter:blur(.7px) saturate(.86) contrast(1.16);
+  will-change:opacity,transform,-webkit-mask-image,mask-image;
+}
+.sga-re-infection::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:
+    repeating-radial-gradient(ellipse at 52% 50%,rgba(108,46,126,.14) 0 2%,rgba(5,1,9,.22) 3% 6%,transparent 7% 11%);
+  opacity:.5;
+  filter:blur(1.2px);
+}
+
 /* Arcana semantic erosion v1.0: restrained meaning rewrite, never a transformation. */
 .sga-arcana-detail-frame{transform-origin:50% 50%;will-change:transform,filter}
 .sga-arcana-detail-image{will-change:filter,transform,clip-path,opacity}

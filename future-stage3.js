@@ -7,10 +7,10 @@
  'use strict';
  const DIALOGUE=Object.freeze(['……？','……アルカナが……？','……っ','……違う。アルカナだけじゃない……','……これが……選ばれた未来、なのか。','……私は、今……何を……？','……いや。パメラの記憶を、探さなければ。']);
  const ASSETS=Object.freeze([
-  {id:'small',path:'./assets/events/gate-vision/future-fixation-rift-01-small.webp',width:1024,height:1536,anchor:{x:520,y:775},viewportWidth:96/390,axis:'vertical, upper-left to lower-right branch'},
-  {id:'medium',path:'./assets/events/gate-vision/future-fixation-rift-02-medium.webp',width:1024,height:1536,anchor:{x:535,y:760},viewportWidth:200/390,axis:'vertical, upper-left to lower-right branch'},
-  {id:'large',path:'./assets/events/gate-vision/future-fixation-rift-03-large.webp',width:1024,height:1536,anchor:{x:535,y:765},viewportWidth:338/390,axis:'vertical, upper-left to lower-right branch'},
-  {id:'vortex',path:'./assets/events/gate-vision/future-fixation-rift-04-vortex.webp',width:1024,height:1536,anchor:{x:510,y:820},viewportWidth:338/390,axis:'large branches into dark spiral throat'}
+  {id:'small',path:'./assets/events/gate-vision/future-fixation-rift-01-small.webp',width:1024,height:1536,anchor:{x:520,y:775},viewportWidth:132/390,axis:'vertical, upper-left to lower-right branch'},
+  {id:'medium',path:'./assets/events/gate-vision/future-fixation-rift-02-medium.webp',width:1024,height:1536,anchor:{x:535,y:760},viewportWidth:272/390,axis:'vertical, upper-left to lower-right branch'},
+  {id:'large',path:'./assets/events/gate-vision/future-fixation-rift-03-large.webp',width:1024,height:1536,anchor:{x:535,y:765},viewportWidth:420/390,axis:'vertical, upper-left to lower-right branch'},
+  {id:'vortex',path:'./assets/events/gate-vision/future-fixation-rift-04-vortex.webp',width:1024,height:1536,anchor:{x:510,y:820},viewportWidth:452/390,axis:'large branches into dark spiral throat'}
  ].map(x=>Object.freeze({...x,anchor:Object.freeze(x.anchor),rgbaBytes:x.width*x.height*4})));
  function aborted(){const e=new Error('Stage 3 interrupted');e.name='AbortError';return e;}
  function createClock(signal,{now=()=>performance.now(),raf=fn=>requestAnimationFrame(fn),cancel=id=>cancelAnimationFrame(id)}={}){

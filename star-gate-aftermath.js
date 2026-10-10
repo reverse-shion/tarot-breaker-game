@@ -113,13 +113,24 @@
  async function action(s,command){const task=s.scene.perform(command);if(task?.promise)await task.promise;await s.clock.wait(0);s.clock.assert();}
  async function flight(s){
   state(s,'LUMIERE_DEPARTURE');
-  const position=s.scene.getState().actors.lumiere;s.flightRoute=[{x:position.x,y:position.y}];if(position.y<240)await action(s,{type:'move',actor:'lumiere',target:{x:position.x,y:245},duration:450});
-  s.scene.face('lumiere',{x:s.scene.getState().actors.lumiere.x+100,y:s.scene.getState().actors.lumiere.y});s.scene.face('shion','lumiere');s.scene.face('shiopon','lumiere');
-  const start={...s.scene.getState().actors.lumiere};s.flightRoute.push({x:start.x,y:start.y});const begin=s.clock.now();let previous=begin,x=start.x;
+  const position=s.scene.getState().actors.lumiere;
+  s.flightRoute=[{x:position.x,y:position.y}];
+  s.scene.face('lumiere',{x:position.x+120,y:position.y-100});
+  s.scene.face('shion','lumiere');s.scene.face('shiopon','lumiere');
+  const start={...s.scene.getState().actors.lumiere};
+  s.flightRoute.push({x:start.x,y:start.y});
+  const begin=s.clock.now();let previous=begin,x=start.x,y=start.y;
   while(alive(s)){
-   await s.clock.wait(16);const now=s.clock.now();x+=140*(now-previous)/1000;previous=now;s.scene.flightPose({x,y:start.y},-8*Math.min(1,(now-begin)/300));
-   const view=s.scene.getState();s.flight={elapsed:now-begin,x,y:start.y,rect:view.lumiereRect,viewport:view.viewport};
-   if(view.lumiereRect&&view.lumiereRect.left>view.viewport.width){s.flightRoute.push({x,y:start.y});s.scene.setLumiereDeparted(true);return;}
+   await s.clock.wait(16);
+   const now=s.clock.now(),dt=(now-previous)/1000;previous=now;
+   x+=128*dt;y-=86*dt;
+   const lift=-18*Math.min(1,(now-begin)/420);
+   s.scene.flightPose({x,y},lift);
+   const view=s.scene.getState();
+   s.flight={elapsed:now-begin,x,y,rect:view.lumiereRect,viewport:view.viewport};
+   if(view.lumiereRect&&(view.lumiereRect.left>view.viewport.width+8||view.lumiereRect.bottom<-8)){
+    s.flightRoute.push({x,y});s.scene.setLumiereDeparted(true);return;
+   }
   }
   s.clock.assert();
  }
