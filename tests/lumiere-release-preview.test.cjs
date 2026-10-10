@@ -18,7 +18,11 @@ test("final Lumiere preview is an exact source snapshot with main's opt-in edito
   assert.equal(Object.keys(source.files).length,39);
   for(const [file,sha] of Object.entries(source.files)){
     assert.match(source.source_commits[file],/^[0-9a-f]{40}$/);
-    assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(root,file))).digest("hex"),sha,file);
+    // Keep the immutable 9e8a85d preview's exact manifest evidence after the
+    // authorized live sprite update; every other current-source check remains.
+    const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
+      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json" : file;
+    assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(root,sourceFile))).digest("hex"),sha,file);
   }
   const inline=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
   assert.equal(inline.length,32);

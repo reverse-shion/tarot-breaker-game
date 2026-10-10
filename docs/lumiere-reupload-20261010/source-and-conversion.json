@@ -1,0 +1,70 @@
+[
+  {
+    "direction": "down",
+    "file": "lumiere_idle.webp",
+    "source_commit": "4a47918fc54c796f29627e08df711bea73d07a72",
+    "source_blob": "2e5f2e81e58c3ce5558b1047128605e427dd12b3",
+    "upload_detected_as": "PNG RGBA, despite .webp filename",
+    "input_sha256": "3b4812114f86b9baab31f1ab1914999cfa61f7e34a5dfc1eed8ec0c7852378b2",
+    "output_sha256": "cef40fe9ae34bbaf824d8bd61741dbf92c1a0e25bb0cc6480b28b1147d98d420",
+    "output_git_blob_sha": "93f1a22e946d8e0c928395f1043334498797f595",
+    "scale": 0.9616055846422339,
+    "translate": [
+      26.60408809564194,
+      37.03664921465969
+    ],
+    "tiny_isolated_interpolation_alpha_pixels_removed": 887,
+    "roundtrip_exact": true
+  },
+  {
+    "direction": "up",
+    "file": "lumiere_hover-back.webp",
+    "source_commit": "ef5e3b7aa98f97378771294042faaf13b7accaff",
+    "source_blob": "dbe5c51f7950fa525ddaf6b62bdf6ec5d301eb55",
+    "upload_detected_as": "PNG RGBA, despite .webp filename",
+    "input_sha256": "425ee30ed742da32aefa55de2c5bd0b5753af716d4a9bbaef85283ff679846ec",
+    "output_sha256": "408b1da10fe9304eb757506ea2427ed86cb099a71a1d5d7cafdfeda935beecc5",
+    "output_git_blob_sha": "8b8ccbf0e73b2eb2c6c80314d9ec96de39b25bbd",
+    "scale": 0.971375807940905,
+    "translate": [
+      21.60858915026074,
+      31.259464450600184
+    ],
+    "tiny_isolated_interpolation_alpha_pixels_removed": 871,
+    "roundtrip_exact": true
+  },
+  {
+    "direction": "left",
+    "file": "lumiere_hover_left.webp",
+    "source_commit": "8ae0e8cd06fde76c954ad9c3d323b2212fae8a7c",
+    "source_blob": "77bba1638863703c999c52482b777d810e1f2f36",
+    "upload_detected_as": "PNG RGBA, despite .webp filename",
+    "input_sha256": "49d3868abd4f138c99322c1dbf889df5516418d76b11c4455ec8274445de0b37",
+    "output_sha256": "1e530fe54dd24cf1d2ce2d2841ae02126986b6a01d637232ccf4f049c52216a9",
+    "output_git_blob_sha": "070d6daf1fb86d30b653e1ea37f5decba3106576",
+    "scale": 0.9886148007590133,
+    "translate": [
+      12.355517031032434,
+      38.705882352941174
+    ],
+    "tiny_isolated_interpolation_alpha_pixels_removed": 547,
+    "roundtrip_exact": true
+  },
+  {
+    "direction": "right",
+    "file": "lumiere_hover_right.webp",
+    "source_commit": "d1b9603cab503c181f28fd42abb538ee286dfe2b",
+    "source_blob": "31aff26e8e94a72a079d608864af65bec84c0993",
+    "upload_detected_as": "PNG RGBA, despite .webp filename",
+    "input_sha256": "cff1c9203cebf88f0f597a36e9bfa9a76341c56861422703c809c839b6492060",
+    "output_sha256": "c43152d16e3ab91df48fbcc86465aa234523fd214a8e230e1ba388855a527d38",
+    "output_git_blob_sha": "cd4d15411ee1dac6e6490016e7d686eb090079c7",
+    "scale": 0.9963536918869644,
+    "translate": [
+      -32.09010575038019,
+      3.2114858705560607
+    ],
+    "tiny_isolated_interpolation_alpha_pixels_removed": 1518,
+    "roundtrip_exact": true
+  }
+]

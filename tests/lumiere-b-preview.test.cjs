@@ -24,7 +24,11 @@ test("Clean candidate preview pins game source and contains no visible editor sc
     // The historical editor-free preview was approved on b99f3d4.
     // The current release candidate restores *main's* dormant editor loaders
     // without changing Lumiere. Normalize only that index for old preview hash.
-    let content = fs.readFileSync(path.join(root, file));
+    // The approved sprite replacement changes the live manifest. This fixture
+    // is the exact historical Git source, still checked against its pinned hash.
+    const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
+      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json" : file;
+    let content = fs.readFileSync(path.join(root, sourceFile));
     if (file === "index.html") {
       const preservedEditors = [
         "fountain-position-editor.js",
