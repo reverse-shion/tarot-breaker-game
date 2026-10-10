@@ -6,10 +6,10 @@ const crypto = require("node:crypto");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
-const relativePage = "docs/lumiere-hover-evidence/lumiere-sway-454f85e.html";
-const runtime = "454f85e8dc7adc98cbe3b905bffa3f911d62af58";
+const relativePage = "docs/lumiere-hover-evidence/lumiere-sway-ce3c31b.html";
+const runtime = "ce3c31bfcabb5226c01405b12411167e571fe221";
 
-test("Option B fixed iPhone preview sources match pinned source digests and inline scripts parse", () => {
+test("Candidate C fixed iPhone preview sources match pinned source digests and inline scripts parse", () => {
   const html = fs.readFileSync(path.join(root, relativePage), "utf8");
   const match = html.match(/<script type="application\/json" id="lumiere-preview-source">([\s\S]*?)<\/script>/);
   assert(match, "source metadata must exist");
@@ -30,6 +30,10 @@ test("Option B fixed iPhone preview sources match pinned source digests and inli
   assert.equal(js.length, 32, "all 32 embedded scripts must be present");
   for (const [, , code] of js) new vm.Script(code);
   assert(html.includes("const verticalRatio = kind ==="));
+  assert(html.includes('candidate: "C"'));
+  assert(html.includes('id="lumiere-check-spec"'));
+  assert(html.includes('id="lumiere-check-diagnostics"'));
+  assert(!html.includes("毛先0.4px・裾先0.25px"));
   assert(html.includes("lumiere-check-sway"));
   assert(html.includes("確認パネルを開く"));
   assert(html.includes(runtime));
