@@ -13,7 +13,7 @@ function harness({dev=true,restoreFails=false,unlockFails=false,inputRemains=fal
  return {window,calls,shown,nodes,state,advancedCount:0,movePlayer(x,y){actors.shion.x=x;actors.shion.y=y;for(const f of timers.values())f()},ui:()=>ui,notify:(overrides={})=>window.dispatchEvent({type:'tarot-breaker:stage3-session-ended',detail:{id:9,completed:true,restored:true,running:false,scene:{},...overrides}})};
 }
 async function flush(n=60){for(let i=0;i<n;i++)await Promise.resolve();}
-async function begin(h){h.notify();await flush();assert.equal(h.window.TarotStarGateAftermath.getState().state,'CHECK_COMPANIONS');}
+async function begin(h){h.notify();await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');}
 async function drive(h,done,max=1000){for(let i=0;i<max&&!done();i++){if(h.shown.length>h.advancedCount){h.ui().advance();h.advancedCount++;}await flush(8);}assert.ok(done(),'dialogue did not reach expected state');}
 
 test('Aftermath is absent from ordinary routes',()=>{const h=harness({dev:false});h.notify();assert.equal(h.window.TarotStarGateAftermath,undefined);assert.deepEqual(h.calls,[])});
@@ -27,7 +27,7 @@ test('first individual talk returns control; second talk flows directly into exa
  const first=h.window.TarotStarGateAftermath.talk('shiopon');await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');assert.equal(await first,true);assert.deepEqual(JSON.parse(JSON.stringify(h.window.TarotStarGateAftermath.getState().checked)),['shiopon']);assert.equal(h.state().owner,null);assert.equal(h.state().following,false);
  target=h.state().actors.lumiere;h.movePlayer(target.x,target.y+18);const before=h.shown.length;const second=h.window.TarotStarGateAftermath.talk('lumiere');await drive(h,()=>h.window.TarotStarGateAftermath.getState().completed,2500);assert.equal(await second,true);
  const r=h.window.TarotStarGateAftermath.getState();assert.equal(r.completed,true);assert.deepEqual(JSON.parse(JSON.stringify(r.checked)).sort(),['lumiere','shiopon']);assert.equal(h.state().lumiereEnabled,false);assert.equal(h.state().following,true);assert.equal(h.state().owner,null);
- const texts=h.shown.slice(before).map(x=>x.text);assert.ok(texts.includes('二人とも、聞いてくれ。'));assert.ok(texts.includes('……だめだ。思い出せない。'));assert.ok(texts.includes('星の声が……食べられたの。'));assert.ok(texts.includes('星砂で地上に降りよう。'));assert.ok(texts.includes('そこから街を抜けて、歩いて城へ戻る。'));assert.ok(texts.includes('では、私は先に星砂の準備をしてまいります。'));assert.ok(texts.includes('しおぽん、行こう。'));
+ const texts=h.shown.slice(before).map(x=>x.text);assert.ok(texts.includes('さっき……何か、見えたんだ。'));assert.ok(texts.includes('でも、思い出そうとすると……ぼやける。'));assert.ok(texts.includes('星の声が……食べられたの。'));assert.ok(texts.includes('……星砂を使おう。あそこから地上へ降りられる。'));assert.ok(texts.includes('地上に降りたら、街を抜けて城へ戻ろう。'));assert.ok(texts.includes('分かりました。私は先に、星砂の準備をしてまいります。'));assert.ok(texts.includes('しおぽん、行こう。東の通路だ。'));assert.ok(texts.includes('一緒に、確かめに行くの。'));
  assert.ok(!texts.some(t=>/全部、壊れて|未来の自分|カードが/.test(t)));
 });
 

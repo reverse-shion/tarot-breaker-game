@@ -617,10 +617,12 @@ async function resonance(){
  const shionStart=stage?.getState?.().actors?.shion||camera.getState().player;
  const lumiereStart=stage?.getState?.().actors?.lumiere;
  if(!stage||!lumiereStart)throw new Error("Lumiere stage state unavailable");
- const faceGate=stage.perform({type:"face",actor:"lumiere",target:"gate"});
- const faced=await faceGate.promise;
- const lumiereFaced=stage.getState().actors.lumiere;
- if(!faced?.completed||!samePoint(lumiereStart,lumiereFaced))throw new Error("Lumiere moved while facing Star Gate");
+ const shionFaceGate=stage.perform({type:"face",actor:"shion",target:"gate"});
+ const lumiereFaceGate=stage.perform({type:"face",actor:"lumiere",target:"gate"});
+ const [shionFaced,lumiereFacedResult]=await Promise.all([shionFaceGate.promise,lumiereFaceGate.promise]);
+ const afterFacing=stage.getState().actors;
+ if(!shionFaced?.completed||!samePoint(shionStart,afterFacing.shion))throw new Error("Shion moved while facing Star Gate");
+ if(!lumiereFacedResult?.completed||!samePoint(lumiereStart,afterFacing.lumiere))throw new Error("Lumiere moved while facing Star Gate");
  await pause(220);
  gateShell()?.classList.add("sga-sequence-active");
  setGateState(null);
@@ -634,19 +636,20 @@ async function resonance(){
  session?.gateSfx?.stop("lightDown",{fadeOut:800});
  await pause(520);
  setGateState("sga-resonance-complete");await pause(1200);
- await say("shion","……星門は、特におかしくないな。");
+ await say("shion","……見たところ、おかしなところはないな。");
  await pause(400);
  setGateState("sga-anomaly-flicker");
  session?.gateSfx?.play("corruptSpread",{loop:true,fadeIn:480});
  session?.gateSfx?.stop("lightCycle",{fadeOut:820});
- await pause(720);
+ await pause(260);
+ await say("lumiere","……？");
+ await pause(460);
  const lumiereDuringAnomaly=stage.getState().actors.lumiere;
  if(!samePoint(lumiereStart,lumiereDuringAnomaly))throw new Error("Lumiere moved during Star Gate anomaly");
  setGateState("sga-anomaly");await pause(480);
  setGateState("sga-reverse-gate");await pause(520);
  await playDarkEnergyReverse();
  setGateState("sga-anomaly-rest");await pause(700);
- await say("lumiere","……？");
  const returned=await camera.returnToPlayer(1350);if(!returned?.completed)throw new Error("Cinematic camera return interrupted");
  camera.release();gateShell()?.classList.remove("sga-sequence-active");await pause(220);
  const shionEnd=window.TarotStage?.getState?.().actors?.shion||camera.getState().player;
@@ -671,18 +674,24 @@ async function futureFixationStage1(){
  gateShell()?.classList.add("sga-future-world-hidden");
  root.classList.add("sga-future-shion-only");
  // Orientation only: keep the verified world coordinate locked.
- const face=(dx,dy)=>stage.perform({type:"face",actor:"shion",target:{x:before.x+dx,y:before.y+dy}});
- face(0,1);
+ const face=async(dx,dy)=>{
+  const action=stage.perform({type:"face",actor:"shion",target:{x:before.x+dx,y:before.y+dy}});
+  const result=await action.promise;
+  if(!result?.completed||!samePoint(before,stage.getState().actors.shion))throw new Error("Shion moved while searching the Future Vision");
+ };
+ await face(0,1);
  root.classList.remove("sga-future-black");
  const vis=window.TarotActorVisibility;
  if(vis){for(let i=1;i<=12;i++){vis.set("shion",i/12);await pause(500/12)}}else await pause(500);
- await say("shion","……？");await pause(250);
- face(-1,0);await pause(350);
- face(1,0);await pause(350);
- face(0,1);await pause(250);
- await say("shion","なんだ……？");
- await say("shion","リュミエール……？");await pause(500);
- await say("shion","……ここは、どこだ？");
+ await say("shion","……何だ……？");
+ await pause(260);
+ await face(-1,0);await pause(280);
+ await say("shion","リュミエール……？");
+ await pause(420);
+ await face(1,0);await pause(280);
+ await say("shion","しおぽん……？");
+ await pause(520);
+ await face(0,-1);
  const after=stage.getState().actors.shion;
  if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 1");
  window.dispatchEvent(new CustomEvent("tarot-breaker:future-fixation-stage1-complete",{detail:{checkpoint:true}}));
@@ -713,18 +722,18 @@ async function futureFixationStage2(){
   actorVisibility?.set("shion",1-(1-FUTURE_VISION_CURRENT_SHION_OPACITY)*progress);
   await pause(850/20);
  }
- await say("shion","……星門庭園……？");await pause(350);
- await say("shion","いや……");
- await say("shion","そんなはず……");await pause(450);
- // Real camera tour over the Vision World. Overscan is deliberately disabled
- // so no shot can reveal pixels outside the reference world.
+ await say("shion","……星門庭園……？");
+ await pause(420);
+ // Real camera tour over the Vision World. Let the player inspect the ruin instead
+ // of explaining it through repeated dialogue.
  const verifyCoverage=(shot)=>{
   if(camera.isViewportInsideWorld?.()===false)throw new Error(`Future Fixation Vision camera coverage failed: ${shot}`);
  };
- await camera.panTo("gate",900,{allowOverscan:false});session.clock.assert();verifyCoverage("gate");await pause(700);
- await camera.panTo({x:430,y:500},950,{allowOverscan:false});session.clock.assert();verifyCoverage("left");await pause(500);
- await camera.panTo("fountain",950,{allowOverscan:false});session.clock.assert();verifyCoverage("fountain");await pause(900);
- await say("shion","……どうして……");
+ await camera.panTo("gate",900,{allowOverscan:false});session.clock.assert();verifyCoverage("gate");await pause(520);
+ await say("shion","……なぜ、こんな姿に……。");
+ await pause(650);
+ await camera.panTo({x:430,y:500},950,{allowOverscan:false});session.clock.assert();verifyCoverage("left");await pause(700);
+ await camera.panTo("fountain",950,{allowOverscan:false});session.clock.assert();verifyCoverage("fountain");await pause(950);
  await camera.returnToPlayer(900);session.clock.assert();verifyCoverage("return");await pause(600);
  const after=stage.getState().actors.shion;
  if(!samePoint(before,after))throw new Error("Shion moved during Future Fixation Vision Stage 2");
@@ -801,24 +810,32 @@ async function futureFixationStage3(){
  root.classList.add("sga-card-phase","sga-future-shion-settle");
  // Future tracks retain ownership; the ordinary BGM stays paused.
 
- // SEQUENCE 01 — Future Shion is visually distinct, but this effect never moves him.
+ // SEQUENCE 01 — Future Shion appears independently. Current Shion can only observe.
  setShion(1);
  const entryEcho=playFutureShionEntryEcho();
  await pause(760);
  await entryEcho;
- await say("shion","……？");await pause(180);
+ const currentTurnsToFuture=stage.perform({type:"face",actor:"shion",target:{x:before.x-1,y:before.y}});
+ const turned=await currentTurnsToFuture.promise;
+ if(!turned?.completed||!samePoint(before,stage.getState().actors.shion))throw new Error("Current Shion moved while observing Future Shion");
+ await pause(220);
+ await say("shion","……俺が、もう一人……？");
+ await pause(520);
+
+ // Future Shion does not notice the observer; he lowers his attention to the card.
  setShion(2);await pause(520);
  setShion(3);await pause(560);
  session.r0={pose:3,source:ASSETS.shionCheckRe,audio:session.audio.capture(),actorOpacity:vis?.getState().shion};
+ await say("shion","……アルカナ？");
+ await pause(260);
 
  await showArcanaDetail();
 
- // SEQUENCE 02 — Re:Arcana holds still first. 650ms after the rewrite the world answers
- // with one restrained 720ms desaturation pulse; it must remain below the later Rift.
- await pause(720);
+ // Re:Arcana is held long enough inside showArcanaDetail; Future Shion reacts only
+ // after the transformed image is readable.
  root.classList.remove('sga-rewrite-world-tension');
- await say("shion","……アルカナが……？");
- await pause(260);
+ await say("shion","……これは、何だ……。");
+ await pause(320);
 
  // SEQUENCE 03 — Arcana acts first. Effect-only dark-purple stain/upflow;
  // the independent card remains fully hidden.

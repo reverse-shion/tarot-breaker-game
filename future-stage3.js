@@ -5,7 +5,7 @@
  else root.TarotFutureStage3=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const DIALOGUE=Object.freeze(['……？','……アルカナが……？','……っ','……違う。アルカナだけじゃない……','……これが……選ばれた未来、なのか。','……私は、今……何を……？','……いや。パメラの記憶を、探さなければ。']);
+ const DIALOGUE=Object.freeze(['……アルカナ？','……これは、何だ……。','……っ！','……違う。アルカナだけじゃない……。','……景色まで……裂けて……。','……私は、今……何を……？','……そうだ。パメラの記憶を……。','早く、探さなければ。']);
  const ASSETS=Object.freeze([
   {id:'small',path:'./assets/events/gate-vision/future-fixation-rift-01-small.webp',width:1024,height:1536,anchor:{x:520,y:775},viewportWidth:132/390,axis:'vertical, upper-left to lower-right branch'},
   {id:'medium',path:'./assets/events/gate-vision/future-fixation-rift-02-medium.webp',width:1024,height:1536,anchor:{x:535,y:760},viewportWidth:272/390,axis:'vertical, upper-left to lower-right branch'},
@@ -74,7 +74,8 @@
   state('FUTURE_RESTORE');const whiteHold=await coveredRestore(clock,240,ctx=>a.restoreFuture(ctx),ctx=>a.draw(ctx));a.recordHold?.('white',whiteHold);
   a.resumeFutureAudio();await tween(350,0,1,p=>a.white(1-p));
   await clock.wait(350);state('MEMORY_GAP');close=await a.say(DIALOGUE[5]);await afterClose(550,close);
-  state('MISSION_RESUME');close=await a.say(DIALOGUE[6]);await afterClose(600,close);
+  state('MISSION_RECALL');close=await a.say(DIALOGUE[6]);await afterClose(420,close);
+  state('MISSION_RESUME');close=await a.say(DIALOGUE[7]);await afterClose(600,close);
   a.assertPresentPrepared();state('FUTURE_FADE');await tween(550,1,0,p=>a.black(p));
   state('BLACK_CUT');a.pauseFutureAudio();
   state('PRESENT_RESTORE');const blackHold=await coveredRestore(clock,180,ctx=>a.restorePresent(ctx),ctx=>a.draw(ctx));a.recordHold?.('black',blackHold);

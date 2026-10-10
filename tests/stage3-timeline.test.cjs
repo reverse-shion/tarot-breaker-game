@@ -27,7 +27,7 @@ const near=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual
 test('T1/T33 exact registered asset paths and §78 dialogue strings',()=>{
  assert.deepEqual(ASSETS.map(a=>a.path),['01-small','02-medium','03-large','04-vortex'].map(s=>'./assets/events/gate-vision/future-fixation-rift-'+s+'.webp'));
  for(const a of ASSETS){assert.equal(a.rgbaBytes,a.width*a.height*4);assert.ok(a.anchor.x>0&&a.anchor.x<a.width&&a.anchor.y>0&&a.anchor.y<a.height);}
- assert.deepEqual(DIALOGUE,['……？','……アルカナが……？','……っ','……違う。アルカナだけじゃない……','……これが……選ばれた未来、なのか。','……私は、今……何を……？','……いや。パメラの記憶を、探さなければ。']);
+ assert.deepEqual(DIALOGUE,['……アルカナ？','……これは、何だ……。','……っ！','……違う。アルカナだけじゃない……。','……景色まで……裂けて……。','……私は、今……何を……？','……そうだ。パメラの記憶を……。','早く、探さなければ。']);
 });
 test('T2/T3/T7/T8/T9/T12/T15/T16 timeline obeys formation and UI closure timing',async()=>{
  const h=harness();await run(h.adapter,h.clock);
@@ -42,7 +42,8 @@ test('T2/T3/T7/T8/T9/T12/T15/T16 timeline obeys formation and UI closure timing'
  near(state(h,'FULL_WHITE').time-state(h,'FUTURE_WHITEOUT').time,340);
  near(event(h,'say',DIALOGUE[5]).time-event(h,'resumeFuture').time,350+350);
  near(event(h,'say',DIALOGUE[6]).time-event(h,'close',DIALOGUE[5]).time,550);
- near(state(h,'FUTURE_FADE').time-event(h,'close',DIALOGUE[6]).time,600);
+ near(event(h,'say',DIALOGUE[7]).time-event(h,'close',DIALOGUE[6]).time,420);
+ near(state(h,'FUTURE_FADE').time-event(h,'close',DIALOGUE[7]).time,600);
 });
 test('T18 crossfade is included and scale continues after opacity reaches one',async()=>{
  const h=harness();await run(h.adapter,h.clock);

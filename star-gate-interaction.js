@@ -38,7 +38,7 @@
     prompt.hidden = true;
     prompt.setAttribute("aria-label", "星門の選択");
     prompt.innerHTML =
-      '<div id="star-gate-interaction-text">星門の共鳴が揺らいでいる。</div>' +
+      '<div id="star-gate-interaction-text">星門から、かすかな共鳴を感じる。</div>' +
       '<div class="star-gate-interaction-actions">' +
       '<button id="star-gate-interaction-inspect" type="button">星門を調べる</button>' +
       '<button id="star-gate-interaction-leave" type="button">離れる</button>' +
