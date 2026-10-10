@@ -1,0 +1,25 @@
+name: Lumiere candidate URL diagnostics
+on:
+  push:
+    paths:
+      - '.github/workflows/lumiere-url-check.yml'
+permissions:
+  contents: read
+jobs:
+  check-url:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CDN and origin URLs
+        env:
+          SHA: 71db5315f06a0a53ce4e863d4478e167f0111eb3
+        run: |
+          set +e
+          for url in \
+           "https://raw.githack.com/reverse-shion/tarot-breaker-game/$SHA/index.html?dev=garden-resume-after-lumiere" \
+           "https://rawcdn.githack.com/reverse-shion/tarot-breaker-game/$SHA/index.html?dev=garden-resume-after-lumiere" \
+           "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/$SHA/index.html" \
+           "https://raw.githack.com/reverse-shion/tarot-breaker-game/8eb3840278aa0b9026eecdc5d3102c9c193c5d6b/docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html?dev=garden-resume-after-lumiere"; do
+             echo "URL: $url"
+             curl -L -s -o /tmp/preview.html -w "HTTP_CODE=%{http_code} CONTENT_TYPE=%{content_type} REDIRECT=%{redirect_url} SIZE=%{size_download}\n" --max-time 25 "$url"
+             head -c 110 /tmp/preview.html | tr '\n' ' '; echo
+          done
