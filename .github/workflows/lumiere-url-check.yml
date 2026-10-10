@@ -9,22 +9,21 @@ jobs:
   check-url:
     runs-on: ubuntu-latest
     steps:
-      - name: Check CDN and origin URLs
-        env:
-          SHA: 71db5315f06a0a53ce4e863d4478e167f0111eb3
+      - name: Check standalone preview CDN
         run: |
-          set +e
-          for url in \
-           "https://raw.githack.com/reverse-shion/tarot-breaker-game/$SHA/index.html?dev=garden-resume-after-lumiere" \
-           "https://rawcdn.githack.com/reverse-shion/tarot-breaker-game/$SHA/index.html?dev=garden-resume-after-lumiere" \
-           "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/$SHA/index.html" \
-           "https://raw.githack.com/reverse-shion/tarot-breaker-game/8eb3840278aa0b9026eecdc5d3102c9c193c5d6b/docs/lumiere-sprite-replacement-20261010/lumiere-official-4357584.html?dev=garden-resume-after-lumiere"; do
-             echo "URL: $url"
-             curl -L -s -o /tmp/preview.html -w "HTTP_CODE=%{http_code} CONTENT_TYPE=%{content_type} REDIRECT=%{redirect_url} SIZE=%{size_download}\n" --max-time 25 "$url"
-             head -c 110 /tmp/preview.html | tr '\n' ' '; echo
-           "https://raw.githack.com/reverse-shion/tarot-breaker-game/942b6cec82d820163c77bbe4f0de6f7cc1f11ee0/docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html?dev=garden-resume-after-lumiere" \
-           "https://rawcdn.githack.com/reverse-shion/tarot-breaker-game/942b6cec82d820163c77bbe4f0de6f7cc1f11ee0/docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html?dev=garden-resume-after-lumiere"; do
-             echo "URL: $url"
-             curl -L -s -o /tmp/preview.html -w "HTTP_CODE=%{http_code} CONTENT_TYPE=%{content_type} SIZE=%{size_download}\n" --max-time 25 "$url"
-             head -c 120 /tmp/preview.html | tr '\n' ' '; echo
+          set -euo pipefail
+          for domain in raw.githack.com rawcdn.githack.com; do
+            URL="https://$domain/reverse-shion/tarot-breaker-game/942b6cec82d820163c77bbe4f0de6f7cc1f11ee0/docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html?dev=garden-resume-after-lumiere"
+            code=$(curl --retry 2 -L -s -o /tmp/preview.html -w '%{http_code}' --max-time 35 "$URL")
+            echo "$domain: HTTP $code, $(wc -c < /tmp/preview.html) bytes"
+            test "$code" = 200
+            grep -q 'lumiere-official-controls' /tmp/preview.html
+            grep -q '37247552f7885650dfa937a8d2228a7dc0053ad2' /tmp/preview.html
+          done
+          for name in lumiere_idle.webp lumiere_hover-back.webp lumiere_hover_left.webp lumiere_hover_right.webp; do
+            URL="https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/37247552f7885650dfa937a8d2228a7dc0053ad2/assets/sprites/lumiere/$name"
+            code=$(curl -L -s -o /tmp/sprite.webp -w '%{http_code}' --max-time 25 "$URL")
+            echo "$name: HTTP $code"
+            test "$code" = 200
+            test "$(head -c 4 /tmp/sprite.webp)" = RIFF
           done
