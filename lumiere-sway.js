@@ -34,8 +34,10 @@
     // The old central sine mask barely moved recognizable hair/hem tips.
     // Anchor the upper/root section, then let the terminal part follow while
     // fading to zero at the tile's one-pixel safety perimeter.
-    return smooth01(u / 0.18) * smooth01((1-u) / 0.18) *
-      smooth01(v / 0.43) * smooth01((1-v) / 0.10);
+    // Broad sine across the strand avoids a folded inverse map when the
+    // free tip moves more than 2 reference px. Keep roots and seams pinned.
+    return Math.sin(Math.PI * u) *
+      smooth01(v / 0.52) * smooth01((1-v) / 0.10);
   }
   function motion(kind, phase) {
     if (!Number.isFinite(phase)) throw new Error("Invalid Lumiere sway phase");
