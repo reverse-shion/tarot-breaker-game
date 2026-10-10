@@ -125,7 +125,12 @@
   let gardenExitRef = { ...DEFAULT_SPAWN };
   let last = 0;
   let anim = 0;
-  let lumiereManifest;
+  const LUMIERE_POSES = Object.freeze({
+    down:Object.freeze({width:1254,height:1254,body_top:60,baseline_y:1168,center_x:620}),
+    up:Object.freeze({width:1254,height:1254,body_top:74,baseline_y:1127,center_x:628}),
+    left:Object.freeze({width:1254,height:1254,body_top:97,baseline_y:1144,center_x:480}),
+    right:Object.freeze({width:1254,height:1254,body_top:58,baseline_y:1158,center_x:785})
+  });
 
   if (NAV_DEBUG) {
     debugStatus = document.createElement("output");
@@ -164,27 +169,6 @@
   const images = {};
   const shioponImages = {};
   const lumiereImages = {};
-  const lumiereCompositors = {};
-
-  function validateLumiereManifest(value) {
-    const render = value?.render;
-    if (value?.format !== "RGBA WebP (lossless)" || value.layout !== "single_pose" ||
-        value.movement_type !== "hover" || value.phase !== 2 || value.localized_sway !== true ||
-        render?.reference_body_height !== 420 || render.reference_cell_height !== FRAME.h ||
-        render.draw_cell_height !== DRAW_HEIGHT || render.bottom_gap !== LUMIERE_BOTTOM_GAP ||
-        render.bob_amplitude !== LUMIERE_BOB_AMPLITUDE || render.bob_period !== LUMIERE_BOB_PERIOD)
-      throw new Error("リュミエール設定が実装仕様と一致しません");
-    for (const dir of ["down", "up", "left", "right"]) {
-      const pose = value.poses?.[dir];
-      if (LUMIERE_BASE + value.files?.[dir] !== lumiereFiles[dir] ||
-          pose?.actual_direction !== dir || !Number.isInteger(pose.width) || pose.width <= 0 ||
-          !Number.isInteger(pose.height) || pose.height <= 0 ||
-          !Number.isFinite(pose.body_top) || !Number.isFinite(pose.baseline_y) ||
-          pose.body_top < 0 || pose.baseline_y <= pose.body_top || pose.baseline_y > pose.height ||
-          !Number.isFinite(pose.center_x) || pose.center_x < 0 || pose.center_x > pose.width)
-        throw new Error("リュミエール" + dir + "アンカー設定不正");
-    }
-  }
 
   const player = {
     x: DEFAULT_SPAWN.x,
@@ -1374,21 +1358,19 @@
   ) {
     if (hover) {
       const dir = actorImages[actor.dir] ? actor.dir : "down";
-      const compositor = lumiereCompositors[dir];
-      const image = compositor.draw(actor.bobPhase);
-      const pose = lumiereManifest.poses[dir];
-      const bodyHeight = DRAW_HEIGHT * lumiereManifest.render.reference_body_height / FRAME.h;
+      const image = actorImages[dir];
+      const pose = LUMIERE_POSES[dir];
+      const bodyHeight = DRAW_HEIGHT * 420 / FRAME.h;
       const poseScale = bodyHeight / (pose.baseline_y - pose.body_top);
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.globalAlpha = 1;
-      // Keep the existing Lumiere shadow; do not add outlines or glow effects.
       ctx.shadowColor = "rgba(54,41,58,.65)";
       ctx.shadowBlur = 0.7 / camera.zoom;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      ctx.drawImage(image, 0, 0, compositor.width, compositor.height,
+      ctx.drawImage(image, 0, 0, pose.width, pose.height,
         actor.x - pose.center_x * poseScale,
         actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * poseScale + visualOffsetY,
         pose.width * poseScale, pose.height * poseScale);
@@ -2075,9 +2057,9 @@
     }
     function lumiereRenderRect() {
       const origin=viewportOrigin();
-      const pose=lumiereManifest?.poses?.[lumiere.dir]||lumiereManifest?.poses?.down;
+      const pose=LUMIERE_POSES[lumiere.dir]||LUMIERE_POSES.down;
       if(!pose)return {left:0,right:0,top:0,bottom:0,width:0,height:0};
-      const bodyHeight=DRAW_HEIGHT*lumiereManifest.render.reference_body_height/FRAME.h;
+      const bodyHeight=DRAW_HEIGHT*420/FRAME.h;
       const poseScale=bodyHeight/(pose.baseline_y-pose.body_top);
       const visualOffset=lumiere.bobOffsetY+lumiere.stageOffsetY;
       const left=(lumiere.x-pose.center_x*poseScale-origin.x)*camera.zoom;
@@ -2441,11 +2423,6 @@
         throw new Error("スプライト設定が実装仕様と一致しません");
       }
 
-      const lumiereResponse = await fetch(LUMIERE_BASE + "lumiere_sprite_manifest.json");
-      if (!lumiereResponse.ok) throw new Error("リュミエール設定を読み込めません");
-      lumiereManifest = await lumiereResponse.json();
-      validateLumiereManifest(lumiereManifest);
-
       await loadCollision();
       const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
       if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
@@ -2518,22 +2495,10 @@
         throw new Error("しおぽん待機画像サイズ不正");
 
       for (const dir of ["down", "up", "left", "right"]) {
-        const pose = lumiereManifest.poses[dir];
+        const pose = LUMIERE_POSES[dir];
         if (lumiereImages[dir].naturalWidth !== pose.width ||
             lumiereImages[dir].naturalHeight !== pose.height)
           throw new Error("リュミエール" + dir + "浮遊画像サイズ不正");
-      }
-
-      if (typeof window.TarotLumiereSway?.create !== "function")
-        throw new Error("リュミエール揺れ描画を読み込めません");
-      for (const dir of ["down", "up", "left", "right"]) {
-        const compositor = window.TarotLumiereSway.create(lumiereImages[dir], lumiereManifest.poses[dir]);
-        if (!compositor?.canvas || typeof compositor.draw !== "function" ||
-            !Number.isInteger(compositor.width) || compositor.width <= 0 ||
-            !Number.isInteger(compositor.height) || compositor.height <= 0 ||
-            compositor.canvas.width !== compositor.width || compositor.canvas.height !== compositor.height)
-          throw new Error("リュミエール" + dir + "揺れ描画設定不正");
-        lumiereCompositors[dir] = compositor;
       }
 
       if (document.body.classList.contains("scene-load-error")) return;
@@ -2577,6 +2542,7 @@
       document.body.classList.remove("scene-booting", "scene-load-error", "scene-rendered");
       document.body.classList.add("scene-ready");
     } catch (error) {
+      window.__lastGardenBootError = error?.message || String(error);
       if (enteringGardenRuntime) window.failGardenArrival?.();
       running = false;
       ready = false;
