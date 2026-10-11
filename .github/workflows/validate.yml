@@ -36,6 +36,9 @@ jobs:
           node --check controls.js
           node --check scripts/test-regression-baseline.mjs
 
+      - name: Audit-only visual trace unit checks
+        run: node --test tests/star-gate-visual-trace.test.cjs
+
       - name: Validate game assets and manifest
         run: |
           node scripts/validate.mjs
