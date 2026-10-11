@@ -71,7 +71,7 @@ test('rest is a fixed fully opaque state; no breathing keyframes remain on it', 
   assert.match(tail, /filter:brightness\(\.18\) saturate\(1\.35\) hue-rotate\(28deg\) contrast\(1\.18\)!important;/);
   assert.doesNotMatch(css, /#game-shell\.sga-anomaly-rest \.scene-gate-inner-light > img\s*\{\s*animation:\s*sgaAnomalyBreathe/);
   const source = fs.readFileSync('star-gate-anomaly.js', 'utf8');
-  assert.match(source, /cleanupGateState\(\{preserveGateAnomaly:/);
+  assert.match(source, /cleanupGateState\(\{preserveFinal:preserveGateAnomaly\}\)/);
   assert.match(source, /if\(preserveFinal\)shell\.classList\.add\("sga-anomaly-rest"\)/);
 });
 
