@@ -2110,7 +2110,10 @@
       // before notifying Aftermath, and abandon it if unconsumed.
       armReturnCamera(id){
         if(!Number.isFinite(id)||sceneLockOwner||!ready||!running||visionWorld.active||absorptionSurface||returnCameraHandoff)return false;
-        const target=normalCameraTarget();
+        // normalCameraTarget is private to the separate cinematic-camera
+        // block. Access it through that block's API, never by free variable.
+        const target=window.TarotCinematicCamera?.getNormalTarget?.();
+        if(!Number.isFinite(target?.x)||!Number.isFinite(target?.y))return false;
         returnCameraHandoff={id,viewport:{width:cssWidth,height:cssHeight},
           safeCamera:{x:target.x,y:target.y,zoom:normalCameraZoom},
           safeCameraRef:{x:target.x/scale.x,y:target.y/scale.y}};
@@ -2250,6 +2253,9 @@
   }
 
   window.TarotCinematicCamera = Object.freeze({
+    // Safe read-only bridge for Stage3->Aftermath return framing. It stays
+    // in this same lexical block as normalCameraTarget().
+    getNormalTarget() { return { ...normalCameraTarget() }; },
     panTo(target = {}, duration = 1200, options = {}) {
       const ref = stageTargetRef(target);
       if (!ref) return Promise.resolve({ completed: false });

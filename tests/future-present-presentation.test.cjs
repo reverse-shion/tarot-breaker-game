@@ -83,3 +83,16 @@ test('iPhone regression: refused Aftermath is diagnosed and panoramic camera is 
  assert.match(anomaly,/returnCameraHandoff:!!current\.returnCameraHandoff/);
  assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
 });
+
+test('real iPhone error regression: adapter cannot reference block-scoped normalCameraTarget',()=>{
+ const game=fs.readFileSync('game.js','utf8');
+ const adapterStart=game.indexOf('  if (stage3Dev) {\n    // Observe physical releases');
+ const cameraBlock=game.indexOf('  if (stage3Dev) {\n  function beginCinematicPan',adapterStart);
+ assert.ok(adapterStart>=0&&cameraBlock>adapterStart,'both blocks must exist');
+ const adapter=game.slice(adapterStart,cameraBlock);
+ const cameraApi=game.slice(cameraBlock);
+ assert.doesNotMatch(adapter,/const target=normalCameraTarget\(\)/);
+ assert.match(adapter,/const target=window\.TarotCinematicCamera\?\.getNormalTarget\?\.\(\)/);
+ assert.match(adapter,/if\(!Number\.isFinite\(target\?\.x\)\|\|!Number\.isFinite\(target\?\.y\)\)return false/);
+ assert.match(cameraApi,/function normalCameraTarget\(\)[\s\S]*getNormalTarget\(\)\s*\{\s*return\s*\{\s*\.\.\.normalCameraTarget\(\)\s*\};?\s*\}/);
+});

@@ -47,7 +47,9 @@ test('Aftermath return formation preserves restored Lumiere and places Shiopon b
 
 test('one-time panorama transfer preserves safe camera and releases an unclaimed lease',()=>{
  const {c,api}=scene();
- c.normalCameraTarget=()=>({x:810,y:440});
+ // The real normalCameraTarget is private to the separate cinematic block.
+ // Expose it only through the cinematic API so this test catches scope errors.
+ c.window.TarotCinematicCamera.getNormalTarget=()=>({x:810,y:440});
  c.cinematicCamera.allowOverscan=false;
  c.window.TarotCinematicCamera.release=()=>{c.cinematicCamera.owned=false;c.cinematicCamera.allowOverscan=false;};
  assert.equal(api.armReturnCamera(91),true);
@@ -63,4 +65,20 @@ test('one-time panorama transfer preserves safe camera and releases an unclaimed
  assert.equal(api.abandonReturnCamera(92),true);
  assert.equal(c.cinematicCamera.owned,false);
  assert.equal(c.cinematicCamera.allowOverscan,false);
+});
+
+test('return camera arm is fail-closed if cinematic target API is missing or invalid',()=>{
+ const {c,api}=scene();
+ assert.equal(api.armReturnCamera(91),false);
+ assert.equal(c.cinematicCamera.owned,false);
+ assert.equal(c.returnCameraHandoff,null);
+ c.window.TarotCinematicCamera.getNormalTarget=()=>({x:NaN,y:440});
+ assert.equal(api.armReturnCamera(92),false);
+ assert.equal(c.cinematicCamera.owned,false);
+ assert.equal(c.returnCameraHandoff,null);
+ c.window.TarotCinematicCamera.getNormalTarget=()=>({x:820,y:440});
+ assert.equal(api.armReturnCamera(93),true);
+ const accepted=api.takeReturnCamera(93);
+ assert.equal(accepted.safeCamera.x,820);
+ assert.equal(accepted.safeCamera.y,440);
 });
