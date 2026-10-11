@@ -91,6 +91,11 @@ physical-device evidence. The inner-light delta has no new automated failure.
 - That accelerated-clock full-route attempt later aborts with
   `Fixed geometry changed: y` and two Future audio seek failures. Recovery restores
   normal. It does not establish successful Present Return or audio PASS.
+- The identical accelerated-clock harness serving the unmodified PR-start JS/CSS
+  also aborts at RIFT_SMALL with the same geometry error and both identical seek
+  failures. The comparison is recorded in `browser-baseline-comparison.json`;
+  these browser limitations reproduce before this correction. This does not
+  establish whether they occur on a physical device at natural playback speed.
 - Focused actual DOM/rendering at393×631 CSS px / DPR3 and844×390 / DPR3 confirms
   aperture alignment at two camera scales, raw1024×1536 source, cover/arch clipping,
   no image filter/transform/mask/animation, z4 behind framez5 and no frame geometry
