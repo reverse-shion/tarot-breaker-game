@@ -229,8 +229,8 @@
 #game-shell.sga-anomaly-flicker .scene-gate-inner-light > img {
   animation: sgaInnerFlicker 1.18s steps(1, end) both !important;
 }
-#game-shell.sga-anomaly .scene-gate-inner-light > img,
-#game-shell.sga-anomaly-rest .scene-gate-inner-light > img {
+/* Transitional anomaly can breathe, but the final state must never fade. */
+#game-shell.sga-anomaly .scene-gate-inner-light > img {
   animation: sgaAnomalyBreathe 7.2s ease-in-out infinite !important;
   opacity: 1 !important;
   filter: brightness(.74) saturate(.80) hue-rotate(24deg) drop-shadow(0 0 7px rgba(90, 108, 205, .32)) !important;
@@ -1198,7 +1198,51 @@ html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !im
   visibility:visible!important;
   mix-blend-mode:normal!important;
 }
+/* Opaque post-ascent portal. These rules intentionally target only sga-anomaly-rest:
+   Normal uses the original WEBP unchanged; the transient Dark Energy sprites still
+   animate and then disappear. The original WEBP has a shaped alpha channel, hence
+   the dark textured *underlay* uses its alpha as an exact silhouette mask.
+   Do not change the final state back to Normal on future/present return. */
+#game-shell .scene-gate-inner-light > .sga-corrupted-inner-field{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  display:block;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse 51% 46% at 50% 70%, rgba(9,3,20,.99) 0%, rgba(29,9,59,.98) 70%, rgba(57,23,91,.96) 100%),
+    repeating-conic-gradient(from 17deg at 50% 51%, rgba(113,47,188,.20) 0deg 14deg, rgba(26,8,53,.06) 19deg 38deg, rgba(90,34,157,.25) 43deg 54deg),
+    radial-gradient(ellipse 68% 73% at 50% 40%, #52277d 0%, #230e3b 70%, #10071c 100%);
+  -webkit-mask-image:url("./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6");
+  mask-image:url("./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6");
+  -webkit-mask-position:center;
+  mask-position:center;
+  -webkit-mask-size:100% 100%;
+  mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+}
+#game-shell.sga-anomaly-rest .scene-gate-inner-light > .sga-corrupted-inner-field{
+  opacity:1!important;
+  visibility:visible!important;
+  animation:none!important;
+}
+#game-shell.sga-anomaly-rest .scene-gate-inner-light{
+  opacity:1!important;
+  visibility:visible!important;
+  mix-blend-mode:normal!important;
+  isolation:isolate!important;
+}
 #game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  /* The old 7.2s sgaAnomalyBreathe forced computed opacity down to .46–.57
+     on actual iPhone despite later declarations. Terminate it in the final
+     state, then retain the opaque, textured, violet-dark original artwork. */
+  animation:none!important;
+  transition:none!important;
   opacity:1!important;
   visibility:visible!important;
   mix-blend-mode:normal!important;
