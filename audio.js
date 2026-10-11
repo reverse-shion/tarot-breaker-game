@@ -18,7 +18,9 @@
   bgm.setAttribute("playsinline", "");
 
   let enteredWorld = false;
-  let playPending = false;
+  let playAttempt = null;
+  let transportAuthorized = false;
+  let pageSuspended = false;
   let enabled = readPreference();
   let targetVolume = NORMAL_VOLUME;
   let fadeFrame = 0;
@@ -75,9 +77,11 @@
     const startedAt = performance.now();
     const step = (now) => {
       if (token !== fadeToken) return;
-      const progress = Math.min(1, (now - startedAt) / duration);
+      // RAF's frame timestamp can precede performance.now() at fade creation.
+      // Clamp both interpolation progress and the HTMLMediaElement volume.
+      const progress = Math.max(0, Math.min(1, (now - startedAt) / duration));
       const eased = 1 - Math.pow(1 - progress, 3);
-      bgm.volume = from + (to - from) * eased;
+      bgm.volume = Math.max(0, Math.min(1, from + (to - from) * eased));
       if (progress < 1) {
         fadeFrame = requestAnimationFrame(step);
         return;
@@ -88,33 +92,71 @@
     fadeFrame = requestAnimationFrame(step);
   }
 
-  async function resumeBgm() {
-    if (eventSession || !enteredWorld || !enabled || document.hidden || playPending || !bgm.paused) return;
-    playPending = true;
-    try {
-      const playResult = bgm.play();
-      if (playResult?.then) await playResult;
-      if (eventSession) return;
-      if (!enabled || document.hidden) {
-        bgm.pause();
-        return;
+  const transportAvailable = () => enabled && !document.hidden && !pageSuspended;
+
+  function invalidatePlay() {
+    playAttempt = null;
+    transportAuthorized = false;
+  }
+
+  function stopTransport() {
+    invalidatePlay();
+    bgm.pause();
+  }
+
+  // All owners share one native play request. A retired promise may stop a
+  // retired transport, but must never pause a newer authorized request.
+  function playTransport() {
+    if (!transportAvailable()) return Promise.resolve(false);
+    if (playAttempt) return playAttempt.promise;
+    transportAuthorized = true;
+    if (!bgm.paused) return Promise.resolve(true);
+    const attempt = {};
+    playAttempt = attempt;
+    let nativePlay;
+    try { nativePlay = bgm.play(); }
+    catch (error) { nativePlay = Promise.reject(error); }
+    attempt.promise = Promise.resolve(nativePlay).then(() => {
+      if (playAttempt !== attempt) {
+        if (!transportAuthorized) bgm.pause();
+        return false;
       }
+      playAttempt = null;
+      if (!transportAvailable()) {
+        stopTransport();
+        return false;
+      }
+      return true;
+    }, () => {
+      if (playAttempt === attempt) stopTransport();
+      return false;
+    });
+    return attempt.promise;
+  }
+
+  async function resumeBgm() {
+    if (eventSession || !enteredWorld || !transportAvailable()) return;
+    // Cancel an OFF fade synchronously while an already-playing transport is
+    // reused. Its queued pause must not win before the promise continuation.
+    if (!bgm.paused && !playAttempt) {
+      transportAuthorized = true;
       fadeTo(targetVolume);
-    } catch (error) {
-      console.warn("BGMを再生できませんでした", error);
-    } finally {
-      playPending = false;
+      return;
     }
+    const played = await playTransport();
+    if (!played || eventSession || !transportAvailable()) return;
+    fadeTo(targetVolume);
   }
 
   function pauseBgm(immediate = false) {
     if (immediate) {
       cancelFade();
-      bgm.pause();
+      stopTransport();
       bgm.volume = 0;
       return;
     }
-    fadeTo(0, 180, () => bgm.pause());
+    invalidatePlay();
+    fadeTo(0, 180, () => stopTransport());
   }
 
   function setEnabled(nextEnabled) {
@@ -138,26 +180,41 @@
       enabled = true;
       renderToggle();
     }
-    resumeBgm();
+    if (eventSession) eventSession.recoverTransport();
+    else resumeBgm();
   }
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
     targetVolume = INTERACTION_VOLUME;
     if (eventSession) eventSession.userChanged();
-    else if (enteredWorld && enabled) fadeTo(targetVolume);
+    else if (enteredWorld && transportAvailable()) fadeTo(targetVolume);
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
     targetVolume = NORMAL_VOLUME;
     if (eventSession) eventSession.userChanged();
-    else if (enteredWorld && enabled) fadeTo(targetVolume);
+    else if (enteredWorld && transportAvailable()) fadeTo(targetVolume);
   });
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) pauseBgm(true);
+  function suspendTransport() {
+    if (eventSession) eventSession.suspendTransport();
+    else pauseBgm(true);
+  }
+  function recoverTransport() {
+    if (eventSession) eventSession.recoverTransport();
     else resumeBgm();
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) suspendTransport();
+    else recoverTransport();
   });
-  window.addEventListener("pagehide", () => pauseBgm(true));
-  window.addEventListener("pageshow", () => resumeBgm());
+  window.addEventListener("pagehide", () => {
+    pageSuspended = true;
+    suspendTransport();
+  });
+  window.addEventListener("pageshow", () => {
+    pageSuspended = false;
+    recoverTransport();
+  });
 
   bgm.addEventListener("error", () => {
     cancelFade();
@@ -178,7 +235,7 @@
     let silent = false;
     let token = 0;
     let failed = false;
-    let pendingResumes = 0;
+    let transportWanted = !bgm.paused || Boolean(playAttempt);
     let silenceFactor = 1;
     let coefficientFrame = 0;
     let coefficientToken = 0;
@@ -188,7 +245,7 @@
       coefficientFrame = 0;
     };
     const apply = () => {
-      if (alive) bgm.volume = enabled && !silent && !failed ? targetVolume * level * silenceFactor : 0;
+      if (alive) bgm.volume = transportAvailable() && !silent && !failed ? targetVolume * level * silenceFactor : 0;
     };
     const tweenCoefficient = (value, duration, isSilence) => {
       if (!alive) return;
@@ -224,7 +281,8 @@
         cancelCoefficientFade();
         token += 1;
         cancelFade();
-        bgm.pause();
+        transportWanted = false;
+        stopTransport();
         bgm.muted = true;
         silent = true;
         apply();
@@ -256,6 +314,7 @@
         silent = true;
         silenceFactor = 0;
         failed = false;
+        transportWanted = snapshot.playing;
         try { bgm.currentTime = snapshot.time; }
         catch { failed = true; apply(); return false; }
         apply();
@@ -265,54 +324,74 @@
       // lost, report failure rather than silently relying on the next tap.
       revealSilent(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
-        if (snapshot.playing && (bgm.paused || !enabled || document.hidden)) return false;
+        transportWanted = snapshot.playing;
         silent = false;
         silenceFactor = 1;
-        failed = false;
+        failed = snapshot.playing && (bgm.paused || !transportAvailable());
         // Only the painted present Garden is allowed to make the ordinary BGM audible again.
+        // Remember that boundary even when Safari requires a later accepted gesture.
         bgm.muted = false;
         apply();
-        return true;
+        return !failed;
       },
       async resume(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
         const ownToken = ++token;
+        transportWanted = snapshot.playing;
         bgm.muted = false;
         silent = false;
         silenceFactor = 1;
         failed = false;
         try { bgm.currentTime = snapshot.time; } catch { failed = true; apply(); return false; }
-        if (!snapshot.playing || !enabled || document.hidden) { bgm.pause(); apply(); return true; }
+        if (!transportWanted || !transportAvailable()) { stopTransport(); apply(); return true; }
         let timeout;
-        pendingResumes += 1;
         try {
-          const pending = Promise.resolve(bgm.play());
-          // A late native play fulfillment must never revive an invalidated run.
-          pending.then(() => { if (!alive || token !== ownToken || failed || !enabled || document.hidden) bgm.pause(); }, () => {});
-          await Promise.race([pending, new Promise((_, reject) => {
+          const played = await Promise.race([playTransport(), new Promise((_, reject) => {
             timeout = setTimeout(() => reject(new Error("Event BGM resume timeout")), 500);
           })]);
-          if (!alive || token !== ownToken || !enabled || document.hidden) { bgm.pause(); return false; }
+          if (!alive || token !== ownToken) return false;
+          if (!played || !transportAvailable()) { failed = true; apply(); return false; }
           apply();
           return true;
         } catch {
-          if (alive && token === ownToken) { failed = true; bgm.pause(); apply(); }
+          if (alive && token === ownToken) { failed = true; stopTransport(); apply(); }
           return false;
-        } finally { pendingResumes -= 1; clearTimeout(timeout); }
+        } finally { clearTimeout(timeout); }
       },
-      userChanged() { if (!enabled) { token += 1; bgm.pause(); } apply(); },
+      suspendTransport() {
+        if (!alive) return;
+        token += 1;
+        cancelFade();
+        stopTransport();
+        apply();
+      },
+      async recoverTransport() {
+        if (!alive || !transportWanted || !transportAvailable()) return;
+        const ownToken = token;
+        const played = await playTransport();
+        if (!alive || ownToken !== token) return;
+        failed = !played;
+        // Recovery never changes silent/muted: blackouts stay hard-muted.
+        apply();
+      },
+      userChanged() {
+        if (!enabled) { token += 1; stopTransport(); }
+        apply();
+      },
       release() {
         if (!alive) return;
         token += 1;
-        if (pendingResumes) bgm.pause();
+        if (playAttempt) stopTransport();
+        else invalidatePlay();
         alive = false;
         cancelCoefficientFade();
         cancelFade();
         eventSession = null;
-        // Preserve restored play state; do not start a previously stopped source.
         // Event hard-mute must never leak into normal gameplay after release.
+        // Normal gameplay regains its own entered/enabled transport intent.
         bgm.muted = false;
-        bgm.volume = enabled && !failed ? targetVolume : 0;
+        bgm.volume = transportAvailable() && !failed ? targetVolume : 0;
+        resumeBgm();
       },
     };
     eventSession = session;

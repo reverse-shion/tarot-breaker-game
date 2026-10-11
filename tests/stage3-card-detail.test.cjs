@@ -3,10 +3,11 @@ const test=require('node:test');const assert=require('node:assert/strict');const
 const source=fs.readFileSync('star-gate-anomaly.js','utf8');const css=fs.readFileSync('future-stage3.css','utf8');
 const functionSource=source.slice(source.indexOf('const ARCANA_DETAIL_REGISTRATION='),source.indexOf('function makeUi(){'));
 function classList(){const items=new Set();return{items,add(...v){v.forEach(x=>items.add(x))},remove(...v){v.forEach(x=>items.delete(x))},contains(v){return items.has(v)}}}
+function style(){return{setProperty(name,value){this[name]=String(value)},getPropertyValue(name){return this[name]||''},removeProperty(name){const old=this[name]||'';delete this[name];return old}}}
 function harness({abortAt=null,decoded=true}={}){
  let time=0,attached=[],waits=[],frames=[],switches=[],audioCalls=[];const worldClasses=classList();
- const makeImage=(width,height)=>({naturalWidth:decoded?width:0,naturalHeight:height,cloneNode(){return {style:{},classList:classList()}}});
- const node=()=>({style:{},children:[],classList:classList(),setAttribute(){},appendChild(card){this.children.push(card)},remove(){attached=attached.filter(n=>n!==this)}});
+ const makeImage=(width,height)=>({naturalWidth:decoded?width:0,naturalHeight:height,cloneNode(){return {style:style(),classList:classList()}}});
+ const node=()=>({style:style(),children:[],classList:classList(),setAttribute(){},appendChild(card){this.children.push(card)},remove(){attached=attached.filter(n=>n!==this)}});
  const session={clock:null,futureAudio:{
   arcanaAnomalyStart(){audioCalls.push(['micro',time])},
   arcanaPulse(index){audioCalls.push(['pulse',time,index])},
@@ -14,15 +15,15 @@ function harness({abortAt=null,decoded=true}={}){
   arcanaInfection(p){audioCalls.push(['infection',time,p])},
   arcanaRewrite(){audioCalls.push(['rewrite',time])}
  }};
- const snapshot=()=>{const frame=attached[0]?.children[0];if(!frame)return;frames.push({time,phase:session.cardDetail?.phase,frameTransform:frame.style.transform,normal:{...frame.children[0].style},re:{...frame.children[1].style},contamination:{...frame.children[2]?.style},classes:[...frame.classList.items]});};
- const clock={now:()=>time,assert(){},async wait(ms){waits.push(ms);if(time===abortAt)throw new Error('cancelled');time+=ms;},async tween(ms,step){waits.push(ms);step(0);time+=ms/2;step(.5);snapshot();if(time-ms/2===abortAt)throw new Error('cancelled');time+=ms/2;step(1);}};
+ const snapshot=(progress=null)=>{const frame=attached[0]?.children[0];if(!frame)return;frames.push({time,progress,phase:session.cardDetail?.phase,frameTransform:frame.style.transform,normal:{...frame.children[0].style},re:{...frame.children[1].style},contamination:{...frame.children[2]?.style},infection:{...frame.children[3]?.style},classes:[...frame.classList.items]});};
+ const clock={now:()=>time,assert(){},async wait(ms){waits.push(ms);snapshot();if(time===abortAt)throw new Error('cancelled');time+=ms;},async tween(ms,step){waits.push(ms);const start=time;step(0);snapshot(0);time=start+ms/2;step(.5);snapshot(.5);if(start===abortAt)throw new Error('cancelled');time=start+ms*.95;step(.95);snapshot(.95);time=start+ms;step(1);snapshot(1);}};
  session.clock=clock;
  const main={set src(value){switches.push({time,value})}};
  const context={session,innerWidth:390,innerHeight:844,root:{classList:worldClasses,querySelector:()=>main},preparedImages:new Map([['detail.png',makeImage(853,1280)],['normal.webp',makeImage(1024,1536)],['pose.webp',makeImage(512,512)]]),ASSETS:{cardDetail:'detail.png',cardNormal:'normal.webp',shionCheckRe:'pose.webp'},Math,document:{createElement:node,body:{appendChild(layer){attached.push(layer)}}}};
  vm.createContext(context);vm.runInContext(functionSource+';this.show=showArcanaDetail;',context);
  return {run:()=>context.show(),session,waits,frames,switches,audioCalls,worldClasses,attached:()=>attached};
 }
-test('three finite Arcana pulses build full-card abnormality before Re emergence and completed hold',async()=>{
+test('three finite Arcana pulses preserve normal card before edge erosion and completed Re hold',async()=>{
  const h=harness();await h.run();
  assert.deepEqual(h.waits,[550,300,240,340,300,430,260,1650,1800]);
  assert.equal(h.session.cardDetail.endedAt-h.session.cardDetail.startedAt,5870);
@@ -31,24 +32,30 @@ test('three finite Arcana pulses build full-card abnormality before Re emergence
   ['NORMAL_HOLD',0],['MICRO_ANOMALY',550],['ABNORMAL_HOLD',2160],['RE_EMERGENCE',2420],['RE_COMPLETE',4070],['RE_HOLD',4070]
  ]);
  assert.deepEqual(Array.from(h.session.cardDetail.pulses,p=>p.number),[1,2,3]);
- const pulseFrames=h.frames.filter(f=>f.phase==='MICRO_ANOMALY');
+ const pulseFrames=h.frames.filter(f=>f.phase==='MICRO_ANOMALY'&&f.progress===.5);
  const pulseScales=pulseFrames.map(f=>Number(f.frameTransform.match(/scale\(([\d.]+)/)[1]));
  assert.equal(pulseScales.length,3);assert.ok(pulseScales[0]>1&&pulseScales[0]<pulseScales[1]&&pulseScales[1]<pulseScales[2]&&pulseScales[2]<1.024);
- assert.ok(Number(pulseFrames[0].contamination.opacity)<Number(pulseFrames[1].contamination.opacity));
- assert.ok(Number(pulseFrames[1].contamination.opacity)<Number(pulseFrames[2].contamination.opacity));
- const hold=h.frames.find(f=>f.phase==='ABNORMAL_HOLD');assert.ok(Number(hold.contamination.opacity)>=.225);
+ for(const frame of h.frames.filter(f=>['MICRO_ANOMALY','ABNORMAL_HOLD'].includes(f.phase))){assert.equal(frame.normal.opacity,'1');assert.equal(frame.normal.filter,'none');assert.equal(frame.re.opacity,'0');assert.equal(frame.contamination.opacity,'0');}
+ const hold=h.frames.find(f=>f.phase==='RE_HOLD');assert.equal(hold.normal.visibility,'hidden');assert.equal(hold.re.opacity,'1');assert.equal(hold.infection.opacity,'0');
  assert.equal(h.attached().length,0);assert.equal(h.worldClasses.contains('sga-rewrite-world-tension'),true);
 });
-test('Re Arcana emerges through a whole-card black-purple stain without a directional erosion front',async()=>{
+test('soft edge erosion reaches center before Re Arcana becomes visible',async()=>{
  const h=harness();await h.run();
- const micro=h.frames.find(f=>f.phase==='MICRO_ANOMALY'),emergence=h.frames.find(f=>f.phase==='RE_EMERGENCE');
+ const micro=h.frames.find(f=>f.phase==='MICRO_ANOMALY'),emergence=h.frames.find(f=>f.phase==='RE_EMERGENCE'&&f.progress===.95);
  assert.equal(micro.normal.opacity,'1');assert.equal(micro.re.opacity,'0');
  assert.ok(Number(emergence.normal.opacity)>0&&Number(emergence.normal.opacity)<1);
  assert.ok(Number(emergence.re.opacity)>0&&Number(emergence.re.opacity)<1);
  assert.equal(emergence.re.maskImage,'none');
+ const erosion=h.frames.filter(f=>f.phase==='RE_EMERGENCE');
+ assert.deepEqual(erosion.map(f=>f.infection['--sga-re-safe']),['68.00%','34.00%','0.49%','0.00%']);
+ assert.equal(erosion[1].normal.opacity,'1.000');assert.equal(erosion[1].re.opacity,'0.000');
+ assert.ok(erosion[1].infection.opacity>erosion[0].infection.opacity);
+ assert.equal(erosion.at(-1).re.opacity,'1.000');assert.equal(erosion.at(-1).normal.opacity,'0.000');
  assert.match(css,/\.sga-arcana-contamination\{/);
  assert.match(css,/\.sga-arcana-contamination\{[\s\S]*?inset:2\.6% 8\.85% 3\.16%/);
  assert.match(css,/\.sga-re-infection\{[\s\S]*?inset:2\.6% 8\.85% 3\.16%/);
+ assert.match(css,/mask-image:radial-gradient\(ellipse at 50% 48%,transparent 0 var\(--sga-re-safe\)/);
+ assert.match(css,/filter:blur\(\.7px\)/);
  assert.doesNotMatch(css,/\.sga-re-infection\{[\s\S]*?inset:-1\.5%/);
  assert.doesNotMatch(css,/\.sga-arcana-breach-glow/);
  assert.doesNotMatch(source,/setErosionMask|linear-gradient\(103deg|EDGE_EROSION|BREACH_GLOW/);
@@ -64,7 +71,8 @@ test('detail cards preserve authored registration while full-card abnormality ch
 });
 test('audio stays continuous: infection begins at Re emergence and rewrite follows with no silent-break cue',async()=>{
  const h=harness();await h.run();
- assert.deepEqual(h.audioCalls.map(x=>x[0]),['micro','pulse','pulse','pulse','infection-start','infection','infection','infection','rewrite']);
+ assert.deepEqual(h.audioCalls.map(x=>x[0]),['micro','pulse','pulse','pulse','infection-start','infection','infection','infection','infection','rewrite']);
+ assert.deepEqual(h.audioCalls.filter(x=>x[0]==='infection').map(x=>x[2]),[0,.5,.99275,1]);
  assert.deepEqual(h.audioCalls.filter(x=>x[0]==='pulse').map(x=>x[2]),[1,2,3]);
  assert.equal(h.audioCalls.find(x=>x[0]==='infection-start')[1],2420);
  assert.equal(h.audioCalls.find(x=>x[0]==='rewrite')[1],4070);

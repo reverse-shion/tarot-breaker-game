@@ -6,13 +6,14 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const collisionData = require('../assets/maps/star-country-gate-garden-collision.json');
 const manifest = require('../assets/sprites/shion/shion_sprite_manifest.json');
+const lumiereManifest = require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
 const { gardenRuntime } = require('./helpers/garden-runtime.cjs');
 
-async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false,
+async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, badLumiere = false, badLumiereManifest = false, missingSway = false, badSway = false,
   search = '?from=landing&navDebug=1', devTransit = null, dialogueState = null } = {}) {
   const rafQueue = []; let now = 1000;
   const { layout: sceneLayout, collision: runtimeCollision } = gardenRuntime();
-  const drawCalls = [], surfaceCalls = [], errors = [], captured = new Set(), inputTrace = [];
+  const drawCalls = [], surfaceCalls = [], swayCreates = [], swayDraws = [], errors = [], captured = new Set(), inputTrace = [];
   class Element {
     constructor() { this.listeners = new Map(); this.style = {}; this.dataset = {}; this.hidden = false; }
     addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
@@ -70,13 +71,20 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     syncCamera() {},
     drawDebug() {},
   };
+  if (!missingSway) window.TarotLumiereSway = { create(image, pose) {
+    if (badSway) throw new Error('sway composition unavailable');
+    const density=3*63.984375/(pose.baseline_y-pose.body_top);
+    const canvas={url:'lumiere_sway/'+image.url.split('/').at(-1),width:Math.ceil(pose.width*density),height:Math.ceil(pose.height*density)};
+    swayCreates.push({image,pose,canvas});
+    return {canvas,width:canvas.width,height:canvas.height,draw(phase){swayDraws.push({canvas,phase});return canvas;}};
+  }};
   class Image {
     naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
       this.url = src;
       if (src.includes('lumiere_')) {
-        this.naturalWidth = 2172;
-        this.naturalHeight = 724;
+        this.naturalWidth = badLumiere ? 1250 : 1254;
+        this.naturalHeight = 1254;
       }
       queueMicrotask(() => this.onload?.());
     }
@@ -88,7 +96,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   window.CustomEvent = CustomEvent;
   const sandbox = vm.createContext({ window, document, Image, URLSearchParams, CustomEvent, location: { search },
     performance: { now: () => now }, requestAnimationFrame: fn => { rafQueue.push(fn); return rafQueue.length; }, setTimeout() { return 1; }, clearTimeout() {},
-    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
+    fetch: async url => { fetched.push(url); return { ok: true, json: async () => url.includes('lumiere_sprite_manifest') ? (badLumiereManifest ? {...lumiereManifest, phase:1} : lumiereManifest) : url.includes('manifest') ? manifest : badCollision ? { ...collisionData, walkAreas: [] } : collisionData }; },
     Math: deterministicMath,
     console: { error: e => errors.push(e), warn() {}, log() {} } });
   for (const name of ['navigation.js', 'blocked-collision.js', 'controls.js']) vm.runInContext(fs.readFileSync(name, 'utf8'), sandbox, { filename: name });
@@ -105,12 +113,13 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   assert.equal(gameSource.split(resetAnchor).length, 2);
   vm.runInContext(gameSource.replace('  const player = {','  const player = window.__gardenPlayer = {')
     .replace('  function chooseShioponTarget() {','  window.__testGardenExit = {updatePlayer, arm(){gardenExitArmed=true;}};\n\n  function chooseShioponTarget() {')
+    .replace('  const lumiere = {', '  const lumiere = window.__gardenLumiere = {')
     .replace(resetAnchor, '  window.__gardenReset = reset;\n' + resetAnchor), sandbox, { filename: 'game.js' });
   for (let i = 0; i < 20 && !document.body.classList.contains('scene-ready'); i++) {
     await new Promise(setImmediate);
     now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now));
   }
-  if (!badCollision) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
+  if (!badCollision && !badLumiere && !badLumiereManifest && !missingSway && !badSway) assert.equal(document.body.classList.contains('scene-ready'), true, `Garden boot did not reach scene-ready; errors=${errors.map(String).join(' | ')}`);
   const tick = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 1000 / 60; rafQueue.splice(0).forEach(fn => fn(now)); } };
   const state = () => JSON.parse(elements['nav-status'].dataset.state);
 
@@ -132,7 +141,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
   // The production game suppresses pointer input while dialogue is active.
   // This harness does not load the dialogue runtime, so provide its inactive contract.
   window.TarotDialogue ??= { getState: () => ({ active: false }) };
-  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
+  return { elements, window, document, state, tick, tapWorld, pointer, fetched, errors, drawCalls, surfaceCalls, swayCreates, swayDraws, captured, safeTarget, inputTrace, controls: window.__gardenControls, collision: runtimeCollision, location:sandbox.location, journeyWrites };
 }
 
 test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes', async () => {
@@ -156,14 +165,14 @@ test('390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and
   const shioponDraws = h.drawCalls.filter(call => call[0]?.url?.includes('shiopon_'));
   const lumiereDraws = h.drawCalls.filter(call => call[0]?.url?.includes('lumiere_'));
   const lumiereMotionDraws = lumiereDraws;
-  const lumiereCoreDraws = h.surfaceCalls.filter(call => call.operation === 'drawImage' && call.args[3] === 243);
   assert.ok(shionDraws.length > 0); assert.ok(shionDraws.every(call => call[8] === 78));
   assert.ok(shioponDraws.length > 0); assert.ok(shioponDraws.every(call => call[8] === 76));
   assert.ok(shionDraws.length >= 12); assert.ok(shioponDraws.length >= 12);
-  assert.ok(lumiereMotionDraws.length > 0); assert.ok(lumiereCoreDraws.length > 0);
-  assert.ok(lumiereMotionDraws.every(call => call[3] === 493));
-  assert.ok(lumiereMotionDraws.every(call => call[4] === 596));
-  assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] - (596 * 78) / 724) < 1e-6));
+  assert.ok(lumiereMotionDraws.length > 0);
+  assert.equal(h.surfaceCalls.length, 0, 'no legacy body-core or sheet composites');
+  assert.equal(h.swayCreates.length,4,'one cached compositor per direction');
+  assert.ok(lumiereMotionDraws.every(call => call[3] === h.swayCreates[0].canvas.width && call[4] === h.swayCreates[0].canvas.height));
+  assert.ok(lumiereMotionDraws.every(call => Math.abs(call[8] * (1168 - 60) / 1254 - 63.984375) < 1e-6));
 });
 test('Garden direct Continue boots the real runtime at exact authored spawn with restored follower state',async()=>{
   const transit={ok:true,context:{mapId:'star_gate_garden',spawnId:'south_gate',companion:'joined_with_shion'},spawn:{x:724,y:944}};
@@ -187,31 +196,66 @@ test('failed isolated Garden transit never falls back to production Journey or n
   assert.equal(h.controls.state.cancelReason,'dev-return-blocked');
   h.window.emit('keyup',{key:'s'});
 });
-test('Lumiere replaces the old torso once and draws one cached silhouette per tick', async () => {
+test('Lumiere draws one fixed full pose per tick without sheet slicing or whole-body fades', async () => {
   const h = await boot();
   for (let i = 0; i < 420; i++) {
     const start = h.drawCalls.length;
     h.tick();
     const calls = h.drawCalls.slice(start).filter(call => call[0]?.url?.includes('lumiere_'));
     assert.equal(calls.length, 1);
-    assert.equal(calls[0][0].url, 'lumiere_composite');
+    assert.ok(calls[0][0].url.endsWith('lumiere_idle.webp'));
+    assert.deepEqual(calls[0].slice(1, 5), [0, 0, h.swayCreates[0].canvas.width, h.swayCreates[0].canvas.height]);
+    assert.equal(h.swayCreates.length,4,'no per-frame compositor allocation');
+    assert.equal(h.swayDraws.at(-1).phase,h.window.__gardenLumiere.bobPhase,'one shared phase drives local sway');
   }
-  const surfaces = new Set(h.surfaceCalls.map(call => call.element));
-  assert.equal(surfaces.size, 4);
-  for (const surface of surfaces) {
-    const ops = h.surfaceCalls.filter(call => call.element === surface);
-    assert.deepEqual(ops.map(call => call.operation), ['drawImage', 'clearRect', 'drawImage']);
-    assert.deepEqual(ops[1].args, [129, 32, 243, 564]);
-  }
+  assert.equal(h.surfaceCalls.length, 0);
 });
-test('Lumiere bobs as one body while slow wing frames change independently', async () => {
-  const h = await boot(); const before = h.state().lumiere; h.tick(37); const after = h.state().lumiere;
-  assert.equal(after.x, before.x); assert.equal(after.y, before.y);
-  assert.deepEqual(after.homeRef, { x: 810, y: 212 }); assert.equal(after.moving, false);
-  assert.notEqual(after.frame, before.frame);
-  assert.notEqual(after.bobOffsetY, before.bobOffsetY);
-  assert.ok(Math.abs(after.bobOffsetY) <= 2.4);
-  assert.ok(after.wingHold >= 0.7 && after.wingHold <= 1.35);
+test('four directions preserve scale, float continuously and keep phase through facing and stage offsets', async () => {
+  const h = await boot();
+  const actor = h.window.__gardenLumiere;
+  const fixed = {x:actor.x,y:actor.y};
+  for (const dir of ['down','up','left','right']) {
+    actor.dir = dir;
+    const beforePhase = actor.bobPhase;
+    for (let i = 0; i < 624; i++) {
+      const before = actor.bobOffsetY;
+      const start = h.drawCalls.length;
+      h.tick();
+      assert.ok(Math.abs(actor.bobOffsetY) <= 2.4);
+      assert.ok(Math.abs(actor.bobOffsetY - before) < 0.05, 'no integer rounding or pose-driven jump');
+      assert.equal(actor.frame,0);
+      assert.equal(actor.x,fixed.x); assert.equal(actor.y,fixed.y);
+      const calls=h.drawCalls.slice(start).filter(call=>call[0]?.url?.includes('lumiere_'));
+      assert.equal(calls.length,1);
+      assert.equal(h.swayCreates.length,4);
+      assert.equal(h.swayDraws.at(-1).phase,actor.bobPhase);
+      const pose=lumiereManifest.poses[dir], call=calls[0];
+      assert.ok(call[0].url.endsWith(lumiereManifest.files[dir]));
+      assert.ok(Math.abs(call[8] * (pose.baseline_y-pose.body_top)/pose.height - 63.984375)<1e-9);
+      const multiplier=call[8]/pose.height;
+      assert.ok(Math.abs(call[5]+pose.center_x*multiplier-actor.x)<1e-9);
+      assert.ok(Math.abs(call[6]+pose.baseline_y*multiplier-(actor.y-2.7+actor.bobOffsetY+actor.stageOffsetY))<1e-9);
+    }
+    const error=Math.atan2(Math.sin(actor.bobPhase-beforePhase),Math.cos(actor.bobPhase-beforePhase));
+    assert.ok(Math.abs(error)<1e-9,'exact two-period phase continuity');
+  }
+  const phase=actor.bobPhase;
+  actor.stageOffsetY=-5;
+  actor.dir='up';h.tick();
+  assert.ok(Math.abs(actor.bobPhase-phase-(Math.PI*2/5.2/60))<1e-9);
+  assert.equal(actor.stageOffsetY,-5,'visual offset does not rewrite stage state');
+  h.window.__gardenReset();
+  assert.equal(actor.bobPhase,0); assert.equal(actor.bobOffsetY,0);
+  assert.equal(actor.stageOffsetY,0);assert.equal(actor.dir,'down');assert.equal(actor.frame,0);
+});
+test('Lumiere invalid images, manifest or compositor dependency never become scene-ready', async () => {
+  for(const options of [{badLumiere:true},{badLumiereManifest:true},{missingSway:true},{badSway:true}]){
+    const h=await boot(options);
+    assert.equal(h.document.body.classList.contains('scene-ready'),false);
+    assert.equal(h.document.body.classList.contains('scene-load-error'),true);
+    assert.equal(h.elements.start.disabled,true);
+    assert.equal(h.errors.length,1);
+  }
 });
 test('Lumiere has solid collision while remaining fixed at the gate', async () => {
   const h = await boot();
@@ -382,13 +426,13 @@ test('stage commands face actors, animate safe steps and expose a skip-to-end ha
   h.tick();
   assert.equal(h.state().shiopon.dir, 'right');
 
-  const lumiereDrawStart = h.surfaceCalls.length;
+  const lumiereDrawStart = h.drawCalls.length;
   await h.window.TarotStage.perform({ type: 'face', actor: 'lumiere', target: 'gate' }).promise;
   h.tick();
   assert.equal(h.state().lumiere.dir, 'up');
   assert.ok(
-    h.surfaceCalls.slice(lumiereDrawStart).some(call =>
-      call.operation === 'drawImage' && call.args[0]?.url?.endsWith('lumiere_hover_up.png')),
+    h.drawCalls.slice(lumiereDrawStart).some(call =>
+      call[0]?.url?.endsWith('lumiere_hover-back.webp')),
   );
 
   const before = h.state().player;

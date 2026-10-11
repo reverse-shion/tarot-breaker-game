@@ -1,0 +1,74 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const vm = require("node:vm");
+
+const root = path.resolve(__dirname, "..");
+const relativePage = "docs/lumiere-hover-evidence/lumiere-clean-b99f3d4.html";
+// Exact Git sources for immutable previews, separate from the live event candidate.
+const historicalSources = require("./fixtures/lumiere-preview-sources-9e8a85d.json");
+const runtime = "b99f3d443dc6969af48850776ad2ee9b89eafd43";
+
+test("Clean candidate preview pins game source and contains no visible editor scripts", () => {
+  const html = fs.readFileSync(path.join(root, relativePage), "utf8");
+  const match = html.match(/<script type="application\/json" id="lumiere-preview-source">([\s\S]*?)<\/script>/);
+  assert(match, "source metadata must exist");
+  const meta = JSON.parse(match[1]);
+  assert.equal(meta.source_sha, runtime);
+  assert.equal(Object.keys(meta.files).length, 39);
+  for (const [file, digest] of Object.entries(meta.files)) {
+    const commit = meta.source_commits[file];
+    assert.match(commit, /^[0-9a-f]{40}$/);
+    // CI checkout can omit historical git trees. Hash exact historical fixtures
+    // for sources changed by the event integration, and live unchanged sources.
+    // Both sets must still match all 39 fixed preview digests.
+    // Normalize only the historic release index's three editor loaders for
+    // the earlier editor-free b99f3d4 preview.
+    // The approved sprite replacement changes the live manifest. This fixture
+    // is the exact historical Git source, still checked against its pinned hash.
+    const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
+      ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json"
+      : file === "audio.js"
+        ? "tests/fixtures/audio-preview-baseline-160ab339.js" : file;
+    let content = Object.hasOwn(historicalSources, file)
+      ? Buffer.from(historicalSources[file]) : fs.readFileSync(path.join(root, sourceFile));
+    if (file === "index.html") {
+      const preservedEditors = [
+        "fountain-position-editor.js",
+        "title-layout-editor.js",
+        "waterfall-position-editor.js",
+      ];
+      const lines = content.toString("utf8").split(String.fromCharCode(10))
+        .filter(line => !preservedEditors.some(editor => line.includes('src="./'+editor)));
+      content = Buffer.from(lines.join(String.fromCharCode(10)));
+    }
+    assert.equal(crypto.createHash("sha256").update(content).digest("hex"), digest,
+      file + " must match its exact git source");
+  }
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+  const js = scripts.filter(([,attrs]) => !/type="application\/json"/.test(attrs));
+  assert.equal(js.length, 28, "all 28 game scripts must parse after debug-only editor removal");
+  for (const [, , code] of js) new vm.Script(code);
+  assert(html.includes("const verticalRatio = kind ==="));
+  assert(html.includes('candidate: "C"'));
+  assert(!html.includes('id="lumiere-check-spec"'));
+  assert(!html.includes('id="lumiere-check-diagnostics"'));
+  assert(!html.includes('id="lumiere-region-inspector"'));
+  assert(!html.includes('id="lumiere-region-crops"'));
+  assert(!html.includes('id="lumiere-fixed-check"'));
+  assert(!html.includes("確認パネルを開く"));
+  assert(!html.includes("髪・裾を拡大診断"));
+  assert(!html.includes("毛先0.4px・裾先0.25px"));
+  assert(!html.includes("lumiere-check-sway"));
+  const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  for (const editor of ["fountain-position-editor.js", "title-layout-editor.js", "waterfall-position-editor.js"]) {
+    assert(index.includes('src="./'+editor), editor+" must remain unchanged from main");
+    assert(!html.includes("window.Tarot"+({ "fountain-position-editor.js":"Fountain","title-layout-editor.js":"Title","waterfall-position-editor.js":"Waterfall" }[editor])+"Editor"));
+  }
+  assert(index.includes('src="./lumiere-sway.js'));
+  assert(index.includes('src="./game.js'));
+
+  assert(html.includes(runtime));
+});

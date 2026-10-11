@@ -179,3 +179,36 @@ This PASS covers the exact production-Continue regression and the locked histori
 
 
 PR #99 gate refresh note — 2026-10-03: metadata now records the exact-runtime device result as PASS. This is evidence-only; runtime content is unchanged.
+
+
+## PR #130 — Lumiere four-direction hover, exact-runtime product owner verification (2026-10-10)
+
+| Scope | Commit SHA | Device | Result | Human-confirmed observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| Star Gate Garden G3 — after Lumiere, four-direction art and restrained floating / hair / hem, editor-free visual inspection | 9e8a85dff39e33e0eb802369228fcab4d512e035 | iPhone testing context; specific OS/browser and model not restated with final reply | PASS | The owner used the immutable exact-runtime preview after the prior direct index link failed, then explicitly said the new version had no problem and requested a merge. This confirms acceptance of that viewed candidate, including the subtle aesthetic and absence of a disruptive verification/editor panel, without specifying every individual angle or navigation operation. | Product owner in ChatGPT: 「問題ないのでmainにマージして」 in direct response to the exact-runtime pinned preview link provided immediately beforehand | Verified preview `docs/lumiere-hover-evidence/lumiere-release-9e8a85d.html?dev=garden-resume-after-lumiere`, pinned to the exact runtime SHA above by 39 source digests and 31 executable inline scripts. Other legacy map/editor scripts are unchanged from main and query-guarded; no full-game/route/low-power/Safari-FPS PASS is inferred. Follow-up commits to branch are registry/docs/tests only. |
+
+### Verification boundary
+
+This human PASS is **limited** to the tested exact-runtime Lumiere visual candidate and the displayed playable G3 scene. It does not certify unrelated Title/Alenon/PAD routes, event replay, saving, iOS/browser version, all four directional cycles, frame rate, or a full regression playthrough. Automated CI and scope audit are separate, mandatory for merge. It does not alter any previously recorded device PASS or authorize changes outside Lumiere visuals.
+
+
+## PR #141 — Lumiere latest Asset Studio four-direction reupload, product-owner device acceptance (2026-10-10)
+
+| Scope | Commit SHA | Device | Result | Human-confirmed observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| Star Gate Garden G3 — latest four-direction replacement sprite and existing hover, standalone editor-free visual preview | 37247552f7885650dfa937a8d2228a7dc0053ad2 | iPhone testing context; device/browser/version not independently restated in this confirmation | PASS | After reporting that the initial direct index URL could not be viewed, the owner was provided the replacement four-direction dedicated preview and responded that it had no problem, instructing the assistant to merge the illustration; then explicitly requested PR #141 to be merged. This confirms acceptance of the displayed candidate only. | Product owner in ChatGPT: 「問題ないのでイラストをマージして」 followed by 「#141をマージして」 after the fixed standalone-preview URL | Exact preview: `docs/lumiere-sprite-replacement-20261010/lumiere-official-3724755.html?dev=garden-resume-after-lumiere`, with embedded `source_sha` equal to this runtime SHA and 40 hashed text sources; latest sprites and manifest from Asset Studio #136/#137/#138/#140. The user did not separately enumerate every angle, cycle, refresh, interaction, browser detail, or route check. |
+
+### Verification boundary
+
+This is a limited product-owner visual acceptance of the exact Lumiere candidate reached through the corrected standalone preview, **not** full device certification of every directional animation frame or the whole game. No new validation of save, audio, Title/Alenon/PAD, mobile frame rate or unrelated events is inferred. The game runtime files (four images and manifest) are unchanged after the recorded runtime SHA; later commits are documentation, tests and temporary tooling/preview files only. Existing historical device records remain unchanged. CI, lineage/scope audit and GitHub merge protections remain mandatory.
+
+
+## PR #142 — Audio fade timestamp/volume bounds, explicit owner acceptance (2026-10-10)
+
+| Scope | Commit SHA | Device | Result | Human-confirmed observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| Standalone candidate BGM smoke: music start; interaction start/end; audio OFF/ON; return from background; repeated controls | 0884d760acb50545818f94c7195dcfe5f32f122d | iPhone test context; device/browser version not independently restated in final reply | PASS | Owner reported all five requested sound-smoke checks passed after receiving the immutable standalone candidate audio test page. Acceptance is for the observed operation and listening checklist, not an instrumentation trace, decibel measurement, or full in-game route | Product owner explicitly replied in ChatGPT: 「問題ない全て合格」 in direct response to PR #142 candidate audio verification checklist | Exact page `docs/audio-fade-20261010/iphone-audio-check.html` from preview SHA `bf735b5c76d0e782b706ef100c8a663e57d9fb65`; it loads `audio.js` and original BGM from exact runtime SHA `0884d760acb50545818f94c7195dcfe5f32f122d`. URL/readability verification run `38050517238` returned page+JS HTTP 200 and MP3 partial content HTTP 206 |
+
+### Scope boundary for PR #142
+
+This is **device acceptance of the standalone BGM fade smoke only**. It does not imply successful full game progression, game dialogue integration, Safari console monitoring, underlying iOS media volume implementation correctness, or other tracks/stages. The test page reports user actions but does not expose an audio-error event recorder. The pre-fix strict volume exception was reproduced and prevented in automated tests, which separately verified valid [0,1] volume writes, cancellation, and visibility handling. Later branch changes following the runtime SHA consist exclusively of tests, fixtures, documentation, and test-only workflow clean-up; no runtime source modifications. All historic device evidence remains unchanged.

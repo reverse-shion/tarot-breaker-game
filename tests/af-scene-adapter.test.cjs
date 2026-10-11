@@ -10,9 +10,25 @@ function scene() {
   const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),returnCameraHandoff:null,heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
   c.window.TarotStage3Scene={lock(owner){c.sceneLockPrior={suspended:c.controls.state.suspended,npcSuspended:c.npcSuspended};c.sceneLockOwner=owner;c.controls.state.suspended=true;c.npcSuspended=true;},unlock(owner){if(c.sceneLockOwner!==owner)return false;c.sceneLockOwner=null;return true;},freezeCamera(){c.cinematicCamera.owned=true;}};
   c.window.TarotCinematicCamera={release(){c.cinematicCamera.owned=false;}};
+  c.lumiereManifest=require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
+  c.DRAW_HEIGHT=78;c.FRAME={h:512};
   vm.runInNewContext(source.slice(start,end),c);
   return {c,api:c.window.TarotAftermathScene};
 }
+test('Aftermath Lumiere bounds use the same four-direction manifest and body height as drawing',()=>{
+  const {c,api}=scene();
+  for(const dir of ['down','up','left','right']){
+    c.lumiere.dir=dir;
+    const rect=api.getState().lumiereRect,pose=c.lumiereManifest.poses[dir];
+    const scale=63.984375/(pose.baseline_y-pose.body_top);
+    const imageLeft=(c.lumiere.x-pose.center_x*scale)*c.camera.zoom;
+    const imageTop=(c.lumiere.y-2.7-pose.baseline_y*scale)*c.camera.zoom;
+    assert.ok(Object.values(rect).every(Number.isFinite));
+    assert.ok(rect.left<=imageLeft&&rect.right>=imageLeft+pose.width*scale*c.camera.zoom);
+    assert.ok(rect.top<=imageTop&&rect.bottom>=imageTop+pose.height*scale*c.camera.zoom);
+    c.lumiere.y=-1000;assert.ok(api.getState().lumiereRect.bottom<0);c.lumiere.y=200;
+  }
+});
 test('Aftermath focus reflows from a stable world baseline without repeated drift',()=>{
   const {c,api}=scene();api.focusGate();const y=c.camera.y;
   for(let i=0;i<10;i++)api.focusGate();assert.equal(c.camera.y,y);

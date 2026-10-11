@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15182c">
+<title>TAROT BREAKER | Audio fade device smoke — PR #142</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;color-scheme:dark;background:#15182c;color:#f2ecff}
+body{max-width:480px;margin:0 auto;padding:24px 18px 58px}
+h1{font-size:1.35rem;line-height:1.5}
+p,li{line-height:1.7;font-size:.94rem}
+button{display:block;width:100%;min-height:52px;border:1px solid #7875aa;border-radius:11px;background:#38365a;color:white;font-size:1rem;font-weight:600;padding:12px;margin:12px 0;touch-action:manipulation}
+button:active{background:#544e83}
+output{display:block;padding:12px;background:#23243e;border-radius:10px;min-height:40px;line-height:1.6}
+small{color:#b3b4d0;font-size:.76rem;word-break:break-all}
+hr{border:0;border-top:1px solid #494b69;margin:22px 0}
+</style>
+<!-- Exact candidate audio.js and original BGM source; no test double or alternate audio implementation. -->
+<script src="https://raw.githack.com/reverse-shion/tarot-breaker-game/0884d760acb50545818f94c7195dcfe5f32f122d/audio.js" data-bgm-url="https://raw.githack.com/reverse-shion/tarot-breaker-game/0884d760acb50545818f94c7195dcfe5f32f122d/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3" defer></script>
+</head>
+<body>
+<h1>TAROT BREAKER — BGM独立実機確認</h1>
+<p>PR #142の修正済み <code>audio.js</code> を読み込み、元のゲームBGMを再生する確認ページ。iPhoneのSafariで操作してください。<strong>このページはゲーム全体の音響検査ではありません。</strong></p>
+<small>Audio runtime: 0884d760acb50545818f94c7195dcfe5f32f122d</small>
+<hr>
+<button id="start" type="button">1. BGM開始（元の音量 0.35）</button>
+<button id="interact-start" type="button">2. 会話開始（音量 0.16 へフェード）</button>
+<button id="interact-end" type="button">3. 会話終了（音量 0.35 へ戻る）</button>
+<button id="off" type="button">4. BGM OFF（フェード後停止）</button>
+<button id="on" type="button">5. BGM ON（再開）</button>
+<output id="status" aria-live="polite">音楽再生は未操作。音声が聞こえるか実際に確認してください。</output>
+<hr>
+<p>さらに確認すること：連続で会話開始・終了を押しても異常がないか。BGM再生中にSafariをバックグラウンドへ移し、戻したときに音が適切に復帰するか。iOSの音量API制限により、音量変化は耳で確認できない場合があります。</p>
+<p><small>正規版main・セーブ・進行には接続しません。ページの操作は音声のテストだけに使います。ボタンの操作表示は再生成功を保証しません。</small></p>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  const status=document.getElementById("status");
+  function act(message,callback){
+    try{
+      if(!window.TarotAudio)throw new Error("audio.js を読み込めませんでした");
+      callback();
+      status.textContent=message+"。実際に音が聞こえるか確認してください。";
+    }catch(error){status.textContent="操作エラー: "+String(error);}
+  }
+  document.getElementById("start").addEventListener("click",()=>act("BGM再生を要求",()=>window.TarotAudio.startFromMovement()));
+  document.getElementById("interact-start").addEventListener("click",()=>act("会話開始イベントを送信",()=>window.dispatchEvent(new Event("tarot-breaker:interaction-start"))));
+  document.getElementById("interact-end").addEventListener("click",()=>act("会話終了イベントを送信",()=>window.dispatchEvent(new Event("tarot-breaker:interaction-end"))));
+  document.getElementById("off").addEventListener("click",()=>act("OFF操作を送信",()=>window.TarotAudio.setEnabled(false)));
+  document.getElementById("on").addEventListener("click",()=>act("ON操作を送信",()=>window.TarotAudio.setEnabled(true)));
+  document.addEventListener("visibilitychange",()=>{status.textContent=document.hidden?"ページが非表示になりました":"ページが復帰しました。音声をご確認ください。";});
+});
+</script>
+</body></html>
