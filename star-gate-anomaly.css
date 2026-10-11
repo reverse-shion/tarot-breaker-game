@@ -790,53 +790,39 @@
   opacity:1!important;
 }
 
-/* Cloud bleed-through fix.
-   The inner-light raster is intentionally transparent around its authored portal shape.
-   During corruption, place an opaque black-purple field behind that raster so moving
-   cloud/sky pixels can never show through the opening. The gate frame above this layer
-   hides the polygon edge; this is not a visible rectangular plate. */
-#game-shell .scene-gate-inner-light{
-  isolation:isolate!important;
-  mix-blend-mode:normal!important;
-}
-#game-shell .scene-gate-inner-backing{
-  position:absolute;
-  inset:0;
-  z-index:0;
-  display:block;
-  opacity:0!important;
-  mix-blend-mode:normal!important;
-  pointer-events:none;
-  clip-path:polygon(50% 0%,67% 4%,82% 15%,93% 31%,100% 54%,100% 100%,0% 100%,0% 54%,7% 31%,18% 15%,33% 4%);
-  background:
-    radial-gradient(ellipse at 50% 76%,rgba(67,26,96,.98) 0%,rgba(35,13,56,.99) 34%,rgba(18,8,31,1) 58%,rgba(7,4,13,1) 82%,rgba(5,3,10,1) 100%),
-    linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%);
-  transition:opacity .28s ease,background .45s ease;
-}
-#game-shell .scene-gate-inner-light>img{
-  position:relative;
-  z-index:1;
-  opacity:1!important;
-  mix-blend-mode:normal!important;
-}
 
-/* Keep the approved normal gate visually unchanged. The backing starts to close
-   the portal only when corruption begins, then stays fully opaque after dark ascent. */
-#game-shell.sga-anomaly-flicker .scene-gate-inner-backing{
-  opacity:.42!important;
-}
-#game-shell.sga-anomaly .scene-gate-inner-backing,
-#game-shell.sga-reverse-gate .scene-gate-inner-backing,
-#game-shell.sga-reverse-flow .scene-gate-inner-backing,
-#game-shell.sga-skyward-release .scene-gate-inner-backing,
-#game-shell.sga-dark-frame-01 .scene-gate-inner-backing,
-#game-shell.sga-dark-frame-02 .scene-gate-inner-backing,
-#game-shell.sga-dark-frame-03 .scene-gate-inner-backing,
-#game-shell.sga-dark-frame-04 .scene-gate-inner-backing,
-#game-shell.sga-dark-frame-rise .scene-gate-inner-backing,
-#game-shell.sga-dark-afterglow .scene-gate-inner-backing,
-#game-shell.sga-anomaly-rest .scene-gate-inner-backing{
+/* Corrupted Star Gate interior.
+   Keep the authored inner-light WEBP itself; do not add a flat backing plate.
+   The normal scene uses parent opacity .42 + screen blend, which made the
+   corrupted portal appear transparent even when the child image was opaque.
+   During corruption/rest, promote the parent to fully opaque normal compositing. */
+#game-shell.sga-reverse-gate .scene-gate-inner-light,
+#game-shell.sga-reverse-flow .scene-gate-inner-light,
+#game-shell.sga-skyward-release .scene-gate-inner-light,
+#game-shell.sga-dark-frame-01 .scene-gate-inner-light,
+#game-shell.sga-dark-frame-02 .scene-gate-inner-light,
+#game-shell.sga-dark-frame-03 .scene-gate-inner-light,
+#game-shell.sga-dark-frame-04 .scene-gate-inner-light,
+#game-shell.sga-dark-frame-rise .scene-gate-inner-light,
+#game-shell.sga-dark-afterglow .scene-gate-inner-light,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light{
   opacity:1!important;
+  mix-blend-mode:normal!important;
+  isolation:isolate!important;
+}
+#game-shell.sga-reverse-gate .scene-gate-inner-light>img,
+#game-shell.sga-reverse-flow .scene-gate-inner-light>img,
+#game-shell.sga-skyward-release .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-01 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-02 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-03 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-04 .scene-gate-inner-light>img,
+#game-shell.sga-dark-frame-rise .scene-gate-inner-light>img,
+#game-shell.sga-dark-afterglow .scene-gate-inner-light>img,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  opacity:1!important;
+  visibility:visible!important;
+  mix-blend-mode:normal!important;
 }
 
 
@@ -971,44 +957,6 @@
 #game-shell.sga-dark-afterglow .sga-dark-afterglow{
   animation:sgaDarkAfterglowFade 360ms ease-out forwards;
 }
-
-/* Preserve the exact gate-interior look seen at the end of dark_energy_rise_04.
-   The full frame must NOT remain on screen: only the portion geometrically
-   overlapping the Star Gate interior is kept after the dark ascent finishes.
-   Dark-energy world box: x=640,y=-300,w=320,h=510.
-   Inner-light world box: x≈688,y=-118,w≈224,h=328.
-   Therefore the retained portal slice is approximately inset(35.7% 15% 0 15%). */
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise{
-  opacity:1!important;
-  visibility:visible!important;
-  overflow:hidden!important;
-  clip-path:inset(35.7% 15% 0 15%)!important;
-}
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame,
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-next,
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-third,
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-afterglow{
-  opacity:0!important;
-  animation:none!important;
-}
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-fourth{
-  opacity:1!important;
-  visibility:visible!important;
-  transform:translate3d(0,0,0) scaleY(1)!important;
-  animation:none!important;
-  filter:none!important;
-}
-
-/* The retained frame-04 pixels are the authored interior reference.
-   Hide the old inner-light raster in the final corrupted state so its transparent
-   pixels cannot alter the appearance when camera/gameplay drawing resumes. */
-#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
-  opacity:0!important;
-}
-#game-shell.sga-anomaly-rest .scene-gate-inner-backing{
-  opacity:1!important;
-}
-
 @keyframes sgaDarkEnergySeep01{
   from{opacity:0;transform:translate3d(0,4px,0) scaleY(.91)}
   to{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
@@ -1126,9 +1074,7 @@
 #game-shell.sga-anomaly-rest .scene-gate-inner-backing{
   opacity:1!important;
   mix-blend-mode:normal!important;
-  background:
-    radial-gradient(ellipse at 50% 76%,rgba(67,26,96,.98) 0%,rgba(35,13,56,.99) 34%,rgba(18,8,31,1) 58%,rgba(7,4,13,1) 82%,rgba(5,3,10,1) 100%),
-    linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%)!important;
+  background:linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%)!important;
 }
 #game-shell.sga-reverse-gate .scene-gate-inner-light>img,
 #game-shell.sga-dark-frame-01 .scene-gate-inner-light>img,
@@ -1252,32 +1198,22 @@ html[data-dev-harness="star-gate-full"] .scene-celestial-gate-light,
 html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !important; }
 
 
-/* FINAL LOCK — corrupted portal after Dark Energy ascent.
-   Keep the authored dark_energy_rise_04 portal pixels through dialogue/free movement.
-   This intentionally comes last so older inner-light rules cannot re-enable the
-   transparent raster after control returns. */
+/* Final corrupted idle: only the filtered authored inner-light remains.
+   Dark-energy rise sprites are transient and must be fully gone after ascent. */
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise *{
+  opacity:0!important;
+  visibility:hidden!important;
+  animation:none!important;
+}
+#game-shell.sga-anomaly-rest .scene-gate-inner-light{
+  opacity:1!important;
+  visibility:visible!important;
+  mix-blend-mode:normal!important;
+}
 #game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
-  opacity:0!important;
-  visibility:hidden!important;
-}
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise{
   opacity:1!important;
   visibility:visible!important;
-  overflow:hidden!important;
-  clip-path:inset(35.7% 15% 0 15%)!important;
-}
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame,
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-next,
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-third,
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-afterglow{
-  opacity:0!important;
-  visibility:hidden!important;
-  animation:none!important;
-}
-#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-fourth{
-  opacity:1!important;
-  visibility:visible!important;
-  transform:translate3d(0,0,0) scaleY(1)!important;
-  animation:none!important;
-  filter:none!important;
+  mix-blend-mode:normal!important;
+  filter:brightness(.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)!important;
 }

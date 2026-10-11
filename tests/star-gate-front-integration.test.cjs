@@ -27,21 +27,12 @@ test('A inner light geometry restored only for dev, ordinary geometry preserved'
  const approved=layout(true),normal=layout(false);assert.equal(approved.w,230.86);assert.ok(Math.abs(approved.x-684.57)<1e-10);assert.equal(approved.y+approved.h,210);assert.equal(normal.w,190);assert.equal(normal.x+normal.w/2,800);assert.equal(normal.y+normal.h,210);
 });
 
-test('corrupted Star Gate inner light has a real opaque backing through return',()=>{
- const bootstrap=fs.readFileSync('stage3-dev-bootstrap.js','utf8');
+test('corrupted inner light uses opaque normal compositing and no retained dark-energy frame',()=>{
  const css=fs.readFileSync('star-gate-anomaly.css','utf8');
- assert.match(bootstrap,/scene-gate-inner-backing/);
- assert.match(bootstrap,/innerLight\.prepend\(backing\)/);
- assert.match(css,/#game-shell\.sga-dark-frame-rise \.scene-gate-inner-backing/);
- assert.match(css,/#game-shell\.sga-anomaly-rest \.scene-gate-inner-backing/);
- assert.match(css,/mix-blend-mode:normal!important/);
- assert.match(css,/opacity:1!important/);
-});
-
-test('final corrupted gate preserves the dark_energy_rise_04 interior slice',()=>{
- const css=fs.readFileSync('star-gate-anomaly.css','utf8');
- assert.match(css,/#game-shell\.sga-anomaly-rest \.scene-dark-energy-rise/);
- assert.match(css,/clip-path:inset\(35\.7% 15% 0 15%\)!important/);
- assert.match(css,/sga-anomaly-rest \.scene-dark-energy-rise \.sga-dark-energy-frame-fourth[\s\S]*opacity:1!important/);
- assert.match(css,/sga-anomaly-rest \.scene-gate-inner-light>img[\s\S]*opacity:0!important/);
+ const boot=fs.readFileSync('stage3-dev-bootstrap.js','utf8');
+ assert.doesNotMatch(boot,/scene-gate-inner-backing/);
+ assert.doesNotMatch(css,/scene-gate-inner-backing/);
+ assert.match(css,/sga-anomaly-rest \.scene-gate-inner-light\{[\s\S]*opacity:1!important[\s\S]*mix-blend-mode:normal!important/);
+ assert.match(css,/sga-anomaly-rest \.scene-gate-inner-light>img\{[\s\S]*filter:brightness\(\.18\) saturate\(1\.35\) hue-rotate\(28deg\) contrast\(1\.18\)!important/);
+ assert.match(css,/sga-anomaly-rest \.scene-dark-energy-rise,[\s\S]*visibility:hidden!important/);
 });
