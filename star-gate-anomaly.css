@@ -1250,3 +1250,34 @@
 /* A's front-effect layer ownership, limited to the registered dev integration. */
 html[data-dev-harness="star-gate-full"] .scene-celestial-gate-light,
 html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !important; }
+
+
+/* FINAL LOCK — corrupted portal after Dark Energy ascent.
+   Keep the authored dark_energy_rise_04 portal pixels through dialogue/free movement.
+   This intentionally comes last so older inner-light rules cannot re-enable the
+   transparent raster after control returns. */
+#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise{
+  opacity:1!important;
+  visibility:visible!important;
+  overflow:hidden!important;
+  clip-path:inset(35.7% 15% 0 15%)!important;
+}
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-next,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-third,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-afterglow{
+  opacity:0!important;
+  visibility:hidden!important;
+  animation:none!important;
+}
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-fourth{
+  opacity:1!important;
+  visibility:visible!important;
+  transform:translate3d(0,0,0) scaleY(1)!important;
+  animation:none!important;
+  filter:none!important;
+}
