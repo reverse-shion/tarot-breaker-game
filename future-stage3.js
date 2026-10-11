@@ -79,9 +79,11 @@
   a.assertPresentPrepared();state('FUTURE_FADE');await tween(550,1,0,p=>a.black(p));
   state('BLACK_CUT');a.pauseFutureAudio();
   state('PRESENT_RESTORE');const blackHold=await coveredRestore(clock,180,ctx=>a.restorePresent(ctx),ctx=>a.draw(ctx));a.recordHold?.('black',blackHold);
-  // Keep the blackout completely silent. First clear the black overlay,
-  // then wait until the restored Garden has actually painted before any ordinary BGM resumes.
-  await clock.tween(550,p=>a.black(1-p));
+  // P0 Shion is already opaque. Stage the companions and their calls while
+  // fully covered; BGM remains silent until after the present reveal.
+  state('RETURN_COMPANIONS_READY');await a.stageReturnFormation();
+  state('RETURN_CALLS_UNDER_BLACK');await a.callReturnVoices();
+  state('PRESENT_REVEAL');await clock.tween(550,p=>a.black(1-p));
   state('PRESENT_VISIBLE');clock.assert();if(a.presentVisible)await a.presentVisible();clock.assert();
   a.resumePresentAudio();
   state('CONTROL_RETURN');a.returnControl();

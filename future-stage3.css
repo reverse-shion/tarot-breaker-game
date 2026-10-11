@@ -11,6 +11,8 @@
 #star-gate-anomaly.sga-v192 .sga-world-loss,#star-gate-anomaly.sga-v192 .sga-world-rift,#star-gate-anomaly.sga-v192 .sga-world-omen-layer{display:none!important}
 #star-gate-anomaly.sga-v192~.tb-dialogue-layer{z-index:2400}
 #anomaly-dialogue-layer{z-index:2400}
+/* Shared dialogue window, temporarily body-mounted over full-black z=2501. */
+body > #anomaly-dialogue-layer.sga-return-call{z-index:2502!important}
 .sga-recovery{position:fixed;inset:0;z-index:2700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#080a12;color:#eee;padding:24px;text-align:center}
 .sga-recovery button,.sga-recovery a{color:#fff;background:#242031;padding:14px 20px;border:1px solid #bdb3d3;border-radius:6px;text-decoration:none}
 

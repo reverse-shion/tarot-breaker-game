@@ -297,6 +297,23 @@ async function say(actor,text){
  if(current)current.dialogues.push({text,closed});
  await sleep(100);return closed;
 }
+// The canonical dialogue window temporarily mounts above the black overlay.
+// Always restore its ordinary parent, even when the player interrupts the event.
+async function callReturnVoicesUnderBlack(black){
+ const current=session;current?.clock.assert();
+ if(!black||Number(black.style.opacity)!==1)throw new Error('Return voices require full blackout');
+ const d=makeUi(),layer=d.elements.layer,previousMount=layer.parentNode;
+ if(!previousMount)throw new Error('Return dialogue mount unavailable');
+ document.body.appendChild(layer);layer.classList.add('sga-return-call');
+ try{
+  await say('shiopon','シオンさん！');
+  await current.clock.wait(180);
+  await say('lumiere','シオン様！');
+ }finally{
+  d.hide();layer.classList.remove('sga-return-call');
+  previousMount.appendChild(layer);
+ }
+}
 async function pause(ms){await sleep(ms)}
 const FUTURE_VISION_CURRENT_SHION_OPACITY=.55;
 // The card-pose source fills more of its 512px canvas than the playable Shion
@@ -1021,6 +1038,21 @@ async function runStage3Latter(before){
    const visibility=window.TarotActorVisibility;
    visibility?.set('shion',1);visibility?.set('shiopon',0);visibility?.set('lumiere',0);
    current.presentIsolation=true;current.restored=true;await preparePresentAudio(current);},
+  async stageReturnFormation(){
+   current.clock.assert();
+   if(!current.restored||!window.TarotAftermathScene?.placeReturnFormation)throw new Error('Present companions cannot be staged');
+   const aftermath=window.TarotAftermathScene;
+   current.returnFormation=aftermath.placeReturnFormation();
+   if(!current.returnFormation?.shion||!current.returnFormation?.shiopon||!current.returnFormation?.lumiere)throw new Error('Present formation incomplete');
+   for(const name of ['shion','shiopon','lumiere'])if(aftermath.setActorVisibility(name,1)!==true)throw new Error('Present actor invisible: '+name);
+   aftermath.face('shiopon','shion');aftermath.face('lumiere','shion');
+   await scene.waitDraw();current.clock.assert();
+  },
+  async callReturnVoices(){
+   current.clock.assert();if(!current.returnFormation)throw new Error('Return calls before formation');
+   await callReturnVoicesUnderBlack(black);
+   current.clock.assert();current.returnCallsPlayed=true;
+  },
   async presentVisible(){await scene.waitDraw();current.clock.assert();await scene.waitDraw();current.clock.assert();},
   resumePresentAudio(){
    current.futureAudio?.pause('PRESENT');
@@ -1037,7 +1069,7 @@ async function runStage3Latter(before){
    const stageState=window.TarotStage?.getState?.(),visibility=window.TarotActorVisibility?.getState?.(),sceneState=scene.getState();
    const player=stageState?.actors?.shion;
    if(!player||!samePoint(current.p0.player,player)||sceneState.vision||sceneState.absorption||
-     visibility?.shion!==1||visibility?.shiopon!==0||visibility?.lumiere!==0)throw new Error('Unsafe control return');
+     visibility?.shion!==1||visibility?.shiopon!==1||visibility?.lumiere!==1||!current.returnCallsPlayed)throw new Error('Unsafe control return');
    current.restored=true;
   }
  };
@@ -1121,7 +1153,7 @@ function releasePresentation({preserveGateAnomaly=false}={}){
  cleanupGateState({preserveFinal:preserveGateAnomaly});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
 }
 function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
- futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
+ futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});

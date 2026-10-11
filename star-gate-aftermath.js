@@ -1,4 +1,4 @@
-/* Present-return scenario v1.4: blackout return -> simultaneous call -> Shion confusion -> free control. */
+/* Present-return scenario v1.5: shared calls under black -> fade -> original Shion response and free control. */
 (() => {
  'use strict';
  if(window.__TAROT_DEV_STAGE3__!==true)return;
@@ -153,14 +153,6 @@
   if(unlocked!==true||view.owner!==null||view.inputSuspended!==false||view.npcSuspended!==false||view.following!==expectedFollowing)throw new Error('Aftermath control return verification failed');
  }
  function lockForDialogue(s){s.scene.lock(s.owner);s.scene.clearInput();}
- async function showDualCall(s){
-  const mount=document.getElementById('game-shell')||document.body;
-  const layer=document.createElement('div');layer.className='aftermath-dual-call';layer.setAttribute('aria-hidden','true');
-  const left=document.createElement('div');left.className='aftermath-call aftermath-call-shiopon';left.textContent='シオンさん！';
-  const right=document.createElement('div');right.className='aftermath-call aftermath-call-lumiere';right.textContent='シオン様！';
-  layer.append(left,right);mount.appendChild(layer);
-  try{await s.clock.wait(900);}finally{layer.remove();}
- }
  async function opening(s){
   state(s,'RETURN_RECOGNITION');
   window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
@@ -175,12 +167,8 @@
   state(s,'SHION_DAZED');
   await s.clock.wait(700);
 
-  state(s,'SIMULTANEOUS_CALL');
-  await showDualCall(s);
-  await s.clock.wait(180);
-
-  // The voices pull Shion's attention back to the two companions; he turns only
-  // after they call, never as an automatic front-facing snap on blackout release.
+  // Both calls already played under black in Stage 3; no repeat here.
+  // Shion turns after hearing the calls, not during the blackout.
   s.scene.face('shion','shiopon');
   await s.clock.wait(180);
   state(s,'SHION_RESPONDS');

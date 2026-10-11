@@ -18,7 +18,10 @@ function harness(options={}) {
   pauseFutureAudio:()=>emit('pause'),resumeFutureAudio:()=>emit('resumeFuture'),presentVisible:async()=>emit('presentVisible'),resumePresentAudio:()=>emit('resumePresent'),presentAudioLevel:v=>emit('presentAudio',v),
   restoreFuture:async()=>{emit('restoreFuture');if(options.restoreError)throw options.restoreError;view.restored='R1';view.rifts={};},
   restorePresent:async()=>{emit('restorePresent');view.restored='P0';},draw:async()=>emit('draw',view.restored),recordHold:(name,result)=>emit('hold',name,result),
-  assertPresentPrepared:()=>emit('presentPrepared'),reaction:async()=>emit('reaction'),returnControl:()=>{view.control=true;emit('control');}};
+  assertPresentPrepared:()=>emit('presentPrepared'),reaction:async()=>emit('reaction'),
+  stageReturnFormation:async()=>{assert.equal(view.black,1);assert.equal(view.restored,'P0');emit('formation');},
+  callReturnVoices:async()=>{assert.equal(view.black,1);emit('returnCall','shiopon','シオンさん！');await clock.wait(180);emit('returnCall','lumiere','シオン様！');await clock.wait(180);},
+  returnControl:()=>{view.control=true;emit('control');}};
  return {clock,adapter,events,view,controller,time:()=>time};
 }
 const event=(h,kind,value)=>h.events.find(e=>e.kind===kind&&(value===undefined||e.values[0]===value));
@@ -64,6 +67,12 @@ test('T13/T14/T17/T29 restoration under independent covers precedes dialogue/con
  assert.equal(h.view.white,0);assert.equal(h.view.black,0);assert.equal(h.view.restored,'P0');assert.equal(h.view.control,true);
  assert.equal(h.events.filter(e=>e.kind==='reaction').length,0);
  assert.ok(event(h,'presentVisible').time>=state(h,'PRESENT_VISIBLE').time);
+ const voices=h.events.filter(e=>e.kind==='returnCall');
+ assert.deepEqual(voices.map(e=>e.values),[['shiopon','シオンさん！'],['lumiere','シオン様！']]);
+ assert.ok(event(h,'formation').time>=event(h,'restorePresent').time);
+ assert.ok(voices[0].time>=event(h,'formation').time);
+ assert.ok(voices.at(-1).time<state(h,'PRESENT_REVEAL').time);
+ assert.equal(h.view.black,0);
  assert.ok(event(h,'control').time>=event(h,'resumePresent').time);
 });
 test('T26 envelope values interpolate and audio pause/resume brackets covered restoration',async()=>{
@@ -77,6 +86,7 @@ test('T26 envelope values interpolate and audio pause/resume brackets covered re
  const blackFrames=h.events.filter(e=>e.kind==='black');const cleared=blackFrames.at(-1);near(cleared.values[0],0);
  assert.ok(event(h,'presentVisible').time>=cleared.time);
  assert.ok(event(h,'resumePresent').time>=event(h,'presentVisible').time);
+ assert.ok(h.events.filter(e=>e.kind==='returnCall').every(e=>e.time>=state(h,'BLACK_CUT').time&&e.time<state(h,'PRESENT_REVEAL').time));
  assert.deepEqual(h.events.filter(e=>e.kind==='presentAudio'),[]);
 });
 test('T22 preparation and covered restoration exceptions propagate without control return',async()=>{

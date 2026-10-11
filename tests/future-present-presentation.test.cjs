@@ -8,7 +8,9 @@ test('successful present return hands off from Shion-only Stage3 and preserves a
  assert.match(anomaly,/visibility\?\.set\('shion',1\);visibility\?\.set\('shiopon',0\);visibility\?\.set\('lumiere',0\)/);
  assert.match(anomaly,/releasePresentation\(\{preserveGateAnomaly:!!current\.completed\}\)/);
  assert.match(anomaly,/cleanupGateState\(\{preserveFinal:preserveGateAnomaly\}\)/);
- assert.match(anomaly,/visibility\?\.shion!==1\|\|visibility\?\.shiopon!==0\|\|visibility\?\.lumiere!==0/);
+ assert.match(anomaly,/visibility\?\.shion!==1\|\|visibility\?\.shiopon!==1\|\|visibility\?\.lumiere!==1\|\|!current\.returnCallsPlayed/);
+ assert.match(anomaly,/async stageReturnFormation\(\)[\s\S]*placeReturnFormation\(\)[\s\S]*setActorVisibility\(name,1\)/);
+ assert.match(anomaly,/async callReturnVoices\(\)[\s\S]*callReturnVoicesUnderBlack\(black\)/);
 });
 
 test('Present Return v1.3 stages separated companions before reveal and returns free control immediately',()=>{
@@ -26,4 +28,19 @@ test('Present return reuses the real inner-light asset and does not add a black 
  assert.match(css,/aftermath-weak-light:not\(\.sga-anomaly-rest\)/);
  assert.doesNotMatch(css,/sga-anomaly-rest\.aftermath-weak-light/);
  assert.match(aftermath,/if\(!shell\.classList\.contains\('sga-anomaly-rest'\)\)shell\.classList\.add\('aftermath-weak-light'\)/);
+});
+
+test('blackout calls use canonical DialogueUI above cover, before fade, never replaying in Aftermath',()=>{
+ const future=fs.readFileSync('future-stage3.js','utf8');
+ const futureCss=fs.readFileSync('future-stage3.css','utf8');
+ const sharedCss=fs.readFileSync('shared-dialogue.css','utf8');
+ assert.match(future,/state\('PRESENT_RESTORE'\)[\s\S]*state\('RETURN_COMPANIONS_READY'\)[\s\S]*a\.stageReturnFormation\(\)[\s\S]*state\('RETURN_CALLS_UNDER_BLACK'\)[\s\S]*a\.callReturnVoices\(\)[\s\S]*state\('PRESENT_REVEAL'\)[\s\S]*a\.black\(1-p\)/);
+ assert.match(anomaly,/callReturnVoicesUnderBlack\(black\)[\s\S]*document\.body\.appendChild\(layer\)[\s\S]*say\('shiopon','シオンさん！'\)[\s\S]*say\('lumiere','シオン様！'\)[\s\S]*previousMount\.appendChild\(layer\)/);
+ assert.match(anomaly,/Number\(black\.style\.opacity\)!==1/);
+ assert.match(futureCss,/\.sga-v192-black\{background:#000;z-index:2501\}/);
+ assert.match(futureCss,/body > #anomaly-dialogue-layer\.sga-return-call\{z-index:2502!important\}/);
+ assert.match(sharedCss,/\.tb-dialogue-window/);
+ assert.doesNotMatch(aftermath,/showDualCall|aftermath-dual-call|SIMULTANEOUS_CALL/);
+ assert.doesNotMatch(css,/\.aftermath-dual-call|\.aftermath-call/);
+ assert.match(aftermath,/state\(s,'SHION_DAZED'\)[\s\S]*await sayLine\(s,'R01',\['shion','……ああ。二人とも……。'\]\)/);
 });
