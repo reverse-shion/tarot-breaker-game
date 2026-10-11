@@ -1224,3 +1224,12 @@ html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !im
   opacity:0!important;
   animation:none!important;
 }
+
+/* Future Vision owns the screen. Preserve the corrupted source in DOM state,
+   but do not paint the present-day gate during blackout, ruins, or Stage 3.
+   Keep this after the anomaly-rest !important declarations above. */
+#game-shell.sga-future-world-hidden > .scene-gate-inner-light,
+#game-shell.sga-future-world-hidden > .scene-gate-inner-light > img{
+  opacity:0!important;
+  visibility:hidden!important;
+}

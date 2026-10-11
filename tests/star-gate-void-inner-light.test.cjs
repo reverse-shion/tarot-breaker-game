@@ -48,3 +48,29 @@ test('void aperture remains registered inside the original frame at reference sc
  assert.ok(Math.abs(width-107.91666666666667)<1e-8);
  assert.ok(Math.abs(height-216.92708333333334)<1e-8);
 });
+
+test('future blackout, ruins and vortex hide the retained corrupted gate with final CSS precedence',()=>{
+ const css=fs.readFileSync('star-gate-anomaly.css','utf8'),html=fs.readFileSync('index.html','utf8');
+ const selector='#game-shell.sga-future-world-hidden > .scene-gate-inner-light,';
+ const index=css.lastIndexOf(selector);
+ assert.ok(index>css.lastIndexOf('#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{'),
+  'the future hide rule must override anomaly-rest !important visibility rules');
+ const rule=css.slice(index,css.indexOf('}',index)+1);
+ assert.match(rule,/#game-shell\.sga-future-world-hidden > \.scene-gate-inner-light > img/);
+ assert.match(rule,/opacity:\s*0\s*!important\s*;/);
+ assert.match(rule,/visibility:\s*hidden\s*!important\s*;/);
+ assert.match(html,/class="scene-object scene-back scene-gate-inner-light"/);
+});
+test('P0 restoration unhides the gate under full black, before revealing present, without changing the void image',()=>{
+ const restoreStart=source.indexOf('async restorePresent(ctx){');
+ const restoreEnd=source.indexOf('async presentVisible(){',restoreStart);
+ assert.ok(restoreStart>=0&&restoreEnd>restoreStart);
+ const restore=source.slice(restoreStart,restoreEnd),verify=restore.indexOf("if(!scene.verify(current.p0).completed)");
+ const unhide=restore.indexOf("gateShell()?.classList.remove('sga-future-world-hidden');");
+ const prepareAudio=restore.indexOf('await preparePresentAudio(current)');
+ assert.ok(verify>=0&&unhide>verify&&prepareAudio>unhide,
+  'P0 must verify and unhide the gate before preparing the covered present reveal');
+ assert.doesNotMatch(restore,/setGateInnerLight\(false\)|cleanupGateState\(\)/);
+ const stage3=fs.readFileSync('future-stage3.js','utf8');
+ assert.match(stage3,/state\('BLACK_CUT'\);[\s\S]*state\('PRESENT_RESTORE'\)/);
+});

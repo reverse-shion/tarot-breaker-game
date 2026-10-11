@@ -1014,6 +1014,9 @@ async function runStage3Latter(before){
   assertPresentPrepared:presentReady,
   async restorePresent(ctx){current.clock.assert();root.classList.add('sga-present-restored');await scene.restore(current.p0,ctx);current.clock.assert();if(!ctx.alive())throw new Error("P0 restoration expired");
    if(!scene.verify(current.p0).completed)throw new Error('P0 verification failed');
+   // P0 is restored beneath fully opaque black: unhide the retained corrupted
+   // gate before the first present frame and its blackout reveal, not afterward.
+   gateShell()?.classList.remove('sga-future-world-hidden');
    // Restore P0 under full black, then keep the companions visually absent until Aftermath begins.
    const visibility=window.TarotActorVisibility;
    visibility?.set('shion',1);visibility?.set('shiopon',0);visibility?.set('lumiere',0);
