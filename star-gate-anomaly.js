@@ -10,6 +10,7 @@ const ASSETS={
  shion:["./assets/sprites/shion/shion_card_01_reach.webp","./assets/sprites/shion/shion_card_02_draw.webp","./assets/sprites/shion/shion_card_03_check.webp","./assets/sprites/shion/shion_card_04_raise.webp","./assets/sprites/shion/shion_card_05_reach.webp"],
  aura1:"./assets/sprites/shion/shion_card_dark_aura_01.webp",aura2:"./assets/sprites/shion/shion_card_dark_aura_02.webp",
  anomalyGate:"./assets/events/gate-vision/garden-star-gate.webp",
+ gateVoid:"./assets/events/gate-vision/gate-void.webp",
  darkEnergy:["./assets/events/gate-vision/dark_energy_rise_01.webp","./assets/events/gate-vision/dark_energy_rise_02.webp","./assets/events/gate-vision/dark_energy_rise_03.webp","./assets/events/gate-vision/dark_energy_rise_04.webp"],
  celestialLight:["./assets/events/gate-vision/celestial_gate_light_01.webp","./assets/events/gate-vision/celestial_gate_light_02.webp","./assets/events/gate-vision/celestial_gate_light_03.webp","./assets/events/gate-vision/celestial_gate_light_04.webp"]
 };
@@ -533,8 +534,31 @@ async function playFinalCompositionReframe(){
 }
 function replayClass(el,className){if(!el)return;el.classList.remove(className);void el.offsetWidth;el.classList.add(className)}
 function gateShell(){return document.getElementById("game-shell")}
-function setGateState(state){const shell=gateShell();if(!shell)return;shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
-function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
+// Aperture registration in the unchanged 1536x1024 garden-star-gate raster.
+// Only the inner image receives geometry; scene-object/frame placement stays owned by the scene.
+function setGateInnerLight(voidRest){
+ const shell=gateShell(),light=shell?.querySelector('.scene-gate-inner-light');
+ const img=light?.querySelector('img');if(!img)return;
+ if(voidRest){
+  const frame=shell.querySelector('.scene-star-gate');if(!frame)return;
+  const g=frame.dataset,l=light.dataset;
+  const gx=Number(g.worldX),gy=Number(g.worldY),gw=Number(g.worldW),gh=Number(g.worldH);
+  const lx=Number(l.worldX),ly=Number(l.worldY),lw=Number(l.worldW),lh=Number(l.worldH);
+  if(![gx,gy,gw,gh,lx,ly,lw,lh].every(Number.isFinite)||gw<=0||gh<=0||lw<=0||lh<=0)throw new Error('Star Gate inner-light registration unavailable');
+  if(!light.hasAttribute('data-sga-normal-src'))light.setAttribute('data-sga-normal-src',img.getAttribute('src'));
+  img.style.setProperty('--sga-void-left',((gx+620*gw/1536-lx)/lw*100)+'%');
+  img.style.setProperty('--sga-void-top',((gy+140*gh/1024-ly)/lh*100)+'%');
+  img.style.setProperty('--sga-void-width',(296*gw/1536/lw*100)+'%');
+  img.style.setProperty('--sga-void-height',(595*gh/1024/lh*100)+'%');
+  if(img.getAttribute('src')!==ASSETS.gateVoid)img.setAttribute('src',ASSETS.gateVoid);
+ }else if(light.hasAttribute('data-sga-normal-src')){
+  img.setAttribute('src',light.getAttribute('data-sga-normal-src'));
+  light.removeAttribute('data-sga-normal-src');
+  for(const name of ['left','top','width','height'])img.style.removeProperty('--sga-void-'+name);
+ }
+}
+function setGateState(state){const shell=gateShell();if(!shell)return;setGateInnerLight(state==='sga-anomaly-rest');shell.classList.remove(...GATE_STATES);if(state)shell.classList.add(state)}
+function cleanupGateState({preserveFinal=false}={}){const shell=gateShell();if(!shell)return;setGateInnerLight(preserveFinal);shell.classList.remove("sga-sequence-active",...GATE_STATES);if(preserveFinal)shell.classList.add("sga-anomaly-rest")}
 function samePoint(a,b){return Math.abs(a.x-b.x)<.001&&Math.abs(a.y-b.y)<.001}
 function darkEnergyFrame(n){
  const el=document.querySelector(".sga-dark-energy-frame");

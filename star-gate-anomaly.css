@@ -1185,7 +1185,7 @@ html[data-dev-harness="star-gate-full"] .scene-celestial-gate-light,
 html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !important; }
 
 
-/* Final corrupted idle: only the filtered authored inner-light remains.
+/* Final corrupted idle: only the authored gate-void inner-light remains.
    Dark-energy rise sprites are transient and must be fully gone after ascent. */
 #game-shell.sga-anomaly-rest .scene-dark-energy-rise,
 #game-shell.sga-anomaly-rest .scene-dark-energy-rise *{
@@ -1199,8 +1199,28 @@ html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !im
   mix-blend-mode:normal!important;
 }
 #game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  position:absolute;
+  left:var(--sga-void-left);
+  top:var(--sga-void-top);
+  width:var(--sga-void-width);
+  height:var(--sga-void-height);
+  /* Fill the opening with a uniform scale; crop smoke at the traced inner arch.
+     Source aperture: x620..916, y140..735. The outer frame remains in front. */
+  object-fit:cover;
+  object-position:50% 50%;
+  clip-path:polygon(50% 0%,59% 4%,67% 8%,76% 13%,85% 19%,92% 26%,97% 34%,100% 42%,100% 100%,0% 100%,0% 42%,3% 34%,8% 26%,15% 19%,24% 13%,33% 8%,41% 4%);
+  -webkit-mask-image:none;
+  mask-image:none;
+  animation:none!important;
+  transform:none!important;
+  transition:none;
   opacity:1!important;
   visibility:visible!important;
   mix-blend-mode:normal!important;
-  filter:brightness(.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)!important;
+  filter:none!important;
+}
+#game-shell.sga-anomaly-rest .scene-gate-inner-light::before,
+#game-shell.sga-anomaly-rest .scene-gate-inner-light::after{
+  opacity:0!important;
+  animation:none!important;
 }

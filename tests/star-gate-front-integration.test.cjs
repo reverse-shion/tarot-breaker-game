@@ -33,6 +33,10 @@ test('corrupted inner light uses opaque normal compositing and no retained dark-
  assert.doesNotMatch(boot,/scene-gate-inner-backing/);
  assert.doesNotMatch(css,/scene-gate-inner-backing/);
  assert.match(css,/sga-anomaly-rest \.scene-gate-inner-light\{[\s\S]*opacity:1!important[\s\S]*mix-blend-mode:normal!important/);
- assert.match(css,/sga-anomaly-rest \.scene-gate-inner-light>img\{[\s\S]*filter:brightness\(\.18\) saturate\(1\.35\) hue-rotate\(28deg\) contrast\(1\.18\)!important/);
+ const restImage=css.slice(css.lastIndexOf('#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{'));
+ assert.match(restImage,/filter:none!important/);
+ assert.match(restImage,/object-fit:cover/);
+ assert.match(restImage,/clip-path:polygon\(50% 0%/);
+ assert.match(restImage,/animation:none!important/);
  assert.match(css,/sga-anomaly-rest \.scene-dark-energy-rise,[\s\S]*visibility:hidden!important/);
 });

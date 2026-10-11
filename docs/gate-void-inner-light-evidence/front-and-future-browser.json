@@ -1,0 +1,899 @@
+{
+  "seen": {
+    "sga-normal-flow": {
+      "classes": "sga-sequence-active sga-normal-flow",
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "phase": null,
+      "running": true,
+      "completed": false,
+      "error": null,
+      "result": null,
+      "dialogue": {
+        "active": false,
+        "eventId": null,
+        "stepIndex": 0,
+        "lineIndex": -1,
+        "mode": "idle",
+        "actionType": null,
+        "shioponDone": true,
+        "lumiereDone": true,
+        "joined": true,
+        "player": {
+          "x": 810,
+          "y": 137
+        }
+      },
+      "aftermath": {
+        "state": "NOT_STARTED",
+        "completed": false
+      },
+      "frame": {
+        "dataset": {
+          "sceneObject": "",
+          "worldX": "520",
+          "worldY": "-163.33333333333331",
+          "worldW": "560",
+          "worldH": "373.3333333333333",
+          "gatePositionRevision": "native-foreground-v6"
+        },
+        "rect": {
+          "x": 14,
+          "y": 46.52000045776367,
+          "width": 365,
+          "height": 243.32994079589844,
+          "top": 46.52000045776367,
+          "right": 379,
+          "bottom": 289.8499412536621,
+          "left": 14
+        }
+      },
+      "inner": {
+        "rect": {
+          "x": 121.26437377929688,
+          "y": 64.29340362548828,
+          "width": 150.47085571289062,
+          "height": 225.55859375,
+          "top": 64.29340362548828,
+          "right": 271.7352294921875,
+          "bottom": 289.8519973754883,
+          "left": 121.26437377929688
+        },
+        "fit": "fill",
+        "clip": "none",
+        "filter": "brightness(1.08)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "mask": "linear-gradient(rgb(0, 0, 0) 0%, rgb(0, 0, 0) 92%, rgba(0, 0, 0, 0.94) 95%, rgba(0, 0, 0, 0.72) 97%, rgba(0, 0, 0, 0.24) 99%, rgba(0, 0, 0, 0) 100%)",
+        "animation": "sgaInnerReceive",
+        "natural": [
+          1024,
+          1535
+        ],
+        "complete": true
+      }
+    },
+    "sga-dark-frame-rise": {
+      "classes": "sga-sequence-active sga-dark-frame-rise",
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "phase": null,
+      "running": true,
+      "completed": false,
+      "error": null,
+      "result": null,
+      "dialogue": {
+        "active": false,
+        "eventId": null,
+        "stepIndex": 0,
+        "lineIndex": -1,
+        "mode": "idle",
+        "actionType": null,
+        "shioponDone": true,
+        "lumiereDone": true,
+        "joined": true,
+        "player": {
+          "x": 810,
+          "y": 137
+        }
+      },
+      "aftermath": {
+        "state": "NOT_STARTED",
+        "completed": false
+      },
+      "frame": {
+        "dataset": {
+          "sceneObject": "",
+          "worldX": "520",
+          "worldY": "-163.33333333333331",
+          "worldW": "560",
+          "worldH": "373.3333333333333",
+          "gatePositionRevision": "native-foreground-v6"
+        },
+        "rect": {
+          "x": 14,
+          "y": 46.52000045776367,
+          "width": 365,
+          "height": 243.32994079589844,
+          "top": 46.52000045776367,
+          "right": 379,
+          "bottom": 289.8499412536621,
+          "left": 14
+        }
+      },
+      "inner": {
+        "rect": {
+          "x": 120.81767272949219,
+          "y": 64.29340362548828,
+          "width": 151.36424255371094,
+          "height": 226.8978271484375,
+          "top": 64.29340362548828,
+          "right": 272.1819152832031,
+          "bottom": 291.1912307739258,
+          "left": 120.81767272949219
+        },
+        "fit": "fill",
+        "clip": "none",
+        "filter": "brightness(0.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)",
+        "transform": "matrix(1.00594, 0, 0, 1.00594, 0, 0)",
+        "mask": "linear-gradient(rgb(0, 0, 0) 0%, rgb(0, 0, 0) 92%, rgba(0, 0, 0, 0.94) 95%, rgba(0, 0, 0, 0.72) 97%, rgba(0, 0, 0, 0.24) 99%, rgba(0, 0, 0, 0) 100%)",
+        "animation": "gate-inner-soft-pulse",
+        "natural": [
+          1024,
+          1535
+        ],
+        "complete": true
+      }
+    },
+    "sga-dark-afterglow": {
+      "classes": "sga-sequence-active sga-dark-afterglow",
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "phase": null,
+      "running": true,
+      "completed": false,
+      "error": null,
+      "result": null,
+      "dialogue": {
+        "active": false,
+        "eventId": null,
+        "stepIndex": 0,
+        "lineIndex": -1,
+        "mode": "idle",
+        "actionType": null,
+        "shioponDone": true,
+        "lumiereDone": true,
+        "joined": true,
+        "player": {
+          "x": 810,
+          "y": 137
+        }
+      },
+      "aftermath": {
+        "state": "NOT_STARTED",
+        "completed": false
+      },
+      "frame": {
+        "dataset": {
+          "sceneObject": "",
+          "worldX": "520",
+          "worldY": "-163.33333333333331",
+          "worldW": "560",
+          "worldH": "373.3333333333333",
+          "gatePositionRevision": "native-foreground-v6"
+        },
+        "rect": {
+          "x": 14,
+          "y": 46.52000045776367,
+          "width": 365,
+          "height": 243.32994079589844,
+          "top": 46.52000045776367,
+          "right": 379,
+          "bottom": 289.8499412536621,
+          "left": 14
+        }
+      },
+      "inner": {
+        "rect": {
+          "x": 120.99463653564453,
+          "y": 64.29340362548828,
+          "width": 151.01031494140625,
+          "height": 226.36727905273438,
+          "top": 64.29340362548828,
+          "right": 272.0049514770508,
+          "bottom": 290.66068267822266,
+          "left": 120.99463653564453
+        },
+        "fit": "fill",
+        "clip": "none",
+        "filter": "brightness(0.18) saturate(1.35) hue-rotate(28deg) contrast(1.18)",
+        "transform": "matrix(1.00359, 0, 0, 1.00359, 0, 0)",
+        "mask": "linear-gradient(rgb(0, 0, 0) 0%, rgb(0, 0, 0) 92%, rgba(0, 0, 0, 0.94) 95%, rgba(0, 0, 0, 0.72) 97%, rgba(0, 0, 0, 0.24) 99%, rgba(0, 0, 0, 0) 100%)",
+        "animation": "gate-inner-soft-pulse",
+        "natural": [
+          1024,
+          1535
+        ],
+        "complete": true
+      }
+    },
+    "sga-anomaly-rest": {
+      "classes": "sga-sequence-active sga-anomaly-rest",
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "phase": null,
+      "running": true,
+      "completed": false,
+      "error": null,
+      "result": null,
+      "dialogue": {
+        "active": false,
+        "eventId": null,
+        "stepIndex": 0,
+        "lineIndex": -1,
+        "mode": "idle",
+        "actionType": null,
+        "shioponDone": true,
+        "lumiereDone": true,
+        "joined": true,
+        "player": {
+          "x": 810,
+          "y": 137
+        }
+      },
+      "aftermath": {
+        "state": "NOT_STARTED",
+        "completed": false
+      },
+      "frame": {
+        "dataset": {
+          "sceneObject": "",
+          "worldX": "520",
+          "worldY": "-163.33333333333331",
+          "worldW": "560",
+          "worldH": "373.3333333333333",
+          "gatePositionRevision": "native-foreground-v6"
+        },
+        "rect": {
+          "x": 13.582456588745117,
+          "y": 45.769813537597656,
+          "width": 365.7826843261719,
+          "height": 243.85171508789062,
+          "top": 45.769813537597656,
+          "right": 379.365140914917,
+          "bottom": 289.6215286254883,
+          "left": 13.582456588745117
+        }
+      },
+      "inner": {
+        "rect": {
+          "x": 161.22720336914062,
+          "y": 79.1046371459961,
+          "width": 70.48255920410156,
+          "height": 141.68975830078125,
+          "top": 79.1046371459961,
+          "right": 231.7097625732422,
+          "bottom": 220.79439544677734,
+          "left": 161.22720336914062
+        },
+        "fit": "cover",
+        "clip": "polygon(50% 0%, 59% 4%, 67% 8%, 76% 13%, 85% 19%, 92% 26%, 97% 34%, 100% 42%, 100% 100%, 0% 100%, 0% 42%, 3% 34%, 8% 26%, 15% 19%, 24% 13%, 33% 8%, 41% 4%)",
+        "filter": "none",
+        "transform": "none",
+        "mask": "none",
+        "animation": "none",
+        "natural": [
+          1024,
+          1536
+        ],
+        "complete": true
+      }
+    },
+    "end": {
+      "classes": "",
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "phase": {
+        "name": "RIFT_SMALL",
+        "time": 84169
+      },
+      "running": false,
+      "completed": false,
+      "error": "Error: Fixed geometry changed: y",
+      "result": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": true,
+        "error": "Error: Fixed geometry changed: y",
+        "recoveryError": null,
+        "reason": null,
+        "futureAudio": {
+          "id": 1,
+          "phase": "DISPOSED",
+          "level": 1,
+          "suspended": false,
+          "contextState": "running",
+          "events": [
+            {
+              "type": "pause",
+              "name": null,
+              "phase": "ENTRY_BLACK",
+              "time": 29992,
+              "source": null
+            },
+            {
+              "type": "request",
+              "name": "ruins",
+              "phase": "RUINS",
+              "time": 37912,
+              "source": "./assets/audio/bgm/future_ruins.mp3"
+            },
+            {
+              "type": "failure",
+              "name": "ruins-seek",
+              "error": "completed seek did not reach start",
+              "time": 37963
+            },
+            {
+              "type": "pulse",
+              "index": 1,
+              "duration": 0.34,
+              "phase": "ARCANA_MICRO",
+              "time": 71544
+            },
+            {
+              "type": "pulse",
+              "index": 2,
+              "duration": 0.39,
+              "phase": "ARCANA_MICRO",
+              "time": 72317
+            },
+            {
+              "type": "pulse",
+              "index": 3,
+              "duration": 0.47,
+              "phase": "ARCANA_MICRO",
+              "time": 73341
+            },
+            {
+              "type": "request",
+              "name": "fix",
+              "phase": "ARCANA_INFECTION",
+              "time": 74368,
+              "source": "./assets/audio/bgm/future_fix.mp3"
+            },
+            {
+              "type": "failure",
+              "name": "fix-seek",
+              "error": "completed seek did not reach start",
+              "time": 74374
+            },
+            {
+              "type": "pause",
+              "name": null,
+              "phase": "ABORT",
+              "time": 84169,
+              "source": null
+            },
+            {
+              "type": "pause",
+              "name": null,
+              "phase": "DISPOSED",
+              "time": 84169,
+              "source": null
+            }
+          ],
+          "tracks": {
+            "ruins": {
+              "source": "./assets/audio/bgm/future_ruins.mp3",
+              "time": 0,
+              "paused": true,
+              "gain": 0,
+              "trim": 0.47424198526024464,
+              "mix": 0.7,
+              "weight": 0,
+              "failed": true
+            },
+            "fix": {
+              "source": "./assets/audio/bgm/future_fix.mp3",
+              "time": 0,
+              "paused": true,
+              "gain": 0,
+              "trim": 0.547646100961894,
+              "mix": 0.5,
+              "weight": 0,
+              "failed": true
+            }
+          }
+        },
+        "states": [
+          {
+            "name": "RIFT_SMALL",
+            "time": 84169
+          }
+        ],
+        "dialogues": [
+          {
+            "text": "……見たところ、おかしなところはないな。",
+            "closed": 13306
+          },
+          {
+            "text": "……？",
+            "closed": 14790
+          },
+          {
+            "text": "……何だ……？",
+            "closed": 33824
+          },
+          {
+            "text": "リュミエール……？",
+            "closed": 35360
+          },
+          {
+            "text": "しおぽん……？",
+            "closed": 36873
+          },
+          {
+            "text": "……星門庭園……？",
+            "closed": 43093
+          },
+          {
+            "text": "……なぜ、こんな姿に……。",
+            "closed": 48974
+          },
+          {
+            "text": "……俺が、もう一人……？",
+            "closed": 67483
+          },
+          {
+            "text": "……アルカナ？",
+            "closed": 70268
+          },
+          {
+            "text": "……これは、何だ……。",
+            "closed": 78302
+          },
+          {
+            "text": "……っ",
+            "closed": 79591
+          }
+        ],
+        "holds": [],
+        "audioFailures": [
+          "future-ruins-seek: completed seek did not reach start",
+          "future-fix-seek: completed seek did not reach start"
+        ],
+        "cardDetail": {
+          "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+          "normalSource": "./assets/tarot/backs/tarot-card-back.webp",
+          "startedAt": 70783,
+          "duration": 5870,
+          "phases": [
+            {
+              "name": "NORMAL_HOLD",
+              "time": 70784
+            },
+            {
+              "name": "MICRO_ANOMALY",
+              "time": 71544
+            },
+            {
+              "name": "ABNORMAL_HOLD",
+              "time": 73856
+            },
+            {
+              "name": "RE_EMERGENCE",
+              "time": 74368
+            },
+            {
+              "name": "RE_COMPLETE",
+              "time": 76234
+            },
+            {
+              "name": "RE_HOLD",
+              "time": 76234
+            }
+          ],
+          "pulses": [
+            {
+              "number": 1,
+              "time": 71544,
+              "scale": 0.009,
+              "stain": 0.075
+            },
+            {
+              "number": 2,
+              "time": 72317,
+              "scale": 0.015,
+              "stain": 0.135
+            },
+            {
+              "number": 3,
+              "time": 73341,
+              "scale": 0.022,
+              "stain": 0.235
+            }
+          ],
+          "registration": {
+            "normal": {
+              "width": 1024,
+              "height": 1536,
+              "bounds": {
+                "left": 98,
+                "top": 46,
+                "right": 920,
+                "bottom": 1458
+              }
+            },
+            "re": {
+              "width": 853,
+              "height": 1280,
+              "bounds": {
+                "left": 48,
+                "top": 26,
+                "right": 805,
+                "bottom": 1247
+              }
+            }
+          },
+          "phase": "RE_HOLD",
+          "endedAt": 78040
+        },
+        "surface": {
+          "width": 439,
+          "height": 704,
+          "dpr": 1,
+          "rgbaBytes": 1236224,
+          "bounds": {
+            "left": -23,
+            "top": -34,
+            "width": 439,
+            "height": 704
+          }
+        },
+        "p0": {
+          "mapId": "star_gate_garden",
+          "player": {
+            "x": 810,
+            "y": 137,
+            "dir": "up"
+          },
+          "camera": {
+            "x": 810,
+            "y": 315.49929077488315,
+            "zoom": 1
+          },
+          "viewport": {
+            "width": 393,
+            "height": 631
+          },
+          "owner": null,
+          "npcLogical": {
+            "companion": "joined_with_shion",
+            "story": {
+              "shioponDone": true,
+              "lumiereDone": true,
+              "joined": true
+            }
+          },
+          "actors": {
+            "shiopon": {
+              "x": 810,
+              "y": 200.23999999999987,
+              "dir": "up",
+              "stageOffsetY": 0,
+              "visualOffsetY": 0,
+              "rotation": 0,
+              "following": true
+            },
+            "lumiere": {
+              "x": 810,
+              "y": 212,
+              "dir": "down",
+              "stageOffsetY": 0
+            }
+          },
+          "visibility": {
+            "shion": 1,
+            "shiopon": 1,
+            "lumiere": 1
+          },
+          "inputSuspended": false,
+          "npcSuspended": false,
+          "hidden": false,
+          "captured": 7765,
+          "audio": {
+            "source": "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+            "time": 0,
+            "playing": true,
+            "base": 0.35,
+            "coefficient": 1
+          }
+        },
+        "fixed": {
+          "left": 95.671875,
+          "top": 93.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 129.2109375,
+          "footY": 158.29443359375
+        },
+        "arcana": {
+          "x": 119.265625,
+          "y": 97.87757110595703,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        },
+        "r1": null,
+        "scene": {
+          "presentPrepared": true,
+          "vision": false,
+          "absorption": false,
+          "viewport": {
+            "width": 393,
+            "height": 631,
+            "dpr": 1
+          },
+          "owner": null
+        }
+      },
+      "dialogue": {
+        "active": false,
+        "eventId": null,
+        "stepIndex": 0,
+        "lineIndex": -1,
+        "mode": "idle",
+        "actionType": null,
+        "shioponDone": true,
+        "lumiereDone": true,
+        "joined": true,
+        "player": {
+          "x": 810,
+          "y": 137
+        }
+      },
+      "aftermath": {
+        "state": "NOT_STARTED",
+        "completed": false
+      },
+      "frame": {
+        "dataset": {
+          "sceneObject": "",
+          "worldX": "520",
+          "worldY": "-163.33333333333331",
+          "worldW": "560",
+          "worldH": "373.3333333333333",
+          "gatePositionRevision": "native-foreground-v6"
+        },
+        "rect": {
+          "x": -93.5,
+          "y": -163.3333282470703,
+          "width": 560,
+          "height": 373.328125,
+          "top": -163.3333282470703,
+          "right": 466.5,
+          "bottom": 209.9947967529297,
+          "left": -93.5
+        }
+      },
+      "inner": {
+        "rect": {
+          "x": 71.28948211669922,
+          "y": -136.06454467773438,
+          "width": 230.42041015625,
+          "height": 345.40447998046875,
+          "top": -136.06454467773438,
+          "right": 301.7098922729492,
+          "bottom": 209.33993530273438,
+          "left": 71.28948211669922
+        },
+        "fit": "fill",
+        "clip": "none",
+        "filter": "brightness(1.00068) drop-shadow(rgba(148, 205, 255, 0.18) 0px 0px 5.0616px)",
+        "transform": "matrix(0.998099, 0, 0, 0.998099, 0, 0)",
+        "mask": "linear-gradient(rgb(0, 0, 0) 0%, rgb(0, 0, 0) 92%, rgba(0, 0, 0, 0.94) 95%, rgba(0, 0, 0, 0.72) 97%, rgba(0, 0, 0, 0.24) 99%, rgba(0, 0, 0, 0) 100%)",
+        "animation": "gate-inner-soft-pulse",
+        "natural": [
+          1024,
+          1535
+        ],
+        "complete": true
+      }
+    }
+  },
+  "trace": [
+    {
+      "step": 0,
+      "classes": "",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 2,
+      "classes": "sga-sequence-active",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 15,
+      "classes": "sga-sequence-active sga-celestial-frame-01",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 17,
+      "classes": "sga-sequence-active sga-celestial-frame-02",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 19,
+      "classes": "sga-sequence-active sga-celestial-frame-03 sga-sequence-overlap sga-sequence-flash-on",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 20,
+      "classes": "sga-sequence-active sga-celestial-frame-03 sga-sequence-flash-on",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 21,
+      "classes": "sga-sequence-active sga-celestial-frame-04 sga-sequence-overlap sga-sequence-flash-on",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 22,
+      "classes": "sga-sequence-active sga-celestial-frame-04 sga-sequence-flash-on",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 23,
+      "classes": "sga-sequence-active sga-normal-flow",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 24,
+      "classes": "sga-sequence-active sga-resonance-complete",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 29,
+      "classes": "sga-sequence-active sga-anomaly-flicker",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 34,
+      "classes": "sga-sequence-active sga-anomaly",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 36,
+      "classes": "sga-sequence-active sga-reverse-gate",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 38,
+      "classes": "sga-sequence-active sga-dark-frame-01",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 40,
+      "classes": "sga-sequence-active sga-dark-frame-02 sga-dark-01-02-overlap",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 41,
+      "classes": "sga-sequence-active sga-dark-frame-02",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 43,
+      "classes": "sga-sequence-active sga-dark-frame-03 sga-dark-02-03-overlap",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 44,
+      "classes": "sga-sequence-active sga-dark-frame-03",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 46,
+      "classes": "sga-sequence-active sga-dark-frame-04 sga-dark-03-04-overlap",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 47,
+      "classes": "sga-sequence-active sga-dark-frame-04",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 49,
+      "classes": "sga-sequence-active sga-dark-frame-rise",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 51,
+      "classes": "sga-sequence-active sga-dark-afterglow",
+      "phase": null,
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": null
+    },
+    {
+      "step": 52,
+      "classes": "sga-sequence-active sga-anomaly-rest",
+      "phase": null,
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "error": null
+    },
+    {
+      "step": 64,
+      "classes": "sga-anomaly-rest",
+      "phase": null,
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "error": null
+    },
+    {
+      "step": 71,
+      "classes": "sga-anomaly-rest sga-future-world-hidden",
+      "phase": null,
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "error": null
+    },
+    {
+      "step": 276,
+      "classes": "sga-anomaly-rest sga-future-world-hidden",
+      "phase": {
+        "name": "RIFT_SMALL",
+        "time": 84169
+      },
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "error": "Error: Fixed geometry changed: y"
+    },
+    {
+      "step": 280,
+      "classes": "",
+      "phase": {
+        "name": "RIFT_SMALL",
+        "time": 84169
+      },
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "error": "Error: Fixed geometry changed: y"
+    }
+  ],
+  "errors": []
+}
