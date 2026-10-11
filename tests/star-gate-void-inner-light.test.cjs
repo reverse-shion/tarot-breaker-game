@@ -37,16 +37,20 @@ test('return cleanup keeps one void image; recovery and replay restore the exact
  h.api.setGateState('sga-anomaly-rest');h.api.setGateState(null);assert.equal(h.img.getAttribute('src'),h.original);
  h.api.setGateState('sga-anomaly-rest');assert.equal(h.img.getAttribute('src'),'./assets/events/gate-vision/gate-void.webp');
 });
-test('void aperture remains registered inside the original frame at reference scale',()=>{
- const h=harness();h.api.setGateState('sga-anomaly-rest');
- const d=h.light.dataset,value=n=>parseFloat(h.properties.get('--sga-void-'+n))/100;
- const left=+d.worldX+value('left')*d.worldW,top=+d.worldY+value('top')*d.worldH;
- const width=value('width')*d.worldW,height=value('height')*d.worldH;
- assert.ok(Math.abs(left+width/2-800)<1e-8);
- assert.ok(Math.abs(left-746.0416666666666)<1e-8);
- assert.ok(Math.abs(top+112.29166666666666)<1e-8);
- assert.ok(Math.abs(width-107.91666666666667)<1e-8);
- assert.ok(Math.abs(height-216.92708333333334)<1e-8);
+test('approved iPhone fit is applied at rest only and retains original frame geometry',()=>{
+ const h=harness(),frame=JSON.stringify(h.frame),parent=JSON.stringify(h.light.dataset);
+ h.api.setGateState('sga-anomaly-rest');
+ const expected={left:'26.627%',top:'-2.3%',width:'46.746%',height:'74.8%'};
+ for(const [name,value] of Object.entries(expected))assert.equal(h.properties.get('--sga-void-'+name),value);
+ const d=h.light.dataset,p=n=>parseFloat(h.properties.get('--sga-void-'+n))/100;
+ const left=+d.worldX+p('left')*d.worldW,top=+d.worldY+p('top')*d.worldH;
+ const width=p('width')*d.worldW,height=p('height')*d.worldH;
+ assert.ok(Math.abs(left+width/2-800)<.05,'inner light remains centered in the frame');
+ assert.ok(top< -140,'approved fit extends above the prior top edge');
+ assert.ok(top+height>110,'approved fit reaches lower than the prior gap');
+ assert.equal(JSON.stringify(h.frame),frame);
+ assert.equal(JSON.stringify(h.light.dataset),parent);
+ h.api.setGateState('sga-anomaly');assert.equal(h.properties.size,0);
 });
 
 test('future blackout, ruins and vortex hide the retained corrupted gate with final CSS precedence',()=>{

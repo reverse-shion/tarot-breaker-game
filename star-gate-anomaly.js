@@ -536,6 +536,8 @@ function replayClass(el,className){if(!el)return;el.classList.remove(className);
 function gateShell(){return document.getElementById("game-shell")}
 // Aperture registration in the unchanged 1536x1024 garden-star-gate raster.
 // Only the inner image receives geometry; scene-object/frame placement stays owned by the scene.
+// Approved on iPhone: exact percentages relative to the unchanged inner-light parent.
+const APPROVED_VOID_FIT=Object.freeze({left:'26.627%',top:'-2.3%',width:'46.746%',height:'74.8%'});
 function setGateInnerLight(voidRest){
  const shell=gateShell(),light=shell?.querySelector('.scene-gate-inner-light');
  const img=light?.querySelector('img');if(!img)return;
@@ -546,10 +548,8 @@ function setGateInnerLight(voidRest){
   const lx=Number(l.worldX),ly=Number(l.worldY),lw=Number(l.worldW),lh=Number(l.worldH);
   if(![gx,gy,gw,gh,lx,ly,lw,lh].every(Number.isFinite)||gw<=0||gh<=0||lw<=0||lh<=0)throw new Error('Star Gate inner-light registration unavailable');
   if(!light.hasAttribute('data-sga-normal-src'))light.setAttribute('data-sga-normal-src',img.getAttribute('src'));
-  img.style.setProperty('--sga-void-left',((gx+620*gw/1536-lx)/lw*100)+'%');
-  img.style.setProperty('--sga-void-top',((gy+140*gh/1024-ly)/lh*100)+'%');
-  img.style.setProperty('--sga-void-width',(296*gw/1536/lw*100)+'%');
-  img.style.setProperty('--sga-void-height',(595*gh/1024/lh*100)+'%');
+  // Only final rest uses the manually approved fit; all earlier states keep normal artwork.
+  for(const [name,value] of Object.entries(APPROVED_VOID_FIT))img.style.setProperty('--sga-void-'+name,value);
   if(img.getAttribute('src')!==ASSETS.gateVoid)img.setAttribute('src',ASSETS.gateVoid);
  }else if(light.hasAttribute('data-sga-normal-src')){
   img.setAttribute('src',light.getAttribute('data-sga-normal-src'));

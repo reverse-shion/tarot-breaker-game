@@ -114,3 +114,27 @@ Device URL uses the immutable final branch SHA:
 `https://raw.githack.com/reverse-shion/tarot-breaker-game/<SHA>/index.html?dev=star-gate-full`.
 Remote delivery must be checked separately; an HTTP/image load alone is not a
 visual or device PASS.
+
+
+## iPhone-approved aperture calibration (2026-10-11)
+
+The user directly adjusted the final void light on iPhone and approved the following
+**percentages of the unchanged** `.scene-gate-inner-light` **parent**:
+
+| Property | Approved |
+| --- | --- |
+| `--sga-void-left` | `26.627%` |
+| `--sga-void-top` | `-2.3%` |
+| `--sga-void-width` | `46.746%` |
+| `--sga-void-height` | `74.8%` |
+
+Only `setGateInnerLight(true)` at `sga-anomaly-rest` uses this locked fit.
+Normal light and all pre-rest gate states retain the prior blue-white source and
+behavior. Successful Present Return reuses the same retained source, while
+`sga-future-world-hidden` continues to suppress its rendering in the future.
+The optional dev editor now resets to these same approved values.
+Do not modify the source WebP, clipping polygon, outer gate frame, camera,
+Future Stage 3, dialogues or audio to implement this fit.
+
+Verification status: runtime/regression tests pending after this update;
+physical iPhone replay with the immutable revision is required before PASS.

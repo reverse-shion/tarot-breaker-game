@@ -28,3 +28,13 @@ test('touch editor provides all 4 independent controls, handles, camera, export 
  assert.match(css,/safe-area-inset-bottom/);
  assert.match(css,/#gate-light-debug-guides/);
 });
+
+test('debug Reset baseline matches the iPhone-approved runtime aperture',()=>{
+ const runtime=fs.readFileSync('star-gate-anomaly.js','utf8');
+ const fit={left:'26.627%',top:'-2.3%',width:'46.746%',height:'74.8%'};
+ for(const [key,value] of Object.entries(fit)){
+  assert.ok(runtime.includes(key+":'"+value+"'"),'runtime '+key+' differs');
+  assert.ok(js.includes(key+':'+Number.parseFloat(value)),'editor '+key+' differs');
+ }
+ assert.match(js,/return \{\.\.\.APPROVED_VOID_FIT\}/);
+});

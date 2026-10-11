@@ -11,6 +11,8 @@
  const STORAGE='tarot-breaker:gate-void-aperture-debug-v1';
  const SOURCE='./assets/events/gate-vision/gate-void.webp';
  const SOURCE_RECT=Object.freeze({left:620,top:140,width:296,height:595});
+ // Identical to the event's locked final-rest fit. Reset returns to these approved values.
+ const APPROVED_VOID_FIT=Object.freeze({left:26.627,top:-2.3,width:46.746,height:74.8});
  const FIELDS=Object.freeze([
   {key:'left',label:'左右',min:-50,max:140},
   {key:'top',label:'上下',min:-50,max:150},
@@ -32,13 +34,8 @@
   const geo=['worldX','worldY','worldW','worldH'].map(k=>Number(g[k]));
   const inner=['worldX','worldY','worldW','worldH'].map(k=>Number(l[k]));
   if(![...geo,...inner].every(Number.isFinite)||geo[2]<=0||geo[3]<=0||inner[2]<=0||inner[3]<=0)throw Error('星門の座標が取得できません');
-  const [gx,gy,gw,gh]=geo,[lx,ly,lw,lh]=inner;
-  return {
-   left:round((gx+SOURCE_RECT.left*gw/1536-lx)/lw*100),
-   top:round((gy+SOURCE_RECT.top*gh/1024-ly)/lh*100),
-   width:round((SOURCE_RECT.width*gw/1536)/lw*100),
-   height:round((SOURCE_RECT.height*gh/1024)/lh*100)
-  };
+  // Keep geometry validation above, but never silently reset to the pre-calibration fit.
+  return {...APPROVED_VOID_FIT};
  }
  function validValues(obj){
   return !!obj&&FIELDS.every(f=>typeof obj[f.key]==='number'&&
