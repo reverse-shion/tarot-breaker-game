@@ -14,6 +14,57 @@
  window.__TAROT_DEV_STAGE3__=true;
  document.body.dataset.enteringFromLanding='true';document.body.dataset.devEntry='star-gate-full';
  document.documentElement.dataset.devHarness='star-gate-full';
+ // Early diagnostic: show on boot, even when Stage3/Aftermath never ends.
+ if(q.get('returnDebug')==='1'&&q.getAll('returnDebug').length===1){
+   const panel=document.createElement('pre');
+   panel.id='tarot-return-diagnostic';panel.setAttribute('role','status');
+   Object.assign(panel.style,{
+     position:'fixed',left:'7px',right:'7px',
+     bottom:'calc(env(safe-area-inset-bottom) + 7px)',
+     margin:'0',padding:'8px 10px',boxSizing:'border-box',
+     maxHeight:'33vh',overflow:'hidden',whiteSpace:'pre-wrap',wordBreak:'break-word',
+     font:'11px/1.35 monospace',color:'#f7edc9',background:'rgba(8,13,29,.96)',
+     border:'2px solid #f0d476',borderRadius:'6px',zIndex:'2147483647',
+     pointerEvents:'none'
+   });
+   document.body.appendChild(panel);
+   let lastEvent=null;
+   window.addEventListener('tarot-breaker:stage3-session-ended',event=>{lastEvent=event.detail;});
+   const read=(fn)=>{try{return fn()??null;}catch(error){return {error:'READ_ERROR '+String(error)};}};
+   const refresh=()=>{
+     if(!panel.isConnected)document.body.appendChild(panel);
+     try{
+       const active=read(()=>window.TarotStarGateAnomaly?.getState?.());
+       const finished=read(()=>window.TarotStarGateAnomaly?.getLastResult?.())||lastEvent;
+       const after=read(()=>window.TarotStarGateAftermath?.getState?.());
+       const attempt=read(()=>window.TarotStarGateAftermath?.getDiagnostic?.());
+       const camera=read(()=>window.TarotCinematicCamera?.getState?.());
+       const eligibility=attempt?.eligibility||null;
+       const failed=eligibility?Object.entries(eligibility).filter(([key,value])=>
+         ['finiteId','completed','restored'].includes(key)?value!==true:
+         ['running','consumed','vision','absorption','overlays'].includes(key)?!!value:
+         ['error','reason','recoveryError'].includes(key)?!!value:
+         key==='owner'?value!==null:false).map(([key,value])=>key+':'+String(value)).join(','):'';
+       const error=String(attempt?.error||after?.error||finished?.error||window.__lastGardenBootError||'none');
+       panel.textContent=[
+         'RETURN CAMERA DEBUG v2 / BOOT ACTIVE',
+         'STAGE3: '+(active?.running?'RUNNING':finished?'ENDED':'WAITING')
+          +' | completed='+String(finished?.completed??'-')
+          +' | restored='+String(finished?.restored??'-'),
+         'CAMERA: '+(camera?.owned?'OWNED':'FREE')+' | zoom='+String(camera?.camera?.zoom??'-'),
+         'HANDOFF: '+String(finished?.returnCameraHandoff??'-')
+          +' | prepared='+String(finished?.returnCameraPrepared??'-'),
+         'AFTERMATH: '+String(after?.state||'NOT_LOADED')
+          +' | start='+String(attempt?.status||'NO_ATTEMPT')
+          +' | line='+String(after?.line||'-'),
+         'FAILED CHECKS: '+(failed||'none'),
+         'START FAILURE: '+String(finished?.afterStartFailure?.status||'-'),
+         'ERROR: '+error.slice(0,170)
+       ].join('\n');
+     }catch(error){panel.textContent='RETURN CAMERA DEBUG v2 / PANEL_ERROR\n'+String(error);}
+   };
+   refresh();window.setInterval(refresh,500);
+ }
  const completedEvents=['alenon_prologue','landing_devil_memory','garden_shiopon_meet','garden_lumiere_gate'];
  const state={landingMemoryDone:true,gardenStory:{shioponDone:true,lumiereDone:true,joined:true},companion:{mode:'following'}};
  window.TarotJourney=Object.freeze({get:k=>state[k],set:(k,v)=>{state[k]=v;},reset:()=>{}});
