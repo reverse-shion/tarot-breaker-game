@@ -14,7 +14,7 @@
     'display', 'visibility', 'opacity', 'mixBlendMode', 'isolation', 'filter',
     'background', 'backgroundColor', 'backgroundImage', 'zIndex', 'clipPath',
     'overflow', 'transform', 'animationName', 'animationPlayState',
-    'transition', 'objectFit', 'width', 'height', 'pointerEvents'
+    'transition', 'objectFit', 'width', 'height', 'pointerEvents', 'maskImage', 'webkitMaskImage'
   ];
 
   function styleOf(element, pseudo) {
@@ -99,6 +99,7 @@
       elements: {
         innerParent: styleOf(inner),
         innerImage: styleOf(innerImage),
+        corruptedInnerField: styleOf(inner?.querySelector('.sga-corrupted-inner-field')),
         innerBefore: styleOf(inner, '::before'),
         innerAfter: styleOf(inner, '::after'),
         gateParent: styleOf(gate),

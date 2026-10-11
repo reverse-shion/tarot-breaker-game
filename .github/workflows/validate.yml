@@ -39,6 +39,9 @@ jobs:
       - name: Audit-only visual trace unit checks
         run: node --test tests/star-gate-visual-trace.test.cjs
 
+      - name: Gate opaque-rest regression checks
+        run: node --test tests/star-gate-opaque-corrupted-rest.test.cjs
+
       - name: Validate game assets and manifest
         run: |
           node scripts/validate.mjs
