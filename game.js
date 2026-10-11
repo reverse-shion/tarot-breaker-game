@@ -307,6 +307,8 @@
   let absorptionSurface = null;
   let sceneLockOwner = null;
   let sceneLockPrior = null;
+  // One-time Stage3 to Aftermath return-camera lease.
+  let returnCameraHandoff = null;
   let outsideInteraction = false;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -2104,6 +2106,41 @@
       lock(owner){window.TarotStage3Scene.lock(owner);aftermathOwner=owner;clearAftermathInput();},
       unlock(owner){clearAftermathInput();const released=window.TarotStage3Scene.unlock(owner);if(released)aftermathOwner=null;return released;},
       clearInput:clearAftermathInput,
+      // Stage3 unlock is unchanged. Reclaim framing in the same JS task
+      // before notifying Aftermath, and abandon it if unconsumed.
+      armReturnCamera(id){
+        if(!Number.isFinite(id)||sceneLockOwner||!ready||!running||visionWorld.active||absorptionSurface||returnCameraHandoff)return false;
+        const target=normalCameraTarget();
+        returnCameraHandoff={id,viewport:{width:cssWidth,height:cssHeight},
+          safeCamera:{x:target.x,y:target.y,zoom:normalCameraZoom},
+          safeCameraRef:{x:target.x/scale.x,y:target.y/scale.y}};
+        cinematicCamera.owned=true;cinematicCamera.allowOverscan=true;
+        return true;
+      },
+      takeReturnCamera(id){
+        const lease=returnCameraHandoff;
+        if(!lease||lease.id!==id||sceneLockOwner||!cinematicCamera.owned)return null;
+        if(lease.viewport.width!==cssWidth||lease.viewport.height!==cssHeight)return null;
+        returnCameraHandoff=null;
+        return {safeCamera:{...lease.safeCamera},safeCameraRef:{...lease.safeCameraRef}};
+      },
+      abandonReturnCamera(id){
+        if(!returnCameraHandoff||returnCameraHandoff.id!==id)return false;
+        returnCameraHandoff=null;window.TarotCinematicCamera.release();draw();return true;
+      },
+      async returnToGameplayCamera(duration=450){
+        if(!aftermathOwner||sceneLockOwner!==aftermathOwner)return {completed:false,reason:"owner"};
+        const vp={width:cssWidth,height:cssHeight};
+        const done=await window.TarotCinematicCamera.returnToPlayer(duration);
+        if(!done?.completed||sceneLockOwner!==aftermathOwner||
+           cssWidth!==vp.width||cssHeight!==vp.height)return {completed:false,reason:"interrupted"};
+        window.TarotCinematicCamera.release();
+        const drawResult=await window.TarotStage3Scene.waitDraw();
+        return {completed:drawResult?.completed===true};
+      },
+      cancelReturnPan(){
+        if(aftermathOwner&&sceneLockOwner===aftermathOwner)window.TarotStage3Scene.freezeCamera();
+      },
       pause(value){aftermathPaused=!!value;},setHiddenPaused(value){aftermathPaused=!!value;},
       setActorVisibility(actorId,value){
         if(!(actorId in actorVisibility))return false;

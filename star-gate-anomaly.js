@@ -1046,7 +1046,17 @@ async function runStage3Latter(before){
    if(!current.returnFormation?.shion||!current.returnFormation?.shiopon||!current.returnFormation?.lumiere)throw new Error('Present formation incomplete');
    for(const name of ['shion','shiopon','lumiere'])if(aftermath.setActorVisibility(name,1)!==true)throw new Error('Present actor invisible: '+name);
    aftermath.face('shiopon','shion');aftermath.face('lumiere','shion');
-   await scene.waitDraw();current.clock.assert();
+   // Frame and draw the complete garden while the black cover is opaque.
+   // Do not let the first visible present frame expose the old camera.
+   const camera=window.TarotCinematicCamera;
+   if(!camera)throw new Error('Return panorama camera unavailable');
+   const framed=await camera.frameBounds(GATE_BOUNDS,0,{padding:14,minZoom:.48});
+   current.clock.assert();
+   const drawn=await scene.waitDraw();current.clock.assert();
+   const state=camera.getState();
+   if(!framed?.completed||!drawn?.completed||!gateIsFramed(state)||!overscanCoversViewport(state))
+     throw new StarGateOverscanCoverageError();
+   current.returnCameraPrepared=true;
   },
   async callReturnVoices(){
    current.clock.assert();if(!current.returnFormation)throw new Error('Return calls before formation');
@@ -1142,8 +1152,18 @@ async function run(){
  finally{
   document.removeEventListener('visibilitychange',hidden);window.removeEventListener('resize',resized);
   resolveAdvance=null;ui?.hide();current.gateSfx?.dispose();current.futureAudio?.dispose();current.clock.dispose();
-  if(current.restored){releasePresentation({preserveGateAnomaly:!!current.completed});current.scene.unlock(current.id);current.audio?.release();}
-  running=false;lastResult=report(current);window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
+  let returnCameraHandoff=false;
+  if(current.restored){
+   releasePresentation({preserveGateAnomaly:!!current.completed});
+   const unlocked=current.scene.unlock(current.id);
+   if(unlocked&&current.completed&&current.returnCameraPrepared&&!current.controller.signal.aborted)
+    returnCameraHandoff=window.TarotAftermathScene?.armReturnCamera?.(current.id)===true;
+   current.audio?.release();
+  }
+  running=false;current.returnCameraHandoff=returnCameraHandoff;
+  lastResult=report(current);window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
+  // Do not leave a panoramic camera behind when no Aftermath accepts it.
+  if(returnCameraHandoff)window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
  }
 }
 function releasePresentation({preserveGateAnomaly=false}={}){
@@ -1153,7 +1173,7 @@ function releasePresentation({preserveGateAnomaly=false}={}){
  cleanupGateState({preserveFinal:preserveGateAnomaly});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
 }
 function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
- futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
+ futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,returnCameraPrepared:!!current.returnCameraPrepared,returnCameraHandoff:!!current.returnCameraHandoff,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});

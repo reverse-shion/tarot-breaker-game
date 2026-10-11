@@ -1,16 +1,20 @@
 const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 const SOURCE=fs.readFileSync(require('node:path').join(__dirname,'../star-gate-aftermath.js'),'utf8');
-function harness({dev=true,restoreFails=false,unlockFails=false,inputRemains=false,npcRemains=false}={}){
+function harness({dev=true,restoreFails=false,unlockFails=false,inputRemains=false,npcRemains=false,returnHandoff=false,returnPanFails=false}={}){
  const handlers={},docHandlers={},nodes={},calls=[],motions=[],shown=[];const facing={};let focused=false,time=0,owner=null,departed=false,ui,following=true,nextTimer=0;const timers=new Map();
  const actors={shion:{x:810,y:145},shiopon:{x:805,y:170},lumiere:{x:815,y:212}};const visibility={shion:1,shiopon:0,lumiere:0};
  function node(){return {hidden:false,children:[],classList:{items:new Set(),add(c){this.items.add(c)},contains(c){return this.items.has(c)},toggle(c,v){v?this.items.add(c):this.items.delete(c)}},listeners:{},append(...a){this.children.push(...a);for(const n of a)if(n.id)nodes[n.id]=n},setAttribute(){},addEventListener(n,f){this.listeners[n]=f},removeEventListener(n,f){if(this.listeners[n]===f)delete this.listeners[n]},remove(){this.removed=true},textContent:'',type:''};}
  const shell=node();nodes['game-shell']=shell;const canvas=node();canvas.getBoundingClientRect=()=>({left:0,top:0});nodes['game']=canvas;
  const state=()=>({actors:JSON.parse(JSON.stringify(actors)),visibility:{...visibility},lumiereRect:{left:actors.lumiere.x-780,right:actors.lumiere.x-700},viewport:{width:390,height:844},owner,inputSuspended:!!owner||inputRemains,npcSuspended:!!owner||npcRemains,following,lumiereEnabled:!departed});
- const scene={capture(){calls.push('capture');return {actors:JSON.parse(JSON.stringify(actors)),visibility:{...visibility},departed,following,weakLight:false}},lock(o){owner=o;calls.push('lock')},unlock(o){calls.push('unlock');if(unlockFails||owner!==o)return false;owner=null;return true},clearInput(){calls.push('clear')},getState:state,placeReturnFormation(){const s={x:actors.shion.x,y:actors.shion.y},l={x:actors.lumiere.x,y:actors.lumiere.y};actors.shiopon.x=l.x-62;actors.shiopon.y=l.y;return {shion:s,shiopon:{x:actors.shiopon.x,y:actors.shiopon.y},lumiere:l}},hitTestActor(x){return x<50?'shiopon':'lumiere'},setActorVisibility(actor,value){visibility[actor]=value;return true},face(actor,target){facing[actor]=target},gameplayCamera(){focused=false},focusGate(){focused=true},perform(c){motions.push(c);actors[c.actor]={...actors[c.actor],...c.target};return {promise:Promise.resolve()}},flightPose(p){actors.lumiere={...actors.lumiere,...p}},setLumiereDeparted(v=true){departed=v},pause(){},async restore(a){if(restoreFails)throw Error('restore');Object.assign(actors,a.actors);Object.assign(visibility,a.visibility);departed=a.departed;following=a.following;calls.push('restore')},verify:()=>({completed:!restoreFails&&!!owner})};
+ const scene={capture(){calls.push('capture');return {actors:JSON.parse(JSON.stringify(actors)),visibility:{...visibility},departed,following,weakLight:false,camera:{x:810,y:440,zoom:.65},cameraRef:{x:810,y:440}}},lock(o){owner=o;calls.push('lock')},unlock(o){calls.push('unlock');if(unlockFails||owner!==o)return false;owner=null;return true},clearInput(){calls.push('clear')},getState:state,
+ takeReturnCamera(id){calls.push('takeReturnCamera');return returnHandoff?{safeCamera:{x:810,y:440,zoom:1},safeCameraRef:{x:810,y:440}}:null},
+ async returnToGameplayCamera(duration){calls.push('returnToGameplayCamera:'+duration);return {completed:!returnPanFails}},
+ cancelReturnPan(){calls.push('cancelReturnPan')},
+ placeReturnFormation(){const s={x:actors.shion.x,y:actors.shion.y},l={x:actors.lumiere.x,y:actors.lumiere.y};actors.shiopon.x=l.x-62;actors.shiopon.y=l.y;return {shion:s,shiopon:{x:actors.shiopon.x,y:actors.shiopon.y},lumiere:l}},hitTestActor(x){return x<50?'shiopon':'lumiere'},setActorVisibility(actor,value){visibility[actor]=value;return true},face(actor,target){facing[actor]=target},gameplayCamera(){focused=false},focusGate(){focused=true},perform(c){motions.push(c);actors[c.actor]={...actors[c.actor],...c.target};return {promise:Promise.resolve()}},flightPose(p){actors.lumiere={...actors.lumiere,...p}},setLumiereDeparted(v=true){departed=v},pause(){},async restore(a){if(restoreFails)throw Error('restore');Object.assign(actors,a.actors);Object.assign(visibility,a.visibility);departed=a.departed;following=a.following;calls.push('restore')},verify:()=>({completed:!restoreFails&&!!owner})};
  const window={__TAROT_DEV_STAGE3__:dev,TarotAftermathScene:scene,TarotFutureStage3:{createClock(signal){return {now:()=>time,assert(){if(signal.aborted)throw Error('abort')},wait(ms){if(signal.aborted)return Promise.reject(Error('abort'));time+=ms;return Promise.resolve()},dispose(){}}}},TarotDialogueUI:{create(o){ui={show(line){ui.line=line;shown.push({text:line.text,actor:line.actor,facing:{...facing},focused});},hide(){},destroy(){},elements:{layer:node()},advance:o.onAdvance};return ui}},addEventListener(n,f){(handlers[n]??=[]).push(f)},removeEventListener(n,f){handlers[n]=(handlers[n]||[]).filter(v=>v!==f)},dispatchEvent(e){if(e.type==='tarot-breaker:shiopon-follow-stop')following=false;if(e.type==='tarot-breaker:shiopon-follow-start')following=true;for(const f of handlers[e.type]||[])f(e)},setInterval(f){const id=++nextTimer;timers.set(id,f);return id},clearInterval(id){timers.delete(id)}};
  const document={hidden:false,body:node(),getElementById:id=>nodes[id],querySelector:()=>null,createElement:node,addEventListener(n,f){(docHandlers[n]??=[]).push(f)},removeEventListener(n,f){docHandlers[n]=(docHandlers[n]||[]).filter(v=>v!==f)}};
  vm.runInNewContext(SOURCE,{window,document,AbortController,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail}}});
- return {window,calls,shown,nodes,state,advancedCount:0,movePlayer(x,y){actors.shion.x=x;actors.shion.y=y;for(const f of timers.values())f()},ui:()=>ui,notify:(overrides={})=>window.dispatchEvent({type:'tarot-breaker:stage3-session-ended',detail:{id:9,completed:true,restored:true,running:false,scene:{},...overrides}})};
+ return {window,calls,shown,nodes,state,advancedCount:0,movePlayer(x,y){actors.shion.x=x;actors.shion.y=y;for(const f of timers.values())f()},ui:()=>ui,notify:(overrides={})=>window.dispatchEvent({type:'tarot-breaker:stage3-session-ended',detail:{id:9,completed:true,restored:true,running:false,returnCameraHandoff:returnHandoff,scene:{},...overrides}})};
 }
 async function flush(n=60){for(let i=0;i<n;i++)await Promise.resolve();}
 async function begin(h){h.notify();await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');}
@@ -52,11 +56,36 @@ test('approved return fear scene plays 14 lines in order with faces and no actor
  assert.ok(states.indexOf('GATE_SILENCE')>states.indexOf('GATE_UNEASE'));
  assert.equal(states.at(-1),'CHECK_COMPANIONS');
  assert.ok(!h.shown.slice(0,expected.length).some(x=>x.text.includes('星の声が……食べられたの。')));
- assert.deepEqual(report.checked,[]);
+ assert.deepEqual(Array.from(report.checked),[]);
  assert.equal(h.state().actors.shion.x,before.shion.x);
  assert.equal(h.state().actors.shion.y,before.shion.y);
  assert.equal(h.state().actors.lumiere.x,before.lumiere.x);
  assert.equal(h.state().actors.lumiere.y,before.lumiere.y);
  assert.equal(h.state().owner,null);
  assert.ok(h.calls.indexOf('lock')>=0&&h.calls.lastIndexOf('unlock')>h.calls.indexOf('lock'));
+});
+
+test('panorama held from R01 through R06, R07 only after camera handback',async()=>{
+ const h=harness({returnHandoff:true});await begin(h);
+ const lines=h.shown.map(x=>x.text),states=h.window.TarotStarGateAftermath.getState().states.map(x=>x.name);
+ assert.equal(h.calls.filter(x=>x==='takeReturnCamera').length,1);
+ assert.equal(h.calls.filter(x=>x==='returnToGameplayCamera:450').length,1);
+ assert.equal(lines[5],'……でも、何を……？');
+ assert.equal(lines[6],'……こんな星門、見たことがない。');
+ assert.ok(states.indexOf('RETURN_CAMERA_PAN')>states.indexOf('GATE_UNEASE'));
+ assert.ok(states.indexOf('RETURN_CAMERA_READY')>states.indexOf('RETURN_CAMERA_PAN'));
+ assert.ok(states.indexOf('RETURN_CAMERA_READY')<states.indexOf('GATE_SILENCE'));
+ assert.equal(h.state().owner,null);
+});
+test('failed camera return cancels without displaying R07 or unlocking gameplay',async()=>{
+ const h=harness({returnHandoff:true,returnPanFails:true});h.notify();
+ for(let i=0;i<300;i++){
+  if(h.shown.length>h.advancedCount){h.ui().advance();h.advancedCount++;}
+  await flush(6);
+  const state=h.window.TarotStarGateAftermath.getState().state;
+  if(state==='CANCELLED'||state==='RESTORE_FAILED')break;
+ }
+ assert.equal(h.window.TarotStarGateAftermath.getState().cancelled,true);
+ assert.ok(!h.shown.some(x=>x.text==='……こんな星門、見たことがない。'));
+ assert.ok(h.calls.includes('cancelReturnPan'));
 });

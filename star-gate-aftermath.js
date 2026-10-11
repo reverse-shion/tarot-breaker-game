@@ -180,7 +180,7 @@
   s.scene.setActorVisibility?.('lumiere',1);
   s.scene.face('shiopon','shion');
   s.scene.face('lumiere','shion');
-  await s.scene.gameplayCamera();
+  if(!s.returnFraming)await s.scene.gameplayCamera();
 
   state(s,'SHION_DAZED');await s.clock.wait(700);
   // The two calls already played under black; do not replay them here.
@@ -198,6 +198,15 @@
   await sayLine(s,'R05',RETURN[4]);
   await sayLine(s,'R06',RETURN[5]);
   await s.clock.wait(280);
+  if(s.returnFraming){
+   state(s,'RETURN_CAMERA_PAN');s.returnPanActive=true;
+   try{
+    const result=await s.scene.returnToGameplayCamera(450);
+    s.clock.assert();
+    if(!result?.completed)throw new Error('Return camera did not reach normal gameplay framing');
+    s.returnFraming=false;state(s,'RETURN_CAMERA_READY');
+   }finally{s.returnPanActive=false;}
+  }
   await sayLine(s,'R07',RETURN[6]);
 
   s.scene.face('shion','lumiere');await s.clock.wait(180);
@@ -318,20 +327,33 @@
  function removeListeners(s){removeTalkInput(s);window.removeEventListener('keydown',s.keyGuard,true);window.removeEventListener('keyup',s.keyRelease,true);document.removeEventListener('visibilitychange',s.hidden);window.removeEventListener('resize',s.resize);}
  async function cancel(reason='cancelled'){
   const s=session;if(!s||s.completed||s.cancelled)return false;s.cancelled=true;s.reason=reason;s.ui?.hide();s.controller.abort();removeListeners(s);s.clock.dispose();s.scene.pause(false);s.ui?.destroy();s.ui?.elements.layer.remove();
-  try{s.scene.lock(s.owner);await s.scene.restore(s.a0);document.getElementById('game-shell').classList.toggle('aftermath-weak-light',s.a0.weakLight);const verified=s.scene.verify(s.a0);if(verified===false||verified?.completed===false||verified?.ok===false)throw new Error('Aftermath A0 verification failed');releaseControl(s,s.a0.following);s.restored=true;s.state='CANCELLED';objective(s,'','イベントを中断しました。再読み込みでやり直せます');}
+  try{s.scene.cancelReturnPan?.();s.scene.lock(s.owner);await s.scene.restore(s.a0);document.getElementById('game-shell').classList.toggle('aftermath-weak-light',s.a0.weakLight);const verified=s.scene.verify(s.a0);if(verified===false||verified?.completed===false||verified?.ok===false)throw new Error('Aftermath A0 verification failed');releaseControl(s,s.a0.following);s.restored=true;s.state='CANCELLED';objective(s,'','イベントを中断しました。再読み込みでやり直せます');}
   catch(error){s.error=String(error);s.state='RESTORE_FAILED';try{s.scene.lock(s.owner);}catch(lockError){s.lockError=String(lockError);}objective(s,'','画面を復元できませんでした。再読み込みしてください。');}
   window.dispatchEvent(new CustomEvent('tarot-breaker:aftermath-ended',{detail:report(s)}));return true;
  }
  function report(s){return s?{id:s.id,state:s.state,line:s.line,completed:!!s.completed,cancelled:!!s.cancelled,restored:!!s.restored,error:s.error,reason:s.reason,checked:[...s.checked],dialogues:s.dialogues,states:s.states,flight:s.flight,flightRoute:s.flightRoute,scene:s.scene.getState()}: {state:'NOT_STARTED',completed:false};}
  function start(reportValue){
   if(consumed||!eligible(reportValue))return false;const scene=window.TarotAftermathScene;if(!scene)return false;
-  const a0=scene.capture();if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
-  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,controller:new AbortController(),states:[],dialogues:[],checked:new Set()};s.clock=aftermathClock(s.controller.signal);
+  const a0=scene.capture();
+  const handoff=reportValue.returnCameraHandoff===true?scene.takeReturnCamera?.(reportValue.id):null;
+  if(reportValue.returnCameraHandoff===true&&!handoff)return false;
+  // A0 must retain an ordinary camera, never the overscanned full-garden view.
+  if(handoff){a0.camera={...handoff.safeCamera};a0.cameraRef={...handoff.safeCameraRef};}
+  if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
+  const s=session={id:reportValue.id,owner:`aftermath:${reportValue.id}`,scene,a0,returnFraming:!!handoff,controller:new AbortController(),states:[],dialogues:[],checked:new Set()};s.clock=aftermathClock(s.controller.signal);
   try{
    scene.lock(s.owner);scene.clearInput();const shell=document.getElementById('game-shell');if(!shell.classList.contains('sga-anomaly-rest'))shell.classList.add('aftermath-weak-light');makeUi(s);installTalkInput(s);
    s.keys=new Set();s.keyGuard=event=>{if(!['Enter',' ','Spacebar'].includes(event.key))return;if(document.hidden||event.repeat||s.keys.has(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}s.keys.add(event.key);};s.keyRelease=event=>s.keys.delete(event.key);window.addEventListener('keydown',s.keyGuard,true);window.addEventListener('keyup',s.keyRelease,true);
-   s.hidden=()=>{scene.pause(document.hidden);if(document.hidden)s.pendingTalk=null;else{scene.clearInput();if(s.focus)scene.focusGate();}};
-   s.resize=()=>{if(!alive(s))return;scene.clearInput();if(s.focus)scene.focusGate();};document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
+   s.hidden=()=>{
+    scene.pause(document.hidden);
+    if(document.hidden){s.pendingTalk=null;if(s.returnPanActive)scene.cancelReturnPan?.();}
+    else{scene.clearInput();if(s.focus)scene.focusGate();}
+   };
+   s.resize=()=>{
+    if(!alive(s))return;scene.clearInput();
+    if(s.returnFraming||s.returnPanActive){scene.cancelReturnPan?.();cancel('viewport');return;}
+    if(s.focus)scene.focusGate();
+   };document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
    opening(s).catch(error=>{if(!s.cancelled){s.error=String(error);cancel('error');}});return true;
   }catch(error){s.error=String(error);cancel('error');return false;}
  }

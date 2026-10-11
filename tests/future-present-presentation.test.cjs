@@ -54,3 +54,16 @@ test('fear scene uses actual actor facing and never repositions the P0 actors',(
  assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
  assert.doesNotMatch(aftermath,/scene\.perform\(\{type:'move'/);
 });
+
+test('full garden panorama is painted beneath black and safely handed off after unlock',()=>{
+ const game=fs.readFileSync('game.js','utf8');
+ assert.match(anomaly,/frameBounds\(GATE_BOUNDS,0,\{padding:14,minZoom:\.48\}\)/);
+ assert.match(anomaly,/framed\?\.completed[\s\S]*overscanCoversViewport\(state\)/);
+ assert.match(anomaly,/const unlocked=current\.scene\.unlock\(current\.id\);[\s\S]*armReturnCamera\?\.\(current\.id\)/);
+ assert.match(anomaly,/abandonReturnCamera\?\.\(current\.id\)/);
+ for(const method of ['armReturnCamera','takeReturnCamera','abandonReturnCamera','returnToGameplayCamera'])assert.ok(game.includes(method+'('));
+ assert.match(aftermath,/if\(!s\.returnFraming\)await s\.scene\.gameplayCamera\(\)/);
+ assert.match(aftermath,/await sayLine\(s,'R06',RETURN\[5\]\)[\s\S]*returnToGameplayCamera\(450\)[\s\S]*await sayLine\(s,'R07',RETURN\[6\]\)/);
+ assert.match(aftermath,/if\(handoff\)\{a0\.camera=\{\.\.\.handoff\.safeCamera\};a0\.cameraRef=\{\.\.\.handoff\.safeCameraRef\};\}/);
+ assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
+});

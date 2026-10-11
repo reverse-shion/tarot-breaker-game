@@ -7,7 +7,7 @@ function scene() {
   const start=source.indexOf('  if (stage3Dev) {\n    // Observe physical releases');
   const end=source.indexOf('  if (stage3Dev) {\n  function beginCinematicPan',start);
   const actors={shion:{x:810,y:150,dir:'up',stageOffsetY:0},shiopon:{x:780,y:180,dir:'up',stageOffsetY:0,following:true,hidden:false,rotation:0,visualOffsetY:0},lumiere:{x:750,y:200,dir:'down',stageOffsetY:0,bobOffsetY:0}};
-  const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
+  const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),returnCameraHandoff:null,heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
   c.window.TarotStage3Scene={lock(owner){c.sceneLockPrior={suspended:c.controls.state.suspended,npcSuspended:c.npcSuspended};c.sceneLockOwner=owner;c.controls.state.suspended=true;c.npcSuspended=true;},unlock(owner){if(c.sceneLockOwner!==owner)return false;c.sceneLockOwner=null;return true;},freezeCamera(){c.cinematicCamera.owned=true;}};
   c.window.TarotCinematicCamera={release(){c.cinematicCamera.owned=false;}};
   vm.runInNewContext(source.slice(start,end),c);
@@ -43,4 +43,24 @@ test('Aftermath return formation preserves restored Lumiere and places Shiopon b
   assert.equal(placed.shiopon.x,lumiereBefore.x-62);assert.equal(placed.shiopon.y,lumiereBefore.y);
   assert.equal(placed.lumiere.x-placed.shiopon.x,62);
   assert.equal(c.actors.shiopon.followRoute.length,0);assert.equal(c.actors.shiopon.wait,Number.POSITIVE_INFINITY);
+});
+
+test('one-time panorama transfer preserves safe camera and releases an unclaimed lease',()=>{
+ const {c,api}=scene();
+ c.normalCameraTarget=()=>({x:810,y:440});
+ c.cinematicCamera.allowOverscan=false;
+ c.window.TarotCinematicCamera.release=()=>{c.cinematicCamera.owned=false;c.cinematicCamera.allowOverscan=false;};
+ assert.equal(api.armReturnCamera(91),true);
+ assert.equal(c.cinematicCamera.owned,true);
+ assert.equal(c.cinematicCamera.allowOverscan,true);
+ assert.equal(api.armReturnCamera(91),false);
+ assert.equal(api.takeReturnCamera(92),null);
+ const token=api.takeReturnCamera(91);
+ assert.deepEqual(JSON.parse(JSON.stringify(token.safeCamera)),{x:810,y:440,zoom:.63});
+ assert.equal(api.takeReturnCamera(91),null);
+ assert.equal(api.abandonReturnCamera(91),false);
+ assert.equal(api.armReturnCamera(92),true);
+ assert.equal(api.abandonReturnCamera(92),true);
+ assert.equal(c.cinematicCamera.owned,false);
+ assert.equal(c.cinematicCamera.allowOverscan,false);
 });
