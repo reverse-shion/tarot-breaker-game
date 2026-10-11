@@ -37,3 +37,11 @@ test('corrupted Star Gate inner light has a real opaque backing through return',
  assert.match(css,/mix-blend-mode:normal!important/);
  assert.match(css,/opacity:1!important/);
 });
+
+test('final corrupted gate preserves the dark_energy_rise_04 interior slice',()=>{
+ const css=fs.readFileSync('star-gate-anomaly.css','utf8');
+ assert.match(css,/#game-shell\.sga-anomaly-rest \.scene-dark-energy-rise/);
+ assert.match(css,/clip-path:inset\(35\.7% 15% 0 15%\)!important/);
+ assert.match(css,/sga-anomaly-rest \.scene-dark-energy-rise \.sga-dark-energy-frame-fourth[\s\S]*opacity:1!important/);
+ assert.match(css,/sga-anomaly-rest \.scene-gate-inner-light>img[\s\S]*opacity:0!important/);
+});

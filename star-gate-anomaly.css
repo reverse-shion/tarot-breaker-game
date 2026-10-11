@@ -971,6 +971,44 @@
 #game-shell.sga-dark-afterglow .sga-dark-afterglow{
   animation:sgaDarkAfterglowFade 360ms ease-out forwards;
 }
+
+/* Preserve the exact gate-interior look seen at the end of dark_energy_rise_04.
+   The full frame must NOT remain on screen: only the portion geometrically
+   overlapping the Star Gate interior is kept after the dark ascent finishes.
+   Dark-energy world box: x=640,y=-300,w=320,h=510.
+   Inner-light world box: x≈688,y=-118,w≈224,h=328.
+   Therefore the retained portal slice is approximately inset(35.7% 15% 0 15%). */
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise{
+  opacity:1!important;
+  visibility:visible!important;
+  overflow:hidden!important;
+  clip-path:inset(35.7% 15% 0 15%)!important;
+}
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-next,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-third,
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-afterglow{
+  opacity:0!important;
+  animation:none!important;
+}
+#game-shell.sga-anomaly-rest .scene-dark-energy-rise .sga-dark-energy-frame-fourth{
+  opacity:1!important;
+  visibility:visible!important;
+  transform:translate3d(0,0,0) scaleY(1)!important;
+  animation:none!important;
+  filter:none!important;
+}
+
+/* The retained frame-04 pixels are the authored interior reference.
+   Hide the old inner-light raster in the final corrupted state so its transparent
+   pixels cannot alter the appearance when camera/gameplay drawing resumes. */
+#game-shell.sga-anomaly-rest .scene-gate-inner-light>img{
+  opacity:0!important;
+}
+#game-shell.sga-anomaly-rest .scene-gate-inner-backing{
+  opacity:1!important;
+}
+
 @keyframes sgaDarkEnergySeep01{
   from{opacity:0;transform:translate3d(0,4px,0) scaleY(.91)}
   to{opacity:1;transform:translate3d(0,0,0) scaleY(1)}
