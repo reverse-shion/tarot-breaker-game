@@ -1161,9 +1161,22 @@ async function run(){
    current.audio?.release();
   }
   running=false;current.returnCameraHandoff=returnCameraHandoff;
-  lastResult=report(current);window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
-  // Do not leave a panoramic camera behind when no Aftermath accepts it.
-  if(returnCameraHandoff)window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
+  lastResult=report(current);
+  window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
+  // Aftermath must positively acknowledge this event. An unaccepted lease
+  // previously allowed free movement with the panoramic camera still active.
+  const aftermath=window.TarotStarGateAftermath;
+  const status=aftermath?.getDiagnostic?.()?.status;
+  const state=aftermath?.getState?.()?.state;
+  if(state==='NOT_STARTED'||!state||status!=='ACCEPTED'){
+   const abandoned=window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
+   if(!abandoned)window.TarotCinematicCamera?.release();
+   current.afterStartFailure={status:status||'NO_RECEIVER',state:state||'MISSING',diagnostic:aftermath?.getDiagnostic?.()||null};
+  }else if(returnCameraHandoff){
+   window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
+  }
+  lastResult=report(current);
+  showReturnDiagnostic();
  }
 }
 function releasePresentation({preserveGateAnomaly=false}={}){
@@ -1172,9 +1185,39 @@ function releasePresentation({preserveGateAnomaly=false}={}){
  // Successful completion retains the exact pre-Future blackout anomaly-rest gate; recovery still clears it.
  cleanupGateState({preserveFinal:preserveGateAnomaly});gateShell()?.classList.remove('sga-future-world-hidden','sga-sequence-overlap','sga-sequence-flash-on','sga-dark-01-02-overlap','sga-dark-02-03-overlap','sga-dark-03-04-overlap');
 }
+function showReturnDiagnostic(){
+ if(new URLSearchParams(location.search).get('returnDebug')!=='1')return;
+ let node=document.getElementById('tarot-return-diagnostic');
+ if(!node){
+  node=document.createElement('pre');node.id='tarot-return-diagnostic';
+  Object.assign(node.style,{position:'fixed',left:'8px',right:'8px',bottom:'calc(env(safe-area-inset-bottom) + 12px)',
+   maxHeight:'36vh',overflow:'auto',padding:'9px',whiteSpace:'pre-wrap',wordBreak:'break-word',
+   color:'#f5ebcb',background:'rgba(13,16,29,.96)',border:'1px solid #b7a47d',
+   font:'11px/1.45 monospace',zIndex:'99999',pointerEvents:'none'});
+  document.body.append(node);
+ }
+ const stage=window.TarotStarGateAnomaly?.getLastResult?.()||lastResult;
+ const after=window.TarotStarGateAftermath;
+ const latest=after?.getState?.()||null;
+ const camera=window.TarotCinematicCamera?.getState?.();
+ node.textContent='RETURN CAMERA DEBUG\n'+JSON.stringify({
+  commit:'return-diagnostic-v1',
+  stage:{completed:stage?.completed,restored:stage?.restored,error:stage?.error,
+   reason:stage?.reason,ready:stage?.returnCameraPrepared,handoff:stage?.returnCameraHandoff,
+   afterStartFailure:stage?.afterStartFailure},
+  after:{state:latest?.state||'NOT_STARTED',line:latest?.line||null,completed:latest?.completed,
+   cancelled:latest?.cancelled,error:latest?.error,reason:latest?.reason,
+   diagnostic:after?.getDiagnostic?.()||null},
+  camera:{owned:camera?.owned,active:camera?.active,zoom:camera?.camera?.zoom,viewport:camera?.viewport}
+ },null,2);
+}
+if(new URLSearchParams(location.search).get('returnDebug')==='1'){
+ window.addEventListener('tarot-breaker:aftermath-state',()=>queueMicrotask(showReturnDiagnostic));
+ window.addEventListener('tarot-breaker:aftermath-ended',()=>queueMicrotask(showReturnDiagnostic));
+}
 function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
  futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,returnCameraPrepared:!!current.returnCameraPrepared,returnCameraHandoff:!!current.returnCameraHandoff,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
- p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
+ afterStartFailure:current.afterStartFailure,p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
 window.TarotStarGateAnomaly=Object.freeze({start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});
 })();

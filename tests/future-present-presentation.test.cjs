@@ -67,3 +67,19 @@ test('full garden panorama is painted beneath black and safely handed off after 
  assert.match(aftermath,/if\(handoff\)\{a0\.camera=\{\.\.\.handoff\.safeCamera\};a0\.cameraRef=\{\.\.\.handoff\.safeCameraRef\};\}/);
  assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
 });
+
+test('iPhone regression: refused Aftermath is diagnosed and panoramic camera is abandoned',()=>{
+ const after=fs.readFileSync('star-gate-aftermath.js','utf8');
+ assert.match(after,/REJECTED_ELIGIBILITY/);
+ assert.match(after,/CAPTURE_FAILED/);
+ assert.match(after,/HANDOFF_FAILED/);
+ assert.match(after,/OPENING_FAILED/);
+ assert.match(after,/getDiagnostic:\(\)=>lastStartAttempt/);
+ assert.match(anomaly,/const status=aftermath\?\.getDiagnostic\?\.\(\)\?\.status/);
+ assert.match(anomaly,/state==='NOT_STARTED'\|\|!state\|\|status!=='ACCEPTED'/);
+ assert.match(anomaly,/if\(!abandoned\)window\.TarotCinematicCamera\?\.release\(\)/);
+ assert.match(anomaly,/showReturnDiagnostic\(\)/);
+ assert.match(anomaly,/get\('returnDebug'\)!=='1'/);
+ assert.match(anomaly,/returnCameraHandoff:!!current\.returnCameraHandoff/);
+ assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
+});

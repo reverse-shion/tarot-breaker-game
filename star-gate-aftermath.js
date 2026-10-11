@@ -74,7 +74,7 @@
  ]);
  const NAMES={shion:'シオン',shiopon:'しおぽん',lumiere:'リュミエール'};
  const TALK_RADIUS=68;
- let session=null,consumed=false;
+ let session=null,consumed=false,lastStartAttempt=null;
  const alive=s=>session===s&&!s.controller.signal.aborted;
  const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
@@ -333,10 +333,34 @@
  }
  function report(s){return s?{id:s.id,state:s.state,line:s.line,completed:!!s.completed,cancelled:!!s.cancelled,restored:!!s.restored,error:s.error,reason:s.reason,checked:[...s.checked],dialogues:s.dialogues,states:s.states,flight:s.flight,flightRoute:s.flightRoute,scene:s.scene.getState()}: {state:'NOT_STARTED',completed:false};}
  function start(reportValue){
-  if(consumed||!eligible(reportValue))return false;const scene=window.TarotAftermathScene;if(!scene)return false;
-  const a0=scene.capture();
-  const handoff=reportValue.returnCameraHandoff===true?scene.takeReturnCamera?.(reportValue.id):null;
-  if(reportValue.returnCameraHandoff===true&&!handoff)return false;
+  const eligibility={
+   finiteId:Number.isFinite(reportValue?.id),
+   completed:reportValue?.completed===true,
+   restored:reportValue?.restored===true,
+   running:!!reportValue?.running,
+   error:String(reportValue?.error||''),
+   reason:String(reportValue?.reason||''),
+   recoveryError:String(reportValue?.recoveryError||''),
+   owner:reportValue?.scene?.owner??null,
+   vision:!!reportValue?.scene?.vision,
+   absorption:!!reportValue?.scene?.absorption,
+   overlays:!!document.querySelector('#star-gate-anomaly.active,.sga-v192-white,.sga-v192-black,.sga-arcana-detail'),
+   consumed
+  };
+  if(consumed||!eligible(reportValue)){
+   lastStartAttempt={status:'REJECTED_ELIGIBILITY',id:reportValue?.id??null,eligibility};return false;
+  }
+  const scene=window.TarotAftermathScene;
+  if(!scene){lastStartAttempt={status:'MISSING_ADAPTER',id:reportValue.id,eligibility};return false;}
+  let a0,handoff;
+  try{
+   a0=scene.capture();
+   handoff=reportValue.returnCameraHandoff===true?scene.takeReturnCamera?.(reportValue.id):null;
+  }catch(error){lastStartAttempt={status:'CAPTURE_FAILED',id:reportValue.id,eligibility,error:String(error)};return false;}
+  if(reportValue.returnCameraHandoff===true&&!handoff){
+   lastStartAttempt={status:'HANDOFF_FAILED',id:reportValue.id,eligibility};return false;
+  }
+  lastStartAttempt={status:'ACCEPTED',id:reportValue.id,eligibility,handoff:!!handoff};
   // A0 must retain an ordinary camera, never the overscanned full-garden view.
   if(handoff){a0.camera={...handoff.safeCamera};a0.cameraRef={...handoff.safeCameraRef};}
   if(a0.visibility)a0.visibility={...a0.visibility,shion:1,shiopon:1,lumiere:1};a0.weakLight=document.getElementById('game-shell').classList.contains('aftermath-weak-light');consumed=true;
@@ -354,9 +378,15 @@
     if(s.returnFraming||s.returnPanActive){scene.cancelReturnPan?.();cancel('viewport');return;}
     if(s.focus)scene.focusGate();
    };document.addEventListener('visibilitychange',s.hidden);window.addEventListener('resize',s.resize);
-   opening(s).catch(error=>{if(!s.cancelled){s.error=String(error);cancel('error');}});return true;
-  }catch(error){s.error=String(error);cancel('error');return false;}
+   opening(s).catch(error=>{
+    if(!s.cancelled){s.error=String(error);lastStartAttempt={...lastStartAttempt,status:'OPENING_FAILED',error:String(error)};cancel('error');}
+   });
+   return true;
+  }catch(error){
+   s.error=String(error);lastStartAttempt={...lastStartAttempt,status:'START_FAILED',error:String(error)};
+   cancel('error');return false;
+  }
  }
  window.addEventListener('tarot-breaker:stage3-session-ended',event=>start(event.detail));
- window.TarotStarGateAftermath=Object.freeze({getState:()=>report(session),cancel,talk,returnDialogue:RETURN,individual:INDIVIDUAL,group:GROUP});
+ window.TarotStarGateAftermath=Object.freeze({getState:()=>report(session),getDiagnostic:()=>lastStartAttempt?{...lastStartAttempt}:null,cancel,talk,returnDialogue:RETURN,individual:INDIVIDUAL,group:GROUP});
 })();
