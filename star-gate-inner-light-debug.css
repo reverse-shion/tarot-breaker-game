@@ -1,0 +1,37 @@
+/* Gate void on-device editor; loaded only by the explicit Stage 3 dev flag. */
+html[data-gate-light-debug="on"] #joystick,
+html[data-gate-light-debug="on"] #guide,
+html[data-gate-light-debug="on"] #audio-toggle,
+html[data-gate-light-debug="on"] #star-gate-interaction-choice{display:none!important}
+#gate-light-debug-panel{
+ position:fixed;z-index:100050;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));
+ box-sizing:border-box;max-height:min(46dvh,430px);overflow:auto;overscroll-behavior:contain;
+ border:1px solid #a6c7f2;border-radius:14px;padding:10px 12px;
+ background:rgba(9,15,34,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+ color:#f5f8ff;font:13px/1.35 system-ui,-apple-system,sans-serif;
+ box-shadow:0 8px 32px rgba(0,0,0,.42);touch-action:pan-y
+}
+#gate-light-debug-panel[hidden],#gate-light-debug-reveal[hidden]{display:none!important}
+#gate-light-debug-panel header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#gate-light-debug-panel strong{font-size:15px}
+#gate-light-debug-panel .gld-sub{margin:8px 0;color:#ccd7e7;font-size:11px}
+#gate-light-debug-panel .gld-toolbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+#gate-light-debug-panel button,#gate-light-debug-reveal{
+ appearance:none;border:1px solid #8299bb;border-radius:9px;min-height:38px;
+ padding:7px 10px;background:#21314d;color:white;font:600 12px/1.1 system-ui,-apple-system,sans-serif;touch-action:manipulation
+}
+#gate-light-debug-panel button:active{background:#345479}
+#gate-light-debug-panel .gld-field{border-top:1px solid rgba(255,255,255,.16);padding:8px 0}
+#gate-light-debug-panel .gld-fieldhead{display:flex;justify-content:space-between}
+#gate-light-debug-panel output{color:#a9eaff;font-variant-numeric:tabular-nums}
+#gate-light-debug-panel input[type=range]{width:100%;height:29px;accent-color:#a7e8ff;touch-action:pan-y}
+#gate-light-debug-panel .gld-nudges{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+#gate-light-debug-panel .gld-status{min-height:18px;color:#bcd8fc;font-size:11px}
+#gate-light-debug-panel .gld-export{display:block;box-sizing:border-box;width:100%;min-height:105px;margin-top:6px;border:1px solid #849fc3;border-radius:8px;padding:8px;background:#111a2c;color:#fff;font:11px/1.35 monospace;user-select:text;-webkit-user-select:text}
+#gate-light-debug-panel .gld-export[hidden]{display:none!important}
+#gate-light-debug-reveal{position:fixed;z-index:100050;right:10px;bottom:calc(12px + env(safe-area-inset-bottom));background:#182d52}
+#gate-light-debug-guides{position:fixed;inset:0;z-index:100040;pointer-events:none}
+#gate-light-debug-guides.is-hidden{display:none!important}
+#gate-light-debug-guides .gld-aperture{position:fixed;box-sizing:border-box;border:1px dashed #ffe29b;box-shadow:0 0 0 1px #533d08;pointer-events:none}
+#gate-light-debug-guides .gld-drag{position:fixed;box-sizing:border-box;border:2px dashed #42dffc;background:rgba(38,176,220,.035);touch-action:none;pointer-events:auto}
+#gate-light-debug-guides .gld-resize{position:absolute;right:-14px;bottom:-14px;width:32px;height:32px;border:2px solid white;border-radius:50%;background:#1283a9;box-shadow:0 1px 8px #000;touch-action:none;pointer-events:auto}
