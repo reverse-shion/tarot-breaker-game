@@ -19,6 +19,16 @@
  window.TarotJourney=Object.freeze({get:k=>state[k],set:(k,v)=>{state[k]=v;},reset:()=>{}});
  window.TarotStage3DevFixture=Object.freeze({context:Object.freeze({mapId:'star_gate_garden',spawnId:'south_gate',spawn:Object.freeze({x:810,y:177}),completedEvents:Object.freeze(completedEvents),companion:'joined_with_shion'})});
  const shell=document.getElementById('game-shell');
+ // The inner-light WEBP contains transparent pixels by design. During the corrupted
+ // gate state those pixels must not reveal the moving sky/cloud layers. The CSS
+ // backing existed before, but no DOM node was ever created, so the safeguard was inert.
+ const innerLight=shell.querySelector('.scene-gate-inner-light');
+ if(innerLight&&!innerLight.querySelector('.scene-gate-inner-backing')){
+   const backing=document.createElement('div');
+   backing.className='scene-gate-inner-backing';
+   backing.setAttribute('aria-hidden','true');
+   innerLight.prepend(backing);
+ }
  // A's approved lower sky registration is unchanged; only its 514px upper extension is restored.
  const sky=shell.querySelector('.scene-farthest-sky');
  sky.classList.add('scene-farthest-sky--extended');sky.querySelector('img').src='./assets/maps/star-country-farthest-sky-background-extended.webp';

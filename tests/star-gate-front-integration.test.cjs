@@ -26,3 +26,14 @@ test('A inner light geometry restored only for dev, ordinary geometry preserved'
  function layout(dev){const window={__TAROT_DEV_STAGE3__:dev};const document={querySelector:()=>null,head:{appendChild(){}},createElement:()=>({dataset:{}})};const c=vm.createContext({window,document});for(const file of ['scene-layout.js','scene-preview41-fix.js'])vm.runInContext(fs.readFileSync(file,'utf8'),c);return window.TarotSceneLayout.gateAssembly.innerLight;}
  const approved=layout(true),normal=layout(false);assert.equal(approved.w,230.86);assert.ok(Math.abs(approved.x-684.57)<1e-10);assert.equal(approved.y+approved.h,210);assert.equal(normal.w,190);assert.equal(normal.x+normal.w/2,800);assert.equal(normal.y+normal.h,210);
 });
+
+test('corrupted Star Gate inner light has a real opaque backing through return',()=>{
+ const bootstrap=fs.readFileSync('stage3-dev-bootstrap.js','utf8');
+ const css=fs.readFileSync('star-gate-anomaly.css','utf8');
+ assert.match(bootstrap,/scene-gate-inner-backing/);
+ assert.match(bootstrap,/innerLight\.prepend\(backing\)/);
+ assert.match(css,/#game-shell\.sga-dark-frame-rise \.scene-gate-inner-backing/);
+ assert.match(css,/#game-shell\.sga-anomaly-rest \.scene-gate-inner-backing/);
+ assert.match(css,/mix-blend-mode:normal!important/);
+ assert.match(css,/opacity:1!important/);
+});

@@ -791,24 +791,27 @@
 }
 
 /* Cloud bleed-through fix.
-   This opaque backing shares the established inner-light geometry and blocks
-   moving cloud/sky pixels wherever the WEBP itself is transparent. */
+   The inner-light raster is intentionally transparent around its authored portal shape.
+   During corruption, place an opaque black-purple field behind that raster so moving
+   cloud/sky pixels can never show through the opening. The gate frame above this layer
+   hides the polygon edge; this is not a visible rectangular plate. */
 #game-shell .scene-gate-inner-light{
   isolation:isolate!important;
+  mix-blend-mode:normal!important;
 }
 #game-shell .scene-gate-inner-backing{
   position:absolute;
-  left:12%;
-  top:8%;
-  width:76%;
-  height:88%;
+  inset:0;
   z-index:0;
   display:block;
-  opacity:1!important;
+  opacity:0!important;
   mix-blend-mode:normal!important;
   pointer-events:none;
-  background:linear-gradient(180deg,#071326 0%,#0a1930 58%,#0b1d38 100%);
   clip-path:polygon(50% 0%,67% 4%,82% 15%,93% 31%,100% 54%,100% 100%,0% 100%,0% 54%,7% 31%,18% 15%,33% 4%);
+  background:
+    radial-gradient(ellipse at 50% 76%,rgba(67,26,96,.98) 0%,rgba(35,13,56,.99) 34%,rgba(18,8,31,1) 58%,rgba(7,4,13,1) 82%,rgba(5,3,10,1) 100%),
+    linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%);
+  transition:opacity .28s ease,background .45s ease;
 }
 #game-shell .scene-gate-inner-light>img{
   position:relative;
@@ -816,13 +819,22 @@
   opacity:1!important;
   mix-blend-mode:normal!important;
 }
-#game-shell.sga-normal-flow .scene-gate-inner-backing,
-#game-shell.sga-resonance-complete .scene-gate-inner-backing,
-#game-shell.sga-anomaly-flicker .scene-gate-inner-backing,
+
+/* Keep the approved normal gate visually unchanged. The backing starts to close
+   the portal only when corruption begins, then stays fully opaque after dark ascent. */
+#game-shell.sga-anomaly-flicker .scene-gate-inner-backing{
+  opacity:.42!important;
+}
 #game-shell.sga-anomaly .scene-gate-inner-backing,
 #game-shell.sga-reverse-gate .scene-gate-inner-backing,
 #game-shell.sga-reverse-flow .scene-gate-inner-backing,
 #game-shell.sga-skyward-release .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-01 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-02 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-03 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-04 .scene-gate-inner-backing,
+#game-shell.sga-dark-frame-rise .scene-gate-inner-backing,
+#game-shell.sga-dark-afterglow .scene-gate-inner-backing,
 #game-shell.sga-anomaly-rest .scene-gate-inner-backing{
   opacity:1!important;
 }
