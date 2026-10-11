@@ -24,7 +24,10 @@ body > #anomaly-dialogue-layer.sga-return-call{z-index:2502!important}
 .sga-arcana-contamination{
   position:absolute;
   z-index:4;
-  inset:0;
+  /* Registered visible normal-card edges (8.3348% sides, 2.0313% top,
+     2.5781% bottom). Keep the soft stain slightly inside those edges so
+     the existing <=1.012 effect scale cannot bleed onto the backdrop. */
+  inset:2.6% 8.85% 3.16%;
   opacity:0;
   pointer-events:none;
   transform-origin:50% 50%;
@@ -61,7 +64,8 @@ body > #anomaly-dialogue-layer.sga-return-call{z-index:2502!important}
   --sga-re-safe:68%;
   position:absolute;
   z-index:6;
-  inset:-1.5%;
+  /* Match the visible card border, not the outer transparent source canvas. */
+  inset:2.6% 8.85% 3.16%;
   opacity:0;
   pointer-events:none;
   transform-origin:50% 50%;

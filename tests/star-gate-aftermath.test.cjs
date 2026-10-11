@@ -69,7 +69,7 @@ test('panorama held from R01 through R06, R07 only after camera handback',async(
  const h=harness({returnHandoff:true});await begin(h);
  const lines=h.shown.map(x=>x.text),states=h.window.TarotStarGateAftermath.getState().states.map(x=>x.name);
  assert.equal(h.calls.filter(x=>x==='takeReturnCamera').length,1);
- assert.equal(h.calls.filter(x=>x==='returnToGameplayCamera:450').length,1);
+ assert.equal(h.calls.filter(x=>x==='returnToGameplayCamera:1550').length,1);
  assert.equal(lines[5],'……でも、何を……？');
  assert.equal(lines[6],'……こんな星門、見たことがない。');
  assert.ok(states.indexOf('RETURN_CAMERA_PAN')>states.indexOf('GATE_UNEASE'));

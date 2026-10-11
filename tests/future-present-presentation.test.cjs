@@ -63,7 +63,7 @@ test('full garden panorama is painted beneath black and safely handed off after 
  assert.match(anomaly,/abandonReturnCamera\?\.\(current\.id\)/);
  for(const method of ['armReturnCamera','takeReturnCamera','abandonReturnCamera','returnToGameplayCamera'])assert.ok(game.includes(method+'('));
  assert.match(aftermath,/if\(!s\.returnFraming\)await s\.scene\.gameplayCamera\(\)/);
- assert.match(aftermath,/await sayLine\(s,'R06',RETURN\[5\]\)[\s\S]*returnToGameplayCamera\(450\)[\s\S]*await sayLine\(s,'R07',RETURN\[6\]\)/);
+ assert.match(aftermath,/await sayLine\(s,'R06',RETURN\[5\]\)[\s\S]*returnToGameplayCamera\(1550\)[\s\S]*await sayLine\(s,'R07',RETURN\[6\]\)/);
  assert.match(aftermath,/if\(handoff\)\{a0\.camera=\{\.\.\.handoff\.safeCamera\};a0\.cameraRef=\{\.\.\.handoff\.safeCameraRef\};\}/);
  assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
 });
@@ -95,4 +95,10 @@ test('real iPhone error regression: adapter cannot reference block-scoped normal
  assert.match(adapter,/const target=window\.TarotCinematicCamera\?\.getNormalTarget\?\.\(\)/);
  assert.match(adapter,/if\(!Number\.isFinite\(target\?\.x\)\|\|!Number\.isFinite\(target\?\.y\)\)return false/);
  assert.match(cameraApi,/function normalCameraTarget\(\)[\s\S]*getNormalTarget\(\)\s*\{\s*return\s*\{\s*\.\.\.normalCameraTarget\(\)\s*\};?\s*\}/);
+});
+
+test('only the R06 return pan duration matches the established 1550ms first gate framing',()=>{
+ assert.match(anomaly,/frameBounds\(GATE_BOUNDS,1550,\{padding:14,minZoom:\.48\}\)/);
+ assert.match(aftermath,/await sayLine\(s,'R06',RETURN\[5\]\)[\s\S]*returnToGameplayCamera\(1550\)[\s\S]*await sayLine\(s,'R07',RETURN\[6\]\)/);
+ assert.doesNotMatch(aftermath,/returnToGameplayCamera\(450\)/);
 });

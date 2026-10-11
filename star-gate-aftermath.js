@@ -201,7 +201,7 @@
   if(s.returnFraming){
    state(s,'RETURN_CAMERA_PAN');s.returnPanActive=true;
    try{
-    const result=await s.scene.returnToGameplayCamera(450);
+    const result=await s.scene.returnToGameplayCamera(1550);
     s.clock.assert();
     if(!result?.completed)throw new Error('Return camera did not reach normal gameplay framing');
     s.returnFraming=false;state(s,'RETURN_CAMERA_READY');

@@ -47,7 +47,9 @@ test('Re Arcana emerges through a whole-card black-purple stain without a direct
  assert.ok(Number(emergence.re.opacity)>0&&Number(emergence.re.opacity)<1);
  assert.equal(emergence.re.maskImage,'none');
  assert.match(css,/\.sga-arcana-contamination\{/);
- assert.match(css,/inset:0/);
+ assert.match(css,/\.sga-arcana-contamination\{[\s\S]*?inset:2\.6% 8\.85% 3\.16%/);
+ assert.match(css,/\.sga-re-infection\{[\s\S]*?inset:2\.6% 8\.85% 3\.16%/);
+ assert.doesNotMatch(css,/\.sga-re-infection\{[\s\S]*?inset:-1\.5%/);
  assert.doesNotMatch(css,/\.sga-arcana-breach-glow/);
  assert.doesNotMatch(source,/setErosionMask|linear-gradient\(103deg|EDGE_EROSION|BREACH_GLOW/);
  assert.doesNotMatch(source,/clipPath='circle/);
