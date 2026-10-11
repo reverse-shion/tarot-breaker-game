@@ -115,7 +115,7 @@
     records.push(data);
     if (records.length > 12) records.shift();
     if (counter) counter.textContent = '星門記録 ' + records.length;
-    if (output && !panel.hidden) output.value = JSON.stringify({ records }, null, 2);
+    if (output && !details.hidden) output.value = JSON.stringify({ records }, null, 2);
     return data;
   }
 
@@ -150,7 +150,6 @@
   details.append(explanation, manual, copy, output);
   panel.append(counter, details);
   document.body.append(panel);
-  Object.defineProperty(panel, 'hidden', { get() { return details.hidden; } });
   counter.addEventListener('click', () => {
     details.hidden = !details.hidden;
     if (!details.hidden) output.value = JSON.stringify({ records }, null, 2);
