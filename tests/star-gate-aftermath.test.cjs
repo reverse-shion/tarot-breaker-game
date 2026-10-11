@@ -36,3 +36,27 @@ test('either order works and Shiopon consistently calls him シオンさん',asy
 test('repeat talk before the second companion does not consume or start the group',async()=>{const h=harness();await begin(h);const target=h.state().actors.shiopon;h.movePlayer(target.x,target.y+18);let p=h.window.TarotStarGateAftermath.talk('shiopon');await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');await p;p=h.window.TarotStarGateAftermath.talk('shiopon');await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS'&&h.shown.at(-1)?.text.includes('耳を澄ませ'));await p;const r=h.window.TarotStarGateAftermath.getState();assert.deepEqual(JSON.parse(JSON.stringify(r.checked)),['shiopon']);assert.equal(r.completed,false);assert.equal(h.state().owner,null);});
 
 test('cancellation from free-check state restores stable visible A0 and original follow',async()=>{const h=harness();await begin(h);assert.equal(h.state().following,false);await h.window.TarotStarGateAftermath.cancel();const r=h.window.TarotStarGateAftermath.getState();assert.equal(r.state,'CANCELLED');assert.equal(r.restored,true);assert.equal(h.state().following,true);assert.deepEqual(h.state().visibility,{shion:1,shiopon:1,lumiere:1});assert.equal(h.state().owner,null);});
+test('approved return fear scene plays 14 lines in order with faces and no actor movement',async()=>{
+ const h=harness(),before=h.state().actors;
+ await begin(h);
+ const expected=[["shion","……二人とも……どうしたんだ？"],["shiopon","……よかったの。シオンさん……。"],["shion","……星門……。"],["shion","……胸騒ぎがする。"],["shion","まるで……何かを訴えているみたいだ。"],["shion","……でも、何を……？"],["shion","……こんな星門、見たことがない。"],["shion","リュミエール……元に戻せるのか？"],["lumiere","……分かりません。"],["lumiere","……あの光が、こんな闇に染まるなんて……。"],["shiopon","……怖いの。"],["shiopon","……いつもは、あんなに優しい光なのに……。"],["lumiere","……私も、怖いです。"],["lumiere","……こんなふうに、星門を恐れる日が来るなんて……。"]];
+ assert.deepEqual(h.shown.slice(0,expected.length).map(x=>[x.actor,x.text]),expected);
+ assert.equal(h.shown[0].facing.shion,'shiopon');
+ assert.equal(h.shown[2].facing.shion,'gate');
+ assert.equal(h.shown[7].facing.shion,'lumiere');
+ assert.equal(h.shown[9].facing.lumiere,'gate');
+ assert.equal(h.shown[10].facing.shiopon,'gate');
+ assert.equal(h.shown[12].facing.lumiere,'gate');
+ const report=h.window.TarotStarGateAftermath.getState(),states=report.states.map(x=>x.name);
+ assert.ok(states.indexOf('GATE_UNEASE')>states.indexOf('SHION_RESPONDS'));
+ assert.ok(states.indexOf('GATE_SILENCE')>states.indexOf('GATE_UNEASE'));
+ assert.equal(states.at(-1),'CHECK_COMPANIONS');
+ assert.ok(!h.shown.slice(0,expected.length).some(x=>x.text.includes('星の声が……食べられたの。')));
+ assert.deepEqual(report.checked,[]);
+ assert.equal(h.state().actors.shion.x,before.shion.x);
+ assert.equal(h.state().actors.shion.y,before.shion.y);
+ assert.equal(h.state().actors.lumiere.x,before.lumiere.x);
+ assert.equal(h.state().actors.lumiere.y,before.lumiere.y);
+ assert.equal(h.state().owner,null);
+ assert.ok(h.calls.indexOf('lock')>=0&&h.calls.lastIndexOf('unlock')>h.calls.indexOf('lock'));
+});

@@ -1,4 +1,4 @@
-/* Present-return scenario v1.5: shared calls under black -> fade -> original Shion response and free control. */
+/* Present-return scenario v1.6: calls under black -> changed-gate fear -> free companion check. */
 (() => {
  'use strict';
  if(window.__TAROT_DEV_STAGE3__!==true)return;
@@ -15,7 +15,7 @@
    Object.freeze(['shiopon','もう少しだけ、耳を澄ませてみるの。'])
   ]),
   lumiere:Object.freeze([
-   Object.freeze(['lumiere','シオン様……ご無事でよかった。']),
+   Object.freeze(['lumiere','シオン様……先ほどのこと、覚えていらっしゃいますか？']),
    Object.freeze(['shion','俺は……どうなっていた？']),
    Object.freeze(['lumiere','星門を見つめたまま、お呼びしてもお返事がなくて……。']),
    Object.freeze(['shion','……そうだったのか。']),
@@ -28,6 +28,23 @@
   shiopon:Object.freeze(['shiopon','もう少しだけ、耳を澄ませてみるの。']),
   lumiere:Object.freeze(['lumiere','星門の様子を、もう少し確かめてみます。'])
  });
+ // Approved return dialogue, spoken after present fade-in.
+ const RETURN=Object.freeze([
+  Object.freeze(["shion","……二人とも……どうしたんだ？"]),
+  Object.freeze(["shiopon","……よかったの。シオンさん……。"]),
+  Object.freeze(["shion","……星門……。"]),
+  Object.freeze(["shion","……胸騒ぎがする。"]),
+  Object.freeze(["shion","まるで……何かを訴えているみたいだ。"]),
+  Object.freeze(["shion","……でも、何を……？"]),
+  Object.freeze(["shion","……こんな星門、見たことがない。"]),
+  Object.freeze(["shion","リュミエール……元に戻せるのか？"]),
+  Object.freeze(["lumiere","……分かりません。"]),
+  Object.freeze(["lumiere","……あの光が、こんな闇に染まるなんて……。"]),
+  Object.freeze(["shiopon","……怖いの。"]),
+  Object.freeze(["shiopon","……いつもは、あんなに優しい光なのに……。"]),
+  Object.freeze(["lumiere","……私も、怖いです。"]),
+  Object.freeze(["lumiere","……こんなふうに、星門を恐れる日が来るなんて……。"])
+ ]);
  const GROUP=Object.freeze([
   Object.freeze(['shion','さっき……何か、見えたんだ。']),
   Object.freeze(['shion','でも、思い出そうとすると……ぼやける。']),
@@ -156,6 +173,7 @@
  async function opening(s){
   state(s,'RETURN_RECOGNITION');
   window.dispatchEvent(new CustomEvent('tarot-breaker:shiopon-follow-stop'));
+  // Reassert the formation staged during full black. No movement or camera pan.
   s.returnFormation=s.scene.placeReturnFormation?.();
   s.scene.setActorVisibility?.('shion',1);
   s.scene.setActorVisibility?.('shiopon',1);
@@ -164,19 +182,43 @@
   s.scene.face('lumiere','shion');
   await s.scene.gameplayCamera();
 
-  state(s,'SHION_DAZED');
-  await s.clock.wait(700);
-
-  // Both calls already played under black in Stage 3; no repeat here.
-  // Shion turns after hearing the calls, not during the blackout.
-  s.scene.face('shion','shiopon');
-  await s.clock.wait(180);
+  state(s,'SHION_DAZED');await s.clock.wait(700);
+  // The two calls already played under black; do not replay them here.
+  s.scene.face('shion','shiopon');await s.clock.wait(180);
   state(s,'SHION_RESPONDS');
-  await sayLine(s,'R01',['shion','……ああ。二人とも……。']);
-  await s.clock.wait(180);
-  await sayLine(s,'R02',['shion','……ごめん。何かあったのか？']);
-  await s.clock.wait(220);
+  await sayLine(s,'R01',RETURN[0]);
+  await sayLine(s,'R02',RETURN[1]);
 
+  // Shock is carried by the approved corrupted inner light and actors' gazes.
+  // Keep fixed world positions and retain Lumiere's existing idle hover.
+  state(s,'GATE_UNEASE');
+  s.scene.face('shion','gate');await s.clock.wait(700);
+  await sayLine(s,'R03',RETURN[2]);await s.clock.wait(240);
+  await sayLine(s,'R04',RETURN[3]);
+  await sayLine(s,'R05',RETURN[4]);
+  await sayLine(s,'R06',RETURN[5]);
+  await s.clock.wait(280);
+  await sayLine(s,'R07',RETURN[6]);
+
+  s.scene.face('shion','lumiere');await s.clock.wait(180);
+  await sayLine(s,'R08',RETURN[7]);
+  await sayLine(s,'R09',RETURN[8]);
+  s.scene.face('lumiere','gate');await s.clock.wait(220);
+  await sayLine(s,'R10',RETURN[9]);
+
+  s.scene.face('shiopon','gate');await s.clock.wait(240);
+  await sayLine(s,'R11',RETURN[10]);
+  await sayLine(s,'R12',RETURN[11]);
+  await s.clock.wait(300);
+  await sayLine(s,'R13',RETURN[12]);
+  await s.clock.wait(200);
+  await sayLine(s,'R14',RETURN[13]);
+
+  // Three silent silhouettes facing the changed gate, then an invitation to
+  // question each companion. No repeat of the later group Gate focus.
+  state(s,'GATE_SILENCE');
+  s.scene.face('shion','gate');await s.clock.wait(680);
+  s.scene.face('shion','shiopon');await s.clock.wait(220);
   releaseControl(s,false);
   state(s,'CHECK_COMPANIONS');
  }
@@ -294,5 +336,5 @@
   }catch(error){s.error=String(error);cancel('error');return false;}
  }
  window.addEventListener('tarot-breaker:stage3-session-ended',event=>start(event.detail));
- window.TarotStarGateAftermath=Object.freeze({getState:()=>report(session),cancel,talk,individual:INDIVIDUAL,group:GROUP});
+ window.TarotStarGateAftermath=Object.freeze({getState:()=>report(session),cancel,talk,returnDialogue:RETURN,individual:INDIVIDUAL,group:GROUP});
 })();

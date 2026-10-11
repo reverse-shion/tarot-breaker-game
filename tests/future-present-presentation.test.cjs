@@ -15,7 +15,7 @@ test('successful present return hands off from Shion-only Stage3 and preserves a
 
 test('Present Return v1.3 stages separated companions before reveal and returns free control immediately',()=>{
  assert.match(aftermath,/state\(s,'RETURN_RECOGNITION'\);[\s\S]*placeReturnFormation\?\.\(\);[\s\S]*setActorVisibility\?\.\('shion',1\);[\s\S]*setActorVisibility\?\.\('shiopon',1\);[\s\S]*setActorVisibility\?\.\('lumiere',1\)/);
- assert.match(aftermath,/s\.scene\.gameplayCamera\(\);releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\)/);
+ assert.match(aftermath,/await s\.scene\.gameplayCamera\(\);[\s\S]*state\(s,'GATE_SILENCE'\);[\s\S]*releaseControl\(s,false\);\s*state\(s,'CHECK_COMPANIONS'\)/);
  assert.doesNotMatch(aftermath,/RETURN_RECOGNITION'[\s\S]{0,900}wait\(900\)/);
  assert.match(aftermath,/if\(s\.checked\.size<2\)\{releaseControl\(s,false\);state\(s,'CHECK_COMPANIONS'\);return;\}[\s\S]*await groupConversation\(s\)/);
  assert.match(aftermath,/if\(a0\.visibility\)a0\.visibility=\{\.\.\.a0\.visibility,shion:1,shiopon:1,lumiere:1\}/);assert.match(aftermath,/installTalkInput\(s\)/);assert.doesNotMatch(aftermath,/aftermath-talk|startTalkScanner|話しかける/);
@@ -42,5 +42,15 @@ test('blackout calls use canonical DialogueUI above cover, before fade, never re
  assert.match(sharedCss,/\.tb-dialogue-window/);
  assert.doesNotMatch(aftermath,/showDualCall|aftermath-dual-call|SIMULTANEOUS_CALL/);
  assert.doesNotMatch(css,/\.aftermath-dual-call|\.aftermath-call/);
- assert.match(aftermath,/state\(s,'SHION_DAZED'\)[\s\S]*await sayLine\(s,'R01',\['shion','……ああ。二人とも……。'\]\)/);
+ assert.match(aftermath,/state\(s,'SHION_DAZED'\)[\s\S]*await sayLine\(s,'R01',RETURN\[0\]\)/);
+ assert.match(aftermath,/Object\.freeze\(\["shion","……二人とも……どうしたんだ？"\]\)/);
+});
+
+test('fear scene uses actual actor facing and never repositions the P0 actors',()=>{
+ assert.match(aftermath,/state\(s,'GATE_UNEASE'\);[\s\S]*face\('shion','gate'\)[\s\S]*state\(s,'GATE_SILENCE'\)/);
+ assert.match(aftermath,/face\('shiopon','gate'\)[\s\S]*await sayLine\(s,'R11',RETURN\[10\]\)/);
+ assert.match(aftermath,/face\('lumiere','gate'\)[\s\S]*await sayLine\(s,'R10',RETURN\[9\]\)/);
+ assert.match(aftermath,/await sayLine\(s,'R14',RETURN\[13\]\)[\s\S]*face\('shion','shiopon'\)[\s\S]*releaseControl\(s,false\)/);
+ assert.match(anomaly,/left:'26\.627%',top:'-2\.3%',width:'46\.746%',height:'74\.8%'/);
+ assert.doesNotMatch(aftermath,/scene\.perform\(\{type:'move'/);
 });
