@@ -1214,9 +1214,9 @@ html[data-dev-harness="star-gate-full"] .scene-dark-energy-rise { z-index: 3 !im
   visibility:hidden;
   pointer-events:none;
   background:
-    radial-gradient(ellipse 51% 46% at 50% 70%, rgba(9,3,20,.99) 0%, rgba(29,9,59,.98) 70%, rgba(57,23,91,.96) 100%),
-    repeating-conic-gradient(from 17deg at 50% 51%, rgba(113,47,188,.20) 0deg 14deg, rgba(26,8,53,.06) 19deg 38deg, rgba(90,34,157,.25) 43deg 54deg),
-    radial-gradient(ellipse 68% 73% at 50% 40%, #52277d 0%, #230e3b 70%, #10071c 100%);
+    radial-gradient(ellipse 51% 46% at 50% 70%, rgba(9,3,20,.84) 0%, rgba(29,9,59,.58) 60%, transparent 94%),
+    repeating-conic-gradient(from 17deg at 50% 51%, rgba(113,47,188,.29) 0deg 14deg, rgba(26,8,53,.10) 19deg 38deg, rgba(90,34,157,.26) 43deg 54deg),
+    linear-gradient(166deg, #341350 0%, #10051e 46%, #431967 69%, #14081f 100%);
   -webkit-mask-image:url("./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6");
   mask-image:url("./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6");
   -webkit-mask-position:center;
