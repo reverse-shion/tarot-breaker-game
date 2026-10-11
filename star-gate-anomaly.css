@@ -1088,7 +1088,9 @@
 #game-shell.sga-anomaly-rest .scene-gate-inner-backing{
   opacity:1!important;
   mix-blend-mode:normal!important;
-  background:linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%)!important;
+  background:
+    radial-gradient(ellipse at 50% 76%,rgba(67,26,96,.98) 0%,rgba(35,13,56,.99) 34%,rgba(18,8,31,1) 58%,rgba(7,4,13,1) 82%,rgba(5,3,10,1) 100%),
+    linear-gradient(180deg,#08050d 0%,#0b0612 48%,#10081a 100%)!important;
 }
 #game-shell.sga-reverse-gate .scene-gate-inner-light>img,
 #game-shell.sga-dark-frame-01 .scene-gate-inner-light>img,
