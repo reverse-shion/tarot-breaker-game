@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: BGM fade rejects neither a prior-frame timestamp nor a late frame
+ok 1 - BGM fade rejects neither a prior-frame timestamp nor a late frame
+  ---
+  duration_ms: 8.515021
+  type: 'test'
+  ...
+# Subtest: interaction fades retain original target levels, timing and bounds
+ok 2 - interaction fades retain original target levels, timing and bounds
+  ---
+  duration_ms: 1.754548
+  type: 'test'
+  ...
+# Subtest: fade cancellation ignores stale callbacks and off fade still pauses
+ok 3 - fade cancellation ignores stale callbacks and off fade still pauses
+  ---
+  duration_ms: 1.595292
+  type: 'test'
+  ...
+# Subtest: hidden-tab pause remains immediate; resuming still fades within range
+ok 4 - hidden-tab pause remains immediate; resuming still fades within range
+  ---
+  duration_ms: 1.851889
+  type: 'test'
+  ...
+# Subtest: pagehide suspends ordinary BGM with hidden=false and pageshow restores interaction volume
+ok 5 - pagehide suspends ordinary BGM with hidden=false and pageshow restores interaction volume
+  ---
+  duration_ms: 11.154928
+  type: 'test'
+  ...
+# Subtest: ordinary return denial retries once on accepted movement without overlapping requests
+ok 6 - ordinary return denial retries once on accepted movement without overlapping requests
+  ---
+  duration_ms: 1.903676
+  type: 'test'
+  ...
+# Subtest: event return and movement retry retain hard mute throughout blackout and healthy release reuses transport
+ok 7 - event return and movement retry retain hard mute throughout blackout and healthy release reuses transport
+  ---
+  duration_ms: 3.547347
+  type: 'test'
+  ...
+# Subtest: lost transport at visible reveal retains gesture retry without playing at reveal
+ok 8 - lost transport at visible reveal retains gesture retry without playing at reveal
+  ---
+  duration_ms: 1.298288
+  type: 'test'
+  ...
+# Subtest: event release resumes entered enabled normal BGM after return denial
+ok 9 - event release resumes entered enabled normal BGM after return denial
+  ---
+  duration_ms: 1.236343
+  type: 'test'
+  ...
+# Subtest: hidden event release waits for foreground and respects disabled preference
+ok 10 - hidden event release waits for foreground and respects disabled preference
+  ---
+  duration_ms: 2.341651
+  type: 'test'
+  ...
+# Subtest: an ordinary late fulfillment cannot pause a newer foreground playback
+ok 11 - an ordinary late fulfillment cannot pause a newer foreground playback
+  ---
+  duration_ms: 1.155442
+  type: 'test'
+  ...
+# Subtest: an event late fulfillment cannot pause newer normal playback after release
+ok 12 - an event late fulfillment cannot pause newer normal playback after release
+  ---
+  duration_ms: 1.744619
+  type: 'test'
+  ...
+# Subtest: a retired native rejection cannot stop newer ordinary playback
+ok 13 - a retired native rejection cannot stop newer ordinary playback
+  ---
+  duration_ms: 1.593889
+  type: 'test'
+  ...
+# Subtest: late ordinary completion while pagehidden is stopped and stays inaudible
+ok 14 - late ordinary completion while pagehidden is stopped and stays inaudible
+  ---
+  duration_ms: 1.377305
+  type: 'test'
+  ...
+# Subtest: event timeout retires native play and gesture retry survives its eventual fulfillment
+ok 15 - event timeout retires native play and gesture retry survives its eventual fulfillment
+  ---
+  duration_ms: 501.434705
+  type: 'test'
+  ...
+# Subtest: explicit event pause stays stopped on pageshow until normal session release
+ok 16 - explicit event pause stays stopped on pageshow until normal session release
+  ---
+  duration_ms: 1.466151
+  type: 'test'
+  ...
+# Subtest: turning normal audio back on cancels a queued OFF pause synchronously
+ok 17 - turning normal audio back on cancels a queued OFF pause synchronously
+  ---
+  duration_ms: 1.112181
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 677.875659

@@ -1,0 +1,11 @@
+TAROT BREAKER validation passed
+Required files: 43
+Dynamic Star Gate Garden assets: static far sky + celestial overlay + repeating clouds
+Shion / Shiopon sheets: 1536x512, 4 frames each
+Lumiere: four fixed lossless RGBA WebP poses plus local terminal sway; body reference height 63.984375px
+Manifest: 384x512 cells, baseline_y=480
+assets/maps/star-country-farthest-sky-background.webp: 425892 bytes, VP8 OK
+assets/maps/star-country-world-clouds.webp: 1306408 bytes, VP8L OK
+assets/maps/star-country-gate-garden-star-sky.webp: 1348736 bytes, VP8L OK
+assets/maps/star-country-world-islands.webp: 412906 bytes, VP8X OK
+assets/maps/star-country-gate-garden-foreground.webp: 457174 bytes, VP8X OK

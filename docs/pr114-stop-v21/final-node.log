@@ -1,0 +1,2694 @@
+TAP version 13
+# Subtest: Aftermath Lumiere bounds use the same four-direction manifest and body height as drawing
+ok 1 - Aftermath Lumiere bounds use the same four-direction manifest and body height as drawing
+  ---
+  duration_ms: 4.943438
+  type: 'test'
+  ...
+# Subtest: Aftermath focus reflows from a stable world baseline without repeated drift
+ok 2 - Aftermath focus reflows from a stable world baseline without repeated drift
+  ---
+  duration_ms: 2.139195
+  type: 'test'
+  ...
+# Subtest: Aftermath rotated A0 restoration verifies owned input, camera and actor display state
+ok 3 - Aftermath rotated A0 restoration verifies owned input, camera and actor display state
+  ---
+  duration_ms: 2.005175
+  type: 'test'
+  ...
+# Subtest: Aftermath actor hit test targets Shiopon/Lumiere directly without UI geometry
+ok 4 - Aftermath actor hit test targets Shiopon/Lumiere directly without UI geometry
+  ---
+  duration_ms: 1.443349
+  type: 'test'
+  ...
+# Subtest: Aftermath return formation preserves restored Lumiere and places Shiopon beside her
+ok 5 - Aftermath return formation preserves restored Lumiere and places Shiopon beside her
+  ---
+  duration_ms: 1.322544
+  type: 'test'
+  ...
+# Subtest: one-time panorama transfer preserves safe camera and releases an unclaimed lease
+ok 6 - one-time panorama transfer preserves safe camera and releases an unclaimed lease
+  ---
+  duration_ms: 1.940264
+  type: 'test'
+  ...
+# Subtest: return camera arm is fail-closed if cinematic target API is missing or invalid
+ok 7 - return camera arm is fail-closed if cinematic target API is missing or invalid
+  ---
+  duration_ms: 1.356196
+  type: 'test'
+  ...
+# Subtest: normal route creates no panel or diagnostic timer and still starts wind
+ok 8 - normal route creates no panel or diagnostic timer and still starts wind
+  ---
+  duration_ms: 4.296132
+  type: 'test'
+  ...
+# Subtest: debug parameter shows suspended Orb context while native wind is independent
+ok 9 - debug parameter shows suspended Orb context while native wind is independent
+  ---
+  duration_ms: 1.908706
+  type: 'test'
+  ...
+# Subtest: wind play rejection is visible even when original unlock uses allSettled
+ok 10 - wind play rejection is visible even when original unlock uses allSettled
+  ---
+  duration_ms: 1.882898
+  type: 'test'
+  ...
+# Subtest: resume rejection is visible without implying that the context is running
+ok 11 - resume rejection is visible without implying that the context is running
+  ---
+  duration_ms: 1.280665
+  type: 'test'
+  ...
+# Subtest: graph construction error is displayed without granting a fictional route
+ok 12 - graph construction error is displayed without granting a fictional route
+  ---
+  duration_ms: 1.72368
+  type: 'test'
+  ...
+# Subtest: native wind transport and opt-in Orb graph are distinguished without claiming audible output
+ok 13 - native wind transport and opt-in Orb graph are distinguished without claiming audible output
+  ---
+  duration_ms: 1.257843
+  type: 'test'
+  ...
+# Subtest: running native transport with zero requested wind volume is classified separately
+ok 14 - running native transport with zero requested wind volume is classified separately
+  ---
+  duration_ms: 1.187552
+  type: 'test'
+  ...
+# Subtest: Orb Web Audio setup failure cannot prevent native wind transport
+ok 15 - Orb Web Audio setup failure cannot prevent native wind transport
+  ---
+  duration_ms: 1.09008
+  type: 'test'
+  ...
+# Subtest: default native Orb bypasses media source graph, stays muted outside hall and reports output
+ok 16 - default native Orb bypasses media source graph, stays muted outside hall and reports output
+  ---
+  duration_ms: 1.462945
+  type: 'test'
+  ...
+# Subtest: Web Audio Orb request alone has no authority without audioDebug=1
+ok 17 - Web Audio Orb request alone has no authority without audioDebug=1
+  ---
+  duration_ms: 1.250269
+  type: 'test'
+  ...
+# Subtest: title forwards audioDebug only when opt-in; normal destination remains unchanged
+ok 18 - title forwards audioDebug only when opt-in; normal destination remains unchanged
+  ---
+  duration_ms: 2.708485
+  type: 'test'
+  ...
+# Subtest: A-F: hall centre audible, perimeter fades, stairs/outside exactly zero, re-entry fades
+ok 19 - A-F: hall centre audible, perimeter fades, stairs/outside exactly zero, re-entry fades
+  ---
+  duration_ms: 8.013076
+  type: 'test'
+  ...
+# Subtest: all ellipse directions and map scaling use ground coordinates; camera cannot change boundary
+ok 20 - all ellipse directions and map scaling use ground coordinates; camera cannot change boundary
+  ---
+  duration_ms: 20.940083
+  type: 'test'
+  ...
+# Subtest: iOS-style ignored volume writes still have exact zero output through gain + mute
+ok 21 - iOS-style ignored volume writes still have exact zero output through gain + mute
+  ---
+  duration_ms: 1.509962
+  type: 'test'
+  ...
+# Subtest: native wind does not depend on the Orb context; stopping it still silences Orb
+ok 22 - native wind does not depend on the Orb context; stopping it still silences Orb
+  ---
+  duration_ms: 2.177967
+  type: 'test'
+  ...
+# Subtest: G: return outside hall resumes wind, stays silent and never duplicates sources
+ok 23 - G: return outside hall resumes wind, stays silent and never duplicates sources
+  ---
+  duration_ms: 2.369614
+  type: 'test'
+  ...
+# Subtest: seconds-based entry smoothing behaves the same at 30/60/120 fps
+ok 24 - seconds-based entry smoothing behaves the same at 30/60/120 fps
+  ---
+  duration_ms: 3.713116
+  type: 'test'
+  ...
+# Subtest: every movement-loop branch updates audio after movement before scheduling next frame
+ok 25 - every movement-loop branch updates audio after movement before scheduling next frame
+  ---
+  duration_ms: 0.652005
+  type: 'test'
+  ...
+# Subtest: first gesture primes wind hard-muted while Orb gain remains zero
+ok 26 - first gesture primes wind hard-muted while Orb gain remains zero
+  ---
+  duration_ms: 1.044947
+  type: 'test'
+  ...
+# Subtest: native wind stays hard-muted through prologue and restarts after scripted wind stop even if volume writes are ignored
+ok 27 - native wind stays hard-muted through prologue and restarts after scripted wind stop even if volume writes are ignored
+  ---
+  duration_ms: 1.179026
+  type: 'test'
+  ...
+# Subtest: normal entry plays Orb natively and hard-mutes it beyond the hall
+ok 28 - normal entry plays Orb natively and hard-mutes it beyond the hall
+  ---
+  duration_ms: 1.544396
+  type: 'test'
+  ...
+# Subtest: Alenon loads Route Registry before Progress Core
+ok 29 - Alenon loads Route Registry before Progress Core
+  ---
+  duration_ms: 0.959738
+  type: 'test'
+  ...
+# Subtest: normal Alenon entry uses Progress v1 without making legacy bypasses durable authority
+ok 30 - normal Alenon entry uses Progress v1 without making legacy bypasses durable authority
+  ---
+  duration_ms: 0.403582
+  type: 'test'
+  ...
+# Subtest: prologue completion is persisted only at the authored completion boundary
+ok 31 - prologue completion is persisted only at the authored completion boundary
+  ---
+  duration_ms: 0.327099
+  type: 'test'
+  ...
+# Subtest: completed resume restores existing ambience path and does not alter Orb hysteresis
+ok 32 - completed resume restores existing ambience path and does not alter Orb hysteresis
+  ---
+  duration_ms: 0.535017
+  type: 'test'
+  ...
+# Subtest: invalid or unsupported Progress is not rewritten by Alenon integration
+ok 33 - invalid or unsupported Progress is not rewritten by Alenon integration
+  ---
+  duration_ms: 0.27887
+  type: 'test'
+  ...
+# Subtest: all real Alenon entries validate v1, boot without writes and use exact detached projections
+ok 34 - all real Alenon entries validate v1, boot without writes and use exact detached projections
+  ---
+  duration_ms: 39.367099
+  type: 'test'
+  ...
+# Subtest: pad Continue uses authored safe ground spawn, reset and cooldown without landing audio or boarding
+ok 35 - pad Continue uses authored safe ground spawn, reset and cooldown without landing audio or boarding
+  ---
+  duration_ms: 7.365619
+  type: 'test'
+  ...
+# Subtest: strict readiness blocks input, triggers and prologue until collision AND decoded images settle
+ok 36 - strict readiness blocks input, triggers and prologue until collision AND decoded images settle
+  ---
+  duration_ms: 6.064005
+  type: 'test'
+  ...
+# Subtest: image/decode/fetch/invalid collision/unsafe spawn failures expose retry and remain locked without rewriting bytes
+ok 37 - image/decode/fetch/invalid collision/unsafe spawn failures expose retry and remain locked without rewriting bytes
+  ---
+  duration_ms: 27.558691
+  type: 'test'
+  ...
+# Subtest: malformed, unsupported, unavailable, other-map and bypass-combination entries fail before gameplay
+ok 38 - malformed, unsupported, unavailable, other-map and bypass-combination entries fail before gameplay
+  ---
+  duration_ms: 33.598221
+  type: 'test'
+  ...
+# Subtest: incomplete Continue executes authored Devil prologue and writes only at real completion; reload suppresses replay
+ok 39 - incomplete Continue executes authored Devil prologue and writes only at real completion; reload suppresses replay
+  ---
+  duration_ms: 17.849727
+  type: 'test'
+  ...
+# Subtest: failed dev completion persistence keeps gameplay and reports nonpersistent status with no production fallback
+ok 40 - failed dev completion persistence keeps gameplay and reports nonpersistent status with no production fallback
+  ---
+  duration_ms: 15.775113
+  type: 'test'
+  ...
+# Subtest: completed intro preserves actual 118/154 hysteresis, native gesture retry and sandbox containment
+ok 41 - completed intro preserves actual 118/154 hysteresis, native gesture retry and sandbox containment
+  ---
+  duration_ms: 5.100009
+  type: 'test'
+  ...
+# Subtest: readiness retry recovers without changing history and registered module imports have no browser side effects
+ok 42 - readiness retry recovers without changing history and registered module imports have no browser side effects
+  ---
+  duration_ms: 4.853721
+  type: 'test'
+  ...
+# Subtest: real Continue input cancels on reset and repeated successful boot cannot duplicate controls or ready signals
+ok 43 - real Continue input cancels on reset and repeated successful boot cannot duplicate controls or ready signals
+  ---
+  duration_ms: 5.187794
+  type: 'test'
+  ...
+# Subtest: strict polygon validation rejects finite degenerate polygons instead of granting permissive readiness
+ok 44 - strict polygon validation rejects finite degenerate polygons instead of granting permissive readiness
+  ---
+  duration_ms: 0.674727
+  type: 'test'
+  ...
+# Subtest: collision success alone and image load without completed decode cannot unlock real Continue
+ok 45 - collision success alone and image load without completed decode cannot unlock real Continue
+  ---
+  duration_ms: 8.556929
+  type: 'test'
+  ...
+# Subtest: receiver rejects valid other-map state and malformed or forged companion authority
+ok 46 - receiver rejects valid other-map state and malformed or forged companion authority
+  ---
+  duration_ms: 0.430411
+  type: 'test'
+  ...
+# Subtest: latest uploaded artwork URLs are cache-busted independently
+ok 47 - latest uploaded artwork URLs are cache-busted independently
+  ---
+  duration_ms: 1.242774
+  type: 'test'
+  ...
+# Subtest: replacement islands fit completely inside the canonical scene
+ok 48 - replacement islands fit completely inside the canonical scene
+  ---
+  duration_ms: 1.985048
+  type: 'test'
+  ...
+# Subtest: native transparent foreground uses the canonical zero-origin scale and is drawn only once
+ok 49 - native transparent foreground uses the canonical zero-origin scale and is drawn only once
+  ---
+  duration_ms: 1.989896
+  type: 'test'
+  ...
+# Subtest: Asset Studio policy accepts only tightly scoped generated PRs
+ok 50 - Asset Studio policy accepts only tightly scoped generated PRs
+  ---
+  duration_ms: 1.262401
+  type: 'test'
+  ...
+# Subtest: Asset Studio policy requires exact CI metadata
+ok 51 - Asset Studio policy requires exact CI metadata
+  ---
+  duration_ms: 0.264743
+  type: 'test'
+  ...
+# Subtest: Asset Studio policy permits only WebP/JSON files below assets and never deletions
+ok 52 - Asset Studio policy permits only WebP/JSON files below assets and never deletions
+  ---
+  duration_ms: 0.2897
+  type: 'test'
+  ...
+# Subtest: Asset Studio policy requires both workflows to be completed successfully
+ok 53 - Asset Studio policy requires both workflows to be completed successfully
+  ---
+  duration_ms: 0.257049
+  type: 'test'
+  ...
+# Subtest: BGM fade rejects neither a prior-frame timestamp nor a late frame
+ok 54 - BGM fade rejects neither a prior-frame timestamp nor a late frame
+  ---
+  duration_ms: 5.926669
+  type: 'test'
+  ...
+# Subtest: interaction fades retain original target levels, timing and bounds
+ok 55 - interaction fades retain original target levels, timing and bounds
+  ---
+  duration_ms: 1.697983
+  type: 'test'
+  ...
+# Subtest: fade cancellation ignores stale callbacks and off fade still pauses
+ok 56 - fade cancellation ignores stale callbacks and off fade still pauses
+  ---
+  duration_ms: 1.544326
+  type: 'test'
+  ...
+# Subtest: hidden-tab pause remains immediate; resuming still fades within range
+ok 57 - hidden-tab pause remains immediate; resuming still fades within range
+  ---
+  duration_ms: 2.478927
+  type: 'test'
+  ...
+# Subtest: pagehide suspends ordinary BGM with hidden=false and pageshow restores interaction volume
+ok 58 - pagehide suspends ordinary BGM with hidden=false and pageshow restores interaction volume
+  ---
+  duration_ms: 10.31903
+  type: 'test'
+  ...
+# Subtest: ordinary return denial retries once on accepted movement without overlapping requests
+ok 59 - ordinary return denial retries once on accepted movement without overlapping requests
+  ---
+  duration_ms: 2.225405
+  type: 'test'
+  ...
+# Subtest: event return and movement retry retain hard mute throughout blackout and healthy release reuses transport
+ok 60 - event return and movement retry retain hard mute throughout blackout and healthy release reuses transport
+  ---
+  duration_ms: 3.82813
+  type: 'test'
+  ...
+# Subtest: lost transport at visible reveal retains gesture retry without playing at reveal
+ok 61 - lost transport at visible reveal retains gesture retry without playing at reveal
+  ---
+  duration_ms: 1.338674
+  type: 'test'
+  ...
+# Subtest: event release resumes entered enabled normal BGM after return denial
+ok 62 - event release resumes entered enabled normal BGM after return denial
+  ---
+  duration_ms: 1.472483
+  type: 'test'
+  ...
+# Subtest: hidden event release waits for foreground and respects disabled preference
+ok 63 - hidden event release waits for foreground and respects disabled preference
+  ---
+  duration_ms: 1.469396
+  type: 'test'
+  ...
+# Subtest: an ordinary late fulfillment cannot pause a newer foreground playback
+ok 64 - an ordinary late fulfillment cannot pause a newer foreground playback
+  ---
+  duration_ms: 1.51919
+  type: 'test'
+  ...
+# Subtest: an event late fulfillment cannot pause newer normal playback after release
+ok 65 - an event late fulfillment cannot pause newer normal playback after release
+  ---
+  duration_ms: 1.771199
+  type: 'test'
+  ...
+# Subtest: a retired native rejection cannot stop newer ordinary playback
+ok 66 - a retired native rejection cannot stop newer ordinary playback
+  ---
+  duration_ms: 1.477813
+  type: 'test'
+  ...
+# Subtest: late ordinary completion while pagehidden is stopped and stays inaudible
+ok 67 - late ordinary completion while pagehidden is stopped and stays inaudible
+  ---
+  duration_ms: 1.812486
+  type: 'test'
+  ...
+# Subtest: event timeout retires native play and gesture retry survives its eventual fulfillment
+ok 68 - event timeout retires native play and gesture retry survives its eventual fulfillment
+  ---
+  duration_ms: 502.489802
+  type: 'test'
+  ...
+# Subtest: explicit event pause stays stopped on pageshow until normal session release
+ok 69 - explicit event pause stays stopped on pageshow until normal session release
+  ---
+  duration_ms: 2.417924
+  type: 'test'
+  ...
+# Subtest: turning normal audio back on cancels a queued OFF pause synchronously
+ok 70 - turning normal audio back on cancels a queued OFF pause synchronously
+  ---
+  duration_ms: 1.226424
+  type: 'test'
+  ...
+# Subtest: blockedAreas subtract from walkAreas including their boundary
+ok 71 - blockedAreas subtract from walkAreas including their boundary
+  ---
+  duration_ms: 1.770768
+  type: 'test'
+  ...
+# Subtest: segmentClear and A* never cut through a blocked area
+ok 72 - segmentClear and A* never cut through a blocked area
+  ---
+  duration_ms: 10.642744
+  type: 'test'
+  ...
+# Subtest: tapping inside a blocked area projects to a nearby legal point
+ok 73 - tapping inside a blocked area projects to a nearby legal point
+  ---
+  duration_ms: 2.562844
+  type: 'test'
+  ...
+# Subtest: legacy collision JSON without blockedAreas remains compatible
+ok 74 - legacy collision JSON without blockedAreas remains compatible
+  ---
+  duration_ms: 0.774563
+  type: 'test'
+  ...
+# Subtest: invalid blocked areas are rejected instead of silently ignored
+ok 75 - invalid blocked areas are rejected instead of silently ignored
+  ---
+  duration_ms: 0.406758
+  type: 'test'
+  ...
+# Subtest: cloud stylesheet is loaded directly and fountain CSS stays isolated
+ok 76 - cloud stylesheet is loaded directly and fountain CSS stays isolated
+  ---
+  duration_ms: 1.305442
+  type: 'test'
+  ...
+# Subtest: Preview 46 uses one three-copy buffered cloud track
+ok 77 - Preview 46 uses one three-copy buffered cloud track
+  ---
+  duration_ms: 4.11754
+  type: 'test'
+  ...
+# Subtest: cloud artwork scrolls left continuously above the celestial sky and below authored map plates
+ok 78 - cloud artwork scrolls left continuously above the celestial sky and below authored map plates
+  ---
+  duration_ms: 0.630655
+  type: 'test'
+  ...
+# Subtest: cloud copies preserve supplied scale and avoid Safari mask-compositor hazards
+ok 79 - cloud copies preserve supplied scale and avoid Safari mask-compositor hazards
+  ---
+  duration_ms: 0.302093
+  type: 'test'
+  ...
+# Subtest: reduced motion keeps the same one-way scroll at a gentler speed
+ok 80 - reduced motion keeps the same one-way scroll at a gentler speed
+  ---
+  duration_ms: 0.396779
+  type: 'test'
+  ...
+# Subtest: Landing observes Garden return without replacing legacy companion runtime
+ok 81 - Landing observes Garden return without replacing legacy companion runtime
+  ---
+  duration_ms: 1.48177
+  type: 'test'
+  ...
+# Subtest: existing Journey wait fact is written before Progress observes board_pad
+ok 82 - existing Journey wait fact is written before Progress observes board_pad
+  ---
+  duration_ms: 0.269132
+  type: 'test'
+  ...
+# Subtest: existing Journey follow fact is written before Progress observes rejoin
+ok 83 - existing Journey follow fact is written before Progress observes rejoin
+  ---
+  duration_ms: 0.309337
+  type: 'test'
+  ...
+# Subtest: Progress observation never assigns companion runtime flags
+ok 84 - Progress observation never assigns companion runtime flags
+  ---
+  duration_ms: 0.333471
+  type: 'test'
+  ...
+# Subtest: short tap starts navigation on release without showing the stick
+ok 85 - short tap starts navigation on release without showing the stick
+  ---
+  duration_ms: 46.103766
+  type: 'test'
+  ...
+# Subtest: drag cancels immediately and cannot turn into a tap after returning to origin
+ok 86 - drag cancels immediately and cannot turn into a tap after returning to origin
+  ---
+  duration_ms: 3.026377
+  type: 'test'
+  ...
+# Subtest: right 32% accepts taps but cannot activate the stick
+ok 87 - right 32% accepts taps but cannot activate the stick
+  ---
+  duration_ms: 2.254038
+  type: 'test'
+  ...
+# Subtest: long press, cancel, second finger and right mouse button do not create routes
+ok 88 - long press, cancel, second finger and right mouse button do not create routes
+  ---
+  duration_ms: 0.261277
+  type: 'test'
+  ...
+# Subtest: all WASD/arrows cancel auto movement; unrelated keys do not
+ok 89 - all WASD/arrows cancel auto movement; unrelated keys do not
+  ---
+  duration_ms: 17.758959
+  type: 'test'
+  ...
+# Subtest: new tap replaces the old route, including an unreachable new target
+ok 90 - new tap replaces the old route, including an unreachable new target
+  ---
+  duration_ms: 2.676485
+  type: 'test'
+  ...
+# Subtest: stick overrides keyboard; taps never queue underneath manual inputs
+ok 91 - stick overrides keyboard; taps never queue underneath manual inputs
+  ---
+  duration_ms: 0.686148
+  type: 'test'
+  ...
+# Subtest: 15% deadzone and curved low-speed range allow precise movement
+ok 92 - 15% deadzone and curved low-speed range allow precise movement
+  ---
+  duration_ms: 1.208371
+  type: 'test'
+  ...
+# Subtest: route follower reaches stairs, never leaves collision, and stays still after arrival
+ok 93 - route follower reaches stairs, never leaves collision, and stays still after arrival
+  ---
+  duration_ms: 14.388352
+  type: 'test'
+  ...
+# Subtest: manual movement cannot tunnel into the fountain even with a stalled frame
+ok 94 - manual movement cannot tunnel into the fountain even with a stalled frame
+  ---
+  duration_ms: 3.045232
+  type: 'test'
+  ...
+# Subtest: reset/blur lifecycle clears keys, gestures and route; event hooks suspend until resumed
+ok 95 - reset/blur lifecycle clears keys, gestures and route; event hooks suspend until resumed
+  ---
+  duration_ms: 10.398518
+  type: 'test'
+  ...
+# Subtest: checkpoint registry cannot write production progress
+ok 96 - checkpoint registry cannot write production progress
+  ---
+  duration_ms: 1.2135
+  type: 'test'
+  ...
+# Subtest: unreleased Star Gate has no fake healthy checkpoint
+ok 97 - unreleased Star Gate has no fake healthy checkpoint
+  ---
+  duration_ms: 1.313387
+  type: 'test'
+  ...
+# Subtest: normal route does not load checkpoint registry
+ok 98 - normal route does not load checkpoint registry
+  ---
+  duration_ms: 0.235889
+  type: 'test'
+  ...
+# Subtest: Phase 2A-5c checkpoints resolve to registered event segments
+ok 99 - Phase 2A-5c checkpoints resolve to registered event segments
+  ---
+  duration_ms: 0.654338
+  type: 'test'
+  ...
+# Subtest: Garden direct Continue bootstrap writes its real receiver after shared dependencies
+ok 100 - Garden direct Continue bootstrap writes its real receiver after shared dependencies
+  ---
+  duration_ms: 2.41596
+  type: 'test'
+  ...
+# Subtest: Garden dev bootstrap writes executable script end tags in dependency order
+ok 101 - Garden dev bootstrap writes executable script end tags in dependency order
+  ---
+  duration_ms: 0.938909
+  type: 'test'
+  ...
+# Subtest: device registry guard requires explicit verified runtime SHA when requested
+ok 102 - device registry guard requires explicit verified runtime SHA when requested
+  ---
+  duration_ms: 1.058852
+  type: 'test'
+  ...
+# Subtest: device registry guard separates evidence commits from verified runtime
+ok 103 - device registry guard separates evidence commits from verified runtime
+  ---
+  duration_ms: 0.288056
+  type: 'test'
+  ...
+# Subtest: device registry guard narrowly exempts only unreferenced new asset-only PRs
+ok 104 - device registry guard narrowly exempts only unreferenced new asset-only PRs
+  ---
+  duration_ms: 0.216242
+  type: 'test'
+  ...
+# Subtest: device registry guard accepts presentation-only asset replacements without weakening runtime gates
+ok 105 - device registry guard accepts presentation-only asset replacements without weakening runtime gates
+  ---
+  duration_ms: 0.17733
+  type: 'test'
+  ...
+# Subtest: device registry guard treats an explicitly empty diff as a no-op
+ok 106 - device registry guard treats an explicitly empty diff as a no-op
+  ---
+  duration_ms: 0.218076
+  type: 'test'
+  ...
+# Subtest: workflow executes device registry guard with PR body
+ok 107 - workflow executes device registry guard with PR body
+  ---
+  duration_ms: 0.183111
+  type: 'test'
+  ...
+# Subtest: instance-local dialogue clock pauses letters without changing default timer behavior
+ok 108 - instance-local dialogue clock pauses letters without changing default timer behavior
+  ---
+  duration_ms: 6.301467
+  type: 'test'
+  ...
+# Subtest: Shiopon proximity starts once, stages the opening, then joins the party
+ok 109 - Shiopon proximity starts once, stages the opening, then joins the party
+  ---
+  duration_ms: 10.330673
+  type: 'test'
+  ...
+# Subtest: Lumiere event requires Shiopon completion and updates the objective once
+ok 110 - Lumiere event requires Shiopon completion and updates the objective once
+  ---
+  duration_ms: 10.09863
+  type: 'test'
+  ...
+# Subtest: event data combines multiline dialogue, looks, waits, steps and Shiopon bounce
+ok 111 - event data combines multiline dialogue, looks, waits, steps and Shiopon bounce
+  ---
+  duration_ms: 1.521344
+  type: 'test'
+  ...
+# Subtest: dialogue UI is shared, multiline and safe-area aware
+ok 112 - dialogue UI is shared, multiline and safe-area aware
+  ---
+  duration_ms: 2.306426
+  type: 'test'
+  ...
+# Subtest: tap during wait or actor motion finishes only that action and playback stays ordered
+ok 113 - tap during wait or actor motion finishes only that action and playback stays ordered
+  ---
+  duration_ms: 1.435434
+  type: 'test'
+  ...
+# Subtest: dialogue text preserves approved speech and relationship constraints
+ok 114 - dialogue text preserves approved speech and relationship constraints
+  ---
+  duration_ms: 1.552111
+  type: 'test'
+  ...
+# Subtest: reset during a blocking action cancels stale playback and releases interaction
+ok 115 - reset during a blocking action cancels stale playback and releases interaction
+  ---
+  duration_ms: 1.259416
+  type: 'test'
+  ...
+# Subtest: Star Gate contract stays unreleased
+ok 116 - Star Gate contract stays unreleased
+  ---
+  duration_ms: 1.193844
+  type: 'test'
+  ...
+# Subtest: machine registry does not invent locked Star Gate segments
+ok 117 - machine registry does not invent locked Star Gate segments
+  ---
+  duration_ms: 0.308484
+  type: 'test'
+  ...
+# Subtest: Garden Landing Continue recovery is registered as isolated working scope
+ok 118 - Garden Landing Continue recovery is registered as isolated working scope
+  ---
+  duration_ms: 0.29
+  type: 'test'
+  ...
+# Subtest: Garden Landing Continue checkpoints use their registered event authority
+ok 119 - Garden Landing Continue checkpoints use their registered event authority
+  ---
+  duration_ms: 1.867147
+  type: 'test'
+  ...
+# Subtest: event development contract is repository authority
+ok 120 - event development contract is repository authority
+  ---
+  duration_ms: 1.264927
+  type: 'test'
+  ...
+# Subtest: device verification registry cannot confuse CI with device PASS
+ok 121 - device verification registry cannot confuse CI with device PASS
+  ---
+  duration_ms: 0.29519
+  type: 'test'
+  ...
+# Subtest: AI safety requires event-development repository contracts
+ok 122 - AI safety requires event-development repository contracts
+  ---
+  duration_ms: 0.250115
+  type: 'test'
+  ...
+# Subtest: fountain water is reduced, centered and seated farther into the basin
+ok 123 - fountain water is reduced, centered and seated farther into the basin
+  ---
+  duration_ms: 1.239328
+  type: 'test'
+  ...
+# Subtest: crystal is moved farther toward the rear and detached ring is disabled
+ok 124 - crystal is moved farther toward the rear and detached ring is disabled
+  ---
+  duration_ms: 0.393473
+  type: 'test'
+  ...
+# Subtest: all always-on gate haze is removed around Lumiere
+ok 125 - all always-on gate haze is removed around Lumiere
+  ---
+  duration_ms: 0.267939
+  type: 'test'
+  ...
+# Subtest: fountain polish is isolated and does not modify collision or scene logic
+ok 126 - fountain polish is isolated and does not modify collision or scene logic
+  ---
+  duration_ms: 0.281945
+  type: 'test'
+  ...
+# Subtest: both future media requests opt into anonymous CORS before starting their load
+ok 127 - both future media requests opt into anonymous CORS before starting their load
+  ---
+  duration_ms: 3.794187
+  type: 'test'
+  ...
+# Subtest: black preparation retains P0 source/time while keeping the unlocked transport silent
+ok 128 - black preparation retains P0 source/time while keeping the unlocked transport silent
+  ---
+  duration_ms: 1.898707
+  type: 'test'
+  ...
+# Subtest: silent-transport preparation rejection/false is recorded without blocking visual restoration
+ok 129 - silent-transport preparation rejection/false is recorded without blocking visual restoration
+  ---
+  duration_ms: 0.417317
+  type: 'test'
+  ...
+# Subtest: blackout stays silent and present reveal never asks iOS for a fresh play()
+ok 130 - blackout stays silent and present reveal never asks iOS for a fresh play()
+  ---
+  duration_ms: 0.75112
+  type: 'test'
+  ...
+# Subtest: successful present return hands off from Shion-only Stage3 and preserves anomaly-rest gate
+ok 131 - successful present return hands off from Shion-only Stage3 and preserves anomaly-rest gate
+  ---
+  duration_ms: 1.908454
+  type: 'test'
+  ...
+# Subtest: Present Return v1.3 stages separated companions before reveal and returns free control immediately
+ok 132 - Present Return v1.3 stages separated companions before reveal and returns free control immediately
+  ---
+  duration_ms: 0.591993
+  type: 'test'
+  ...
+# Subtest: Present return reuses the real inner-light asset and does not add a black backing or Aftermath anomaly override
+ok 133 - Present return reuses the real inner-light asset and does not add a black backing or Aftermath anomaly override
+  ---
+  duration_ms: 0.599206
+  type: 'test'
+  ...
+# Subtest: blackout calls use canonical DialogueUI above cover, before fade, never replaying in Aftermath
+ok 134 - blackout calls use canonical DialogueUI above cover, before fade, never replaying in Aftermath
+  ---
+  duration_ms: 0.976609
+  type: 'test'
+  ...
+# Subtest: fear scene uses actual actor facing and never repositions the P0 actors
+ok 135 - fear scene uses actual actor facing and never repositions the P0 actors
+  ---
+  duration_ms: 0.502366
+  type: 'test'
+  ...
+# Subtest: full garden panorama is painted beneath black and safely handed off after unlock
+ok 136 - full garden panorama is painted beneath black and safely handed off after unlock
+  ---
+  duration_ms: 0.963174
+  type: 'test'
+  ...
+# Subtest: iPhone regression: refused Aftermath is diagnosed and panoramic camera is abandoned
+ok 137 - iPhone regression: refused Aftermath is diagnosed and panoramic camera is abandoned
+  ---
+  duration_ms: 1.630467
+  type: 'test'
+  ...
+# Subtest: real iPhone error regression: adapter cannot reference block-scoped normalCameraTarget
+ok 138 - real iPhone error regression: adapter cannot reference block-scoped normalCameraTarget
+  ---
+  duration_ms: 0.604636
+  type: 'test'
+  ...
+# Subtest: only the R06 return pan duration matches the established 1550ms first gate framing
+ok 139 - only the R06 return pan duration matches the established 1550ms first gate framing
+  ---
+  duration_ms: 0.300559
+  type: 'test'
+  ...
+# Subtest: Arcana audio remains continuous and reaches its strongest combined mix during edge erosion
+ok 140 - Arcana audio remains continuous and reaches its strongest combined mix during edge erosion
+  ---
+  duration_ms: 7.021318
+  type: 'test'
+  ...
+# Subtest: three Arcana pulse calls synthesize finite low beats and respect music OFF
+ok 141 - three Arcana pulse calls synthesize finite low beats and respect music OFF
+  ---
+  duration_ms: 2.940367
+  type: 'test'
+  ...
+# Subtest: OFF never starts media; errors degrade to silence
+ok 142 - OFF never starts media; errors degrade to silence
+  ---
+  duration_ms: 3.444656
+  type: 'test'
+  ...
+# Subtest: pagehide pauses even when hidden is false; disposal prevents delayed play resurrection
+ok 143 - pagehide pauses even when hidden is false; disposal prevents delayed play resurrection
+  ---
+  duration_ms: 1.509102
+  type: 'test'
+  ...
+# Subtest: end of track falls over last1500ms without looping; bounded rewrite play fails silent
+ok 144 - end of track falls over last1500ms without looping; bounded rewrite play fails silent
+  ---
+  duration_ms: 3.754083
+  type: 'test'
+  ...
+# Subtest: integration routes continuous Re-emergence audio without a silent break or ordinary BGM source replacement
+ok 145 - integration routes continuous Re-emergence audio without a silent break or ordinary BGM source replacement
+  ---
+  duration_ms: 1.073679
+  type: 'test'
+  ...
+# Subtest: unloaded metadata deadline invalidates late callbacks and malformed seek stays silent
+ok 146 - unloaded metadata deadline invalidates late callbacks and malformed seek stays silent
+  ---
+  duration_ms: 4.235278
+  type: 'test'
+  ...
+# Subtest: mid-emergence musicOFF pauses both desired layers and resumes them without introducing a silent phase
+ok 147 - mid-emergence musicOFF pauses both desired layers and resumes them without introducing a silent phase
+  ---
+  duration_ms: 1.29385
+  type: 'test'
+  ...
+# Subtest: hidden preserves emergence/rewrite state and does not restart the completed fix cue
+ok 148 - hidden preserves emergence/rewrite state and does not restart the completed fix cue
+  ---
+  duration_ms: 1.423632
+  type: 'test'
+  ...
+# Subtest: native seeking is gain0 until seeked and stalled seek times out; suspended graph is degradation
+ok 149 - native seeking is gain0 until seeked and stalled seek times out; suspended graph is degradation
+  ---
+  duration_ms: 2.937953
+  type: 'test'
+  ...
+# Subtest: old play fulfillment does not pause a newer allowed request; disposed error cannot rewrite report
+ok 150 - old play fulfillment does not pause a newer allowed request; disposed error cannot rewrite report
+  ---
+  duration_ms: 1.052691
+  type: 'test'
+  ...
+# Subtest: pagehide with hiddenfalse rejects late play before disposal, and pageshow restores saved position
+ok 151 - pagehide with hiddenfalse rejects late play before disposal, and pageshow restores saved position
+  ---
+  duration_ms: 4.752883
+  type: 'test'
+  ...
+# Subtest: pending initial gesture unlock cannot revive fix on pagehide before monitor or disposal
+ok 152 - pending initial gesture unlock cannot revive fix on pagehide before monitor or disposal
+  ---
+  duration_ms: 0.835767
+  type: 'test'
+  ...
+# Subtest: native asynchronous setter may remain0 until seeked without false failure
+ok 153 - native asynchronous setter may remain0 until seeked without false failure
+  ---
+  duration_ms: 1.494023
+  type: 'test'
+  ...
+# Subtest: late initial unlock cannot restart an explicitly stopped black or white source
+ok 154 - late initial unlock cannot restart an explicitly stopped black or white source
+  ---
+  duration_ms: 2.53404
+  type: 'test'
+  ...
+# Subtest: initial unlock late fulfillment after a forced black pause stays paused before disposal
+ok 155 - initial unlock late fulfillment after a forced black pause stays paused before disposal
+  ---
+  duration_ms: 0.947956
+  type: 'test'
+  ...
+# Subtest: 390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes
+ok 156 - 390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes
+  ---
+  duration_ms: 77.730777
+  type: 'test'
+  ...
+# Subtest: Garden direct Continue boots the real runtime at exact authored spawn with restored follower state
+ok 157 - Garden direct Continue boots the real runtime at exact authored spawn with restored follower state
+  ---
+  duration_ms: 84.247554
+  type: 'test'
+  ...
+# Subtest: failed isolated Garden transit never falls back to production Journey or navigation
+ok 158 - failed isolated Garden transit never falls back to production Journey or navigation
+  ---
+  duration_ms: 73.384752
+  type: 'test'
+  ...
+# Subtest: Lumiere draws one fixed full pose per tick without sheet slicing or whole-body fades
+ok 159 - Lumiere draws one fixed full pose per tick without sheet slicing or whole-body fades
+  ---
+  duration_ms: 114.521837
+  type: 'test'
+  ...
+# Subtest: four directions preserve scale, float continuously and keep phase through facing and stage offsets
+ok 160 - four directions preserve scale, float continuously and keep phase through facing and stage offsets
+  ---
+  duration_ms: 272.666038
+  type: 'test'
+  ...
+# Subtest: Lumiere invalid images, manifest or compositor dependency never become scene-ready
+ok 161 - Lumiere invalid images, manifest or compositor dependency never become scene-ready
+  ---
+  duration_ms: 99.983287
+  type: 'test'
+  ...
+# Subtest: Lumiere has solid collision while remaining fixed at the gate
+ok 162 - Lumiere has solid collision while remaining fixed at the gate
+  ---
+  duration_ms: 270.73418
+  type: 'test'
+  ...
+# Subtest: Garden pointer payload is accepted by the production controls contract
+ok 163 - Garden pointer payload is accepted by the production controls contract
+  ---
+  duration_ms: 51.917675
+  type: 'test'
+  ...
+# Subtest: Garden registered pointerdown handler accepts the same browser-like event directly
+ok 164 - Garden registered pointerdown handler accepts the same browser-like event directly
+  ---
+  duration_ms: 52.775494
+  type: 'test'
+  ...
+# Subtest: Garden registered pointerup handler completes the accepted gesture
+ok 165 - Garden registered pointerup handler completes the accepted gesture
+  ---
+  duration_ms: 53.682924
+  type: 'test'
+  ...
+# Subtest: canvas tap uses camera/zoom/element offset and does not jump the camera to the destination
+ok 166 - canvas tap uses camera/zoom/element offset and does not jump the camera to the destination
+  ---
+  duration_ms: 388.72792
+  type: 'test'
+  ...
+# Subtest: real drag/keyboard bindings cancel movement and production reset clears held input
+ok 167 - real drag/keyboard bindings cancel movement and production reset clears held input
+  ---
+  duration_ms: 57.310511
+  type: 'test'
+  ...
+# Subtest: four directions use all four Shion walk frames then the matching idle frame
+ok 168 - four directions use all four Shion walk frames then the matching idle frame
+  ---
+  duration_ms: 324.578565
+  type: 'test'
+  ...
+# Subtest: pointercancel, lost capture, blur and hidden page prevent stuck movement
+ok 169 - pointercancel, lost capture, blur and hidden page prevent stuck movement
+  ---
+  duration_ms: 283.656034
+  type: 'test'
+  ...
+# Subtest: future interaction lifecycle cancels and suspends player movement
+ok 170 - future interaction lifecycle cancels and suspends player movement
+  ---
+  duration_ms: 60.430703
+  type: 'test'
+  ...
+# Subtest: stage commands face actors, animate safe steps and expose a skip-to-end handle
+ok 171 - stage commands face actors, animate safe steps and expose a skip-to-end handle
+  ---
+  duration_ms: 62.703056
+  type: 'test'
+  ...
+# Subtest: Shiopon bounce is visible mid-action and returns to its exact baseline
+ok 172 - Shiopon bounce is visible mid-action and returns to its exact baseline
+  ---
+  duration_ms: 60.70806
+  type: 'test'
+  ...
+# Subtest: desktop click uses the same input at camera zoom 1.22
+ok 173 - desktop click uses the same input at camera zoom 1.22
+  ---
+  duration_ms: 69.190911
+  type: 'test'
+  ...
+# Subtest: preview asset configuration loads the same game and rejects invalid collision data
+ok 174 - preview asset configuration loads the same game and rejects invalid collision data
+  ---
+  duration_ms: 57.722338
+  type: 'test'
+  ...
+# Subtest: cached arrival waits for final actor draw and two frames, without a fixed extra delay
+ok 175 - cached arrival waits for final actor draw and two frames, without a fixed extra delay
+  ---
+  duration_ms: 55.873413
+  type: 'test'
+  ...
+# Subtest: uncached sprites and delayed decode stay covered even if scene canvases are ready first
+ok 176 - uncached sprites and delayed decode stay covered even if scene canvases are ready first
+  ---
+  duration_ms: 42.670201
+  type: 'test'
+  ...
+# Subtest: late scene/canvas dependency stays covered after sprites finish
+ok 177 - late scene/canvas dependency stays covered after sprites finish
+  ---
+  duration_ms: 39.143482
+  type: 'test'
+  ...
+# Subtest: image failure and JSON failure enter the existing visible error state
+ok 178 - image failure and JSON failure enter the existing visible error state
+  ---
+  duration_ms: 118.175853
+  type: 'test'
+  ...
+# Subtest: stalled load times out and a late success cannot remove the error
+ok 179 - stalled load times out and a late success cannot remove the error
+  ---
+  duration_ms: 41.298175
+  type: 'test'
+  ...
+# Subtest: load-only browser fallback and rejected Safari decode with a drawable image both complete
+ok 180 - load-only browser fallback and rejected Safari decode with a drawable image both complete
+  ---
+  duration_ms: 81.687517
+  type: 'test'
+  ...
+# Subtest: already failed image rejects immediately, and failed decode fallback propagates canvas errors
+ok 181 - already failed image rejects immediately, and failed decode fallback propagates canvas errors
+  ---
+  duration_ms: 1.513098
+  type: 'test'
+  ...
+# Subtest: normal TOUCH TO START resets durable Progress and Journey before opening the prologue
+ok 182 - normal TOUCH TO START resets durable Progress and Journey before opening the prologue
+  ---
+  duration_ms: 39.018579
+  type: 'test'
+  ...
+# Subtest: New Game fails closed when durable Progress cannot be reset
+ok 183 - New Game fails closed when durable Progress cannot be reset
+  ---
+  duration_ms: 40.314413
+  type: 'test'
+  ...
+# Subtest: first-paint cover is opaque and guards the parent composite; error removes the cover
+ok 184 - first-paint cover is opaque and guards the parent composite; error removes the cover
+  ---
+  duration_ms: 0.422386
+  type: 'test'
+  ...
+# Subtest: real scene readiness waits for foreground polygons and image decode before painting all scene canvases
+ok 185 - real scene readiness waits for foreground polygons and image decode before painting all scene canvases
+  ---
+  duration_ms: 2.141378
+  type: 'test'
+  ...
+# Subtest: real scene rejects foreground and canvas failures instead of announcing readiness
+ok 186 - real scene rejects foreground and canvas failures instead of announcing readiness
+  ---
+  duration_ms: 1.468665
+  type: 'test'
+  ...
+# Subtest: PAD gate audio remains one play, fixed 1800ms transfer, 180ms fade, volume .45
+ok 187 - PAD gate audio remains one play, fixed 1800ms transfer, 180ms fade, volume .45
+  ---
+  duration_ms: 2.68439
+  type: 'test'
+  ...
+# Subtest: Garden Progress observer remains valid JavaScript
+ok 188 - Garden Progress observer remains valid JavaScript
+  ---
+  duration_ms: 1.45465
+  type: 'test'
+  ...
+# Subtest: Garden loads Progress bridge without editing story ownership
+ok 189 - Garden loads Progress bridge without editing story ownership
+  ---
+  duration_ms: 0.414152
+  type: 'test'
+  ...
+# Subtest: Garden Progress observer cannot start or suppress authored events
+ok 190 - Garden Progress observer cannot start or suppress authored events
+  ---
+  duration_ms: 0.327571
+  type: 'test'
+  ...
+# Subtest: Garden records only existing completion facts and unchanged Landing arrival
+ok 191 - Garden records only existing completion facts and unchanged Landing arrival
+  ---
+  duration_ms: 3.810678
+  type: 'test'
+  ...
+# Subtest: Landing Continue Garden transit uses isolated Progress instead of production Progress
+ok 192 - Landing Continue Garden transit uses isolated Progress instead of production Progress
+  ---
+  duration_ms: 0.228946
+  type: 'test'
+  ...
+# Subtest: waiting_at_landing is absent from Garden and cannot restart Shiopon meeting
+ok 193 - waiting_at_landing is absent from Garden and cannot restart Shiopon meeting
+  ---
+  duration_ms: 0.57419
+  type: 'test'
+  ...
+# Subtest: normal Landing to Garden refreshes session story from durable Progress
+ok 194 - normal Landing to Garden refreshes session story from durable Progress
+  ---
+  duration_ms: 2.385384
+  type: 'test'
+  ...
+# [Progress Core] { failureClass: 'save', code: 'malformed-json' }
+# Subtest: Garden direct Continue restores all three exact checkpoint projections
+ok 195 - Garden direct Continue restores all three exact checkpoint projections
+  ---
+  duration_ms: 3.06588
+  type: 'test'
+  ...
+# Subtest: Garden direct Continue rejects non-Garden, ambiguous, routed and malformed authority
+ok 196 - Garden direct Continue rejects non-Garden, ambiguous, routed and malformed authority
+  ---
+  duration_ms: 2.097387
+  type: 'test'
+  ...
+# Subtest: Garden direct Continue is wired into strict real Garden boot without fallback or production writes
+ok 197 - Garden direct Continue is wired into strict real Garden boot without fallback or production writes
+  ---
+  duration_ms: 0.990014
+  type: 'test'
+  ...
+# Subtest: integration contract blocks unreleased Star Gate
+ok 198 - integration contract blocks unreleased Star Gate
+  ---
+  duration_ms: 1.02533
+  type: 'test'
+  ...
+# Subtest: foundation preserves normal Star Gate suppression
+ok 199 - foundation preserves normal Star Gate suppression
+  ---
+  duration_ms: 0.33802
+  type: 'test'
+  ...
+# Subtest: Landing Progress is observer-only and legacy replay guard stays authoritative
+ok 200 - Landing Progress is observer-only and legacy replay guard stays authoritative
+  ---
+  duration_ms: 1.471792
+  type: 'test'
+  ...
+# Subtest: Landing records Progress only after existing memory completion
+ok 201 - Landing records Progress only after existing memory completion
+  ---
+  duration_ms: 0.242262
+  type: 'test'
+  ...
+# Subtest: Landing observes Alenon arrival without changing authored gate transition
+ok 202 - Landing observes Alenon arrival without changing authored gate transition
+  ---
+  duration_ms: 0.432185
+  type: 'test'
+  ...
+# Subtest: Landing persists every real PAD departure to Alenon, not only Dev Continue
+ok 203 - Landing persists every real PAD departure to Alenon, not only Dev Continue
+  ---
+  duration_ms: 0.277086
+  type: 'test'
+  ...
+# Subtest: Landing checkpoints are registered with frozen exact pad_ground fixtures
+ok 204 - Landing checkpoints are registered with frozen exact pad_ground fixtures
+  ---
+  duration_ms: 2.021365
+  type: 'test'
+  ...
+# Subtest: Landing receiver projects completed history without inventing it
+ok 205 - Landing receiver projects completed history without inventing it
+  ---
+  duration_ms: 1.554826
+  type: 'test'
+  ...
+# Subtest: Landing dev session reads only its remapped session key and never production Progress
+ok 206 - Landing dev session reads only its remapped session key and never production Progress
+  ---
+  duration_ms: 0.431744
+  type: 'test'
+  ...
+# Subtest: Landing receiver rejects wrong or ambiguous development entries
+ok 207 - Landing receiver rejects wrong or ambiguous development entries
+  ---
+  duration_ms: 0.31639
+  type: 'test'
+  ...
+# Subtest: Landing collision validator is strict and rejects malformed fallback candidates
+ok 208 - Landing collision validator is strict and rejects malformed fallback candidates
+  ---
+  duration_ms: 0.844724
+  type: 'test'
+  ...
+# Subtest: Landing HTML wires Continue separately from the normal arrival route
+ok 209 - Landing HTML wires Continue separately from the normal arrival route
+  ---
+  duration_ms: 0.809628
+  type: 'test'
+  ...
+# Subtest: authored Landing Continue actor points are exact, walkable and trigger-safe
+ok 210 - authored Landing Continue actor points are exact, walkable and trigger-safe
+  ---
+  duration_ms: 0.40271
+  type: 'test'
+  ...
+# Subtest: joined Shiopon placement is player-relative, ordered left then right then behind, and fail-closed
+ok 211 - joined Shiopon placement is player-relative, ordered left then right then behind, and fail-closed
+  ---
+  duration_ms: 0.417257
+  type: 'test'
+  ...
+# Subtest: Garden return picks the safe right-side Shiopon position from authored collision
+ok 212 - Garden return picks the safe right-side Shiopon position from authored collision
+  ---
+  duration_ms: 0.495352
+  type: 'test'
+  ...
+# Subtest: Landing image readiness rejects load and decode failures
+ok 213 - Landing image readiness rejects load and decode failures
+  ---
+  duration_ms: 2.084102
+  type: 'test'
+  ...
+# Subtest: Landing Continue readiness guards input, loop triggers and production Journey writes
+ok 214 - Landing Continue readiness guards input, loop triggers and production Journey writes
+  ---
+  duration_ms: 1.525281
+  type: 'test'
+  ...
+# Subtest: Landing Continue identity survives Garden and Alenon roundtrips through the active Progress instance
+ok 215 - Landing Continue identity survives Garden and Alenon roundtrips through the active Progress instance
+  ---
+  duration_ms: 2.129326
+  type: 'test'
+  ...
+# Subtest: isolated Landing session commits Garden roundtrip and reopens at garden_entrance
+ok 216 - isolated Landing session commits Garden roundtrip and reopens at garden_entrance
+  ---
+  duration_ms: 1.083147
+  type: 'test'
+  ...
+# Subtest: waiting_at_landing stays blocked until the return greeting rejoins Shiopon
+ok 217 - waiting_at_landing stays blocked until the return greeting rejoins Shiopon
+  ---
+  duration_ms: 0.814498
+  type: 'test'
+  ...
+# Subtest: waiting Continue completes Landing -> Alenon -> Landing -> greeting -> Garden durable flow
+ok 218 - waiting Continue completes Landing -> Alenon -> Landing -> greeting -> Garden durable flow
+  ---
+  duration_ms: 0.866213
+  type: 'test'
+  ...
+# Subtest: Garden re-entry accepts both Landing source checkpoints without replaying Shiopon
+ok 219 - Garden re-entry accepts both Landing source checkpoints without replaying Shiopon
+  ---
+  duration_ms: 0.473772
+  type: 'test'
+  ...
+# Subtest: waiting Shiopon is a Continue-only blocking actor
+ok 220 - waiting Shiopon is a Continue-only blocking actor
+  ---
+  duration_ms: 0.636345
+  type: 'test'
+  ...
+# Subtest: PAD arrival restores following only after the automatic return dialogue
+ok 221 - PAD arrival restores following only after the automatic return dialogue
+  ---
+  duration_ms: 0.525168
+  type: 'test'
+  ...
+# Subtest: waiting_at_landing runtime contract requires PAD return before greeting and rejoin
+ok 222 - waiting_at_landing runtime contract requires PAD return before greeting and rejoin
+  ---
+  duration_ms: 0.705314
+  type: 'test'
+  ...
+# Subtest: locked historical Continue contracts remain represented by regression tests
+ok 223 - locked historical Continue contracts remain represented by regression tests
+  ---
+  duration_ms: 2.169051
+  type: 'test'
+  ...
+# Subtest: Clean candidate preview pins game source and contains no visible editor scripts
+ok 224 - Clean candidate preview pins game source and contains no visible editor scripts
+  ---
+  duration_ms: 14.052754
+  type: 'test'
+  ...
+# Subtest: final Lumiere preview is an exact source snapshot with main's opt-in editors preserved
+ok 225 - final Lumiere preview is an exact source snapshot with main's opt-in editors preserved
+  ---
+  duration_ms: 14.493907
+  type: 'test'
+  ...
+# Subtest: local sway has fixed roots/perimeter and bounded smooth displacement
+ok 226 - local sway has fixed roots/perimeter and bounded smooth displacement
+  ---
+  duration_ms: 22.782585
+  type: 'test'
+  ...
+# Subtest: all four source regions exclude conservative fixed face/torso/legs/wings areas
+ok 227 - all four source regions exclude conservative fixed face/torso/legs/wings areas
+  ---
+  duration_ms: 1.06806
+  type: 'test'
+  ...
+# Subtest: sway caches build only at readiness and reuse capacity during two cycles and A/B
+ok 228 - sway caches build only at readiness and reuse capacity during two cycles and A/B
+  ---
+  duration_ms: 3353.036375
+  type: 'test'
+  ...
+# Subtest: Candidate C envelope keeps visible motion close to the free tips, not the anchor
+ok 229 - Candidate C envelope keeps visible motion close to the free tips, not the anchor
+  ---
+  duration_ms: 1.174007
+  type: 'test'
+  ...
+# Subtest: Candidate C uses one periodic phase with distinct hair and hem follow delays
+ok 230 - Candidate C uses one periodic phase with distinct hair and hem follow delays
+  ---
+  duration_ms: 2.579254
+  type: 'test'
+  ...
+# Subtest: Candidate C exposes actual amplitudes and initialization-only pixel diagnostics
+ok 231 - Candidate C exposes actual amplitudes and initialization-only pixel diagnostics
+  ---
+  duration_ms: 1179.992052
+  type: 'test'
+  ...
+# Subtest: Candidate C never folds a narrow curl: horizontal inverse-mesh slope stays bounded
+ok 232 - Candidate C never folds a narrow curl: horizontal inverse-mesh slope stays bounded
+  ---
+  duration_ms: 3274.47182
+  type: 'test'
+  ...
+# Subtest: inspector exposes already-built pose canvases with no extra per-frame allocations
+ok 233 - inspector exposes already-built pose canvases with no extra per-frame allocations
+  ---
+  duration_ms: 3384.228702
+  type: 'test'
+  ...
+# Subtest: main lineage guard enforces current base ancestry
+ok 234 - main lineage guard enforces current base ancestry
+  ---
+  duration_ms: 1.077347
+  type: 'test'
+  ...
+# Subtest: main merge workflow executes lineage guard
+ok 235 - main merge workflow executes lineage guard
+  ---
+  duration_ms: 0.26857
+  type: 'test'
+  ...
+# Subtest: BGM waits for movement, is one looping instance, retries rejection and never rewinds
+ok 236 - BGM waits for movement, is one looping instance, retries rejection and never rewinds
+  ---
+  duration_ms: 11.651783
+  type: 'test'
+  ...
+# Subtest: PAD return enters the real north path, does not replay memory or immediately leave
+ok 237 - PAD return enters the real north path, does not replay memory or immediately leave
+  ---
+  duration_ms: 9.066457
+  type: 'test'
+  ...
+# Subtest: Garden return URL alone does not complete or suppress fresh Landing memory
+ok 238 - Garden return URL alone does not complete or suppress fresh Landing memory
+  ---
+  duration_ms: 3.917907
+  type: 'test'
+  ...
+# Subtest: companion farewell finishes before boarding, stays on ground during flight and rejoins on return
+ok 239 - companion farewell finishes before boarding, stays on ground during flight and rejoins on return
+  ---
+  duration_ms: 14.445767
+  type: 'test'
+  ...
+# Subtest: solo boarding has no farewell; walking at the south edge cannot teleport off the island
+ok 240 - solo boarding has no farewell; walking at the south edge cannot teleport off the island
+  ---
+  duration_ms: 2.993937
+  type: 'test'
+  ...
+# Subtest: Continue tap endpoint cannot snap through waiting Shiopon collision
+ok 241 - Continue tap endpoint cannot snap through waiting Shiopon collision
+  ---
+  duration_ms: 3.73697
+  type: 'test'
+  ...
+# Subtest: PAD accepted pointer and keyboard gestures invoke the shared manager
+ok 242 - PAD accepted pointer and keyboard gestures invoke the shared manager
+  ---
+  duration_ms: 4.066695
+  type: 'test'
+  ...
+# Subtest: Alenon return bypasses prologue and spawns behind its authored PAD; title still starts prologue
+ok 243 - Alenon return bypasses prologue and spawns behind its authored PAD; title still starts prologue
+  ---
+  duration_ms: 8.989264
+  type: 'test'
+  ...
+# Subtest: completed intro resume stays silent until leaving the Orb outer radius and re-entering
+ok 244 - completed intro resume stays silent until leaving the Orb outer radius and re-entering
+  ---
+  duration_ms: 6.389491
+  type: 'test'
+  ...
+# Subtest: title prologue can re-arm the Orb after its existing final walk without changing control release
+ok 245 - title prologue can re-arm the Orb after its existing final walk without changing control release
+  ---
+  duration_ms: 2.248719
+  type: 'test'
+  ...
+# Subtest: PAD return retains landing, dismount, and Orb suppression without an immediate reboard
+ok 246 - PAD return retains landing, dismount, and Orb suppression without an immediate reboard
+  ---
+  duration_ms: 2.153531
+  type: 'test'
+  ...
+# Subtest: garden return trigger lies on the current collision path and has spawn clearance
+ok 247 - garden return trigger lies on the current collision path and has spawn clearance
+  ---
+  duration_ms: 1.008618
+  type: 'test'
+  ...
+# Subtest: journey progress survives a new page and title reset clears only this journey
+ok 248 - journey progress survives a new page and title reset clears only this journey
+  ---
+  duration_ms: 0.908423
+  type: 'test'
+  ...
+# Subtest: garden uses real controls to return through its reachable entrance exactly once
+ok 249 - garden uses real controls to return through its reachable entrance exactly once
+  ---
+  duration_ms: 40.785889
+  type: 'test'
+  ...
+# Subtest: new garden arrival can turn back without triggering the first event; revisits retain completed events
+ok 250 - new garden arrival can turn back without triggering the first event; revisits retain completed events
+  ---
+  duration_ms: 63.888692
+  type: 'test'
+  ...
+# Subtest: garden keyboard movement starts the same looping BGM without a title click
+ok 251 - garden keyboard movement starts the same looping BGM without a title click
+  ---
+  duration_ms: 32.414597
+  type: 'test'
+  ...
+# Subtest: merge gate requires machine and human evidence
+ok 252 - merge gate requires machine and human evidence
+  ---
+  duration_ms: 1.047742
+  type: 'test'
+  ...
+# Subtest: AI entry requires preflight and forbids direct main event work
+ok 253 - AI entry requires preflight and forbids direct main event work
+  ---
+  duration_ms: 0.260666
+  type: 'test'
+  ...
+# Subtest: official JSON parses: reference size, nonempty polygons and finite coordinates
+ok 254 - official JSON parses: reference size, nonempty polygons and finite coordinates
+  ---
+  duration_ms: 1.220754
+  type: 'test'
+  ...
+# Subtest: invalid reference, empty areas, short polygon and NaN are rejected, not silently dropped
+ok 255 - invalid reference, empty areas, short polygon and NaN are rejected, not silently dropped
+  ---
+  duration_ms: 0.578387
+  type: 'test'
+  ...
+# Subtest: center path, both fountain sides and upper stairs remain connected
+ok 256 - center path, both fountain sides and upper stairs remain connected
+  ---
+  duration_ms: 79.037339
+  type: 'test'
+  ...
+# Subtest: fountain is not crossed; A* and smoothing route around it
+ok 257 - fountain is not crossed; A* and smoothing route around it
+  ---
+  duration_ms: 5.758927
+  type: 'test'
+  ...
+# Subtest: flowerbed/fountain taps project to the nearest legal boundary
+ok 258 - flowerbed/fountain taps project to the nearest legal boundary
+  ---
+  duration_ms: 5.811846
+  type: 'test'
+  ...
+# Subtest: authored east side passage stays walkable while the far map edge remains blocked
+ok 259 - authored east side passage stays walkable while the far map edge remains blocked
+  ---
+  duration_ms: 18.676207
+  type: 'test'
+  ...
+# Subtest: a sub-pixel gap and a diagonal blocked corner cannot be jumped
+ok 260 - a sub-pixel gap and a diagonal blocked corner cannot be jumped
+  ---
+  duration_ms: 4.448766
+  type: 'test'
+  ...
+# Subtest: overlapping polygons and editor-compatible ellipse areas share continuous collision
+ok 261 - overlapping polygons and editor-compatible ellipse areas share continuous collision
+  ---
+  duration_ms: 0.452973
+  type: 'test'
+  ...
+# Subtest: updated editor polygons rebuild navigation without changing schema
+ok 262 - updated editor polygons rebuild navigation without changing schema
+  ---
+  duration_ms: 4.41793
+  type: 'test'
+  ...
+# Subtest: sampled routes stay inside the original polygons after smoothing
+ok 263 - sampled routes stay inside the original polygons after smoothing
+  ---
+  duration_ms: 708.822221
+  type: 'test'
+  ...
+# Subtest: v1 registry contains exactly the contracted semantic IDs and immutable metadata
+ok 264 - v1 registry contains exactly the contracted semantic IDs and immutable metadata
+  ---
+  duration_ms: 3.386499
+  type: 'test'
+  ...
+# Subtest: valid initial, landing and garden checkpoints remain independent of map event completion
+ok 265 - valid initial, landing and garden checkpoints remain independent of map event completion
+  ---
+  duration_ms: 1.773283
+  type: 'test'
+  ...
+# Subtest: missing/malformed/primitive/null/future saves are read-only failures
+ok 266 - missing/malformed/primitive/null/future saves are read-only failures
+  ---
+  duration_ms: 0.827902
+  type: 'test'
+  ...
+# Subtest: unknown map/spawn and mismatched map/spawn cannot become a checkpoint
+ok 267 - unknown map/spawn and mismatched map/spawn cannot become a checkpoint
+  ---
+  duration_ms: 0.544013
+  type: 'test'
+  ...
+# Subtest: unknown events and impossible prerequisites are rejected, not repaired
+ok 268 - unknown events and impossible prerequisites are rejected, not repaired
+  ---
+  duration_ms: 0.354881
+  type: 'test'
+  ...
+# Subtest: known event duplicates normalize only in memory; unknown events never disappear
+ok 269 - known event duplicates normalize only in memory; unknown events never disappear
+  ---
+  duration_ms: 0.259353
+  type: 'test'
+  ...
+# Subtest: companion invariants reject false joins and impossible locations
+ok 270 - companion invariants reject false joins and impossible locations
+  ---
+  duration_ms: 0.368286
+  type: 'test'
+  ...
+# Subtest: registered event completions are one-key atomic, ordered and idempotent
+ok 271 - registered event completions are one-key atomic, ordered and idempotent
+  ---
+  duration_ms: 1.129685
+  type: 'test'
+  ...
+# Subtest: all four events complete only at their registered map and spawn; meet joins in same record
+ok 272 - all four events complete only at their registered map and spawn; meet joins in same record
+  ---
+  duration_ms: 0.70874
+  type: 'test'
+  ...
+# Subtest: route registry accepts five exact edges; it never creates an event
+ok 273 - route registry accepts five exact edges; it never creates an event
+  ---
+  duration_ms: 0.485795
+  type: 'test'
+  ...
+# Subtest: arrival commits checkpoint only; source and Devil memory prerequisite are enforced
+ok 274 - arrival commits checkpoint only; source and Devil memory prerequisite are enforced
+  ---
+  duration_ms: 1.307145
+  type: 'test'
+  ...
+# Subtest: companion transitions require meet, approved reason and landing checkpoint
+ok 275 - companion transitions require meet, approved reason and landing checkpoint
+  ---
+  duration_ms: 0.566615
+  type: 'test'
+  ...
+# Subtest: Landing wait -> Alenon -> Landing -> Garden preserves Shiopon completion history
+ok 276 - Landing wait -> Alenon -> Landing -> Garden preserves Shiopon completion history
+  ---
+  duration_ms: 0.676099
+  type: 'test'
+  ...
+# Subtest: failed write preserves confirmed record and reports volatile candidate separately
+ok 277 - failed write preserves confirmed record and reports volatile candidate separately
+  ---
+  duration_ms: 0.475105
+  type: 'test'
+  ...
+# Subtest: storage read failures and unavailable storage never import legacy or crash
+ok 278 - storage read failures and unavailable storage never import legacy or crash
+  ---
+  duration_ms: 0.354801
+  type: 'test'
+  ...
+# Subtest: reset writes the exact clean schema once and never deletes other keys
+ok 279 - reset writes the exact clean schema once and never deletes other keys
+  ---
+  duration_ms: 0.248423
+  type: 'test'
+  ...
+# Subtest: New Game token suppresses repeats without rewinding later progress; distinct token replaces it
+ok 280 - New Game token suppresses repeats without rewinding later progress; distinct token replaces it
+  ---
+  duration_ms: 0.335515
+  type: 'test'
+  ...
+# Subtest: offline New Game and subsequent event/arrival remain playable without overwriting old save
+ok 281 - offline New Game and subsequent event/arrival remain playable without overwriting old save
+  ---
+  duration_ms: 0.686298
+  type: 'test'
+  ...
+# Subtest: legacy inspection is read-only and distinguishes absence, object, malformed, and nonobject JSON
+ok 282 - legacy inspection is read-only and distinguishes absence, object, malformed, and nonobject JSON
+  ---
+  duration_ms: 3.600696
+  type: 'test'
+  ...
+# Subtest: unavailable session storage and read exceptions never suppress valid Progress authority
+ok 283 - unavailable session storage and read exceptions never suppress valid Progress authority
+  ---
+  duration_ms: 0.898483
+  type: 'test'
+  ...
+# Subtest: old completion fields, companion mode, and pixel coordinates never create Progress v1
+ok 284 - old completion fields, companion mode, and pixel coordinates never create Progress v1
+  ---
+  duration_ms: 0.492998
+  type: 'test'
+  ...
+# Subtest: valid v1 wins with absent, matching, conflicting, or malformed legacy bytes
+ok 285 - valid v1 wins with absent, matching, conflicting, or malformed legacy bytes
+  ---
+  duration_ms: 0.722666
+  type: 'test'
+  ...
+# Subtest: a purported valid load with a non-v1 record is rejected even through a substituted loader
+ok 286 - a purported valid load with a non-v1 record is rejected even through a substituted loader
+  ---
+  duration_ms: 0.347046
+  type: 'test'
+  ...
+# Subtest: corrupt and future durable records cannot fall back to plausible legacy data
+ok 287 - corrupt and future durable records cannot fall back to plausible legacy data
+  ---
+  duration_ms: 0.553862
+  type: 'test'
+  ...
+# Subtest: local storage failure is distinct from legacy detection and grants no durable authority
+ok 288 - local storage failure is distinct from legacy detection and grants no durable authority
+  ---
+  duration_ms: 0.281144
+  type: 'test'
+  ...
+# Subtest: route queries and skipPrologue cannot become authority or write any progress
+ok 289 - route queries and skipPrologue cannot become authority or write any progress
+  ---
+  duration_ms: 5.203664
+  type: 'test'
+  ...
+# Subtest: repeated authority checks only read storage, never create, normalize, or delete either key
+ok 290 - repeated authority checks only read storage, never create, normalize, or delete either key
+  ---
+  duration_ms: 1.331941
+  type: 'test'
+  ...
+# Subtest: Continue resolves every checkpoint and companion with detached frozen normalized facts, no writes
+ok 291 - Continue resolves every checkpoint and companion with detached frozen normalized facts, no writes
+  ---
+  duration_ms: 3.346444
+  type: 'test'
+  ...
+# Subtest: Continue fails closed on status labels, invalid history/location, extra fields and legacy/URL input
+ok 292 - Continue fails closed on status labels, invalid history/location, extra fields and legacy/URL input
+  ---
+  duration_ms: 0.341125
+  type: 'test'
+  ...
+# Subtest: durable arrival and replay: pad_to_landing
+ok 293 - durable arrival and replay: pad_to_landing
+  ---
+  duration_ms: 3.781012
+  type: 'test'
+  ...
+# Subtest: durable arrival and replay: gate_to_garden
+ok 294 - durable arrival and replay: gate_to_garden
+  ---
+  duration_ms: 1.533627
+  type: 'test'
+  ...
+# Subtest: durable arrival and replay: garden_to_landing
+ok 295 - durable arrival and replay: garden_to_landing
+  ---
+  duration_ms: 0.507015
+  type: 'test'
+  ...
+# Subtest: durable arrival and replay: pad_to_alenon
+ok 296 - durable arrival and replay: pad_to_alenon
+  ---
+  duration_ms: 0.573388
+  type: 'test'
+  ...
+# Subtest: issue rejects title, malformed edge, wrong source/prerequisite and incompatible companion destination
+ok 297 - issue rejects title, malformed edge, wrong source/prerequisite and incompatible companion destination
+  ---
+  duration_ms: 0.376311
+  type: 'test'
+  ...
+# Subtest: claim requires exact token, destination and current independently validated durable state
+ok 298 - claim requires exact token, destination and current independently validated durable state
+  ---
+  duration_ms: 0.522513
+  type: 'test'
+  ...
+# Subtest: one live slot, TTL, invalid clocks and distinct token replacement
+ok 299 - one live slot, TTL, invalid clocks and distinct token replacement
+  ---
+  duration_ms: 0.813455
+  type: 'test'
+  ...
+# Subtest: corrupt/unreadable evidence is never automatically overwritten
+ok 300 - corrupt/unreadable evidence is never automatically overwritten
+  ---
+  duration_ms: 1.162665
+  type: 'test'
+  ...
+# Subtest: missing/throwing dependencies yield bounded failure without global fallback
+ok 301 - missing/throwing dependencies yield bounded failure without global fallback
+  ---
+  duration_ms: 0.298165
+  type: 'test'
+  ...
+# Subtest: arrival waits for actual assetsReady
+ok 302 - arrival waits for actual assetsReady
+  ---
+  duration_ms: 0.443285
+  type: 'test'
+  ...
+# Subtest: arrival waits for actual collisionReady
+ok 303 - arrival waits for actual collisionReady
+  ---
+  duration_ms: 0.234186
+  type: 'test'
+  ...
+# Subtest: arrival waits for actual spawnResolved
+ok 304 - arrival waits for actual spawnResolved
+  ---
+  duration_ms: 0.206335
+  type: 'test'
+  ...
+# Subtest: arrival waits for actual historyRestored
+ok 305 - arrival waits for actual historyRestored
+  ---
+  duration_ms: 0.261197
+  type: 'test'
+  ...
+# Subtest: arrival waits for actual companionPlaced
+ok 306 - arrival waits for actual companionPlaced
+  ---
+  duration_ms: 0.269312
+  type: 'test'
+  ...
+# Subtest: arrival waits for actual arrivalSettled
+ok 307 - arrival waits for actual arrivalSettled
+  ---
+  duration_ms: 0.219569
+  type: 'test'
+  ...
+# Subtest: failed durable write retains source bytes, claimed evidence, volatile retry boundary; reload retries
+ok 308 - failed durable write retains source bytes, claimed evidence, volatile retry boundary; reload retries
+  ---
+  duration_ms: 0.688453
+  type: 'test'
+  ...
+# Subtest: durable success plus receipt failure recovers exact destination without repeating arrival
+ok 309 - durable success plus receipt failure recovers exact destination without repeating arrival
+  ---
+  duration_ms: 0.389836
+  type: 'test'
+  ...
+# Subtest: fresh competing durable record is rejected; stale cached snapshot needs caller refresh
+ok 310 - fresh competing durable record is rejected; stale cached snapshot needs caller refresh
+  ---
+  duration_ms: 0.298346
+  type: 'test'
+  ...
+# Subtest: independent tabs cannot claim; cloned session evidence can acknowledge same logical destination
+ok 311 - independent tabs cannot claim; cloned session evidence can acknowledge same logical destination
+  ---
+  duration_ms: 0.343911
+  type: 'test'
+  ...
+# Subtest: committed slots can be replaced and old tokens cannot replay a different transition
+ok 312 - committed slots can be replaced and old tokens cannot replay a different transition
+  ---
+  duration_ms: 0.426806
+  type: 'test'
+  ...
+# Subtest: browser import performs no storage/clock/token/navigation operation and only explicitly approved Continue entry modules import it
+ok 313 - browser import performs no storage/clock/token/navigation operation and only explicitly approved Continue entry modules import it
+  ---
+  duration_ms: 6.312878
+  type: 'test'
+  ...
+# Subtest: persisted identity history rejects stale A after recreated A/B issue and expiry cycles
+ok 314 - persisted identity history rejects stale A after recreated A/B issue and expiry cycles
+  ---
+  duration_ms: 0.380729
+  type: 'test'
+  ...
+# Subtest: identity history survives claim, commit, recreated committed replacement and quota failure
+ok 315 - identity history survives claim, commit, recreated committed replacement and quota failure
+  ---
+  duration_ms: 0.433668
+  type: 'test'
+  ...
+# Subtest: corrupt identity histories fail closed without rewriting any evidence
+ok 316 - corrupt identity histories fail closed without rewriting any evidence
+  ---
+  duration_ms: 0.853099
+  type: 'test'
+  ...
+# Subtest: Title durable status validation is read only including unsupported map/version and unavailable
+ok 317 - Title durable status validation is read only including unsupported map/version and unavailable
+  ---
+  duration_ms: 2.309783
+  type: 'test'
+  ...
+# Subtest: click reloads stale save, launches registry destination once and permits navigation failure retry
+ok 318 - click reloads stale save, launches registry destination once and permits navigation failure retry
+  ---
+  duration_ms: 1.321912
+  type: 'test'
+  ...
+# Subtest: receiver rejects all conflicting markers, wrong map, malformed and unreadable saves preserving bytes
+ok 319 - receiver rejects all conflicting markers, wrong map, malformed and unreadable saves preserving bytes
+  ---
+  duration_ms: 1.011303
+  type: 'test'
+  ...
+# [Public Continue] continue-image-failed: ./assets/maps/alenon/bg.webp
+# Subtest: real Public bootstrap restores exact spawn/history only after strict readiness; PAD production departure remains normal
+ok 320 - real Public bootstrap restores exact spawn/history only after strict readiness; PAD production departure remains normal
+  ---
+  duration_ms: 18.864658
+  type: 'test'
+  ...
+# [Public Continue] continue-image-decode-failed: ./assets/maps/alenon/bg.webp
+# [Public Continue] network
+# [Public Continue] public-save-changed-during-readiness
+# Subtest: real Public failure and stale-during-readiness leave input locked and Progress bytes untouched; retry works
+ok 321 - real Public failure and stale-during-readiness leave input locked and Progress bytes untouched; retry works
+  ---
+  duration_ms: 20.469086
+  type: 'test'
+  ...
+# Subtest: Public incomplete prologue persists via existing Production boundary; normal start reset policy and PAD return unchanged
+ok 322 - Public incomplete prologue persists via existing Production boundary; normal start reset policy and PAD return unchanged
+  ---
+  duration_ms: 24.210495
+  type: 'test'
+  ...
+# Subtest: registered Public harness executes same adapter while preserving Production/Journey bytes and containing departure
+ok 323 - registered Public harness executes same adapter while preserving Production/Journey bytes and containing departure
+  ---
+  duration_ms: 19.798688
+  type: 'test'
+  ...
+# Subtest: new controller and adapter imports perform no storage, clock, token or navigation operations
+ok 324 - new controller and adapter imports perform no storage, clock, token or navigation operations
+  ---
+  duration_ms: 1.175589
+  type: 'test'
+  ...
+# [Public Continue] public-history-not-restored
+# Subtest: Public Journey restoration preserves unrelated keys and fails closed when session writes are denied
+ok 325 - Public Journey restoration preserves unrelated keys and fails closed when session writes are denied
+  ---
+  duration_ms: 11.994136
+  type: 'test'
+  ...
+# Subtest: real Title UI uses the Public controller without normal-start fallback and keeps Save writes out of the UI
+ok 326 - real Title UI uses the Public controller without normal-start fallback and keeps Save writes out of the UI
+  ---
+  duration_ms: 0.64959
+  type: 'test'
+  ...
+# Subtest: Public adapter imports are explicitly allowlisted; editor redirect cannot precede Public query refusal
+ok 327 - Public adapter imports are explicitly allowlisted; editor redirect cannot precede Public query refusal
+  ---
+  duration_ms: 3.263568
+  type: 'test'
+  ...
+# Subtest: actual normal title and ordinary PAD-return bootstrap preserve existing Progress bytes and reset policy
+ok 328 - actual normal title and ordinary PAD-return bootstrap preserve existing Progress bytes and reset policy
+  ---
+  duration_ms: 11.522352
+  type: 'test'
+  ...
+# Subtest: Production Continue hides the whole status panel on successful readiness while dev diagnostics remain visible
+ok 329 - Production Continue hides the whole status panel on successful readiness while dev diagnostics remain visible
+  ---
+  duration_ms: 18.519956
+  type: 'test'
+  ...
+# [Public Continue] network
+# Subtest: Production Continue failure retains visible retry and Title controls; successful retry clears status
+ok 330 - Production Continue failure retains visible retry and Title controls; successful retry clears status
+  ---
+  duration_ms: 4.43935
+  type: 'test'
+  ...
+# [Progress Core] { failureClass: 'save', code: 'companion-location-mismatch' }
+# Subtest: Garden checkpoint stays Public Continue eligible on repeated title resumes
+ok 331 - Garden checkpoint stays Public Continue eligible on repeated title resumes
+  ---
+  duration_ms: 3.772647
+  type: 'test'
+  ...
+# Subtest: Garden Public receiver restores G1 G2 G3 authority exactly without durable writes
+ok 332 - Garden Public receiver restores G1 G2 G3 authority exactly without durable writes
+  ---
+  duration_ms: 0.579901
+  type: 'test'
+  ...
+# Subtest: Garden Public receiver rejects conflicts, wrong map, contradictory companion and stale saves
+ok 333 - Garden Public receiver rejects conflicts, wrong map, contradictory companion and stale saves
+  ---
+  duration_ms: 1.573211
+  type: 'test'
+  ...
+# Subtest: Garden Public projection rebuilds legacy Journey and preserves unrelated keys
+ok 334 - Garden Public projection rebuilds legacy Journey and preserves unrelated keys
+  ---
+  duration_ms: 0.511864
+  type: 'test'
+  ...
+# Subtest: Garden Public production wiring is strict, exact-spawn, stale-checked and receiver reload returns Title
+ok 335 - Garden Public production wiring is strict, exact-spawn, stale-checked and receiver reload returns Title
+  ---
+  duration_ms: 1.306794
+  type: 'test'
+  ...
+# Subtest: Garden Public Continue can never execute the root New Game reset branch
+ok 336 - Garden Public Continue can never execute the root New Game reset branch
+  ---
+  duration_ms: 0.668224
+  type: 'test'
+  ...
+# Subtest: Garden Public Continue keeps the south exit active and returns to Landing
+ok 337 - Garden Public Continue keeps the south exit active and returns to Landing
+  ---
+  duration_ms: 1.63252
+  type: 'test'
+  ...
+# Subtest: Garden Public adapter browser import is inert
+ok 338 - Garden Public adapter browser import is inert
+  ---
+  duration_ms: 2.298481
+  type: 'test'
+  ...
+# Subtest: Title controller enables Landing and Garden durable checkpoints
+ok 339 - Title controller enables Landing and Garden durable checkpoints
+  ---
+  duration_ms: 2.629709
+  type: 'test'
+  ...
+# Subtest: Landing Public receiver validates production entry read-only and restores exact projection
+ok 340 - Landing Public receiver validates production entry read-only and restores exact projection
+  ---
+  duration_ms: 0.916788
+  type: 'test'
+  ...
+# Subtest: Landing Public receiver rejects conflicting query, wrong map and stale save without writes
+ok 341 - Landing Public receiver rejects conflicting query, wrong map and stale save without writes
+  ---
+  duration_ms: 0.645543
+  type: 'test'
+  ...
+# Subtest: Public history projection rebuilds session Journey and preserves unrelated keys
+ok 342 - Public history projection rebuilds session Journey and preserves unrelated keys
+  ---
+  duration_ms: 1.161944
+  type: 'test'
+  ...
+# Subtest: Public history projection fails closed when session persistence cannot be verified
+ok 343 - Public history projection fails closed when session persistence cannot be verified
+  ---
+  duration_ms: 0.317842
+  type: 'test'
+  ...
+# Subtest: Landing page gates input until assets, stale-save check and Journey restoration finish
+ok 344 - Landing page gates input until assets, stale-save check and Journey restoration finish
+  ---
+  duration_ms: 0.9557
+  type: 'test'
+  ...
+# Subtest: waiting durable state is treated as the deterministic return leg and rejoins through existing dialogue
+ok 345 - waiting durable state is treated as the deterministic return leg and rejoins through existing dialogue
+  ---
+  duration_ms: 0.66563
+  type: 'test'
+  ...
+# Subtest: Landing Public adapter import is inert
+ok 346 - Landing Public adapter import is inert
+  ---
+  duration_ms: 1.425786
+  type: 'test'
+  ...
+# Subtest: Public Continue target and segments are preflightable without claiming device verification or release
+ok 347 - Public Continue target and segments are preflightable without claiming device verification or release
+  ---
+  duration_ms: 229.303222
+  type: 'test'
+  ...
+# Subtest: unknown Public Continue targets remain blocked
+ok 348 - unknown Public Continue targets remain blocked
+  ---
+  duration_ms: 29.265221
+  type: 'test'
+  ...
+# Subtest: registering Public Continue does not bypass locked event or segment refusal
+ok 349 - registering Public Continue does not bypass locked event or segment refusal
+  ---
+  duration_ms: 219.146043
+  type: 'test'
+  ...
+# Subtest: runtime handoff is exact, one-shot and expires
+ok 350 - runtime handoff is exact, one-shot and expires
+  ---
+  duration_ms: 1.485678
+  type: 'test'
+  ...
+# Subtest: runtime-entry module import itself touches no browser state
+ok 351 - runtime-entry module import itself touches no browser state
+  ---
+  duration_ms: 1.531432
+  type: 'test'
+  ...
+# Subtest: cold production map entries require handoff while dev/editor entries remain directly reachable
+ok 352 - cold production map entries require handoff while dev/editor entries remain directly reachable
+  ---
+  duration_ms: 2.940928
+  type: 'test'
+  ...
+# Subtest: all production cross-map exits issue one-shot handoff before navigation
+ok 353 - all production cross-map exits issue one-shot handoff before navigation
+  ---
+  duration_ms: 2.682897
+  type: 'test'
+  ...
+# Subtest: requireInternal redirects a cold page to Title and admits an issued page exactly once
+ok 354 - requireInternal redirects a cold page to Title and admits an issued page exactly once
+  ---
+  duration_ms: 1.78244
+  type: 'test'
+  ...
+# Subtest: gate opening aligns with stair centre; standalone gate is mask-only and foreground uses the native zero-origin placement
+ok 355 - gate opening aligns with stair centre; standalone gate is mask-only and foreground uses the native zero-origin placement
+  ---
+  duration_ms: 2.096245
+  type: 'test'
+  ...
+# Subtest: foot baseline is strict, local to the object and independent for each actor
+ok 356 - foot baseline is strict, local to the object and independent for each actor
+  ---
+  duration_ms: 0.642066
+  type: 'test'
+  ...
+# Subtest: local physical bases remain solid for manual movement and pathfinding without editing authored areas
+ok 357 - local physical bases remain solid for manual movement and pathfinding without editing authored areas
+  ---
+  duration_ms: 69.255028
+  type: 'test'
+  ...
+# Subtest: rear actor is alpha-masked in an isolated surface; front actor draws directly
+ok 358 - rear actor is alpha-masked in an isolated surface; front actor draws directly
+  ---
+  duration_ms: 3.045302
+  type: 'test'
+  ...
+# Subtest: scene and actors share the current camera; event FX is opt-in
+ok 359 - scene and actors share the current camera; event FX is opt-in
+  ---
+  duration_ms: 1.430284
+  type: 'test'
+  ...
+# Subtest: motion uses independent cycles; Preview 44 cloud artwork scrolls left in a buffered track
+ok 360 - motion uses independent cycles; Preview 44 cloud artwork scrolls left in a buffered track
+  ---
+  duration_ms: 0.377022
+  type: 'test'
+  ...
+# Subtest: Shiopon uses the original NPC as the single companion
+ok 361 - Shiopon uses the original NPC as the single companion
+  ---
+  duration_ms: 1.121068
+  type: 'test'
+  ...
+# Subtest: companion follows behind with a protected gap and does not block Shion
+ok 362 - companion follows behind with a protected gap and does not block Shion
+  ---
+  duration_ms: 0.330926
+  type: 'test'
+  ...
+# Subtest: companion replans a collision-safe route and accelerates when Shion gets ahead
+ok 363 - companion replans a collision-safe route and accelerates when Shion gets ahead
+  ---
+  duration_ms: 0.276856
+  type: 'test'
+  ...
+# Subtest: Shiopon can face Shion through the data-driven stage command
+ok 364 - Shiopon can face Shion through the data-driven stage command
+  ---
+  duration_ms: 0.165588
+  type: 'test'
+  ...
+# Subtest: race dialogue drives a real run, trip and recovery animation
+ok 365 - race dialogue drives a real run, trip and recovery animation
+  ---
+  duration_ms: 0.374738
+  type: 'test'
+  ...
+# Subtest: follow-mode draw order keeps Shiopon immediately below Shion
+ok 366 - follow-mode draw order keeps Shiopon immediately below Shion
+  ---
+  duration_ms: 0.207756
+  type: 'test'
+  ...
+# Subtest: Preview 38 mounts a dedicated far-sky plate below all moving atmosphere
+ok 367 - Preview 38 mounts a dedicated far-sky plate below all moving atmosphere
+  ---
+  duration_ms: 1.099067
+  type: 'test'
+  ...
+# Subtest: the farthest sky itself has no authored animation
+ok 368 - the farthest sky itself has no authored animation
+  ---
+  duration_ms: 0.262538
+  type: 'test'
+  ...
+# Subtest: nebula and stars shimmer with only sub-percent drift
+ok 369 - nebula and stars shimmer with only sub-percent drift
+  ---
+  duration_ms: 0.236851
+  type: 'test'
+  ...
+# Subtest: sun enhancement is fixed to world geometry and uses layered bloom
+ok 370 - sun enhancement is fixed to world geometry and uses layered bloom
+  ---
+  duration_ms: 0.253993
+  type: 'test'
+  ...
+# Subtest: default cinematic calls have no effect; independent event coefficient applies once
+ok 371 - default cinematic calls have no effect; independent event coefficient applies once
+  ---
+  duration_ms: 3.209769
+  type: 'test'
+  ...
+# Subtest: iOS-safe event silence hard-mutes native transport and reveal needs no play call
+ok 372 - iOS-safe event silence hard-mutes native transport and reveal needs no play call
+  ---
+  duration_ms: 1.769156
+  type: 'test'
+  ...
+# Subtest: pause snapshots actual time and resume preserves mute settings and stopped state
+ok 373 - pause snapshots actual time and resume preserves mute settings and stopped state
+  ---
+  duration_ms: 1.483293
+  type: 'test'
+  ...
+# Subtest: failed play remains silent without blocking visual caller; released late play cannot restart
+ok 374 - failed play remains silent without blocking visual caller; released late play cannot restart
+  ---
+  duration_ms: 1.090191
+  type: 'test'
+  ...
+# Subtest: pause invalidates pending resume; white/black silence is actual native pause
+ok 375 - pause invalidates pending resume; white/black silence is actual native pause
+  ---
+  duration_ms: 0.999402
+  type: 'test'
+  ...
+# Subtest: hung native play reports failure within bounded interval and eventual fulfillment stays paused
+ok 376 - hung native play reports failure within bounded interval and eventual fulfillment stays paused
+  ---
+  duration_ms: 501.77302
+  type: 'test'
+  ...
+# Subtest: ordinary movement unlock and native background pause retain old behavior without event ownership
+ok 377 - ordinary movement unlock and native background pause retain old behavior without event ownership
+  ---
+  duration_ms: 1.54615
+  type: 'test'
+  ...
+# Subtest: front coefficient and silence duration interpolate; per-frame Stage3 level cancels older fade
+ok 378 - front coefficient and silence duration interpolate; per-frame Stage3 level cancels older fade
+  ---
+  duration_ms: 1.192071
+  type: 'test'
+  ...
+# Subtest: P0 base restores independently from user mute and never overwrites preference
+ok 379 - P0 base restores independently from user mute and never overwrites preference
+  ---
+  duration_ms: 1.227487
+  type: 'test'
+  ...
+# Subtest: event coefficient fades tolerate a queued RAF timestamp before their start
+ok 380 - event coefficient fades tolerate a queued RAF timestamp before their start
+  ---
+  duration_ms: 1.222517
+  type: 'test'
+  ...
+# Subtest: real background plane covers portrait and landscape throughout absorption including outside anchors
+ok 381 - real background plane covers portrait and landscape throughout absorption including outside anchors
+  ---
+  duration_ms: 1.381494
+  type: 'test'
+  ...
+# Subtest: three finite Arcana pulses preserve normal card before edge erosion and completed Re hold
+ok 382 - three finite Arcana pulses preserve normal card before edge erosion and completed Re hold
+  ---
+  duration_ms: 4.754476
+  type: 'test'
+  ...
+# Subtest: soft edge erosion reaches center before Re Arcana becomes visible
+ok 383 - soft edge erosion reaches center before Re Arcana becomes visible
+  ---
+  duration_ms: 2.468408
+  type: 'test'
+  ...
+# Subtest: detail cards preserve authored registration while full-card abnormality changes only rendering properties
+ok 384 - detail cards preserve authored registration while full-card abnormality changes only rendering properties
+  ---
+  duration_ms: 1.306113
+  type: 'test'
+  ...
+# Subtest: audio stays continuous: infection begins at Re emergence and rewrite follows with no silent-break cue
+ok 385 - audio stays continuous: infection begins at Re emergence and rewrite follows with no silent-break cue
+  ---
+  duration_ms: 1.268002
+  type: 'test'
+  ...
+# Subtest: each cancelled phase releases overlay and never rewrites early
+ok 386 - each cancelled phase releases overlay and never rewrites early
+  ---
+  duration_ms: 8.339954
+  type: 'test'
+  ...
+# Subtest: detail refuses an unprepared image before mounting or advancing
+ok 387 - detail refuses an unprepared image before mounting or advancing
+  ---
+  duration_ms: 0.755537
+  type: 'test'
+  ...
+# Subtest: R0 explicitly prepares and restores red03 while initial03 stays on normal path
+ok 388 - R0 explicitly prepares and restores red03 while initial03 stays on normal path
+  ---
+  duration_ms: 0.240458
+  type: 'test'
+  ...
+# Subtest: T1/T33 exact registered asset paths and §78 dialogue strings
+ok 389 - T1/T33 exact registered asset paths and §78 dialogue strings
+  ---
+  duration_ms: 2.226418
+  type: 'test'
+  ...
+# Subtest: T2/T3/T7/T8/T9/T12/T15/T16 timeline obeys formation and UI closure timing
+ok 390 - T2/T3/T7/T8/T9/T12/T15/T16 timeline obeys formation and UI closure timing
+  ---
+  duration_ms: 11.149348
+  type: 'test'
+  ...
+# Subtest: T18 crossfade is included and scale continues after opacity reaches one
+ok 391 - T18 crossfade is included and scale continues after opacity reaches one
+  ---
+  duration_ms: 1.481099
+  type: 'test'
+  ...
+# Subtest: T13/T14/T17/T29 restoration under independent covers precedes dialogue/control
+ok 392 - T13/T14/T17/T29 restoration under independent covers precedes dialogue/control
+  ---
+  duration_ms: 1.495826
+  type: 'test'
+  ...
+# Subtest: T26 envelope values interpolate and audio pause/resume brackets covered restoration
+ok 393 - T26 envelope values interpolate and audio pause/resume brackets covered restoration
+  ---
+  duration_ms: 4.0692
+  type: 'test'
+  ...
+# Subtest: T22 preparation and covered restoration exceptions propagate without control return
+ok 394 - T22 preparation and covered restoration exceptions propagate without control return
+  ---
+  duration_ms: 1.135004
+  type: 'test'
+  ...
+# Subtest: T30 restoration deadline is separate from minimum and rejects unresolved work
+ok 395 - T30 restoration deadline is separate from minimum and rejects unresolved work
+  ---
+  duration_ms: 2.568645
+  type: 'test'
+  ...
+# Subtest: T23 cancellation prevents sequence actions and control after abort
+ok 396 - T23 cancellation prevents sequence actions and control after abort
+  ---
+  duration_ms: 4.502185
+  type: 'test'
+  ...
+# Subtest: createClock abort cancels queued RAF and rejects with no late tween samples
+ok 397 - createClock abort cancels queued RAF and rejects with no late tween samples
+  ---
+  duration_ms: 1.032794
+  type: 'test'
+  ...
+# Subtest: T23/T30 timed-out restoration token expires and late fulfillment cannot draw
+ok 398 - T23/T30 timed-out restoration token expires and late fulfillment cannot draw
+  ---
+  duration_ms: 2.391705
+  type: 'test'
+  ...
+# Subtest: T23 aborted covered restore expires token and suppresses a later draw
+ok 399 - T23 aborted covered restore expires token and suppresses a later draw
+  ---
+  duration_ms: 3.908319
+  type: 'test'
+  ...
+# Subtest: active tween excludes hidden wall time and dispose removes visibility observer
+ok 400 - active tween excludes hidden wall time and dispose removes visibility observer
+  ---
+  duration_ms: 1.573481
+  type: 'test'
+  ...
+# Subtest: T30 recovery deadline counts active execution only across hidden interval
+ok 401 - T30 recovery deadline counts active execution only across hidden interval
+  ---
+  duration_ms: 1.819219
+  type: 'test'
+  ...
+# Subtest: official collision v6 preserves the seventeen authored walk areas
+ok 402 - official collision v6 preserves the seventeen authored walk areas
+  ---
+  duration_ms: 1.76092
+  type: 'test'
+  ...
+# Subtest: spawn, Shiopon and the Lumiere gate approach stay walkable
+ok 403 - spawn, Shiopon and the Lumiere gate approach stay walkable
+  ---
+  duration_ms: 1.302466
+  type: 'test'
+  ...
+# Subtest: fountain, flowerbeds and far map edges remain blocked
+ok 404 - fountain, flowerbeds and far map edges remain blocked
+  ---
+  duration_ms: 1.410057
+  type: 'test'
+  ...
+# Subtest: the intended paved route remains connected from spawn to the Star Gate
+ok 405 - the intended paved route remains connected from spawn to the Star Gate
+  ---
+  duration_ms: 57.103494
+  type: 'test'
+  ...
+# Subtest: Aftermath is absent from ordinary routes
+ok 406 - Aftermath is absent from ordinary routes
+  ---
+  duration_ms: 3.381619
+  type: 'test'
+  ...
+# Subtest: present return preserves Lumiere position, puts Shiopon beside her and gives control after the return dialogue
+ok 407 - present return preserves Lumiere position, puts Shiopon beside her and gives control after the return dialogue
+  ---
+  duration_ms: 9.866388
+  type: 'test'
+  ...
+# Subtest: nearby NPC can be talked to by tapping the actor directly without a prompt
+ok 408 - nearby NPC can be talked to by tapping the actor directly without a prompt
+  ---
+  duration_ms: 3.094214
+  type: 'test'
+  ...
+# Subtest: first individual talk returns control; second talk flows directly into exact v1.3 group and departure
+ok 409 - first individual talk returns control; second talk flows directly into exact v1.3 group and departure
+  ---
+  duration_ms: 9.517878
+  type: 'test'
+  ...
+# Subtest: either order works and Shiopon consistently calls him シオンさん
+ok 410 - either order works and Shiopon consistently calls him シオンさん
+  ---
+  duration_ms: 9.16422
+  type: 'test'
+  ...
+# Subtest: repeat talk before the second companion does not consume or start the group
+ok 411 - repeat talk before the second companion does not consume or start the group
+  ---
+  duration_ms: 2.124888
+  type: 'test'
+  ...
+# Subtest: cancellation from free-check state restores stable visible A0 and original follow
+ok 412 - cancellation from free-check state restores stable visible A0 and original follow
+  ---
+  duration_ms: 2.041372
+  type: 'test'
+  ...
+# Subtest: approved return fear scene plays 14 lines in order with faces and no actor movement
+ok 413 - approved return fear scene plays 14 lines in order with faces and no actor movement
+  ---
+  duration_ms: 3.139768
+  type: 'test'
+  ...
+# Subtest: panorama held from R01 through R06, R07 only after camera handback
+ok 414 - panorama held from R01 through R06, R07 only after camera handback
+  ---
+  duration_ms: 2.074013
+  type: 'test'
+  ...
+# Subtest: failed camera return cancels without displaying R07 or unlocking gameplay
+ok 415 - failed camera return cancels without displaying R07 or unlocking gameplay
+  ---
+  duration_ms: 2.1419
+  type: 'test'
+  ...
+# Subtest: integration approach offers choice; leaving releases input and requires spatial exit/reentry
+ok 416 - integration approach offers choice; leaving releases input and requires spatial exit/reentry
+  ---
+  duration_ms: 2.752727
+  type: 'test'
+  ...
+# Subtest: prompt releases its lock before P0 event dispatch and completed/interrupted attempts never autoreplay
+ok 417 - prompt releases its lock before P0 event dispatch and completed/interrupted attempts never autoreplay
+  ---
+  duration_ms: 1.831502
+  type: 'test'
+  ...
+# Subtest: ordinary routes install no interaction or Production backend
+ok 418 - ordinary routes install no interaction or Production backend
+  ---
+  duration_ms: 1.920658
+  type: 'test'
+  ...
+# Subtest: A inner light geometry restored only for dev, ordinary geometry preserved
+ok 419 - A inner light geometry restored only for dev, ordinary geometry preserved
+  ---
+  duration_ms: 3.826087
+  type: 'test'
+  ...
+# Subtest: corrupted inner light uses opaque normal compositing and no retained dark-energy frame
+ok 420 - corrupted inner light uses opaque normal compositing and no retained dark-energy frame
+  ---
+  duration_ms: 1.252023
+  type: 'test'
+  ...
+# Subtest: editor loads only from opt-in Stage3 dev route and never writes production game state
+ok 421 - editor loads only from opt-in Stage3 dev route and never writes production game state
+  ---
+  duration_ms: 1.118022
+  type: 'test'
+  ...
+# Subtest: same gate source, coordinate registration and rest-only image as game
+ok 422 - same gate source, coordinate registration and rest-only image as game
+  ---
+  duration_ms: 0.298726
+  type: 'test'
+  ...
+# Subtest: touch editor provides all 4 independent controls, handles, camera, export and storage
+ok 423 - touch editor provides all 4 independent controls, handles, camera, export and storage
+  ---
+  duration_ms: 0.245327
+  type: 'test'
+  ...
+# Subtest: debug Reset baseline matches the iPhone-approved runtime aperture
+ok 424 - debug Reset baseline matches the iPhone-approved runtime aperture
+  ---
+  duration_ms: 0.553351
+  type: 'test'
+  ...
+# Subtest: normal/corruption/rise/afterglow retain the blue-white source; only rest switches it
+ok 425 - normal/corruption/rise/afterglow retain the blue-white source; only rest switches it
+  ---
+  duration_ms: 4.583006
+  type: 'test'
+  ...
+# Subtest: return cleanup keeps one void image; recovery and replay restore the exact normal source
+ok 426 - return cleanup keeps one void image; recovery and replay restore the exact normal source
+  ---
+  duration_ms: 2.201841
+  type: 'test'
+  ...
+# Subtest: approved iPhone fit is applied at rest only and retains original frame geometry
+ok 427 - approved iPhone fit is applied at rest only and retains original frame geometry
+  ---
+  duration_ms: 1.618885
+  type: 'test'
+  ...
+# Subtest: future blackout, ruins and vortex hide the retained corrupted gate with final CSS precedence
+ok 428 - future blackout, ruins and vortex hide the retained corrupted gate with final CSS precedence
+  ---
+  duration_ms: 0.524026
+  type: 'test'
+  ...
+# Subtest: P0 restoration unhides the gate under full black, before revealing present, without changing the void image
+ok 429 - P0 restoration unhides the gate under full black, before revealing present, without changing the void image
+  ---
+  duration_ms: 0.396539
+  type: 'test'
+  ...
+# Subtest: Title markup uses Japanese-first world-design labels and no legacy TOUCH TO START
+ok 430 - Title markup uses Japanese-first world-design labels and no legacy TOUCH TO START
+  ---
+  duration_ms: 1.173276
+  type: 'test'
+  ...
+# Subtest: Title menu renders generated frame artwork without CSS-built symbols
+ok 431 - Title menu renders generated frame artwork without CSS-built symbols
+  ---
+  duration_ms: 0.719751
+  type: 'test'
+  ...
+# Subtest: NO_SAVE shows only 物語をはじめる / BEGIN and allows the existing New Game handler
+ok 432 - NO_SAVE shows only 物語をはじめる / BEGIN and allows the existing New Game handler
+  ---
+  duration_ms: 2.024541
+  type: 'test'
+  ...
+# Subtest: CONTINUE_AVAILABLE shows Continue first and requires confirmation before New Game
+ok 433 - CONTINUE_AVAILABLE shows Continue first and requires confirmation before New Game
+  ---
+  duration_ms: 0.979014
+  type: 'test'
+  ...
+# Subtest: valid Continue still launches through the existing Public Continue controller
+ok 434 - valid Continue still launches through the existing Public Continue controller
+  ---
+  duration_ms: 0.956582
+  type: 'test'
+  ...
+# Subtest: invalid save is not auto-reset; it exposes RETRY and a confirmed New Game path
+ok 435 - invalid save is not auto-reset; it exposes RETRY and a confirmed New Game path
+  ---
+  duration_ms: 0.854402
+  type: 'test'
+  ...
+# Subtest: verified gameplay contract registry exists and forbids weakening active contracts
+ok 436 - verified gameplay contract registry exists and forbids weakening active contracts
+  ---
+  duration_ms: 1.189115
+  type: 'test'
+  ...
+# Subtest: VGC-001: unfinished Star Gate interaction is absent from normal main route
+ok 437 - VGC-001: unfinished Star Gate interaction is absent from normal main route
+  ---
+  duration_ms: 0.448696
+  type: 'test'
+  ...
+# Subtest: VGC-001 records the explicit completion gate before Star Gate UI can be enabled
+ok 438 - VGC-001 records the explicit completion gate before Star Gate UI can be enabled
+  ---
+  duration_ms: 0.272788
+  type: 'test'
+  ...
+# Subtest: AI safety requires causal regression analysis and preserves verified assertions
+ok 439 - AI safety requires causal regression analysis and preserves verified assertions
+  ---
+  duration_ms: 4.103634
+  type: 'test'
+  ...
+# Subtest: Verified contracts cannot be omitted from CI workflow
+ok 440 - Verified contracts cannot be omitted from CI workflow
+  ---
+  duration_ms: 0.20391
+  type: 'test'
+  ...
+# Subtest: VGC-002: Alenon prologue keeps the Devil card baseline
+ok 441 - VGC-002: Alenon prologue keeps the Devil card baseline
+  ---
+  duration_ms: 0.958926
+  type: 'test'
+  ...
+# Subtest: VGC-003: Alenon keeps ORB interaction/anomaly implementation markers
+ok 442 - VGC-003: Alenon keeps ORB interaction/anomaly implementation markers
+  ---
+  duration_ms: 0.921206
+  type: 'test'
+  ...
+# Subtest: VGC-004: Landing Devil memory remains one-time and Progress-observed
+ok 443 - VGC-004: Landing Devil memory remains one-time and Progress-observed
+  ---
+  duration_ms: 0.653598
+  type: 'test'
+  ...
+# Subtest: VGC-005: Landing preserves Shiopon return state and greeting guard
+ok 444 - VGC-005: Landing preserves Shiopon return state and greeting guard
+  ---
+  duration_ms: 1.370804
+  type: 'test'
+  ...
+# Subtest: VGC-006: Garden Progress remains observer-only for Shiopon and Lumiere
+ok 445 - VGC-006: Garden Progress remains observer-only for Shiopon and Lumiere
+  ---
+  duration_ms: 0.516201
+  type: 'test'
+  ...
+# Subtest: VGC-007: Progress validates verified route prerequisites instead of owning them
+ok 446 - VGC-007: Progress validates verified route prerequisites instead of owning them
+  ---
+  duration_ms: 0.517624
+  type: 'test'
+  ...
+1..446
+# tests 446
+# suites 0
+# pass 446
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 21171.526765
