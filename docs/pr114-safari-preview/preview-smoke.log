@@ -1,0 +1,23 @@
+chromium stage3-portrait PASS
+chromium stage3-landscape PASS
+chromium normal-title PASS
+chromium normal-garden-g3 PASS
+chromium served-all-files-digest 配信SHA照合 PASS: 193 files
+実機Device Gate: PENDING / MAIN MERGE GATE: STOP
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+Traceback (most recent call last):
+  File "/workspace/safari-investigation/preview-smoke.py", line 71, in <module>
+    asyncio.run(main())
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/safari-investigation/preview-smoke.py", line 53, in main
+    assert all(r['url'].startswith(BASE) and r['status']==200 and not r['redirected'] for r in responses)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

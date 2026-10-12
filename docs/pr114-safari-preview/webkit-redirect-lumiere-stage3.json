@@ -1,0 +1,1168 @@
+{
+  "url": "http://127.0.0.1:8766/index.html?dev=star-gate-full&returnDebug=1",
+  "bodyClass": "scene-load-error",
+  "bootError": "The operation is insecure.",
+  "note": "The operation is insecure.",
+  "diagnostic": "RETURN CAMERA DEBUG v2 / BOOT ACTIVE\nSTAGE3: WAITING | completed=- | restored=-\nCAMERA: FREE | zoom=1\nHANDOFF: - | prepared=-\nAFTERMATH: NOT_STARTED | start=NO_ATTEMPT | line=-\nFAILED CHECKS: none\nSTART FAILURE: -\nERROR: The operation is insecure.",
+  "evidence": [
+    {
+      "ok": true,
+      "canvas": "scene-crystal-core",
+      "sources": [
+        {
+          "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "cors": "anonymous",
+          "kind": "IMG"
+        }
+      ],
+      "stack": "@web-inspector://bootstrap.js:30:132\nsplitCrystal@http://127.0.0.1:8766/scene-layout.js:123:37\n@http://127.0.0.1:8766/scene-effects.js:44:732"
+    },
+    {
+      "ok": true,
+      "canvas": "scene-crystal-core",
+      "sources": [
+        {
+          "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "cors": "anonymous",
+          "kind": "IMG"
+        }
+      ],
+      "stack": "@web-inspector://bootstrap.js:30:132\nsplitCrystal@http://127.0.0.1:8766/scene-layout.js:136:37\n@http://127.0.0.1:8766/scene-effects.js:44:732"
+    },
+    {
+      "ok": false,
+      "name": "SecurityError",
+      "message": "The operation is insecure.",
+      "stack": "getImageData@[native code]\n@web-inspector://bootstrap.js:30:30\ncreate@http://127.0.0.1:8766/lumiere-sway.js:77:43\n@http://127.0.0.1:8766/game.js:2589:58",
+      "canvas": "",
+      "sources": [
+        {
+          "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_idle.webp",
+          "cors": null,
+          "kind": "IMG"
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background-extended.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-base.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-water.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/garden-star-gate.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_01.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_02.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_03.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_04.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_01.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_02.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_03.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_04.webp",
+      "cors": null,
+      "loaded": true
+    }
+  ],
+  "lumiere": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "engine": "webkit",
+  "case": "redirect-lumiere-stage3",
+  "pageErrors": [],
+  "console": [
+    {
+      "type": "error",
+      "text": "Unable to get image data from canvas because the canvas has been tainted by cross-origin data."
+    },
+    {
+      "type": "error",
+      "text": "SecurityError: The operation is insecure."
+    }
+  ],
+  "failedRequests": [],
+  "responses": [
+    {
+      "url": "http://127.0.0.1:8766/index.html?dev=star-gate-full&returnDebug=1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/html"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/game.css?v=20260919-no-reset-hard-v2",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/fountain-polish.css?v=1.0.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/sky-atmosphere.css?v=1.0.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/cloud-motion-fix.css?v=1.7.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/audio.css?v=0.8.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/dialogue.css?v=20260920-dialogue-ui-v3",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/shared-dialogue.css?v=20260920-dialogue-ui-v3",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/gate-polish.css?v=20260916-gate-polish-v2",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/layer-order-fix.css?v=20260917-v6",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/runtime-entry.js?v=title-entry-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/map-journey.js?v=20260919-roundtrip-1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/route-registry.js?v=20260921-progress-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/progress.js?v=20260921-progress-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/progress-resume.js?v=phase-2a-6-alenon",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/public-continue.js?v=phase-2a-6-alenon",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/title-first-visit-preview.js?v=2",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/public-continue-title.js?v=title-ux-v1-1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/garden-dev-bootstrap.js?v=phase-2a-5c-1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/stage3-dev-bootstrap.js?v=stage3-v192",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/garden-progress-observer.js?v=phase-2a-5c-transit-1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/navigation.js?v=0.7.1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/blocked-collision.js?v=0.9.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/controls.js?v=0.7.1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/audio.js?v=20260919-roundtrip-1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/lumiere-outline.js?v=0.7.1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/shared-dialogue.js?v=20260920-dialogue-ui-v3",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/dialogue.js?v=20260920-dialogue-ui-v3",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/story-event-guard.js?v=mandatory-story-v5-approved-dialogue",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/scene-layout.js?v=1.2.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/scene-preview41-fix.js?v=native-foreground-v7",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/single-map-occlusion.js?v=garden-arrival-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/scene-effects.js?v=garden-arrival-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/lumiere-sway.js?v=lumiere-local-sway-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/fountain-position-editor.js?v=3.0.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/game.js?v=garden-arrival-v1-lumiere-sway-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/title-layout-editor.js?v=1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/waterfall-position-editor.js?v=3.0.0",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/future-stage3.css?v=stage3-v192",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/star-gate-interaction.css?v=front-integration",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/star-gate-anomaly.css?v=stage3-v192",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/star-gate-aftermath.css?v=aftermath-v13",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/css"
+    },
+    {
+      "url": "http://127.0.0.1:8766/dev-checkpoints.js?v=stage3-v192",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/future-stage3.js?v=stage3-v192",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/future-vision-audio.js?v=audio-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/star-gate-anomaly.js?v=stage3-v192",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/star-gate-interaction.js?v=front-integration",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/star-gate-aftermath.js?v=aftermath-v13",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "text/javascript"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-waterfall.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-base.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-water.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate.webp?v=20260916-native-foreground-v6",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-depth.json?singleMap=1791766216116",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "application/json"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-depth.json?t=1791766216118",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "application/json"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background-extended.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_01.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_02.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_03.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_04.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_01.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_02.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_03.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/garden-star-gate.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_04.webp",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shion/shion_sprite_manifest.json",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "application/json"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+      "status": 0,
+      "redirected_from": null,
+      "location": null,
+      "acao": null,
+      "content_type": null
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "audio/mpeg"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_sprite_manifest.json",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "application/json"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-collision.json",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "application/json"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shion/shion_idle.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shion/shion_walk_down.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shion/shion_walk_up.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shion/shion_walk_right.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shiopon/shiopon_idle.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shiopon/shiopon_walk_down.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shion/shion_walk_left.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shiopon/shiopon_walk_up.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shiopon/shiopon_walk_left.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/shiopon/shiopon_walk_right.png",
+      "status": 200,
+      "redirected_from": null,
+      "location": null,
+      "acao": "*",
+      "content_type": "image/png"
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_idle.webp",
+      "status": 301,
+      "redirected_from": null,
+      "location": "http://localhost:8766/assets/sprites/lumiere/lumiere_idle.webp",
+      "acao": "*",
+      "content_type": null
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_hover-back.webp",
+      "status": 301,
+      "redirected_from": null,
+      "location": "http://localhost:8766/assets/sprites/lumiere/lumiere_hover-back.webp",
+      "acao": "*",
+      "content_type": null
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_hover_left.webp",
+      "status": 301,
+      "redirected_from": null,
+      "location": "http://localhost:8766/assets/sprites/lumiere/lumiere_hover_left.webp",
+      "acao": "*",
+      "content_type": null
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_hover_right.webp",
+      "status": 301,
+      "redirected_from": null,
+      "location": "http://localhost:8766/assets/sprites/lumiere/lumiere_hover_right.webp",
+      "acao": "*",
+      "content_type": null
+    },
+    {
+      "url": "http://localhost:8766/assets/sprites/lumiere/lumiere_hover-back.webp",
+      "status": 200,
+      "redirected_from": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_hover-back.webp",
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://localhost:8766/assets/sprites/lumiere/lumiere_idle.webp",
+      "status": 200,
+      "redirected_from": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_idle.webp",
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://localhost:8766/assets/sprites/lumiere/lumiere_hover_left.webp",
+      "status": 200,
+      "redirected_from": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_hover_left.webp",
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    },
+    {
+      "url": "http://localhost:8766/assets/sprites/lumiere/lumiere_hover_right.webp",
+      "status": 200,
+      "redirected_from": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_hover_right.webp",
+      "location": null,
+      "acao": "*",
+      "content_type": "image/webp"
+    }
+  ],
+  "devicePASS": false
+}

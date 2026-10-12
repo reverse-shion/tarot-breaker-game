@@ -1,0 +1,7 @@
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+webkit stage3-portrait PASS
+webkit stage3-landscape PASS
+webkit normal-title PASS
+webkit normal-garden-g3 PASS
+webkit served-all-files-digest 配信SHA照合 PASS: 193 files
+実機Device Gate: PENDING / MAIN MERGE GATE: STOP

@@ -1,0 +1,12 @@
+{
+  "output": "/workspace/pr114-preview-b093e355-v2",
+  "source_sha": "b093e355f8ba409f8a87de0de5c828604d2bf905",
+  "runtime_sha": "b8cd71755f7eafabf7c23fc3c85c779f345ea948",
+  "files": 193,
+  "bytes": 122634290,
+  "runtime_source_changes": 0,
+  "preview_index_transforms": 1,
+  "export_integrity": "PASS",
+  "https_deployment": "NOT_PERFORMED",
+  "device": "PENDING"
+}

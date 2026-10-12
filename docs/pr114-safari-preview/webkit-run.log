@@ -1,0 +1,4 @@
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+{"engine": "webkit", "case": "same-origin-stage3", "bodyClass": "scene-ready", "bootError": null, "pageErrors": [], "failedRequests": []}
+{"engine": "webkit", "case": "redirect-lumiere-stage3", "bodyClass": "scene-load-error", "bootError": "The operation is insecure.", "pageErrors": [], "failedRequests": []}
+{"engine": "webkit", "case": "same-origin-title", "bodyClass": "scene-ready", "bootError": null, "pageErrors": [], "failedRequests": []}
