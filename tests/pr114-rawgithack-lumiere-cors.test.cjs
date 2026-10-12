@@ -1,5 +1,5 @@
-# PR114 RawGitHack Lumiere Canvas CORS candidate
-# This is a source-contract test, not a browser / iPhone CORS PASS.
+// PR114 RawGitHack Lumiere Canvas CORS candidate
+// This is a source-contract test, not a browser / iPhone CORS PASS.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
