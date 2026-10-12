@@ -255,3 +255,13 @@ User-reported exact test context: fixed RawGitHack PR #114 development fixture `
 Source inspection: `star-gate-interaction.js` subscribes to `tarot-breaker:stage3-session-ended` and unconditionally sets `completed=true; armed=false; hidePrompt()`. For dev harness `progressReady()` returns `!completed`, meaning interruption also consumes the only attempt until reload. This is a **plausible lockout mechanism**, not proof of the precise Safari trigger. `stage3-dev-bootstrap.js` uses only in-memory journey/fixture state and is not an ordinary production Save/Continue test.
 
 **Gate status:** STOP for lifecycle recovery; earlier exact-SHA PASS records for played uninterrupted event/individual audio/dialogue remain historical and valid for those observations only. Do not declare overall Device PASS or release main. Correct source/trigger through a separate reviewed candidate, then obtain new exact-runtime human test evidence.
+
+## PR #150 iPhone Home-return retry — owner confirmation (2026-10-12)
+
+Exact fixed candidate runtime: `5b89db82209c1e1a1a14bc628c68982883d1adae`, `index.html?dev=star-gate-full` (RawGitHack). On this presented fixed link, the product owner explicitly reported: `「星門を調べる」が表示される 再度プレイして最後までイベントをプレイ出来る`.
+
+| Check | Device | Result | Human-observed scope | Limits |
+|---|---|---|---|---|
+| Stage3 interrupted by iPhone Home/background → return → reapproach → inspect choice appears → fresh attempt completes entire event | iPhone (Safari test context, browser/OS build not independently logged) | **PASS** | Previously missing `星門を調べる` is now displayed and the player successfully replays Stage3 through its ending | No claim about BFCache/page reload mechanism, repeated multi-phase interruption stress, rejected autoplay, injected failed recovery, normal non-dev initial meeting route, or independent Astra audit |
+
+Earlier FAIL on prior runtime remains historical and must not be erased. This new exact-SHA report is scoped PASS for Home-return recovery and successful replay. The overall PR #114 Device Gate and main merge remain separately gated; do not generalize into blanket release PASS.
