@@ -243,3 +243,15 @@ The product owner explicitly confirmed in ChatGPT, in response to a question spe
 | Aftermath: talk Lumiere then Shiopon | iPhone (previous test context) | PASS | Owner explicitly confirms both orders completed without issue; separate screenshot/log not provided |
 
 This closes the **dialogue-order** checkpoint only. Normal non-dev initial meeting route, browser visibility/BFCache transitions, Title/Save/Continue, and any other independent release requirements remain unverified. No overall DEVICE_RESULT PASS or production authorization is inferred.
+
+### PR #114 iPhone background-return regression — 2026-10-12
+
+User-reported exact test context: fixed RawGitHack PR #114 development fixture `?dev=star-gate-full`, with runtime `948fed1dbd214af86c2aeadfcdee811dd701217b` (later commits contain only test/doc changes). The owner reported: `イベント中にホームに戻ると一度最初からになるよ。星門を調べるに戻る ただし星門を調べるの選択肢はでない`.
+
+| Check | Device | Result | Human-observed behavior | Scope/uncertainty |
+|---|---|---|---|---|
+| Active Stage3 → iPhone Home → return to browser → recover gate interaction | iPhone, browser/OS version not restated | **FAIL** | Scene appears back at the gate investigation starting point, but the "星門を調べる" choice does not appear; player may be unable to restart the event | Exact lifecycle sequence (BFCache restore vs page reload vs in-game interruption) not yet captured; normal non-dev route not established |
+
+Source inspection: `star-gate-interaction.js` subscribes to `tarot-breaker:stage3-session-ended` and unconditionally sets `completed=true; armed=false; hidePrompt()`. For dev harness `progressReady()` returns `!completed`, meaning interruption also consumes the only attempt until reload. This is a **plausible lockout mechanism**, not proof of the precise Safari trigger. `stage3-dev-bootstrap.js` uses only in-memory journey/fixture state and is not an ordinary production Save/Continue test.
+
+**Gate status:** STOP for lifecycle recovery; earlier exact-SHA PASS records for played uninterrupted event/individual audio/dialogue remain historical and valid for those observations only. Do not declare overall Device PASS or release main. Correct source/trigger through a separate reviewed candidate, then obtain new exact-runtime human test evidence.
