@@ -232,3 +232,14 @@ Exact user-played runtime: `948fed1dbd214af86c2aeadfcdee811dd701217b` (RawGitHac
 | Player controls restored and Shiopon follow after event | iPhone (browser version not recorded) | PASS | Owner's explicit response: `操作復帰としおぽん追従=pass` | Does not verify Title/Save/Continue or ordinary route beyond dev fixture |
 
 **Release boundary:** these are three explicit human-observed PASS results and may be cited as such. They do **not** certify the full initial Lumiere-meeting route, both alternative dialogue orders, normal Title/Save/Continue, Safari BFCache/retry edge cases, separate iPad coverage, or a production release. Project-wide `DEVICE_RESULT` remains PENDING until the required remaining gate scope is approved and covered. CI/automated checks are separate.
+
+### Both Aftermath dialogue orders — owner confirmation 2026-10-12
+
+The product owner explicitly confirmed in ChatGPT, in response to a question specifying both orders, `両方確認済みで問題ない`. This refers to the already verified iPhone Star Gate event runtime `948fed1dbd214af86c2aeadfcdee811dd701217b`, accessed as `?dev=star-gate-full` at a fixed RawGitHack SHA.
+
+| Check | Device | Result | Explicit evidence / limits |
+|---|---|---|---|
+| Aftermath: talk Shiopon then Lumiere | iPhone (previous test context) | PASS | Owner explicitly confirms both orders completed without issue; separate screenshot/log not provided |
+| Aftermath: talk Lumiere then Shiopon | iPhone (previous test context) | PASS | Owner explicitly confirms both orders completed without issue; separate screenshot/log not provided |
+
+This closes the **dialogue-order** checkpoint only. Normal non-dev initial meeting route, browser visibility/BFCache transitions, Title/Save/Continue, and any other independent release requirements remain unverified. No overall DEVICE_RESULT PASS or production authorization is inferred.
