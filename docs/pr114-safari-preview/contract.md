@@ -11,7 +11,7 @@ Status: WORKING / HIGH (Safari delivery); MAIN MERGE GATE: STOP.
 - LOCKED: all runtime JavaScript/CSS/HTML, artwork, audio, dialogue, event
   timeline, camera, Lumiere compositor, Save/Continue, ordinary routes,
   tests/validators/baselines, Device Registry Guard and device records.
-- Expected repository changes: additive script and investigation documentation
+- Expected repository changes: additive export/build scripts and investigation documentation
   only. The exported preview's index configuration may replace the existing
   remote Shiopon asset base with the pinned local copy; disclose both hashes.
 - No gameplay repair unless browser evidence establishes a runtime defect.

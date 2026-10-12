@@ -1,0 +1,8 @@
+{
+  "build": "PASS",
+  "remote_git_fetch": "exact audit/runtime object IDs",
+  "output_files": 196,
+  "output_byte_comparison": "all196 same as reviewed staticexport",
+  "external_vercel_execution": "NOT_TESTED",
+  "https_deployment": "NOT_PERFORMED"
+}

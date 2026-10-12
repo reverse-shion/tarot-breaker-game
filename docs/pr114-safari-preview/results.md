@@ -80,6 +80,7 @@ Vercel設定は静的配信・buildなし。既存本番プロジェクトへの
 | 起動のCORS／SecurityError | 同一originのパッケージでは0。再現条件では意図どおりSecurityError |
 | 通常ルートのdev漏出 | 通常Title／G3でStage3フラグ・イベントruntime・選択UIなし |
 | Device Registry Guard（PR条件） | exit 1、runtime SHAの人間確認記録なし。STOPを維持 |
+| Main lineage guard（PR条件） | 独立ブランチ公開後PASS、最新mainは候補のancestor |
 | MAIN MERGE GATE | STOP。HTTPS・人間実機・統合承認を満たしていない |
 
 ブラウザ計測はLinux desktop Chromium／Playwright WebKit26.5。
@@ -103,10 +104,18 @@ Vercel接続後、新規のプレビュー専用プロジェクトを選び、�
 Preview deploymentとして配信する。既存プロジェクト・Production・Pagesに
 deployしない。新規projectのGit自動連携も不要。
 
+[VercelのCLI上限](https://vercel.com/docs/limits#static-file-uploads)はHobbyで100MB、
+Proで1GB。全素材122.6MBを削らず配信するため、
+`scripts/build-pr114-vercel-bootstrap.py`が8,834 bytesのアップロード用パッケージを作る。
+同梱exporterをSHA-256照合し、ビルド内で監査HEADとruntimeの2つのGit object ID
+だけを取得して、上記と同一のpublicファイルを生成する。可変mainを取得しない。
+ローカルのpublic出力は.vercelignoreで除外する。VercelビルドでのGitHubアクセス・
+git／bash／python3の利用は、実ホストに接続した後の確認事項。
+
 ```sh
-python scripts/build-pr114-safari-preview.py /absolute/new/pr114-preview
+python scripts/build-pr114-vercel-bootstrap.py /absolute/new/pr114-build-upload
 # 新規プレビュー専用Vercel projectだけにlinkした上で実行する。
-vercel deploy /absolute/new/pr114-preview --target=preview
+vercel deploy /absolute/new/pr114-build-upload --target=preview
 ```
 
 [Vercel CLI](https://vercel.com/docs/cli/deploy)のPreview targetを用いる。
@@ -137,6 +146,16 @@ VercelのPreviewアクセス保護はiPhoneでも同じviewerで開けること�
 
 独立Astraに実diff・export・取得ログ・テスト結果を渡してread-onlyレビューを依頼。
 レビュー結果は別記録へ保存する。実機と独立監査が揃うまでMAIN MERGE GATEはSTOP。
+
+独立Draft [PR #148](https://github.com/reverse-shion/tarot-breaker-game/pull/148)は
+PR #114のブランチをbaseとする。main向けではない。初回候補
+`82de6f0c29b19387692e77574aad3db1a2f9bfb0`の
+[Validate CI #1734](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38189797142)はSUCCESS。
+Main lineage guardの初回FAILは未公開のremote refによるものだった。
+独立ブランチ公開後に同じ検証器を再実行してPASSを確認した。
+
+全静的配信パッケージ: `pr114-preview-b093e355.tar.gz`（196 files）。
+SHA-256: `4d70e8eaf43a080763ec6ac683311c1bc1c5e71d4ceb49418321b8305bc93fee`。
 
 REGRESSION LOCK: source runtime changes NO / new Node failures NO /
 automated audio/trigger/route assertions PASS / physical device PENDING /
