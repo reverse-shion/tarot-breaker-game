@@ -220,3 +220,15 @@ This section records only what the product owner explicitly observed on a fixed 
 | Event / checkpoint | Commit SHA | Device | Result | Locked observable behavior | Human confirmation | Notes |
 |---|---|---|---|---|---|---|
 | PR #114 dev checkpoint `?dev=star-gate-full` — startup and complete Star Gate event playthrough after Lumiere CORS repair | 948fed1dbd214af86c2aeadfcdee811dd701217b | iPhone; browser version/OS version not captured | PASS (observed scope only) | Fixed-SHA RawGitHack link loads without previous Canvas `The operation is insecure.` failure; diagnostic screenshot shows `ERROR: none`; product owner then played the same runtime with `returnDebug=1` omitted and reported completing the event without problems | Product owner in ChatGPT on 2026-10-12: "最後まで問題無かったよ" after following same-SHA non-debug link | Direct Stage3 dev fixture begins after Lumiere meeting. Does not verify full initial meeting route; no detailed explicit report for both Aftermath dialogue orders, precise audio cues, Safari background/BFCache, regular Title/Save/Continue, iPad, or separate standard integrated route. Post-tested commit `2ed8492990d264c5e539c1cde46ce151fb054c9e` changes only the new test fixture, not runtime. Overall Device Gate remains PENDING until remaining required checks are human-verified. |
+
+### Additional owner-confirmed Stage3 observations — 2026-10-12
+
+Exact user-played runtime: `948fed1dbd214af86c2aeadfcdee811dd701217b` (RawGitHack `index.html?dev=star-gate-full`, no diagnostics). The owner explicitly supplied the following additional answers in ChatGPT for that exact runtime. These observations apply to the played event flow only. No new runtime code exists after that SHA; later commits affected tests/documentation.
+
+| Check | Device | Result | Human confirmation | Scope limitation |
+|---|---|---|---|---|
+| BGM transitions, silence during blackout, BGM restoration after return | iPhone (browser version not recorded) | PASS | Owner's explicit response: `音響と暗転=pass` | No separate BFCache/pagehide/pageshow stress or exact fade timing measurement |
+| Conversation after return and Lumiere exit | iPhone (browser version not recorded) | PASS | Owner's explicit response: `会話とリュミエール退場=pass` | Does not establish both alternate conversation orders independently tested |
+| Player controls restored and Shiopon follow after event | iPhone (browser version not recorded) | PASS | Owner's explicit response: `操作復帰としおぽん追従=pass` | Does not verify Title/Save/Continue or ordinary route beyond dev fixture |
+
+**Release boundary:** these are three explicit human-observed PASS results and may be cited as such. They do **not** certify the full initial Lumiere-meeting route, both alternative dialogue orders, normal Title/Save/Continue, Safari BFCache/retry edge cases, separate iPad coverage, or a production release. Project-wide `DEVICE_RESULT` remains PENDING until the required remaining gate scope is approved and covered. CI/automated checks are separate.
