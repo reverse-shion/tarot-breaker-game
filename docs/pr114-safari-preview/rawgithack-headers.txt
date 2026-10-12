@@ -2,7 +2,7 @@ HTTP/1.1 200 OK
 date: Mon, 12 Oct 2026 00:39:02 GMT
 server: envoy
 
-HTTP/2 403 
+HTTP/2 403
 date: Mon, 12 Oct 2026 00:39:03 GMT
 content-type: text/html; charset=UTF-8
 cache-control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0
@@ -15,4 +15,3 @@ server: envoy
 cf-ray: a4920b94a9d7f7d2-ORD
 alt-svc: h3=":443"; ma=86400
 x-envoy-upstream-service-time: 37
-

@@ -62,7 +62,8 @@ Lumiere、Star Gate、Save/Continue、通常BGM／イベント音響、カメラ
 追加の`__preview__/verify.html`はゲームとは別ページ。
 `__preview__/manifest.json`の固定HEAD/runtimeを確認し、配信された193ファイルを
 ブラウザのSHA-256で照合する。これは配信バイトの証明であり、Device PASSではない。
-Vercel設定は静的配信・buildなし。既存本番プロジェクトへの接続・Git連携は行わない。
+全静的export内のVercel設定はbuildなし。後述の小さなbootstrap設定はビルドで
+この静的exportを生成する。既存本番プロジェクトへの接続・Git連携は行わない。
 
 ## 自動・ブラウザ検証
 
@@ -144,8 +145,9 @@ Saveは別originのため本番の保存データを共有しない。通常導�
 VercelのPreviewアクセス保護はiPhoneでも同じviewerで開けることを確認する。
 必要な音響・イベント全編・BFCache確認は保留。これらはbyte一致だけでは証明できない。
 
-独立Astraに実diff・export・取得ログ・テスト結果を渡してread-onlyレビューを依頼。
-レビュー結果は別記録へ保存する。実機と独立監査が揃うまでMAIN MERGE GATEはSTOP。
+独立Astraが実diff・export・取得ログ・テスト結果をread-onlyで再監査した。
+exporter／bootstrap実装は受入可、統合はSTOP。詳細は`astra-review.md`。
+2件の低リスク文書指摘を修正。実機と外部配信の確認までMAIN MERGE GATEはSTOP。
 
 独立Draft [PR #148](https://github.com/reverse-shion/tarot-breaker-game/pull/148)は
 PR #114のブランチをbaseとする。main向けではない。初回候補
