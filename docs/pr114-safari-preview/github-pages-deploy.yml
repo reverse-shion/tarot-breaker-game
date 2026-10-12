@@ -1,0 +1,85 @@
+# Install this file as .github/workflows/deploy-pr114.yml
+# in the SEPARATE PUBLIC repository reverse-shion/tarot-breaker-pr114-preview.
+# Never install/execute it in tarot-breaker-game: its Pages site is production.
+name: TAROT BREAKER PR114 isolated pinned Pages preview
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pr114-isolated-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Enforce dedicated preview repository
+        env:
+          ACTUAL_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test "$ACTUAL_REPOSITORY" = "reverse-shion/tarot-breaker-pr114-preview"
+
+      - name: Export exact audited PR114 runtime without modifying game source
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="$RUNNER_TEMP/tarot-source"
+          site_dir="$RUNNER_TEMP/pr114-site"
+          mkdir -p "$source_dir"
+          git -C "$source_dir" init --quiet
+          git -C "$source_dir" remote add origin https://github.com/reverse-shion/tarot-breaker-game.git
+          # All three full commit IDs are pinned. No moving branch or main is read.
+          GIT_TERMINAL_PROMPT=0 git -C "$source_dir" fetch --no-tags --depth=1 origin \
+            b8590add71ab194a469ee4d61a27fbfe1cdfea2a \
+            b093e355f8ba409f8a87de0de5c828604d2bf905 \
+            b8cd71755f7eafabf7c23fc3c85c779f345ea948
+          git -C "$source_dir" checkout --detach --quiet b8590add71ab194a469ee4d61a27fbfe1cdfea2a
+          test "$(git -C "$source_dir" rev-parse HEAD)" = "b8590add71ab194a469ee4d61a27fbfe1cdfea2a"
+          python3 "$source_dir/scripts/build-pr114-safari-preview.py" "$site_dir"
+          # Vercel configuration belongs only to the old optional transport.
+          rm -f "$site_dir/vercel.json"
+          touch "$site_dir/.nojekyll"
+
+      - name: Verify all 193 delivered runtime bytes before deployment
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          folder = pathlib.Path(os.environ["RUNNER_TEMP"]) / "pr114-site"
+          doc = json.loads((folder / "__preview__" / "manifest.json").read_text())
+          assert doc["source_sha"] == "b093e355f8ba409f8a87de0de5c828604d2bf905"
+          assert doc["runtime_sha"] == "b8cd71755f7eafabf7c23fc3c85c779f345ea948"
+          assert doc["main_merge_gate"] == "STOP" and doc["device_result"] == "PENDING"
+          assert len(doc["files"]) == 193
+          assert len(doc["transforms"]) == 1
+          assert doc["transforms"][0]["path"] == "index.html"
+          for item in doc["files"]:
+              data = (folder / item["path"]).read_bytes()
+              assert len(data) == item["bytes"], item["path"]
+              assert hashlib.sha256(data).hexdigest() == item["deployed_sha256"], item["path"]
+          assert (folder / "index.html").is_file()
+          assert (folder / "__preview__" / "verify.html").is_file()
+          print("PINNED EXPORT VERIFIED: 193/193; DEVICE GATE PENDING")
+          PY
+
+      - name: Configure isolated GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload pinned site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pr114-site
+      - name: Deploy exclusively to preview repository Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
