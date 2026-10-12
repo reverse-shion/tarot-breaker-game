@@ -376,6 +376,10 @@
 
   function loadImage(src) {
     const image = new Image();
+    // Lumiere's localized sway compositor reads pixels with getImageData().
+    // RawGitHack can redirect WebP assets to a different origin; request CORS
+    // before src is assigned so the resulting Canvas stays origin-clean.
+    if (Object.values(lumiereFiles).includes(src)) image.crossOrigin = "anonymous";
     image.src = src;
     return window.TarotSceneEffects.waitImage(image);
   }
