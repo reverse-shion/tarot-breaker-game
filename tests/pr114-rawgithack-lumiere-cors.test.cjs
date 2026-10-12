@@ -16,7 +16,7 @@ test('Lumiere images use anonymous CORS before src is assigned', () => {
   assert.ok(source.indexOf('image.crossOrigin') < source.indexOf('image.src = src'),
     'CORS must be configured before src');
   const images = {
-    './assets/sprites/lumiere/lumiere_idle.webp': true,
+    down: './assets/sprites/lumiere/lumiere_idle.webp',
   };
   const events = [];
   function Image() {
