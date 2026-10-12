@@ -1113,7 +1113,7 @@ async function recoverPresent(current){
   await current.scene.waitDraw();await current.scene.waitDraw();
   if(!current.audio.revealSilent(current.p0.audio))current.audioFailures.push('P0-recovery-transport-lost');
   current.audio.tweenCoefficient(current.p0.audio.coefficient,360,false);
-  current.restored=true;
+  current.restored=true;current.recoveryError=null;
  }catch(e){current.recoveryError=String(e);black.remove();showRecovery(current);}finally{recoveryClock.dispose();}
 }
 function showRecovery(current){
@@ -1122,7 +1122,7 @@ function showRecovery(current){
  const retry=document.createElement('button');retry.type='button';retry.textContent='復帰を再試行';
  const title=document.createElement('a');title.href='./index.html';title.textContent='タイトルへ戻る';
  panel.append(message,retry,title);document.body.append(panel);
- retry.addEventListener('click',async()=>{retry.disabled=true;panel.remove();await recoverPresent(current);if(current.restored){releasePresentation();current.scene.unlock(current.id);current.audio?.release();lastResult=report(current);window.dispatchEvent(new CustomEvent("tarot-breaker:stage3-session-ended",{detail:lastResult}));}});
+ retry.addEventListener('click',async()=>{if(retry.disabled||session!==current||running)return;retry.disabled=true;panel.remove();await recoverPresent(current);if(current.restored){releasePresentation();current.scene.unlock(current.id);current.audio?.release();current.audioReleased=true;lastResult=report(current);window.dispatchEvent(new CustomEvent("tarot-breaker:stage3-session-ended",{detail:lastResult}));}});
  title.addEventListener('click',()=>{current.audio?.pause();current.audio?.release();releasePresentation();});
 }
 
@@ -1159,6 +1159,7 @@ async function run(){
    if(unlocked&&current.completed&&current.returnCameraPrepared&&!current.controller.signal.aborted)
     returnCameraHandoff=window.TarotAftermathScene?.armReturnCamera?.(current.id)===true;
    current.audio?.release();
+   current.audioReleased=true;
   }
   running=false;current.returnCameraHandoff=returnCameraHandoff;
   lastResult=report(current);
@@ -1215,7 +1216,7 @@ if(new URLSearchParams(location.search).get('returnDebug')==='1'){
  window.addEventListener('tarot-breaker:aftermath-state',()=>queueMicrotask(showReturnDiagnostic));
  window.addEventListener('tarot-breaker:aftermath-ended',()=>queueMicrotask(showReturnDiagnostic));
 }
-function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
+function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,audioReleased:current.audioReleased===true,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
  futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,returnCameraPrepared:!!current.returnCameraPrepared,returnCameraHandoff:!!current.returnCameraHandoff,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  afterStartFailure:current.afterStartFailure,p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);

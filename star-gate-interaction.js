@@ -13,6 +13,10 @@
   let prompt = null;
   let armed = true;
   let promptLock = false;
+  let pending = false;
+  let retryPending = false;
+  let settledId = null;
+  const otherInteractions = new Set();
 
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
@@ -49,14 +53,31 @@
     return prompt;
   }
 
+  function sceneReady() {
+    const scene = window.TarotStage3Scene?.getState?.();
+    const control = window.TarotAftermathScene?.getState?.();
+    const camera = window.TarotCinematicCamera?.getState?.();
+    return Boolean(!document.hidden && scene?.presentPrepared === true &&
+      scene.owner === null && !scene.vision && !scene.absorption &&
+      control && control.owner === null && camera && !camera.owned &&
+      !document.querySelector('#star-gate-anomaly.active,.sga-v192-white,.sga-v192-black,.sga-arcana-detail,.sga-recovery') &&
+      (promptLock || (control.inputSuspended === false && control.npcSuspended === false)) &&
+      otherInteractions.size === 0 && !window.TarotDialogue?.getState?.()?.active &&
+      !window.TarotStarGateAnomaly?.getState?.().running);
+  }
+
   function canOfferChoice() {
-    const state = window.TarotDialogue?.getState?.();
     const shion = player();
-    if (shion && distance(shion, GATE) >= REARM_RADIUS) armed = true;
+    const result = window.TarotStarGateAnomaly?.getState?.();
+    const retryReady = !retryPending || (result?.id === settledId &&
+      result.completed === false && result.restored === true &&
+      result.audioReleased === true && !result.recoveryError);
+    const ready = !pending && retryReady && sceneReady();
+    // Only a safe, player-controlled exit rearms a recovered attempt.
+    if (ready && shion && distance(shion, GATE) >= REARM_RADIUS) armed = true;
     return Boolean(
       progressReady() &&
-      !state?.active &&
-      !window.TarotStarGateAnomaly?.getState?.().running &&
+      ready &&
       shion &&
       armed &&
       distance(shion, GATE) <= ACTIVE_RADIUS
@@ -95,7 +116,7 @@
     window.setTimeout(() => {
       if (!el.classList.contains("visible")) el.hidden = true;
     }, 220);
-    if (unlock) unlockPrompt();
+    if (unlock && otherInteractions.size === 0) unlockPrompt();
   }
 
   function leave(event) {
@@ -122,8 +143,10 @@
     // Once the prompt is visible it already owns the interaction lock.
     // Do not re-run canOfferChoice() here: interaction-start intentionally
     // suspends gameplay while the choice is on screen.
-    if (!active || !promptLock || !progressReady()) return false;
+    if (!active || !promptLock || !progressReady() || pending || !sceneReady()) return false;
 
+    pending = true;
+    retryPending = false;
     armed = false;
     // Release this prompt owner synchronously before the event captures P0.
     hidePrompt();
@@ -134,12 +157,37 @@
     return true;
   }
 
-  window.addEventListener("tarot-breaker:interaction-start", render);
-  window.addEventListener("tarot-breaker:interaction-end", () => setTimeout(render, 0));
-  window.addEventListener("tarot-breaker:stage3-session-ended", () => {
-    // This dev attempt is consumed in memory on success and interruption.
-    completed = true;
+  window.addEventListener("tarot-breaker:interaction-start", event => {
+    if (event.detail?.source !== "garden_star_gate_prompt") otherInteractions.add(event.detail?.source || "external");
+    render();
+  });
+  window.addEventListener("tarot-breaker:interaction-end", event => {
+    if (event.detail?.source !== "garden_star_gate_prompt") otherInteractions.delete(event.detail?.source || "external");
+    if (!active && otherInteractions.size === 0) unlockPrompt();
+    setTimeout(render, 0);
+  });
+  window.addEventListener("tarot-breaker:stage3-session-ended", event => {
+    const result = event.detail;
+    const current = window.TarotStarGateAnomaly?.getState?.();
+    // Ignore duplicate/stale notifications, including those from an older attempt.
+    if (!result || !Number.isFinite(result.id) || result.id !== current?.id ||
+        current.running || result.running !== false || completed || result.id === settledId) return;
+    if (["completed", "restored", "audioReleased", "error", "reason", "recoveryError"]
+        .some(key => result[key] !== current[key])) return;
+    const success = result.completed === true && result.restored === true && result.audioReleased === true &&
+      !result.error && !result.reason && !result.recoveryError && result.scene &&
+      result.scene.owner === null && !result.scene.vision && !result.scene.absorption &&
+      current.scene?.owner === null && !current.scene.vision && !current.scene.absorption;
+    completed = Boolean(success);
     armed = false;
+    pending = true;
+    retryPending = false;
+    if (success || (result.completed === false && result.restored === true &&
+        result.audioReleased === true && !result.recoveryError && (result.reason || result.error))) {
+      settledId = result.id;
+      pending = false;
+      retryPending = !success;
+    }
     hidePrompt();
   });
 
@@ -148,7 +196,7 @@
     canInteract: canOfferChoice,
     start,
     leave,
-    getState: () => ({ active, completed, armed, promptLock })
+    getState: () => ({ active, completed, armed, promptLock, pending, retryPending, settledId })
   });
 
   ensurePrompt();
