@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  if (window.__TAROT_STAGE3_ENTRY_REJECTED__ === true) return;
 
   const canvas = document.getElementById("game");
   let ctx = canvas.getContext("2d", { alpha: true });
@@ -73,7 +74,7 @@
   }
 
   const params = new URLSearchParams(location.search);
-  const stage3Dev = params.get("dev") === "star-gate-full" && window.__TAROT_DEV_STAGE3__ === true;
+  const stage3Dev = ["star-gate-full", "star-gate-from-lumiere"].includes(params.get("dev")) && window.__TAROT_DEV_STAGE3__ === true;
   const enteringFromLanding = params.get("from") === "landing";
   const gardenResumeDev = stage3Dev || (params.get("from") === null &&
     /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || ""));

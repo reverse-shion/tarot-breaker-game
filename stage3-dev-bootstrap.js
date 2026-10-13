@@ -2,7 +2,13 @@
 (() => {
  'use strict';
  const q=new URLSearchParams(location.search);
- if(q.get('dev')!=='star-gate-full'||q.getAll('dev').length!==1||q.has('entry')||q.has('from'))return;
+ const route=q.get('dev')==='star-gate-from-lumiere';
+ if(window.__TAROT_STAGE3_ENTRY_REJECTED__===true){
+   document.body.dataset.enteringFromLanding='true';document.body.classList.add('scene-load-error');
+   const error=document.getElementById('load-error');if(error){error.hidden=false;error.textContent='検証用の入口が競合しています。確認リンクを開き直してください。';}
+   return;
+ }
+ if((!route&&q.get('dev')!=='star-gate-full')||q.getAll('dev').length!==1||q.has('entry')||q.has('from'))return;
  const recordBootError=value=>{
    const message=value?.message||value?.reason?.message||value?.reason||String(value||'unknown error');
    window.__lastGardenBootError=message;
@@ -12,8 +18,9 @@
  window.addEventListener('error',event=>recordBootError(event.error||event.message));
  window.addEventListener('unhandledrejection',event=>recordBootError(event));
  window.__TAROT_DEV_STAGE3__=true;
- document.body.dataset.enteringFromLanding='true';document.body.dataset.devEntry='star-gate-full';
- document.documentElement.dataset.devHarness='star-gate-full';
+ if(route)window.__TAROT_DEV_STAR_GATE_ROUTE__=true;
+ document.body.dataset.enteringFromLanding='true';document.body.dataset.devEntry=q.get('dev');
+ document.documentElement.dataset.devHarness=q.get('dev');
  // Early diagnostic: show on boot, even when Stage3/Aftermath never ends.
  if(q.get('returnDebug')==='1'&&q.getAll('returnDebug').length===1){
    const panel=document.createElement('pre');
@@ -65,10 +72,10 @@
    };
    refresh();window.setInterval(refresh,500);
  }
- const completedEvents=['alenon_prologue','landing_devil_memory','garden_shiopon_meet','garden_lumiere_gate'];
- const state={landingMemoryDone:true,gardenStory:{shioponDone:true,lumiereDone:true,joined:true},companion:{mode:'following'}};
+ const completedEvents=['alenon_prologue','landing_devil_memory','garden_shiopon_meet',...(route?[]:['garden_lumiere_gate'])];
+ const state={landingMemoryDone:true,gardenStory:{shioponDone:true,lumiereDone:!route,joined:true},companion:{mode:'following'}};
  window.TarotJourney=Object.freeze({get:k=>state[k],set:(k,v)=>{state[k]=v;},reset:()=>{}});
- window.TarotStage3DevFixture=Object.freeze({context:Object.freeze({mapId:'star_gate_garden',spawnId:'south_gate',spawn:Object.freeze({x:810,y:177}),completedEvents:Object.freeze(completedEvents),companion:'joined_with_shion'})});
+ window.TarotStage3DevFixture=Object.freeze({context:Object.freeze({mapId:'star_gate_garden',spawnId:'south_gate',spawn:Object.freeze({x:810,y:route?400:177}),completedEvents:Object.freeze(completedEvents),companion:'joined_with_shion'})});
  const shell=document.getElementById('game-shell');
  // A's approved lower sky registration is unchanged; only its 514px upper extension is restored.
  const sky=shell.querySelector('.scene-farthest-sky');
@@ -80,6 +87,7 @@
  window.TarotGardenDevTransit=Object.freeze({ok:true,context:window.TarotStage3DevFixture.context,projection:Object.freeze({gardenStory:state.gardenStory})});
  document.write('<link rel="stylesheet" href="./star-gate-anomaly.css?v=stage3-v192"><link rel="stylesheet" href="./future-stage3.css?v=stage3-v192"><link rel="stylesheet" href="./star-gate-interaction.css?v=front-integration"><link rel="stylesheet" href="./star-gate-aftermath.css?v=aftermath-v13">');
  document.write('<script src="./dev-checkpoints.js?v=stage3-v192" defer><\/script><script src="./future-stage3.js?v=stage3-v192" defer><\/script><script src="./future-vision-audio.js?v=audio-v1" defer><\/script><script src="./star-gate-anomaly.js?v=stage3-v192" defer><\/script><script src="./star-gate-interaction.js?v=front-integration" defer><\/script><script src="./star-gate-aftermath.js?v=aftermath-v13" defer><\/script>');
+ if(route)document.write('<script src="./star-gate-route.js?v=lumiere-route-v1" defer><\/script>');
  // Isolated, explicitly opted-in editor. No event animation or production entry.
  if(q.get('gateDebug')==='inner-light'&&q.getAll('gateDebug').length===1){
    document.documentElement.dataset.gateLightDebug='on';
