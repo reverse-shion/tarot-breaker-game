@@ -751,7 +751,8 @@ async function futureFixationStage2(){
  actorVisibility?.set("lumiere",0);
  // Load the authored ruins into the same 1448x1086 reference world as the garden.
  // No viewport cover, CSS translation or actor relocation is permitted.
- await vision.begin(ASSETS.ruins);
+ await vision.begin(ASSETS.ruins,{signal:session.controller.signal,prepared:preparedImages.get(ASSETS.ruins)});
+ session.clock.assert();
  root.classList.add("sga-future-ruins");
  // The current Shion becomes an observer as the ruined future itself appears.
  // Fade the completed actor composite from 1.0 to 0.55 in lockstep with the
@@ -859,9 +860,7 @@ async function futureFixationStage3(){
 
  // SEQUENCE 01 — Future Shion appears independently. Current Shion can only observe.
  setShion(1);
- const entryEcho=playFutureShionEntryEcho();
- await pause(760);
- await entryEcho;
+ await Promise.all([playFutureShionEntryEcho(),pause(760)]);
  const currentTurnsToFuture=stage.perform({type:"face",actor:"shion",target:{x:before.x-1,y:before.y}});
  const turned=await currentTurnsToFuture.promise;
  if(!turned?.completed||!samePoint(before,stage.getState().actors.shion))throw new Error("Current Shion moved while observing Future Shion");
@@ -1113,7 +1112,7 @@ async function recoverPresent(current){
   await current.scene.waitDraw();await current.scene.waitDraw();
   if(!current.audio.revealSilent(current.p0.audio))current.audioFailures.push('P0-recovery-transport-lost');
   current.audio.tweenCoefficient(current.p0.audio.coefficient,360,false);
-  current.restored=true;
+  current.restored=true;current.recoveryError=null;
  }catch(e){current.recoveryError=String(e);black.remove();showRecovery(current);}finally{recoveryClock.dispose();}
 }
 function showRecovery(current){
@@ -1122,7 +1121,7 @@ function showRecovery(current){
  const retry=document.createElement('button');retry.type='button';retry.textContent='復帰を再試行';
  const title=document.createElement('a');title.href='./index.html';title.textContent='タイトルへ戻る';
  panel.append(message,retry,title);document.body.append(panel);
- retry.addEventListener('click',async()=>{retry.disabled=true;panel.remove();await recoverPresent(current);if(current.restored){releasePresentation();current.scene.unlock(current.id);current.audio?.release();lastResult=report(current);window.dispatchEvent(new CustomEvent("tarot-breaker:stage3-session-ended",{detail:lastResult}));}});
+ retry.addEventListener('click',async()=>{if(retry.disabled||session!==current||running)return;retry.disabled=true;panel.remove();await recoverPresent(current);if(current.restored){releasePresentation();current.scene.unlock(current.id);current.audio?.release();current.audioReleased=true;lastResult=report(current);window.dispatchEvent(new CustomEvent("tarot-breaker:stage3-session-ended",{detail:lastResult}));}});
  title.addEventListener('click',()=>{current.audio?.pause();current.audio?.release();releasePresentation();});
 }
 
@@ -1159,21 +1158,27 @@ async function run(){
    if(unlocked&&current.completed&&current.returnCameraPrepared&&!current.controller.signal.aborted)
     returnCameraHandoff=window.TarotAftermathScene?.armReturnCamera?.(current.id)===true;
    current.audio?.release();
+   current.audioReleased=true;
   }
   running=false;current.returnCameraHandoff=returnCameraHandoff;
   lastResult=report(current);
   window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
   // Aftermath must positively acknowledge this event. An unaccepted lease
   // previously allowed free movement with the panoramic camera still active.
+  if(current.completed&&current.restored){
   const aftermath=window.TarotStarGateAftermath;
   const status=aftermath?.getDiagnostic?.()?.status;
   const state=aftermath?.getState?.()?.state;
   if(state==='NOT_STARTED'||!state||status!=='ACCEPTED'){
    const abandoned=window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
-   if(!abandoned)window.TarotCinematicCamera?.release();
+   // A failed recovery still owns its camera. A foreign camera acquired by an
+   // ended-event listener must also survive this old session's finalizer.
+   if(!abandoned&&current.scene.getState().owner===null&&window.TarotCinematicCamera?.getState?.()?.owned===false)
+    window.TarotCinematicCamera?.release();
    current.afterStartFailure={status:status||'NO_RECEIVER',state:state||'MISSING',diagnostic:aftermath?.getDiagnostic?.()||null};
   }else if(returnCameraHandoff){
    window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
+  }
   }
   lastResult=report(current);
   showReturnDiagnostic();
@@ -1215,7 +1220,7 @@ if(new URLSearchParams(location.search).get('returnDebug')==='1'){
  window.addEventListener('tarot-breaker:aftermath-state',()=>queueMicrotask(showReturnDiagnostic));
  window.addEventListener('tarot-breaker:aftermath-ended',()=>queueMicrotask(showReturnDiagnostic));
 }
-function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
+function report(current){return {id:current.id,running,completed:!!current.completed,restored:current.restored,audioReleased:current.audioReleased===true,error:current.error,recoveryError:current.recoveryError,reason:current.reason,
  futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,returnCameraPrepared:!!current.returnCameraPrepared,returnCameraHandoff:!!current.returnCameraHandoff,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  afterStartFailure:current.afterStartFailure,p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);

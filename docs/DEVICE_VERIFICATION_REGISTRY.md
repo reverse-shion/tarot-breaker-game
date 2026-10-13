@@ -255,3 +255,23 @@ User-reported exact test context: fixed RawGitHack PR #114 development fixture `
 Source inspection: `star-gate-interaction.js` subscribes to `tarot-breaker:stage3-session-ended` and unconditionally sets `completed=true; armed=false; hidePrompt()`. For dev harness `progressReady()` returns `!completed`, meaning interruption also consumes the only attempt until reload. This is a **plausible lockout mechanism**, not proof of the precise Safari trigger. `stage3-dev-bootstrap.js` uses only in-memory journey/fixture state and is not an ordinary production Save/Continue test.
 
 **Gate status:** STOP for lifecycle recovery; earlier exact-SHA PASS records for played uninterrupted event/individual audio/dialogue remain historical and valid for those observations only. Do not declare overall Device PASS or release main. Correct source/trigger through a separate reviewed candidate, then obtain new exact-runtime human test evidence.
+
+## PR #150 iPhone Home-return retry — owner confirmation (2026-10-12)
+
+Exact fixed candidate runtime: `5b89db82209c1e1a1a14bc628c68982883d1adae`, `index.html?dev=star-gate-full` (RawGitHack). On this presented fixed link, the product owner explicitly reported: `「星門を調べる」が表示される 再度プレイして最後までイベントをプレイ出来る`.
+
+| Check | Device | Result | Human-observed scope | Limits |
+|---|---|---|---|---|
+| Stage3 interrupted by iPhone Home/background → return → reapproach → inspect choice appears → fresh attempt completes entire event | iPhone (Safari test context, browser/OS build not independently logged) | **PASS** | Previously missing `星門を調べる` is now displayed and the player successfully replays Stage3 through its ending | No claim about BFCache/page reload mechanism, repeated multi-phase interruption stress, rejected autoplay, injected failed recovery, normal non-dev initial meeting route, or independent Astra audit |
+
+Earlier FAIL on prior runtime remains historical and must not be erased. This new exact-SHA report is scoped PASS for Home-return recovery and successful replay. The overall PR #114 Device Gate and main merge remain separately gated; do not generalize into blanket release PASS.
+
+## PR #150 audit-STOP repair — exact-runtime owner acceptance (2026-10-13)
+
+Runtime: `88c61140763f24aac41eceb8ab1e9d5bb2ddb531`, fixed RawGitHack `index.html?dev=star-gate-full` supplied in the immediately preceding reply. The owner replied: `実機確認した。何も問題なかった。次に進んでほしい`.
+
+| Scope | Runtime SHA | Device | Result | Human-confirmed scope and boundary |
+|---|---|---|---|---|
+| PR150 repaired Stage3 Home return, reapproach, explicit retry and completion, as requested in the supplied fixed-link smoke | 88c61140763f24aac41eceb8ab1e9d5bb2ddb531 | iPhone testing context; browser/OS/model not independently restated | PASS | Owner accepted the tested candidate with no observed problem after receiving the fixed-SHA link and Home-return → reapproach → retry → finish instructions. No individual multi-phase timing trace, injected image/decode failure, rejected autoplay, BFCache/reload mechanism, normal non-dev Lumiere-meeting route, or full-game certification is inferred. |
+
+This closes the **isolated PR150 device repair gate** and permits the next requested technical integration into PR114. The broader PR114 release/integration device gate, production enablement and main merge are separate. Only evidence/documentation may be added above this runtime without invalidating its executable-code equivalence. Existing historical FAIL/PASS entries remain intact.

@@ -243,6 +243,7 @@
   const cinematicCamera = {
     active: false,
     owned: false,
+    generation: 0,
     allowOverscan: false,
     startX: 0,
     startY: 0,
@@ -266,21 +267,47 @@
   });
   const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
 
-  function loadVisionWorld(src) {
+  function loadVisionWorld(src, {signal, prepared, token = ++visionWorld.token} = {}) {
+    const interrupted = () => { const error = new Error("Future Vision entry interrupted"); error.name = "AbortError"; return error; };
+    const live = () => !signal?.aborted && token === visionWorld.token;
+    if (!live()) return Promise.reject(interrupted());
+    if (prepared) {
+      if (!prepared.complete || !prepared.naturalWidth || !prepared.naturalHeight)
+        return Promise.reject(new Error("Future Vision prepared image unavailable"));
+      visionWorld.image = prepared;
+      visionWorld.src = src;
+      return Promise.resolve(prepared);
+    }
     if (visionWorld.image && visionWorld.src === src && visionWorld.image.complete)
       return Promise.resolve(visionWorld.image);
-    const token = ++visionWorld.token;
     const image = new Image();
     image.decoding = "async";
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        signal?.removeEventListener("abort", abort);
+        image.onload = image.onerror = null;
+        if (error) {
+          if (token === visionWorld.token) visionWorld.token++;
+          reject(error);
+        } else resolve(image);
+      };
+      const abort = () => finish(interrupted());
+      const timeout = setTimeout(() => finish(new Error("Future Vision image/decode deadline")), 10000);
+      signal?.addEventListener("abort", abort, {once:true});
       image.onload = async () => {
-        try { await image.decode(); } catch (error) { reject(error); return; }
-        if (token !== visionWorld.token) return resolve(image);
+        try { await image.decode(); } catch (error) { finish(error); return; }
+        if (settled) return;
+        if (!live()) { finish(interrupted()); return; }
+        if (!image.naturalWidth || !image.naturalHeight) { finish(new Error("Future Vision decoded image unavailable")); return; }
         visionWorld.image = image;
         visionWorld.src = src;
-        resolve(image);
+        finish();
       };
-      image.onerror = () => reject(new Error("Future Vision world image failed to load"));
+      image.onerror = () => finish(new Error("Future Vision world image failed to load"));
       image.src = src;
     });
   }
@@ -1995,10 +2022,11 @@
       sceneLockOwner = null;
       if (!sceneLockPrior?.suspended && !outsideInteraction) controls?.resume();
       npcSuspended = !!sceneLockPrior?.npcSuspended || outsideInteraction;
-      cinematicCamera.owned=false; cinematicCamera.allowOverscan=false;
+      cinematicCamera.generation++;cinematicCamera.owned=false; cinematicCamera.allowOverscan=false;
       sceneLockPrior = null; return true;
     },
     freezeCamera() {
+      cinematicCamera.generation++;
       if (cinematicCamera.resolve) cinematicCamera.resolve({completed:false,interrupted:true});
       cinematicCamera.resolve = null; cinematicCamera.active = false; cinematicCamera.owned = true;
       return {...camera};
@@ -2051,7 +2079,7 @@
       shiopon.hidden=p0.npcLogical.companion === "waiting_at_landing";
       for (const id of Object.keys(actorVisibility)) actorVisibility[id]=p0.visibility[id];
       if (cinematicCamera.resolve) cinematicCamera.resolve({completed:false,interrupted:true});
-      cinematicCamera.active=false; cinematicCamera.resolve=null; cinematicCamera.owned=true;
+      cinematicCamera.generation++;cinematicCamera.active=false; cinematicCamera.resolve=null; cinematicCamera.owned=true;
       cinematicCamera.allowOverscan=false; Object.assign(camera,p0.camera);
       if (cssWidth !== p0.viewport.width || cssHeight !== p0.viewport.height) camera.zoom=normalCameraZoom;
       await this.waitDraw({alive});
@@ -2128,7 +2156,7 @@
         // block. Access it through that block's API, never by free variable.
         const target=window.TarotCinematicCamera?.getNormalTarget?.();
         if(!Number.isFinite(target?.x)||!Number.isFinite(target?.y))return false;
-        returnCameraHandoff={id,viewport:{width:cssWidth,height:cssHeight},
+        returnCameraHandoff={id,generation:++cinematicCamera.generation,viewport:{width:cssWidth,height:cssHeight},
           safeCamera:{x:target.x,y:target.y,zoom:normalCameraZoom},
           safeCameraRef:{x:target.x/scale.x,y:target.y/scale.y}};
         cinematicCamera.owned=true;cinematicCamera.allowOverscan=true;
@@ -2136,14 +2164,17 @@
       },
       takeReturnCamera(id){
         const lease=returnCameraHandoff;
-        if(!lease||lease.id!==id||sceneLockOwner||!cinematicCamera.owned)return null;
+        if(!lease||lease.id!==id||sceneLockOwner||!cinematicCamera.owned||lease.generation!==cinematicCamera.generation)return null;
         if(lease.viewport.width!==cssWidth||lease.viewport.height!==cssHeight)return null;
         returnCameraHandoff=null;
         return {safeCamera:{...lease.safeCamera},safeCameraRef:{...lease.safeCameraRef}};
       },
       abandonReturnCamera(id){
-        if(!returnCameraHandoff||returnCameraHandoff.id!==id)return false;
-        returnCameraHandoff=null;window.TarotCinematicCamera.release();draw();return true;
+        const lease=returnCameraHandoff;
+        if(!lease||lease.id!==id)return false;
+        returnCameraHandoff=null;
+        if(sceneLockOwner||!cinematicCamera.owned||lease.generation!==cinematicCamera.generation)return false;
+        window.TarotCinematicCamera.release();draw();return true;
       },
       async returnToGameplayCamera(duration=450){
         if(!aftermathOwner||sceneLockOwner!==aftermathOwner)return {completed:false,reason:"owner"};
@@ -2239,6 +2270,7 @@
 
   if (stage3Dev) {
   function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
+    cinematicCamera.generation++;
     if (cinematicCamera.resolve)
       cinematicCamera.resolve({ completed: false, interrupted: true });
     cinematicCamera.active = true;
@@ -2322,6 +2354,7 @@
       return beginCinematicPan(target.x, target.y, normalCameraZoom, duration, true);
     },
     release() {
+      cinematicCamera.generation++;
       if (cinematicCamera.resolve)
         cinematicCamera.resolve({ completed: false, interrupted: true });
       cinematicCamera.active = false;
@@ -2355,8 +2388,12 @@
     },
   });
   window.TarotVisionWorld = Object.freeze({
-    async begin(src) {
-      await loadVisionWorld(src);
+    async begin(src, options = {}) {
+      const token = ++visionWorld.token;
+      await loadVisionWorld(src, {...options, token});
+      if (options.signal?.aborted || token !== visionWorld.token) {
+        const error = new Error("Future Vision entry expired"); error.name = "AbortError"; throw error;
+      }
       visionWorld.active = true;
       setVisionScenery(true);
       visionWorld.opacity = 0;

@@ -1,9 +1,9 @@
 const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 const SOURCE=fs.readFileSync(require('node:path').join(__dirname,'../star-gate-aftermath.js'),'utf8');
-function harness({dev=true,restoreFails=false,unlockFails=false,inputRemains=false,npcRemains=false,returnHandoff=false,returnPanFails=false}={}){
+function harness({dev=true,restoreFails=false,unlockFails=false,inputRemains=false,npcRemains=false,returnHandoff=false,returnPanFails=false,interaction=false}={}){
  const handlers={},docHandlers={},nodes={},calls=[],motions=[],shown=[];const facing={};let focused=false,time=0,owner=null,departed=false,ui,following=true,nextTimer=0;const timers=new Map();
  const actors={shion:{x:810,y:145},shiopon:{x:805,y:170},lumiere:{x:815,y:212}};const visibility={shion:1,shiopon:0,lumiere:0};
- function node(){return {hidden:false,children:[],classList:{items:new Set(),add(c){this.items.add(c)},contains(c){return this.items.has(c)},toggle(c,v){v?this.items.add(c):this.items.delete(c)}},listeners:{},append(...a){this.children.push(...a);for(const n of a)if(n.id)nodes[n.id]=n},setAttribute(){},addEventListener(n,f){this.listeners[n]=f},removeEventListener(n,f){if(this.listeners[n]===f)delete this.listeners[n]},remove(){this.removed=true},textContent:'',type:''};}
+ function node(){return {hidden:false,children:[],classList:{items:new Set(),add(c){this.items.add(c)},remove(c){this.items.delete(c)},contains(c){return this.items.has(c)},toggle(c,v){v?this.items.add(c):this.items.delete(c)}},listeners:{},append(...a){this.children.push(...a);for(const n of a)if(n.id)nodes[n.id]=n},appendChild(n){this.append(n)},querySelector(){return null},setAttribute(){},addEventListener(n,f){this.listeners[n]=f},removeEventListener(n,f){if(this.listeners[n]===f)delete this.listeners[n]},remove(){this.removed=true},textContent:'',type:''};}
  const shell=node();nodes['game-shell']=shell;const canvas=node();canvas.getBoundingClientRect=()=>({left:0,top:0});nodes['game']=canvas;
  const state=()=>({actors:JSON.parse(JSON.stringify(actors)),visibility:{...visibility},lumiereRect:{left:actors.lumiere.x-780,right:actors.lumiere.x-700},viewport:{width:390,height:844},owner,inputSuspended:!!owner||inputRemains,npcSuspended:!!owner||npcRemains,following,lumiereEnabled:!departed});
  const scene={capture(){calls.push('capture');return {actors:JSON.parse(JSON.stringify(actors)),visibility:{...visibility},departed,following,weakLight:false,camera:{x:810,y:440,zoom:.65},cameraRef:{x:810,y:440}}},lock(o){owner=o;calls.push('lock')},unlock(o){calls.push('unlock');if(unlockFails||owner!==o)return false;owner=null;return true},clearInput(){calls.push('clear')},getState:state,
@@ -13,14 +13,43 @@ function harness({dev=true,restoreFails=false,unlockFails=false,inputRemains=fal
  placeReturnFormation(){const s={x:actors.shion.x,y:actors.shion.y},l={x:actors.lumiere.x,y:actors.lumiere.y};actors.shiopon.x=l.x-62;actors.shiopon.y=l.y;return {shion:s,shiopon:{x:actors.shiopon.x,y:actors.shiopon.y},lumiere:l}},hitTestActor(x){return x<50?'shiopon':'lumiere'},setActorVisibility(actor,value){visibility[actor]=value;return true},face(actor,target){facing[actor]=target},gameplayCamera(){focused=false},focusGate(){focused=true},perform(c){motions.push(c);actors[c.actor]={...actors[c.actor],...c.target};return {promise:Promise.resolve()}},flightPose(p){actors.lumiere={...actors.lumiere,...p}},setLumiereDeparted(v=true){departed=v},pause(){},async restore(a){if(restoreFails)throw Error('restore');Object.assign(actors,a.actors);Object.assign(visibility,a.visibility);departed=a.departed;following=a.following;calls.push('restore')},verify:()=>({completed:!restoreFails&&!!owner})};
  const window={__TAROT_DEV_STAGE3__:dev,TarotAftermathScene:scene,TarotFutureStage3:{createClock(signal){return {now:()=>time,assert(){if(signal.aborted)throw Error('abort')},wait(ms){if(signal.aborted)return Promise.reject(Error('abort'));time+=ms;return Promise.resolve()},dispose(){}}}},TarotDialogueUI:{create(o){ui={show(line){ui.line=line;shown.push({text:line.text,actor:line.actor,facing:{...facing},focused});},hide(){},destroy(){},elements:{layer:node()},advance:o.onAdvance};return ui}},addEventListener(n,f){(handlers[n]??=[]).push(f)},removeEventListener(n,f){handlers[n]=(handlers[n]||[]).filter(v=>v!==f)},dispatchEvent(e){if(e.type==='tarot-breaker:shiopon-follow-stop')following=false;if(e.type==='tarot-breaker:shiopon-follow-start')following=true;for(const f of handlers[e.type]||[])f(e)},setInterval(f){const id=++nextTimer;timers.set(id,f);return id},clearInterval(id){timers.delete(id)}};
  const document={hidden:false,body:node(),getElementById:id=>nodes[id],querySelector:()=>null,createElement:node,addEventListener(n,f){(docHandlers[n]??=[]).push(f)},removeEventListener(n,f){docHandlers[n]=(docHandlers[n]||[]).filter(v=>v!==f)}};
- vm.runInNewContext(SOURCE,{window,document,AbortController,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail}}});
- return {window,calls,shown,nodes,state,advancedCount:0,movePlayer(x,y){actors.shion.x=x;actors.shion.y=y;for(const f of timers.values())f()},ui:()=>ui,notify:(overrides={})=>window.dispatchEvent({type:'tarot-breaker:stage3-session-ended',detail:{id:9,completed:true,restored:true,running:false,returnCameraHandoff:returnHandoff,scene:{},...overrides}})};
+ let stageReport={running:false};
+ const context={window,document,AbortController,CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail}},setTimeout(f){f()}};
+ if(interaction){
+  window.TarotStage={getState:()=>({actors})};window.TarotStage3Scene={getState:()=>({presentPrepared:true,owner,vision:false,absorption:false})};
+  window.TarotCinematicCamera={getState:()=>({owned:false})};window.TarotDialogue={getState:()=>({active:false})};
+  window.TarotStarGateAnomaly={getState:()=>stageReport};window.setTimeout=f=>f();
+  window.addEventListener('tarot-breaker:star-gate-investigate',()=>{stageReport={id:(stageReport.id||0)+1,running:true}});
+  vm.runInNewContext(fs.readFileSync('star-gate-interaction.js','utf8'),context);
+ }
+ vm.runInNewContext(SOURCE,context);
+ return {window,calls,shown,nodes,state,advancedCount:0,movePlayer(x,y){actors.shion.x=x;actors.shion.y=y;for(const f of timers.values())f()},ui:()=>ui,notify:(overrides={})=>{
+  stageReport={id:9,completed:true,restored:true,running:false,audioReleased:true,returnCameraHandoff:returnHandoff,scene:{owner:null,vision:false,absorption:false},...overrides};
+  window.dispatchEvent({type:'tarot-breaker:stage3-session-ended',detail:stageReport});
+ }};
 }
 async function flush(n=60){for(let i=0;i<n;i++)await Promise.resolve();}
 async function begin(h){h.notify();await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');}
 async function drive(h,done,max=1000){for(let i=0;i<max&&!done();i++){if(h.shown.length>h.advancedCount){h.ui().advance();h.advancedCount++;}await flush(8);}assert.ok(done(),'dialogue did not reach expected state');}
 
 test('Aftermath is absent from ordinary routes',()=>{const h=harness({dev:false});h.notify();assert.equal(h.window.TarotStarGateAftermath,undefined);assert.deepEqual(h.calls,[])});
+
+test('interrupted interaction retries intentionally and real Aftermath accepts successful retry only once',async()=>{
+ const h=harness({interaction:true}),interaction=h.window.TarotStarGateInteraction;
+ h.movePlayer(810,145);assert.equal(interaction.start(),true);
+ h.notify({id:1,completed:false,reason:'background',error:'AbortError'});await flush();
+ assert.equal(h.window.TarotStarGateAftermath.getState().state,'NOT_STARTED');assert.equal(h.calls.includes('capture'),false);
+ h.movePlayer(810,205);h.movePlayer(810,145);assert.equal(interaction.start(),true);assert.equal(interaction.start(),false);
+ h.notify({id:2});await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');
+ assert.equal(interaction.getState().completed,true);assert.equal(h.calls.filter(x=>x==='capture').length,1);
+ h.notify({id:2});await flush();assert.equal(h.calls.filter(x=>x==='capture').length,1);
+ let target=h.state().actors.shiopon;h.movePlayer(target.x,target.y+18);const first=h.window.TarotStarGateAftermath.talk('shiopon');
+ await drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');await first;
+ target=h.state().actors.lumiere;h.movePlayer(target.x,target.y+18);const second=h.window.TarotStarGateAftermath.talk('lumiere');
+ await drive(h,()=>h.window.TarotStarGateAftermath.getState().completed,2500);assert.equal(await second,true);
+ h.movePlayer(810,205);h.movePlayer(810,145);assert.equal(interaction.getState().active,false);assert.equal(interaction.start(),false);
+ assert.equal(h.state().following,true);assert.equal(h.state().owner,null);
+});
 
 test('present return preserves Lumiere position, puts Shiopon beside her and gives control after the return dialogue',async()=>{const h=harness();const before=h.state().actors.lumiere;await begin(h);const view=h.state(),r=h.window.TarotStarGateAftermath.getState();assert.deepEqual(view.visibility,{shion:1,shiopon:1,lumiere:1});assert.equal(r.state,'CHECK_COMPANIONS');assert.equal(view.owner,null);assert.equal(view.inputSuspended,false);assert.equal(view.following,false);assert.equal(view.actors.lumiere.x,before.x);assert.equal(view.actors.lumiere.y,before.y);assert.equal(view.actors.shiopon.y,view.actors.lumiere.y);assert.equal(view.actors.lumiere.x-view.actors.shiopon.x,62);assert.equal(h.nodes['aftermath-talk'],undefined);assert.equal(h.nodes['aftermath-talk-label'],undefined);});
 
