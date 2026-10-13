@@ -1,6 +1,6 @@
 (() => {
 "use strict";
-if(!window.__TAROT_DEV_STAGE3__ || new URLSearchParams(location.search).get("dev")!=="star-gate-full")return;
+if(!window.__TAROT_DEV_STAGE3__ || !['star-gate-full','star-gate-from-lumiere'].includes(new URLSearchParams(location.search).get("dev")))return;
 const ASSETS={
  cardNormal:"./assets/tarot/backs/tarot-card-back.webp",
  shionCheckRe:"./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",

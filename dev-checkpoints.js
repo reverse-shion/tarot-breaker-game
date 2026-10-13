@@ -83,6 +83,14 @@
     receivingRuntime:"star-gate-anomaly.js real resonance -> Stage1 -> Stage2 -> Stage3 -> star-gate-aftermath.js",
     expectedFirstRuntimeState:"decoded present Garden gate-approach fixture, original choice then real resonance",
     durableWritePolicy:"FORBIDDEN; in-memory fixture and Journey only"});
+  register("star-gate-from-lumiere", {event:"star-gate-anomaly",segment:"lumiere-to-star-gate",map:"star_gate_garden",spawn:"before Lumiere approach (810,400)",
+    temporaryState:Object.freeze({completedEvents:Object.freeze(allEvents.slice(0,3)),companion:"joined_with_shion"}),
+    requiredRuntime:Object.freeze(["game.js","stage3-dev-bootstrap.js","dialogue.js","story-event-guard.js","star-gate-route-entry.js","star-gate-route.js","star-gate-interaction.js","future-stage3.js","future-vision-audio.js","star-gate-anomaly.js","star-gate-aftermath.js"]),
+    entryAction:"approach Lumiere, complete original meeting, approach gate, choose investigation or leave",
+    emittedSignal:"tarot-breaker:star-gate-investigate",
+    receivingRuntime:"real dialogue.js Lumiere completion -> existing choice -> real Stage3 -> Aftermath",
+    expectedFirstRuntimeState:"decoded present Garden (810,400), Shiopon joined, Lumiere unfinished, no gate choice",
+    durableWritePolicy:"FORBIDDEN; observed real dialogue facts in in-memory Journey only"});
   Object.freeze(definitions);
   function get(id) { return Object.prototype.hasOwnProperty.call(definitions, id) ? definitions[id] : null; }
   function list() { return Object.values(definitions); }

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function bootDialogue() {
+function bootDialogue({configure} = {}) {
   const elements = {};
   const performed = [];
   const stageFinishes = [];
@@ -73,9 +73,13 @@ function bootDialogue() {
       if (key === 'hidden') this.hidden = true;
     }
     focus() {}
+    querySelector(selector) { return elements[selector.replace(/^#/, '')] || null; }
     set innerHTML(html) {
       this._innerHTML = html;
-      for (const id of ['dialogue-advance', 'dialogue-speaker', 'dialogue-text']) {
+      const ids = html.includes('star-gate-interaction-inspect')
+        ? ['star-gate-interaction-inspect', 'star-gate-interaction-leave']
+        : ['dialogue-advance', 'dialogue-speaker', 'dialogue-text'];
+      for (const id of ids) {
         const child = new Element(id);
         elements[id] = child;
         this.children.push(child);
@@ -152,6 +156,7 @@ function bootDialogue() {
   let interactionEnds = 0;
   window.addEventListener('tarot-breaker:interaction-start', () => interactionStarts++);
   window.addEventListener('tarot-breaker:interaction-end', () => interactionEnds++);
+  configure?.({window, document});
 
   const sandbox = vm.createContext({
     window,
@@ -182,6 +187,7 @@ function bootDialogue() {
     starts: () => interactionStarts,
     ends: () => interactionEnds,
     timers,
+    sandbox,
   };
 }
 

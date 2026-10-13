@@ -21,7 +21,7 @@
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
   function progressReady() {
-    if (DEV_HARNESS) return !completed;
+    if (DEV_HARNESS) return !completed && (window.__TAROT_DEV_STAR_GATE_ROUTE__ !== true || window.TarotStarGateRoute?.canInvestigate?.() === true);
     if (!progress) return false;
     try {
       const loaded = progress.load();
