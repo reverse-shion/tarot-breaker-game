@@ -10,7 +10,7 @@ const lumiereManifest = require('../assets/sprites/lumiere/lumiere_sprite_manife
 const { gardenRuntime } = require('./helpers/garden-runtime.cjs');
 
 async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumiereBase, collisionUrl, badCollision = false, badLumiere = false, badLumiereManifest = false, missingSway = false, badSway = false,
-  search = '?from=landing&navDebug=1', devTransit = null, dialogueState = null } = {}) {
+  search = '?from=landing&navDebug=1', devTransit = null, dialogueState = null, configure = null } = {}) {
   const rafQueue = []; let now = 1000;
   const { layout: sceneLayout, collision: runtimeCollision } = gardenRuntime();
   const drawCalls = [], surfaceCalls = [], swayCreates = [], swayDraws = [], errors = [], captured = new Set(), inputTrace = [];
@@ -79,7 +79,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     return {canvas,width:canvas.width,height:canvas.height,draw(phase){swayDraws.push({canvas,phase});return canvas;}};
   }};
   class Image {
-    naturalWidth = 1536; naturalHeight = 512;
+    complete = true; naturalWidth = 1536; naturalHeight = 512;
     set src(src) {
       this.url = src;
       if (src.includes('lumiere_')) {
@@ -108,6 +108,7 @@ async function boot({ width = 390, height = 844, spriteBase, shioponBase, lumier
     window.__gardenControls = instance;
     return instance;
   };
+  configure?.({window,document,sandbox});
   const gameSource = fs.readFileSync('game.js', 'utf8');
   const resetAnchor = '  function reset() {';
   assert.equal(gameSource.split(resetAnchor).length, 2);

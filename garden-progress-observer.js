@@ -46,6 +46,17 @@
     if (loaded.status !== "valid") return;
   }
 
+  // Share the existing observer authority; the event must not create another Progress writer.
+  if (root.__TAROT_PUBLIC_STAR_GATE__ === true) {
+    root.TarotStarGateProgress = progress;
+    root.TarotStarGateProgressAuthority = Object.freeze({rebind(next){
+      if (!gardenResumePublic || root.TarotGardenContinueTransit?.progress !== next || !next?.getCurrentState?.()) return false;
+      progress = next;
+      root.TarotStarGateProgress = next;
+      return true;
+    }});
+  }
+
   function note(message, error) {
     if (typeof console !== "undefined") console.warn("[Garden Progress]", message, error || "");
   }

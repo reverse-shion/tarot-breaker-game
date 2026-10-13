@@ -1,6 +1,6 @@
 (() => {
 "use strict";
-if(!window.__TAROT_DEV_STAGE3__ || !['star-gate-full','star-gate-from-lumiere'].includes(new URLSearchParams(location.search).get("dev")))return;
+if(window.__TAROT_PUBLIC_STAR_GATE__!==true && (!window.__TAROT_DEV_STAGE3__||!['star-gate-full','star-gate-from-lumiere'].includes(new URLSearchParams(location.search).get('dev'))))return;
 const ASSETS={
  cardNormal:"./assets/tarot/backs/tarot-card-back.webp",
  shionCheckRe:"./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
@@ -566,7 +566,15 @@ function setGateInnerLight(voidRest){
   if(![gx,gy,gw,gh,lx,ly,lw,lh].every(Number.isFinite)||gw<=0||gh<=0||lw<=0||lh<=0)throw new Error('Star Gate inner-light registration unavailable');
   if(!light.hasAttribute('data-sga-normal-src'))light.setAttribute('data-sga-normal-src',img.getAttribute('src'));
   // Only final rest uses the manually approved fit; all earlier states keep normal artwork.
-  for(const [name,value] of Object.entries(APPROVED_VOID_FIT))img.style.setProperty('--sga-void-'+name,value);
+  // Preserve ordinary pre-event parent geometry while reproducing the exact
+  // human-verified 230.86px parent registration for the final image in world space.
+  let fit=APPROVED_VOID_FIT;
+  if(window.__TAROT_PUBLIC_STAR_GATE__===true){
+   const w=230.86,h=w*1535/1024,x=gx+gw/2-w/2,y=gy+gh-h;
+   fit={left:((x+w*.26627-lx)/lw*100)+'%',top:((y-h*.023-ly)/lh*100)+'%',
+        width:(w*.46746/lw*100)+'%',height:(h*.748/lh*100)+'%'};
+  }
+  for(const [name,value] of Object.entries(fit))img.style.setProperty('--sga-void-'+name,value);
   if(img.getAttribute('src')!==ASSETS.gateVoid)img.setAttribute('src',ASSETS.gateVoid);
  }else if(light.hasAttribute('data-sga-normal-src')){
   img.setAttribute('src',light.getAttribute('data-sga-normal-src'));
@@ -1224,5 +1232,5 @@ function report(current){return {id:current.id,running,completed:!!current.compl
  futureAudio:current.futureAudio?.getState(),states:current.states,dialogues:current.dialogues,returnCallsPlayed:!!current.returnCallsPlayed,returnFormation:current.returnFormation,returnCameraPrepared:!!current.returnCameraPrepared,returnCameraHandoff:!!current.returnCameraHandoff,holds:current.holds,audioFailures:current.audioFailures,cardDetail:current.cardDetail,surface:current.surface,
  afterStartFailure:current.afterStartFailure,p0:current.p0,fixed:current.fixed,arcana:current.arcana,r1:current.r1,scene:current.scene.getState()};}
 window.addEventListener("tarot-breaker:star-gate-investigate",run);
-window.TarotStarGateAnomaly=Object.freeze({start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});
+window.TarotStarGateAnomaly=Object.freeze({restoreCompletedGate(){if(running)return false;cleanupGateState({preserveFinal:true});return true;},start:run,cancel:()=>{session?.scene?.freezeCamera();session?.controller.abort();ui?.hide();window.TarotStage?.cancelAll();},getState:()=>session?report(session):{running:false},getLastResult:()=>lastResult});
 })();

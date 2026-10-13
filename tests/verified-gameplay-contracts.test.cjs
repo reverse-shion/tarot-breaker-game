@@ -7,22 +7,23 @@ function read(path) { return fs.readFileSync(path, "utf8"); }
 test("verified gameplay contract registry exists and forbids weakening active contracts", () => {
   const registry = read("docs/VERIFIED_GAMEPLAY_CONTRACTS.md");
   assert.match(registry, /A PR that fails a verified gameplay contract is BLOCKED/);
-  assert.match(registry, /Contract VGC-001 — Star Gate unfinished-event suppression/);
+  assert.match(registry, /Contract VGC-001 — Completed Star Gate normal-route candidate/);
   assert.match(registry, /Status: ACTIVE/);
 });
 
-test("VGC-001: unfinished Star Gate interaction is absent from normal main route", () => {
+test("VGC-001: event resources are not unconditionally loaded on Title and use validated Garden bootstrap", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /star-gate-interaction\.js/);
   assert.doesNotMatch(html, /star-gate-anomaly\.js/);
   assert.doesNotMatch(html, /star-gate-interaction\.css/);
   assert.doesNotMatch(html, /star-gate-anomaly\.css/);
   assert.doesNotMatch(html, /star-gate-interaction-choice/);
+  assert.match(html, /star-gate-public-bootstrap\.js/);
 });
 
 test("VGC-001 records the explicit completion gate before Star Gate UI can be enabled", () => {
   const registry = read("docs/VERIFIED_GAMEPLAY_CONTRACTS.md");
-  assert.match(registry, /does NOT display the "星門を調べる \/ 離れる" choice UI/);
+  assert.match(registry, /did NOT display the "星門を調べる \/ 離れる" choice UI/);
   assert.match(registry, /explicit product decision that the full event is complete/);
   assert.match(registry, /same reviewed PR that enables the completed event/);
 });

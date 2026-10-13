@@ -87,8 +87,8 @@ test('iPhone regression: refused Aftermath is diagnosed and panoramic camera is 
 
 test('real iPhone error regression: adapter cannot reference block-scoped normalCameraTarget',()=>{
  const game=fs.readFileSync('game.js','utf8');
- const adapterStart=game.indexOf('  if (stage3Dev) {\n    // Observe physical releases');
- const cameraBlock=game.indexOf('  if (stage3Dev) {\n  function beginCinematicPan',adapterStart);
+ const adapterStart=game.indexOf('  if (stage3Runtime) {\n    // Observe physical releases');
+ const cameraBlock=game.indexOf('  if (stage3Runtime) {\n  function beginCinematicPan',adapterStart);
  assert.ok(adapterStart>=0&&cameraBlock>adapterStart,'both blocks must exist');
  const adapter=game.slice(adapterStart,cameraBlock);
  const cameraApi=game.slice(cameraBlock);
