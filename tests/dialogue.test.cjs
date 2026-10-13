@@ -333,7 +333,7 @@ test('tap during wait or actor motion finishes only that action and playback sta
   h.window.TarotDialogue.advance();
   await flush();
   assert.equal(h.window.TarotDialogue.getState().mode, 'dialogue');
-  assert.equal(h.elements['dialogue-text'].textContent, 'シオンさま？');
+  assert.equal(h.elements['dialogue-text'].textContent, 'シオンさん？');
 });
 
 test('dialogue text preserves approved speech and relationship constraints', () => {
@@ -342,6 +342,14 @@ test('dialogue text preserves approved speech and relationship constraints', () 
   const all = [...scripts.shioponMeet, ...scripts.lumiereGate];
   const shion = all.filter(([speaker]) => speaker === 'シオン').map(([, text]) => text);
   const lumiere = all.filter(([speaker]) => speaker === 'リュミエール').map(([, text]) => text);
+  const shiopon = all.filter(([speaker]) => speaker === 'しおぽん').map(([, text]) => text);
+  assert.deepEqual(shiopon.filter(text => text.includes('シオンさん')), [
+    'シオンさん？',
+    'シオンさん？',
+    '……でもシオンさん。',
+  ]);
+  assert.ok(shiopon.every(text => !/シオン(?:さま|様)/.test(text)),
+    'しおぽんは現代のシオンを「シオンさん」と呼ぶ');
 
   assert.ok(shion.some(text => text.includes('……やっぱり、ここもおかしい。')));
   assert.ok(shion.some(text => text.includes('だから、これから確かめる。')));
