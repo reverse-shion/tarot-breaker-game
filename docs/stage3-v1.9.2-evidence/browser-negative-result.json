@@ -1,0 +1,32 @@
+[
+  {
+    "case": "preload-failure",
+    "restored": true,
+    "completed": false,
+    "owner": null,
+    "futureLayerCount": 0,
+    "writes": [],
+    "error": "Error: Asset failed: ./assets/events/gate-vision/future-fixation-rift-01-small.webp",
+    "recoveryLocked": null
+  },
+  {
+    "case": "cancel",
+    "restored": true,
+    "completed": false,
+    "owner": null,
+    "futureLayerCount": 0,
+    "writes": [],
+    "error": "AbortError: Stage 3 interrupted",
+    "recoveryLocked": null
+  },
+  {
+    "case": "recovery-retry",
+    "restored": true,
+    "completed": false,
+    "owner": null,
+    "futureLayerCount": 0,
+    "writes": [],
+    "error": "AbortError: Stage 3 interrupted",
+    "recoveryLocked": true
+  }
+]

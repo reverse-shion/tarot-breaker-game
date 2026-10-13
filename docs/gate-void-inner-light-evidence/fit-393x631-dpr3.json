@@ -1,0 +1,393 @@
+{
+  "mode": "real DOM/rendering with test-only exposure of runtime helpers; no full event route",
+  "before": {
+    "frame": {
+      "data": {
+        "sceneObject": "",
+        "worldX": "520",
+        "worldY": "-163.33333333333331",
+        "worldW": "560",
+        "worldH": "373.3333333333333",
+        "gatePositionRevision": "native-foreground-v6"
+      },
+      "rect": {
+        "x": 62.099998474121094,
+        "y": 315.3333435058594,
+        "width": 268.79998779296875,
+        "height": 179.19747924804688,
+        "top": 315.3333435058594,
+        "right": 330.89998626708984,
+        "bottom": 494.53082275390625,
+        "left": 62.099998474121094
+      },
+      "z": "5"
+    },
+    "inner": {
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "natural": [
+        1024,
+        1535
+      ],
+      "rect": {
+        "x": 140.7620086669922,
+        "y": 328.42236328125,
+        "width": 111.47567749023438,
+        "height": 167.1041259765625,
+        "top": 328.42236328125,
+        "right": 252.23768615722656,
+        "bottom": 495.5264892578125,
+        "left": 140.7620086669922
+      },
+      "clip": "none",
+      "fit": "fill",
+      "filter": "brightness(1.05489) drop-shadow(rgba(178, 226, 255, 0.3) 0px 0px 9.99038px)",
+      "transform": "matrix(1.00598, 0, 0, 1.00598, 0, 0)",
+      "mask": "linear-gradient(rgb(0, 0, 0) 0%, rgb(0, 0, 0) 92%, rgba(0, 0, 0, 0.94) 95%, rgba(0, 0, 0, 0.72) 97%, rgba(0, 0, 0, 0.24) 99%, rgba(0, 0, 0, 0) 100%)",
+      "animation": "gate-inner-soft-pulse",
+      "z": "4"
+    },
+    "camera": {
+      "active": false,
+      "owned": true,
+      "allowOverscan": true,
+      "camera": {
+        "x": 800,
+        "y": -162.9861111111111,
+        "zoom": 0.48
+      },
+      "origin": {
+        "x": 390.625,
+        "y": -820.2777777777778
+      },
+      "viewport": {
+        "width": 393,
+        "height": 631,
+        "normalZoom": 1
+      },
+      "world": {
+        "w": 1448,
+        "h": 1086
+      },
+      "scale": {
+        "x": 1,
+        "y": 1
+      },
+      "player": {
+        "x": 810,
+        "y": 177
+      }
+    }
+  },
+  "after": {
+    "frame": {
+      "data": {
+        "sceneObject": "",
+        "worldX": "520",
+        "worldY": "-163.33333333333331",
+        "worldW": "560",
+        "worldH": "373.3333333333333",
+        "gatePositionRevision": "native-foreground-v6"
+      },
+      "rect": {
+        "x": 62.099998474121094,
+        "y": 315.3333435058594,
+        "width": 268.79998779296875,
+        "height": 179.19747924804688,
+        "top": 315.3333435058594,
+        "right": 330.89998626708984,
+        "bottom": 494.53082275390625,
+        "left": 62.099998474121094
+      },
+      "z": "5"
+    },
+    "inner": {
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "natural": [
+        1024,
+        1536
+      ],
+      "rect": {
+        "x": 170.59860229492188,
+        "y": 339.8298645019531,
+        "width": 51.79498291015625,
+        "height": 104.12249755859375,
+        "top": 339.8298645019531,
+        "right": 222.39358520507812,
+        "bottom": 443.9523620605469,
+        "left": 170.59860229492188
+      },
+      "clip": "polygon(50% 0%, 59% 4%, 67% 8%, 76% 13%, 85% 19%, 92% 26%, 97% 34%, 100% 42%, 100% 100%, 0% 100%, 0% 42%, 3% 34%, 8% 26%, 15% 19%, 24% 13%, 33% 8%, 41% 4%)",
+      "fit": "cover",
+      "filter": "none",
+      "transform": "none",
+      "mask": "none",
+      "animation": "none",
+      "z": "4"
+    },
+    "camera": {
+      "active": false,
+      "owned": true,
+      "allowOverscan": true,
+      "camera": {
+        "x": 800,
+        "y": -162.9861111111111,
+        "zoom": 0.48
+      },
+      "origin": {
+        "x": 390.625,
+        "y": -820.2777777777778
+      },
+      "viewport": {
+        "width": 393,
+        "height": 631,
+        "normalZoom": 1
+      },
+      "world": {
+        "w": 1448,
+        "h": 1086
+      },
+      "scale": {
+        "x": 1,
+        "y": 1
+      },
+      "player": {
+        "x": 810,
+        "y": 177
+      }
+    }
+  },
+  "landscape": {
+    "frame": {
+      "data": {
+        "sceneObject": "",
+        "worldX": "520",
+        "worldY": "-163.33333333333331",
+        "worldW": "560",
+        "worldH": "373.3333333333333",
+        "gatePositionRevision": "native-foreground-v6"
+      },
+      "rect": {
+        "x": 150.5,
+        "y": 14,
+        "width": 543,
+        "height": 361.9949645996094,
+        "top": 14,
+        "right": 693.5,
+        "bottom": 375.9949645996094,
+        "left": 150.5
+      },
+      "z": "5"
+    },
+    "inner": {
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "natural": [
+        1024,
+        1536
+      ],
+      "rect": {
+        "x": 369.6768798828125,
+        "y": 63.485145568847656,
+        "width": 104.6304931640625,
+        "height": 210.33676147460938,
+        "top": 63.485145568847656,
+        "right": 474.307373046875,
+        "bottom": 273.82190704345703,
+        "left": 369.6768798828125
+      },
+      "clip": "polygon(50% 0%, 59% 4%, 67% 8%, 76% 13%, 85% 19%, 92% 26%, 97% 34%, 100% 42%, 100% 100%, 0% 100%, 0% 42%, 3% 34%, 8% 26%, 15% 19%, 24% 13%, 33% 8%, 41% 4%)",
+      "fit": "cover",
+      "filter": "none",
+      "transform": "none",
+      "mask": "none",
+      "animation": "none",
+      "z": "4"
+    },
+    "camera": {
+      "active": false,
+      "owned": true,
+      "allowOverscan": true,
+      "camera": {
+        "x": 800,
+        "y": 23.333333333333343,
+        "zoom": 0.9696428571428571
+      },
+      "origin": {
+        "x": 364.7882136279926,
+        "y": -177.77163904235726
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "normalZoom": 1
+      },
+      "world": {
+        "w": 1448,
+        "h": 1086
+      },
+      "scale": {
+        "x": 1,
+        "y": 1
+      },
+      "player": {
+        "x": 810,
+        "y": 177
+      }
+    }
+  },
+  "preserved": {
+    "frame": {
+      "data": {
+        "sceneObject": "",
+        "worldX": "520",
+        "worldY": "-163.33333333333331",
+        "worldW": "560",
+        "worldH": "373.3333333333333",
+        "gatePositionRevision": "native-foreground-v6"
+      },
+      "rect": {
+        "x": 150.5,
+        "y": 14,
+        "width": 543,
+        "height": 361.9949645996094,
+        "top": 14,
+        "right": 693.5,
+        "bottom": 375.9949645996094,
+        "left": 150.5
+      },
+      "z": "5"
+    },
+    "inner": {
+      "src": "./assets/events/gate-vision/gate-void.webp",
+      "natural": [
+        1024,
+        1536
+      ],
+      "rect": {
+        "x": 369.6768798828125,
+        "y": 63.485145568847656,
+        "width": 104.6304931640625,
+        "height": 210.33676147460938,
+        "top": 63.485145568847656,
+        "right": 474.307373046875,
+        "bottom": 273.82190704345703,
+        "left": 369.6768798828125
+      },
+      "clip": "polygon(50% 0%, 59% 4%, 67% 8%, 76% 13%, 85% 19%, 92% 26%, 97% 34%, 100% 42%, 100% 100%, 0% 100%, 0% 42%, 3% 34%, 8% 26%, 15% 19%, 24% 13%, 33% 8%, 41% 4%)",
+      "fit": "cover",
+      "filter": "none",
+      "transform": "none",
+      "mask": "none",
+      "animation": "none",
+      "z": "4"
+    },
+    "camera": {
+      "active": false,
+      "owned": true,
+      "allowOverscan": true,
+      "camera": {
+        "x": 800,
+        "y": 23.333333333333343,
+        "zoom": 0.9696428571428571
+      },
+      "origin": {
+        "x": 364.7882136279926,
+        "y": -177.77163904235726
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "normalZoom": 1
+      },
+      "world": {
+        "w": 1448,
+        "h": 1086
+      },
+      "scale": {
+        "x": 1,
+        "y": 1
+      },
+      "player": {
+        "x": 810,
+        "y": 177
+      }
+    }
+  },
+  "reset": {
+    "frame": {
+      "data": {
+        "sceneObject": "",
+        "worldX": "520",
+        "worldY": "-163.33333333333331",
+        "worldW": "560",
+        "worldH": "373.3333333333333",
+        "gatePositionRevision": "native-foreground-v6"
+      },
+      "rect": {
+        "x": 150.5,
+        "y": 14,
+        "width": 543,
+        "height": 361.9949645996094,
+        "top": 14,
+        "right": 693.5,
+        "bottom": 375.9949645996094,
+        "left": 150.5
+      },
+      "z": "5"
+    },
+    "inner": {
+      "src": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "natural": [
+        0,
+        0
+      ],
+      "rect": {
+        "x": 310.2979736328125,
+        "y": 40.44097900390625,
+        "width": 223.4034423828125,
+        "height": 334.8859558105469,
+        "top": 40.44097900390625,
+        "right": 533.701416015625,
+        "bottom": 375.3269348144531,
+        "left": 310.2979736328125
+      },
+      "clip": "none",
+      "fit": "fill",
+      "filter": "brightness(1) drop-shadow(rgba(147, 205, 255, 0.18) 0px 0px 5px)",
+      "transform": "matrix(0.998, 0, 0, 0.998, 0, 0)",
+      "mask": "linear-gradient(rgb(0, 0, 0) 0%, rgb(0, 0, 0) 92%, rgba(0, 0, 0, 0.94) 95%, rgba(0, 0, 0, 0.72) 97%, rgba(0, 0, 0, 0.24) 99%, rgba(0, 0, 0, 0) 100%)",
+      "animation": "gate-inner-soft-pulse",
+      "z": "4"
+    },
+    "camera": {
+      "active": false,
+      "owned": true,
+      "allowOverscan": true,
+      "camera": {
+        "x": 800,
+        "y": 23.333333333333343,
+        "zoom": 0.9696428571428571
+      },
+      "origin": {
+        "x": 364.7882136279926,
+        "y": -177.77163904235726
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "normalZoom": 1
+      },
+      "world": {
+        "w": 1448,
+        "h": 1086
+      },
+      "scale": {
+        "x": 1,
+        "y": 1
+      },
+      "player": {
+        "x": 810,
+        "y": 177
+      }
+    }
+  }
+}

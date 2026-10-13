@@ -1,0 +1,304 @@
+TAP version 13
+# Subtest: Aftermath Lumiere bounds use the same four-direction manifest and body height as drawing
+ok 1 - Aftermath Lumiere bounds use the same four-direction manifest and body height as drawing
+  ---
+  duration_ms: 4.603655
+  type: 'test'
+  ...
+# Subtest: Aftermath focus reflows from a stable world baseline without repeated drift
+ok 2 - Aftermath focus reflows from a stable world baseline without repeated drift
+  ---
+  duration_ms: 5.152687
+  type: 'test'
+  ...
+# Subtest: Aftermath rotated A0 restoration verifies owned input, camera and actor display state
+ok 3 - Aftermath rotated A0 restoration verifies owned input, camera and actor display state
+  ---
+  duration_ms: 2.275649
+  type: 'test'
+  ...
+# Subtest: Aftermath actor hit test targets Shiopon/Lumiere directly without UI geometry
+ok 4 - Aftermath actor hit test targets Shiopon/Lumiere directly without UI geometry
+  ---
+  duration_ms: 1.390079
+  type: 'test'
+  ...
+# Subtest: Aftermath return formation preserves restored Lumiere and places Shiopon beside her
+ok 5 - Aftermath return formation preserves restored Lumiere and places Shiopon beside her
+  ---
+  duration_ms: 1.643441
+  type: 'test'
+  ...
+# Subtest: one-time panorama transfer preserves safe camera and releases an unclaimed lease
+ok 6 - one-time panorama transfer preserves safe camera and releases an unclaimed lease
+  ---
+  duration_ms: 2.430908
+  type: 'test'
+  ...
+# Subtest: return camera arm is fail-closed if cinematic target API is missing or invalid
+ok 7 - return camera arm is fail-closed if cinematic target API is missing or invalid
+  ---
+  duration_ms: 1.325589
+  type: 'test'
+  ...
+# Subtest: 390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes
+ok 8 - 390x844 boots with Shion + Shiopon + Lumiere, DPR cap, corrected spawn and actor sizes
+  ---
+  duration_ms: 131.163606
+  type: 'test'
+  ...
+# Subtest: Garden direct Continue boots the real runtime at exact authored spawn with restored follower state
+ok 9 - Garden direct Continue boots the real runtime at exact authored spawn with restored follower state
+  ---
+  duration_ms: 166.901506
+  type: 'test'
+  ...
+# Subtest: failed isolated Garden transit never falls back to production Journey or navigation
+ok 10 - failed isolated Garden transit never falls back to production Journey or navigation
+  ---
+  duration_ms: 103.832243
+  type: 'test'
+  ...
+# Subtest: Lumiere draws one fixed full pose per tick without sheet slicing or whole-body fades
+ok 11 - Lumiere draws one fixed full pose per tick without sheet slicing or whole-body fades
+  ---
+  duration_ms: 174.182098
+  type: 'test'
+  ...
+# Subtest: four directions preserve scale, float continuously and keep phase through facing and stage offsets
+ok 12 - four directions preserve scale, float continuously and keep phase through facing and stage offsets
+  ---
+  duration_ms: 410.851452
+  type: 'test'
+  ...
+# Subtest: Lumiere invalid images, manifest or compositor dependency never become scene-ready
+ok 13 - Lumiere invalid images, manifest or compositor dependency never become scene-ready
+  ---
+  duration_ms: 123.683367
+  type: 'test'
+  ...
+# Subtest: Lumiere has solid collision while remaining fixed at the gate
+ok 14 - Lumiere has solid collision while remaining fixed at the gate
+  ---
+  duration_ms: 413.354048
+  type: 'test'
+  ...
+# Subtest: Garden pointer payload is accepted by the production controls contract
+ok 15 - Garden pointer payload is accepted by the production controls contract
+  ---
+  duration_ms: 88.554565
+  type: 'test'
+  ...
+# Subtest: Garden registered pointerdown handler accepts the same browser-like event directly
+ok 16 - Garden registered pointerdown handler accepts the same browser-like event directly
+  ---
+  duration_ms: 81.919295
+  type: 'test'
+  ...
+# Subtest: Garden registered pointerup handler completes the accepted gesture
+ok 17 - Garden registered pointerup handler completes the accepted gesture
+  ---
+  duration_ms: 79.464023
+  type: 'test'
+  ...
+# Subtest: canvas tap uses camera/zoom/element offset and does not jump the camera to the destination
+ok 18 - canvas tap uses camera/zoom/element offset and does not jump the camera to the destination
+  ---
+  duration_ms: 601.851482
+  type: 'test'
+  ...
+# Subtest: real drag/keyboard bindings cancel movement and production reset clears held input
+ok 19 - real drag/keyboard bindings cancel movement and production reset clears held input
+  ---
+  duration_ms: 92.308179
+  type: 'test'
+  ...
+# Subtest: four directions use all four Shion walk frames then the matching idle frame
+ok 20 - four directions use all four Shion walk frames then the matching idle frame
+  ---
+  duration_ms: 392.402581
+  type: 'test'
+  ...
+# Subtest: pointercancel, lost capture, blur and hidden page prevent stuck movement
+ok 21 - pointercancel, lost capture, blur and hidden page prevent stuck movement
+  ---
+  duration_ms: 429.212304
+  type: 'test'
+  ...
+# Subtest: future interaction lifecycle cancels and suspends player movement
+ok 22 - future interaction lifecycle cancels and suspends player movement
+  ---
+  duration_ms: 86.491452
+  type: 'test'
+  ...
+# Subtest: stage commands face actors, animate safe steps and expose a skip-to-end handle
+ok 23 - stage commands face actors, animate safe steps and expose a skip-to-end handle
+  ---
+  duration_ms: 57.699403
+  type: 'test'
+  ...
+# Subtest: Shiopon bounce is visible mid-action and returns to its exact baseline
+ok 24 - Shiopon bounce is visible mid-action and returns to its exact baseline
+  ---
+  duration_ms: 78.740315
+  type: 'test'
+  ...
+# Subtest: desktop click uses the same input at camera zoom 1.22
+ok 25 - desktop click uses the same input at camera zoom 1.22
+  ---
+  duration_ms: 80.723799
+  type: 'test'
+  ...
+# Subtest: preview asset configuration loads the same game and rejects invalid collision data
+ok 26 - preview asset configuration loads the same game and rejects invalid collision data
+  ---
+  duration_ms: 72.029615
+  type: 'test'
+  ...
+# Subtest: cached arrival waits for final actor draw and two frames, without a fixed extra delay
+ok 27 - cached arrival waits for final actor draw and two frames, without a fixed extra delay
+  ---
+  duration_ms: 67.558978
+  type: 'test'
+  ...
+# Subtest: uncached sprites and delayed decode stay covered even if scene canvases are ready first
+ok 28 - uncached sprites and delayed decode stay covered even if scene canvases are ready first
+  ---
+  duration_ms: 40.555671
+  type: 'test'
+  ...
+# Subtest: late scene/canvas dependency stays covered after sprites finish
+ok 29 - late scene/canvas dependency stays covered after sprites finish
+  ---
+  duration_ms: 52.431411
+  type: 'test'
+  ...
+# Subtest: image failure and JSON failure enter the existing visible error state
+ok 30 - image failure and JSON failure enter the existing visible error state
+  ---
+  duration_ms: 145.333484
+  type: 'test'
+  ...
+# Subtest: stalled load times out and a late success cannot remove the error
+ok 31 - stalled load times out and a late success cannot remove the error
+  ---
+  duration_ms: 48.273506
+  type: 'test'
+  ...
+# Subtest: load-only browser fallback and rejected Safari decode with a drawable image both complete
+ok 32 - load-only browser fallback and rejected Safari decode with a drawable image both complete
+  ---
+  duration_ms: 102.968914
+  type: 'test'
+  ...
+# Subtest: already failed image rejects immediately, and failed decode fallback propagates canvas errors
+ok 33 - already failed image rejects immediately, and failed decode fallback propagates canvas errors
+  ---
+  duration_ms: 1.659141
+  type: 'test'
+  ...
+# Subtest: normal TOUCH TO START resets durable Progress and Journey before opening the prologue
+ok 34 - normal TOUCH TO START resets durable Progress and Journey before opening the prologue
+  ---
+  duration_ms: 39.994966
+  type: 'test'
+  ...
+# Subtest: New Game fails closed when durable Progress cannot be reset
+ok 35 - New Game fails closed when durable Progress cannot be reset
+  ---
+  duration_ms: 67.423927
+  type: 'test'
+  ...
+# Subtest: first-paint cover is opaque and guards the parent composite; error removes the cover
+ok 36 - first-paint cover is opaque and guards the parent composite; error removes the cover
+  ---
+  duration_ms: 0.456481
+  type: 'test'
+  ...
+# Subtest: real scene readiness waits for foreground polygons and image decode before painting all scene canvases
+ok 37 - real scene readiness waits for foreground polygons and image decode before painting all scene canvases
+  ---
+  duration_ms: 2.759049
+  type: 'test'
+  ...
+# Subtest: real scene rejects foreground and canvas failures instead of announcing readiness
+ok 38 - real scene rejects foreground and canvas failures instead of announcing readiness
+  ---
+  duration_ms: 4.143025
+  type: 'test'
+  ...
+# Subtest: PAD gate audio remains one play, fixed 1800ms transfer, 180ms fade, volume .45
+ok 39 - PAD gate audio remains one play, fixed 1800ms transfer, 180ms fade, volume .45
+  ---
+  duration_ms: 3.989261
+  type: 'test'
+  ...
+# Subtest: Clean candidate preview pins game source and contains no visible editor scripts
+ok 40 - Clean candidate preview pins game source and contains no visible editor scripts
+  ---
+  duration_ms: 14.335592
+  type: 'test'
+  ...
+# Subtest: final Lumiere preview is an exact source snapshot with main's opt-in editors preserved
+ok 41 - final Lumiere preview is an exact source snapshot with main's opt-in editors preserved
+  ---
+  duration_ms: 14.797492
+  type: 'test'
+  ...
+# Subtest: local sway has fixed roots/perimeter and bounded smooth displacement
+ok 42 - local sway has fixed roots/perimeter and bounded smooth displacement
+  ---
+  duration_ms: 40.065748
+  type: 'test'
+  ...
+# Subtest: all four source regions exclude conservative fixed face/torso/legs/wings areas
+ok 43 - all four source regions exclude conservative fixed face/torso/legs/wings areas
+  ---
+  duration_ms: 0.991928
+  type: 'test'
+  ...
+# Subtest: sway caches build only at readiness and reuse capacity during two cycles and A/B
+ok 44 - sway caches build only at readiness and reuse capacity during two cycles and A/B
+  ---
+  duration_ms: 3343.109258
+  type: 'test'
+  ...
+# Subtest: Candidate C envelope keeps visible motion close to the free tips, not the anchor
+ok 45 - Candidate C envelope keeps visible motion close to the free tips, not the anchor
+  ---
+  duration_ms: 1.185889
+  type: 'test'
+  ...
+# Subtest: Candidate C uses one periodic phase with distinct hair and hem follow delays
+ok 46 - Candidate C uses one periodic phase with distinct hair and hem follow delays
+  ---
+  duration_ms: 2.79194
+  type: 'test'
+  ...
+# Subtest: Candidate C exposes actual amplitudes and initialization-only pixel diagnostics
+ok 47 - Candidate C exposes actual amplitudes and initialization-only pixel diagnostics
+  ---
+  duration_ms: 1249.40394
+  type: 'test'
+  ...
+# Subtest: Candidate C never folds a narrow curl: horizontal inverse-mesh slope stays bounded
+ok 48 - Candidate C never folds a narrow curl: horizontal inverse-mesh slope stays bounded
+  ---
+  duration_ms: 3300.574118
+  type: 'test'
+  ...
+# Subtest: inspector exposes already-built pose canvases with no extra per-frame allocations
+ok 49 - inspector exposes already-built pose canvases with no extra per-frame allocations
+  ---
+  duration_ms: 3470.181329
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16156.233168

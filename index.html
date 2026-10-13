@@ -76,7 +76,12 @@
             document.body.classList.remove("scene-booting", "scene-ready", "scene-rendered");
             document.body.classList.add("scene-load-error");
             var error = document.getElementById("load-error");
-            if (error) error.hidden = false;
+            if (error) {
+              error.hidden = false;
+              if (window.__lastGardenBootError) {
+                error.textContent = "読み込み失敗: " + window.__lastGardenBootError;
+              }
+            }
           };
           window.gardenArrivalTimeout = setTimeout(window.failGardenArrival, 45000);
         }
@@ -158,6 +163,7 @@
       <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
       <div id="load-error" class="load-error" hidden role="alert">読み込みに失敗しました。再読み込みしてください。</div>
     </main>
+    <script src="./star-gate-route-entry.js?v=lumiere-route-v1"></script>
     <script src="./map-journey.js?v=20260919-roundtrip-1"></script>
     <script src="./route-registry.js?v=20260921-progress-v1"></script>
     <script src="./progress.js?v=20260921-progress-v1"></script>
@@ -171,6 +177,8 @@
     <script src="./title-first-visit-preview.js?v=2"></script>
     <script src="./public-continue-title.js?v=title-ux-v1-1"></script>
     <script src="./garden-dev-bootstrap.js?v=phase-2a-5c-1"></script>
+    <script src="./stage3-dev-bootstrap.js?v=stage3-v192"></script>
+    <script src="./star-gate-public-bootstrap.js?v=public-v1"></script>
     <script src="./garden-progress-observer.js?v=phase-2a-5c-transit-1" defer></script>
     <script src="./navigation.js?v=0.7.1" defer></script>
     <script src="./blocked-collision.js?v=0.9.0" defer></script>

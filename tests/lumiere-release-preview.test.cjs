@@ -6,6 +6,8 @@ const crypto = require("node:crypto");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname,"..");
+// Exact Git sources for immutable previews, separate from the live event candidate.
+const historicalSources = require("./fixtures/lumiere-preview-sources-9e8a85d.json");
 const runtime = "9e8a85dff39e33e0eb802369228fcab4d512e035";
 const page = "docs/lumiere-hover-evidence/lumiere-release-9e8a85d.html";
 
@@ -18,13 +20,15 @@ test("final Lumiere preview is an exact source snapshot with main's opt-in edito
   assert.equal(Object.keys(source.files).length,39);
   for(const [file,sha] of Object.entries(source.files)){
     assert.match(source.source_commits[file],/^[0-9a-f]{40}$/);
-    // Keep the immutable 9e8a85d preview's exact manifest evidence after the
-    // authorized live sprite update; every other current-source check remains.
+    // Preserve immutable 9e8a85d evidence independently of authorized live
+    // changes. Fixed digests still cover every historical or unchanged source.
     const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
       ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json"
       : file === "audio.js"
         ? "tests/fixtures/audio-preview-baseline-160ab339.js" : file;
-    assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(root,sourceFile))).digest("hex"),sha,file);
+    const content = Object.hasOwn(historicalSources,file)
+      ? Buffer.from(historicalSources[file]) : fs.readFileSync(path.join(root,sourceFile));
+    assert.equal(crypto.createHash("sha256").update(content).digest("hex"),sha,file);
   }
   const inline=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
   assert.equal(inline.length,32);

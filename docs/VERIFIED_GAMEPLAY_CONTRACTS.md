@@ -34,37 +34,23 @@ A behavior is not CONTRACT LOCKED until:
 - A PR that fails a verified gameplay contract is BLOCKED.
 - Device-only behavior that cannot yet be automated remains a mandatory Device Gate and must be recorded as such.
 
-## Contract VGC-001 — Star Gate unfinished-event suppression
-Status: ACTIVE — current product decision until the Star Gate event is explicitly approved as complete.
+## Contract VGC-001 — Completed Star Gate normal-route candidate
+Status: ACTIVE on this candidate; explicit product decision that the full event is complete and normal-route/save implementation is authorized by the owner on2026-10-13 21:10JST: 「進めて」 in response to the public-integration proposal.
 
-Preconditions:
-- map: Star Gate Garden
-- Star Gate Anomaly is not yet approved as complete/released
+This replaces unfinished-event suppression in the same reviewed PR that enables the completed event. Main remains unchanged; this approval is not main merge or publication authorization. The specified normal-route Device Gate is now human-verified PASS at integrated fixed SHA `f4909bc17a2568101e277c2a8fb08b692c7d71f8` (four earlier checks at the unchanged runtime `f3b861098fa573f5b02ae60b3b02af8f0769fa3e`, plus three final integrated-route checks). Limits and direct owner reports are recorded in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
 
 Observable contract:
-1. Approaching or touching the Star Gate does NOT display the "星門を調べる / 離れる" choice UI.
-2. Normal gameplay movement remains unaffected by a hidden/incomplete Star Gate interaction.
-3. The unfinished Star Gate anomaly must not start from normal gameplay.
-4. Development/test harnesses may exercise the event only through an explicit developer-only path that cannot activate during the normal route.
+1. Only validated ordinary Garden arrival or Public Continue loads the approved event runtime. Title, conflicting entry and unrelated developer fixtures do not expose it.
+2. Real Shiopon/Lumiere completion, joined companion, current Garden Progress and free scene/input/camera are required for the existing inspect/leave choice.
+3. Investigation starts only on explicit input and cannot overlap or duplicate.
+4. Stage3 success consumes the page attempt but never by itself writes final durable completion. Only actual full Aftermath completion with verified departure, restored controls and follower may persist garden_star_gate_anomaly.
+5. Before final completion, reload restarts investigation after already-completed Lumiere. After completion, reload/Continue/map return suppresses replay and restores corrupted gate and departed Lumiere.
+6. Failed save/readback never claims durable success or leaves event ownership locked; current-page consumption still prevents duplicates.
+7. Existing isolated checkpoints remain memory-only; no developer fixture authority enters normal P0.
 
-Forbidden regressions:
-- normal gameplay loads or creates #star-gate-interaction-choice;
-- normal gameplay loads star-gate-interaction.js or star-gate-anomaly.js before release approval;
-- touching/approaching the gate exposes unfinished interaction UI;
-- a feature branch re-enables the old PR #36 interaction foundation merely because the code still exists in history.
+Device Gate: real normal entry -> meetings -> inspect -> Stage3/Aftermath -> save -> Continue/return without replay; Home same-page interruption -> explicit retry. Only changed-route checks, not repetition of unchanged dev certification.
 
-Activation change rule:
-This contract may be replaced by the completed Star Gate interaction contract only after an explicit product decision that the full event is complete, automated tests pass, and the Device Gate passes. The replacement must happen in the same reviewed PR that enables the completed event.
-
-## Device Gate for VGC-001
-On iPhone/iPad normal gameplay route verify:
-- approach/touch the Star Gate -> no choice prompt appears;
-- unfinished anomaly does not start;
-- ordinary movement remains available;
-- no Star Gate development UI leaks into the normal route.
-
-Record the verified commit SHA after PASS.
-
+Historical VGC001 unfinished-event suppression remains the contract on current main until this reviewed candidate is explicitly merged. The prior behavior did NOT display the "星門を調べる / 離れる" choice UI and is not retroactively treated as a regression.
 
 ## Contract VGC-002 — Alenon prologue / Devil card
 Status: ACTIVE — device-verified gameplay baseline.
@@ -114,7 +100,7 @@ Observable contract:
 1. The Garden keeps both Shiopon meeting and Lumiere gate story sequences.
 2. Garden Progress is observer-only: `shioponDone` observes `garden_shiopon_meet`; `lumiereDone` observes `garden_lumiere_gate`.
 3. Progress restoration must not become a second trigger owner for either dialogue event.
-4. Completing Lumiere does NOT by itself enable the unfinished Star Gate choice UI; VGC-001 remains authoritative.
+4. Completing Lumiere does not automatically investigate the Star Gate. Approved candidate VGC-001 controls prerequisites and explicit player choice; historical main suppression remains unchanged until merge.
 
 ## Contract VGC-007 — Cross-map round-trip preservation
 Status: ACTIVE — device-verified gameplay baseline.
@@ -136,4 +122,4 @@ Before merging gameplay/progress/route changes, verify on iPhone/iPad as applica
 - Garden Shiopon event;
 - Garden Lumiere event;
 - Landing <-> Garden return;
-- no unfinished Star Gate choice UI.
+- no unfinished/developer Star Gate UI leaks; the approved candidate follows VGC-001.

@@ -1,0 +1,95 @@
+{
+  "kind": "Local Chromium simulation; no physical iPhone/speaker/BFCache certification",
+  "trace": [
+    {
+      "case": "real Stage3 boot/compositor/Aftermath bounds",
+      "result": "PASS",
+      "boot": {
+        "state": {
+          "actors": {
+            "shion": {
+              "x": 810,
+              "y": 177,
+              "dir": "up"
+            },
+            "shiopon": {
+              "x": 810,
+              "y": 233,
+              "dir": "up"
+            },
+            "lumiere": {
+              "x": 810,
+              "y": 212,
+              "dir": "down"
+            }
+          },
+          "following": true,
+          "lumiereEnabled": true,
+          "visibility": {
+            "shion": 1,
+            "shiopon": 1,
+            "lumiere": 1
+          },
+          "lumiereRect": {
+            "left": 157.1964688628159,
+            "right": 233.61199796931407,
+            "top": 139.50112418193268,
+            "bottom": 221,
+            "width": 76.41552910649818,
+            "height": 81.49887581806732
+          },
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "camera": {
+            "x": 810,
+            "y": -243.2964997120849,
+            "zoom": 1
+          },
+          "owner": null,
+          "inputSuspended": false,
+          "npcSuspended": false
+        },
+        "sway": "function",
+        "loaded": true
+      }
+    },
+    {
+      "case": "ordinary Garden G3 event isolation",
+      "result": "PASS",
+      "normal": {
+        "dev": false,
+        "event": false,
+        "choice": false,
+        "sway": "function"
+      }
+    },
+    {
+      "case": "actual media play/pagehide/pageshow/hard-muted event/healthy release",
+      "result": "PASS",
+      "lifecycle": {
+        "hidden": {
+          "paused": true,
+          "muted": true,
+          "volume": 0
+        },
+        "restored": {
+          "paused": false,
+          "muted": true,
+          "volume": 0
+        },
+        "reveal": true,
+        "released": {
+          "paused": false,
+          "muted": false,
+          "volume": 0.35,
+          "extraPlay": 0
+        }
+      }
+    },
+    {
+      "pageErrors": []
+    }
+  ]
+}

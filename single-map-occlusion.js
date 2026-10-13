@@ -120,7 +120,9 @@
   const STAR_GATE_H = STAR_GATE_W * (1024 / 1536);
   const STAR_GATE_X = GATE_CENTER_X - STAR_GATE_W / 2;
   const STAR_GATE_Y = STAIR_TOP_Y - STAR_GATE_H - GATE_LIFT;
-  const INNER_LIGHT_W = 190;
+  // Use the already-approved aperture from scene-preview41-fix.js in both
+  // ordinary play and the Stage3 fixture; never shrink it on this second pass.
+  const INNER_LIGHT_W = layout.gateAssembly?.innerLight?.w ?? 230.86;
   const INNER_LIGHT_H = INNER_LIGHT_W * (1535 / 1024);
   const INNER_LIGHT_X = GATE_CENTER_X - INNER_LIGHT_W / 2;
   const INNER_LIGHT_Y = STAIR_TOP_Y - INNER_LIGHT_H - GATE_LIFT;

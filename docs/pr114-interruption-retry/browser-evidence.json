@@ -1,0 +1,1051 @@
+{
+  "mode": "Chromium 390x844 synthetic visibilitychange; real HTML/runtime/media; not iPhone or BFCache",
+  "runtime_sha256": {
+    "star-gate-interaction.js": "eeb1ce9290382a40c2055c0506681c5eac5037f549751ad1c4541426630f145d",
+    "star-gate-anomaly.js": "04eed8eda4c1d818a1dde5f0ba0f3370ba62933e84c717a3a64abf410e45770d"
+  },
+  "observations": {
+    "tarot-pr114-baseline-abort": {
+      "interaction": {
+        "active": false,
+        "completed": true,
+        "armed": false,
+        "promptLock": false
+      },
+      "stage": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": true,
+        "audioReleased": null,
+        "error": "AbortError: Stage 3 interrupted",
+        "reason": "background",
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": false
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "up"
+          },
+          "shiopon": {
+            "x": 810,
+            "y": 201,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 157.1964688628159,
+          "right": 233.61199796931407,
+          "top": 142.03079614445943,
+          "bottom": 221,
+          "width": 76.41552910649818,
+          "height": 78.96920385554057
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": false,
+        "npcSuspended": false
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-pr114-baseline/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.35
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-pr114-baseline/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-pr114-baseline/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "tarot-pr114-baseline-reapproach": {
+      "interaction": {
+        "active": false,
+        "completed": true,
+        "armed": true,
+        "promptLock": false
+      },
+      "stage": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": true,
+        "audioReleased": null,
+        "error": "AbortError: Stage 3 interrupted",
+        "reason": "background",
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": false
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "up"
+          },
+          "shiopon": {
+            "x": 810,
+            "y": 207.25,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 157.1964688628159,
+          "right": 233.61199796931407,
+          "top": 140.81694628915298,
+          "bottom": 221,
+          "width": 76.41552910649818,
+          "height": 80.18305371084702
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": false,
+        "npcSuspended": false
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-pr114-baseline/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.35
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-pr114-baseline/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-pr114-baseline/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "tarot-breaker-game-abort": {
+      "interaction": {
+        "active": false,
+        "completed": false,
+        "armed": false,
+        "promptLock": false,
+        "pending": false,
+        "retryPending": true,
+        "settledId": 1
+      },
+      "stage": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": true,
+        "audioReleased": true,
+        "error": "AbortError: Stage 3 interrupted",
+        "reason": "background",
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": false
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "up"
+          },
+          "shiopon": {
+            "x": 810,
+            "y": 201,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 157.1964688628159,
+          "right": 233.61199796931407,
+          "top": 141.97868486267237,
+          "bottom": 221,
+          "width": 76.41552910649818,
+          "height": 79.02131513732763
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": false,
+        "npcSuspended": false
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.35
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "tarot-breaker-game-reapproach": {
+      "interaction": {
+        "active": true,
+        "completed": false,
+        "armed": true,
+        "promptLock": true,
+        "pending": false,
+        "retryPending": true,
+        "settledId": 1
+      },
+      "stage": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": true,
+        "audioReleased": true,
+        "error": "AbortError: Stage 3 interrupted",
+        "reason": "background",
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": false
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "up"
+          },
+          "shiopon": {
+            "x": 810,
+            "y": 228.25,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 157.1964688628159,
+          "right": 233.61199796931407,
+          "top": 142.2103495987853,
+          "bottom": 221,
+          "width": 76.41552910649818,
+          "height": 78.78965040121469
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": true,
+        "npcSuspended": true
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.32050176143638853
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "candidate-retry-completed": {
+      "interaction": {
+        "active": false,
+        "completed": true,
+        "armed": false,
+        "promptLock": false,
+        "pending": false,
+        "retryPending": false,
+        "settledId": 2
+      },
+      "stage": {
+        "id": 2,
+        "running": false,
+        "completed": true,
+        "restored": true,
+        "audioReleased": true,
+        "error": null,
+        "reason": null,
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": true
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "down"
+          },
+          "shiopon": {
+            "x": 751.6983865656898,
+            "y": 212.75337504115905,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "up"
+          }
+        },
+        "following": false,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 154.84027777777783,
+          "right": 235.0381944444445,
+          "top": 136.419609506545,
+          "bottom": 221,
+          "width": 80.19791666666669,
+          "height": 84.58039049345501
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": false,
+        "npcSuspended": false
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.35
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/light_down.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/light_cycle.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/corrupt_spread.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/dark_up.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "candidate-aftermath-completed": {
+      "interaction": {
+        "active": false,
+        "completed": true,
+        "armed": true,
+        "promptLock": false,
+        "pending": false,
+        "retryPending": false,
+        "settledId": 2
+      },
+      "stage": {
+        "id": 2,
+        "running": false,
+        "completed": true,
+        "restored": true,
+        "audioReleased": true,
+        "error": null,
+        "reason": null,
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": true
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 230,
+            "dir": "left"
+          },
+          "shiopon": {
+            "x": 751.6983865656898,
+            "y": 212.75337504115905,
+            "dir": "left"
+          },
+          "lumiere": {
+            "x": 1068.6879999999999,
+            "y": 38.194,
+            "dir": "right"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": false,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 406.0264232954544,
+          "right": 482.96861079545437,
+          "top": -50.79290465408505,
+          "bottom": 47.194,
+          "width": 76.94218749999999,
+          "height": 97.98690465408505
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": false,
+        "npcSuspended": false
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 230
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.35
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/light_down.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/light_cycle.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/corrupt_spread.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/events/gate-vision/audio/dark_up.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 0
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "candidate-restore-failed": {
+      "interaction": {
+        "active": false,
+        "completed": false,
+        "armed": false,
+        "promptLock": false,
+        "pending": true,
+        "retryPending": false,
+        "settledId": null
+      },
+      "stage": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": false,
+        "audioReleased": false,
+        "error": "AbortError: Stage 3 interrupted",
+        "reason": "background",
+        "recoveryError": "Error: injected P0 restore failure",
+        "audioFailures": [],
+        "returnCameraHandoff": false
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "up"
+          },
+          "shiopon": {
+            "x": 810,
+            "y": 201,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 157.1964688628159,
+          "right": 233.61199796931407,
+          "top": 142.05727543721372,
+          "bottom": 221,
+          "width": 76.41552910649818,
+          "height": 78.94272456278628
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "owner": 1,
+        "inputSuspended": true,
+        "npcSuspended": true
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 422,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": true,
+          "volume": 0
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    },
+    "candidate-manual-recovery": {
+      "interaction": {
+        "active": false,
+        "completed": false,
+        "armed": false,
+        "promptLock": false,
+        "pending": false,
+        "retryPending": true,
+        "settledId": 1
+      },
+      "stage": {
+        "id": 1,
+        "running": false,
+        "completed": false,
+        "restored": true,
+        "audioReleased": true,
+        "error": "AbortError: Stage 3 interrupted",
+        "reason": "background",
+        "recoveryError": null,
+        "audioFailures": [],
+        "returnCameraHandoff": false
+      },
+      "controls": {
+        "actors": {
+          "shion": {
+            "x": 810,
+            "y": 145,
+            "dir": "up"
+          },
+          "shiopon": {
+            "x": 810,
+            "y": 201,
+            "dir": "up"
+          },
+          "lumiere": {
+            "x": 810,
+            "y": 212,
+            "dir": "down"
+          }
+        },
+        "following": true,
+        "lumiereEnabled": true,
+        "visibility": {
+          "shion": 1,
+          "shiopon": 1,
+          "lumiere": 1
+        },
+        "lumiereRect": {
+          "left": 157.1964688628159,
+          "right": 233.61199796931407,
+          "top": 140.3816665707111,
+          "bottom": 221,
+          "width": 76.41552910649818,
+          "height": 80.6183334292889
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "camera": {
+          "x": 810,
+          "y": 411.3705037102206,
+          "zoom": 1
+        },
+        "owner": null,
+        "inputSuspended": false,
+        "npcSuspended": false
+      },
+      "camera": {
+        "active": false,
+        "owned": false,
+        "allowOverscan": false,
+        "camera": {
+          "x": 810,
+          "y": 411.3705037102206,
+          "zoom": 1
+        },
+        "origin": {
+          "x": 615,
+          "y": 0
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "normalZoom": 1
+        },
+        "world": {
+          "w": 1448,
+          "h": 1086
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "player": {
+          "x": 810,
+          "y": 145
+        }
+      },
+      "audio": [
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+          "paused": false,
+          "muted": false,
+          "volume": 0.35
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_ruins.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        },
+        {
+          "src": "http://127.0.0.1:8765/tarot-breaker-game/assets/audio/bgm/future_fix.mp3",
+          "paused": true,
+          "muted": false,
+          "volume": 1
+        }
+      ],
+      "pageErrors": [],
+      "blackoutAudioViolationCount": 0
+    }
+  }
+}

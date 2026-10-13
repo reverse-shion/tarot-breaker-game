@@ -5,6 +5,7 @@
  */
 (function (root) {
   "use strict";
+  if (root.__TAROT_DEV_STAGE3__ === true) return;
 
   const core = root.TarotProgressCore;
   if (!core) return;
@@ -43,6 +44,17 @@
     progress = core.createProgress();
     const loaded = progress.load();
     if (loaded.status !== "valid") return;
+  }
+
+  // Share the existing observer authority; the event must not create another Progress writer.
+  if (root.__TAROT_PUBLIC_STAR_GATE__ === true) {
+    root.TarotStarGateProgress = progress;
+    root.TarotStarGateProgressAuthority = Object.freeze({rebind(next){
+      if (!gardenResumePublic || root.TarotGardenContinueTransit?.progress !== next || !next?.getCurrentState?.()) return false;
+      progress = next;
+      root.TarotStarGateProgress = next;
+      return true;
+    }});
   }
 
   function note(message, error) {

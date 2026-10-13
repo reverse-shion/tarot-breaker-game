@@ -78,6 +78,8 @@
 
   function makeController(elements, options = {}) {
     const { layer, button, speaker, text, next } = elements;
+    // Optional instance-local clock; ordinary Dialogue keeps the existing timer.
+    const wait = typeof options.wait === "function" ? options.wait : sleep;
     let chars = [];
     let token = 0;
     let complete = false;
@@ -108,7 +110,7 @@
       for (let i = 0; i < source.length; i += 1) {
         if (destroyed || !active || currentToken !== token || complete) return;
         chars[i]?.classList.add("revealed");
-        await sleep(pauseFor(source[i]));
+        await wait(pauseFor(source[i]));
       }
 
       if (destroyed || !active || currentToken !== token) return;

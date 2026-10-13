@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "error": "Error: Fixed geometry changed: y",
+    "phase": "RIFT_SMALL",
+    "completed": false,
+    "restored": true,
+    "audioFailures": [
+      "future-ruins-seek: completed seek did not reach start",
+      "future-fix-seek: completed seek did not reach start"
+    ],
+    "sourceAtAscent": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+    "sourceAtAfterglow": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+    "sourceAtRest": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+    "sourceOnRecovery": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6"
+  },
+  "candidate": {
+    "error": "Error: Fixed geometry changed: y",
+    "phase": "RIFT_SMALL",
+    "completed": false,
+    "restored": true,
+    "audioFailures": [
+      "future-ruins-seek: completed seek did not reach start",
+      "future-fix-seek: completed seek did not reach start"
+    ],
+    "sourceAtAscent": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+    "sourceAtAfterglow": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+    "sourceAtRest": "./assets/events/gate-vision/gate-void.webp",
+    "sourceOnRecovery": "./assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6"
+  },
+  "mode": "Same Chromium393x631DPR1 accelerated clock harness; baseline serves unmodified PR-start JS/CSS; not physical iOS or natural-time audio verification.",
+  "sameFailureIdentity": true
+}

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function bootDialogue() {
+function bootDialogue({configure} = {}) {
   const elements = {};
   const performed = [];
   const stageFinishes = [];
@@ -73,9 +73,13 @@ function bootDialogue() {
       if (key === 'hidden') this.hidden = true;
     }
     focus() {}
+    querySelector(selector) { return elements[selector.replace(/^#/, '')] || null; }
     set innerHTML(html) {
       this._innerHTML = html;
-      for (const id of ['dialogue-advance', 'dialogue-speaker', 'dialogue-text']) {
+      const ids = html.includes('star-gate-interaction-inspect')
+        ? ['star-gate-interaction-inspect', 'star-gate-interaction-leave']
+        : ['dialogue-advance', 'dialogue-speaker', 'dialogue-text'];
+      for (const id of ids) {
         const child = new Element(id);
         elements[id] = child;
         this.children.push(child);
@@ -152,6 +156,7 @@ function bootDialogue() {
   let interactionEnds = 0;
   window.addEventListener('tarot-breaker:interaction-start', () => interactionStarts++);
   window.addEventListener('tarot-breaker:interaction-end', () => interactionEnds++);
+  configure?.({window, document});
 
   const sandbox = vm.createContext({
     window,
@@ -182,8 +187,29 @@ function bootDialogue() {
     starts: () => interactionStarts,
     ends: () => interactionEnds,
     timers,
+    sandbox,
   };
 }
+
+test('instance-local dialogue clock pauses letters without changing default timer behavior', async () => {
+  const h = bootDialogue();
+  h.window.matchMedia = () => ({ matches: false });
+  const pending = [];
+  const ui = h.window.TarotDialogueUI.create({ mount: h.elements['game-shell'], wait: ms => new Promise(resolve => pending.push({ms,resolve})) });
+  ui.show({text:'あい'});
+  const chars = ui.elements.text.children[0].children;
+  assert.equal(chars[0].classList.contains('revealed'), true);
+  assert.equal(chars[1].classList.contains('revealed'), false);
+  await flush();
+  assert.equal(chars[1].classList.contains('revealed'), false);
+  pending.shift().resolve(); await flush();
+  assert.equal(chars[1].classList.contains('revealed'), true);
+  ui.hide(); pending.shift().resolve(); await flush();
+  assert.equal(ui.isActive(), false);
+  const ordinary = h.window.TarotDialogueUI.create({mount:h.elements['game-shell']});
+  const count = h.timers.size; ordinary.show({text:'あい'});
+  assert.ok(h.timers.size > count, 'ordinary instance retains setTimeout');
+});
 
 async function flush() {
   for (let i = 0; i < 8; i++) await Promise.resolve();

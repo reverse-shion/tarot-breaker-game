@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: real background plane covers portrait and landscape throughout absorption including outside anchors
+ok 1 - real background plane covers portrait and landscape throughout absorption including outside anchors
+  ---
+  duration_ms: 1.346794
+  type: 'test'
+  ...
+# Subtest: real detail helper displays prepared altered card for 1000ms then releases layer
+ok 2 - real detail helper displays prepared altered card for 1000ms then releases layer
+  ---
+  duration_ms: 7.139237
+  type: 'test'
+  ...
+# Subtest: detail cancellation releases its overlay while propagating to existing P0 recovery
+ok 3 - detail cancellation releases its overlay while propagating to existing P0 recovery
+  ---
+  duration_ms: 4.457581
+  type: 'test'
+  ...
+# Subtest: detail refuses an unprepared image without displaying an overlay
+ok 4 - detail refuses an unprepared image without displaying an overlay
+  ---
+  duration_ms: 1.282134
+  type: 'test'
+  ...
+# Subtest: T1/T33 exact registered asset paths and §78 dialogue strings
+ok 5 - T1/T33 exact registered asset paths and §78 dialogue strings
+  ---
+  duration_ms: 7.249919
+  type: 'test'
+  ...
+# Subtest: T2/T3/T7/T8/T9/T12/T15/T16 timeline obeys formation and UI closure timing
+ok 6 - T2/T3/T7/T8/T9/T12/T15/T16 timeline obeys formation and UI closure timing
+  ---
+  duration_ms: 36.044341
+  type: 'test'
+  ...
+# Subtest: T18 crossfade is included and scale continues after opacity reaches one
+ok 7 - T18 crossfade is included and scale continues after opacity reaches one
+  ---
+  duration_ms: 3.426031
+  type: 'test'
+  ...
+# Subtest: T13/T14/T17/T29 restoration under independent covers precedes dialogue/control
+ok 8 - T13/T14/T17/T29 restoration under independent covers precedes dialogue/control
+  ---
+  duration_ms: 2.750758
+  type: 'test'
+  ...
+# Subtest: T26 envelope values interpolate and audio pause/resume brackets covered restoration
+ok 9 - T26 envelope values interpolate and audio pause/resume brackets covered restoration
+  ---
+  duration_ms: 7.406998
+  type: 'test'
+  ...
+# Subtest: T22 preparation and covered restoration exceptions propagate without control return
+ok 10 - T22 preparation and covered restoration exceptions propagate without control return
+  ---
+  duration_ms: 8.72465
+  type: 'test'
+  ...
+# Subtest: T30 restoration deadline is separate from minimum and rejects unresolved work
+ok 11 - T30 restoration deadline is separate from minimum and rejects unresolved work
+  ---
+  duration_ms: 5.481515
+  type: 'test'
+  ...
+# Subtest: T23 cancellation prevents sequence actions and reaction/control after abort
+ok 12 - T23 cancellation prevents sequence actions and reaction/control after abort
+  ---
+  duration_ms: 6.167155
+  type: 'test'
+  ...
+# Subtest: createClock abort cancels queued RAF and rejects with no late tween samples
+ok 13 - createClock abort cancels queued RAF and rejects with no late tween samples
+  ---
+  duration_ms: 2.020397
+  type: 'test'
+  ...
+# Subtest: T23/T30 timed-out restoration token expires and late fulfillment cannot draw
+ok 14 - T23/T30 timed-out restoration token expires and late fulfillment cannot draw
+  ---
+  duration_ms: 4.07492
+  type: 'test'
+  ...
+# Subtest: T23 aborted covered restore expires token and suppresses a later draw
+ok 15 - T23 aborted covered restore expires token and suppresses a later draw
+  ---
+  duration_ms: 5.70103
+  type: 'test'
+  ...
+# Subtest: active tween excludes hidden wall time and dispose removes visibility observer
+ok 16 - active tween excludes hidden wall time and dispose removes visibility observer
+  ---
+  duration_ms: 3.364956
+  type: 'test'
+  ...
+# Subtest: T30 recovery deadline counts active execution only across hidden interval
+ok 17 - T30 recovery deadline counts active execution only across hidden interval
+  ---
+  duration_ms: 2.430593
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 659.236184

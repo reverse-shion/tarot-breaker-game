@@ -1,0 +1,144 @@
+{
+  "version": "1",
+  "date": "2026-10-05",
+  "source": "Built-in ImageGen edits",
+  "status": "transparent candidate assets; scene and Device Gates pending",
+  "assets": [
+    {
+      "role": "01-small",
+      "webp": "assets/events/gate-vision/future-fixation-rift-01-small.webp",
+      "png": "source-png/future-fixation-rift-01-small.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "zero_alpha_percent": 88.7155,
+      "alpha_bbox": [
+        73,
+        207,
+        868,
+        1462
+      ],
+      "edge_alpha_max": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "canvas_center_initial_only": [
+        512,
+        768
+      ],
+      "wound_anchor_registration": "pending visual registration",
+      "lossless_rgba_roundtrip": true,
+      "webp_bytes": 641730,
+      "webp_sha256": "172fb17b376b4638a695dcff2418259362d4d021cf9d55e9cfc8f2c4c499b510",
+      "png_sha256": "a45a1be60b24ee6d9cfdccbc6ec8d8e798ec1609fe43042d064e4ffeb3cb71a4"
+    },
+    {
+      "role": "02-medium",
+      "webp": "assets/events/gate-vision/future-fixation-rift-02-medium.webp",
+      "png": "source-png/future-fixation-rift-02-medium.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        253
+      ],
+      "zero_alpha_percent": 59.3758,
+      "alpha_bbox": [
+        0,
+        7,
+        1004,
+        1536
+      ],
+      "edge_alpha_max": [
+        1,
+        0,
+        0,
+        2
+      ],
+      "canvas_center_initial_only": [
+        512,
+        768
+      ],
+      "wound_anchor_registration": "pending visual registration",
+      "lossless_rgba_roundtrip": true,
+      "webp_bytes": 1139814,
+      "webp_sha256": "db008ae45623f86778cb307ff993cc2c942a2e05915f29b43d3bd637fa2f4ab6",
+      "png_sha256": "77e1aefb71b10a337149afd05b966c3193491da34a7b1d2624f2d2b90c815b2f"
+    },
+    {
+      "role": "03-large",
+      "webp": "assets/events/gate-vision/future-fixation-rift-03-large.webp",
+      "png": "source-png/future-fixation-rift-03-large.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "zero_alpha_percent": 55.4642,
+      "alpha_bbox": [
+        0,
+        0,
+        1024,
+        1536
+      ],
+      "edge_alpha_max": [
+        4,
+        5,
+        2,
+        9
+      ],
+      "canvas_center_initial_only": [
+        512,
+        768
+      ],
+      "wound_anchor_registration": "pending visual registration",
+      "lossless_rgba_roundtrip": true,
+      "webp_bytes": 1519116,
+      "webp_sha256": "6919732b25d4e9f63952767a572eda5f8f6d3b9c206371147899303b49e4f3b3",
+      "png_sha256": "80365c7ccafe66d9936a3af529fad2a5c21e38fe545ecc09b88d431b8f5cb4d6"
+    },
+    {
+      "role": "04-vortex",
+      "webp": "assets/events/gate-vision/future-fixation-rift-04-vortex.webp",
+      "png": "source-png/future-fixation-rift-04-vortex.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "zero_alpha_percent": 56.881,
+      "alpha_bbox": [
+        0,
+        12,
+        1024,
+        1536
+      ],
+      "edge_alpha_max": [
+        3,
+        3,
+        0,
+        4
+      ],
+      "canvas_center_initial_only": [
+        512,
+        768
+      ],
+      "wound_anchor_registration": "pending visual registration",
+      "lossless_rgba_roundtrip": true,
+      "webp_bytes": 1561820,
+      "webp_sha256": "5bdce199a2b378adec40a0e94074ee5bd2eacfea31f7ce8bcfa6b384989b1a9a",
+      "png_sha256": "cfd7cbb907319ce313fd79b45a35ff1e7a12433ccb885ffb4abf347e720b1064"
+    }
+  ]
+}

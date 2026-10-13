@@ -1,0 +1,108 @@
+{
+  "main": "5c33fb8ccf9a46321c1dc1c94ba1dfac125900f3",
+  "A": "5d696165914e585c617d9dbb406c50145d724b28",
+  "B": "794fee3551f4382af7c1349c1986124c35d5d9e8",
+  "common_ancestor": "09aa8a6950c00e71204e03a6d03c580c225b54ee",
+  "mutable_A_assets_resolved_at_current_main": [
+    {
+      "path": "assets/maps/star-country-farthest-sky-background-extended.webp",
+      "natural": [
+        1003,
+        1568
+      ],
+      "sha256": "6733b97eff20ff3595e5b0cb1aabb8d8bbe4b09fa2ba1d5f0002ef5ff3e851e1",
+      "bytes": 2941058,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/garden-star-gate.webp",
+      "natural": [
+        1536,
+        1024
+      ],
+      "sha256": "7eafea253a7ff3cf3ceef544d1653358adcb3963435cf9b87baf8179738f150a",
+      "bytes": 2657647,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/celestial_gate_light_01.webp",
+      "natural": [
+        591,
+        887
+      ],
+      "sha256": "e4577bdf51765534fa6972f88e2154c0967797cb28bc4f380a1f584d88a3eb96",
+      "bytes": 880994,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/celestial_gate_light_02.webp",
+      "natural": [
+        591,
+        887
+      ],
+      "sha256": "6838baf74b415e100192ca5ab1e562292fcb58750ca7d7a61fd7ca86eb1502fc",
+      "bytes": 633809,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/celestial_gate_light_03.webp",
+      "natural": [
+        592,
+        887
+      ],
+      "sha256": "4a025d93a17c8047a2fcede4cbed27f86bf64621dddd7af874bf5fa34376fbfa",
+      "bytes": 851180,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/celestial_gate_light_04.webp",
+      "natural": [
+        1024,
+        1536
+      ],
+      "sha256": "0fe72353440e6f8c9a1e28adf23498af658d2a6e38c516d9312e7fb578fa982c",
+      "bytes": 1633019,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/dark_energy_rise_01.webp",
+      "natural": [
+        336,
+        698
+      ],
+      "sha256": "74334fc13b831ae77ce8ec77cb7012ee1031e69baef832c53eee60d4a25b778c",
+      "bytes": 338666,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/dark_energy_rise_02.webp",
+      "natural": [
+        384,
+        834
+      ],
+      "sha256": "9dfe76ee8acd962056e350231b4a6d104beec76422bffeec243252bc3482cfff",
+      "bytes": 399099,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/dark_energy_rise_03.webp",
+      "natural": [
+        306,
+        931
+      ],
+      "sha256": "8b92ef3dd4b3520f2fdc344b87060943c88c05d60d15c5324678a89ab94c8c77",
+      "bytes": 394646,
+      "candidate_reference": "local immutable commit resource"
+    },
+    {
+      "path": "assets/events/gate-vision/dark_energy_rise_04.webp",
+      "natural": [
+        245,
+        931
+      ],
+      "sha256": "21abe612373244116d7fa9ec1a616a2de269f54553575c00a3c95c0c8f57421e",
+      "bytes": 346333,
+      "candidate_reference": "local immutable commit resource"
+    }
+  ]
+}

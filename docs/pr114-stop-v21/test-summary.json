@@ -1,0 +1,63 @@
+{
+  "main-node": {
+    "tests": 341,
+    "pass": 341,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "pr-before-node-real": {
+    "tests": 417,
+    "pass": 388,
+    "fail": 29,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "integrated-before-fixes-node": {
+    "tests": 432,
+    "pass": 425,
+    "fail": 7,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "final-node": {
+    "tests": 446,
+    "pass": 446,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "final-regression": {
+    "tests": 446,
+    "pass": 446,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "final-stage3-eight": {
+    "tests": 64,
+    "pass": 64,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "final-audio-boundaries": {
+    "tests": 17,
+    "pass": 17,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "final-lumiere": {
+    "tests": 49,
+    "pass": 49,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "runtime_sha": "b8cd71755f7eafabf7c23fc3c85c779f345ea948",
+  "baseline_sha": "22c07ae94d7491c3818b57574da7ee3af12edfc4",
+  "original_sha": "ee6ee0992652660dfb8398ddb33c14a7c252cb22",
+  "device": "PENDING; guard exit1, exact runtime absent from registry",
+  "production": "Not deployed; main not merged"
+}

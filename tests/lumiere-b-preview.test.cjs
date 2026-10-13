@@ -7,6 +7,8 @@ const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 const relativePage = "docs/lumiere-hover-evidence/lumiere-clean-b99f3d4.html";
+// Exact Git sources for immutable previews, separate from the live event candidate.
+const historicalSources = require("./fixtures/lumiere-preview-sources-9e8a85d.json");
 const runtime = "b99f3d443dc6969af48850776ad2ee9b89eafd43";
 
 test("Clean candidate preview pins game source and contains no visible editor scripts", () => {
@@ -19,18 +21,19 @@ test("Clean candidate preview pins game source and contains no visible editor sc
   for (const [file, digest] of Object.entries(meta.files)) {
     const commit = meta.source_commits[file];
     assert.match(commit, /^[0-9a-f]{40}$/);
-    // CI checkout can omit historical git trees; current tree must still
-    // match the 40 exact source digests embedded in the pinned preview.
-    // The historical editor-free preview was approved on b99f3d4.
-    // The current release candidate restores *main's* dormant editor loaders
-    // without changing Lumiere. Normalize only that index for old preview hash.
+    // CI checkout can omit historical git trees. Hash exact historical fixtures
+    // for sources changed by the event integration, and live unchanged sources.
+    // Both sets must still match all 39 fixed preview digests.
+    // Normalize only the historic release index's three editor loaders for
+    // the earlier editor-free b99f3d4 preview.
     // The approved sprite replacement changes the live manifest. This fixture
     // is the exact historical Git source, still checked against its pinned hash.
     const sourceFile = file === "assets/sprites/lumiere/lumiere_sprite_manifest.json"
       ? "tests/fixtures/lumiere-preview-manifest-9e8a85d.json"
       : file === "audio.js"
         ? "tests/fixtures/audio-preview-baseline-160ab339.js" : file;
-    let content = fs.readFileSync(path.join(root, sourceFile));
+    let content = Object.hasOwn(historicalSources, file)
+      ? Buffer.from(historicalSources[file]) : fs.readFileSync(path.join(root, sourceFile));
     if (file === "index.html") {
       const preservedEditors = [
         "fountain-position-editor.js",

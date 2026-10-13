@@ -1,0 +1,40 @@
+> Historical v1.5 candidate evidence. The author v1.6 dialogue table/card contract supersedes its strings; see [integration v1.6](future-vision-integration-v1.6.md). These old counts are not new-SHA results.
+
+# Future Vision Aftermath v1.5 — dev candidate record
+
+Author-specified v1.5 replaces v1.3/v1.4 Aftermath flow. PR #114 and `fix/star-gate-front-stage3-integration` continue unchanged as the development location. Start-time local/remote PR HEAD was `8c1bc81b94e7e887425e23f59855f19945d54450`, clean worktree. Fresh fetched main: `5c33fb8ccf9a46321c1dc1c94ba1dfac125900f3`. Pre-Aftermath comparison: `8461475634e9d53bf6dd14ad82b6f5f3127ce1a3`. No reset or old-file replacement.
+
+## Scope and preservation
+
+Risk HIGH (dialogue/input/camera/companion presentation). WORKING: existing dev-only Aftermath flow,14 author-specified Boxes, visible-clock waits, local composition when occluded, final verified control return, tests and evidence. LOCKED: original gate approach `調べる／離れる`, extended sky, inner-light material/registration/brightness.58, front resonance/reverse flow, Stage1–3, card1000ms, White/R0/Future Memory Gap/mission/current restore and audio, normal Title/Save/Continue/Route/Follow. No new map, exit, transition, starsand system, asset, checkpoint, dev entry or page. Existing dev external-route suppression remains enabled after completion.
+
+## Runtime change
+
+`star-gate-aftermath.js` preserves `eligible()` rejection of abnormal Stage3 reports and page-local `consumed`. A0 is still captured after Stage3 cleanup and before the synchronously acquired Aftermath owner lock. Stage3 unlock/notification semantics are unchanged. The owner remains locked through all14Boxes, Focus, existing flight and final visible300ms. Removed together: `GATE_WAIT`, `resolveInspect`, mid-event unlock/relock, inspection button, its RAF/update loop and normal Objective panels. Normal UI contains only existing shared Dialogue; no replacement Objective system.
+
+Sequence: visible300ms → A01 →300ms → A02/A03/A04/A05 →250ms → A06 → existing Focus/visible1000ms → A07/A08 → gameplay composition while still locked → A09/A10/A11/A12 → existing conditional moveAway → A13/A14 → existing east flight → whole rectangle outside viewport → visible300ms → gameplay camera/clear pending input/verified owner unlock → completed once. All14 exact author strings are executable expectations in `tests/star-gate-aftermath.test.cjs`; no auto-reading or extra Boxes.
+
+The existing restored camera and world coordinates are used for Focus, retaining bounded±36 reference-pixel positioning and stable resize baseline. No player approach is required. Weak-light values and image geometry are unchanged, applied once at Aftermath start and retained on success.
+
+A04 composition: actual restored Shion810,146 / Shiopon810,202 and Lumiere on the same column occluded Shiopon. Only when Shiopon/Lumiere separation is <28 reference px in x, <32 in y and Shion distance >48, existing legal `perform(move)` briefly approaches Shion's left/lower side: x−32,y+40,400ms. Actual full-flow destination778,186 equals the requested legal point, without nearest-walkable relocation. No Shion/Lumiere reposition, new navigation or Follow algorithm. Separated layouts do not move. Cancel restores the previous Shiopon position via A0.
+
+Final return requires `unlock(owner) === true`, owner null, player input unsuspended, NPC updates unsuspended and original A0 Follow state preserved; departed Lumiere must remain disabled. Only then cleanup and normal completion occur. `game.js` adds the existing dev adapter's `npcSuspended` observation for this verification, with no ordinary behavior change. Failure takes existing abort/A0 recovery, with a safe lock and reload notice if restore/unlock fails. Error-only `objective()/aftermath-status` and original notice IDs remain; CSS does not hide them globally.
+
+Existing visible-clock/waitVisible completion-race protection remains for every new wait. Hidden cancellation never waits for visibility. Rotation preserves Box/state/world flight position and reflows Focus/exit bounds. Old async work remains abort-invalidated. Existing Lumiere sprite/wings/shadow envelope and speed140 reference px/s are preserved, never a deadline hide. Exclusion still affects dev-only render/collision/conversation, not global companion or durable NPC state.
+
+## Fresh automated and browser evidence
+
+- Fresh candidate368/368, fresh main326/326 PASS, zero skip/cancel. Targeted Aftermath9/9 plus scene adapter2/2 PASS. Old interactive/11Box tests were replaced by authorized continuous-lock/14Box checks without deleting safety assertions. Added final300ms hidden-cancel/stale-completion and unlock/input/Follow/NPC-suspension failure tests, plus conditional move/no-move/A0 tests. Preflight, syntax, game/background/audio validation and diff checks PASS.
+- Independent readonly review, followed by re-review of conditional composition and error IDs, found no code BLOCKER. Device verification remains separate.
+- Chromium151/DPR1,390×844 and844×390: actual original gate approach/choice → front → Stage1/2/3/card/White/R0/current restoration → automatic14Box Aftermath → full NPC exit/300ms → actual canvas tap movement and original Shiopon Follow. Completed/restored true, page exceptions/audioFailures/storage writes0. During every sampled Aftermath phase before completion, same owner and player/NPC suspension remained active; normal status/inspection DOM absent. Held ArrowDown through A14 did not move Shion after unlock until release; new tap moved Shion and Shiopon.
+- [Portrait A13](aftermath-v1.5-evidence/a13-portrait.png), [landscape A13](aftermath-v1.5-evidence/a13-landscape.png), [restored-position Focus](aftermath-v1.5-evidence/focus-portrait.png), [two-person free control](aftermath-v1.5-evidence/free-follow-landscape.png). Standard Dialogue font/wrapping retained. Full-flow flight elapsed2025.8ms portrait /3221.3ms landscape; wide viewport uses longer travel rather than increased speed/deadline removal.
+
+Additional actual Chromium lifecycle checks passed in INTRODUCTION/OBSERVATION/DECISION/LUMIERE_DEPARTURE/RETURN_HOLD: revealed-character count and flight position freeze while hidden, sameBox after rotation, repeated Focus resize without drift, hidden cancellation restores A0 and departed NPC, and no stale completion. The final300ms remains locked and does not expire during400ms hidden time. Injected restore failure keeps its lock and [visible reload notice](aftermath-v1.5-evidence/restore-failure.png); ordinary page has no Aftermath runtime/adapter/UI. These focused cases use internal valid-report injection, while preceding Stage3 admission is separately exercised by the full original-entry flows. Visibility is synthetic document state, rotation is Chromium viewport resizing, not physical OS/iPhone evidence. Initial harness failures (Storage-function serialization, dual-click target overshoot and overloaded40s harness deadline) were corrected without changing gameplay timing/expectations.
+
+Public exact-commit verification is recorded in PR #114 after publication. Only one updated-SHA integration URL is presented, retaining the same host/repository and `index.html?dev=star-gate-full`. Old SHA URLs remain immutable.
+
+## Pending and inherited issues
+
+Physical iPhone is UNPERFORMED:14Box/tap feel, visible delays, Focus weak light, flight, input release, Follow, OS background/rotation and save isolation need exact-build human evidence. CI is not Device PASS; no registry/gate weakening. Device registry merge gate remains blocked without that evidence.
+
+Inherited ruins-image lower horizontal boundary and baseline ordinary-audio fade negative-volume exception remain separate, untouched issues. The current successful browser runs do not erase earlier baseline reproduction or claim those issues repaired. No main merge, auto-merge, Production publication or normal-route connection.

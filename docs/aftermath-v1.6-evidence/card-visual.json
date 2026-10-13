@@ -1,0 +1,205 @@
+{
+  "method": "Actual detail helper with internal test clock wait latch for static screenshots; not timing evidence",
+  "captures": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "phase": "NORMAL_HOLD",
+      "actor": {
+        "x": 94.171875,
+        "y": 133.3125,
+        "width": 67.078125,
+        "height": 67.078125,
+        "top": 133.3125,
+        "right": 161.25,
+        "bottom": 200.390625,
+        "left": 94.171875
+      },
+      "source": "./assets/sprites/shion/shion_card_03_check.webp",
+      "cards": [
+        {
+          "rect": {
+            "x": 18.53125,
+            "y": 159.890625,
+            "width": 355.015625,
+            "height": 532.53125,
+            "top": 159.890625,
+            "right": 373.546875,
+            "bottom": 692.421875,
+            "left": 18.53125
+          },
+          "source": "./assets/tarot/backs/tarot-card-back.webp",
+          "opacity": "1",
+          "filter": "none"
+        },
+        {
+          "rect": {
+            "x": 24,
+            "y": 165.40625,
+            "width": 342,
+            "height": 513.1875,
+            "top": 165.40625,
+            "right": 366,
+            "bottom": 678.59375,
+            "left": 24
+          },
+          "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+          "opacity": "0",
+          "filter": "none"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "phase": "RE_HOLD",
+      "actor": {
+        "x": 94.171875,
+        "y": 133.3125,
+        "width": 67.078125,
+        "height": 67.078125,
+        "top": 133.3125,
+        "right": 161.25,
+        "bottom": 200.390625,
+        "left": 94.171875
+      },
+      "source": "./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
+      "cards": [
+        {
+          "rect": {
+            "x": 18.53125,
+            "y": 159.890625,
+            "width": 355.015625,
+            "height": 532.53125,
+            "top": 159.890625,
+            "right": 373.546875,
+            "bottom": 692.421875,
+            "left": 18.53125
+          },
+          "source": "./assets/tarot/backs/tarot-card-back.webp",
+          "opacity": "0",
+          "filter": "brightness(0.92)"
+        },
+        {
+          "rect": {
+            "x": 24,
+            "y": 165.40625,
+            "width": 342,
+            "height": 513.1875,
+            "top": 165.40625,
+            "right": 366,
+            "bottom": 678.59375,
+            "left": 24
+          },
+          "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+          "opacity": "1",
+          "filter": "none"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "phase": "NORMAL_HOLD",
+      "actor": {
+        "x": 321.171875,
+        "y": 133.3125,
+        "width": 67.078125,
+        "height": 67.078125,
+        "top": 133.3125,
+        "right": 388.25,
+        "bottom": 200.390625,
+        "left": 321.171875
+      },
+      "source": "./assets/sprites/shion/shion_card_03_check.webp",
+      "cards": [
+        {
+          "rect": {
+            "x": 304.40625,
+            "y": 20.328125,
+            "width": 236.578125,
+            "height": 354.875,
+            "top": 20.328125,
+            "right": 540.984375,
+            "bottom": 375.203125,
+            "left": 304.40625
+          },
+          "source": "./assets/tarot/backs/tarot-card-back.webp",
+          "opacity": "1",
+          "filter": "none"
+        },
+        {
+          "rect": {
+            "x": 308.046875,
+            "y": 24,
+            "width": 227.90625,
+            "height": 342,
+            "top": 24,
+            "right": 535.953125,
+            "bottom": 366,
+            "left": 308.046875
+          },
+          "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+          "opacity": "0",
+          "filter": "none"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "phase": "RE_HOLD",
+      "actor": {
+        "x": 321.171875,
+        "y": 133.3125,
+        "width": 67.078125,
+        "height": 67.078125,
+        "top": 133.3125,
+        "right": 388.25,
+        "bottom": 200.390625,
+        "left": 321.171875
+      },
+      "source": "./assets/events/star-gate/future-fixation/shion/shion_card_03_check_re.webp",
+      "cards": [
+        {
+          "rect": {
+            "x": 304.40625,
+            "y": 20.328125,
+            "width": 236.578125,
+            "height": 354.875,
+            "top": 20.328125,
+            "right": 540.984375,
+            "bottom": 375.203125,
+            "left": 304.40625
+          },
+          "source": "./assets/tarot/backs/tarot-card-back.webp",
+          "opacity": "0",
+          "filter": "brightness(0.92)"
+        },
+        {
+          "rect": {
+            "x": 308.046875,
+            "y": 24,
+            "width": 227.90625,
+            "height": 342,
+            "top": 24,
+            "right": 535.953125,
+            "bottom": 366,
+            "left": 308.046875
+          },
+          "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+          "opacity": "1",
+          "filter": "none"
+        }
+      ]
+    }
+  ]
+}

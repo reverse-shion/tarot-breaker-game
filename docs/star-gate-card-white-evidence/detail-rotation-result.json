@@ -1,0 +1,181 @@
+{
+  "browser": "151.0.7922.173",
+  "state": {
+    "id": 1,
+    "running": false,
+    "completed": false,
+    "restored": true,
+    "error": "AbortError: Stage 3 interrupted",
+    "recoveryError": null,
+    "reason": "viewport",
+    "states": [],
+    "dialogues": [
+      {
+        "text": "……星門は、特におかしくないな。",
+        "closed": 31912.099999999627
+      },
+      {
+        "text": "……？",
+        "closed": 42791.40000000037
+      },
+      {
+        "text": "……？",
+        "closed": 59359.40000000037
+      },
+      {
+        "text": "なんだ……？",
+        "closed": 62887.40000000037
+      },
+      {
+        "text": "リュミエール……？",
+        "closed": 65271.300000000745
+      },
+      {
+        "text": "……ここは、どこだ？",
+        "closed": 68212.90000000037
+      },
+      {
+        "text": "……星門庭園……？",
+        "closed": 72467.40000000037
+      },
+      {
+        "text": "いや……",
+        "closed": 73664.40000000037
+      },
+      {
+        "text": "そんなはず……",
+        "closed": 74589.70000000112
+      },
+      {
+        "text": "……どうして……",
+        "closed": 82882.59999999963
+      },
+      {
+        "text": "……？",
+        "closed": 85601.30000000075
+      }
+    ],
+    "holds": [],
+    "audioFailures": [],
+    "cardDetail": {
+      "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+      "startedAt": 87606.40000000037,
+      "duration": 1000,
+      "endedAt": 88015.90000000037
+    },
+    "surface": null,
+    "p0": {
+      "mapId": "star_gate_garden",
+      "player": {
+        "x": 810,
+        "y": 146,
+        "dir": "up"
+      },
+      "camera": {
+        "x": 810,
+        "y": 421.22171865521227,
+        "zoom": 1
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "owner": null,
+      "npcLogical": {
+        "companion": "joined_with_shion",
+        "story": {
+          "shioponDone": true,
+          "lumiereDone": true,
+          "joined": true
+        }
+      },
+      "actors": {
+        "shiopon": {
+          "x": 810,
+          "y": 202,
+          "dir": "up",
+          "stageOffsetY": 0,
+          "visualOffsetY": 0,
+          "rotation": 0,
+          "following": true
+        },
+        "lumiere": {
+          "x": 810,
+          "y": 212,
+          "dir": "down",
+          "stageOffsetY": 0
+        }
+      },
+      "visibility": {
+        "shion": 1,
+        "shiopon": 1,
+        "lumiere": 1
+      },
+      "inputSuspended": false,
+      "npcSuspended": false,
+      "hidden": false,
+      "captured": 6932.4000000003725,
+      "audio": {
+        "source": "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+        "time": 2.183358,
+        "playing": true,
+        "base": 0.35,
+        "coefficient": 1
+      }
+    },
+    "fixed": null,
+    "arcana": null,
+    "r1": null,
+    "scene": {
+      "presentPrepared": true,
+      "vision": false,
+      "absorption": false,
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "dpr": 1
+      },
+      "owner": null
+    }
+  },
+  "errors": [],
+  "dialogues": [
+    "……",
+    "……星門は、特におかしくないな。",
+    "……？",
+    "……",
+    "……？",
+    "なんだ…",
+    "なんだ……？",
+    "リュミエ",
+    "リュミエール……？",
+    "……",
+    "……ここは、どこだ？",
+    "……星門",
+    "……星門庭園……？",
+    "いや",
+    "いや……",
+    "そんなは",
+    "そんなはず……",
+    "……",
+    "……どうして……",
+    "……？"
+  ],
+  "checks": {
+    "states": [],
+    "images": [],
+    "geometry": []
+  },
+  "fit": {
+    "x": 24,
+    "y": 165.40625,
+    "width": 342,
+    "height": 513.1875,
+    "top": 165.40625,
+    "right": 366,
+    "bottom": 678.59375,
+    "left": 24
+  },
+  "residual": 0,
+  "writes": []
+}

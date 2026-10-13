@@ -1,0 +1,1235 @@
+{
+  "cardChecks": [
+    {
+      "phase": "NORMAL_HOLD",
+      "actor": {
+        "x": 321.171875,
+        "y": 102.3125,
+        "width": 67.078125,
+        "height": 67.078125,
+        "top": 102.3125,
+        "right": 388.25,
+        "bottom": 169.390625,
+        "left": 321.171875
+      },
+      "source": "./assets/sprites/shion/shion_card_03_check.webp",
+      "cards": [
+        {
+          "source": "./assets/tarot/backs/tarot-card-back.webp",
+          "rect": {
+            "x": 304.40625,
+            "y": 20.328125,
+            "width": 236.578125,
+            "height": 354.875,
+            "top": 20.328125,
+            "right": 540.984375,
+            "bottom": 375.203125,
+            "left": 304.40625
+          },
+          "opacity": "1",
+          "filter": "none"
+        },
+        {
+          "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+          "rect": {
+            "x": 308.046875,
+            "y": 24,
+            "width": 227.90625,
+            "height": 342,
+            "top": 24,
+            "right": 535.953125,
+            "bottom": 366,
+            "left": 308.046875
+          },
+          "opacity": "0",
+          "filter": "none"
+        }
+      ]
+    }
+  ],
+  "aftermath": {
+    "id": 1,
+    "state": "COMPLETED",
+    "line": 14,
+    "completed": true,
+    "cancelled": false,
+    "restored": false,
+    "error": null,
+    "reason": null,
+    "dialogues": [
+      {
+        "id": "A01",
+        "actor": "lumiere",
+        "text": "シ……オンさま……\nシオンさま！",
+        "time": 339.5
+      },
+      {
+        "id": "A02",
+        "actor": "shion",
+        "text": "……リュミエール？",
+        "time": 10142.10000000894
+      },
+      {
+        "id": "A03",
+        "actor": "shiopon",
+        "text": "シオンさま、大丈夫ぴょん？\nずっと呼んでたぴょん……",
+        "time": 21587.29999999702
+      },
+      {
+        "id": "A04",
+        "actor": "shion",
+        "text": "今のは……\n……いや。今は、それより――",
+        "time": 25386.20000000298
+      },
+      {
+        "id": "A05",
+        "actor": "shiopon",
+        "text": "……初めて、食べられたの。",
+        "time": 38086.40000000596
+      },
+      {
+        "id": "A06",
+        "actor": "shiopon",
+        "text": "星の声が……食べられたの。",
+        "time": 48667.29999999702
+      },
+      {
+        "id": "A07",
+        "actor": "shion",
+        "text": "食べられた？",
+        "time": 56662.79999999702
+      },
+      {
+        "id": "A08",
+        "actor": "lumiere",
+        "text": "……私にも、初めての事で。",
+        "time": 63156.70000000298
+      },
+      {
+        "id": "A09",
+        "actor": "lumiere",
+        "text": "少なくとも、安全を確かめるまでは星門は使わない方がよさそうです。",
+        "time": 67553.60000000894
+      },
+      {
+        "id": "A10",
+        "actor": "lumiere",
+        "text": "アリエット様なら、きっと原因がわかるかもしれません。",
+        "time": 76658.20000000298
+      },
+      {
+        "id": "A11",
+        "actor": "shion",
+        "text": "……そうだな。\nアリエットに相談しよう。",
+        "time": 82882.10000000894
+      },
+      {
+        "id": "A12",
+        "actor": "lumiere",
+        "text": "では、私は先に星砂の準備をしてきます。\nお二人は、東側から来てください。",
+        "time": 91133.29999999702
+      },
+      {
+        "id": "A13",
+        "actor": "shion",
+        "text": "分かった。頼む。",
+        "time": 105947.20000000298
+      },
+      {
+        "id": "A14",
+        "actor": "shiopon",
+        "text": "リュミエール、またあとでね。",
+        "time": 113678.40000000596
+      }
+    ],
+    "states": [
+      {
+        "name": "INTRODUCTION",
+        "time": 0.5
+      },
+      {
+        "name": "OBSERVATION",
+        "time": 36083.5
+      },
+      {
+        "name": "DECISION",
+        "time": 91133.29999999702
+      },
+      {
+        "name": "LUMIERE_DEPARTURE",
+        "time": 118889.20000000298
+      },
+      {
+        "name": "RETURN_HOLD",
+        "time": 126977.10000000894
+      },
+      {
+        "name": "COMPLETED",
+        "time": 127773.70000000298
+      }
+    ],
+    "flight": {
+      "elapsed": 3325.2999999970198,
+      "x": 1275.5419999995827,
+      "y": 245,
+      "rect": {
+        "left": 858.9853701653285,
+        "right": 916.0986298338369,
+        "top": 165.73079139600108,
+        "bottom": 254,
+        "width": 57.11325966850836,
+        "height": 88.26920860399892
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390
+      }
+    },
+    "flightRoute": [
+      {
+        "x": 810,
+        "y": 212
+      },
+      {
+        "x": 810,
+        "y": 245
+      },
+      {
+        "x": 1275.5419999995827,
+        "y": 245
+      }
+    ],
+    "scene": {
+      "actors": {
+        "shion": {
+          "x": 810,
+          "y": 158,
+          "dir": "down"
+        },
+        "shiopon": {
+          "x": 778,
+          "y": 186,
+          "dir": "down"
+        },
+        "lumiere": {
+          "x": 1275.5419999995827,
+          "y": 245,
+          "dir": "right"
+        }
+      },
+      "following": true,
+      "lumiereEnabled": false,
+      "lumiereRect": {
+        "left": 858.9853701653285,
+        "right": 916.0986298338369,
+        "top": 165.73079139600108,
+        "bottom": 254,
+        "width": 57.11325966850836,
+        "height": 88.26920860399892
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "camera": {
+        "x": 810,
+        "y": 195,
+        "zoom": 1
+      },
+      "owner": null,
+      "inputSuspended": false,
+      "npcSuspended": false
+    },
+    "tapBefore": {
+      "actors": {
+        "shion": {
+          "x": 810,
+          "y": 158,
+          "dir": "down"
+        },
+        "shiopon": {
+          "x": 778,
+          "y": 186,
+          "dir": "down"
+        },
+        "lumiere": {
+          "x": 1275.5419999995827,
+          "y": 245,
+          "dir": "right"
+        }
+      },
+      "following": true,
+      "lumiereEnabled": false,
+      "lumiereRect": {
+        "left": 858.9853701653285,
+        "right": 916.0986298338369,
+        "top": 165.73079139600108,
+        "bottom": 254,
+        "width": 57.11325966850836,
+        "height": 88.26920860399892
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "camera": {
+        "x": 810,
+        "y": 195,
+        "zoom": 1
+      },
+      "owner": null,
+      "inputSuspended": false,
+      "npcSuspended": false
+    },
+    "tapAfter": {
+      "actors": {
+        "shion": {
+          "x": 814.515252782722,
+          "y": 172.0156383125465,
+          "dir": "down"
+        },
+        "shiopon": {
+          "x": 773.6877024967541,
+          "y": 188.4202455204855,
+          "dir": "left"
+        },
+        "lumiere": {
+          "x": 1275.5419999995827,
+          "y": 245,
+          "dir": "right"
+        }
+      },
+      "following": true,
+      "lumiereEnabled": false,
+      "lumiereRect": {
+        "left": 857.2798985277833,
+        "right": 914.3931581962917,
+        "top": 165.73079139600108,
+        "bottom": 254,
+        "width": 57.11325966850836,
+        "height": 88.26920860399892
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "camera": {
+        "x": 811.7054716375452,
+        "y": 195,
+        "zoom": 1
+      },
+      "owner": null,
+      "inputSuspended": false,
+      "npcSuspended": false
+    }
+  },
+  "browser": "151.0.7922.173",
+  "state": {
+    "id": 1,
+    "running": false,
+    "completed": true,
+    "restored": true,
+    "error": null,
+    "recoveryError": null,
+    "reason": null,
+    "states": [
+      {
+        "name": "RIFT_SMALL",
+        "time": 98257.70000000298
+      },
+      {
+        "name": "RIFT_SMALL_HOLD",
+        "time": 98461.09999999404
+      },
+      {
+        "name": "RIFT_MEDIUM",
+        "time": 98662.79999999702
+      },
+      {
+        "name": "WORLD_ANOMALY_RECOGNITION",
+        "time": 99064.09999999404
+      },
+      {
+        "name": "RIFT_LARGE",
+        "time": 100988.90000000596
+      },
+      {
+        "name": "FUTURE_REALIZATION",
+        "time": 101965.5
+      },
+      {
+        "name": "NO_RESPONSE",
+        "time": 103992.90000000596
+      },
+      {
+        "name": "VORTEX_EMERGENCE",
+        "time": 104514.59999999404
+      },
+      {
+        "name": "WORLD_ABSORPTION",
+        "time": 105163.70000000298
+      },
+      {
+        "name": "FUTURE_WHITEOUT",
+        "time": 106362.40000000596
+      },
+      {
+        "name": "FULL_WHITE",
+        "time": 106788.59999999404
+      },
+      {
+        "name": "FUTURE_RESTORE",
+        "time": 106795.29999999702
+      },
+      {
+        "name": "MEMORY_GAP",
+        "time": 107807.40000000596
+      },
+      {
+        "name": "MISSION_RESUME",
+        "time": 111166.90000000596
+      },
+      {
+        "name": "FUTURE_FADE",
+        "time": 113906.5
+      },
+      {
+        "name": "BLACK_CUT",
+        "time": 114495.90000000596
+      },
+      {
+        "name": "PRESENT_RESTORE",
+        "time": 114496.40000000596
+      },
+      {
+        "name": "PRESENT_SILENCE",
+        "time": 116005.5
+      },
+      {
+        "name": "SHION_REACTION",
+        "time": 116962.59999999404
+      },
+      {
+        "name": "CONTROL_RETURN",
+        "time": 117517.90000000596
+      }
+    ],
+    "dialogues": [
+      {
+        "text": "……星門は、特におかしくないな。",
+        "closed": 21878.90000000596
+      },
+      {
+        "text": "……？",
+        "closed": 32369.90000000596
+      },
+      {
+        "text": "……？",
+        "closed": 56164.79999999702
+      },
+      {
+        "text": "なんだ……？",
+        "closed": 59718
+      },
+      {
+        "text": "リュミエール……？",
+        "closed": 62876.90000000596
+      },
+      {
+        "text": "……ここは、どこだ？",
+        "closed": 66162.20000000298
+      },
+      {
+        "text": "……星門庭園……？",
+        "closed": 68781.09999999404
+      },
+      {
+        "text": "いや……",
+        "closed": 70312.20000000298
+      },
+      {
+        "text": "そんなはず……",
+        "closed": 72070.70000000298
+      },
+      {
+        "text": "……どうして……",
+        "closed": 81363
+      },
+      {
+        "text": "……？",
+        "closed": 85106.90000000596
+      },
+      {
+        "text": "……アルカナが……？",
+        "closed": 92998.59999999404
+      },
+      {
+        "text": "……っ",
+        "closed": 94203.29999999702
+      },
+      {
+        "text": "……違う。アルカナだけじゃない……",
+        "closed": 100779.29999999702
+      },
+      {
+        "text": "……これが……選ばれた未来、なのか。",
+        "closed": 103890.70000000298
+      },
+      {
+        "text": "……私は、今……何を……？",
+        "closed": 110595
+      },
+      {
+        "text": "……いや。パメラの記憶を、探さなければ。",
+        "closed": 113293.90000000596
+      }
+    ],
+    "holds": [
+      {
+        "which": "white",
+        "elapsed": 278.30000001192093,
+        "extended": true
+      },
+      {
+        "which": "black",
+        "elapsed": 681,
+        "extended": true
+      }
+    ],
+    "audioFailures": [],
+    "cardDetail": {
+      "source": "./assets/events/star-gate/future-fixation/card/arcana-transformed-detail.png",
+      "normalSource": "./assets/tarot/backs/tarot-card-back.webp",
+      "startedAt": 86678.70000000298,
+      "duration": 2950,
+      "phases": [
+        {
+          "name": "NORMAL_HOLD",
+          "time": 86678.90000000596
+        },
+        {
+          "name": "NORMAL_SETTLE",
+          "time": 87495
+        },
+        {
+          "name": "TRANSFORM",
+          "time": 87861.29999999702
+        },
+        {
+          "name": "RE_HOLD",
+          "time": 88713
+        }
+      ],
+      "registration": {
+        "normal": {
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "left": 98,
+            "top": 46,
+            "right": 920,
+            "bottom": 1458
+          }
+        },
+        "re": {
+          "width": 853,
+          "height": 1280,
+          "bounds": {
+            "left": 48,
+            "top": 26,
+            "right": 805,
+            "bottom": 1247
+          }
+        }
+      },
+      "phase": "RE_HOLD",
+      "endedAt": 89754.79999999702
+    },
+    "surface": {
+      "width": 941,
+      "height": 437,
+      "dpr": 1,
+      "rgbaBytes": 1644868,
+      "bounds": {
+        "left": -40,
+        "top": -6,
+        "width": 941,
+        "height": 437
+      }
+    },
+    "p0": {
+      "mapId": "star_gate_garden",
+      "player": {
+        "x": 810,
+        "y": 146,
+        "dir": "up"
+      },
+      "camera": {
+        "x": 810,
+        "y": 194.69628534697853,
+        "zoom": 1
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "owner": null,
+      "npcLogical": {
+        "companion": "joined_with_shion",
+        "story": {
+          "shioponDone": true,
+          "lumiereDone": true,
+          "joined": true
+        }
+      },
+      "actors": {
+        "shiopon": {
+          "x": 810,
+          "y": 202,
+          "dir": "up",
+          "stageOffsetY": 0,
+          "visualOffsetY": 0,
+          "rotation": 0,
+          "following": true
+        },
+        "lumiere": {
+          "x": 810,
+          "y": 212,
+          "dir": "down",
+          "stageOffsetY": 0
+        }
+      },
+      "visibility": {
+        "shion": 1,
+        "shiopon": 1,
+        "lumiere": 1
+      },
+      "inputSuspended": false,
+      "npcSuspended": false,
+      "hidden": false,
+      "captured": 11435.59999999404,
+      "audio": {
+        "source": "./assets/audio/bgm/hoshi-no-kioku_toki-no-inori.mp3",
+        "time": 2.473761,
+        "playing": true,
+        "base": 0.35,
+        "coefficient": 1
+      }
+    },
+    "fixed": {
+      "left": 321.171875,
+      "top": 102.3125,
+      "width": 67.078125,
+      "height": 67.078125,
+      "scale": 0.131011962890625,
+      "footX": 354.7109375,
+      "footY": 167.29443359375
+    },
+    "arcana": {
+      "x": 344.765625,
+      "y": 38.4375,
+      "width": 42,
+      "height": 42,
+      "rotation": 0
+    },
+    "r1": {
+      "left": 321.171875,
+      "top": 101.390625,
+      "width": 67.078125,
+      "height": 67.078125,
+      "scale": 0.131011962890625,
+      "footX": 354.7109375,
+      "footY": 167.28964233398438
+    },
+    "scene": {
+      "presentPrepared": true,
+      "vision": false,
+      "absorption": false,
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "dpr": 1
+      },
+      "owner": "aftermath:1"
+    }
+  },
+  "errors": [],
+  "dialogues": [
+    "……",
+    "……星門は、特におかしくないな。",
+    "……",
+    "……？",
+    "なんだ",
+    "なんだ……？",
+    "リュミエ",
+    "リュミエール……？",
+    "……",
+    "……ここは、どこだ？",
+    "……",
+    "……星門庭園……？",
+    "いや…",
+    "いや……",
+    "そんなはず…",
+    "そんなはず……",
+    "……",
+    "……どうして……",
+    "……？",
+    "……アルカナが……？",
+    "……っ",
+    "……違う。アルカナだけじ",
+    "……違う。アルカナだけじゃない……",
+    "……",
+    "……これが……選ばれた未来、なのか。",
+    "……私は、今…",
+    "……私は、今……何を……？",
+    "……いや。パメラの記憶を、探",
+    "……いや。パメラの記憶を、探さなければ。"
+  ],
+  "checks": {
+    "states": [
+      {
+        "name": "RIFT_SMALL",
+        "time": 98257.70000000298
+      },
+      {
+        "name": "RIFT_SMALL_HOLD",
+        "time": 98461.09999999404
+      },
+      {
+        "name": "RIFT_MEDIUM",
+        "time": 98662.79999999702
+      },
+      {
+        "name": "WORLD_ANOMALY_RECOGNITION",
+        "time": 99064.09999999404
+      },
+      {
+        "name": "RIFT_LARGE",
+        "time": 100988.90000000596
+      },
+      {
+        "name": "FUTURE_REALIZATION",
+        "time": 101965.5
+      },
+      {
+        "name": "NO_RESPONSE",
+        "time": 103992.90000000596
+      },
+      {
+        "name": "VORTEX_EMERGENCE",
+        "time": 104514.59999999404
+      },
+      {
+        "name": "WORLD_ABSORPTION",
+        "time": 105163.70000000298
+      },
+      {
+        "name": "FUTURE_WHITEOUT",
+        "time": 106362.40000000596
+      },
+      {
+        "name": "FULL_WHITE",
+        "time": 106788.59999999404
+      },
+      {
+        "name": "FUTURE_RESTORE",
+        "time": 106795.29999999702
+      },
+      {
+        "name": "MEMORY_GAP",
+        "time": 107807.40000000596
+      },
+      {
+        "name": "MISSION_RESUME",
+        "time": 111166.90000000596
+      },
+      {
+        "name": "FUTURE_FADE",
+        "time": 113906.5
+      },
+      {
+        "name": "BLACK_CUT",
+        "time": 114495.90000000596
+      },
+      {
+        "name": "PRESENT_RESTORE",
+        "time": 114496.40000000596
+      },
+      {
+        "name": "PRESENT_SILENCE",
+        "time": 116005.5
+      },
+      {
+        "name": "SHION_REACTION",
+        "time": 116962.59999999404
+      },
+      {
+        "name": "CONTROL_RETURN",
+        "time": 117517.90000000596
+      }
+    ],
+    "images": [],
+    "geometry": [
+      {
+        "phase": "RIFT_SMALL_HOLD",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "RIFT_MEDIUM",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "WORLD_ANOMALY_RECOGNITION",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "WORLD_ANOMALY_RECOGNITION",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "RIFT_LARGE",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "RIFT_LARGE",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "FUTURE_REALIZATION",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "FUTURE_REALIZATION",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "NO_RESPONSE",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "VORTEX_EMERGENCE",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "WORLD_ABSORPTION",
+        "actor": {
+          "x": 321.171875,
+          "y": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 102.3125,
+          "right": 388.25,
+          "bottom": 169.390625,
+          "left": 321.171875
+        },
+        "card": {
+          "x": 323.765625,
+          "y": 17.4375,
+          "width": 42,
+          "height": 42,
+          "top": 17.4375,
+          "right": 365.765625,
+          "bottom": 59.4375,
+          "left": 323.765625
+        },
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      },
+      {
+        "phase": "FUTURE_RESTORE",
+        "actor": {
+          "x": 321.171875,
+          "y": 101.390625,
+          "width": 67.078125,
+          "height": 67.078125,
+          "top": 101.390625,
+          "right": 388.25,
+          "bottom": 168.46875,
+          "left": 321.171875
+        },
+        "card": null,
+        "fixed": {
+          "left": 321.171875,
+          "top": 102.3125,
+          "width": 67.078125,
+          "height": 67.078125,
+          "scale": 0.131011962890625,
+          "footX": 354.7109375,
+          "footY": 167.29443359375
+        },
+        "arcana": {
+          "x": 344.765625,
+          "y": 38.4375,
+          "width": 42,
+          "height": 42,
+          "rotation": 0
+        }
+      }
+    ]
+  },
+  "writes": []
+}

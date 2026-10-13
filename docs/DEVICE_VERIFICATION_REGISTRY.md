@@ -212,3 +212,99 @@ This is a limited product-owner visual acceptance of the exact Lumiere candidate
 ### Scope boundary for PR #142
 
 This is **device acceptance of the standalone BGM fade smoke only**. It does not imply successful full game progression, game dialogue integration, Safari console monitoring, underlying iOS media volume implementation correctness, or other tracks/stages. The test page reports user actions but does not expose an audio-error event recorder. The pre-fix strict volume exception was reproduced and prevented in automated tests, which separately verified valid [0,1] volume writes, cancellation, and visibility handling. Later branch changes following the runtime SHA consist exclusively of tests, fixtures, documentation, and test-only workflow clean-up; no runtime source modifications. All historic device evidence remains unchanged.
+
+## PR #114 Star Gate Stage3 — limited human evidence (2026-10-12)
+
+This section records only what the product owner explicitly observed on a fixed commit. It is **not an overall PR Device PASS**, a normal production route confirmation, or an independently measured audio/BFCache/Save test.
+
+| Event / checkpoint | Commit SHA | Device | Result | Locked observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| PR #114 dev checkpoint `?dev=star-gate-full` — startup and complete Star Gate event playthrough after Lumiere CORS repair | 948fed1dbd214af86c2aeadfcdee811dd701217b | iPhone; browser version/OS version not captured | PASS (observed scope only) | Fixed-SHA RawGitHack link loads without previous Canvas `The operation is insecure.` failure; diagnostic screenshot shows `ERROR: none`; product owner then played the same runtime with `returnDebug=1` omitted and reported completing the event without problems | Product owner in ChatGPT on 2026-10-12: "最後まで問題無かったよ" after following same-SHA non-debug link | Direct Stage3 dev fixture begins after Lumiere meeting. Does not verify full initial meeting route; no detailed explicit report for both Aftermath dialogue orders, precise audio cues, Safari background/BFCache, regular Title/Save/Continue, iPad, or separate standard integrated route. Post-tested commit `2ed8492990d264c5e539c1cde46ce151fb054c9e` changes only the new test fixture, not runtime. Overall Device Gate remains PENDING until remaining required checks are human-verified. |
+
+### Additional owner-confirmed Stage3 observations — 2026-10-12
+
+Exact user-played runtime: `948fed1dbd214af86c2aeadfcdee811dd701217b` (RawGitHack `index.html?dev=star-gate-full`, no diagnostics). The owner explicitly supplied the following additional answers in ChatGPT for that exact runtime. These observations apply to the played event flow only. No new runtime code exists after that SHA; later commits affected tests/documentation.
+
+| Check | Device | Result | Human confirmation | Scope limitation |
+|---|---|---|---|---|
+| BGM transitions, silence during blackout, BGM restoration after return | iPhone (browser version not recorded) | PASS | Owner's explicit response: `音響と暗転=pass` | No separate BFCache/pagehide/pageshow stress or exact fade timing measurement |
+| Conversation after return and Lumiere exit | iPhone (browser version not recorded) | PASS | Owner's explicit response: `会話とリュミエール退場=pass` | Does not establish both alternate conversation orders independently tested |
+| Player controls restored and Shiopon follow after event | iPhone (browser version not recorded) | PASS | Owner's explicit response: `操作復帰としおぽん追従=pass` | Does not verify Title/Save/Continue or ordinary route beyond dev fixture |
+
+**Release boundary:** these are three explicit human-observed PASS results and may be cited as such. They do **not** certify the full initial Lumiere-meeting route, both alternative dialogue orders, normal Title/Save/Continue, Safari BFCache/retry edge cases, separate iPad coverage, or a production release. Project-wide `DEVICE_RESULT` remains PENDING until the required remaining gate scope is approved and covered. CI/automated checks are separate.
+
+### Both Aftermath dialogue orders — owner confirmation 2026-10-12
+
+The product owner explicitly confirmed in ChatGPT, in response to a question specifying both orders, `両方確認済みで問題ない`. This refers to the already verified iPhone Star Gate event runtime `948fed1dbd214af86c2aeadfcdee811dd701217b`, accessed as `?dev=star-gate-full` at a fixed RawGitHack SHA.
+
+| Check | Device | Result | Explicit evidence / limits |
+|---|---|---|---|
+| Aftermath: talk Shiopon then Lumiere | iPhone (previous test context) | PASS | Owner explicitly confirms both orders completed without issue; separate screenshot/log not provided |
+| Aftermath: talk Lumiere then Shiopon | iPhone (previous test context) | PASS | Owner explicitly confirms both orders completed without issue; separate screenshot/log not provided |
+
+This closes the **dialogue-order** checkpoint only. Normal non-dev initial meeting route, browser visibility/BFCache transitions, Title/Save/Continue, and any other independent release requirements remain unverified. No overall DEVICE_RESULT PASS or production authorization is inferred.
+
+### PR #114 iPhone background-return regression — 2026-10-12
+
+User-reported exact test context: fixed RawGitHack PR #114 development fixture `?dev=star-gate-full`, with runtime `948fed1dbd214af86c2aeadfcdee811dd701217b` (later commits contain only test/doc changes). The owner reported: `イベント中にホームに戻ると一度最初からになるよ。星門を調べるに戻る ただし星門を調べるの選択肢はでない`.
+
+| Check | Device | Result | Human-observed behavior | Scope/uncertainty |
+|---|---|---|---|---|
+| Active Stage3 → iPhone Home → return to browser → recover gate interaction | iPhone, browser/OS version not restated | **FAIL** | Scene appears back at the gate investigation starting point, but the "星門を調べる" choice does not appear; player may be unable to restart the event | Exact lifecycle sequence (BFCache restore vs page reload vs in-game interruption) not yet captured; normal non-dev route not established |
+
+Source inspection: `star-gate-interaction.js` subscribes to `tarot-breaker:stage3-session-ended` and unconditionally sets `completed=true; armed=false; hidePrompt()`. For dev harness `progressReady()` returns `!completed`, meaning interruption also consumes the only attempt until reload. This is a **plausible lockout mechanism**, not proof of the precise Safari trigger. `stage3-dev-bootstrap.js` uses only in-memory journey/fixture state and is not an ordinary production Save/Continue test.
+
+**Gate status:** STOP for lifecycle recovery; earlier exact-SHA PASS records for played uninterrupted event/individual audio/dialogue remain historical and valid for those observations only. Do not declare overall Device PASS or release main. Correct source/trigger through a separate reviewed candidate, then obtain new exact-runtime human test evidence.
+
+## PR #150 iPhone Home-return retry — owner confirmation (2026-10-12)
+
+Exact fixed candidate runtime: `5b89db82209c1e1a1a14bc628c68982883d1adae`, `index.html?dev=star-gate-full` (RawGitHack). On this presented fixed link, the product owner explicitly reported: `「星門を調べる」が表示される 再度プレイして最後までイベントをプレイ出来る`.
+
+| Check | Device | Result | Human-observed scope | Limits |
+|---|---|---|---|---|
+| Stage3 interrupted by iPhone Home/background → return → reapproach → inspect choice appears → fresh attempt completes entire event | iPhone (Safari test context, browser/OS build not independently logged) | **PASS** | Previously missing `星門を調べる` is now displayed and the player successfully replays Stage3 through its ending | No claim about BFCache/page reload mechanism, repeated multi-phase interruption stress, rejected autoplay, injected failed recovery, normal non-dev initial meeting route, or independent Astra audit |
+
+Earlier FAIL on prior runtime remains historical and must not be erased. This new exact-SHA report is scoped PASS for Home-return recovery and successful replay. The overall PR #114 Device Gate and main merge remain separately gated; do not generalize into blanket release PASS.
+
+## PR #150 audit-STOP repair — exact-runtime owner acceptance (2026-10-13)
+
+Runtime: `88c61140763f24aac41eceb8ab1e9d5bb2ddb531`, fixed RawGitHack `index.html?dev=star-gate-full` supplied in the immediately preceding reply. The owner replied: `実機確認した。何も問題なかった。次に進んでほしい`.
+
+| Scope | Runtime SHA | Device | Result | Human-confirmed scope and boundary |
+|---|---|---|---|---|
+| PR150 repaired Stage3 Home return, reapproach, explicit retry and completion, as requested in the supplied fixed-link smoke | 88c61140763f24aac41eceb8ab1e9d5bb2ddb531 | iPhone testing context; browser/OS/model not independently restated | PASS | Owner accepted the tested candidate with no observed problem after receiving the fixed-SHA link and Home-return → reapproach → retry → finish instructions. No individual multi-phase timing trace, injected image/decode failure, rejected autoplay, BFCache/reload mechanism, normal non-dev Lumiere-meeting route, or full-game certification is inferred. |
+
+This closes the **isolated PR150 device repair gate** and permits the next requested technical integration into PR114. The broader PR114 release/integration device gate, production enablement and main merge are separate. Only evidence/documentation may be added above this runtime without invalidating its executable-code equivalence. Existing historical FAIL/PASS entries remain intact.
+
+
+## PR #151 Lumiere -> Star Gate local handoff — owner acceptance (2026-10-13)
+
+| Scope | Runtime SHA | Device | Result | Human confirmation |
+|---|---|---|---|---|
+| Isolated dev=star-gate-from-lumiere: actual initial Lumiere meeting -> gate -> entire event; active Stage3 -> Home -> same page -> leave/reapproach -> explicit retry -> finish without replaying initial meeting | 90fc05ea00c92406366e1d18b3ea34ae02282d29 | iPhone test context; model/browser/OS version not independently captured | PASS | Owner first stated 「初回会話→星門→完走は問題ない」 and then explicitly confirmed 「1−4は問題ない。」 in response to the Home/same-page/reapproach/retry/finish checklist (20:55 JST). |
+
+The prior reload observation was ambiguous and is not evidence of durable Save, BFCache mechanism, or cross-reload story retention. This PASS closes the specified local handoff and Home-retry Device Gate for PR151 only. No full Title-to-Garden non-dev route, injected failure, all-phase interruption stress, production activation, main merge or release authorization is inferred. Earlier historical records remain intact. Evidence-only follow-up commits do not change tested runtime.
+
+## PR #152 regular Garden Star Gate integration — owner-confirmed iPhone observations (2026-10-13)
+
+Exact tested candidate: `f3b861098fa573f5b02ae60b3b02af8f0769fa3e`; RawGitHack normal root `index.html` without any `?dev=` parameter. The owner responded in ChatGPT **「1ー4問題なくプレイできたよ」** to the four-item checklist supplied immediately beforehand. Prior dev-only tests and the earlier failed normal inner-light candidate are separate historical evidence. Source: direct human observation, not CI or an AI-run device.
+
+| Route / check | Runtime SHA | Device | Result | Explicitly confirmed | Unverified boundary |
+|---|---|---|---|---|---|
+| PR #152 normal Garden Star Gate (the four prescribed checks) | f3b861098fa573f5b02ae60b3b02af8f0769fa3e | iPhone Safari test context; exact model, OS/browser versions not independently logged | **PASS (specified four checks)** | (1) Normal-route inner light fits the gate after the 230.86px two-pass overwrite correction; (2) event plays from the Lumiere conversation through completion; (3) after completion, Continue does not replay the event and the corrupted gate remains; (4) movement, Shiopon following and audio have no observed issues | Does not independently verify Garden↔Landing↔Garden roundtrip after completion, unfinished-event reload/Continue and same-page Home interruption in the **new public route**, both Aftermath talk orders on this SHA, repeated BFCache/background stress, every audio cue/time measurement, iPad, main/public deployment, or injected failure scenarios |
+
+The two-pass inner-light correction was tested on this exact SHA, and GitHub Actions Validate #1762 returned 506/506 PASS. This CI observation is distinct from the four human device observations above. The owner approved **only this scope**; preserve other required release/integration gates as pending. The event candidate is still not main-merged or published.
+
+## PR #114 integrated public Star Gate — additional owner-confirmed iPhone checks (2026-10-14)
+
+Exact tested candidate: `f4909bc17a2568101e277c2a8fb08b692c7d71f8`, regular root `index.html` (no `?dev`). This is the PR #152→#114 integration merge itself. The product owner was given the fixed-SHA link with three explicit final integration checks and responded **「1−3問題ない 次に進んで」**. This evidence is a direct user report, not an AI screenshot inspection or CI inference.
+
+| Scenario on integrated normal route | Runtime SHA | Device | Result | Human-observed scope / limits |
+|---|---|---|---|---|
+| (1) After completed event, Garden → Landing → Garden | f4909bc17a2568101e277c2a8fb08b692c7d71f8 | iPhone Safari test context; exact model/OS not independently recorded | **PASS** | Return to Garden without incorrect restored gate/companion/departure state, or movement/BGM problem, per the exact checklist owner accepted. Does not verify other routes beyond this roundtrip |
+| (2) Before full event completion, reload → Title → Continue → explicit re-investigation | f4909bc17a2568101e277c2a8fb08b692c7d71f8 | iPhone Safari test context | **PASS** | From the Lumiere-completed but Star Gate-not-yet-completed state, reloading/reopening and Continue permits safe gate investigation and retry. Does not establish precisely which Safari lifecycle pathway took place |
+| (3) During normal-route Stage3, iPhone Home/background → same-page return → leave/reapproach → explicit retry → finish | f4909bc17a2568101e277c2a8fb08b692c7d71f8 | iPhone Safari test context | **PASS** | Safe control release and deliberate retry through completion, no observed lockout or unintentional auto-replay on the checklist. No independent BFCache/pagehide trace or repeated stress testing |
+
+An earlier four-item **human-confirmed PASS** for `f3b861098fa573f5b02ae60b3b02af8f0769fa3e` covers normal aperture fit, Lumiere→Star Gate full event, completed Continue persistence, movement/Shiopon following/audio. The integrated commit `f4909bc17a2568101e277c2a8fb08b692c7d71f8` changes **only this registry** relative to that exact runtime: GitHub compare returned one changed documentation file and no production changes. The new three checks above were additionally human-confirmed on the integration commit itself.
+
+**Device Gate for specified normal-route acceptance checklist: PASS on `f4909bc17a2568101e277c2a8fb08b692c7d71f8`.** This is not approval to merge PR #114 into main or to publish. Unmeasured Safari-specific lifecycle diagnostics, injected failure handling, older save migrations outside tested scope, iPad, and production-domain deployments remain outside the evidenced scope. Prior failures and historical checks are preserved.

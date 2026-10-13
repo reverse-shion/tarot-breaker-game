@@ -65,7 +65,16 @@ if (unreferencedNewAssetOnly) {
   process.exit(0);
 }
 function metadataValue(key) {
-  const matches=body.split(/\r?\n/).filter(line => line.trim().toUpperCase().startsWith(key + ":"));
+  let fence=null;
+  const matches=body.split(/\r?\n/).filter(line => {
+    const marker=line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (marker) {
+      if (!fence) fence={character:marker[1][0], length:marker[1].length};
+      else if (marker[1][0]===fence.character && marker[1].length>=fence.length && !marker[2].trim()) fence=null;
+      return false;
+    }
+    return !fence && new RegExp("^ {0,3}" + key + ":", "i").test(line);
+  });
   if (matches.length !== 1) fail("PR metadata must declare exactly one "+key+" line.");
   return matches[0].slice(matches[0].indexOf(":")+1).trim();
 }
@@ -91,7 +100,7 @@ if (needsDevice) {
 
   const reg=fs.readFileSync(registry,"utf8").toLowerCase();
   if (!reg.includes(runtimeSha)) fail("DEVICE_RUNTIME_SHA is not recorded in the Device Verification Registry.");
-  if (!/DEVICE_RESULT:\s*PASS/i.test(body)) fail("Runtime-SHA registry evidence exists, but PR body does not declare DEVICE_RESULT: PASS.");
+  if (metadataValue("DEVICE_RESULT").toUpperCase() !== "PASS") fail("Runtime-SHA registry evidence exists, but PR body does not declare DEVICE_RESULT: PASS.");
 }
 console.log("DEVICE REGISTRY GUARD: PASS");
 console.log(needsDevice ? "Required runtime-SHA device evidence found; later evidence-only changes are separated from the verified runtime." : "No Device Gate requested by PR contract.");

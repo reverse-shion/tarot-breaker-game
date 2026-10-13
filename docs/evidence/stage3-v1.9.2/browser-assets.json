@@ -1,0 +1,44 @@
+{
+  "browser": "151.0.7922.173",
+  "viewport": "390x844",
+  "DPR": 3,
+  "transport": "data URL of exact local asset bytes; not game runtime",
+  "assets": [
+    {
+      "decode": "PASS",
+      "width": 1024,
+      "height": 1536,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "nonOpaquePixels": 0,
+      "path": "future-fixation-rift-01-small.webp"
+    },
+    {
+      "decode": "PASS",
+      "width": 1024,
+      "height": 1536,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "nonOpaquePixels": 0,
+      "path": "future-fixation-rift-02-medium.webp"
+    },
+    {
+      "decode": "PASS",
+      "width": 1024,
+      "height": 1536,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "nonOpaquePixels": 0,
+      "path": "future-fixation-rift-03-large.webp"
+    },
+    {
+      "decode": "PASS",
+      "width": 1024,
+      "height": 1536,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "nonOpaquePixels": 0,
+      "path": "future-fixation-rift-04-vortex.webp"
+    }
+  ]
+}
