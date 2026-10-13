@@ -31,7 +31,7 @@
       say("shion", "……やっぱり、ここもおかしい。"),
 
       face("shiopon", "shion"),
-      say("shiopon", "シオンさま？"),
+      say("shiopon", "シオンさん？"),
 
       face("shion", "gate"),
       say("shion", "アレノンだけじゃない。ここの共鳴も、いつもと違う。"),
@@ -85,7 +85,7 @@
       say("shion", "……。"),
 
       face("shiopon", "shion"),
-      say("shiopon", "シオンさま？"),
+      say("shiopon", "シオンさん？"),
 
       face("shion", "gate"),
       say("shion", "リュミエールは？"),
@@ -102,7 +102,7 @@
       say("shiopon", "うん！"),
 
       wait(220),
-      say("shiopon", "……でもシオンさま。"),
+      say("shiopon", "……でもシオンさん。"),
 
       face("shion", "shiopon"),
       say("shion", "なに？"),
