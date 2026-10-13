@@ -37,7 +37,7 @@ A behavior is not CONTRACT LOCKED until:
 ## Contract VGC-001 — Completed Star Gate normal-route candidate
 Status: ACTIVE on this candidate; explicit product decision that the full event is complete and normal-route/save implementation is authorized by the owner on2026-10-13 21:10JST: 「進めて」 in response to the public-integration proposal.
 
-This replaces unfinished-event suppression in the same reviewed PR that enables the completed event. Main remains unchanged; this approval is not main merge or publication authorization. New normal-route Device Gate remains PENDING.
+This replaces unfinished-event suppression in the same reviewed PR that enables the completed event. Main remains unchanged; this approval is not main merge or publication authorization. The specified normal-route Device Gate is now human-verified PASS at integrated fixed SHA `f4909bc17a2568101e277c2a8fb08b692c7d71f8` (four earlier checks at the unchanged runtime `f3b861098fa573f5b02ae60b3b02af8f0769fa3e`, plus three final integrated-route checks). Limits and direct owner reports are recorded in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
 
 Observable contract:
 1. Only validated ordinary Garden arrival or Public Continue loads the approved event runtime. Title, conflicting entry and unrelated developer fixtures do not expose it.
