@@ -10,7 +10,7 @@ function harness({publicMode=false}={}){
  const frame={dataset:{worldX:'520',worldY:String(210-560*1024/1536),worldW:'560',worldH:String(560*1024/1536)}};
  const shell={querySelector:s=>s==='.scene-gate-inner-light'?light:frame,classList:{add:n=>classes.add(n),remove:(...ns)=>ns.forEach(n=>classes.delete(n))}};
  let elapsed=0;const observations=[];
- if(publicMode)Object.assign(light.dataset,{worldX:'705',worldY:String(210-190*1535/1024),worldW:'190',worldH:String(190*1535/1024)});
+ if(publicMode)Object.assign(light.dataset,{worldX:String(800-230.86/2),worldY:String(210-230.86*1535/1024),worldW:'230.86',worldH:String(230.86*1535/1024)});
  const window={__TAROT_DEV_STAGE3__:!publicMode,__TAROT_PUBLIC_STAR_GATE__:publicMode,addEventListener(){}};
  const document={getElementById:()=>shell,querySelector:()=>({src:''})};
  const context=vm.createContext({window,document,location:{search:'?dev=star-gate-full'},URLSearchParams,setTimeout});
@@ -82,11 +82,23 @@ test('P0 restoration unhides the gate under full black, before revealing present
 
 test('public final aperture matches verified dev image in world space while ordinary parent and recovery source stay unchanged',()=>{
  const dev=harness(),normal=harness({publicMode:true});const before=JSON.stringify(normal.light.dataset);
- assert.equal(+normal.light.dataset.worldW,190);assert.equal(normal.img.getAttribute('src'),normal.original);
+ assert.equal(+normal.light.dataset.worldW,230.86);assert.equal(normal.img.getAttribute('src'),normal.original);
  dev.api.setGateState('sga-anomaly-rest');normal.api.setGateState('sga-anomaly-rest');
  const world=h=>{const d=h.light.dataset,p=k=>parseFloat(h.properties.get('--sga-void-'+k))/100;
   return {x:+d.worldX+p('left')*d.worldW,y:+d.worldY+p('top')*d.worldH,w:p('width')*d.worldW,h:p('height')*d.worldH};};
  for(const key of ['x','y','w','h'])assert.ok(Math.abs(world(dev)[key]-world(normal)[key])<1e-8,key);
  assert.equal(JSON.stringify(normal.light.dataset),before);normal.api.cleanupGateState();
  assert.equal(normal.img.getAttribute('src'),normal.original);assert.equal(normal.properties.size,0);assert.equal(JSON.stringify(normal.light.dataset),before);
+});
+
+test('normal route and Stage3 use the same approved 230.86px inner-light layout',()=>{
+ const source=fs.readFileSync('scene-preview41-fix.js','utf8');
+ assert.match(source,/const INNER_LIGHT_W = 230\.86;/);
+ assert.doesNotMatch(source,/const INNER_LIGHT_W\s*=\s*window\.__TAROT_DEV_STAGE3__/);
+ for(const mode of [false,true]){
+  const {light}=harness({publicMode:mode}),data=light.dataset;
+  assert.equal(+data.worldW,230.86);
+  assert.ok(Math.abs(+data.worldX+230.86/2-800)<1e-8);
+  assert.ok(Math.abs(+data.worldY+(+data.worldH)-210)<1e-8);
+ }
 });
