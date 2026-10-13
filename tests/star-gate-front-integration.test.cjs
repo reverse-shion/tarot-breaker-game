@@ -129,3 +129,43 @@ test('corrupted inner light uses opaque normal compositing and no retained dark-
  assert.match(restImage,/animation:none!important/);
  assert.match(css,/sga-anomaly-rest \.scene-dark-energy-rise,[\s\S]*visibility:hidden!important/);
 });
+
+test('second single-map pass preserves the approved 230.86px aperture in ordinary and dev modes',()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ assert.ok(html.indexOf('scene-preview41-fix.js')<html.indexOf('single-map-occlusion.js'));
+ for(const dev of [false,true]){
+  const elements=new Map();
+  function node(){
+   const children=[];
+   return {dataset:{},style:{},hidden:false,children,
+    setAttribute(){},addEventListener(){},appendChild(child){children.push(child)},
+    querySelector(sel){return sel==='img'?children.find(c=>c.tag==='img')||null:null}};
+  }
+  for(const sel of ['.scene-star-gate','.scene-gate-inner-light','.scene-gate-particle',
+   '.scene-gate-event','.scene-gate-base','.scene-ground','.scene-foreground img',
+   '.scene-fountain-base','.scene-fountain-water','.scene-fountain-crystal',
+   '.scene-fountain-glow','.scene-fountain-sparkle'])elements.set(sel,node());
+  const gateImage={tag:'img',style:{}};elements.get('.scene-star-gate').appendChild(gateImage);
+  const shell=node(),map=node();
+  const document={
+   querySelector:sel=>elements.get(sel)||null,
+   querySelectorAll:()=>[],
+   getElementById:id=>id==='game-shell'?shell:id==='map-layer'?map:null,
+   createElement:tag=>Object.assign(node(),{tag}),
+   head:{appendChild(){}},
+  };
+  const window={__TAROT_DEV_STAGE3__:dev};
+  const context=vm.createContext({window,document,fetch:async()=>({ok:false})});
+  for(const file of ['scene-layout.js','scene-preview41-fix.js']){
+   vm.runInContext(fs.readFileSync(file,'utf8'),context);
+  }
+  const light=elements.get('.scene-gate-inner-light');
+  assert.equal(+light.dataset.worldW,230.86,'initial layout');
+  vm.runInContext(fs.readFileSync('single-map-occlusion.js','utf8'),context);
+  assert.equal(+light.dataset.worldW,230.86,'final world DOM geometry');
+  assert.equal(window.TarotSceneLayout.gateAssembly.innerLight.w,230.86,'final authoritative layout');
+  assert.ok(Math.abs(+light.dataset.worldX+230.86/2-800)<1e-8);
+  assert.ok(Math.abs(+light.dataset.worldY+(+light.dataset.worldH)-210)<1e-8);
+  assert.equal(+elements.get('.scene-star-gate').dataset.worldW,560,'gold gate untouched');
+ }
+});
