@@ -1,0 +1,18 @@
+{
+  "candidate": {
+    "tests": 446,
+    "pass": 446,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "regression_baseline": "PASS"
+  },
+  "main": {
+    "tests": 341,
+    "pass": 341,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "regression_baseline": "PASS"
+  }
+}

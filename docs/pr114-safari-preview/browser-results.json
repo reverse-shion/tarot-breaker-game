@@ -1,0 +1,2604 @@
+{
+  "device_result": "PENDING",
+  "https_result": "NOT_DEPLOYED",
+  "event_start": "NOT_EXERCISED",
+  "audio": "NOT_TESTED",
+  "cases": [
+    {
+      "engine": "chromium",
+      "case": "stage3-portrait",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+          "location": {
+            "url": "http://127.0.0.1:8767/favicon.ico",
+            "line": 0,
+            "column": 0,
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background-extended.webp",
+          "width": 1003,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/garden-star-gate.webp",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_01.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_02.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_03.webp",
+          "width": 592,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_04.webp",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_01.webp",
+          "width": 336,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_02.webp",
+          "width": 384,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_03.webp",
+          "width": 306,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_04.webp",
+          "width": 245,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 780,
+          "height": 1688,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": true,
+        "event": true,
+        "choice": true
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1846,
+          "changed": 1704,
+          "silhouette": 1231,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 539,
+              "changed": 512,
+              "silhouette": 408,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 609,
+              "changed": 577,
+              "silhouette": 438,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 358,
+              "changed": 286,
+              "silhouette": 173,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 329,
+              "silhouette": 212,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 2060,
+          "changed": 1627,
+          "silhouette": 1241,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 663,
+              "changed": 547,
+              "silhouette": 446,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 604,
+              "changed": 500,
+              "silhouette": 404,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 399,
+              "changed": 275,
+              "silhouette": 190,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 394,
+              "changed": 305,
+              "silhouette": 201,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 874,
+          "changed": 370,
+          "silhouette": 179,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 617,
+              "changed": 263,
+              "silhouette": 112,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 257,
+              "changed": 107,
+              "silhouette": 67,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 936,
+          "changed": 719,
+          "silhouette": 553,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 418,
+              "changed": 345,
+              "silhouette": 264,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 324,
+              "changed": 246,
+              "silhouette": 176,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 194,
+              "changed": 128,
+              "silhouette": 113,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "case": "stage3-landscape",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background-extended.webp",
+          "width": 1003,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/garden-star-gate.webp",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_01.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_02.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_03.webp",
+          "width": 592,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_04.webp",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_01.webp",
+          "width": 336,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_02.webp",
+          "width": 384,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_03.webp",
+          "width": 306,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_04.webp",
+          "width": 245,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1688,
+          "height": 780,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": true,
+        "event": true,
+        "choice": true
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1846,
+          "changed": 1704,
+          "silhouette": 1231,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 539,
+              "changed": 512,
+              "silhouette": 408,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 609,
+              "changed": 577,
+              "silhouette": 438,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 358,
+              "changed": 286,
+              "silhouette": 173,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 329,
+              "silhouette": 212,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 2060,
+          "changed": 1627,
+          "silhouette": 1241,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 663,
+              "changed": 547,
+              "silhouette": 446,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 604,
+              "changed": 500,
+              "silhouette": 404,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 399,
+              "changed": 275,
+              "silhouette": 190,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 394,
+              "changed": 305,
+              "silhouette": 201,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 874,
+          "changed": 370,
+          "silhouette": 179,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 617,
+              "changed": 263,
+              "silhouette": 112,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 257,
+              "changed": 107,
+              "silhouette": 67,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 936,
+          "changed": 719,
+          "silhouette": 553,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 418,
+              "changed": 345,
+              "silhouette": 264,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 324,
+              "changed": 246,
+              "silhouette": 176,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 194,
+              "changed": 128,
+              "silhouette": 113,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "case": "normal-title",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 780,
+          "height": 1688,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": false,
+        "event": false,
+        "choice": false
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1846,
+          "changed": 1704,
+          "silhouette": 1231,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 539,
+              "changed": 512,
+              "silhouette": 408,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 609,
+              "changed": 577,
+              "silhouette": 438,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 358,
+              "changed": 286,
+              "silhouette": 173,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 329,
+              "silhouette": 212,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 2060,
+          "changed": 1627,
+          "silhouette": 1241,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 663,
+              "changed": 547,
+              "silhouette": 446,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 604,
+              "changed": 500,
+              "silhouette": 404,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 399,
+              "changed": 275,
+              "silhouette": 190,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 394,
+              "changed": 305,
+              "silhouette": 201,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 874,
+          "changed": 370,
+          "silhouette": 179,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 617,
+              "changed": 263,
+              "silhouette": 112,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 257,
+              "changed": 107,
+              "silhouette": 67,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 936,
+          "changed": 719,
+          "silhouette": 553,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 418,
+              "changed": 345,
+              "silhouette": 264,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 324,
+              "changed": 246,
+              "silhouette": 176,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 194,
+              "changed": 128,
+              "silhouette": 113,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "case": "normal-garden-g3",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 780,
+          "height": 1688,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": false,
+        "event": false,
+        "choice": false
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1846,
+          "changed": 1704,
+          "silhouette": 1231,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 539,
+              "changed": 512,
+              "silhouette": 408,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 609,
+              "changed": 577,
+              "silhouette": 438,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 358,
+              "changed": 286,
+              "silhouette": 173,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 329,
+              "silhouette": 212,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 2060,
+          "changed": 1627,
+          "silhouette": 1241,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 663,
+              "changed": 547,
+              "silhouette": 446,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 604,
+              "changed": 500,
+              "silhouette": 404,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 399,
+              "changed": 275,
+              "silhouette": 190,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 394,
+              "changed": 305,
+              "silhouette": 201,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 874,
+          "changed": 370,
+          "silhouette": 179,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 617,
+              "changed": 263,
+              "silhouette": 112,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 257,
+              "changed": 107,
+              "silhouette": 67,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 936,
+          "changed": 719,
+          "silhouette": 553,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 418,
+              "changed": 345,
+              "silhouette": 264,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 324,
+              "changed": 246,
+              "silhouette": 176,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 194,
+              "changed": 128,
+              "silhouette": 113,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "case": "stage3-portrait",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background-extended.webp",
+          "width": 1003,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/garden-star-gate.webp",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_01.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_02.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_03.webp",
+          "width": 592,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_04.webp",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_01.webp",
+          "width": 336,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_02.webp",
+          "width": 384,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_03.webp",
+          "width": 306,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_04.webp",
+          "width": 245,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 780,
+          "height": 1688,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": true,
+        "event": true,
+        "choice": true
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1717,
+          "changed": 1646,
+          "silhouette": 1017,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 495,
+              "changed": 490,
+              "silhouette": 339,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 555,
+              "changed": 562,
+              "silhouette": 360,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 279,
+              "silhouette": 141,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 327,
+              "changed": 315,
+              "silhouette": 177,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 1939,
+          "changed": 1594,
+          "silhouette": 1043,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 621,
+              "changed": 539,
+              "silhouette": 385,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 564,
+              "changed": 473,
+              "silhouette": 339,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 380,
+              "changed": 275,
+              "silhouette": 156,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 374,
+              "changed": 307,
+              "silhouette": 163,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 847,
+          "changed": 382,
+          "silhouette": 138,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 605,
+              "changed": 278,
+              "silhouette": 87,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 242,
+              "changed": 104,
+              "silhouette": 51,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 869,
+          "changed": 695,
+          "silhouette": 455,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 383,
+              "changed": 342,
+              "silhouette": 217,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 303,
+              "changed": 233,
+              "silhouette": 143,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 183,
+              "changed": 120,
+              "silhouette": 95,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "case": "stage3-landscape",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background-extended.webp",
+          "width": 1003,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/garden-star-gate.webp",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_01.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_02.webp",
+          "width": 591,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_03.webp",
+          "width": 592,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/celestial_gate_light_04.webp",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_01.webp",
+          "width": 336,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_02.webp",
+          "width": 384,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_03.webp",
+          "width": 306,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/events/gate-vision/dark_energy_rise_04.webp",
+          "width": 245,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1688,
+          "height": 780,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": true,
+        "event": true,
+        "choice": true
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1717,
+          "changed": 1646,
+          "silhouette": 1017,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 495,
+              "changed": 490,
+              "silhouette": 339,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 555,
+              "changed": 562,
+              "silhouette": 360,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 279,
+              "silhouette": 141,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 327,
+              "changed": 315,
+              "silhouette": 177,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 1939,
+          "changed": 1594,
+          "silhouette": 1043,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 621,
+              "changed": 539,
+              "silhouette": 385,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 564,
+              "changed": 473,
+              "silhouette": 339,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 380,
+              "changed": 275,
+              "silhouette": 156,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 374,
+              "changed": 307,
+              "silhouette": 163,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 847,
+          "changed": 382,
+          "silhouette": 138,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 605,
+              "changed": 278,
+              "silhouette": 87,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 242,
+              "changed": 104,
+              "silhouette": 51,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 869,
+          "changed": 695,
+          "silhouette": 455,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 383,
+              "changed": 342,
+              "silhouette": 217,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 303,
+              "changed": 233,
+              "silhouette": 143,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 183,
+              "changed": 120,
+              "silhouette": 95,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "case": "normal-title",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 780,
+          "height": 1688,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": false,
+        "event": false,
+        "choice": false
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1717,
+          "changed": 1646,
+          "silhouette": 1017,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 495,
+              "changed": 490,
+              "silhouette": 339,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 555,
+              "changed": 562,
+              "silhouette": 360,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 279,
+              "silhouette": 141,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 327,
+              "changed": 315,
+              "silhouette": 177,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 1939,
+          "changed": 1594,
+          "silhouette": 1043,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 621,
+              "changed": 539,
+              "silhouette": 385,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 564,
+              "changed": 473,
+              "silhouette": 339,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 380,
+              "changed": 275,
+              "silhouette": 156,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 374,
+              "changed": 307,
+              "silhouette": 163,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 847,
+          "changed": 382,
+          "silhouette": 138,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 605,
+              "changed": 278,
+              "silhouette": 87,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 242,
+              "changed": 104,
+              "silhouette": 51,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 869,
+          "changed": 695,
+          "silhouette": 455,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 383,
+              "changed": 342,
+              "silhouette": 217,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 303,
+              "changed": 233,
+              "silhouette": 143,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 183,
+              "changed": 120,
+              "silhouette": 95,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "case": "normal-garden-g3",
+      "body": "scene-ready",
+      "error": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "images": [
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-farthest-sky-background.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-sky.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+          "width": 1469,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-base.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-water.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+          "width": 1254,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+          "width": 1024,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+          "width": 1536,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+          "width": 1448,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+          "width": 1365,
+          "loaded": true
+        },
+        {
+          "url": "http://127.0.0.1:8767/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+          "width": 2048,
+          "loaded": true
+        }
+      ],
+      "canvas": [
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 1448,
+          "height": 1086,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-ring",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "scene-crystal-core",
+          "width": 1254,
+          "height": 1254,
+          "readable": true
+        },
+        {
+          "class": "",
+          "width": 780,
+          "height": 1688,
+          "readable": true
+        }
+      ],
+      "normalIsolation": {
+        "dev": false,
+        "event": false,
+        "choice": false
+      },
+      "lumiere": [
+        {
+          "direction": "down",
+          "foreground": 1717,
+          "changed": 1646,
+          "silhouette": 1017,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 495,
+              "changed": 490,
+              "silhouette": 339,
+              "maxReference": 2.1993212826551893
+            },
+            {
+              "kind": "hair",
+              "foreground": 555,
+              "changed": 562,
+              "silhouette": 360,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 340,
+              "changed": 279,
+              "silhouette": 141,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 327,
+              "changed": 315,
+              "silhouette": 177,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "up",
+          "foreground": 1939,
+          "changed": 1594,
+          "silhouette": 1043,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 621,
+              "changed": 539,
+              "silhouette": 385,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hair",
+              "foreground": 564,
+              "changed": 473,
+              "silhouette": 339,
+              "maxReference": 2.2
+            },
+            {
+              "kind": "hem",
+              "foreground": 380,
+              "changed": 275,
+              "silhouette": 156,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 374,
+              "changed": 307,
+              "silhouette": 163,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "left",
+          "foreground": 847,
+          "changed": 382,
+          "silhouette": 138,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 605,
+              "changed": 278,
+              "silhouette": 87,
+              "maxReference": 1.6969422426798817
+            },
+            {
+              "kind": "hem",
+              "foreground": 242,
+              "changed": 104,
+              "silhouette": 51,
+              "maxReference": 1.35
+            }
+          ]
+        },
+        {
+          "direction": "right",
+          "foreground": 869,
+          "changed": 695,
+          "silhouette": 455,
+          "regions": [
+            {
+              "kind": "hair",
+              "foreground": 383,
+              "changed": 342,
+              "silhouette": 217,
+              "maxReference": 1.9507545067609116
+            },
+            {
+              "kind": "hem",
+              "foreground": 303,
+              "changed": 233,
+              "silhouette": 143,
+              "maxReference": 1.35
+            },
+            {
+              "kind": "hem",
+              "foreground": 183,
+              "changed": 120,
+              "silhouette": 95,
+              "maxReference": 1.35
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "served_hashes": {
+    "chromium": "193 files PASS; preview-smoke.log",
+    "webkit": "193 files PASS; preview-webkit-smoke.log"
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "url": "http://127.0.0.1:8766/index.html?dev=star-gate-full&returnDebug=1",
+  "bodyClass": "scene-load-error",
+  "bootError": "Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.",
+  "note": "Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.",
+  "diagnostic": "RETURN CAMERA DEBUG v2 / BOOT ACTIVE\nSTAGE3: WAITING | completed=- | restored=-\nCAMERA: FREE | zoom=1\nHANDOFF: - | prepared=-\nAFTERMATH: NOT_STARTED | start=NO_ATTEMPT | line=-\nFAILED CHECKS: none\nSTART FAILURE: -\nERROR: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.",
+  "evidence": [
+    {
+      "ok": true,
+      "canvas": "scene-crystal-core",
+      "sources": [
+        {
+          "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "cors": "anonymous",
+          "kind": "IMG"
+        }
+      ],
+      "stack": "Error\n    at proto.getImageData (<anonymous>:14:123)\n    at Object.splitCrystal (http://127.0.0.1:8766/scene-layout.js?v=1.2.0:123:25)\n    at http://127.0.0.1:8766/scene-effects.js?v=garden-arrival-v1:44:720"
+    },
+    {
+      "ok": true,
+      "canvas": "scene-crystal-core",
+      "sources": [
+        {
+          "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+          "cors": "anonymous",
+          "kind": "IMG"
+        }
+      ],
+      "stack": "Error\n    at proto.getImageData (<anonymous>:14:123)\n    at Object.splitCrystal (http://127.0.0.1:8766/scene-layout.js?v=1.2.0:136:25)\n    at http://127.0.0.1:8766/scene-effects.js?v=garden-arrival-v1:44:720"
+    },
+    {
+      "ok": false,
+      "name": "SecurityError",
+      "message": "Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.",
+      "stack": "SecurityError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.\n    at proto.getImageData (<anonymous>:14:25)\n    at Object.create (http://127.0.0.1:8766/lumiere-sway.js?v=lumiere-local-sway-v1:77:31)\n    at http://127.0.0.1:8766/game.js?v=garden-arrival-v1-lumiere-sway-v1:2589:52",
+      "canvas": "",
+      "sources": [
+        {
+          "url": "http://127.0.0.1:8766/assets/sprites/lumiere/lumiere_idle.webp",
+          "cors": null,
+          "kind": "IMG"
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background-extended.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-world-islands.webp?asset=34856728cf2b",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-waterfall.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=single-map-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-base.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-water.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-crystal-glow.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-fountain-sparkle.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-inner-light.webp?v=20260916-native-foreground-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate.webp?v=single-map-gate-v6",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/garden-star-gate.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-particle.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-gate-event-fx.webp",
+      "cors": "anonymous",
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/ui/title/title-background.webp?v=0377d67f989b54327eccfdd6000baf6466207014",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/ui/title/tarot-breaker-logo.webp?v=bee86a371dffee7f05aa29a96cd8e9074849a01f",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_01.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_02.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_03.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/celestial_gate_light_04.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_01.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_02.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_03.webp",
+      "cors": null,
+      "loaded": true
+    },
+    {
+      "url": "http://127.0.0.1:8766/assets/events/gate-vision/dark_energy_rise_04.webp",
+      "cors": null,
+      "loaded": true
+    }
+  ],
+  "lumiere": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "engine": "chromium",
+  "case": "redirect-lumiere-stage3",
+  "pageErrors": [],
+  "console": [
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background.webp' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-farthest-sky-background.webp' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-gate-garden-star-sky.webp' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-gate-garden-transparent.webp?v=cca8dd37b9' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "warning",
+      "text": "A preload for 'http://127.0.0.1:8766/assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf' is found, but is not used because the request credentials mode does not match. Consider taking a look at crossorigin attribute."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (File not found)"
+    },
+    {
+      "type": "warning",
+      "text": "Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently"
+    },
+    {
+      "type": "error",
+      "text": "SecurityError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.\n    at proto.getImageData (<anonymous>:14:25)\n    at Object.create (http://127.0.0.1:8766/lumiere-sway.js?v=lumiere-local-sway-v1:77:31)\n    at http://127.0.0.1:8766/game.js?v=garden-arrival-v1-lumiere-sway-v1:2589:52"
+    }
+  ],
+  "failedRequests": [],
+  "devicePASS": false
+}

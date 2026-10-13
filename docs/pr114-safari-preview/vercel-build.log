@@ -1,0 +1,15 @@
+From https://github.com/reverse-shion/tarot-breaker-game
+ * branch            b093e355f8ba409f8a87de0de5c828604d2bf905 -> FETCH_HEAD
+ * branch            b8cd71755f7eafabf7c23fc3c85c779f345ea948 -> FETCH_HEAD
+{
+  "output": "/workspace/pr114-vercel-bootstrap/public",
+  "source_sha": "b093e355f8ba409f8a87de0de5c828604d2bf905",
+  "runtime_sha": "b8cd71755f7eafabf7c23fc3c85c779f345ea948",
+  "files": 193,
+  "bytes": 122634290,
+  "runtime_source_changes": 0,
+  "preview_index_transforms": 1,
+  "export_integrity": "PASS",
+  "https_deployment": "NOT_PERFORMED",
+  "device": "PENDING"
+}

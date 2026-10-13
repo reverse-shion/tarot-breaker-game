@@ -1,0 +1,15 @@
+{
+  "assets": {
+    "exit_code": 0
+  },
+  "background": {
+    "exit_code": 0
+  },
+  "audio": {
+    "exit_code": 0
+  },
+  "syntax": {
+    "files": 57,
+    "result": "PASS"
+  }
+}
