@@ -6,7 +6,7 @@ Machine-readable companion: `event-contracts.json`.
 ## EC-001 — Star Gate Anomaly
 event_id: star-gate-anomaly
 map: star_gate_garden
-status: IMPLEMENTED / normal-route candidate; changed Device Gate PENDING
+status: IMPLEMENTED / normal-route candidate; specified normal-route Device Gate human-confirmed PASS at integration SHA f4909bc17a2568101e277c2a8fb08b692c7d71f8 (main/publication not authorized)
 start_condition: owner-approved VGC-001 candidate activation; explicit investigation after real prerequisite completion
 required_state: Shiopon and Lumiere garden progression completed before production activation
 trigger_owner: Star Gate interaction runtime when released
@@ -23,7 +23,7 @@ Segments:
 - star-gate-camera-return — NOT TESTED
 - star-gate-aftermath — NOT TESTED
 - future-fixation-stage3 — NOT TESTED / dev=star-gate-full v1.9.2 candidate; isolated memory only, productionEnabled remains false
-- public-star-gate-integration — IMPLEMENTED / normal route and completion persistence, Device Gate PENDING
+- public-star-gate-integration — IMPLEMENTED / normal route, completion persistence, specified four-plus-three-check Device Gate PASS at exact SHAs in Device Registry; unrelated untested stress cases remain outside evidence
 - lumiere-to-star-gate — NOT TESTED / dev=star-gate-from-lumiere; real authored Lumiere meeting -> existing Stage3/Aftermath, in-memory only, productionEnabled remains false
 
 No Star Gate segment is DEVICE VERIFIED merely because historical branches contain implementations.
