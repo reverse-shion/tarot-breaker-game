@@ -77,7 +77,8 @@ test('iPhone regression: refused Aftermath is diagnosed and panoramic camera is 
  assert.match(after,/getDiagnostic:\(\)=>lastStartAttempt/);
  assert.match(anomaly,/const status=aftermath\?\.getDiagnostic\?\.\(\)\?\.status/);
  assert.match(anomaly,/state==='NOT_STARTED'\|\|!state\|\|status!=='ACCEPTED'/);
- assert.match(anomaly,/if\(!abandoned\)window\.TarotCinematicCamera\?\.release\(\)/);
+ assert.match(anomaly,/if\(current\.completed&&current\.restored\)\{[\s\S]*const aftermath=window\.TarotStarGateAftermath/);
+ assert.match(anomaly,/if\(!abandoned&&current\.scene\.getState\(\)\.owner===null&&window\.TarotCinematicCamera\?\.getState\?\.\(\)\?\.owned===false\)[\s\S]*window\.TarotCinematicCamera\?\.release\(\)/);
  assert.match(anomaly,/showReturnDiagnostic\(\)/);
  assert.match(anomaly,/get\('returnDebug'\)!=='1'/);
  assert.match(anomaly,/returnCameraHandoff:!!current\.returnCameraHandoff/);

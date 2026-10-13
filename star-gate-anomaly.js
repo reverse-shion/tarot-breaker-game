@@ -751,7 +751,8 @@ async function futureFixationStage2(){
  actorVisibility?.set("lumiere",0);
  // Load the authored ruins into the same 1448x1086 reference world as the garden.
  // No viewport cover, CSS translation or actor relocation is permitted.
- await vision.begin(ASSETS.ruins);
+ await vision.begin(ASSETS.ruins,{signal:session.controller.signal,prepared:preparedImages.get(ASSETS.ruins)});
+ session.clock.assert();
  root.classList.add("sga-future-ruins");
  // The current Shion becomes an observer as the ruined future itself appears.
  // Fade the completed actor composite from 1.0 to 0.55 in lockstep with the
@@ -859,9 +860,7 @@ async function futureFixationStage3(){
 
  // SEQUENCE 01 — Future Shion appears independently. Current Shion can only observe.
  setShion(1);
- const entryEcho=playFutureShionEntryEcho();
- await pause(760);
- await entryEcho;
+ await Promise.all([playFutureShionEntryEcho(),pause(760)]);
  const currentTurnsToFuture=stage.perform({type:"face",actor:"shion",target:{x:before.x-1,y:before.y}});
  const turned=await currentTurnsToFuture.promise;
  if(!turned?.completed||!samePoint(before,stage.getState().actors.shion))throw new Error("Current Shion moved while observing Future Shion");
@@ -1166,15 +1165,20 @@ async function run(){
   window.dispatchEvent(new CustomEvent('tarot-breaker:stage3-session-ended',{detail:lastResult}));
   // Aftermath must positively acknowledge this event. An unaccepted lease
   // previously allowed free movement with the panoramic camera still active.
+  if(current.completed&&current.restored){
   const aftermath=window.TarotStarGateAftermath;
   const status=aftermath?.getDiagnostic?.()?.status;
   const state=aftermath?.getState?.()?.state;
   if(state==='NOT_STARTED'||!state||status!=='ACCEPTED'){
    const abandoned=window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
-   if(!abandoned)window.TarotCinematicCamera?.release();
+   // A failed recovery still owns its camera. A foreign camera acquired by an
+   // ended-event listener must also survive this old session's finalizer.
+   if(!abandoned&&current.scene.getState().owner===null&&window.TarotCinematicCamera?.getState?.()?.owned===false)
+    window.TarotCinematicCamera?.release();
    current.afterStartFailure={status:status||'NO_RECEIVER',state:state||'MISSING',diagnostic:aftermath?.getDiagnostic?.()||null};
   }else if(returnCameraHandoff){
    window.TarotAftermathScene?.abandonReturnCamera?.(current.id);
+  }
   }
   lastResult=report(current);
   showReturnDiagnostic();

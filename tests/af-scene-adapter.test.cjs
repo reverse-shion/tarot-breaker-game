@@ -2,17 +2,27 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-function scene() {
+function scene({realCamera=false}={}) {
   const source=fs.readFileSync(require('node:path').join(__dirname,'../game.js'),'utf8');
   const start=source.indexOf('  if (stage3Dev) {\n    // Observe physical releases');
   const end=source.indexOf('  if (stage3Dev) {\n  function beginCinematicPan',start);
   const actors={shion:{x:810,y:150,dir:'up',stageOffsetY:0},shiopon:{x:780,y:180,dir:'up',stageOffsetY:0,following:true,hidden:false,rotation:0,visualOffsetY:0},lumiere:{x:750,y:200,dir:'down',stageOffsetY:0,bobOffsetY:0}};
-  const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),returnCameraHandoff:null,heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
+  const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),returnCameraHandoff:null,heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false,generation:0},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
   c.window.TarotStage3Scene={lock(owner){c.sceneLockPrior={suspended:c.controls.state.suspended,npcSuspended:c.npcSuspended};c.sceneLockOwner=owner;c.controls.state.suspended=true;c.npcSuspended=true;},unlock(owner){if(c.sceneLockOwner!==owner)return false;c.sceneLockOwner=null;return true;},freezeCamera(){c.cinematicCamera.owned=true;}};
   c.window.TarotCinematicCamera={release(){c.cinematicCamera.owned=false;}};
   c.lumiereManifest=require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
   c.DRAW_HEIGHT=78;c.FRAME={h:512};
   vm.runInNewContext(source.slice(start,end),c);
+  if(realCamera){
+    c.controls.suspend=()=>c.controls.state.suspended=true;c.controls.resume=()=>c.controls.state.suspended=false;c.outsideInteraction=false;
+    const locksStart=source.indexOf('    lock(owner) {');
+    const methods=vm.runInNewContext('({'+source.slice(locksStart,source.indexOf('    waitDraw(',locksStart))+'})',c);
+    Object.assign(c.window.TarotStage3Scene,methods);
+    c.clamp=(n,a,b)=>Math.max(a,Math.min(b,n));c.world={w:1448,h:1086};c.cameraOffsetY=()=>0;
+    c.stageTargetRef=target=>typeof target==='object'?target:null;
+    const cameraStart=source.indexOf('  if (stage3Dev) {\n  function beginCinematicPan');
+    vm.runInNewContext(source.slice(cameraStart,source.indexOf('  window.TarotStage = Object.freeze({',cameraStart)),c);
+  }
   return {c,api:c.window.TarotAftermathScene};
 }
 test('Aftermath Lumiere bounds use the same four-direction manifest and body height as drawing',()=>{
@@ -97,4 +107,28 @@ test('return camera arm is fail-closed if cinematic target API is missing or inv
  const accepted=api.takeReturnCamera(93);
  assert.equal(accepted.safeCamera.x,820);
  assert.equal(accepted.safeCamera.y,440);
+});
+test('armed return handoff cannot take or abandon a newer foreign scene, freeze, pan or release',async()=>{
+ for(const takeover of ['scene','freeze','pan','release']){
+  const {c,api}=scene({realCamera:true});assert.equal(api.armReturnCamera(91),true);const leaseGeneration=c.cinematicCamera.generation;
+  let pending;
+  if(takeover==='scene'){c.window.TarotStage3Scene.lock('foreign');c.window.TarotStage3Scene.freezeCamera();}
+  if(takeover==='freeze')c.window.TarotStage3Scene.freezeCamera();
+  if(takeover==='pan')pending=c.window.TarotCinematicCamera.panTo({x:1200,y:700},900);
+  if(takeover==='release')c.window.TarotCinematicCamera.release();
+  assert.ok(c.cinematicCamera.generation>leaseGeneration);
+  const before={...c.cinematicCamera},cameraBefore={...c.camera};
+  assert.equal(api.takeReturnCamera(91),null);assert.equal(api.abandonReturnCamera(91),false);
+  assert.deepEqual(c.cinematicCamera,before);assert.deepEqual(c.camera,cameraBefore);assert.equal(c.returnCameraHandoff,null);
+  if(takeover==='scene')assert.equal(c.sceneLockOwner,'foreign');
+  if(pending){c.window.TarotCinematicCamera.release();assert.equal((await pending).interrupted,true);}
+ }
+});
+test('same-generation normal handoff is consumed once; unclaimed handoff restores normal camera',()=>{
+ const {c,api}=scene({realCamera:true});
+ assert.equal(api.armReturnCamera(91),true);const generation=c.cinematicCamera.generation;
+ assert.ok(api.takeReturnCamera(91));assert.equal(api.takeReturnCamera(91),null);assert.equal(c.cinematicCamera.generation,generation);
+ c.window.TarotCinematicCamera.release();assert.equal(api.armReturnCamera(92),true);
+ c.camera.zoom=.48;assert.equal(api.abandonReturnCamera(92),true);assert.equal(c.cinematicCamera.owned,false);
+ assert.equal(c.camera.zoom,c.normalCameraZoom);assert.equal(api.abandonReturnCamera(92),false);
 });
