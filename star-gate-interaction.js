@@ -1,13 +1,12 @@
 (() => {
   "use strict";
 
-  if (window.__TAROT_DEV_STAGE3__ !== true) return;
+  if (window.__TAROT_DEV_STAGE3__ !== true && window.__TAROT_PUBLIC_STAR_GATE__ !== true) return;
 
   const GATE = Object.freeze({ x: 810, y: 105 });
   const ACTIVE_RADIUS = 46;
   const REARM_RADIUS = 96;
-  const DEV_HARNESS = true;
-  const progress = DEV_HARNESS ? null : window.TarotProgressCore?.createProgress?.();
+  const DEV_HARNESS = window.__TAROT_DEV_STAGE3__ === true;
   let active = false;
   let completed = false;
   let prompt = null;
@@ -22,13 +21,7 @@
 
   function progressReady() {
     if (DEV_HARNESS) return !completed && (window.__TAROT_DEV_STAR_GATE_ROUTE__ !== true || window.TarotStarGateRoute?.canInvestigate?.() === true);
-    if (!progress) return false;
-    try {
-      const loaded = progress.load();
-      if (loaded.status !== "valid") return false;
-      completed = progress.isEventCompleted("garden_star_gate_anomaly");
-      return progress.isEventCompleted("garden_lumiere_gate") && !completed;
-    } catch { return false; }
+    return !completed && window.TarotStarGatePublic?.canInvestigate?.() === true;
   }
 
   function player() {

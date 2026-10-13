@@ -4,10 +4,10 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 function scene({realCamera=false}={}) {
   const source=fs.readFileSync(require('node:path').join(__dirname,'../game.js'),'utf8');
-  const start=source.indexOf('  if (stage3Dev) {\n    // Observe physical releases');
-  const end=source.indexOf('  if (stage3Dev) {\n  function beginCinematicPan',start);
+  const start=source.indexOf('  if (stage3Runtime) {\n    // Observe physical releases');
+  const end=source.indexOf('  if (stage3Runtime) {\n  function beginCinematicPan',start);
   const actors={shion:{x:810,y:150,dir:'up',stageOffsetY:0},shiopon:{x:780,y:180,dir:'up',stageOffsetY:0,following:true,hidden:false,rotation:0,visualOffsetY:0},lumiere:{x:750,y:200,dir:'down',stageOffsetY:0,bobOffsetY:0}};
-  const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),returnCameraHandoff:null,heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false,generation:0},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
+  const c={canvas:{getBoundingClientRect:()=>({left:0,top:0})},player:actors.shion,stage3Dev:true,stage3Runtime:true,ready:true,running:true,visionWorld:{active:false},absorptionSurface:null,sceneLockOwner:null,sceneLockPrior:null,npcSuspended:false,controls:{state:{suspended:false}},scale:{x:1,y:1},cssWidth:390,cssHeight:844,camera:{x:810,y:440,zoom:.63},normalCameraZoom:.63,actors,shiopon:actors.shiopon,lumiere:actors.lumiere,actorVisibility:{shion:1,shiopon:1,lumiere:1},aftermathPaused:false,aftermathFocusBaseline:null,aftermathOwner:null,aftermathLumiereEnabled:true,aftermathMotions:new Set(),returnCameraHandoff:null,heldKeys:new Set(),heldPointers:new Set(),releaseKeys:new Set(),releasePointers:new Set(),stageMotions:{},LUMIERE_DRAW_HEIGHT:78,lumiereFrame:{h:100},LUMIERE_NORMALIZED_SIZE:{w:493,h:596},LUMIERE_BOTTOM_GAP:2.7,cinematicCamera:{owned:false,generation:0},draw(){},clearInput(){},stageActor:id=>actors[id],stageActorRef:id=>({x:actors[id].x,y:actors[id].y}),playerRef:()=>({x:actors.shion.x,y:actors.shion.y}),setDirection(actor,dx,dy){actor.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')},isWalkableRef:()=>true,collision:{nearestWalkable:p=>({...p})},refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),viewportOrigin:()=>({x:0,y:0}),window:{addEventListener(){}}};
   c.window.TarotStage3Scene={lock(owner){c.sceneLockPrior={suspended:c.controls.state.suspended,npcSuspended:c.npcSuspended};c.sceneLockOwner=owner;c.controls.state.suspended=true;c.npcSuspended=true;},unlock(owner){if(c.sceneLockOwner!==owner)return false;c.sceneLockOwner=null;return true;},freezeCamera(){c.cinematicCamera.owned=true;}};
   c.window.TarotCinematicCamera={release(){c.cinematicCamera.owned=false;}};
   c.lumiereManifest=require('../assets/sprites/lumiere/lumiere_sprite_manifest.json');
@@ -20,7 +20,7 @@ function scene({realCamera=false}={}) {
     Object.assign(c.window.TarotStage3Scene,methods);
     c.clamp=(n,a,b)=>Math.max(a,Math.min(b,n));c.world={w:1448,h:1086};c.cameraOffsetY=()=>0;
     c.stageTargetRef=target=>typeof target==='object'?target:null;
-    const cameraStart=source.indexOf('  if (stage3Dev) {\n  function beginCinematicPan');
+    const cameraStart=source.indexOf('  if (stage3Runtime) {\n  function beginCinematicPan');
     vm.runInNewContext(source.slice(cameraStart,source.indexOf('  window.TarotStage = Object.freeze({',cameraStart)),c);
   }
   return {c,api:c.window.TarotAftermathScene};

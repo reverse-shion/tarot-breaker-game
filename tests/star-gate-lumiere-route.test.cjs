@@ -21,7 +21,7 @@ function bootstrap(search){
 test('registered checkpoint starts before real Lumiere and uses a safe authored approach spawn',()=>{
  const definition=require('../dev-checkpoints.js').get('star-gate-from-lumiere');
  const contracts=JSON.parse(fs.readFileSync('event-contracts.json','utf8')).events;
- assert.equal(contracts[definition.event].segments[definition.segment],'NOT TESTED');assert.equal(contracts[definition.event].productionEnabled,false);
+ assert.equal(contracts[definition.event].segments[definition.segment],'NOT TESTED');assert.equal(contracts[definition.event].productionEnabled,true); // Owner-approved public candidate; this checkpoint still writes only memory.
  for(const file of definition.requiredRuntime)assert.ok(fs.existsSync(file),file);
  assert.deepEqual([...definition.temporaryState.completedEvents],['alenon_prologue','landing_devil_memory','garden_shiopon_meet']);
  const h=bootstrap('?dev=star-gate-from-lumiere');assert.equal(h.window.__TAROT_DEV_STAR_GATE_ROUTE__,true);

@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-if(!window.__TAROT_DEV_STAGE3__||!['star-gate-full','star-gate-from-lumiere'].includes(new URLSearchParams(location.search).get('dev')))return;
+if(window.__TAROT_PUBLIC_STAR_GATE__!==true && (!window.__TAROT_DEV_STAGE3__||!['star-gate-full','star-gate-from-lumiere'].includes(new URLSearchParams(location.search).get('dev'))))return;
 const TRACKS=Object.freeze({ruins:{source:'./assets/audio/bgm/future_ruins.mp3',trim:10**(-6.48/20),start:1.8,mix:.70},fix:{source:'./assets/audio/bgm/future_fix.mp3',trim:10**(-5.23/20),start:20,mix:.50}});
 let context=null;
 function create({clock,signal,failures,id}){

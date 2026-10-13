@@ -75,6 +75,7 @@
 
   const params = new URLSearchParams(location.search);
   const stage3Dev = ["star-gate-full", "star-gate-from-lumiere"].includes(params.get("dev")) && window.__TAROT_DEV_STAGE3__ === true;
+  const stage3Runtime = stage3Dev || window.__TAROT_PUBLIC_STAR_GATE__ === true;
   const enteringFromLanding = params.get("from") === "landing";
   const gardenResumeDev = stage3Dev || (params.get("from") === null &&
     /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || ""));
@@ -92,10 +93,10 @@
   const COLLISION_URL =
     config.collisionUrl || "./assets/maps/star-country-gate-garden-collision.json";
   const SPRITE_BASE = config.spriteBase || "./assets/sprites/shion/";
-  const SHIOPON_BASE = stage3Dev ? "./assets/sprites/shiopon/" : (
+  const SHIOPON_BASE = stage3Runtime ? "./assets/sprites/shiopon/" : (
     config.shioponBase ||
     "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/");
-  const LUMIERE_BASE = stage3Dev ? "./assets/sprites/lumiere/" : (
+  const LUMIERE_BASE = stage3Runtime ? "./assets/sprites/lumiere/" : (
     config.lumiereBase ||
     "./assets/sprites/lumiere/");
 
@@ -697,7 +698,7 @@
   function updateStageActor(actorId, dt) {
     const motion = stageMotions[actorId];
     if (!motion) return false;
-    if (stage3Dev && aftermathPaused && aftermathMotions.has(motion.id)) return true;
+    if (stage3Runtime && aftermathPaused && aftermathMotions.has(motion.id)) return true;
     const actor = stageActor(actorId);
 
     if (motion.kind === "bounce") {
@@ -764,7 +765,7 @@
     const npcBlocked =
       next.moving &&
       (shioponBlocked ||
-        (!(stage3Dev && !aftermathLumiereEnabled) && movingIntoActor(
+        (!(stage3Runtime && !aftermathLumiereEnabled) && movingIntoActor(
           from,
           next,
           lumiereRef(),
@@ -1159,7 +1160,7 @@
   }
 
   function updateShiopon(dt) {
-    if (stage3Dev && aftermathPaused) return;
+    if (stage3Runtime && aftermathPaused) return;
     if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
     if (shiopon.scripted) {
@@ -1235,7 +1236,7 @@
   }
 
   function updateLumiere(dt) {
-    if (stage3Dev && (aftermathPaused || !aftermathLumiereEnabled)) return;
+    if (stage3Runtime && (aftermathPaused || !aftermathLumiereEnabled)) return;
     updateStageActor("lumiere", dt);
     lumiere.bobPhase =
       (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
@@ -1252,7 +1253,7 @@
   }
 
   function updateCamera(dt) {
-    if (stage3Dev && aftermathPaused && aftermathOwner) return;
+    if (stage3Runtime && aftermathPaused && aftermathOwner) return;
     if (cinematicCamera.active) {
       cinematicCamera.elapsed += dt;
       const t = cinematicCamera.duration > 0 ? Math.min(1, cinematicCamera.elapsed / cinematicCamera.duration) : 1;
@@ -1540,7 +1541,7 @@
 
 
   function drawActors() {
-    if (!visionWorld.active && (!stage3Dev || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
+    if (!visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
 
@@ -1576,7 +1577,7 @@
         },
       },
     ].filter(entry => (entry.actor !== shiopon || !shiopon.hidden) &&
-      (entry.actor !== lumiere || !stage3Dev || aftermathLumiereEnabled)).sort((a, b) => {
+      (entry.actor !== lumiere || !stage3Runtime || aftermathLumiereEnabled)).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
@@ -1587,7 +1588,7 @@
     for (const entry of actors) {
       const actorId = entry.actor === player ? "shion" : entry.actor === shiopon ? "shiopon" : "lumiere";
       if (visionWorld.active && actorId !== "shion") continue;
-      const opacity = stage3Dev ? actorVisibility[actorId] : 1;
+      const opacity = stage3Runtime ? actorVisibility[actorId] : 1;
       if (opacity <= 0) continue;
       if (visionWorld.active && actorId === "shion") {drawFutureCurrentShionComposite(entry,opacity); continue;}
       ctx.save(); ctx.globalAlpha *= opacity;
@@ -1863,6 +1864,7 @@
       startShioponFollow();
       if (enteringGardenRuntime) placeShioponBesidePlayer();
     }
+    if (window.__TAROT_PUBLIC_STAR_GATE__ === true) window.TarotStarGatePublic?.restoreCompleted?.();
     last = performance.now();
     draw();
     requestAnimationFrame(loop);
@@ -1901,7 +1903,7 @@
   }
 
   function pointerDown(event) {
-    if (!running || (stage3Dev && releasePointers.has(event.pointerId))) return;
+    if (!running || (stage3Runtime && releasePointers.has(event.pointerId))) return;
     event.preventDefault();
     if (!controls.pointerDown(pointerInfo(event))) return;
     window.TarotAudio?.startFromMovement();
@@ -1910,14 +1912,14 @@
   }
 
   function pointerMove(event) {
-    if (!running || (stage3Dev && releasePointers.has(event.pointerId))) return;
+    if (!running || (stage3Runtime && releasePointers.has(event.pointerId))) return;
     event.preventDefault();
     controls.pointerMove(pointerInfo(event));
     syncStick();
   }
 
   function pointerEnd(event) {
-    if (stage3Dev && releasePointers.has(event.pointerId)) { releasePointers.delete(event.pointerId); clearInput("aftermath-release"); return; }
+    if (stage3Runtime && releasePointers.has(event.pointerId)) { releasePointers.delete(event.pointerId); clearInput("aftermath-release"); return; }
     if (!running) return;
     event.preventDefault();
     const action = controls.pointerEnd(
@@ -2005,12 +2007,12 @@
       }
     }
   }
-  if (stage3Dev) window.TarotStage3Scene = Object.freeze({
+  if (stage3Runtime) window.TarotStage3Scene = Object.freeze({
     capture() {
       if (!ready || !running || !map.complete || !images.idle?.complete || !collision || cssWidth <= 1 || cssHeight <= 1) throw new Error("P0 current resources not prepared");
       if (visionWorld.active) throw new Error("P0 must precede Future Vision");
       return { mapId: "star_gate_garden", player: {...playerRef(), dir: player.dir},
-        camera: {...camera}, viewport: {width:cssWidth,height:cssHeight}, owner:sceneLockOwner, npcLogical: {companion:window.TarotStage3DevFixture.context.companion, story:{...window.TarotJourney?.get("gardenStory")}}, actors: {shiopon: {...shioponRef(), dir:shiopon.dir, stageOffsetY:shiopon.stageOffsetY, visualOffsetY:shiopon.visualOffsetY, rotation:shiopon.rotation, following:shiopon.following}, lumiere: {...lumiereRef(), dir:lumiere.dir, stageOffsetY:lumiere.stageOffsetY}}, visibility: {...actorVisibility}, inputSuspended: !!controls?.state.suspended,
+        camera: {...camera}, viewport: {width:cssWidth,height:cssHeight}, owner:sceneLockOwner, npcLogical: {companion:stage3Dev ? window.TarotStage3DevFixture.context.companion : (shiopon.following ? "joined_with_shion" : (shiopon.hidden ? "waiting_at_landing" : "not_joined")), story:{...window.TarotJourney?.get("gardenStory")}}, actors: {shiopon: {...shioponRef(), dir:shiopon.dir, stageOffsetY:shiopon.stageOffsetY, visualOffsetY:shiopon.visualOffsetY, rotation:shiopon.rotation, following:shiopon.following}, lumiere: {...lumiereRef(), dir:lumiere.dir, stageOffsetY:lumiere.stageOffsetY}}, visibility: {...actorVisibility}, inputSuspended: !!controls?.state.suspended,
         npcSuspended, hidden: shiopon.hidden, captured: performance.now() };
     },
     lock(owner) {
@@ -2103,7 +2105,7 @@
     getState() {return {presentPrepared:!!(ready && running && map.complete && images.idle?.complete && collision && cssWidth>1 && cssHeight>1),vision:visionWorld.active,absorption:!!absorptionSurface,viewport:{width:cssWidth,height:cssHeight,dpr},owner:sceneLockOwner};},
   });
 
-  if (stage3Dev) {
+  if (stage3Runtime) {
     // Observe physical releases independently of UI propagation. No time-based cooldown.
     window.addEventListener("keydown", e => heldKeys.add(e.key), true);
     window.addEventListener("keyup", e => heldKeys.delete(e.key), true);
@@ -2269,7 +2271,7 @@
     });
   }
 
-  if (stage3Dev) {
+  if (stage3Runtime) {
   function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
     cinematicCamera.generation++;
     if (cinematicCamera.resolve)
@@ -2490,7 +2492,7 @@
   window.addEventListener(
     "keydown",
     (event) => {
-      if (stage3Dev && releaseKeys.has(event.key)) return;
+      if (stage3Runtime && releaseKeys.has(event.key)) return;
       if (running && controls.keyDown(event.key)) {
         window.TarotAudio?.startFromMovement();
         guide.hidden = true;
@@ -2650,6 +2652,13 @@
         });
         if (!projected?.ok) throw new Error(projected?.reason || "garden-public-project-failed");
         window.TarotGardenContinueTransit = fresh;
+        if (window.__TAROT_PUBLIC_STAR_GATE__ === true &&
+            window.TarotStarGateProgressAuthority?.rebind?.(fresh.progress) !== true) throw new Error("Star Gate Progress authority unavailable");
+      }
+      if (window.__TAROT_PUBLIC_STAR_GATE__ === true) {
+        if (typeof window.TarotStarGatePublic?.prepareRestoration !== "function" ||
+            typeof window.TarotStarGatePublic?.restoreCompleted !== "function") throw new Error("Star Gate observer unavailable");
+        await window.TarotStarGatePublic.prepareRestoration();
       }
       ready = true;
       resize();

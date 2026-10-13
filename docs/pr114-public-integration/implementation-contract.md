@@ -1,0 +1,13 @@
+# Public Star Gate integration contract v1 — 2026-10-13
+
+User approved the public-route/Aftermath-completion-save proposal with 「進めて」 at21:10JST. This explicitly authorizes replacement of VGC001 unfinished-event suppression in the same reviewed candidate. Main merge/deployment remain unauthorized.
+Risk HIGH. Basecf3328ce3cdd30d64af2236d16e32dce50fc21ea; currentmain22c07ae94d7491c3818b57574da7ee3af12edfc4. Branchfeat/pr114-public-star-gate targetsPR114.
+
+WORKING: validated normal Garden arrival/Continue event boot/resources; existing Scene/P0/Aftermath/camera APIs admit that normal context without devfixture; actual dialogue+Progress prerequisites; stable garden_star_gate_anomaly ID requiring garden_lumiere_gate; observer-only final Aftermath completion save and independent readback; completion restoration of gate/departedLumiere/follower; old saves remain valid; strict CI DEVICE_RESULT metadata (separate technical repair).
+LOCKED: unrelated Title/NewGame/Alenon/PAD/Landing routes and save/version/migration policies; original dialogue/story/visuals/audioassets/mix/timings; collision/navigation/actorhover; existing devfixtures and their memory-only isolation; validators/baselines/workflows except the confirmed CI parser defect; star-sand path not added.
+
+Acceptance: ordinary initialdialogues remain original; noinspectuntilallrealprerequisites/controlfree; explicittapstarts exactlyonce; Stage3success alone neverdurablyconsumes event; finalAftermathdeparture/input/follow+actualreport required tosave; forged/stale/duplicate reports reject; beforefinalreload retriesfrominspect withLumierealreadydone; afterfinalreload/Continue/roundtrip noeventreplay andrestoredgate/departure; savefailurecannotstrandlocks orfalselyclaim persistence; memorycompletion prevents duplicates. ProductionP0 uses livecompanion+story, neverdevprojection. Devsave remains isolated.
+
+Expectedminimum files: new publicbootstrap/controller; game runtime admission and completedrestoration; existing modules guard/prerequisite integration only; route-registry additive event; gardenobserver shares existing Progress instance for observer-only authority; index bootstrap tag; explicit VGC001/EC001/test replacement; CI parser/tests in separatecommit. NoStage3/Aftermathdialogue/cue/timing rewrite.
+
+Checks: targeted realmodule boot/prerequisite/persistence/restore and failure tests; existingdev/Stage3/Aftermath regression; strictmetadata executable adversarialcases; fullsuite vs latestmain; independent read-onlyreview; remoteCI andfixedSHA; changednormalroute iPhone integration smoke inclContinue/completedreturn required. HistoricaldevPASS staysvalid butdoesnotcertifynewnormalroute. NoautomaticPR114integrationbeforechangeddevicePASS.

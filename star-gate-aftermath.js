@@ -1,7 +1,7 @@
 /* Present-return scenario v1.6: calls under black -> changed-gate fear -> free companion check. */
 (() => {
  'use strict';
- if(window.__TAROT_DEV_STAGE3__!==true)return;
+ if(window.__TAROT_DEV_STAGE3__!==true&&window.__TAROT_PUBLIC_STAR_GATE__!==true)return;
 
  const INDIVIDUAL=Object.freeze({
   shiopon:Object.freeze([

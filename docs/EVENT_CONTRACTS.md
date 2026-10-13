@@ -6,13 +6,13 @@ Machine-readable companion: `event-contracts.json`.
 ## EC-001 — Star Gate Anomaly
 event_id: star-gate-anomaly
 map: star_gate_garden
-status: NOT TESTED / unreleased
-start_condition: disabled in production by VGC-001 until explicit release approval
+status: IMPLEMENTED / normal-route candidate; changed Device Gate PENDING
+start_condition: owner-approved VGC-001 candidate activation; explicit investigation after real prerequisite completion
 required_state: Shiopon and Lumiere garden progression completed before production activation
 trigger_owner: Star Gate interaction runtime when released
 start_event: tarot-breaker:star-gate-investigate
-progress_changes: none authorized by this foundation
-return_behavior: normal Garden route remains governed by VGC-001
+progress_changes: observer-only garden_star_gate_anomaly completion after actual final Aftermath/departure/control restoration; validated durable readback
+return_behavior: normal Garden routing preserved; completed reload/Continue/roundtrip suppress replay and restore gate/departure
 
 Segments:
 - star-gate-choice — NOT TESTED
@@ -23,6 +23,7 @@ Segments:
 - star-gate-camera-return — NOT TESTED
 - star-gate-aftermath — NOT TESTED
 - future-fixation-stage3 — NOT TESTED / dev=star-gate-full v1.9.2 candidate; isolated memory only, productionEnabled remains false
+- public-star-gate-integration — IMPLEMENTED / normal route and completion persistence, Device Gate PENDING
 - lumiere-to-star-gate — NOT TESTED / dev=star-gate-from-lumiere; real authored Lumiere meeting -> existing Stage3/Aftermath, in-memory only, productionEnabled remains false
 
 No Star Gate segment is DEVICE VERIFIED merely because historical branches contain implementations.
