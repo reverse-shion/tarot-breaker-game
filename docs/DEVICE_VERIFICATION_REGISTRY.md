@@ -275,3 +275,12 @@ Runtime: `88c61140763f24aac41eceb8ab1e9d5bb2ddb531`, fixed RawGitHack `index.htm
 | PR150 repaired Stage3 Home return, reapproach, explicit retry and completion, as requested in the supplied fixed-link smoke | 88c61140763f24aac41eceb8ab1e9d5bb2ddb531 | iPhone testing context; browser/OS/model not independently restated | PASS | Owner accepted the tested candidate with no observed problem after receiving the fixed-SHA link and Home-return → reapproach → retry → finish instructions. No individual multi-phase timing trace, injected image/decode failure, rejected autoplay, BFCache/reload mechanism, normal non-dev Lumiere-meeting route, or full-game certification is inferred. |
 
 This closes the **isolated PR150 device repair gate** and permits the next requested technical integration into PR114. The broader PR114 release/integration device gate, production enablement and main merge are separate. Only evidence/documentation may be added above this runtime without invalidating its executable-code equivalence. Existing historical FAIL/PASS entries remain intact.
+
+
+## PR #151 Lumiere -> Star Gate local handoff — owner acceptance (2026-10-13)
+
+| Scope | Runtime SHA | Device | Result | Human confirmation |
+|---|---|---|---|---|
+| Isolated dev=star-gate-from-lumiere: actual initial Lumiere meeting -> gate -> entire event; active Stage3 -> Home -> same page -> leave/reapproach -> explicit retry -> finish without replaying initial meeting | 90fc05ea00c92406366e1d18b3ea34ae02282d29 | iPhone test context; model/browser/OS version not independently captured | PASS | Owner first stated 「初回会話→星門→完走は問題ない」 and then explicitly confirmed 「1−4は問題ない。」 in response to the Home/same-page/reapproach/retry/finish checklist (20:55 JST). |
+
+The prior reload observation was ambiguous and is not evidence of durable Save, BFCache mechanism, or cross-reload story retention. This PASS closes the specified local handoff and Home-retry Device Gate for PR151 only. No full Title-to-Garden non-dev route, injected failure, all-phase interruption stress, production activation, main merge or release authorization is inferred. Earlier historical records remain intact. Evidence-only follow-up commits do not change tested runtime.

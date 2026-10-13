@@ -50,3 +50,9 @@ simulates the Stage3 session-ended report to check the handoff/retry protocol.
 Report device/browser, exact runtime SHA and PASS/FAIL. This is a local authored
 Lumiere-to-StarGate handoff check, not a full Title-to-Garden production route,
 reload persistence test or release authorization.
+
+## Human gate closed — 2026-10-13 20:55 JST
+
+Runtime 90fc05ea00c92406366e1d18b3ea34ae02282d29. Product owner confirmed the initial meeting->gate->complete event without problems, then 「1−4は問題ない。」 for Home->same page (no refresh)->leave/reapproach->inspect/retry->finish without replaying Lumiere. Device PASS for this local route and Home retry, not durable reload semantics or a full production route.
+
+Runtime Validate CI #1753 run38391247961 SUCCESS. CODE/local TEST/CI/required local DEVICE: GO. Independent final evidence review and evidence-head CI must be verified before PR151->PR114 integration. PR114 stays Draft; main/release remain separate.
