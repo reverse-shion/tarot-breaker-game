@@ -103,9 +103,17 @@ test('foreign interaction hides choice without releasing the foreign owner',()=>
  assert.equal(api(h).getState().active,true);
 });
 test('ordinary routes install no interaction or Production backend',()=>{const h=harness(false);assert.equal(h.window.TarotStarGateInteraction,undefined);assert.deepEqual(h.emitted,[])});
-test('A inner light geometry restored only for dev, ordinary geometry preserved',()=>{
- function layout(dev){const window={__TAROT_DEV_STAGE3__:dev};const document={querySelector:()=>null,head:{appendChild(){}},createElement:()=>({dataset:{}})};const c=vm.createContext({window,document});for(const file of ['scene-layout.js','scene-preview41-fix.js'])vm.runInContext(fs.readFileSync(file,'utf8'),c);return window.TarotSceneLayout.gateAssembly.innerLight;}
- const approved=layout(true),normal=layout(false);assert.equal(approved.w,230.86);assert.ok(Math.abs(approved.x-684.57)<1e-10);assert.equal(approved.y+approved.h,210);assert.equal(normal.w,190);assert.equal(normal.x+normal.w/2,800);assert.equal(normal.y+normal.h,210);
+test('normal and Stage3 use the same 230.86px inner light without moving the gate',()=>{
+ function layout(dev){const window={__TAROT_DEV_STAGE3__:dev};const document={querySelector:()=>null,head:{appendChild(){}},createElement:()=>({dataset:{}})};const c=vm.createContext({window,document});for(const file of ['scene-layout.js','scene-preview41-fix.js'])vm.runInContext(fs.readFileSync(file,'utf8'),c);return window.TarotSceneLayout.gateAssembly;}
+ const approved=layout(true),normal=layout(false);
+ assert.equal(approved.innerLight.w,230.86);
+ assert.equal(normal.innerLight.w,230.86);
+ for(const view of [approved,normal]){
+  assert.ok(Math.abs(view.innerLight.x-684.57)<1e-10);
+  assert.ok(Math.abs(view.innerLight.y+view.innerLight.h-210)<1e-10);
+  assert.equal(view.starGate.w,560);
+  assert.ok(Math.abs(view.starGate.x+view.starGate.w/2-800)<1e-10);
+ }
 });
 
 test('corrupted inner light uses opaque normal compositing and no retained dark-energy frame',()=>{
