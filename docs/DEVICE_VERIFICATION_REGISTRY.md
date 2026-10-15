@@ -333,3 +333,14 @@ Candidate tested runtime: `587ed2e16b6e484993a54aca53a8eb4384188f39`. The develo
 Automated CI at the exact runtime `587ed2e16b6e484993a54aca53a8eb4384188f39`: [Validate #38742867459](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38742867459), **518/518 PASS, 0 failed, 0 skipped**. GitHub compare with the previously reviewed `861d92d23ed5f231bab06c19b2ddbfbb1c5b0f3e` returned **no changed files** after rolling back the unsuccessful checkpoint experiment. Any later docs-only commit does not change this tested executable runtime.
 
 **Device gate status: scoped normal-route checks 1–3 PASS; overall PR #154 integration / release gate remains PENDING.** Unverified on this SHA: post-Lumiere/pre-decision lock separately, repeated joystick/tap close-and-resume, failure/interruption recovery, east passage after Garden ↔ Landing roundtrip, old-save migration on real iPhone, and an isolated segment checkpoint. The product owner did not explicitly grant main-merge/public-release approval in the response above. Preserve the reviewed B-line coordinates `(1398,740) → (1398,844)`, all historical record entries, and `DEVICE_RESULT: PENDING` in PR metadata until the applicable final gates are actually met.
+
+
+## PR #154 east passage B-line — completed Garden ↔ Landing roundtrip (2026-10-15)
+
+Owner supplied confirmation **「問題ないので次に進めて」** directly in reply to the single specified check **「イベント完了後に庭園 → 離着陸場 → 庭園と移動し、戻っても東側通路が開放されたままか」**. The most recently supplied game link was the immutable normal-route `587ed2e16b6e484993a54aca53a8eb4384188f39/index.html` used in this PR's iPhone testing context.
+
+| Check | Fixed runtime SHA | Result | Evidence boundary |
+|---|---|---|---|
+| After completed Star Gate/Aftermath, Garden → Landing → Garden and B-line remains open after return | `587ed2e16b6e484993a54aca53a8eb4384188f39` | **PASS — human-reported single scenario** | Does not certify repeated joystick/tap contact, mid-event cancellation/reload, failed storage, old-save migration, general audio/visual gameplay regression or iPad |
+
+This supplements, but does not replace, the already recorded normal-route 3-item human report (pre-event warning/closure; after-final-Aftermath opening; reload/Continue keeps passage open). **Combined evidence: four specifically asked normal-route checks confirmed by owner at one unchanged executable runtime**, plus 518/518 automated regression on that code. No inference of full Device Gate or author permission to merge main; historical preview-source/independent-checkpoint gap remains outside the observed tests. PR `DEVICE_RESULT: PENDING` and Draft status stay in place until the remaining specific release criteria and merge authorization are satisfied.
