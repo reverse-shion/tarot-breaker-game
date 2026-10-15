@@ -99,16 +99,16 @@ Title and Alenon runtime exist on the Phase 2A-6A candidate branch; release stat
 Four `public-continue-alenon-*` fixtures are registered and exercise the real Public adapter using injected session-only storage. Detached Journey projection and contained PAD departure preserve zero Production writes in these fixtures. They do not prove the Production roundtrip. Full details and pending Device checklist: implementation contract §13. No historical device record is changed or transferred.
 
 
-## EC-005 — East Passage B-line / Star Sand route knowledge (foundation)
+## EC-005 — East Passage B-line / Star Sand route knowledge (Draft PR #154)
 
 event_id: garden-east-passage
 map: star_gate_garden
-status: NOT TESTED / foundation only
-productionEnabled: false
-segment: east-passage-b-line — NOT TESTED
-start_event: tarot-breaker:star-sand-route-known — RESERVED, not emitted by the game
-progress_changes: none currently; proposed independent typed event garden_star_sand_route_known (not registered in Progress yet)
-return_behavior: locked Garden, normal Star Gate, Continue and Garden-to-Landing routes are unchanged
+status: IMPLEMENTED / normal-route candidate only / NOT DEVICE VERIFIED
+productionEnabled: true on feature branch (does NOT imply merged main or public release)
+segment: east-passage-b-line — IMPLEMENTED, pending full iPhone Device Gate
+start_event: tarot-breaker:star-sand-route-known — RESERVED; the production event uses validated Aftermath completion to persist its independent typed fact, not a new emitted signal
+progress_changes: adds durable event `garden_star_sand_route_known` after successful validated Star Gate Aftermath final completion; existing saves with validated completed Star Gate are migrated when restored in Garden; failed writes never claim durable unlock
+return_behavior: normal Garden, Star Gate, Continue, follower and Garden-to-Landing routes preserved
 implementation_contract: docs/garden-east-passage-b-implementation-contract.md
 
-B-line segment calculations are unit-test-only. Current Garden HTML does not load garden-east-passage.js. No player-visible closure, opening or dialogue exists yet. Exact boundary geometry and durable migration require independent validation. Do not grant Device PASS or main merge for this foundation.
+Current Draft candidate **does** load `garden-east-passage.js` from Garden `index.html`, guard the player (not NPC) crossing, and use the shared dialogue UI for Shion's warning. Fixed B-line candidate: (1398, 740) → (1398, 844). The author confirmed the warning position is correct on 2026-10-15; this is **position-only acceptance**, not proof that before/after event, interruption, tap-to-move, Save/Continue or roundtrip checks passed on a specific device. Automated CI on `cb1669250987fd4770b0146e11df4702140d7c9a` reported 515/515 PASS; any later test/doc commits require a fresh CI check. Full Device Gate, independent integration review, main merge and publication remain PENDING. Do not infer global DEVICE VERIFIED from position feedback.
