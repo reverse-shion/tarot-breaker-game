@@ -83,7 +83,7 @@ test('actual game exports public Scene/P0/Aftermath/camera without a developer f
  assert.equal(h.errors.length,0);
 });
 
-test('actual public Aftermath emits final completion only after both talks/departure; observer then writes once',async()=>{
+test('actual public Aftermath saves completion and Star Sand knowledge only after both talks and departure',async()=>{
  const fixture=fs.readFileSync('tests/star-gate-aftermath.test.cjs','utf8'),f={require,__dirname,AbortController};
  vm.runInNewContext(fixture.slice(0,fixture.indexOf("test('")),f);
  const p=harness();
@@ -97,7 +97,7 @@ test('actual public Aftermath emits final completion only after both talks/depar
  await f.drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');await first;assert.equal(p.writes(),0);
  actor=h.state().actors.lumiere;h.movePlayer(actor.x,actor.y+18);const second=h.window.TarotStarGateAftermath.talk('lumiere');
  await f.drive(h,()=>h.window.TarotStarGateAftermath.getState().completed,2500);assert.equal(await second,true);
- assert.equal(p.writes(),1);assert.equal(h.window.TarotStarGatePublic.getState().persisted,true);
+ assert.equal(p.writes(),2);assert.equal(p.progress.isEventCompleted('garden_star_gate_anomaly'),true);assert.equal(p.progress.isEventCompleted('garden_star_sand_route_known'),true);assert.equal(h.window.TarotStarGatePublic.getState().persisted,true);
  assert.equal(h.state().following,true);assert.equal(h.state().lumiereEnabled,false);assert.equal(h.state().owner,null);
 });
 
