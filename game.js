@@ -123,6 +123,12 @@
   let leavingMap = false;
   let gardenExitArmed = false;
   let gardenExitRef = { ...DEFAULT_SPAWN };
+  const eastPassage = window.TarotGardenEastPassage;
+  const eastPassageLine = eastPassage?.B_LINE;
+  const eastPassageFeedback = eastPassage?.createFeedbackThrottle?.(1500);
+  let eastPassageAttempt = false;
+  let eastPassageDialogue = null;
+  let eastPassageDialogueActive = false;
   let last = 0;
   let anim = 0;
   let lumiereManifest;
@@ -381,8 +387,27 @@
     } : data);
     walkAreas = collision.areas;
     collisionVersion = collision.version;
+    // The authored pathfinder remains unchanged across lock/unlock.
+    // Guard player movement only; scripted actors, map surfaces and
+    // verified Garden exits continue to use the base collision.
+    const playerCollision = enteringGardenRuntime && eastPassage?.validLine?.(eastPassageLine) ? {
+      ...collision,
+      segmentClear(from, to) {
+        if (!collision.segmentClear(from, to)) return false;
+        if (eastPassage.routeKnown(window.TarotStarGateProgress)) return true;
+        if (!eastPassage.wouldBlock(from, to, eastPassageLine, false)) return true;
+        // Navigation search may probe the wall from far away. Only a
+        // nearby step originating from Shion may trigger his remark.
+        if (running && !eastPassageDialogueActive && !sceneLockOwner &&
+            refDistance(from, playerRef()) <= 9 &&
+            eastPassage.distanceToLine(playerRef(), eastPassageLine) <= 36) {
+          eastPassageAttempt = true;
+        }
+        return false;
+      },
+    } : collision;
     navigation = createNavigator(collision, 16);
-    controls = createControls(collision, navigation);
+    controls = createControls(playerCollision, navigation);
   }
 
   function findNearestSpawnRef() {
@@ -744,11 +769,38 @@
     return true;
   }
 
+  function showEastPassageDialogue() {
+    if (!eastPassageAttempt || !eastPassageFeedback) return;
+    eastPassageAttempt = false;
+    if (!running || eastPassageDialogueActive || sceneLockOwner ||
+        outsideInteraction || window.TarotDialogue?.getState?.().active) return;
+    if (!eastPassageFeedback.permit(performance.now())) return;
+    if (!window.TarotDialogueUI?.create) return;
+    if (!eastPassageDialogue) {
+      eastPassageDialogue = window.TarotDialogueUI.create({
+        mount: document.getElementById("game-shell"),
+        ids: {layer: "east-passage-dialogue", advance: "east-passage-advance",
+          speaker: "east-passage-speaker", text: "east-passage-text"},
+        onAdvance() {
+          eastPassageDialogue?.hide();
+          eastPassageDialogueActive = false;
+          if (!sceneLockOwner && !outsideInteraction) controls?.resume();
+        },
+      });
+    }
+    eastPassageDialogueActive = true;
+    controls?.suspend();
+    syncStick();
+    eastPassageDialogue.show({actor: "shion", speaker: "シオン",
+      text: "……この先は、しばらく使っていない道だ。今は引き返そう。"});
+  }
+
   function updatePlayer(dt) {
     if (leavingMap) return;
     if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
+    if (eastPassageAttempt) showEastPassageDialogue();
 
     // A proximity event can begin inside the wrapped controls.step call.
     if (stageMotions.shion) {
