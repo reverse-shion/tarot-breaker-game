@@ -76,6 +76,33 @@
       durableWritePolicy: "production writes forbidden; checkpoint-specific dev session only at authored event completion" });
   }
 
+  // East-passage-only session checkpoints. Real Garden collision + controls,
+  // but no production Progress/localStorage, Aftermath shortcut or synthetic event emission.
+  for (const [id, facts] of [
+    ["garden-resume-east-passage-locked", [...allEvents]],
+    ["garden-resume-east-passage-open", [...allEvents, "garden_star_gate_anomaly", "garden_star_sand_route_known"]],
+  ]) {
+    const fixture = Object.freeze({
+      version: 1,
+      checkpoint: Object.freeze({ mapId: "star_gate_garden", spawnId: "south_gate" }),
+      completedEvents: Object.freeze(facts),
+      companion: "joined_with_shion",
+    });
+    register(id, {
+      event: "garden-east-passage", segment: "east-passage-b-line",
+      map: "star_gate_garden", spawn: "south_gate", temporaryState: fixture,
+      requiredRuntime: Object.freeze([
+        "index.html", "garden-resume.js", "garden-progress-observer.js",
+        "game.js", "garden-east-passage.js", "controls.js",
+      ]),
+      entryAction: "registered ?dev=" + id + " and walk to the photographed B-line",
+      emittedSignal: "tarot-breaker:garden-resume-ready",
+      receivingRuntime: "real Garden strict Continue boot with session-only typed Progress and real player collision",
+      expectedFirstRuntimeState: "south_gate Garden with normal actor movement; B-line " + (id.endsWith("open") ? "unlocked" : "locked"),
+      durableWritePolicy: "production writes forbidden; independent sessionStorage key per fixture",
+    });
+  }
+
   register("star-gate-full", {event:"star-gate-anomaly",segment:"future-fixation-stage3",map:"star_gate_garden",spawn:"gate approach (810,177)",
     temporaryState:Object.freeze({completedEvents:allEvents,companion:"joined_with_shion"}),
     requiredRuntime:Object.freeze(["game.js","stage3-dev-bootstrap.js","star-gate-interaction.js","future-stage3.js","future-vision-audio.js","star-gate-anomaly.js","star-gate-aftermath.js"]),
