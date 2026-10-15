@@ -7,6 +7,12 @@
   'use strict';
   const KNOWLEDGE_EVENT = 'garden_star_sand_route_known';
   const REF = Object.freeze({ width: 1448, height: 1086 });
+  // Photo-based B candidate: eastern lower path, not the whole east courtyard.
+  // iPhone foot-point calibration is still required before this can enter main.
+  const B_LINE = Object.freeze({
+    a: Object.freeze({ x: 1398, y: 740 }),
+    b: Object.freeze({ x: 1398, y: 844 }),
+  });
   const EPS = 1e-8;
   const finite = p => p && Number.isFinite(p.x) && Number.isFinite(p.y);
   function validPoint(p) {
@@ -47,6 +53,12 @@
       throw new TypeError('East passage line and footpoints must use authored reference pixels');
     return !known && intersects(from, to, line.a, line.b);
   }
+  function distanceToLine(point, line = B_LINE) {
+    if (!validPoint(point) || !validLine(line)) throw new TypeError('Invalid passage geometry');
+    const dx = line.b.x - line.a.x, dy = line.b.y - line.a.y;
+    const t = Math.max(0, Math.min(1, ((point.x - line.a.x) * dx + (point.y - line.a.y) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(point.x - line.a.x - t * dx, point.y - line.a.y - t * dy);
+  }
   function createFeedbackThrottle(intervalMs = 1500) {
     if (!Number.isFinite(intervalMs) || intervalMs < 0) throw new TypeError('Invalid feedback interval');
     let last = -Infinity;
@@ -60,5 +72,5 @@
       reset() { last = -Infinity; },
     });
   }
-  return Object.freeze({ KNOWLEDGE_EVENT, REF, validLine, routeKnown, wouldBlock, createFeedbackThrottle });
+  return Object.freeze({ KNOWLEDGE_EVENT, REF, B_LINE, validLine, routeKnown, wouldBlock, distanceToLine, createFeedbackThrottle });
 });
