@@ -44,6 +44,10 @@
       eventId: "garden_star_gate_anomaly", mapId: "star_gate_garden",
       checkpointSpawnId: "south_gate", requires: Object.freeze(["garden_lumiere_gate"]),
     }),
+    garden_star_sand_route_known: Object.freeze({
+      eventId: "garden_star_sand_route_known", mapId: "star_gate_garden",
+      checkpointSpawnId: "south_gate", requires: Object.freeze(["garden_lumiere_gate"]),
+    }),
   });
 
   const companionStates = Object.freeze([
