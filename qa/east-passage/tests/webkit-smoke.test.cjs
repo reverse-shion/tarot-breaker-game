@@ -130,7 +130,10 @@ test('WebKit mobile viewport: pending Aftermath Continue and browser reload neve
   await page.waitForFunction(()=>window.TarotGardenContinueTransit?.ok===true,null,{timeout:30000});
   await assertGardenReady(page,false,'pending-initial');
   await assertTouchMovement(page,'pending-initial');
-  await page.reload({waitUntil:'load'});
+  assert.match(page.url(),/\/index\.html\?entry=continue$/, 'touch input must not trigger another route before manual reload');
+  // DOMContentLoaded plus explicit Title URL/Continue checks avoid a WebKit
+  // load-event hang hiding whether the one-shot-token redirect succeeded.
+  await page.reload({waitUntil:'domcontentloaded',timeout:45000});
   // Reloading a one-shot internal runtime URL must fail closed to Title.
   // Resume through official Title once more rather than bypassing the token.
   await page.waitForURL(/\/index\.html$/,{timeout:30000});
@@ -162,7 +165,10 @@ test('WebKit mobile viewport: legacy save migrates in real Garden Continue; isol
   },KEY,{timeout:40000});
   const migrated=JSON.parse(await save(page));
   assert.equal(migrated.completedEvents.filter(x=>x==='garden_star_sand_route_known').length,1);
-  await page.reload({waitUntil:'load'});
+  assert.match(page.url(),/\/index\.html\?entry=continue$/, 'touch input must not trigger another route before manual reload');
+  // DOMContentLoaded plus explicit Title URL/Continue checks avoid a WebKit
+  // load-event hang hiding whether the one-shot-token redirect succeeded.
+  await page.reload({waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForURL(/\/index\.html$/,{timeout:30000});
   const resume=page.locator('#continue');
   await resume.waitFor({state:'visible',timeout:30000});
