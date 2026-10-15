@@ -7,7 +7,7 @@
   const id = params.get("dev") || "";
   const from = params.get("from");
   const landingTransit = from === "landing" && /^landing-resume-(arrival|memory-complete|waiting)$/.test(id);
-  const gardenResume = !params.has("from") && /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(id);
+  const gardenResume = !params.has("from") && /^garden-resume-(before-shiopon|after-shiopon|after-lumiere|east-passage-locked|east-passage-open)$/.test(id);
   const publicGardenResume = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
     !params.has("from") && !params.has("dev");
   if (!landingTransit && !gardenResume && !publicGardenResume) return;
