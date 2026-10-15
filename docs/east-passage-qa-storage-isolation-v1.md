@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 Scope: risk assessment and acceptance design ONLY
-Status: GUARDED QA LAUNCHER IMPLEMENTED / APPROVED ORIGIN EMPTY / NOT DEVICE-USABLE / NO NEW DEVICE URL
+Status: READ-ONLY RESEARCH / NOT IMPLEMENTED / NO NEW DEVICE URL
 Review basis: PR #154 normal-route executable SHA `587ed2e16b6e484993a54aca53a8eb4384188f39`; later branch commits are docs and tests only.
 Priority: CRITICAL for any further destructive/interrupted-save/manual legacy-migration device tests.
 Main merge / public production release: NOT APPROVED.
@@ -22,16 +22,6 @@ Main merge / public production release: NOT APPROVED.
 3. Failed writes — **CONFIRMED design behavior**. `routeKnown()` requires persisted knowledge; a permanently unavailable storage provider leaves B blocked even if the scene completes. Fail-closed protects against false durable progress but can trap the player. Owner decision required before changing policy: (A) preserve locked behavior with actionable error/retry, or (B) allow a separately flagged session-only post-verified-Aftermath passage with no durable-continue claim. Do not silently toggle policy in this QA task.
 4. Contract wording — **AMBIGUOUS STATUS, not necessarily a contradiction**. `event-contracts.json` `productionEnabled:true` describes that the candidate's normal Garden runtime is wired on its feature branch; it does NOT mean main production is published. `NOT DEVICE VERIFIED` means the **overall** gate is pending while Registry records four human-scoped PASS checks. Future contract wording should explicitly state `candidateWired:true / releasedOnMain:false / scopedDeviceChecks:4 PASS / overallDeviceGate:PENDING` in prose or a compatible schema without weakening existing event-contract tests.
 5. Save isolation — **HIGH CONFIDENCE risk from code + Web Storage model**. Same-origin RawGitHack SHA previews default to one `localStorage` area and same progress key. No QA code may invoke resetting/overwriting that area as an allegedly isolated fixture. Confirm final origin and all storage read/write/readback paths before creating the next migration test.
-
-## Implemented QA-safe launcher (2026-10-15)
-
-- New isolated-purpose files under `qa/east-passage/`: `index.html`, `qa-safety.js`, `approved-origin.js`, `launcher.js` and `README.md`.
-- The guard denies storage access by default; the approved origin is intentionally the empty string. It rejects known saved-data hosts, including any GitHub Pages host, RawGitHack host, GitHub / raw-content host, localhost and IP literals, even if entered as an approved origin.
-- Only an explicitly configured exact distinct HTTPS origin, an empty disposable QA Progress key and a direct user click can seed a validated Progress v1 fixture. The launcher always refuses to overwrite an existing QA save, never imports/copies an existing user save, and cannot be reached through normal game HTML.
-- Two synthetic states available: `pending-aftermath` for a real Garden Continue before the gate event and `legacy-completed` for a real completed-Gate Continue before the Star Sand route migration. These are isolated QA seed fixtures, not actual past user save bytes.
-- `tests/east-passage-qa-isolation.test.cjs` checks the origin guard, disabled configuration, strict fixture validation, readback, denial and no auto-write. GitHub Actions Validate #38753129387 at `913bf7e8a2c7d0926b30355dc94a64659dd1c9c2` reported **530/530 PASS**. Subsequent documentation-only commits need a fresh CI confirmation.
-- **External dependency still missing:** a genuinely separate deployed QA hostname with the complete PR feature branch as the static web root. No DNS/deployment secret/approved origin is configured. Therefore there is NO authorized working QA URL yet, and zero new real-device QA outcomes. See `qa/east-passage/README.md`.
-- Since executable QA files were added, the branch diff is no longer docs-and-tests-only. The **normal game runtime** (`index.html`, `game.js`, `star-gate-public.js`, `progress.js`, original assets, map collision and B-line) remains unchanged compared with the owner-tested SHA. QA-only launcher must undergo independent review when an origin is provisioned.
 
 ## Safe QA architecture and acceptance gates
 
