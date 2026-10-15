@@ -3,12 +3,13 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const gate = require('../garden-east-passage.js');
 const B = Object.freeze({a:{x:100,y:20},b:{x:100,y:80}});
-const p = events => ({getCurrentState:()=>({state:{completedEvents:events}})});
+const p = events => ({getCurrentState:()=>({persisted:true,state:{completedEvents:events}})});
 test('star-sand knowledge must have its own progression event, not Star Gate completion',()=>{
   assert.equal(gate.KNOWLEDGE_EVENT,'garden_star_sand_route_known');
   assert.equal(gate.routeKnown(p([])),false);
   assert.equal(gate.routeKnown(p(['garden_star_gate_anomaly'])),false);
   assert.equal(gate.routeKnown(p([gate.KNOWLEDGE_EVENT])),true);
+  assert.equal(gate.routeKnown({getCurrentState:()=>({persisted:false,state:{completedEvents:[gate.KNOWLEDGE_EVENT]}})}),false);
   assert.equal(gate.routeKnown(null),false);
   assert.equal(gate.routeKnown({getCurrentState(){throw Error('storage');}}),false);
   assert.equal(gate.routeKnown({getCurrentState:()=>({state:{completedEvents:null}})}),false);
