@@ -90,7 +90,11 @@ test('older Star Gate-completed save migrates exactly once, restores gate, and r
   assert.equal(h.writes(),1,'migration adds only the missing dedicated event');
   assert.equal(h.api.restoreCompleted(),false);
   assert.equal(h.writes(),1,'repeat restore must not duplicate writes');
-  const loaded=reload(h);
+  let bytes=h.bytes();
+  const isolatedStore={getItem:(key)=>key===core.STORAGE_KEY?bytes:null,
+    setItem:(key,value)=>{assert.equal(key,core.STORAGE_KEY);bytes=value;}};
+  const loaded=core.createProgress({storage:isolatedStore});
+  assert.equal(loaded.load().status,'valid');
   assert.equal(passage.routeKnown(loaded),true);
   assert.equal(loaded.commitArrival({sourceMapId:'star_gate_garden',
     destinationMapId:'star_country_landing',spawnId:'garden_entrance',
@@ -99,5 +103,5 @@ test('older Star Gate-completed save migrates exactly once, restores gate, and r
     destinationMapId:'star_gate_garden',spawnId:'south_gate',
     reason:'gate_to_garden'}).persisted,true);
   assert.equal(passage.routeKnown(loaded),true);
-  assert.equal(h.bytes().includes('garden_star_sand_route_known'),true);
+  assert.equal(bytes.includes('garden_star_sand_route_known'),true);
 });
