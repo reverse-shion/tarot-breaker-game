@@ -51,7 +51,7 @@ test('v1 registry contains exactly the contracted semantic IDs and immutable met
   assert.equal(STORAGE_KEY, 'tarot-breaker:progress-v1');
   assert.deepEqual(Object.keys(Registry.maps), ['alenon', 'star_country_landing', 'star_gate_garden']);
   assert.deepEqual(Object.keys(Registry.events), [
-    'alenon_prologue', 'landing_devil_memory', 'garden_shiopon_meet', 'garden_lumiere_gate', 'garden_star_gate_anomaly',
+    'alenon_prologue', 'landing_devil_memory', 'garden_shiopon_meet', 'garden_lumiere_gate', 'garden_star_gate_anomaly', 'garden_star_sand_route_known',
   ]);
   assert.deepEqual(Registry.companionStates, ['not_joined', 'joined_with_shion', 'waiting_at_landing']);
   assert.deepEqual(Registry.maps.alenon.spawnIds, ['intro', 'pad_return']);
