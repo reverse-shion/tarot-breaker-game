@@ -2,7 +2,7 @@
 (() => {
  'use strict';
  if(window.__TAROT_PUBLIC_STAR_GATE__!==true||window.__TAROT_DEV_STAGE3__===true)return;
- const EVENT='garden_star_gate_anomaly';
+ const EVENT='garden_star_gate_anomaly',ROUTE_KNOWN='garden_star_sand_route_known';
  let sessionCompleted=false,persisted=false,error=null,restored=false,consumedId=null;
  const progress=()=>window.TarotStarGateProgress;
  function current(){
@@ -14,6 +14,23 @@
   return !!(state&&state.checkpoint.mapId==='star_gate_garden'&&
    state.companion==='joined_with_shion'&&state.completedEvents.includes('garden_lumiere_gate')&&
    story&&story.shioponDone===true&&story.lumiereDone===true&&story.joined===true&&!story.active&&!done());
+ }
+ // The independent Star Sand fact is written only after the validated final
+ // Aftermath saved Star Gate completion. Also migrates verified older saves:
+ // those players already heard the C16 Star Sand decision in their completed run.
+ function ensureRouteKnown(){
+  const state=current();
+  if(!state?.completedEvents?.includes(EVENT))return false;
+  if(state.completedEvents.includes(ROUTE_KNOWN))return true;
+  try{
+   const written=progress()?.completeEvent(ROUTE_KNOWN,{mapId:'star_gate_garden',spawnId:'south_gate'});
+   if(!written?.persisted)throw new Error(written?.reason||'route-knowledge-write-unavailable');
+   const loaded=window.TarotProgressCore.createProgress().load();
+   if(loaded.status!=='valid'||!loaded.state.completedEvents.includes(ROUTE_KNOWN)||
+      !loaded.state.completedEvents.includes(EVENT)||loaded.state.checkpoint.mapId!=='star_gate_garden')
+     throw new Error('route-knowledge-readback-failed');
+   return true;
+  }catch(e){console.warn('[Star Sand Progress]',String(e));return false;}
  }
  function prepareRestoration(){
   if(!done())return Promise.resolve();
@@ -33,6 +50,7 @@
   if(window.TarotStarGateAnomaly?.restoreCompletedGate?.()!==true)throw new Error('Completed Star Gate restoration unavailable');
   scene.setLumiereDeparted(true);
   if(scene.getState().lumiereEnabled!==false)throw new Error('Completed Lumiere departure restoration failed');
+  ensureRouteKnown();
   restored=true;return true;
  }
  function observe(event){
@@ -55,6 +73,7 @@
    if(loaded.status!=='valid'||!loaded.state.completedEvents.includes(EVENT)||
       loaded.state.checkpoint.mapId!=='star_gate_garden'||loaded.state.companion!=='joined_with_shion')throw new Error('completion-readback-failed');
    persisted=true;
+   ensureRouteKnown();
   }catch(e){error=String(e);console.warn('[Star Gate Progress]',error);}
  }
  window.addEventListener('tarot-breaker:aftermath-ended',observe);
