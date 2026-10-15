@@ -76,9 +76,7 @@ test('official index loads the passage guard before game, and only the player co
  assert.ok(html.includes('garden-east-passage.js?v=20261015-b1'));
  assert.ok(html.indexOf('garden-east-passage.js')<html.indexOf('game.js?v='));
  assert.match(game,/navigation = createNavigator\(collision, 16\);\s*controls = createControls\(playerCollision, navigation\);/);
- assert.match(game,/eastPassage\.routeKnown\(factSource\)/);
- assert.match(game,/bLineDev && !window\.__TAROT_PUBLIC_STAR_GATE__/);
- assert.match(game,/: window\.TarotStarGateProgress;/);
+ assert.match(game,/eastPassage\.routeKnown\(window\.TarotStarGateProgress\)/);
  assert.match(game,/eastPassageDialogue\.show\(\{actor: "shion", speaker: "シオン"/);
 });
 
