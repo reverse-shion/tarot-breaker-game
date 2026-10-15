@@ -61,3 +61,9 @@ The initial 515/515 candidate was verified by GitHub Actions. A later test-only 
 The owner tested the fixed-SHA normal title entry `587ed2e16b6e484993a54aca53a8eb4384188f39` against three explicitly stated checks and answered 「問題なかったよ」. The scope reported PASS is: (1) pre-event B closure and Shion warning, (2) unlocked B after full Aftermath, (3) reopened route remains unlocked after reload/Continue. Confirmed position remains unchanged. Evidence recorded in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
 
 This is a **scoped 3/3 Device PASS**, not full certification of all device smoke requirements. The integration/release gate remains PENDING for the independent unverified scenarios: Garden↔Landing roundtrip after unlock; repeat tap/joystick handling; interruptions/fail-closed storage; pre-route partial progress and existing-save compatibility. No executable changes, no main merge and no production deployment were made to obtain this evidence.
+
+## Human post-event roundtrip acceptance — 2026-10-15
+
+The owner responded 「問題ないので次に進めて」 to the exact requested test "After event completion, Garden → Landing → Garden, and eastern B route remains open". Runtime is the last user-supplied fixed normal entry `587ed2e16b6e484993a54aca53a8eb4384188f39`; there were no intervening changes to executable files. **Scoped iPhone human PASS** for this single roundtrip, in addition to earlier three confirmed checkpoints. Human evidence logged in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
+
+Remaining release-verification scope (not silently upgraded): repeated joystick/rapid taps and dialogue dismissal, interruption before complete Aftermath (must remain blocked), failed storage handling and historical completed-save migration as applicable, previously identified isolated-checkpoint restriction, final independent reviewer follow-up, owner merge approval. Keep Draft and main untouched until full gate evidence.
