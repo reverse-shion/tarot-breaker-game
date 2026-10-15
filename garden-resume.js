@@ -53,7 +53,8 @@
     const params = new URLSearchParams(search || "");
     const definition = checkpoints.resolve(search);
     if (!definition || !definition.id.startsWith(DEV_PREFIX) || definition.map !== MAP_ID ||
-        definition.event !== "garden-landing-continue-recovery" || definition.segment !== "garden-resume-entry" ||
+        !((definition.event === "garden-landing-continue-recovery" && definition.segment === "garden-resume-entry") ||
+          (definition.event === "garden-east-passage" && definition.segment === "east-passage-b-line")) ||
         params.getAll("dev").length !== 1 || params.has("from") ||
         ["padEdit", "debug", "collision", "passage", "edit", "objects"].some(key => params.has(key)))
       return Object.freeze({ok:false, reason:"invalid-development-entry"});
