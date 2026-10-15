@@ -79,3 +79,68 @@ test('official index loads the passage guard before game, and only the player co
  assert.match(game,/eastPassage\.routeKnown\(window\.TarotStarGateProgress\)/);
  assert.match(game,/eastPassageDialogue\.show\(\{actor: "shion", speaker: "シオン"/);
 });
+
+test('tap-to-move attempts are blocked and later recover without a navigator rebuild',()=>{
+  const {gardenRuntime}=require('./helpers/garden-runtime.cjs');
+  const {createControls}=require('../controls.js');
+  const {createNavigator}=require('../blocked-collision.js');
+  const base=gardenRuntime().collision;
+  const from={x:1393,y:800}, destination={x:1410,y:800};
+  assert.equal(base.segmentClear(from,destination),true,'original official path is still open');
+  let known=false;
+  const collision={...base,segmentClear:(a,b)=>base.segmentClear(a,b) &&
+    !gate.wouldBlock(a,b,gate.B_LINE,known)};
+  const controls=createControls(collision,createNavigator(base,16));
+  assert.ok(controls.tap(destination,from),'normal navigator can target east road');
+  const locked=controls.step(from,0.05,155);
+  assert.ok(locked.x<1398,'navigation cannot step through the locked line');
+  assert.equal(controls.state.cancelReason,'blocked');
+  known=true;
+  assert.ok(controls.tap(destination,from),'tap can be retried after durable unlock');
+  const opened=controls.step(from,0.05,155);
+  assert.ok(opened.x>1398,'the same controls object crosses after unlock');
+});
+test('independent durable knowledge remains correct on reload and Garden/Landing roundtrip',()=>{
+  const {createProgress,STORAGE_KEY}=require('../progress.js');
+  const memory=new Map();
+  memory.set(STORAGE_KEY,JSON.stringify({
+    version:1,checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},
+    completedEvents:['alenon_prologue','landing_devil_memory','garden_shiopon_meet','garden_lumiere_gate'],
+    companion:'joined_with_shion'
+  }));
+  const storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
+  const progress=createProgress({storage});
+  assert.equal(progress.load().status,'valid');
+  assert.equal(gate.routeKnown(progress),false);
+  assert.equal(progress.completeEvent('garden_star_gate_anomaly',
+    {mapId:'star_gate_garden',spawnId:'south_gate'}).persisted,true);
+  assert.equal(gate.routeKnown(progress),false,'Star Gate completion alone is not authorization');
+  assert.equal(progress.completeEvent(gate.KNOWLEDGE_EVENT,
+    {mapId:'star_gate_garden',spawnId:'south_gate'}).persisted,true);
+  assert.equal(gate.routeKnown(progress),true);
+  const reopened=createProgress({storage});
+  assert.equal(reopened.load().status,'valid');
+  assert.equal(gate.routeKnown(reopened),true,'reload preserves the independent fact');
+  reopened.commitArrival({sourceMapId:'star_gate_garden',destinationMapId:'star_country_landing',
+    spawnId:'garden_entrance',reason:'garden_to_landing'});
+  assert.equal(gate.routeKnown(reopened),true,'fact survives Garden exit');
+  reopened.commitArrival({sourceMapId:'star_country_landing',destinationMapId:'star_gate_garden',
+    spawnId:'south_gate',reason:'gate_to_garden'});
+  const afterRoundtrip=createProgress({storage});
+  assert.equal(afterRoundtrip.load().status,'valid');
+  assert.equal(gate.routeKnown(afterRoundtrip),true,'return and Continue retain independent fact');
+});
+test('event contract matches actual wired Draft, with no implied Device verification',()=>{
+  const fs=require('node:fs');
+  const contract=JSON.parse(fs.readFileSync('event-contracts.json','utf8'));
+  const event=contract.events['garden-east-passage'];
+  assert.equal(event.status,'IMPLEMENTED');
+  assert.equal(event.productionEnabled,true,'candidate is wired on ordinary Garden entry');
+  assert.equal(event.segments['east-passage-b-line'],'IMPLEMENTED');
+  const docs=fs.readFileSync('docs/EVENT_CONTRACTS.md','utf8');
+  assert.match(docs,/EC-005[^]*status: IMPLEMENTED \/ normal-route candidate only/);
+  assert.match(docs,/pending full iPhone Device Gate/);
+  assert.match(docs,/position-only acceptance/);
+  const html=fs.readFileSync('index.html','utf8');
+  assert.match(html,/garden-east-passage\.js/);
+});
