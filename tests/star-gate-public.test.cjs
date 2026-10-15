@@ -121,3 +121,15 @@ test('actual Continue revalidation rebinds the real meeting observer and Star Ga
  assert.equal(c.TarotStarGatePublic.canInvestigate(),true);assert.equal(JSON.parse(bytes).completedEvents.includes('garden_lumiere_gate'),true);
  assert.equal(original.isEventCompleted('garden_lumiere_gate'),false);
 });
+
+test('older completed Garden save remains safe when Star Sand migration cannot persist',async()=>{
+ const h=harness({completed:true,writeFailure:true});
+ await h.api.prepareRestoration();
+ assert.equal(h.api.restoreCompleted(),true,'existing completed Gate restoration still succeeds');
+ const gate=require('../garden-east-passage.js');
+ assert.equal(gate.routeKnown(h.progress),false,'volatile route knowledge cannot grant durable passage');
+ assert.equal(h.progress.getCurrentState().persisted,false);
+ assert.equal(JSON.parse(h.bytes()).completedEvents.includes('garden_star_sand_route_known'),false);
+ assert.equal(JSON.parse(h.bytes()).completedEvents.includes(EVENT),true);
+ assert.equal(h.scene.gateRestored,true);
+});
