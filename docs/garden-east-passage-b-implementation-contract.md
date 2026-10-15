@@ -3,7 +3,7 @@ Date: 2026-10-15
 Base main: `4d95d98bcac7723dfd006931400bf8b86ad212e0`
 Feature branch: `feature/garden-east-passage-b-foundation`
 Risk: HIGH once integrated (Progress / Save / collision / Tap-to-Move / iPhone)
-Status: FOUNDATION ONLY / NOT WIRED / DEVICE PENDING
+Status: IMPLEMENTED CANDIDATE / CI RUNNING / iPhone DEVICE PENDING / NO MAIN MERGE
 
 ## Author decision / accepted scope
 - 「庭園右側の旧道」＝「東側通路」＝「星砂方面の出口」。写真内でシオンが立っていた柱の脇にある封鎖位置、**B案**を採用。庭園の東側全域を封鎖しない。
@@ -20,18 +20,28 @@ Status: FOUNDATION ONLY / NOT WIRED / DEVICE PENDING
 - Existing users may have completed Star Gate in their durable save. Transition to a new independent knowledge fact must preserve their progress safely; do not lock prior completed saves on update.
 
 ## Technical design (foundation only)
-- New **unwired** pure module `garden-east-passage.js` exports `KNOWLEDGE_EVENT= garden_star_sand_route_known`, `routeKnown(progress)`, `wouldBlock(from,to,line,known)`, `createFeedbackThrottle(ms)`.
-- It contains **no guessed map coordinates, no storage writes, no DOM, no collision mutations**, and is not included in the live HTML.
-- The map-authoring B-line geometry is `{a:{x,y}, b:{x,y}}` in the original 1448×1086 reference coordinate system, with the precise endpoints deliberately **PENDING**: the screenshot is not stored in the repository as an anchored coordinate. Do not infer them from viewport pixels or invent a pillar coordinate.
-- Never turn this module on for production before that geometry is verified against both the image and the v6 collision walk graph.
+- Shared pure module `garden-east-passage.js` exports `KNOWLEDGE_EVENT= garden_star_sand_route_known`, `routeKnown(progress)`, `wouldBlock(from,to,line,known)`, `createFeedbackThrottle(ms)`.
+- Geometry is an explicit provisional candidate derived from the image + existing v6 polygon walk graph. The pure module itself never writes storage/DOM and does not mutate map collision.
+- `index.html` loads it before `game.js`; the **player's movement collision only** is guarded in `loadCollision()`, while the canonical navigation graph, NPC paths, map solids and Landing return remain unchanged.
+- Near an actual blocked crossing, `game.js` uses the existing shared Dialogue UI to show Shion's short one-line reaction; repeated contact is throttled and controls resume after dismissal.
+- `route-registry.js` registers independent typed semantic event `garden_star_sand_route_known` without modifying Progress v1 schema. `star-gate-public.js` writes it only after actual validated Aftermath completion + persisted Gate event (when C16 has been seen). For older saves already containing completed Gate event, it performs explicit legacy migration on Gate restore. Only durable confirmed knowledge opens the line.
+- The user supplied an updated iPhone screenshot showing Shion on the lower-right platform at the east passage. Candidate crossing line in 1448×1086 reference coordinates: **B_LINE (1398, 740) → (1398, 844)**. This is a geometrically tested candidate, NOT pixel-exact iPhone calibration. The author photograph is not a reproducible ref-point acquisition trace.
+- Polygon walkability sampling and coarse route BFS found the far-east walkable endpoint unreachable through the B-line when locked, without modifying the upper east courtyard. Exact artwork/footpoint alignment remains DEVICE PENDING.
+- **The branch is testable but NOT released**. Production main stays unchanged until the user confirms B-line placement and behavior on iPhone, and the independent integration/merge gates pass.
 
-## Remaining integration
-1. Fix B-line endpoints by comparing the user-selected screenshot with map-authoring reference coordinates and path intersections. Confirm a single reachable choke and no route around either endpoint before gating.
-2. Register a separate durable `garden_star_sand_route_known` event with explicit prerequisites. Record it when the C16 knowledge is genuinely delivered, using a safe durable boundary in the Aftermath completion/observer; prevent aborted/cancelled/partial runs from setting it. Preserve preexisting completed saves via verified backward-compatible migration or equivalent typed restoration; never infer unknown future flags from mere event success in general.
-3. Integrate boundary with **both** `collision.isWalkable` / `collision.segmentClear` and the tap-to-move navigator. Replan after unlocking without introducing a stuck route, teleport, or phantom blocked zones. Test foot-point handling and obstacle corner bypass.
-4. Add a short Shion-only one-time-per-attempt line (provisional wording 「この先は、しばらく使っていない道だ。今は引き返そう。」) as independent non-event dialogue; preserve event dialogue/gesture routing.
-5. Add explicit isolated checkpoint only with real runtime and no production save writes, then affected regression suite, GitHub CI, independent read-only review and iPhone B-line device checklist.
-6. No star-sand map transition in this ticket; new scene creation follows as a separate task. main merge and publication prohibited until all gates pass.
+## Current scope and remaining work (2026-10-15)
+1. Code candidate now includes B-line crossing, Shion's dialogue, independent durable knowledge fact, and old-save migration. No new map/scene transition has been created.
+2. Confirm actual Shion foot position and the B-line in the author's iPhone screenshot using the fixed-SHA dev checkpoint. If the dialogue starts too early/late, modify only the B-line endpoint coordinates; do not shift collision across the whole eastern courtyard.
+3. Run an independent read-only diff review against main. Verify player manual/tap blocking, dialogue closing/press-hold throttling, unrelated Garden walkability, event interruption, old/new Save/Continue, Landing roundtrip, star-gate visual/Audio and character movement.
+4. Run the complete baseline CI and targeted tests; preserve all locked contracts. The Main Merge Gate is expected to remain blocked while DEVICE_RESULT: PENDING. Never forge the Device Registry.
+5. Owner iPhone isolated and integration Device PASS at **exact tested runtime SHA** is required before merge. Do not merge or publish without the owner's explicit authorization for this HIGH gameplay change.
+
+## Automated evidence
+- Earlier candidate runtime `312d749dcf57707e78f92f8cee59002b0462471b`: [Validate #38737649188](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38737649188), **514/514 PASS**, failures 0, skips 0, known failures 0; this does **not** certify later changes.
+- Added fail-closed guard for nonpersistent Progress and legacy-write-failure regression test in subsequent runtime commits; re-run CI for the final exact SHA and record the result.
+- Main Merge Gate remains pending until independent review and user Device PASS; a failing device-registry check must not be presented as a code regression.
+- Screenshot-based B coordinate remains provisional and must not be recorded as human-device verified.
+- Main baseline remains `4d95d98bcac7723dfd006931400bf8b86ad212e0`.
 
 ## Acceptance checklist
 - Before Lumiere: locked at B; controls elsewhere function
@@ -43,4 +53,4 @@ Status: FOUNDATION ONLY / NOT WIRED / DEVICE PENDING
 - Existing Star Gate normal/corrupt, animations, music, dialogue, companion, south return unchanged
 
 ## Evidence boundary
-No preflight run or full Node regression was executed locally: there is no checkout or Git network in the current worker container. GitHub Actions may independently validate this proposed branch. Tests in `tests/garden-east-passage.test.cjs` are newly authored, not yet asserted PASS. This PR is not a finished gate.
+There is no local repository checkout available to the assistant runtime, so tests are executed through GitHub Actions on this PR. Device/UI exact position has not been confirmed. The candidate remains Draft and is not a finished Main Merge Gate.
