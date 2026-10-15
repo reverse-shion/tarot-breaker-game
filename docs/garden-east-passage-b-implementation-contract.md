@@ -3,7 +3,7 @@ Date: 2026-10-15
 Base main: `4d95d98bcac7723dfd006931400bf8b86ad212e0`
 Feature branch: `feature/garden-east-passage-b-foundation`
 Risk: HIGH once integrated (Progress / Save / collision / Tap-to-Move / iPhone)
-Status: IMPLEMENTED CANDIDATE / CI RUNNING / iPhone DEVICE PENDING / NO MAIN MERGE
+Status: IMPLEMENTED CANDIDATE / POSITION ACCEPTED / remaining Device Gate PENDING / NO MAIN MERGE
 
 ## Author decision / accepted scope
 - 「庭園右側の旧道」＝「東側通路」＝「星砂方面の出口」。写真内でシオンが立っていた柱の脇にある封鎖位置、**B案**を採用。庭園の東側全域を封鎖しない。
@@ -31,7 +31,7 @@ Status: IMPLEMENTED CANDIDATE / CI RUNNING / iPhone DEVICE PENDING / NO MAIN MER
 
 ## Current scope and remaining work (2026-10-15)
 1. Code candidate now includes B-line crossing, Shion's dialogue, independent durable knowledge fact, and old-save migration. No new map/scene transition has been created.
-2. Confirm actual Shion foot position and the B-line in the author's iPhone screenshot using the fixed-SHA dev checkpoint. If the dialogue starts too early/late, modify only the B-line endpoint coordinates; do not shift collision across the whole eastern courtyard.
+2. **Position confirmed**: on 2026-10-15 the owner answered 「位置は問題ないよ」 after the fixed candidate URL was supplied. Keep B_LINE (1398,740)→(1398,844) unchanged. This feedback verifies location only; it does not verify event-state release, interruption or Save/Continue on iPhone.
 3. Run an independent read-only diff review against main. Verify player manual/tap blocking, dialogue closing/press-hold throttling, unrelated Garden walkability, event interruption, old/new Save/Continue, Landing roundtrip, star-gate visual/Audio and character movement.
 4. Run the complete baseline CI and targeted tests; preserve all locked contracts. The Main Merge Gate is expected to remain blocked while DEVICE_RESULT: PENDING. Never forge the Device Registry.
 5. Owner iPhone isolated and integration Device PASS at **exact tested runtime SHA** is required before merge. Do not merge or publish without the owner's explicit authorization for this HIGH gameplay change.
@@ -40,7 +40,7 @@ Status: IMPLEMENTED CANDIDATE / CI RUNNING / iPhone DEVICE PENDING / NO MAIN MER
 - Earlier candidate runtime `312d749dcf57707e78f92f8cee59002b0462471b`: [Validate #38737649188](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38737649188), **514/514 PASS**, failures 0, skips 0, known failures 0; this does **not** certify later changes.
 - Added fail-closed guard for nonpersistent Progress and legacy-write-failure regression test in subsequent runtime commits; re-run CI for the final exact SHA and record the result.
 - Main Merge Gate remains pending until independent review and user Device PASS; a failing device-registry check must not be presented as a code regression.
-- Screenshot-based B coordinate remains provisional and must not be recorded as human-device verified.
+- B-line **position-only owner acceptance** recorded 2026-10-15. Do not upgrade this to full Human Device Gate PASS without the remaining checks.
 - Main baseline remains `4d95d98bcac7723dfd006931400bf8b86ad212e0`.
 
 ## Acceptance checklist
@@ -53,4 +53,4 @@ Status: IMPLEMENTED CANDIDATE / CI RUNNING / iPhone DEVICE PENDING / NO MAIN MER
 - Existing Star Gate normal/corrupt, animations, music, dialogue, companion, south return unchanged
 
 ## Evidence boundary
-There is no local repository checkout available to the assistant runtime, so tests are executed through GitHub Actions on this PR. Device/UI exact position has not been confirmed. The candidate remains Draft and is not a finished Main Merge Gate.
+The initial 515/515 candidate was verified by GitHub Actions. A later test-only update must be checked again. The user accepted the selected warning position; all other human Device Gates are pending. Candidate remains Draft and is not a finished Main Merge Gate.
