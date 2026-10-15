@@ -1,0 +1,35 @@
+name: East Passage isolated QA - WebKit
+
+on:
+  pull_request:
+    branches:
+      - feature/garden-east-passage-b-foundation
+    paths:
+      - "qa/east-passage/**"
+      - ".github/workflows/east-passage-webkit-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-webkit:
+    name: Isolated WebKit browser checks (NOT real iPhone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pinned Playwright and WebKit engine
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps webkit
+      - name: Verify QA approval is still disabled in checked-in source
+        shell: bash
+        run: |
+          grep -Eq 'TarotEastPassageQAApprovedOrigin = "";' qa/east-passage/approved-origin.js
+          node --check qa/east-passage/tests/webkit-smoke.test.cjs
+      - name: Run disposable virtual-HTTPS WebKit checks
+        run: node --test qa/east-passage/tests/webkit-smoke.test.cjs
