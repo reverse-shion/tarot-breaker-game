@@ -14,7 +14,7 @@
   const landingResumeDev = params.get("from") === "landing" &&
     /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "");
   const gardenResumeDev = !params.has("from") &&
-    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere|east-passage-locked|east-passage-open)$/.test(params.get("dev") || "");
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
   const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
     !params.has("from") && !params.has("dev");
 
