@@ -54,11 +54,11 @@
     },
     "garden-east-passage": {
       "map": "star_gate_garden",
-      "status": "NOT TESTED",
-      "productionEnabled": false,
+      "status": "IMPLEMENTED",
+      "productionEnabled": true,
       "startEvent": "tarot-breaker:star-sand-route-known",
       "segments": {
-        "east-passage-b-line": "NOT TESTED"
+        "east-passage-b-line": "IMPLEMENTED"
       }
     }
   }
