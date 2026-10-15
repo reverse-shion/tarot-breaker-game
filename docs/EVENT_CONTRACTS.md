@@ -97,3 +97,18 @@ Runtime integration proceeds Alenon → Landing → Garden with separate impleme
 Title and Alenon runtime exist on the Phase 2A-6A candidate branch; release status remains NOT TESTED / productionEnabled false until the required review, CI and human Device Gates. Title success emits `tarot-breaker:public-continue-request`; the real Alenon boot emits `tarot-breaker:alenon-resume-ready` after readiness. Public marker is `entry=continue`, durable save is sole authority, and only Alenon intro/pad_return are admitted. Landing/Garden Public runtime is absent.
 
 Four `public-continue-alenon-*` fixtures are registered and exercise the real Public adapter using injected session-only storage. Detached Journey projection and contained PAD departure preserve zero Production writes in these fixtures. They do not prove the Production roundtrip. Full details and pending Device checklist: implementation contract §13. No historical device record is changed or transferred.
+
+
+## EC-005 — East Passage B-line / Star Sand route knowledge (foundation)
+
+event_id: garden-east-passage
+map: star_gate_garden
+status: NOT TESTED / foundation only
+productionEnabled: false
+segment: east-passage-b-line — NOT TESTED
+start_event: tarot-breaker:star-sand-route-known — RESERVED, not emitted by the game
+progress_changes: none currently; proposed independent typed event garden_star_sand_route_known (not registered in Progress yet)
+return_behavior: locked Garden, normal Star Gate, Continue and Garden-to-Landing routes are unchanged
+implementation_contract: docs/garden-east-passage-b-implementation-contract.md
+
+B-line segment calculations are unit-test-only. Current Garden HTML does not load garden-east-passage.js. No player-visible closure, opening or dialogue exists yet. Exact boundary geometry and durable migration require independent validation. Do not grant Device PASS or main merge for this foundation.
