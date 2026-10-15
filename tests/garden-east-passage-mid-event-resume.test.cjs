@@ -6,7 +6,7 @@ const core=require('../progress.js'),passage=require('../garden-east-passage.js'
 function publicHarness() {
   // Reuse the actual, already-covered public Garden observer fixture without modifying its historical contract.
   const source=fs.readFileSync('tests/star-gate-public.test.cjs','utf8');
-  const env={require,__dirname,URLSearchParams,queueMicrotask,setImmediate};
+  const env={require,__dirname,URLSearchParams,queueMicrotask,setImmediate,setTimeout,clearTimeout};
   vm.runInNewContext(source.slice(0,source.indexOf("test('")),env);
   return env.harness;
 }
