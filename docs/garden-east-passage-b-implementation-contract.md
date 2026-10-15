@@ -54,3 +54,10 @@ Status: IMPLEMENTED CANDIDATE / POSITION ACCEPTED / remaining Device Gate PENDIN
 
 ## Evidence boundary
 The initial 515/515 candidate was verified by GitHub Actions. A later test-only update must be checked again. The user accepted the selected warning position; all other human Device Gates are pending. Candidate remains Draft and is not a finished Main Merge Gate.
+
+
+## Human normal-route acceptance — 2026-10-15
+
+The owner tested the fixed-SHA normal title entry `587ed2e16b6e484993a54aca53a8eb4384188f39` against three explicitly stated checks and answered 「問題なかったよ」. The scope reported PASS is: (1) pre-event B closure and Shion warning, (2) unlocked B after full Aftermath, (3) reopened route remains unlocked after reload/Continue. Confirmed position remains unchanged. Evidence recorded in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
+
+This is a **scoped 3/3 Device PASS**, not full certification of all device smoke requirements. The integration/release gate remains PENDING for the independent unverified scenarios: Garden↔Landing roundtrip after unlock; repeat tap/joystick handling; interruptions/fail-closed storage; pre-route partial progress and existing-save compatibility. No executable changes, no main merge and no production deployment were made to obtain this evidence.
