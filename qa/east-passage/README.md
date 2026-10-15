@@ -41,3 +41,28 @@ Primary purpose: test mid-Aftermath browser reload and old-save migration withou
 ## Branch ownership / PR scope
 
 This QA launcher is developed on **`feature/east-passage-qa-origin-isolation`**, a separate branch targeting the B-line foundation feature branch. It is **not part of the tested gameplay runtime** on PR #154 and must not be merged directly into main. The parent PR's safety guard recognized these QA HTML/JS files as new executable files, so their integration gate correctly blocked; do not weaken or circumvent that gate. This separate branch exists to keep human-tested Garden gameplay and QA-site development isolated. The source stays intentionally disabled until an independently reviewed HTTPS QA hostname has been provisioned and precisely approved.
+
+
+## Automated WebKit mobile browser verification — 2026-10-15
+
+The GitHub Actions workflow `.github/workflows/east-passage-webkit-qa.yml` installs pinned Playwright WebKit on a Linux CI runner and executes `qa/east-passage/tests/webkit-smoke.test.cjs` with a 393×852 mobile-sized viewport, touch mode, and device scale factor 3.
+
+**No public deployment and no production saved data.** The test intercepts **every** HTTP(S) request and fulfills permitted files from the CI checkout using synthetic HTTPS hostnames `east-a.playwright.test` and `east-b.playwright.test`. It aborts all external requests. Actual RawGitHack and GitHub Pages origins are simulated inside a disposable browser context; no requests are sent to those services. The checked-in `approved-origin.js` remains empty/blocked. Test-only network interception supplies an origin approval on the synthetic hosts, never by updating the deployed file.
+
+The real Title one-shot entry contract is retained. After seeding the isolated synthetic Progress record, the launcher navigates to the real `../../index.html` Title; WebKit explicitly clicks **つづきから** before it receives the `?entry=continue` token. Direct navigation to the internal URL is correctly rejected. After reloading the consumed internal URL, the browser is returned to Title; WebKit clicks Continue again and checks the durable record.
+
+Covered browser assertions:
+1. The QA launcher on simulated RawGitHack/GitHub Pages stays locked and preserves pre-existing storage marker bytes despite attempted clicks.
+2. An incomplete Aftermath fixture launches real Garden Continue, then reloads and re-enters via Title without creating the independent route-known event.
+3. A legacy complete Star Gate fixture is migrated by the real Garden runtime exactly once; reload and Title Continue retain the new event, while a separate synthetic QA origin in the **same browser context** remains empty.
+
+Evidence: [WebKit run #38759907789](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38759907789) at `7e02ed1d6784527e879d1f8042f847f3293717ab`: **3/3 PASS**; [normal regression run #38759907701](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38759907701): **530/530 PASS**. If this README is committed later, obtain new CI evidence for the new HEAD.
+
+**Limits:** This is Linux WebKit mobile emulation, not a physical iPhone/Safari or its page lifecycle; no real halfway-through-cinematic pagekill, write-denial device test, audio/sprite review, or actual hosted-origin verification has occurred. The old-save fixture is synthetic, not copied user data. Do not mark `DEVICE_RESULT: PASS` or merge PR #156/PR #154 based on automated browser results alone.
+
+Run locally in a disposable checkout (optional):
+```sh
+npm install --no-save --no-package-lock playwright@1.56.1
+npx playwright install --with-deps webkit
+node --test qa/east-passage/tests/webkit-smoke.test.cjs
+```
