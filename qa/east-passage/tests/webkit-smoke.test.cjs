@@ -40,7 +40,11 @@ async function create(page,kind){
  assert.equal(await page.locator('#start').isDisabled(),true);
  await page.locator('#consent').check();
  assert.equal(await page.locator('#start').isEnabled(),true);
- await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),page.locator('#start').click()]);
+ await Promise.all([page.waitForURL(/\/index\.html$/,{timeout:30000}),page.locator('#start').click()]);
+ // Use the real Title controller, which issues the one-shot session token.
+ const continueButton=page.locator('#continue');
+ await continueButton.waitFor({state:'visible',timeout:30000});
+ await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),continueButton.click()]);
  const raw=await save(page);
  assert.ok(raw,'seed persists over real same-origin navigation');
  return JSON.parse(raw);
