@@ -27,7 +27,7 @@
     try {
       const snapshot = progress?.getCurrentState?.();
       const events = snapshot?.state?.completedEvents;
-      return Array.isArray(events) && events.includes(KNOWLEDGE_EVENT);
+      return snapshot?.persisted === true && Array.isArray(events) && events.includes(KNOWLEDGE_EVENT);
     } catch (_) {
       return false;
     }
