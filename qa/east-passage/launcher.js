@@ -18,6 +18,8 @@ button.addEventListener("click",function(){
   storage:window.localStorage,core:window.TarotProgressCore,kind:fixture.value});
  if(!result.ok){message.textContent="停止: "+result.reason;return;}
  message.textContent="隔離QA用の状態を保存しました。ゲームへ移動します。";
- location.assign("../../index.html?entry=continue");
+ // The official Title must issue the one-shot runtime-entry token.
+ // Direct navigation to ?entry=continue is intentionally rejected by the game.
+ location.assign("../../index.html");
 });
 })();
