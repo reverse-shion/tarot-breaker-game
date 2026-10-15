@@ -20,7 +20,8 @@
     // An unknown, incomplete or unreadable record must never grant access.
     try {
       const snapshot = progress?.getCurrentState?.();
-      return snapshot?.state?.completedEvents?.includes(KNOWLEDGE_EVENT) === true;
+      const events = snapshot?.state?.completedEvents;
+      return Array.isArray(events) && events.includes(KNOWLEDGE_EVENT);
     } catch (_) {
       return false;
     }
