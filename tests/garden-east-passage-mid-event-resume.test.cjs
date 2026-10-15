@@ -6,9 +6,11 @@ const core=require('../progress.js'),passage=require('../garden-east-passage.js'
 function publicHarness() {
   // Reuse the actual, already-covered public Garden observer fixture without modifying its historical contract.
   const source=fs.readFileSync('tests/star-gate-public.test.cjs','utf8');
-  const env={require,__dirname,URLSearchParams,queueMicrotask,setImmediate,setTimeout,clearTimeout};
-  vm.runInNewContext(source.slice(0,source.indexOf("test('")),env);
-  return env.harness;
+  // Public fixture validates strict plain objects in the caller JS realm.
+  // This test-owned fixture must share the same JS realm as Progress.
+  const factory=new Function('require','__dirname',
+    source.slice(0,source.indexOf("test('"))+'\nreturn harness;');
+  return factory(require,__dirname);
 }
 function aftermathHarness(){
   const source=fs.readFileSync('tests/star-gate-aftermath.test.cjs','utf8');
