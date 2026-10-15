@@ -67,3 +67,15 @@ This is a **scoped 3/3 Device PASS**, not full certification of all device smoke
 The owner responded 「問題ないので次に進めて」 to the exact requested test "After event completion, Garden → Landing → Garden, and eastern B route remains open". Runtime is the last user-supplied fixed normal entry `587ed2e16b6e484993a54aca53a8eb4384188f39`; there were no intervening changes to executable files. **Scoped iPhone human PASS** for this single roundtrip, in addition to earlier three confirmed checkpoints. Human evidence logged in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
 
 Remaining release-verification scope (not silently upgraded): repeated joystick/rapid taps and dialogue dismissal, interruption before complete Aftermath (must remain blocked), failed storage handling and historical completed-save migration as applicable, previously identified isolated-checkpoint restriction, final independent reviewer follow-up, owner merge approval. Keep Draft and main untouched until full gate evidence.
+
+## Additional interrupted-story and legacy-save automation (2026-10-15)
+
+No player runtime was modified after owner-tested `587ed2e16b6e484993a54aca53a8eb4384188f39`. The candidate added only a new regression file `tests/garden-east-passage-mid-event-resume.test.cjs` for three scenarios using the actual Aftermath handler + public Progress observer with isolated test storage:
+
+1. Abort in `CHECK_COMPANIONS` after speaking to Shiopon but before completing Lumiere's dialogue. Neither `garden_star_gate_anomaly` nor `garden_star_sand_route_known` is saved, and a simulated reload keeps the east B-line blocked.
+2. During the second conversation, after the line `……星砂を使おう。` but before validated Aftermath final completion, no premature persistent unlock is allowed. Both Progress facts are saved only on full completion.
+3. Old persisted Star Gate-completed save without the new dedicated event migrates exactly once on real completed-Gate restore and remains valid after the typed Garden→Landing→Garden route, with no production storage use in tests.
+
+Validate GitHub Actions [#38749400134](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38749400134), candidate runtime-compatible test HEAD `7b50420bc510921024d38357f21ada99add4abca`: **525/525 PASS; failures 0, skipped 0, new regressions 0**. Comparison with human-tested runtime confirms ONLY these five non-executable paths differ: Device registry, Event contract, implementation contract, and two new test files.
+
+This does **not** replace unperformed iPhone input feel, interrupted reload sequence on-device, or old historic save migration. Full device/integration and main merge gates remain PENDING. Historical tested coordinates `(1398,740)→(1398,844)` are unchanged.
