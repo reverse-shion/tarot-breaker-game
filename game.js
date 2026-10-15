@@ -78,7 +78,7 @@
   const stage3Runtime = stage3Dev || window.__TAROT_PUBLIC_STAR_GATE__ === true;
   const enteringFromLanding = params.get("from") === "landing";
   const gardenResumeDev = stage3Dev || (params.get("from") === null &&
-    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || ""));
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere|east-passage-locked|east-passage-open)$/.test(params.get("dev") || ""));
   const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
     !params.has("from") && !params.has("dev");
   const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic;
@@ -394,7 +394,13 @@
       ...collision,
       segmentClear(from, to) {
         if (!collision.segmentClear(from, to)) return false;
-        if (eastPassage.routeKnown(window.TarotStarGateProgress)) return true;
+        // Dev B-line fixtures use their registered session-only Progress.
+        // Never use a developer authority in the ordinary production route.
+        const bLineDev = /^garden-resume-east-passage-(locked|open)$/.test(params.get("dev") || "");
+        const factSource = bLineDev && !window.__TAROT_PUBLIC_STAR_GATE__
+          ? window.TarotGardenDevTransit?.progress
+          : window.TarotStarGateProgress;
+        if (eastPassage.routeKnown(factSource)) return true;
         if (!eastPassage.wouldBlock(from, to, eastPassageLine, false)) return true;
         // Navigation search may probe the wall from far away. Only a
         // nearby step originating from Shion may trigger his remark.
