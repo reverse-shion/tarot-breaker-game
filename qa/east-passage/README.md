@@ -37,3 +37,7 @@ Primary purpose: test mid-Aftermath browser reload and old-save migration withou
 - Browser-origin isolation cannot be certified by CI alone. Until a host is configured and tested, this is **working guard code but NO LIVE ISOLATED QA**.
 - Preserve the owner-confirmed `B_LINE (1398,740)→(1398,844)`, all existing working event/audio/Progress files, plus historical locked preview SHA tests.
 - New QA launcher does not claim to be a registered `dev-checkpoints.js` production-compatible checkpoint; it is an independent disposable-site test launcher using an actual normal Continue runtime after isolated seeding.
+
+## Branch ownership / PR scope
+
+This QA launcher is developed on **`feature/east-passage-qa-origin-isolation`**, a separate branch targeting the B-line foundation feature branch. It is **not part of the tested gameplay runtime** on PR #154 and must not be merged directly into main. The parent PR's safety guard recognized these QA HTML/JS files as new executable files, so their integration gate correctly blocked; do not weaken or circumvent that gate. This separate branch exists to keep human-tested Garden gameplay and QA-site development isolated. The source stays intentionally disabled until an independently reviewed HTTPS QA hostname has been provisioned and precisely approved.
