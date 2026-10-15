@@ -49,8 +49,8 @@ test('Stage3 success and spoofed/stale or unfinished Aftermath never persist com
  h.setStage({audioReleased:false});h.notify();assert.equal(h.writes(),0);assert.equal(h.api.getState().completed,false);
 });
 test('final actual Aftermath saves exactly once, validates readback and suppresses subsequent investigation',()=>{
- const h=harness();h.finish();h.notify();assert.equal(h.writes(),1);assert.equal(h.api.getState().persisted,true);assert.equal(h.api.canInvestigate(),false);
- h.notify();assert.equal(h.writes(),1);const saved=JSON.parse(h.bytes());assert.ok(saved.completedEvents.includes(EVENT));assert.equal(saved.companion,'joined_with_shion');assert.equal(saved.version,1);
+ const h=harness();h.finish();h.notify();assert.equal(h.writes(),2);assert.equal(h.api.getState().persisted,true);assert.equal(h.api.canInvestigate(),false);
+ h.notify();assert.equal(h.writes(),2);const saved=JSON.parse(h.bytes());assert.ok(saved.completedEvents.includes(EVENT));assert.ok(saved.completedEvents.includes('garden_star_sand_route_known'));assert.equal(saved.companion,'joined_with_shion');assert.equal(saved.version,1);
 });
 test('storage write or lying readback failure retains page consumption without claiming durable success or ownership',()=>{
  for(const options of [{writeFailure:true},{readbackFailure:true}]){
@@ -60,7 +60,7 @@ test('storage write or lying readback failure retains page consumption without c
 });
 test('old pre-event saves remain valid; completed reload restores gate and departure and never enables a new event',async()=>{
  const old=harness();assert.equal(old.api.canInvestigate(),true);assert.equal(old.api.restoreCompleted(),false);
- const h=harness({completed:true});await h.api.prepareRestoration();assert.equal(h.api.canInvestigate(),false);assert.equal(h.api.restoreCompleted(),true);assert.equal(h.scene.gateRestored,true);assert.equal(h.scene.lumiereEnabled,false);assert.equal(h.scene.following,true);assert.equal(h.api.restoreCompleted(),false);assert.equal(h.writes(),0);
+ const h=harness({completed:true});await h.api.prepareRestoration();assert.equal(h.api.canInvestigate(),false);assert.equal(h.api.restoreCompleted(),true);assert.equal(h.scene.gateRestored,true);assert.equal(h.scene.lumiereEnabled,false);assert.equal(h.scene.following,true);assert.equal(h.api.restoreCompleted(),false);assert.equal(h.writes(),1);assert.equal(h.progress.isEventCompleted('garden_star_sand_route_known'),true);
 });
 test('completion survives actual Progress route roundtrip and resolver without replay or lost companion',()=>{
  const h=harness();h.finish();h.notify();
