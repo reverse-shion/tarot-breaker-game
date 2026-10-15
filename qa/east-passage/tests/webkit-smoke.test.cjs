@@ -77,6 +77,12 @@ test('WebKit mobile viewport: pending Aftermath Continue and browser reload neve
   assert.equal(seeded.completedEvents.includes('garden_star_sand_route_known'),false);
   await page.waitForFunction(()=>window.TarotGardenContinueTransit?.ok===true,null,{timeout:30000});
   await page.reload({waitUntil:'load'});
+  // Reloading a one-shot internal runtime URL must fail closed to Title.
+  // Resume through official Title once more rather than bypassing the token.
+  await page.waitForURL(/\/index\.html$/,{timeout:30000});
+  const resume=page.locator('#continue');
+  await resume.waitFor({state:'visible',timeout:30000});
+  await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),resume.click()]);
   await page.waitForFunction(()=>window.TarotGardenContinueTransit?.ok===true,null,{timeout:30000});
   const current=JSON.parse(await save(page));
   assert.equal(current.completedEvents.includes('garden_star_sand_route_known'),false);
@@ -100,6 +106,11 @@ test('WebKit mobile viewport: legacy save migrates in real Garden Continue; isol
   const migrated=JSON.parse(await save(page));
   assert.equal(migrated.completedEvents.filter(x=>x==='garden_star_sand_route_known').length,1);
   await page.reload({waitUntil:'load'});
+  await page.waitForURL(/\/index\.html$/,{timeout:30000});
+  const resume=page.locator('#continue');
+  await resume.waitFor({state:'visible',timeout:30000});
+  await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),resume.click()]);
+  await page.waitForFunction(()=>window.TarotGardenContinueTransit?.ok===true,null,{timeout:30000});
   assert.equal(JSON.parse(await save(page)).completedEvents.filter(x=>x==='garden_star_sand_route_known').length,1);
   const second=await ctx.newPage();await open(second,QA_A);
   assert.equal(await save(second),null,'same WebKit context, distinct synthetic host must stay empty');
