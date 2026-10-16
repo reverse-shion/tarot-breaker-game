@@ -43,7 +43,7 @@ jobs:
           npm install --no-save --no-package-lock playwright@${{ matrix.playwright }}
           npx playwright install --with-deps webkit
       - name: Check expected-failure classifier rejects unrelated failures
-        run: node --test qa/east-passage/f1/classify.test.cjs
+        run: node --test qa/east-passage/f1/classify.test.cjs qa/east-passage/f1/select-attempts.test.cjs
       - name: Run frozen native fixture and unwrapped original four; new engine also retains existing eleven
         env:
           F1_EVIDENCE_DIR: ${{ runner.temp }}/f1-${{ matrix.engine }}
