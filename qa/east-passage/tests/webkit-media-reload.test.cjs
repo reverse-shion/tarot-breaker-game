@@ -24,7 +24,7 @@ test('WebKit native media: playing MP3 pause on pagehide returns and reload comm
   const page=await ctx.newPage();let start=0;
   try{
    await page.goto(ORIGIN+'/index.html');
-   await page.locator('#play').tap();await page.waitForFunction(()=>window.playing===true);
+   await page.locator('#play').tap();await page.waitForFunction(()=>window.playing===true&&!audio.paused&&audio.currentTime>0);
    const original=await page.evaluate(()=>window.__qaDocument);start=trace.entries.length;
    trace.record('reload-start',{method:'playwright',url:page.url()});
    await page.reload({waitUntil:'domcontentloaded',timeout:45000});

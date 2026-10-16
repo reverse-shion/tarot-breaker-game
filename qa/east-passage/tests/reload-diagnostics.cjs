@@ -1,6 +1,6 @@
 'use strict';
 // QA-only observers. Never read save bytes, issue entry tokens, or change navigation.
-const fs=require('node:fs/promises'),path=require('node:path');
+const fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
 const traces=new WeakMap();
 function safeURL(value){try{const u=new URL(value);return u.origin+u.pathname+(u.search==='?entry=continue'?u.search:'')}catch{return String(value).slice(0,120)}}
 async function observe(ctx){
@@ -80,7 +80,8 @@ async function report(page,label,start,{failed=false}={}){
 }
 async function reloadToTitle(page,{method='window',label}={}){
  const trace=traces.get(page.context()),start=trace.entries.length;
- trace.record('reload-start',{method,url:safeURL(page.url()),state:await snapshot(page)});
+ const before=await snapshot(page);
+ trace.record('reload-start',{method,url:safeURL(page.url()),state:before});
  try{
   await Promise.all([
    page.waitForURL(/\/index\.html$/,{waitUntil:'domcontentloaded',timeout:45000}),
@@ -88,7 +89,14 @@ async function reloadToTitle(page,{method='window',label}={}){
   ]);
   await page.waitForURL(/\/index\.html$/,{timeout:30000});
   await page.locator('#continue').waitFor({state:'visible',timeout:30000});
-  return await report(page,label,start);
+  const result=await report(page,label,start);
+  assert.equal(result.state.titleVisible,true,'official Title must be visible');
+  assert.equal(result.state.continueVisible,true,'official Continue must reappear');
+  assert.equal(result.state.entryPresent,false,'one-shot entry remains consumed');
+  assert.notEqual(result.state.document,before.document,'reload must create a new document');
+  assert.ok(result.events.some(x=>x.message?.includes('consume')&&x.message.includes('runtime-entry-missing')),'reloaded runtime must reject consumed entry');
+  assert.ok(result.events.some(x=>x.message?.includes('location.replace')),'normal title redirect must execute');
+  return result;
  }catch(e){await report(page,label,start,{failed:true});throw e}
 }
 module.exports={observe,instrumentRuntime,reloadToTitle,report};
