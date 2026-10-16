@@ -42,7 +42,7 @@ test('actual Aftermath CHECK_COMPANIONS interrupted before second talk cannot un
   await begin(h);
   assert.equal(h.window.TarotStarGateAftermath.getState().state,'CHECK_COMPANIONS');
   assert.equal(p.writes(),0);
-  assert.equal(passage.routeKnown(p.progress),false);
+  assert.equal(passage.routeKnown({getItem:()=>p.bytes()}),false);
   let actor=h.state().actors.shiopon;
   h.movePlayer(actor.x,actor.y+18);
   const talk=h.window.TarotStarGateAftermath.talk('shiopon');
@@ -56,9 +56,9 @@ test('actual Aftermath CHECK_COMPANIONS interrupted before second talk cannot un
   const reloaded=reload(p);
   assert.equal(reloaded.isEventCompleted('garden_star_gate_anomaly'),false);
   assert.equal(reloaded.isEventCompleted(passage.KNOWLEDGE_EVENT),false);
-  assert.equal(passage.routeKnown(reloaded),false);
+  assert.equal(passage.routeKnown({getItem:()=>p.bytes()}),false);
   assert.equal(passage.wouldBlock({x:1393,y:800},{x:1410,y:800},
-    passage.B_LINE,passage.routeKnown(reloaded)),true);
+    passage.B_LINE,passage.routeKnown({getItem:()=>p.bytes()})),true);
 });
 
 test('story mentioning Star Sand is not itself a durable unlock before Aftermath finishes',async()=>{
@@ -74,17 +74,19 @@ test('story mentioning Star Sand is not itself a durable unlock before Aftermath
   const talk2=h.window.TarotStarGateAftermath.talk('lumiere');
   await drive(h,()=>h.shown.some(line=>line.text.includes('星砂を使おう。')),2500);
   assert.equal(p.writes(),0,'C16 line alone must not write a premature save');
-  assert.equal(passage.routeKnown(reload(p)),false,'mid-dialogue Continue stays blocked');
+  reload(p);
+  assert.equal(passage.routeKnown({getItem:()=>p.bytes()}),false,'mid-dialogue Continue stays blocked');
   await drive(h,()=>h.window.TarotStarGateAftermath.getState().completed,2500);
   assert.equal(await talk2,true);
   assert.equal(p.writes(),2,'completed validated story writes gate and independent route fact');
-  assert.equal(passage.routeKnown(reload(p)),true,'only finished persisted route grants access');
+  reload(p);
+  assert.equal(passage.routeKnown({getItem:()=>p.bytes()}),true,'only finished persisted route grants access');
 });
 
 test('older Star Gate-completed save migrates exactly once, restores gate, and retains unlock through Garden roundtrip',async()=>{
   const h=publicHarness()({completed:true});
   assert.equal(h.progress.isEventCompleted('garden_star_gate_anomaly'),true);
-  assert.equal(passage.routeKnown(h.progress),false,'legacy save has no separate star-sand event yet');
+  assert.equal(passage.routeKnown({getItem:()=>h.bytes()}),false,'legacy save has no separate star-sand event yet');
   await h.api.prepareRestoration();
   assert.equal(h.api.restoreCompleted(),true);
   assert.equal(h.scene.gateRestored,true);
@@ -97,13 +99,13 @@ test('older Star Gate-completed save migrates exactly once, restores gate, and r
     setItem:(key,value)=>{assert.equal(key,core.STORAGE_KEY);bytes=value;}};
   const loaded=core.createProgress({storage:isolatedStore});
   assert.equal(loaded.load().status,'valid');
-  assert.equal(passage.routeKnown(loaded),true);
+  assert.equal(passage.routeKnown(isolatedStore),true);
   assert.equal(loaded.commitArrival({sourceMapId:'star_gate_garden',
     destinationMapId:'star_country_landing',spawnId:'garden_entrance',
     reason:'garden_to_landing'}).persisted,true);
   assert.equal(loaded.commitArrival({sourceMapId:'star_country_landing',
     destinationMapId:'star_gate_garden',spawnId:'south_gate',
     reason:'gate_to_garden'}).persisted,true);
-  assert.equal(passage.routeKnown(loaded),true);
+  assert.equal(passage.routeKnown(isolatedStore),true);
   assert.equal(bytes.includes('garden_star_sand_route_known'),true);
 });

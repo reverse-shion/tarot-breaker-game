@@ -394,8 +394,8 @@
       ...collision,
       segmentClear(from, to) {
         if (!collision.segmentClear(from, to)) return false;
-        if (eastPassage.routeKnown(window.TarotStarGateProgress)) return true;
         if (!eastPassage.wouldBlock(from, to, eastPassageLine, false)) return true;
+        if (eastPassage.routeKnown()) return true;
         // Navigation search may probe the wall from far away. Only a
         // nearby step originating from Shion may trigger his remark.
         if (running && !eastPassageDialogueActive && !sceneLockOwner &&
