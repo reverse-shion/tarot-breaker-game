@@ -1,0 +1,50 @@
+name: East Passage isolated QA - WebKit
+
+on:
+  pull_request:
+    branches:
+      - feature/garden-east-passage-b-foundation
+      - feature/east-passage-qa-isolated-v2
+      - fix/east-passage-durable-proof-v12c
+    paths:
+      - "qa/east-passage/**"
+      - ".github/workflows/east-passage-webkit-qa.yml"
+  push:
+    branches:
+      - fix/east-passage-webkit-diagnostics-v12c
+      - fix/east-passage-integration-v12c
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-webkit:
+    name: Isolated WebKit browser checks (NOT real iPhone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pinned Playwright and WebKit engine
+        run: |
+          npm install --no-save --no-package-lock playwright@1.64.1
+          npx playwright install --with-deps webkit
+      - name: Verify QA approval is still disabled in checked-in source
+        shell: bash
+        run: |
+          grep -Eq 'TarotEastPassageQAApprovedOrigin = "";' qa/east-passage/approved-origin.js
+          node --check qa/east-passage/tests/webkit-smoke.test.cjs
+      - name: Run disposable virtual-HTTPS WebKit checks
+        env:
+          QA_DIAGNOSTIC_DIR: ${{ runner.temp }}/east-passage-diagnostics
+        run: node --test --test-concurrency=1 qa/east-passage/tests/*.test.cjs
+      - name: Preserve reload evidence (no save bytes)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: east-passage-reload-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/east-passage-diagnostics
+          if-no-files-found: warn
