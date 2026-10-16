@@ -70,7 +70,7 @@ function selectAttempts(root,env=process.env){
     assert.ok(Number.isSafeInteger(step.number)&&step.number>previousNumber,'step number missing/invalid/unordered');previousNumber=step.number;
     assert.equal(step.status,'completed','incomplete job step');
     assert.ok(conclusions.includes(step.conclusion),'step conclusion missing/invalid');
-    if(job.conclusion==='success')assert.ok(['success','skipped'].includes(step.conclusion),'successful job contradicts failed step');
+    if(job.conclusion==='success')assert.equal(step.conclusion,'success','successful job contradicts failed or skipped step');
     const stepStart=time(step.started_at),stepEnd=time(step.completed_at);
     assert.ok(stepStart>=previousEnd&&stepEnd<=end&&stepEnd>=stepStart,'step execution outside job times/order');previousEnd=stepEnd;
    }
@@ -99,6 +99,7 @@ function selectAttempts(root,env=process.env){
   assert.equal(String(artifact.workflow_run?.id),runID,'foreign artifact run');assert.equal(artifact.workflow_run?.head_sha,head,'wrong HEAD in artifact');
   assert.ok(Number.isSafeInteger(artifact.id)&&artifact.id>0,'artifact ID missing');
   assert.ok(time(artifact.created_at)>=time(row.job.started_at)&&time(artifact.created_at)<=time(row.job.completed_at),'artifact time outside actual execution');
+  assert.equal(typeof artifact.expired,'boolean','artifact expiry metadata missing/invalid');
   if(artifact.expired){row.reasons.push('API artifact expired');return}
   if(!directories.has(artifact.name)){row.reasons.push('API artifact exists but downloaded directory missing');return}
   directories.delete(artifact.name);

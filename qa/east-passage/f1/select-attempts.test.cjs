@@ -76,7 +76,7 @@ test('collector archives complete multi-page jobs and artifacts and detects a ru
  calls=0;assert.throws(()=>collect(f.env,route=>{const r=api(route);if(calls===2)return [{...f.snapshot.run,run_attempt:3}];return r}),/run changed/);
 });
 for(const field of ['name','number','conclusion'])test(`missing latest step ${field} must STOP with retained execution history`,t=>{const f=mixed(t);delete f.snapshot.attempts[1].jobs[0].steps[0][field];const e=f.stop(/step .*missing/);assert.equal(e.provenance.history.old.at(-1).state,'UNVERIFIED_EXECUTION');assert.equal(e.provenance.attempts.old,2)});
-test('success job with failed step is contradictory and STOPs',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[0].steps[0].conclusion='failure';f.stop(/successful job contradicts failed step/)});
+test('success job with failed step is contradictory and STOPs',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[0].steps[0].conclusion='failure';f.stop(/successful job contradicts failed or skipped step/)});
 test('incomplete historical API job remains in STOP audit history',t=>{const f=mixed(t);f.snapshot.attempts[0].jobs[0].status='in_progress';const e=f.stop(/execution incomplete/);const row=e.provenance.history.old[0];assert.equal(row.attempt,1);assert.equal(row.job.status,'in_progress');assert.match(row.reasons.join(' '),/execution incomplete/)});
 test('historical failure classifier reasons remain after accepted latest execution',t=>{const f=mixed(t);const p=path.join(f.dir,'f1-old-123-1/result.json'),r=JSON.parse(fs.readFileSync(p));r.native.reason='native cancellation';r.unwrapped.reason='missing original scenarios';fs.writeFileSync(p,JSON.stringify(r));const row=f.select().provenance.history.old[0];assert.deepEqual(row.reasons,['native cancellation','missing original scenarios']);assert.equal(row.classification.native.reason,'native cancellation')});
 
@@ -89,3 +89,7 @@ for(const field of ['head','run','attempt','engine'])test(`historical result wro
  fs.writeFileSync(p,JSON.stringify(r));f.stop(/wrong HEAD|run URL mismatch|attempt metadata mismatch|engine mismatch/);
 });
 test('valid historical result with missing identity remains incomplete history',t=>{const f=mixed(t);fs.unlinkSync(path.join(f.dir,'f1-old-123-1/identity.json'));assert.equal(f.select().provenance.history.old[0].state,'INCOMPLETE_ARTIFACT')});
+
+for(const index of [3,4,5,6])test(`successful engine cannot skip required step ${index}`,t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[0].steps[index].conclusion='skipped';f.stop(/successful job contradicts failed or skipped step/)});
+
+for(const expired of [undefined,null,'false'])test(`artifact expiry requires explicit boolean (${String(expired)})`,t=>{const f=mixed(t);f.snapshot.artifacts.at(-1).expired=expired;f.stop(/artifact expiry metadata missing\/invalid/)});
