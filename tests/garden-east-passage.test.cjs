@@ -3,12 +3,14 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const gate = require('../garden-east-passage.js');
 const B = Object.freeze({a:{x:100,y:20},b:{x:100,y:80}});
-const p = events => ({getCurrentState:()=>({persisted:true,state:{completedEvents:events}})});
+const history=['alenon_prologue','landing_devil_memory','garden_shiopon_meet','garden_lumiere_gate'];
+const p = events => ({getItem:()=>JSON.stringify({version:1,checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:[...history,...events],companion:'joined_with_shion'})});
 test('star-sand knowledge must have its own progression event, not Star Gate completion',()=>{
   assert.equal(gate.KNOWLEDGE_EVENT,'garden_star_sand_route_known');
   assert.equal(gate.routeKnown(p([])),false);
   assert.equal(gate.routeKnown(p(['garden_star_gate_anomaly'])),false);
-  assert.equal(gate.routeKnown(p([gate.KNOWLEDGE_EVENT])),true);
+  assert.equal(gate.routeKnown(p([gate.KNOWLEDGE_EVENT])),false,'route flag without prerequisite is invalid');
+  assert.equal(gate.routeKnown(p(['garden_star_gate_anomaly',gate.KNOWLEDGE_EVENT])),true);
   assert.equal(gate.routeKnown({getCurrentState:()=>({persisted:false,state:{completedEvents:[gate.KNOWLEDGE_EVENT]}})}),false);
   assert.equal(gate.routeKnown(null),false);
   assert.equal(gate.routeKnown({getCurrentState(){throw Error('storage');}}),false);
@@ -76,7 +78,7 @@ test('official index loads the passage guard before game, and only the player co
  assert.ok(html.includes('garden-east-passage.js?v=20261015-b1'));
  assert.ok(html.indexOf('garden-east-passage.js')<html.indexOf('game.js?v='));
  assert.match(game,/navigation = createNavigator\(collision, 16\);\s*controls = createControls\(playerCollision, navigation\);/);
- assert.match(game,/eastPassage\.routeKnown\(window\.TarotStarGateProgress\)/);
+ assert.match(game,/wouldBlock\(from, to, eastPassageLine, false\)[^]*eastPassage\.routeKnown\(\)/);
  assert.match(game,/eastPassageDialogue\.show\(\{actor: "shion", speaker: "シオン"/);
 });
 
@@ -111,24 +113,24 @@ test('independent durable knowledge remains correct on reload and Garden/Landing
   const storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value)};
   const progress=createProgress({storage});
   assert.equal(progress.load().status,'valid');
-  assert.equal(gate.routeKnown(progress),false);
+  assert.equal(gate.routeKnown(storage),false);
   assert.equal(progress.completeEvent('garden_star_gate_anomaly',
     {mapId:'star_gate_garden',spawnId:'south_gate'}).persisted,true);
-  assert.equal(gate.routeKnown(progress),false,'Star Gate completion alone is not authorization');
+  assert.equal(gate.routeKnown(storage),false,'Star Gate completion alone is not authorization');
   assert.equal(progress.completeEvent(gate.KNOWLEDGE_EVENT,
     {mapId:'star_gate_garden',spawnId:'south_gate'}).persisted,true);
-  assert.equal(gate.routeKnown(progress),true);
+  assert.equal(gate.routeKnown(storage),true);
   const reopened=createProgress({storage});
   assert.equal(reopened.load().status,'valid');
-  assert.equal(gate.routeKnown(reopened),true,'reload preserves the independent fact');
+  assert.equal(gate.routeKnown(storage),true,'reload preserves the independent fact');
   reopened.commitArrival({sourceMapId:'star_gate_garden',destinationMapId:'star_country_landing',
     spawnId:'garden_entrance',reason:'garden_to_landing'});
-  assert.equal(gate.routeKnown(reopened),true,'fact survives Garden exit');
+  assert.equal(gate.routeKnown(storage),true,'fact survives Garden exit');
   reopened.commitArrival({sourceMapId:'star_country_landing',destinationMapId:'star_gate_garden',
     spawnId:'south_gate',reason:'gate_to_garden'});
   const afterRoundtrip=createProgress({storage});
   assert.equal(afterRoundtrip.load().status,'valid');
-  assert.equal(gate.routeKnown(afterRoundtrip),true,'return and Continue retain independent fact');
+  assert.equal(gate.routeKnown(storage),true,'return and Continue retain independent fact');
 });
 test('event contract matches actual wired Draft, with no implied Device verification',()=>{
   const fs=require('node:fs');

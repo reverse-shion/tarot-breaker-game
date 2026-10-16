@@ -72,11 +72,11 @@ test('a failed persistent Progress write never turns the closed B line into an u
  const storage={getItem:()=>source,setItem(){throw Error('storage unavailable')}};
  const progress=core.createProgress({storage});
  assert.equal(progress.load().status,'valid');
- assert.equal(gate.routeKnown(progress),false);
+ assert.equal(gate.routeKnown(storage),false);
  const result=progress.completeEvent(gate.KNOWLEDGE_EVENT,{mapId:'star_gate_garden',spawnId:'south_gate'});
  assert.equal(result.persisted,false);
- assert.equal(gate.routeKnown(progress),false,'volatile/failed writes must not unlock');
+ assert.equal(gate.routeKnown(storage),false,'volatile/failed writes must not unlock');
  const loaded=core.createProgress({storage});
  assert.equal(loaded.load().status,'valid');
- assert.equal(gate.routeKnown(loaded),false);
+ assert.equal(gate.routeKnown(storage),false);
 });

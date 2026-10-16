@@ -1,9 +1,10 @@
 /* East passage B-line foundation. Not wired into production collision or Progress. */
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof module === 'object' && module.exports
+    ? require('./progress.js') : root.TarotProgressCore);
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.TarotGardenEastPassage = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (core) {
   'use strict';
   const KNOWLEDGE_EVENT = 'garden_star_sand_route_known';
   const REF = Object.freeze({ width: 1448, height: 1086 });
@@ -22,12 +23,14 @@
     return line && validPoint(line.a) && validPoint(line.b) &&
       Math.hypot(line.b.x - line.a.x, line.b.y - line.a.y) > EPS;
   }
-  function routeKnown(progress) {
-    // An unknown, incomplete or unreadable record must never grant access.
+  function routeKnown(storage) {
+    // A fresh reader validates durable v1 bytes, never the writer's memory.
+    // Do not cache permission: revoked, stale or unreadable saves close B immediately.
     try {
-      const snapshot = progress?.getCurrentState?.();
-      const events = snapshot?.state?.completedEvents;
-      return snapshot?.persisted === true && Array.isArray(events) && events.includes(KNOWLEDGE_EVENT);
+      const loaded = core.createProgress({ storage, diagnostic() {} }).load();
+      const events = loaded?.state?.completedEvents;
+      return loaded?.status === 'valid' && Array.isArray(events) &&
+        events.includes('garden_star_gate_anomaly') && events.includes(KNOWLEDGE_EVENT);
     } catch (_) {
       return false;
     }

@@ -2,9 +2,10 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const core=require('../progress.js'),EVENT='garden_star_gate_anomaly';
 const history=['alenon_prologue','landing_devil_memory','garden_shiopon_meet','garden_lumiere_gate'];
-function harness({completed=false,missingMeeting=false,writeFailure=false,readbackFailure=false}={}){
- let bytes=JSON.stringify({version:1,checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:completed?[...history,EVENT]:missingMeeting?history.slice(0,3):history,companion:'joined_with_shion'}),writes=0;
- const storage={getItem:()=>bytes,setItem(k,v){writes++;if(writeFailure)throw Error('storage blocked');if(!readbackFailure)bytes=v;}};
+function harness({completed=false,missingMeeting=false,writeFailure=false,readbackFailure=false,readThrowsAfter=Infinity,staleAfter=Infinity,known=false}={}){
+ let bytes=JSON.stringify({version:1,checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:completed?[...history,EVENT,...(known?['garden_star_sand_route_known']:[])]:missingMeeting?history.slice(0,3):history,companion:'joined_with_shion'}),writes=0,reads=0;
+ const original=bytes;
+ const storage={getItem(){reads++;if(writes>=readThrowsAfter)throw Error('injected readback unavailable');return writes>=staleAfter?original:bytes;},setItem(k,v){writes++;if(writeFailure)throw Error('storage blocked');if(!readbackFailure)bytes=v;}};
  const progress=core.createProgress({storage});assert.equal(progress.load().status,'valid');
  const listeners={},scene={owner:null,inputSuspended:false,npcSuspended:false,lumiereEnabled:true,following:true},story={shioponDone:true,lumiereDone:!missingMeeting,joined:true,active:false};
  let report={id:1,state:'NOT_STARTED',completed:false,cancelled:false},stage={id:1,running:false,completed:true,restored:true,audioReleased:true,scene:{owner:null,vision:false,absorption:false}};
@@ -15,7 +16,7 @@ function harness({completed=false,missingMeeting=false,writeFailure=false,readba
   addEventListener(n,f){(listeners[n]??=[]).push(f)}};
  const c={window,console:{warn(){}},Image:class{naturalWidth=100;naturalHeight=100;set src(s){queueMicrotask(()=>this.onload())}decode(){return Promise.resolve()}},setTimeout,clearTimeout};
  vm.runInNewContext(fs.readFileSync('star-gate-public.js','utf8'),c);
- return {window,scene,story,progress,api:window.TarotStarGatePublic,writes:()=>writes,bytes:()=>bytes,
+ return {window,scene,story,progress,storage,api:window.TarotStarGatePublic,writes:()=>writes,reads:()=>reads,bytes:()=>bytes,failReads(){readThrowsAfter=writes;},
   notify(value){(listeners['tarot-breaker:aftermath-ended']||[]).forEach(f=>f({detail:value||report}));},
   finish(overrides={}){report={id:1,state:'COMPLETED',completed:true,cancelled:false,...overrides};scene.lumiereEnabled=false;return report;},
   setStage(value){stage={...stage,...value}}};
@@ -127,9 +128,43 @@ test('older completed Garden save remains safe when Star Sand migration cannot p
  await h.api.prepareRestoration();
  assert.equal(h.api.restoreCompleted(),true,'existing completed Gate restoration still succeeds');
  const gate=require('../garden-east-passage.js');
- assert.equal(gate.routeKnown(h.progress),false,'volatile route knowledge cannot grant durable passage');
+ assert.equal(gate.routeKnown({getItem:()=>h.bytes()}),false,'volatile route knowledge cannot grant durable passage');
  assert.equal(h.progress.getCurrentState().persisted,false);
  assert.equal(JSON.parse(h.bytes()).completedEvents.includes('garden_star_sand_route_known'),false);
  assert.equal(JSON.parse(h.bytes()).completedEvents.includes(EVENT),true);
  assert.equal(h.scene.gateRestored,true);
+});
+
+
+test('route write succeeds but independent getItem throws: writer memory must not open B',()=>{
+ const h=harness({completed:true,readThrowsAfter:1});
+ assert.equal(h.api.restoreCompleted(),true,'scene restoration must remain usable');
+ assert.equal(h.writes(),1);
+ assert.equal(h.progress.getCurrentState().persisted,true,'reproduces misleading successful writer memory');
+ assert.equal(h.progress.isEventCompleted('garden_star_sand_route_known'),true);
+ const gate=require('../garden-east-passage.js');
+ assert.equal(gate.routeKnown(h.storage),false,'independent read failure closes only the passage');
+ assert.equal(h.scene.owner,null);
+ assert.equal(h.scene.inputSuspended,false);
+});
+test('route write succeeds but independent read returns old save: B stays closed',()=>{
+ const h=harness({completed:true,staleAfter:1});
+ assert.equal(h.api.restoreCompleted(),true);
+ assert.equal(h.writes(),1);
+ assert.equal(h.progress.getCurrentState().persisted,true);
+ assert.equal(h.progress.isEventCompleted('garden_star_sand_route_known'),true);
+ assert.equal(require('../garden-east-passage.js').routeKnown(h.storage),false);
+});
+test('already-known memory cannot bypass migration readback or rewrite a verified normal save',()=>{
+ const h=harness({completed:true,known:true});h.failReads();const before=h.reads();
+ assert.equal(h.api.restoreCompleted(),true);
+ assert.ok(h.reads()>before,'already-known memory must still trigger independent readback');
+ assert.equal(h.writes(),0,'read failure must not overwrite storage');
+ assert.equal(require('../garden-east-passage.js').routeKnown(h.storage),false);
+ const normal=harness({completed:true,known:true});
+ const bytes=normal.bytes();
+ assert.equal(normal.api.restoreCompleted(),true);
+ assert.equal(normal.writes(),0,'verified known save never needs migration');
+ assert.equal(normal.bytes(),bytes);
+ assert.equal(require('../garden-east-passage.js').routeKnown(normal.storage),true);
 });
