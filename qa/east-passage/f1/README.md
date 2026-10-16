@@ -44,3 +44,7 @@ For the pair command, preferably place only the two run directories under a dedi
 ## Limits
 
 Only synthetic intercepted HTTPS is tested here. No local HTTP evidence or claim is retained. No production/preview save or origin is touched. The init-script/native wrappers in the minimal probe remain an observation condition; the four game scenarios are separately run without them to expose observer-induced differences. This does not prove a specific C++ lock, all engines between the pins, physical iPhone behavior, audio audibility or release safety. Prior device PASS is not transferred. Publish run URLs, exact HEAD and artifact IDs in the new Draft PR; no protected PR is edited.
+
+## Exact audited HEAD verification (v1.5-D)
+
+The prior PR #160 `pull_request` jobs checked out GitHub's synthetic merge commit `69c0b4070b71e5ab29b9ce5e2f897ce08118bd94`, rather than its branch HEAD `c958d14bd5524c190fd7c5a463890ce8979a8b74`. They remain useful for identical-input comparison but cannot alone prove execution at that exact branch HEAD. This follow-up uses an explicitly pinned `github.event.pull_request.head.sha` (or the push/dispatch `github.sha`) in both checkout jobs; the F1 worker and pair comparator must reject any mismatch. The target commit for this separate QA Draft is its own new HEAD; the protected #160 head stays intact. It is a QA evidence correction only, not an iPhone/merge/release PASS. The fixed fixture, helper, MP3, original unwrapped cases, eleven existing browser scenarios and game/runtime code are unchanged.
