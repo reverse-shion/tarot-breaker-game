@@ -2,7 +2,7 @@ name: WebKit F1 fixed-fixture A-B evidence
 
 on:
   push:
-    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e, qa/f1-evidence-completeness-v18c]
+    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e, qa/f1-evidence-completeness-v18c, qa/f1-rerun-missing-evidence-v18d]
   pull_request:
     branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e]
     paths:
@@ -48,14 +48,29 @@ jobs:
       - name: Run frozen native fixture and unwrapped original four; new engine also retains existing eleven
         env:
           F1_EVIDENCE_DIR: ${{ runner.temp }}/f1-${{ matrix.engine }}
-        run: node qa/east-passage/f1/run.cjs ${{ matrix.engine }}
+        run: |
+          node qa/east-passage/f1/run.cjs ${{ matrix.engine }}
+          # Negative control, isolated branch ONLY. Do not change PR #164 or game sources.
+          # Attempt 1 uploads complete old/new evidence and must PASS.
+          # Re-run OLD engine job only. Attempt 2 uploads identity but NO result.json.
+          # Attempt 3+ suppresses the old artifact upload entirely.
+          if [ "${{ matrix.engine }}" = "old" ] && [ "${{ github.run_attempt }}" -eq 2 ]; then
+            test -f "$F1_EVIDENCE_DIR/result.json"
+            echo "::warning::F1_NEGATIVE_CONTROL: WITHHOLD_LATEST_OLD_RESULT_JSON"
+            rm -f -- "$F1_EVIDENCE_DIR/result.json"
+          elif [ "${{ matrix.engine }}" = "old" ] && [ "${{ github.run_attempt }}" -ge 3 ]; then
+            test -f "$F1_EVIDENCE_DIR/result.json"
+            echo "::warning::F1_NEGATIVE_CONTROL: WITHHOLD_LATEST_OLD_ARTIFACT"
+            rm -rf -- "$F1_EVIDENCE_DIR"
+          fi
       - name: Preserve raw PASS-FAIL, hashes, timeline and classification (including failed probes)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: f1-${{ matrix.engine }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/f1-${{ matrix.engine }}
-          if-no-files-found: error
+          # Deliberately allow *absent* engine artifact in this disposable negative-control branch.
+          if-no-files-found: warn
 
   identical-input-comparison:
     name: Compare equal hashes and explicit old-failure/new-pass evidence
