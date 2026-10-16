@@ -2,9 +2,9 @@ name: WebKit F1 fixed-fixture A-B evidence
 
 on:
   push:
-    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e]
+    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e, qa/f1-evidence-completeness-v18c]
   pull_request:
-    branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d]
+    branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e]
     paths:
       - 'qa/east-passage/f1/**'
       - 'qa/east-passage/README.md'
@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 env:
   F1_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -68,18 +69,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Snapshot attempt-specific API jobs and artifact inventory
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node qa/east-passage/f1/collect-actions.cjs '${{ runner.temp }}/f1-pair'
       - uses: actions/download-artifact@v4
+        if: always()
         with:
           # Failed-job-only reruns may leave the successful peer at an earlier attempt.
           # The comparator selects latest per engine only after authenticating run/attempt/HEAD.
           pattern: f1-*-${{ github.run_id }}-*
           path: ${{ runner.temp }}/f1-pair
       - name: Verify latest engine evidence across attempts and exact input bytes
+        if: always()
         run: node qa/east-passage/f1/compare.cjs '${{ runner.temp }}/f1-pair'
       - name: Preserve paired verification summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: f1-paired-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/f1-pair/comparison.json
+          path: |
+            ${{ runner.temp }}/f1-pair/comparison.json
+            ${{ runner.temp }}/f1-pair/actions-history.json
           if-no-files-found: error

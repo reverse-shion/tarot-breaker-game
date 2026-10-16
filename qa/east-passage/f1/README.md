@@ -1,4 +1,4 @@
-# F1 v1.4-C fixed-fixture evidence protocol
+# F1 v1.8-C evidence completeness protocol
 
 Scope: QA only; NORMAL risk (no runtime diff). Baseline `56a30d64958df19b9befd647e0c6ff3c4a856e31`, main inspected at `4d95d98bcac7723dfd006931400bf8b86ad212e0`. Existing PR154/156/157/158/159, main, assets, origin configuration, all game code and existing eleven browser tests are read-only. F1 closure remains Astra's decision; Draft/no merge/no deployment.
 
@@ -26,20 +26,20 @@ This subprocess has no preload, NODE_OPTIONS, diagnostic import, observe(), medi
 
 ## Run and retrieve
 
-Use an empty disposable checkout of the dedicated QA branch. Keep the inherited proxy/CA settings. On a machine with normal Playwright dependencies:
+Use an empty disposable checkout of the dedicated QA branch. The workflow installs the two exact engines with standard host dependencies, runs the frozen fixtures, and uploads `f1-old-<run>-<attempt>`, `f1-new-<run>-<attempt>` and `f1-paired-<run>-<attempt>`. Failure artifacts upload with `always()`. The ordinary eleven-test workflow is untouched; the new-engine evidence job also executes those same two test files normally, without the F1 preloader.
+
+Offline directory-only comparison is deliberately no longer accepted as authenticated F1 evidence. To replay an Actions run, check out its exact execution HEAD, download all its engine artifacts into distinct artifact-name directories under a disposable parent, and supply read-only GitHub API access and the exact run identity:
 
 ```sh
-npm install --no-save --no-package-lock playwright@1.56.1
-npx playwright install --with-deps webkit
-F1_EVIDENCE_DIR=/tmp/f1-old node qa/east-passage/f1/run.cjs old
-
-npm install --no-save --no-package-lock playwright@1.64.1
-npx playwright install --with-deps webkit
-F1_EVIDENCE_DIR=/tmp/f1-new node qa/east-passage/f1/run.cjs new
-node qa/east-passage/f1/compare.cjs /tmp
+export GITHUB_REPOSITORY=reverse-shion/tarot-breaker-game
+export GITHUB_RUN_ID=<run-id>
+export GITHUB_RUN_ATTEMPT=<latest-attempt>
+export F1_EXPECTED_HEAD=<exact-execution-head>
+node qa/east-passage/f1/collect-actions.cjs /tmp/f1-pair
+node qa/east-passage/f1/compare.cjs /tmp/f1-pair
 ```
 
-For the pair command, preferably place only the two run directories under a dedicated evidence parent (the comparator requires exactly two `result.json` files). Actions executes these as separate fresh runner jobs; it never swaps versions during a job. `.github/workflows/webkit-f1-evidence.yml` uploads `f1-old-<run>-<attempt>`, `f1-new-<run>-<attempt>` and `f1-paired-<run>-<attempt>`. Failure artifacts upload with `always()`. The ordinary eleven-test workflow is untouched; the new-engine evidence job also executes those same two test files normally, without the F1 preloader.
+The collector uses `gh api` GET only; `actions: read` is sufficient. It archives every attempt's run metadata and full paginated job/step history plus the run artifact inventory in `actions-history.json`. A missing permission, incomplete pagination, or run-attempt race is STOP, not permission to fall back. `comparison.json` is written on both PASS and STOP. The paired artifact retains both files even when verification fails.
 
 ## Limits
 
@@ -58,4 +58,20 @@ This QA-only correction fetches all `f1-*-${run_id}-*` artifacts and authenticat
 
 New adversarial tests reject a foreign run, a forged attempt, an absent peer, future-attempt artifacts, and masking of a later failure. The frozen fixture, its timeouts, native hooks, original four and eleven browser tests, real runtime, Save/Continue, collision, audio, assets, main and protected PR heads are unchanged. No iPhone evidence is implied.
 
-For manual comparison from a checked-out exact HEAD, set `F1_EXPECTED_HEAD=$(git rev-parse HEAD)`, place artifacts in distinct `f1-old`/`f1-new` directories, and invoke `node qa/east-passage/f1/compare.cjs /path/to/parent`. GitHub Actions additionally requires `GITHUB_RUN_ID`, `GITHUB_REPOSITORY` and `GITHUB_RUN_ATTEMPT` matching the artifact metadata.
+## F1-01 fail-closed selection (v1.8-C)
+
+Fixed parent: PR #162 `6045b70a09ca164d30af94eebd86cd53870f5739`; tracking: Issue #163. This repair changes only evidence selection, its tests, documentation and the F1 workflow. Protected game/fixture/hook/audio bytes remain unchanged.
+
+The former selector discovered only `result.json`. A newer identity-only directory (or an upload that never created an artifact) was invisible, allowing old successful results to be selected. That exact identity-only fallback was reproduced before this repair.
+
+Selection now enumerates artifact **directories**, reconciles them with the API inventory and every attempt's engine jobs, and selects the latest **actual execution** before checking success. Artifact creation time is checked against that execution, but never defines whether a job reran. GitHub can rewrite both job ID and `run_attempt` for an inherited successful peer: inheritance requires matching prior successful execution start/end timestamps and the complete step execution history. New execution times require new evidence even if its peer remains at an earlier attempt. Missing/ambiguous job records, inconsistent identities/HEADs, unexpected/future/foreign artifacts or unproven inheritance are STOP.
+
+The selected execution must have a successful job and complete accepted result, an independent `identity.json` matching `result.identity`, run URL, attempt and exact HEAD, and an unexpired inventory artifact whose directory was downloaded. Latest identity-only, missing artifact, failed result or failed job is STOP; no earlier success can replace it. The existing strict engine verdict, equal-input and expected-old-failure checks remain in force. Earlier failed/incomplete/missing executions remain in `selection.history`, with their job/step records, states and reasons. Healthy later evidence may supersede those historical failures; contradictory provenance cannot be ignored. Inherited peers are listed separately with the actual execution attempt. Raw API history is retained even when authentication stops before selection can be completed.
+
+Run the targeted positive/negative controls with:
+
+```sh
+node --test qa/east-passage/f1/classify.test.cjs qa/east-passage/f1/select-attempts.test.cjs
+```
+
+These controls include latest identity-only, absent upload, missing download, rejected result, mixed old2/new1, full same-attempt executions, false inheritance, missing API/steps, foreign run, wrong HEAD, forged/future attempt, historical failed/incomplete/missing attempts, collector pagination and races, and persisted STOP output. Synthetic controls do not claim that an actual Actions upload was lost or interrupted. Report separately which real Actions rerun routes were exercised on the submitted HEAD. F1 closure still requires Astra's independent READ ONLY verdict; iPhone, merge and deployment gates remain closed.
