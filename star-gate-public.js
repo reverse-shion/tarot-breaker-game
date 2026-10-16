@@ -19,10 +19,12 @@
  // Aftermath saved Star Gate completion. Also migrates verified older saves:
  // those players already heard the C16 Star Sand decision in their completed run.
  function ensureRouteKnown(){
-  const state=current();
-  if(!state?.completedEvents?.includes(EVENT))return false;
-  if(state.completedEvents.includes(ROUTE_KNOWN))return true;
   try{
+   // Even an already-known fact needs independent durable evidence.
+   const before=window.TarotProgressCore.createProgress().load(),state=before.state;
+   if(before.status!=='valid'||!state.completedEvents.includes(EVENT)||
+      state.checkpoint.mapId!=='star_gate_garden'||state.companion!=='joined_with_shion')return false;
+   if(state.completedEvents.includes(ROUTE_KNOWN))return true;
    const written=progress()?.completeEvent(ROUTE_KNOWN,{mapId:'star_gate_garden',spawnId:'south_gate'});
    if(!written?.persisted)throw new Error(written?.reason||'route-knowledge-write-unavailable');
    const loaded=window.TarotProgressCore.createProgress().load();
