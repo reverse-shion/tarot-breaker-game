@@ -54,7 +54,7 @@ test('wrong API HEAD STOPs',t=>{const f=mixed(t);f.snapshot.run.head_sha='a'.rep
 test('foreign API artifact run STOPs',t=>{const f=mixed(t);f.snapshot.artifacts[0].workflow_run.id=999;f.stop(/foreign artifact run/)});
 test('inherited peer with differing step history STOPs',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[1].steps[0].name='changed';f.stop(/engine step sequence/)});
 test('inherited failed peer is not a normal previous success',t=>{const f=mixed(t);for(const a of f.snapshot.attempts)a.jobs.find(j=>j.name===jobName('new')).conclusion='failure';f.stop(/inherited execution not proven/)});
-test('new execution times force fresh artifact even with misleading created_at/run_attempt',t=>{const f=mixed(t);const j=f.snapshot.attempts[1].jobs[1];j.started_at='2026-10-16T12:21:00Z';j.completed_at='2026-10-16T12:21:30Z';for(const step of j.steps){step.started_at=new Date(Date.parse(step.started_at)+60000).toISOString();step.completed_at=new Date(Date.parse(step.completed_at)+60000).toISOString()}f.stop(/new latest execution attempt 2: MISSING_ARTIFACT/)});
+test('new execution times force fresh artifact even with misleading created_at/run_attempt',t=>{const f=mixed(t);const j=f.snapshot.attempts[1].jobs[1];j.started_at='2026-10-16T12:21:00Z';j.completed_at='2026-10-16T12:21:30Z';for(const step of j.steps){step.started_at=new Date(Date.parse(step.started_at)+660000).toISOString();step.completed_at=new Date(Date.parse(step.completed_at)+660000).toISOString()}f.stop(/new latest execution attempt 2: MISSING_ARTIFACT/)});
 test('insufficient or ambiguous attempt job history STOPs',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs.push(structuredClone(f.snapshot.attempts[1].jobs[0]));f.stop(/missing\/ambiguous API job/)});
 test('expired latest artifact STOPs',t=>{const f=mixed(t);f.snapshot.artifacts.at(-1).expired=true;f.stop(/API artifact expired/)});
 test('latest failed job cannot be accepted using a COMPLETE result',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[0].conclusion='failure';f.stop(/job conclusion failure/)});
@@ -82,3 +82,10 @@ test('historical failure classifier reasons remain after accepted latest executi
 
 test('identically truncated original and inherited step arrays cannot prove complete history',t=>{const f=mixed(t);for(const a of f.snapshot.attempts)a.jobs.find(j=>j.name===jobName('new')).steps.pop();f.stop(/incomplete\/changed engine step sequence/)});
 test('duplicate step numbers are insufficient execution metadata',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[0].steps[1].number=1;f.stop(/step number missing\/invalid\/unordered/)});
+
+for(const field of ['head','run','attempt','engine'])test(`historical result wrong ${field} cannot hide behind missing identity file`,t=>{
+ const f=mixed(t),dir=path.join(f.dir,'f1-old-123-1'),p=path.join(dir,'result.json'),r=JSON.parse(fs.readFileSync(p));fs.unlinkSync(path.join(dir,'identity.json'));
+ if(field==='head')r.identity.executionHead='a'.repeat(40);if(field==='run')r.identity.actions.runURL='https://github.com/foreign/run';if(field==='attempt')r.identity.actions.attempt='2';if(field==='engine')r.engine='new';
+ fs.writeFileSync(p,JSON.stringify(r));f.stop(/wrong HEAD|run URL mismatch|attempt metadata mismatch|engine mismatch/);
+});
+test('valid historical result with missing identity remains incomplete history',t=>{const f=mixed(t);fs.unlinkSync(path.join(f.dir,'f1-old-123-1/identity.json'));assert.equal(f.select().provenance.history.old[0].state,'INCOMPLETE_ARTIFACT')});

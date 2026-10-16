@@ -104,14 +104,22 @@ function selectAttempts(root,env=process.env){
   directories.delete(artifact.name);
   row.state='INCOMPLETE_ARTIFACT';
   const dir=path.join(root,artifact.name);
-  let identity,result;
-  try{
-   identity=JSON.parse(fs.readFileSync(path.join(dir,'identity.json'),'utf8'));
-   authenticate(identity,row.attempt);
-   result=JSON.parse(fs.readFileSync(path.join(dir,'result.json'),'utf8'));
-   assert.equal(result.engine,/^f1-(old|new)-/.exec(artifact.name)[1],'artifact engine mismatch');
-   authenticate(result.identity,row.attempt);assert.deepEqual(result.identity,identity,'identity/result disagree');
-  }catch(error){row.reasons.push(error.message);if(error.code!=='ENOENT')stop(artifact.name+': '+error.message);return}
+  let identity,result,incomplete=false;
+  // A missing companion file must never suppress authentication of a file
+  // that is present (including contradictory historical result metadata).
+  for(const file of ['identity.json','result.json']){
+   try{
+    const value=JSON.parse(fs.readFileSync(path.join(dir,file),'utf8'));
+    if(file==='identity.json'){identity=value;authenticate(identity,row.attempt)}
+    else{
+     result=value;assert.equal(result.engine,/^f1-(old|new)-/.exec(artifact.name)[1],'artifact engine mismatch');
+     authenticate(result.identity,row.attempt);
+    }
+   }catch(error){incomplete=true;row.reasons.push(error.message);if(error.code!=='ENOENT')stop(artifact.name+': '+error.message)}
+  }
+  if(identity&&result)try{assert.deepEqual(result.identity,identity,'identity/result disagree')}
+  catch(error){incomplete=true;row.reasons.push(error.message);stop(artifact.name+': '+error.message)}
+  if(incomplete)return;
   row.state=result.comparisonEvidenceAccepted===true?'COMPLETE':'FAILED';
   row.evidenceAccepted=result.comparisonEvidenceAccepted===true;
   row.nativeVerdict=result.native?.verdict;row.originalFourVerdict=result.unwrapped?.verdict;
