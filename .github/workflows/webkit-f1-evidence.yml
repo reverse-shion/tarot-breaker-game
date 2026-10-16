@@ -4,7 +4,7 @@ on:
   push:
     branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d]
   pull_request:
-    branches: [fix/east-passage-integration-v12c]
+    branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c]
     paths:
       - 'qa/east-passage/f1/**'
       - 'qa/east-passage/README.md'
