@@ -1886,16 +1886,25 @@
     // to the New Game reset/navigation path.
     if (!enteringGardenRuntime) {
       if (start) start.disabled = true;
-      const progress = window.TarotProgressCore?.createProgress();
-      if (!progress) {
+      // The title transition is owned by public-continue-title.js. A failed
+      // durable reset must also release its departing state, not merely this button.
+      function reportStartFailure(message) {
         if (start) start.disabled = false;
-        if (note) note.textContent = "セーブ機能を初期化できません";
+        if (note) note.textContent = message;
+        window.dispatchEvent(new CustomEvent("tarot-breaker:title-new-game-failed", { detail: { message } }));
+      }
+      let progress;
+      try { progress = window.TarotProgressCore?.createProgress(); }
+      catch (_) { progress = null; }
+      if (!progress) {
+        reportStartFailure("セーブ機能を初期化できません");
         return;
       }
-      const reset = progress.resetGame("title-new-game");
+      let reset;
+      try { reset = progress.resetGame("title-new-game"); }
+      catch (_) { reset = null; }
       if (!reset?.persisted) {
-        if (start) start.disabled = false;
-        if (note) note.textContent = "セーブデータを初期化できません。再試行してください";
+        reportStartFailure("セーブデータを初期化できません。再試行してください");
         return;
       }
       window.TarotJourney?.reset();
