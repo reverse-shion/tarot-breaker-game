@@ -40,7 +40,7 @@ jobs:
       - name: Run disposable virtual-HTTPS WebKit checks
         env:
           QA_DIAGNOSTIC_DIR: ${{ runner.temp }}/east-passage-diagnostics
-        run: node --test qa/east-passage/tests/webkit-smoke.test.cjs
+        run: node --test --test-concurrency=1 qa/east-passage/tests/*.test.cjs
       - name: Preserve reload evidence (no save bytes)
         if: always()
         uses: actions/upload-artifact@v4

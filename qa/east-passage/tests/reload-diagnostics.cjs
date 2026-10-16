@@ -14,6 +14,17 @@ async function observe(ctx){
   const report=event=>window.__qaLifecycle({type:event.type,document:id,persisted:event.persisted===true}).catch(()=>{});
   for(const type of ['pageshow','pagehide','beforeunload','DOMContentLoaded','load'])window.addEventListener(type,report);
   report({type:'new-document'});
+  for(const method of ['play','pause']){
+   const original=HTMLMediaElement.prototype[method];
+   HTMLMediaElement.prototype[method]=function(...args){
+    const src=new URL(this.currentSrc||this.src||location.href,location.href).pathname;
+    console.debug('[QA media]',method+'-enter',src);
+    const result=Reflect.apply(original,this,args);
+    console.debug('[QA media]',method+'-return',src);
+    if(method==='play')Promise.resolve(result).then(()=>console.debug('[QA media] play-resolved',src),e=>console.debug('[QA media] play-rejected',e.name));
+    return result;
+   };
+  }
  });
  ctx.on('page',page=>{
   const pageId=++sequence;
@@ -21,7 +32,7 @@ async function observe(ctx){
   for(const event of ['domcontentloaded','load','close','crash'])page.on(event,()=>record('page:'+event,{pageId,url:safeURL(page.url())}));
   page.on('pageerror',error=>record('pageerror',{pageId,message:error.message.slice(0,300)}));
   page.on('console',msg=>{
-   if(msg.type()==='error'||msg.text().startsWith('[QA Runtime Entry]'))record('console:'+msg.type(),{pageId,message:msg.text().slice(0,300)});
+   if(msg.type()==='error'||(msg.text().startsWith('[QA Runtime Entry]')||msg.text().startsWith('[QA media]')))record('console:'+msg.type(),{pageId,message:msg.text().slice(0,300)});
   });
   page.on('request',req=>{
    pending.set(req,safeURL(req.url()));
@@ -58,13 +69,13 @@ async function report(page,label,start,{failed=false}={}){
  const trace=traces.get(page.context());
  const events=trace.entries.slice(start),types=new Set(events.map(x=>x.event));
  const observed={label,failed,finalURL:safeURL(page.url()),state:await snapshot(page),
-  absent:['beforeunload','pagehide','new-document','framenavigated','domcontentloaded','DOMContentLoaded','load','pageshow','requestfailed','pageerror','console:error','page:close','page:crash'].filter(x=>!types.has(x)),
-  pendingRequests:[...trace.pending.values()],events};
+  absent:['beforeunload','pagehide','new-document','framenavigated','page:domcontentloaded','DOMContentLoaded','load','pageshow','requestfailed','pageerror','console:error','page:close','page:crash'].filter(x=>!types.has(x)),
+  pendingRequests:[...trace.pending.values()],preReloadMedia:trace.entries.slice(0,start).filter(x=>x.event.startsWith('media-')||x.message?.startsWith('[QA media]')),events};
  if(process.env.QA_DIAGNOSTIC_DIR){
   await fs.mkdir(process.env.QA_DIAGNOSTIC_DIR,{recursive:true});
   await fs.writeFile(path.join(process.env.QA_DIAGNOSTIC_DIR,label+'.json'),JSON.stringify(observed,null,2));
  }
- console.log('[QA reload diagnostics] '+JSON.stringify(observed));
+ console.log('[QA reload diagnostics] '+JSON.stringify(failed?observed:{...observed,events:events.filter(x=>!['requestfailed'].includes(x.event))}));
  return observed;
 }
 async function reloadToTitle(page,{method='window',label}={}){
@@ -80,4 +91,4 @@ async function reloadToTitle(page,{method='window',label}={}){
   return await report(page,label,start);
  }catch(e){await report(page,label,start,{failed:true});throw e}
 }
-module.exports={observe,instrumentRuntime,reloadToTitle};
+module.exports={observe,instrumentRuntime,reloadToTitle,report};

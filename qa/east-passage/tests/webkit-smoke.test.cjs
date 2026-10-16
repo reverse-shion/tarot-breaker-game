@@ -13,7 +13,7 @@ const KEY='tarot-breaker:progress-v1';
 const MIMES={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.css':'text/css','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ogg':'audio/ogg','.mp3':'audio/mpeg','.woff2':'font/woff2'};
 async function contextFor(browser,{missingCollisionOnContinue=false}={}){
  const ctx=await browser.newContext({viewport:{width:393,height:852},deviceScaleFactor:3,isMobile:true,hasTouch:true,ignoreHTTPSErrors:true,serviceWorkers:'block'});
- await observe(ctx);
+ const trace=await observe(ctx);
  await ctx.route('**/*',async route=>{
   const url=new URL(route.request().url());
   if(!ALLOWED.has(url.origin))return route.abort('blockedbyclient');
@@ -30,6 +30,7 @@ async function contextFor(browser,{missingCollisionOnContinue=false}={}){
   }
   try{
    let data=await fs.readFile(file);
+   if(url.pathname.includes('/audio/'))trace.record('media-response',{path:url.pathname,range:route.request().headers().range||null,status:200,size:data.length});
    if(url.pathname==='/runtime-entry.js')data=Buffer.from(instrumentRuntime(data.toString('utf8')));
    return route.fulfill({status:200,body:data,contentType:MIMES[path.extname(file).toLowerCase()]||'application/octet-stream',headers:{'cache-control':'no-store'}});
   }catch(e){
