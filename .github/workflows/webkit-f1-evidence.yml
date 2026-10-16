@@ -2,9 +2,9 @@ name: WebKit F1 fixed-fixture A-B evidence
 
 on:
   push:
-    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d]
+    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d, qa/webkit-f1-retry-pair-v16e]
   pull_request:
-    branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c]
+    branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d]
     paths:
       - 'qa/east-passage/f1/**'
       - 'qa/east-passage/README.md'
@@ -70,9 +70,11 @@ jobs:
           node-version: '22'
       - uses: actions/download-artifact@v4
         with:
-          pattern: f1-*-${{ github.run_id }}-${{ github.run_attempt }}
+          # Failed-job-only reruns may leave the successful peer at an earlier attempt.
+          # The comparator selects latest per engine only after authenticating run/attempt/HEAD.
+          pattern: f1-*-${{ github.run_id }}-*
           path: ${{ runner.temp }}/f1-pair
-      - name: Require identical fixture, HTML, JavaScript, MP3 and observation bytes
+      - name: Verify latest engine evidence across attempts and exact input bytes
         run: node qa/east-passage/f1/compare.cjs '${{ runner.temp }}/f1-pair'
       - name: Preserve paired verification summary
         if: always()
