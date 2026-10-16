@@ -62,7 +62,20 @@ Evidence: [WebKit run #38759907789](https://github.com/reverse-shion/tarot-break
 
 Run locally in a disposable checkout (optional):
 ```sh
-npm install --no-save --no-package-lock playwright@1.56.1
+npm install --no-save --no-package-lock playwright@1.64.1
 npx playwright install --with-deps webkit
 node --test qa/east-passage/tests/webkit-smoke.test.cjs
 ```
+
+
+## v1.2-C native WebKit reload repair
+
+PR156 baseline `30f1973a85d8ed46a481ab9bd07347da1d138009` reproduces the two touch/reload failures on Playwright 1.56.1 / WebKit 26.0 (build 2215). Before reload the real Garden is rendered and the entry token is absent. `beforeunload`, document request and `pagehide` fire, then the native BGM `HTMLMediaElement.pause()` enters and never returns. No replacement document, Runtime Entry consumption, redirect, page error or page crash is observed; page evaluation also stalls. This is a native media teardown stall, before Title or Runtime Entry can run again.
+
+A reduction containing only a button, the unchanged MP3, `Audio.play()` and `pagehide → Audio.pause()` reproduces outside the game, both with request interception and a local HTTP server. No storage or game modules participate. A range-response experiment does not resolve the game failure (the observed audio requests carry no Range). The identical reduction on Playwright 1.64.1 / WebKit 27.2 (build 2370) returns from pause and commits reload in both transport modes. The QA workflow now pins 1.64.1. No production code/audio is changed. The browser's internal native lock mechanism is not independently established; this evidence identifies the affected engine and blocking API, not a proven iPhone defect.
+
+The original four scenarios remain. Six additive comparisons cover no-touch with each reload API and touch with `page.reload()` for each fixture; the originals cover touch with `window.location.reload()`. A separate native-media regression requires real MP3 playback and a new document after pause/reload. No timeout increase, token forgery, relaxed URL, bypass, skip, or removed assertion is used. The minimal fixture has an explicit mobile viewport and adequately sized touch target.
+
+`reload-diagnostics.cjs` records lifecycle, request failure, page error, console error, close/crash, new-document IDs, exact destination/Title/Continue state and token **presence only**. Runtime Entry consume/replace observations are added solely to intercepted QA response bytes; media wrappers delegate to the native methods unchanged. Missing events and an unresponsive page are explicit. Full JSON evidence is uploaded by CI, including failures; save bytes and token values are never logged. The pinned original tests are also rerun without observers for engine comparison.
+
+This QA change is independent of the durable-permission repair. Combined verification runs only on `fix/east-passage-integration-v12c`. CI and physical iPhone Safari remain separate gates. Both original PRs and repair PRs stay Draft; approved origin stays empty, no production or preview storage is seeded, no main merge or deployment is authorized. Exact final HEAD/run IDs belong to the repair PR evidence; historical 3/3 is not current proof.

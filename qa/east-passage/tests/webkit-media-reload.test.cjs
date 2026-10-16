@@ -15,17 +15,18 @@ test('WebKit native media: playing MP3 pause on pagehide returns and reload comm
    if(u.origin!==ORIGIN)return route.abort('blockedbyclient');
    if(u.pathname==='/bgm.mp3')return route.fulfill({status:200,contentType:'audio/mpeg',body:media});
    if(u.pathname!=='/index.html')return route.fulfill({status:404,body:'Not found'});
-   return route.fulfill({status:200,contentType:'text/html',body:`<button id="play">Play</button><script>
+   return route.fulfill({status:200,contentType:'text/html',body:`<meta name="viewport" content="width=device-width, initial-scale=1"><button id="play" style="margin:24px;width:160px;height:64px">Play</button><script>
     const audio=new Audio('/bgm.mp3');audio.preload='auto';audio.loop=true;
-    play.onclick=()=>audio.play().then(()=>window.playing=true);
+    document.getElementById('play').onclick=()=>audio.play().then(()=>window.playing=true);
     addEventListener('pagehide',()=>audio.pause());
    </script>`});
   });
-  const page=await ctx.newPage();await page.goto(ORIGIN+'/index.html');
-  await page.locator('#play').tap();await page.waitForFunction(()=>window.playing===true);
-  const original=await page.evaluate(()=>window.__qaDocument),start=trace.entries.length;
-  trace.record('reload-start',{method:'playwright',url:page.url()});
+  const page=await ctx.newPage();let start=0;
   try{
+   await page.goto(ORIGIN+'/index.html');
+   await page.locator('#play').tap();await page.waitForFunction(()=>window.playing===true);
+   const original=await page.evaluate(()=>window.__qaDocument);start=trace.entries.length;
+   trace.record('reload-start',{method:'playwright',url:page.url()});
    await page.reload({waitUntil:'domcontentloaded',timeout:45000});
    assert.match(page.url(),/\/index\.html$/);
    assert.notEqual(await page.evaluate(()=>window.__qaDocument),original);
