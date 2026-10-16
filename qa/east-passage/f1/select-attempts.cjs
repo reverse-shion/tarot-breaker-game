@@ -13,7 +13,7 @@ class EvidenceStop extends Error{
 function selectAttempts(root,env=process.env){
  const provenance={history:{old:[],new:[]},inherited:[],attempts:{},artifacts:[]},reasons=[];
  const stop=message=>reasons.push(message);
- const guard=fn=>{try{return fn()}catch(error){stop(error.message)}};
+ const guard=(fn,row)=>{try{return fn()}catch(error){stop(error.message);if(row)row.reasons.push(error.message)}};
  const ci=Boolean(env.GITHUB_RUN_ID),runID=String(env.GITHUB_RUN_ID),current=Number(env.GITHUB_RUN_ATTEMPT),head=env.F1_EXPECTED_HEAD;
  let snapshot;
  guard(()=>{
@@ -41,26 +41,40 @@ function selectAttempts(root,env=process.env){
   const start=time(run.run_started_at);assert.ok(i===0||start>starts[i-1],'contradictory attempt start times');starts.push(start);
  });
  if(reasons.length)throw new EvidenceStop(reasons,provenance);
- for(let i=0;i<current;i++)for(const engine of ENGINES)guard(()=>{
-  const attempt=i+1,jobs=snapshot.attempts[i].jobs.filter(j=>j.name===jobName(engine));
-  assert.equal(jobs.length,1,`${engine} attempt ${attempt}: missing/ambiguous API job`);
-  const job=jobs[0];assert.equal(String(job.run_id),runID,'foreign job run');assert.equal(job.head_sha,head,'wrong HEAD in job');
-  assert.equal(job.run_attempt,attempt,'job API attempt mismatch');
-  assert.equal(job.status,'completed',`${engine} attempt ${attempt}: execution incomplete`);
-  const start=time(job.started_at),end=time(job.completed_at);
-  assert.ok(end>=start,'contradictory job times');
-  assert.ok(Array.isArray(job.steps)&&job.steps.length>0,'job step history missing');
-  for(const step of job.steps){assert.equal(step.status,'completed','incomplete job step');assert.ok(time(step.started_at)>=start&&time(step.completed_at)<=end&&time(step.completed_at)>=time(step.started_at),'step execution outside job times')}
-  const prior=provenance.history[engine].at(-1);
-  if(start<starts[i]){
-   assert.ok(prior&&job.conclusion==='success'&&prior.job.conclusion==='success'&&execution(job)===execution(prior.job),`${engine} attempt ${attempt}: inherited execution not proven`);
-   provenance.inherited.push({engine,observedAttempt:attempt,executionAttempt:prior.attempt,job});return;
-  }
-  assert.ok(i+1===current||end<=starts[i+1],'execution overlaps a later attempt');
-  const name=`f1-${engine}-${runID}-${attempt}`;
-  const row={attempt,artifact:name,job,state:'MISSING_ARTIFACT',evidenceAccepted:false,reasons:[]};
-  provenance.history[engine].push(row);rows.set(name,row);
- });
+ for(let i=0;i<current;i++)for(const engine of ENGINES){
+  const attempt=i+1,name=`f1-${engine}-${runID}-${attempt}`,list=provenance.history[engine],prior=list.at(-1);
+  const row={attempt,artifact:name,state:'UNVERIFIED_EXECUTION',evidenceAccepted:false,reasons:[]};
+  list.push(row);
+  guard(()=>{
+   const jobs=snapshot.attempts[i].jobs.filter(j=>j.name===jobName(engine));row.observedJobs=jobs;
+   assert.equal(jobs.length,1,`${engine} attempt ${attempt}: missing/ambiguous API job`);
+   const job=jobs[0];row.job=job;delete row.observedJobs;
+   assert.equal(String(job.run_id),runID,'foreign job run');assert.equal(job.head_sha,head,'wrong HEAD in job');
+   assert.equal(job.run_attempt,attempt,'job API attempt mismatch');
+   assert.equal(job.status,'completed',`${engine} attempt ${attempt}: execution incomplete`);
+   const conclusions=['success','failure','cancelled','skipped','neutral','timed_out','action_required','stale'];
+   assert.ok(conclusions.includes(job.conclusion),'job conclusion missing/invalid');
+   const start=time(job.started_at),end=time(job.completed_at);
+   assert.ok(end>=start,'contradictory job times');
+   assert.ok(Array.isArray(job.steps)&&job.steps.length>0,'job step history missing');
+   let previousNumber=0,previousEnd=start;
+   for(const step of job.steps){
+    assert.ok(typeof step.name==='string'&&step.name.trim().length>0,'step name missing');
+    assert.ok(Number.isSafeInteger(step.number)&&step.number>previousNumber,'step number missing/invalid/unordered');previousNumber=step.number;
+    assert.equal(step.status,'completed','incomplete job step');
+    assert.ok(conclusions.includes(step.conclusion),'step conclusion missing/invalid');
+    if(job.conclusion==='success')assert.ok(['success','skipped'].includes(step.conclusion),'successful job contradicts failed step');
+    const stepStart=time(step.started_at),stepEnd=time(step.completed_at);
+    assert.ok(stepStart>=previousEnd&&stepEnd<=end&&stepEnd>=stepStart,'step execution outside job times/order');previousEnd=stepEnd;
+   }
+   if(start<starts[i]){
+    assert.ok(prior&&job.conclusion==='success'&&prior.job?.conclusion==='success'&&execution(job)===execution(prior.job),`${engine} attempt ${attempt}: inherited execution not proven`);
+    list.pop();provenance.inherited.push({engine,observedAttempt:attempt,executionAttempt:prior.attempt,job});return;
+   }
+   assert.ok(i+1===current||end<=starts[i+1],'execution overlaps a later attempt');
+   row.state='MISSING_ARTIFACT';rows.set(name,row);
+  },row);
+ }
  // Enumerate directories themselves: identity-only/empty latest artifacts count.
  const directories=new Set();
  for(const entry of fs.readdirSync(root,{withFileTypes:true})){
@@ -92,7 +106,13 @@ function selectAttempts(root,env=process.env){
   }catch(error){row.reasons.push(error.message);if(error.code!=='ENOENT')stop(artifact.name+': '+error.message);return}
   row.state=result.comparisonEvidenceAccepted===true?'COMPLETE':'FAILED';
   row.evidenceAccepted=result.comparisonEvidenceAccepted===true;
-  row.nativeVerdict=result.native?.verdict;row.originalFourVerdict=result.unwrapped?.verdict;row.result=result;
+  row.nativeVerdict=result.native?.verdict;row.originalFourVerdict=result.unwrapped?.verdict;
+  if(!row.evidenceAccepted){
+   row.classification={native:result.native,unwrapped:result.unwrapped,existing:result.existing};
+   row.reasons.push(...[result.native?.reason,result.unwrapped?.reason].filter(Boolean));
+   if(!row.reasons.length)row.reasons.push('comparisonEvidenceAccepted is not true');
+  }
+  row.result=result;
  });
  for(const name of directories)stop('unlisted/untrusted artifact directory: '+name);
  const selected={};
@@ -101,7 +121,7 @@ function selectAttempts(root,env=process.env){
   for(const row of list)if(!inventory.has(row.artifact))row.reasons.push('artifact absent from Actions API inventory');
   if(!latest){stop('no proven execution for '+engine);continue}
   provenance[engine]=latest.artifact;provenance.attempts[engine]=latest.attempt;
-  if(latest.job.conclusion!=='success')stop(`${engine} latest execution attempt ${latest.attempt}: job conclusion ${latest.job.conclusion}`);
+  if(latest.job?.conclusion!=='success')stop(`${engine} latest execution attempt ${latest.attempt}: job conclusion ${latest.job?.conclusion}`);
   if(latest.state!=='COMPLETE')stop(`${engine} latest execution attempt ${latest.attempt}: ${latest.state}: ${latest.reasons.join(', ')||'result evidence rejected'}`);
   selected[engine]=latest.result;
  }
