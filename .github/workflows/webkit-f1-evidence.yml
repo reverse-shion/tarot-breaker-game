@@ -2,9 +2,9 @@ name: WebKit F1 fixed-fixture A-B evidence
 
 on:
   push:
-    branches: [qa/webkit-f1-evidence-v14c]
+    branches: [qa/webkit-f1-evidence-v14c, qa/webkit-f1-exact-head-v15d]
   pull_request:
-    branches: [fix/east-passage-integration-v12c]
+    branches: [fix/east-passage-integration-v12c, qa/webkit-f1-evidence-v14c]
     paths:
       - 'qa/east-passage/f1/**'
       - 'qa/east-passage/README.md'
@@ -13,6 +13,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  F1_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   compare:
@@ -30,6 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -59,6 +63,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

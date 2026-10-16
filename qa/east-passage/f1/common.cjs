@@ -10,6 +10,11 @@ const SMOKE='qa/east-passage/tests/webkit-smoke.test.cjs';
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function git(...args){return execFileSync('git',args,{cwd:ROOT,maxBuffer:16*1024*1024})}
 function identities(){
+ // Fail before testing unless the checked-out commit is the exact audited PR head.
+ const expectedHead=process.env.F1_EXPECTED_HEAD;
+ const executionHead=git('rev-parse','HEAD').toString().trim();
+ if(!expectedHead||!/^[0-9a-f]{40}$/.test(expectedHead)||executionHead!==expectedHead)
+  throw Error('F1 exact-head mismatch: expected '+String(expectedHead)+' but running '+executionHead);
  const files={};
  for(const file of [FIXTURE,HELPER,MP3,SMOKE]){
   const bytes=fs.readFileSync(path.join(ROOT,file));
@@ -20,7 +25,7 @@ function identities(){
  const match=/body:`([^`]+)`/.exec(source);if(!match)throw Error('Fixed HTML literal not found');
  const html=match[1],script=/<script>([\s\S]*)<\/script>/.exec(html)?.[1];
  if(!script)throw Error('Fixed inline JavaScript not found');
- return {baseline:BASE,executionHead:git('rev-parse','HEAD').toString().trim(),node:process.version,platform:process.platform,arch:process.arch,
+ return {baseline:BASE,executionHead,expectedHead,node:process.version,platform:process.platform,arch:process.arch,
   files,htmlSHA256:sha(html),inlineJavaScriptSHA256:sha(script),
   observationHookSHA256:sha(fs.readFileSync(path.join(__dirname,'observe-fixed.cjs'))),
   actions:{runURL:process.env.GITHUB_RUN_ID?`https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`:null,attempt:process.env.GITHUB_RUN_ATTEMPT||null}};
