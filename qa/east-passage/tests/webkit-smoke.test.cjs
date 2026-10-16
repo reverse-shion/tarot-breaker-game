@@ -61,7 +61,8 @@ async function assertGardenReady(page,expectedKnown,label){
   const passage=window.TarotGardenEastPassage;
   const state=window.TarotStarGateProgress;
   const line=passage?.B_LINE;
-  const known=passage?.routeKnown(state);
+  // Integrated durable-proof API reads independently from browser storage.
+  const known=passage?.routeKnown();
   return {painted,known,line,
    blocks:passage?.wouldBlock({x:1393,y:800},{x:1410,y:800},line,known),
    persisted:state?.getCurrentState?.()?.persisted,
