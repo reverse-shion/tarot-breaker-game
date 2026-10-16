@@ -262,7 +262,7 @@ test("invalid save is not auto-reset; it exposes RETRY and a confirmed New Game 
 function attachRealNewGameBegin(t, resetGame) {
   // Execute the literal production begin() source, not a separate test stand-in.
   const gameSource = fs.readFileSync("game.js", "utf8");
-  const match = gameSource.match(/  function begin\\(event\\) \\{[\\s\\S]*?(?=\\n  function pointerInfo\\(event\\) \\{)/);
+  const match = gameSource.match(/  function begin\(event\) \{[\s\S]*?(?=\n  function pointerInfo\(event\) \{)/);
   assert.ok(match, "production begin() source not found");
   let resetCalls = 0, journeyResets = 0;
   const navigations = [];
@@ -302,13 +302,13 @@ test("New Game with no save: failed persisted reset shows status, unlocks Title 
   assert.equal(start.disabled, false);
   assert.equal(screen.classList.contains("title-screen--departing"), false);
   assert.equal(start.classList.contains("is-departing"), false);
-  assert.match(css, /\\.title-screen__status \\{[\\s\\S]*?display: block/);
+  assert.match(css, /\.title-screen__status \{[\s\S]*?display: block/);
   assert.match(html, /id="continue-note"[^>]*aria-live="polite"/);
   writable = true;
   start.click();
   assert.equal(game.resets, 2, "a second click must reach the original begin()");
   assert.equal(game.journeyResets, 1);
-  assert.match(game.navigations[0], /alenon\\.html\\?from=title/);
+  assert.match(game.navigations[0], /alenon\.html\?from=title/);
 });
 
 test("Existing save: failed confirmed NEW GAME preserves Continue and requires confirmation on retry", () => {
