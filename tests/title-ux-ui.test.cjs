@@ -99,7 +99,9 @@ function harness(initialAssessment) {
       addEventListener: (type, listener) => (documentListeners[type] ||= []).push(listener),
     },
     addEventListener: (type, listener) => (windowListeners[type] ||= []).push(listener),
-    dispatchEvent: () => {},
+    dispatchEvent: event => {
+      for (const fn of windowListeners[event.type] || []) fn(event);
+    },
     TarotRuntimeEntry: {
       navigate(url) { navigated = url; return {ok:true}; },
     },
@@ -254,4 +256,101 @@ test("invalid save is not auto-reset; it exposes RETRY and a confirmed New Game 
   t.elements["title-retry"].click();
   assert.equal(t.elements["start-screen"].dataset.titleMode, "continue");
   assert.equal(t.elements.continue.hidden, false);
+});
+
+
+function attachRealNewGameBegin(t, resetGame) {
+  // Execute the literal production begin() source, not a separate test stand-in.
+  const gameSource = fs.readFileSync("game.js", "utf8");
+  const match = gameSource.match(/  function begin\\(event\\) \\{[\\s\\S]*?(?=\\n  function pointerInfo\\(event\\) \\{)/);
+  assert.ok(match, "production begin() source not found");
+  let resetCalls = 0, journeyResets = 0;
+  const navigations = [];
+  t.h.__titleStart = t.elements.start;
+  t.h.__gameLoadNote = t.elements["load-note"] = new FakeElement("load-note");
+  t.h.__newGameNavigate = url => navigations.push(url);
+  t.h.TarotJourney = {reset() { journeyResets += 1; }};
+  t.h.TarotProgressCore = {
+    createProgress() { return {resetGame(action) {
+      assert.equal(action, "title-new-game");
+      resetCalls += 1;
+      return resetGame();
+    }}; },
+  };
+  vm.runInContext(`
+    const ready = true, running = false, enteringGardenRuntime = false;
+    const start = window.__titleStart, note = window.__gameLoadNote;
+    function navigateRuntime(url) { window.__newGameNavigate(url); }
+    ${match[0]}
+    start.addEventListener("click", begin);
+  `, t.h, {filename:"actual-game-begin.js"});
+  return {get resets() { return resetCalls; },
+    get journeyResets() { return journeyResets; }, navigations};
+}
+
+test("New Game with no save: failed persisted reset shows status, unlocks Title and retries", () => {
+  const t = harness({ok:false,status:"none"});
+  let writable = false;
+  const game = attachRealNewGameBegin(t, () => ({persisted:writable}));
+  const {start, "continue-note":status, "start-screen":screen} = t.elements;
+  start.disabled = false;
+  start.click();
+  assert.equal(game.resets, 1);
+  assert.equal(game.journeyResets, 0);
+  assert.equal(game.navigations.length, 0);
+  assert.match(status.textContent, /セーブデータを初期化できません/);
+  assert.equal(start.disabled, false);
+  assert.equal(screen.classList.contains("title-screen--departing"), false);
+  assert.equal(start.classList.contains("is-departing"), false);
+  assert.match(css, /\\.title-screen__status \\{[\\s\\S]*?display: block/);
+  assert.match(html, /id="continue-note"[^>]*aria-live="polite"/);
+  writable = true;
+  start.click();
+  assert.equal(game.resets, 2, "a second click must reach the original begin()");
+  assert.equal(game.journeyResets, 1);
+  assert.match(game.navigations[0], /alenon\\.html\\?from=title/);
+});
+
+test("Existing save: failed confirmed NEW GAME preserves Continue and requires confirmation on retry", () => {
+  const t = harness({ok:true,status:"valid",url:"./alenon.html?entry=continue"});
+  let writable = false;
+  const game = attachRealNewGameBegin(t, () => ({persisted:writable}));
+  const {start,continue:cont,"new-game-confirm":confirm,"new-game-confirm-accept":accept,
+    "continue-note":status,"start-screen":screen} = t.elements;
+  start.disabled = false;
+  start.click();
+  assert.equal(confirm.hidden, false);
+  accept.click();
+  assert.equal(game.resets, 1);
+  assert.match(status.textContent,/セーブデータを初期化できません/);
+  assert.equal(confirm.hidden, true);
+  assert.equal(screen.classList.contains("title-screen--departing"),false);
+  assert.equal(cont.hidden,false);
+  assert.equal(cont.disabled,false,"a failed reset must not leave CONTINUE disabled");
+  assert.equal(start.disabled,false);
+  assert.equal(game.journeyResets,0);
+  start.click();
+  assert.equal(confirm.hidden,false,"retry still requires New Game confirmation");
+  writable=true;
+  accept.click();
+  assert.equal(game.resets,2);
+  assert.equal(game.journeyResets,1);
+  assert.equal(game.navigations.length,1);
+});
+
+test("Thrown reset failure also unlocks Title and can retry without an automatic reset", () => {
+  const t=harness({ok:false,status:"none"});
+  let fail=true;
+  const game=attachRealNewGameBegin(t,()=>{if(fail)throw new Error("storage unavailable");
+    return {persisted:true};});
+  t.elements.start.disabled=false;
+  t.elements.start.click();
+  assert.equal(game.resets,1);
+  assert.equal(game.navigations.length,0);
+  assert.equal(t.elements.start.disabled,false);
+  assert.match(t.elements["continue-note"].textContent,/セーブデータを初期化できません/);
+  fail=false;
+  t.elements.start.click();
+  assert.equal(game.resets,2);
+  assert.equal(game.journeyResets,1);
 });
