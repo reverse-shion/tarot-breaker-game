@@ -2,6 +2,13 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const ENGINES=['old','new'];
 const jobName=engine=>engine+' engine — raw results plus explicit evidence classification';
+// Exact engine-job step sequence in the accompanying QA workflow. Checking only
+// equality of two truncated API step arrays would incorrectly prove inheritance.
+const ENGINE_STEPS=['Set up job','Run actions/checkout@v4','Run actions/setup-node@v4',
+ 'Install exact engine with standard host dependencies','Check expected-failure classifier rejects unrelated failures',
+ 'Run frozen native fixture and unwrapped original four; new engine also retains existing eleven',
+ 'Preserve raw PASS-FAIL, hashes, timeline and classification (including failed probes)',
+ 'Post Run actions/setup-node@v4','Post Run actions/checkout@v4','Complete job'];
 const time=value=>{const ms=Date.parse(value);assert.ok(Number.isFinite(ms),'missing/invalid execution timestamp');return ms};
 // GitHub rewrites job IDs and run_attempt for inherited peers. Actual execution
 // times AND the complete step history must match an earlier successful execution.
@@ -67,6 +74,7 @@ function selectAttempts(root,env=process.env){
     const stepStart=time(step.started_at),stepEnd=time(step.completed_at);
     assert.ok(stepStart>=previousEnd&&stepEnd<=end&&stepEnd>=stepStart,'step execution outside job times/order');previousEnd=stepEnd;
    }
+   assert.deepEqual(job.steps.map(s=>s.name),ENGINE_STEPS,'incomplete/changed engine step sequence');
    if(start<starts[i]){
     assert.ok(prior&&job.conclusion==='success'&&prior.job?.conclusion==='success'&&execution(job)===execution(prior.job),`${engine} attempt ${attempt}: inherited execution not proven`);
     list.pop();provenance.inherited.push({engine,observedAttempt:attempt,executionAttempt:prior.attempt,job});return;
@@ -136,4 +144,4 @@ function selectAttempts(root,env=process.env){
   assert.equal(identity.actions?.runURL,`https://github.com/${env.GITHUB_REPOSITORY}/actions/runs/${runID}`,'artifact run URL mismatch');
  }
 }
-module.exports={selectAttempts,EvidenceStop,jobName};
+module.exports={selectAttempts,EvidenceStop,jobName,ENGINE_STEPS};
