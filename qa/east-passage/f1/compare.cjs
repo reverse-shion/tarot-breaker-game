@@ -2,7 +2,10 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.resolve(process.argv[2]);
 const {selectAttempts}=require('./select-attempts.cjs');
-const {old,current,provenance}=selectAttempts(root);
+let provenance;
+try{
+const selection=selectAttempts(root);
+const {old,current}=selection;provenance=selection.provenance;
 
 for(const key of ['baseline','executionHead','expectedHead','htmlSHA256','inlineJavaScriptSHA256','observationHookSHA256','node','platform','arch'])assert.deepEqual(old.identity[key],current.identity[key],key+' differs');
 assert.deepEqual(old.identity.files,current.identity.files,'fixed input files differ');
@@ -18,3 +21,9 @@ const report={verdict:'F1_EVIDENCE_COMPLETE_ASTRA_DECISION_PENDING',identity:old
  old:{native:old.native,unwrapped:old.unwrapped},new:{native:current.native,unwrapped:current.unwrapped,existingEleven:current.existing},
  equalFixtureAndObservationBytes:true,http:'NOT_RUN; no current HTTP reproduction claim',normalOldEngineCIPass:false};
 fs.writeFileSync(path.join(root,'comparison.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+
+}catch(error){
+ const report={verdict:'STOP',reasons:error.reasons||[error.message],selection:error.provenance||provenance||null};
+ fs.mkdirSync(root,{recursive:true});fs.writeFileSync(path.join(root,'comparison.json'),JSON.stringify(report,null,2));
+ console.error(JSON.stringify(report,null,2));process.exitCode=1;
+}

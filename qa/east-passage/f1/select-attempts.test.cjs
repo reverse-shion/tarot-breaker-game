@@ -1,48 +1,77 @@
 'use strict';
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
-const {selectAttempts}=require('./select-attempts.cjs');
-const env={GITHUB_RUN_ID:'38892991421',GITHUB_RUN_ATTEMPT:'3',GITHUB_REPOSITORY:'reverse-shion/tarot-breaker-game'};
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
+const {selectAttempts,EvidenceStop,jobName}=require('./select-attempts.cjs');
+const {collect}=require('./collect-actions.cjs');
+const HEAD='6045b70a09ca164d30af94eebd86cd53870f5739';
 function scenario(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'f1-pair-'));
  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
- function add(engine,attempt,accepted=true,override={}){
-  const name='f1-'+engine+'-'+env.GITHUB_RUN_ID+'-'+attempt,loc=path.join(dir,name);
-  fs.mkdirSync(loc);
-  const result={engine,identity:{executionHead:'91ce2839a95d7a4983ff7aa6a749d5026406966b',
-   actions:{attempt:String(attempt),runURL:'https://github.com/'+env.GITHUB_REPOSITORY+'/actions/runs/'+env.GITHUB_RUN_ID}},
-   comparisonEvidenceAccepted:accepted,native:{verdict:accepted?'EXPECTED_OLD_ENGINE_STALL':'INCONCLUSIVE_FAILURE'},
-   unwrapped:{verdict:'EXPECTED_OLD_UNWRAPPED_RELOAD_FAILURES'},...override};
-  fs.writeFileSync(path.join(loc,'result.json'),JSON.stringify(result));
+ const env={GITHUB_RUN_ID:'123',GITHUB_RUN_ATTEMPT:'2',GITHUB_REPOSITORY:'reverse-shion/tarot-breaker-game',F1_EXPECTED_HEAD:HEAD};
+ const run=attempt=>({id:123,head_sha:HEAD,run_attempt:attempt,run_started_at:`2026-10-16T12:${String(attempt*10).padStart(2,'0')}:00Z`});
+ const snapshot={schema:1,repository:env.GITHUB_REPOSITORY,runID:'123',expectedHead:HEAD,currentAttempt:2,run:run(2),attempts:[1,2].map(n=>({run:run(n),jobs:[]})),artifacts:[]};
+ function add(engine,attempt,accepted=true,mode='complete'){
+  const name=`f1-${engine}-123-${attempt}`,loc=path.join(dir,name),start=snapshot.attempts[attempt-1].run.run_started_at,end=start.replace(':00Z',':30Z');
+  const job={id:100*attempt+(engine==='old'?1:2),run_id:123,head_sha:HEAD,run_attempt:attempt,name:jobName(engine),status:'completed',conclusion:'success',started_at:start,completed_at:end,
+   steps:[{number:1,name:'probe',status:'completed',conclusion:'success',started_at:start,completed_at:end}]};
+  snapshot.attempts[attempt-1].jobs.push(job);
+  if(mode==='missing')return;
+  const identity={executionHead:HEAD,expectedHead:HEAD,actions:{attempt:String(attempt),runURL:`https://github.com/${env.GITHUB_REPOSITORY}/actions/runs/123`}};
+  const result={engine,identity,comparisonEvidenceAccepted:accepted,native:{verdict:accepted?'EXPECTED_OLD_ENGINE_STALL':'INCONCLUSIVE_FAILURE'},unwrapped:{verdict:'EXPECTED_OLD_UNWRAPPED_RELOAD_FAILURES'}};
+  snapshot.artifacts.push({id:job.id,name,expired:false,created_at:end,workflow_run:{id:123,head_sha:HEAD}});
+  fs.mkdirSync(loc);fs.writeFileSync(path.join(loc,'identity.json'),JSON.stringify(identity));
+  if(mode==='complete')fs.writeFileSync(path.join(loc,'result.json'),JSON.stringify(result));
   return loc;
  }
- return {dir,add};
+ function inherit(engine,attempt){const prior=snapshot.attempts[attempt-2].jobs.find(j=>j.name===jobName(engine));snapshot.attempts[attempt-1].jobs.push({...structuredClone(prior),id:999+attempt,run_attempt:attempt})}
+ function save(){fs.writeFileSync(path.join(dir,'actions-history.json'),JSON.stringify(snapshot))}
+ function select(){save();return selectAttempts(dir,env)}
+ function stop(pattern){save();try{selectAttempts(dir,env);assert.fail('expected STOP')}catch(error){assert.ok(error instanceof EvidenceStop);assert.match(error.message,pattern);return error}}
+ return {dir,env,snapshot,add,inherit,save,select,stop};
 }
+function mixed(t,mode='complete',accepted=true,priorAccepted=false){const f=scenario(t);f.add('old',1,priorAccepted);f.add('new',1);f.add('old',2,accepted,mode);f.inherit('new',2);return f}
 test('select latest old attempt and retain historical failure; use prior green new attempt',t=>{
- const f=scenario(t);f.add('old',1,false);f.add('old',2,true);f.add('new',1,true);
- const {old,current,provenance}=selectAttempts(f.dir,env);
+ const f=mixed(t),{old,current,provenance}=f.select();
  assert.equal(old.comparisonEvidenceAccepted,true);assert.equal(current.comparisonEvidenceAccepted,true);
- assert.deepEqual(provenance.attempts,{old:2,new:1});
- assert.equal(provenance.sameAttempt,false);
- assert.deepEqual(provenance.history.old.map(x=>x.evidenceAccepted),[false,true]);
+ assert.deepEqual(provenance.attempts,{old:2,new:1});assert.equal(provenance.sameAttempt,false);
+ assert.deepEqual(provenance.history.old.map(x=>x.state),['FAILED','COMPLETE']);assert.equal(provenance.inherited[0].executionAttempt,1);
 });
-test('latest failure is never silently replaced by prior success',t=>{
- const f=scenario(t);f.add('old',1,true);f.add('old',2,false);f.add('new',1,true);
- const {old,provenance}=selectAttempts(f.dir,env);
- assert.equal(old.comparisonEvidenceAccepted,false);assert.equal(provenance.attempts.old,2);
-});
-test('reject a foreign run even when its JSON claims a valid source HEAD',t=>{
- const f=scenario(t);f.add('old',1);f.add('new',1);
- const original=path.join(f.dir,'f1-old-'+env.GITHUB_RUN_ID+'-1');
- fs.renameSync(original,path.join(f.dir,'f1-old-38892991422-1'));
- assert.throws(()=>selectAttempts(f.dir,env),/foreign run artifact/);
-});
-test('reject forged attempt metadata',t=>{
- const f=scenario(t);f.add('old',1,true,{identity:{actions:{attempt:'2',runURL:'https://github.com/'+env.GITHUB_REPOSITORY+'/actions/runs/'+env.GITHUB_RUN_ID}}});f.add('new',1);
- assert.throws(()=>selectAttempts(f.dir,env),/artifact attempt metadata mismatch/);
-});
-test('refuse absent latest counterpart or future-attempt artifact',t=>{
- const f=scenario(t);f.add('old',1);
- assert.throws(()=>selectAttempts(f.dir,env),/both engine results are required/);
- f.add('new',4);
- assert.throws(()=>selectAttempts(f.dir,env),/future run attempt rejected/);
+test('normal same-attempt comparison selects both latest executions',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs=f.snapshot.attempts[1].jobs.filter(j=>j.name!==jobName('new'));f.add('new',2);assert.deepEqual(f.select().provenance.attempts,{old:2,new:2})});
+test('latest failure is never silently replaced by prior success',t=>{const f=mixed(t,'complete',false,true);assert.equal(f.stop(/latest execution attempt 2: FAILED/).provenance.history.old[1].evidenceAccepted,false)});
+test('F1-01: latest identity-only artifact STOPs rather than falling back',t=>{const f=mixed(t,'identity-only',true,true),e=f.stop(/attempt 2: INCOMPLETE_ARTIFACT/);assert.equal(e.provenance.attempts.old,2);assert.equal(e.provenance.history.old.length,2)});
+test('latest API artifact itself absent STOPs even with two earlier successes',t=>{const f=mixed(t,'missing',true,true);const e=f.stop(/attempt 2: MISSING_ARTIFACT.*absent from Actions API/);assert.equal(e.provenance.history.old.length,2)});
+test('artifact listed by API but not downloaded STOPs',t=>{const f=mixed(t);fs.rmSync(path.join(f.dir,'f1-old-123-2'),{recursive:true});f.stop(/downloaded directory missing/)});
+test('empty latest artifact directory cannot hide latest execution',t=>{const f=mixed(t,'identity-only');fs.unlinkSync(path.join(f.dir,'f1-old-123-2/identity.json'));f.stop(/INCOMPLETE_ARTIFACT/)});
+test('failed and incomplete historical attempts remain after a later success',t=>{const f=mixed(t,'identity-only');f.env.GITHUB_RUN_ATTEMPT='3';f.snapshot.currentAttempt=3;f.snapshot.run={...f.snapshot.run,run_attempt:3,run_started_at:'2026-10-16T12:30:00Z'};f.snapshot.attempts.push({run:f.snapshot.run,jobs:[]});f.add('old',3);f.inherit('new',3);assert.deepEqual(f.select().provenance.history.old.map(x=>x.state),['FAILED','INCOMPLETE_ARTIFACT','COMPLETE'])});
+test('missing historical artifact remains in accepted audit history',t=>{const f=mixed(t);fs.rmSync(path.join(f.dir,'f1-old-123-1'),{recursive:true});f.snapshot.artifacts=f.snapshot.artifacts.filter(a=>a.name!=='f1-old-123-1');const row=f.select().provenance.history.old[0];assert.equal(row.state,'MISSING_ARTIFACT');assert.match(row.reasons[0],/absent from Actions API/)});
+test('reject a foreign run even when its JSON claims a valid source HEAD',t=>{const f=mixed(t);fs.renameSync(path.join(f.dir,'f1-old-123-2'),path.join(f.dir,'f1-old-456-2'));f.stop(/unlisted\/untrusted artifact directory/)});
+test('reject forged attempt metadata',t=>{const f=mixed(t);const p=path.join(f.dir,'f1-old-123-2/identity.json'),id=JSON.parse(fs.readFileSync(p));id.actions.attempt='1';fs.writeFileSync(p,JSON.stringify(id));f.stop(/artifact attempt metadata mismatch/)});
+test('refuse absent counterpart or future-attempt artifact',t=>{const f=mixed(t);fs.mkdirSync(path.join(f.dir,'f1-old-123-3'));f.stop(/unlisted\/untrusted artifact directory/)});
+test('forged API inventory attempt without real execution STOPs',t=>{const f=mixed(t);f.snapshot.artifacts[0].name='f1-old-123-3';f.stop(/without matching actual execution/)});
+test('wrong evidence HEAD STOPs even for a historical artifact',t=>{const f=mixed(t);const p=path.join(f.dir,'f1-old-123-1/identity.json'),id=JSON.parse(fs.readFileSync(p));id.executionHead='a'.repeat(40);fs.writeFileSync(p,JSON.stringify(id));f.stop(/wrong HEAD in evidence/)});
+test('wrong HEAD in result cannot bypass independent identity file',t=>{const f=mixed(t);const p=path.join(f.dir,'f1-old-123-2/result.json'),r=JSON.parse(fs.readFileSync(p));r.identity.executionHead='a'.repeat(40);fs.writeFileSync(p,JSON.stringify(r));f.stop(/wrong HEAD in evidence/)});
+test('future API attempt is rejected',t=>{const f=mixed(t);f.snapshot.currentAttempt=3;f.stop(/API attempt mismatch/)});
+test('wrong API HEAD STOPs',t=>{const f=mixed(t);f.snapshot.run.head_sha='a'.repeat(40);f.stop(/wrong HEAD in API run/)});
+test('foreign API artifact run STOPs',t=>{const f=mixed(t);f.snapshot.artifacts[0].workflow_run.id=999;f.stop(/foreign artifact run/)});
+test('inherited peer with differing step history STOPs',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[1].steps[0].name='changed';f.stop(/inherited execution not proven/)});
+test('inherited failed peer is not a normal previous success',t=>{const f=mixed(t);for(const a of f.snapshot.attempts)a.jobs.find(j=>j.name===jobName('new')).conclusion='failure';f.stop(/inherited execution not proven/)});
+test('new execution times force fresh artifact even with misleading created_at/run_attempt',t=>{const f=mixed(t);const j=f.snapshot.attempts[1].jobs[1];j.started_at='2026-10-16T12:21:00Z';j.completed_at='2026-10-16T12:21:30Z';j.steps[0].started_at=j.started_at;j.steps[0].completed_at=j.completed_at;f.stop(/new latest execution attempt 2: MISSING_ARTIFACT/)});
+test('insufficient or ambiguous attempt job history STOPs',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs.push(structuredClone(f.snapshot.attempts[1].jobs[0]));f.stop(/missing\/ambiguous API job/)});
+test('expired latest artifact STOPs',t=>{const f=mixed(t);f.snapshot.artifacts.at(-1).expired=true;f.stop(/API artifact expired/)});
+test('latest failed job cannot be accepted using a COMPLETE result',t=>{const f=mixed(t);f.snapshot.attempts[1].jobs[0].conclusion='failure';f.stop(/job conclusion failure/)});
+test('compare command persists STOP report and incomplete history',t=>{const f=mixed(t,'identity-only');f.save();const p=spawnSync(process.execPath,[path.join(__dirname,'compare.cjs'),f.dir],{env:{...process.env,...f.env},encoding:'utf8'});assert.equal(p.status,1);const report=JSON.parse(fs.readFileSync(path.join(f.dir,'comparison.json')));assert.equal(report.verdict,'STOP');assert.match(report.reasons.join(' '),/INCOMPLETE_ARTIFACT/);assert.equal(report.selection.history.old.length,2)});
+test('collector retrieves every attempt and rejects an incomplete pagination response',t=>{const f=mixed(t);let count=0;function api(route){if(route.includes('/jobs?'))return [{total_count:3,jobs:[]}];if(route.includes('/attempts/'))return [f.snapshot.attempts[Number(/attempts\/(\d+)/.exec(route)[1])-1].run];count++;return [f.snapshot.run]}assert.throws(()=>collect(f.env,api),/incomplete API pagination/);assert.equal(count,1)});
+test('missing API snapshot cannot fall back to directory-only success',t=>{const f=mixed(t);assert.throws(()=>selectAttempts(f.dir,f.env),/STOP:.*ENOENT/)});
+
+test('collector failure cannot be ignored in favor of older files',t=>{const f=mixed(t);f.snapshot.collectionError='403 API forbidden';f.stop(/API history unavailable.*403/)});
+test('collector archives complete multi-page jobs and artifacts and detects a run race',t=>{
+ const f=mixed(t);let calls=0;
+ function api(route){
+  const attempt=/attempts\/(\d+)/.exec(route);
+  if(route.includes('/jobs?'))return [{total_count:2,jobs:f.snapshot.attempts[Number(attempt[1])-1].jobs}];
+  if(route.includes('/artifacts?'))return [{total_count:3,artifacts:/page=2$/.test(route)?f.snapshot.artifacts.slice(2):f.snapshot.artifacts.slice(0,2)}];
+  if(attempt)return [f.snapshot.attempts[Number(attempt[1])-1].run];
+  calls++;return [f.snapshot.run];
+ }
+ const result=collect(f.env,api);assert.equal(result.artifacts.length,3);assert.equal(result.attempts.length,2);assert.equal(calls,2);
+ calls=0;assert.throws(()=>collect(f.env,route=>{const r=api(route);if(calls===2)return [{...f.snapshot.run,run_attempt:3}];return r}),/run changed/);
 });
