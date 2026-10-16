@@ -4,6 +4,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs/promises'),path=require('node:path');
 const {webkit}=require('playwright');
+const {observe,instrumentRuntime,reloadToTitle}=require('./reload-diagnostics.cjs');
 const ROOT=path.resolve(__dirname,'../../..');
 const QA_A='https://east-a.playwright.test',QA_B='https://east-b.playwright.test';
 const PREVIEW='https://raw.githack.com',PRODUCTION='https://reverse-shion.github.io';
@@ -12,6 +13,7 @@ const KEY='tarot-breaker:progress-v1';
 const MIMES={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.css':'text/css','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ogg':'audio/ogg','.mp3':'audio/mpeg','.woff2':'font/woff2'};
 async function contextFor(browser,{missingCollisionOnContinue=false}={}){
  const ctx=await browser.newContext({viewport:{width:393,height:852},deviceScaleFactor:3,isMobile:true,hasTouch:true,ignoreHTTPSErrors:true,serviceWorkers:'block'});
+ const trace=await observe(ctx);
  await ctx.route('**/*',async route=>{
   const url=new URL(route.request().url());
   if(!ALLOWED.has(url.origin))return route.abort('blockedbyclient');
@@ -27,7 +29,9 @@ async function contextFor(browser,{missingCollisionOnContinue=false}={}){
    return route.fulfill({status:200,contentType:'text/javascript',body:'window.TarotEastPassageQAApprovedOrigin='+JSON.stringify(approved)+';'});
   }
   try{
-   const data=await fs.readFile(file);
+   let data=await fs.readFile(file);
+   if(url.pathname.includes('/audio/'))trace.record('media-response',{path:url.pathname,range:route.request().headers().range||null,status:200,size:data.length});
+   if(url.pathname==='/runtime-entry.js')data=Buffer.from(instrumentRuntime(data.toString('utf8')));
    return route.fulfill({status:200,body:data,contentType:MIMES[path.extname(file).toLowerCase()]||'application/octet-stream',headers:{'cache-control':'no-store'}});
   }catch(e){
    if(e.code==='ENOENT'||e.code==='EISDIR')return route.fulfill({status:404,body:'Not found'});
@@ -131,17 +135,7 @@ test('WebKit mobile viewport: pending Aftermath Continue and browser reload neve
   await assertGardenReady(page,false,'pending-initial');
   await assertTouchMovement(page,'pending-initial');
   assert.match(page.url(),/\/index\.html\?entry=continue$/, 'touch input must not trigger another route before manual reload');
-  // DOMContentLoaded plus explicit Title URL/Continue checks avoid a WebKit
-  // load-event hang hiding whether the one-shot-token redirect succeeded.
-  // Use the page's own browser reload (one-shot entry must redirect to Title).
-  // Assert the destination explicitly rather than assuming Playwright's reload load event.
-  await Promise.all([
-   page.waitForURL(/\/index\.html$/,{waitUntil:'domcontentloaded',timeout:45000}),
-   page.evaluate(()=>window.location.reload()),
-  ]);
-  // Reloading a one-shot internal runtime URL must fail closed to Title.
-  // Resume through official Title once more rather than bypassing the token.
-  await page.waitForURL(/\/index\.html$/,{timeout:30000});
+  await reloadToTitle(page,{label:'pending-touch-window'});
   const resume=page.locator('#continue');
   await resume.waitFor({state:'visible',timeout:30000});
   await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),resume.click()]);
@@ -171,15 +165,7 @@ test('WebKit mobile viewport: legacy save migrates in real Garden Continue; isol
   const migrated=JSON.parse(await save(page));
   assert.equal(migrated.completedEvents.filter(x=>x==='garden_star_sand_route_known').length,1);
   assert.match(page.url(),/\/index\.html\?entry=continue$/, 'touch input must not trigger another route before manual reload');
-  // DOMContentLoaded plus explicit Title URL/Continue checks avoid a WebKit
-  // load-event hang hiding whether the one-shot-token redirect succeeded.
-  // Use the page's own browser reload (one-shot entry must redirect to Title).
-  // Assert the destination explicitly rather than assuming Playwright's reload load event.
-  await Promise.all([
-   page.waitForURL(/\/index\.html$/,{waitUntil:'domcontentloaded',timeout:45000}),
-   page.evaluate(()=>window.location.reload()),
-  ]);
-  await page.waitForURL(/\/index\.html$/,{timeout:30000});
+  await reloadToTitle(page,{label:'legacy-touch-window'});
   const resume=page.locator('#continue');
   await resume.waitFor({state:'visible',timeout:30000});
   await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),resume.click()]);
@@ -209,3 +195,31 @@ test('WebKit negative control: missing Garden collision JSON prevents scene read
   await page.close();
  }finally{await ctx.close()}
 }));
+
+
+// Compare both reload APIs before/after real touch input through official Continue.
+// The original four safety scenarios above remain mandatory.
+for(const kind of ['pending-aftermath','legacy-completed']){
+ for(const touch of [false,true]){
+  for(const method of ['window','playwright']){
+   if(touch&&method==='window')continue; // covered by the original scenarios above
+   test(`WebKit reload comparison: ${kind}, touch=${touch}, method=${method}`,{timeout:110000},async()=>withBrowser(async browser=>{
+    const ctx=await contextFor(browser);
+    try{
+     const page=await ctx.newPage();await open(page,QA_A);await create(page,kind);
+     await assertGardenReady(page,kind==='legacy-completed','comparison-initial');
+     if(touch)await assertTouchMovement(page,'comparison-touch');
+     const result=await reloadToTitle(page,{method,label:kind+'-touch-'+touch+'-'+method});
+     assert.equal(result.state.titleVisible,true);
+     assert.equal(result.state.continueVisible,true);
+     assert.equal(result.state.entryPresent,false,'one-shot entry must be consumed');
+     assert.equal(result.state.sceneReady,false,'Title must not be reported as Garden');
+     const resume=page.locator('#continue');
+     await Promise.all([page.waitForURL(/\/index\.html\?entry=continue$/,{timeout:30000}),resume.click()]);
+     await assertGardenReady(page,kind==='legacy-completed','comparison-resumed');
+     await page.close();
+    }finally{await ctx.close()}
+   }));
+  }
+ }
+}
