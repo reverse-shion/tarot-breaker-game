@@ -216,6 +216,26 @@
     }
   });
 
+  // The runtime's New Game reset may fail without navigating away. Undo the
+  // title's departure lock, display the error in the *visible* status element,
+  // and let the player retry without deleting or overwriting their save.
+  window.addEventListener("tarot-breaker:title-new-game-failed", event => {
+    departing = false;
+    allowConfirmedStart = false;
+    transitionReadyStart = false;
+    closeConfirm();
+    screen.classList.remove("title-screen--departing");
+    start.classList.remove("is-departing");
+    button.classList.remove("is-departing");
+    previousStartDisabled = null;
+    refresh();
+    start.disabled = false;
+    button.disabled = button.hidden;
+    retry.disabled = false;
+    note.textContent = typeof event?.detail?.message === "string"
+      ? event.detail.message : "セーブデータを初期化できません。再試行してください";
+  });
+
   window.addEventListener("pageshow", () => {
     departing = false;
     allowConfirmedStart = false;
