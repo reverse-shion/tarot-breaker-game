@@ -4,7 +4,7 @@ import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
-const FILES = Object.freeze([
+export const FILES = Object.freeze([
   'index.html',
   'alenon.html',
   'game.js',
