@@ -7,7 +7,7 @@ import {verifyHost} from './verify-host.mjs';
 // Loopback-only reconstruction of private forwarded port; this is NOT real device evidence.
 const ORIGIN='https://qa-fixture-8765.app.github.dev';
 async function runFixture({approved,expectPass}){
-  const server=createServer(makeHandler({approvedOrigin:approved?ORIGIN:''}));
+  const server=createServer(makeHandler({approvedOrigin:approved?ORIGIN:'',qaPort:approved?8765:null,codespaceName:approved?'qa-fixture':undefined}));
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   try{
     const local='http://127.0.0.1:'+server.address().port;
