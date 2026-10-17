@@ -1,0 +1,21 @@
+{
+  "name": "TAROT BREAKER — isolated iPhone QA (do not use for main)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "forwardPorts": [
+    8765,
+    8766
+  ],
+  "portsAttributes": {
+    "8765": {
+      "label": "TAROT BREAKER QA A — Aftermath",
+      "onAutoForward": "notify",
+      "visibility": "private"
+    },
+    "8766": {
+      "label": "TAROT BREAKER QA B — Legacy",
+      "onAutoForward": "notify",
+      "visibility": "private"
+    }
+  },
+  "postStartCommand": "nohup node qa/east-passage/hosting/codespaces-host.mjs 8765 > /tmp/tarot-qa-a.log 2>&1 < /dev/null & nohup node qa/east-passage/hosting/codespaces-host.mjs 8766 > /tmp/tarot-qa-b.log 2>&1 < /dev/null &"
+}
