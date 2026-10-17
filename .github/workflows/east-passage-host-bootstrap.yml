@@ -31,7 +31,7 @@ jobs:
           git cat-file -e "$BASE^{commit}"
           while IFS= read -r name; do
             case "$name" in
-              qa/east-passage/hosting/*|.github/workflows/east-passage-host-bootstrap.yml) ;;
+              qa/east-passage/hosting/*|.devcontainer/qa-device/devcontainer.json|.github/workflows/east-passage-host-bootstrap.yml) ;;
               *) echo "STOP: non-QA delta: $name"; exit 1 ;;
             esac
           done < <(git diff --name-only "$BASE" HEAD)
@@ -39,6 +39,8 @@ jobs:
         run: |
           grep -Eq 'TarotEastPassageQAApprovedOrigin = "";' qa/east-passage/approved-origin.js
           node --check qa/east-passage/hosting/verify-host.mjs
+          node --check qa/east-passage/hosting/codespaces-host.mjs
+          node -e 'const f=require("fs");const c=JSON.parse(f.readFileSync(".devcontainer/qa-device/devcontainer.json","utf8"));if(c.portsAttributes["8765"].visibility!=="private"||c.portsAttributes["8766"].visibility!=="private")throw Error("Codespaces QA ports must stay private by default");'
       - name: Test exact-origin guard
         run: |
           node --test qa/east-passage/hosting/*.test.mjs
