@@ -2,9 +2,10 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const core=require('../progress.js'),EVENT='garden_star_gate_anomaly';
 const history=['alenon_prologue','landing_devil_memory','garden_shiopon_meet','garden_lumiere_gate'];
-function harness({completed=false,missingMeeting=false,writeFailure=false,readbackFailure=false}={}){
- let bytes=JSON.stringify({version:1,checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:completed?[...history,EVENT]:missingMeeting?history.slice(0,3):history,companion:'joined_with_shion'}),writes=0;
- const storage={getItem:()=>bytes,setItem(k,v){writes++;if(writeFailure)throw Error('storage blocked');if(!readbackFailure)bytes=v;}};
+function harness({completed=false,missingMeeting=false,writeFailure=false,readbackFailure=false,readThrowsAfter=Infinity,staleAfter=Infinity,known=false}={}){
+ let bytes=JSON.stringify({version:1,checkpoint:{mapId:'star_gate_garden',spawnId:'south_gate'},completedEvents:completed?[...history,EVENT,...(known?['garden_star_sand_route_known']:[])]:missingMeeting?history.slice(0,3):history,companion:'joined_with_shion'}),writes=0,reads=0;
+ const original=bytes;
+ const storage={getItem(){reads++;if(writes>=readThrowsAfter)throw Error('injected readback unavailable');return writes>=staleAfter?original:bytes;},setItem(k,v){writes++;if(writeFailure)throw Error('storage blocked');if(!readbackFailure)bytes=v;}};
  const progress=core.createProgress({storage});assert.equal(progress.load().status,'valid');
  const listeners={},scene={owner:null,inputSuspended:false,npcSuspended:false,lumiereEnabled:true,following:true},story={shioponDone:true,lumiereDone:!missingMeeting,joined:true,active:false};
  let report={id:1,state:'NOT_STARTED',completed:false,cancelled:false},stage={id:1,running:false,completed:true,restored:true,audioReleased:true,scene:{owner:null,vision:false,absorption:false}};
@@ -15,7 +16,7 @@ function harness({completed=false,missingMeeting=false,writeFailure=false,readba
   addEventListener(n,f){(listeners[n]??=[]).push(f)}};
  const c={window,console:{warn(){}},Image:class{naturalWidth=100;naturalHeight=100;set src(s){queueMicrotask(()=>this.onload())}decode(){return Promise.resolve()}},setTimeout,clearTimeout};
  vm.runInNewContext(fs.readFileSync('star-gate-public.js','utf8'),c);
- return {window,scene,story,progress,api:window.TarotStarGatePublic,writes:()=>writes,bytes:()=>bytes,
+ return {window,scene,story,progress,storage,api:window.TarotStarGatePublic,writes:()=>writes,reads:()=>reads,bytes:()=>bytes,failReads(){readThrowsAfter=writes;},
   notify(value){(listeners['tarot-breaker:aftermath-ended']||[]).forEach(f=>f({detail:value||report}));},
   finish(overrides={}){report={id:1,state:'COMPLETED',completed:true,cancelled:false,...overrides};scene.lumiereEnabled=false;return report;},
   setStage(value){stage={...stage,...value}}};
@@ -49,8 +50,8 @@ test('Stage3 success and spoofed/stale or unfinished Aftermath never persist com
  h.setStage({audioReleased:false});h.notify();assert.equal(h.writes(),0);assert.equal(h.api.getState().completed,false);
 });
 test('final actual Aftermath saves exactly once, validates readback and suppresses subsequent investigation',()=>{
- const h=harness();h.finish();h.notify();assert.equal(h.writes(),1);assert.equal(h.api.getState().persisted,true);assert.equal(h.api.canInvestigate(),false);
- h.notify();assert.equal(h.writes(),1);const saved=JSON.parse(h.bytes());assert.ok(saved.completedEvents.includes(EVENT));assert.equal(saved.companion,'joined_with_shion');assert.equal(saved.version,1);
+ const h=harness();h.finish();h.notify();assert.equal(h.writes(),2);assert.equal(h.api.getState().persisted,true);assert.equal(h.api.canInvestigate(),false);
+ h.notify();assert.equal(h.writes(),2);const saved=JSON.parse(h.bytes());assert.ok(saved.completedEvents.includes(EVENT));assert.ok(saved.completedEvents.includes('garden_star_sand_route_known'));assert.equal(saved.companion,'joined_with_shion');assert.equal(saved.version,1);
 });
 test('storage write or lying readback failure retains page consumption without claiming durable success or ownership',()=>{
  for(const options of [{writeFailure:true},{readbackFailure:true}]){
@@ -60,7 +61,7 @@ test('storage write or lying readback failure retains page consumption without c
 });
 test('old pre-event saves remain valid; completed reload restores gate and departure and never enables a new event',async()=>{
  const old=harness();assert.equal(old.api.canInvestigate(),true);assert.equal(old.api.restoreCompleted(),false);
- const h=harness({completed:true});await h.api.prepareRestoration();assert.equal(h.api.canInvestigate(),false);assert.equal(h.api.restoreCompleted(),true);assert.equal(h.scene.gateRestored,true);assert.equal(h.scene.lumiereEnabled,false);assert.equal(h.scene.following,true);assert.equal(h.api.restoreCompleted(),false);assert.equal(h.writes(),0);
+ const h=harness({completed:true});await h.api.prepareRestoration();assert.equal(h.api.canInvestigate(),false);assert.equal(h.api.restoreCompleted(),true);assert.equal(h.scene.gateRestored,true);assert.equal(h.scene.lumiereEnabled,false);assert.equal(h.scene.following,true);assert.equal(h.api.restoreCompleted(),false);assert.equal(h.writes(),1);assert.equal(h.progress.isEventCompleted('garden_star_sand_route_known'),true);
 });
 test('completion survives actual Progress route roundtrip and resolver without replay or lost companion',()=>{
  const h=harness();h.finish();h.notify();
@@ -83,7 +84,7 @@ test('actual game exports public Scene/P0/Aftermath/camera without a developer f
  assert.equal(h.errors.length,0);
 });
 
-test('actual public Aftermath emits final completion only after both talks/departure; observer then writes once',async()=>{
+test('actual public Aftermath saves completion and Star Sand knowledge only after both talks and departure',async()=>{
  const fixture=fs.readFileSync('tests/star-gate-aftermath.test.cjs','utf8'),f={require,__dirname,AbortController};
  vm.runInNewContext(fixture.slice(0,fixture.indexOf("test('")),f);
  const p=harness();
@@ -97,7 +98,7 @@ test('actual public Aftermath emits final completion only after both talks/depar
  await f.drive(h,()=>h.window.TarotStarGateAftermath.getState().state==='CHECK_COMPANIONS');await first;assert.equal(p.writes(),0);
  actor=h.state().actors.lumiere;h.movePlayer(actor.x,actor.y+18);const second=h.window.TarotStarGateAftermath.talk('lumiere');
  await f.drive(h,()=>h.window.TarotStarGateAftermath.getState().completed,2500);assert.equal(await second,true);
- assert.equal(p.writes(),1);assert.equal(h.window.TarotStarGatePublic.getState().persisted,true);
+ assert.equal(p.writes(),2);assert.equal(p.progress.isEventCompleted('garden_star_gate_anomaly'),true);assert.equal(p.progress.isEventCompleted('garden_star_sand_route_known'),true);assert.equal(h.window.TarotStarGatePublic.getState().persisted,true);
  assert.equal(h.state().following,true);assert.equal(h.state().lumiereEnabled,false);assert.equal(h.state().owner,null);
 });
 
@@ -120,4 +121,50 @@ test('actual Continue revalidation rebinds the real meeting observer and Star Ga
  assert.equal(fresh.progress.isEventCompleted('garden_lumiere_gate'),true);
  assert.equal(c.TarotStarGatePublic.canInvestigate(),true);assert.equal(JSON.parse(bytes).completedEvents.includes('garden_lumiere_gate'),true);
  assert.equal(original.isEventCompleted('garden_lumiere_gate'),false);
+});
+
+test('older completed Garden save remains safe when Star Sand migration cannot persist',async()=>{
+ const h=harness({completed:true,writeFailure:true});
+ await h.api.prepareRestoration();
+ assert.equal(h.api.restoreCompleted(),true,'existing completed Gate restoration still succeeds');
+ const gate=require('../garden-east-passage.js');
+ assert.equal(gate.routeKnown({getItem:()=>h.bytes()}),false,'volatile route knowledge cannot grant durable passage');
+ assert.equal(h.progress.getCurrentState().persisted,false);
+ assert.equal(JSON.parse(h.bytes()).completedEvents.includes('garden_star_sand_route_known'),false);
+ assert.equal(JSON.parse(h.bytes()).completedEvents.includes(EVENT),true);
+ assert.equal(h.scene.gateRestored,true);
+});
+
+
+test('route write succeeds but independent getItem throws: writer memory must not open B',()=>{
+ const h=harness({completed:true,readThrowsAfter:1});
+ assert.equal(h.api.restoreCompleted(),true,'scene restoration must remain usable');
+ assert.equal(h.writes(),1);
+ assert.equal(h.progress.getCurrentState().persisted,true,'reproduces misleading successful writer memory');
+ assert.equal(h.progress.isEventCompleted('garden_star_sand_route_known'),true);
+ const gate=require('../garden-east-passage.js');
+ assert.equal(gate.routeKnown(h.storage),false,'independent read failure closes only the passage');
+ assert.equal(h.scene.owner,null);
+ assert.equal(h.scene.inputSuspended,false);
+});
+test('route write succeeds but independent read returns old save: B stays closed',()=>{
+ const h=harness({completed:true,staleAfter:1});
+ assert.equal(h.api.restoreCompleted(),true);
+ assert.equal(h.writes(),1);
+ assert.equal(h.progress.getCurrentState().persisted,true);
+ assert.equal(h.progress.isEventCompleted('garden_star_sand_route_known'),true);
+ assert.equal(require('../garden-east-passage.js').routeKnown(h.storage),false);
+});
+test('already-known memory cannot bypass migration readback or rewrite a verified normal save',()=>{
+ const h=harness({completed:true,known:true});h.failReads();const before=h.reads();
+ assert.equal(h.api.restoreCompleted(),true);
+ assert.ok(h.reads()>before,'already-known memory must still trigger independent readback');
+ assert.equal(h.writes(),0,'read failure must not overwrite storage');
+ assert.equal(require('../garden-east-passage.js').routeKnown(h.storage),false);
+ const normal=harness({completed:true,known:true});
+ const bytes=normal.bytes();
+ assert.equal(normal.api.restoreCompleted(),true);
+ assert.equal(normal.writes(),0,'verified known save never needs migration');
+ assert.equal(normal.bytes(),bytes);
+ assert.equal(require('../garden-east-passage.js').routeKnown(normal.storage),true);
 });

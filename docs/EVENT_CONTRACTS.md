@@ -97,3 +97,25 @@ Runtime integration proceeds Alenon → Landing → Garden with separate impleme
 Title and Alenon runtime exist on the Phase 2A-6A candidate branch; release status remains NOT TESTED / productionEnabled false until the required review, CI and human Device Gates. Title success emits `tarot-breaker:public-continue-request`; the real Alenon boot emits `tarot-breaker:alenon-resume-ready` after readiness. Public marker is `entry=continue`, durable save is sole authority, and only Alenon intro/pad_return are admitted. Landing/Garden Public runtime is absent.
 
 Four `public-continue-alenon-*` fixtures are registered and exercise the real Public adapter using injected session-only storage. Detached Journey projection and contained PAD departure preserve zero Production writes in these fixtures. They do not prove the Production roundtrip. Full details and pending Device checklist: implementation contract §13. No historical device record is changed or transferred.
+
+
+## EC-005 — East Passage B-line / Star Sand route knowledge (Draft PR #154)
+
+event_id: garden-east-passage
+map: star_gate_garden
+status: IMPLEMENTED / normal-route candidate only / NOT DEVICE VERIFIED
+productionEnabled: true on feature branch (does NOT imply merged main or public release)
+segment: east-passage-b-line — IMPLEMENTED, pending full iPhone Device Gate
+start_event: tarot-breaker:star-sand-route-known — RESERVED; the production event uses validated Aftermath completion to persist its independent typed fact, not a new emitted signal
+progress_changes: adds durable event `garden_star_sand_route_known` after successful validated Star Gate Aftermath final completion; existing saves with validated completed Star Gate are migrated when restored in Garden; failed writes never claim durable unlock
+return_behavior: normal Garden, Star Gate, Continue, follower and Garden-to-Landing routes preserved
+implementation_contract: docs/garden-east-passage-b-implementation-contract.md
+
+Release-status clarification (2026-10-15 audit):
+- `event-contracts.json.productionEnabled: true` means the east B-line guard is **wired into the ordinary Garden runtime on this feature branch only**. It is not proof that this Draft has been merged into main or published.
+- `NOT DEVICE VERIFIED` above is shorthand for the **overall PR integration/release Device Gate PENDING**. The Device Verification Registry separately lists **four human-reported PASS cases**, each limited to the exact tested SHA and scope. These are both true and must not be collapsed into a blanket PASS or blanket lack of testing.
+- Test-only CI at 2026-10-15 [#38751466404](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38751466404) is **525/525 PASS**, not a certification of an iPhone interrupted browser reload or isolated old-save migration.
+- Same-origin RawGitHack fixed-SHA previews use the same `localStorage` origin and the current Progress key. Do not claim a SHA URL is an isolated disposable save; consult `docs/east-passage-qa-storage-isolation-v1.md` before destructive QA.
+
+
+Current Draft candidate **does** load `garden-east-passage.js` from Garden `index.html`, guard the player (not NPC) crossing, and use the shared dialogue UI for Shion's warning. Fixed B-line candidate: (1398, 740) → (1398, 844). The earlier **position-only acceptance** was recorded on 2026-10-15, before the expanded three-check normal-route validation. After receiving a fixed-SHA normal route and 3-point checklist, the owner reported 「問題なかったよ」 for (1) pre-event B blockade with Shion warning, (2) passage opening after full Aftermath, and (3) opening preserved after reload/Continue, at runtime `587ed2e16b6e484993a54aca53a8eb4384188f39`. This is a **human scoped 3-check PASS**, not proof of every interruption, repeat-input, separate middle-state, existing-save migration, or Garden↔Landing roundtrip. [CI #38742867459](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38742867459) was 518/518 PASS at tested SHA; later documentation-only candidate [CI #38745957805](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38745957805) also 518/518 PASS, with runtime files unchanged. Full integration Device Gate, final release review, main merge and publication remain PENDING. See the exact scope in `docs/DEVICE_VERIFICATION_REGISTRY.md`.
