@@ -17,5 +17,5 @@
       "protocol": "http"
     }
   },
-  "postStartCommand": "nohup node qa/east-passage/hosting/codespaces-host.mjs 8765 > /tmp/tarot-qa-a.log 2>&1 < /dev/null & nohup node qa/east-passage/hosting/codespaces-host.mjs 8766 > /tmp/tarot-qa-b.log 2>&1 < /dev/null &"
+  "postStartCommand": "node qa/east-passage/hosting/ensure-live.mjs --start-only"
 }
