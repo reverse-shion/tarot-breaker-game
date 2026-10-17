@@ -37,11 +37,26 @@ export function singleByteRange(raw,size){
   return {status:206,start:lo,end:hi};
 }
 
-export function makeHandler({root=process.cwd(),approvedOrigin=''}={}){
+export function assertPortBoundApproval({approved,port,codespaceName}){
+  if(!approved)return '';
+  const origin=validateOrigin(approved);
+  if(!Number.isInteger(port)||![8765,8766].includes(port))
+    throw Error('Activation restricted to QA ports 8765 and 8766');
+  if(typeof codespaceName!=='string'||! /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(codespaceName))
+    throw Error('Cannot activate without validated Codespaces identity');
+  const expected='https://'+codespaceName+'-'+port+'.app.github.dev';
+  if(origin!==expected)throw Error('QA origin/port mismatch; fail closed');
+  return expected;
+}
+
+export function makeHandler({root=process.cwd(),approvedOrigin='',qaPort=null,codespaceName=process.env.CODESPACE_NAME}={}){
   const base=resolve(root);
   const approved=approvedOrigin?validateOrigin(approvedOrigin):'';
   if(approved && !GOOD_HOSTNAME.test(new URL(approved).hostname))
     throw Error('Only verified GitHub Codespaces port origins may be approved here');
+  // Activating the *actual* Codespaces server requires one exact port-bound identity.
+  if(approved && qaPort!==null)
+    assertPortBoundApproval({approved,port:qaPort,codespaceName});
   return async(req,res)=>{
     if(req.method!=='GET'&&req.method!=='HEAD')return send(res,405,'Method not allowed');
     let pathname;
@@ -93,7 +108,7 @@ if(process.argv[1] && import.meta.url===pathToFileURL(resolve(process.argv[1])).
   const port=Number(process.argv[2]||8765);
   if(!Number.isInteger(port)||port<1024||port>65535)throw Error('Invalid port');
   const approved=process.env.TAROT_QA_APPROVED_ORIGIN||'';
-  const server=createServer(makeHandler({approvedOrigin:approved}));
+  const server=createServer(makeHandler({approvedOrigin:approved,qaPort:port}));
   server.listen(port,'0.0.0.0',()=>{
     console.log('QA_CODESPACES_SERVER_READY port='+port+
       ' seed='+ (approved?'EXPLICIT_APPROVAL_CONFIGURED':'LOCKED')+
