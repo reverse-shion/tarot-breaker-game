@@ -44,13 +44,16 @@ export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fet
   const approved = await readFile(join(base, 'qa/east-passage/approved-origin.js'), 'utf8');
   const configured = approved.match(/TarotEastPassageQAApprovedOrigin\s*=\s*"([^"]*)"\s*;/);
   if (!configured) throw new Error('QA approval assignment missing or unsupported');
-  if (enabled ? configured[1] !== origin : configured[1] !== '') {
-    throw new Error(enabled ? 'QA origin not explicitly approved' : 'Bootstrap must remain disabled');
-  }
+  // The tracked source must remain disabled even after ephemeral QA activation.
+  // Approval is injected only by the isolated Codespaces HTTP handler.
+  if (configured[1] !== '') throw new Error('Tracked QA origin must remain disabled');
   const failures = [];
   const results = [];
   for (const filename of FILES) {
     const localBytes = await readFile(join(base, filename));
+    const expectedBytes = enabled && filename === 'qa/east-passage/approved-origin.js'
+      ? Buffer.from('window.TarotEastPassageQAApprovedOrigin = ' + JSON.stringify(origin) + ';\\n'.replace('\\n','\n'))
+      : localBytes;
     const url = new URL('/' + filename, origin);
     try {
       const response = await fetcher(url, {
@@ -61,8 +64,8 @@ export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fet
         throw new Error('response status/origin mismatch: ' + response.status);
       }
       const remoteBytes = Buffer.from(await response.arrayBuffer());
-      if (hash(remoteBytes) !== hash(localBytes)) throw new Error('SHA256 bytes mismatch');
-      results.push({filename, verdict: 'MATCH', sha256: hash(localBytes)});
+      if (hash(remoteBytes) !== hash(expectedBytes)) throw new Error('SHA256 bytes mismatch');
+      results.push({filename, verdict: 'MATCH', sha256: hash(expectedBytes)});
     } catch (error) {
       failures.push({filename, verdict: 'STOP', reason: String(error?.message || error)});
     }
