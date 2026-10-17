@@ -23,7 +23,8 @@ export async function probeLockedPort(port,{fetcher=fetch,expected}={}){
     if(!Buffer.from(expected).equals(bytes))return 'UNEXPECTED_SERVER';
     return 'LOCKED_READY';
   }catch(error){
-    if(error?.name==='TypeError'||error?.name==='TimeoutError'||error?.name==='AbortError')
+    if((error?.name==='TypeError' && /fetch failed/i.test(error.message)) ||
+       error?.name==='TimeoutError'||error?.name==='AbortError')
       return 'UNAVAILABLE';
     throw error;
   }
