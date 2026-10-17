@@ -38,7 +38,7 @@ export function validateOrigin(raw) {
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 
-export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fetch, enabled = false} = {}) {
+export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fetch, enabled = false, githubToken = null} = {}) {
   const origin = validateOrigin(rawOrigin);
   const base = resolve(root);
   const approved = await readFile(join(base, 'qa/east-passage/approved-origin.js'), 'utf8');
@@ -55,7 +55,7 @@ export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fet
     try {
       const response = await fetcher(url, {
         redirect: 'manual', signal: AbortSignal.timeout(15000),
-        headers: {'cache-control': 'no-cache'},
+        headers: {'cache-control': 'no-cache', ...(githubToken ? {'X-Github-Token':githubToken} : {})},
       });
       if (response.status !== 200 || new URL(response.url).origin !== origin) {
         throw new Error('response status/origin mismatch: ' + response.status);
@@ -75,12 +75,16 @@ export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fet
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const args = process.argv.slice(2);
   const enabled = args.includes('--enabled');
+  const privateCodespace = args.includes('--codespaces-private');
   const origin = args.find(a => !a.startsWith('--'));
   if (!origin) {
-    console.error('Usage: node qa/east-passage/hosting/verify-host.mjs https://qa.example.org [--enabled]');
+    console.error('Usage: node qa/east-passage/hosting/verify-host.mjs https://qa.example.org [--enabled] [--codespaces-private]');
+    process.exitCode = 2;
+  } else if (privateCodespace && !process.env.GITHUB_TOKEN) {
+    console.error('STOP: GITHUB_TOKEN missing; cannot verify private forwarded port');
     process.exitCode = 2;
   } else {
-    verifyHost(origin, {enabled}).then(report => {
+    verifyHost(origin, {enabled, githubToken: privateCodespace ? process.env.GITHUB_TOKEN : null}).then(report => {
       console.log(JSON.stringify(report, null, 2));
       if (report.verdict !== 'CORE_BYTES_MATCH') process.exitCode = 1;
     }).catch(error => {console.error('STOP:', error.message); process.exitCode = 1;});
