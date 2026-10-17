@@ -40,7 +40,10 @@ jobs:
           grep -Eq 'TarotEastPassageQAApprovedOrigin = "";' qa/east-passage/approved-origin.js
           node --check qa/east-passage/hosting/verify-host.mjs
       - name: Test exact-origin guard
-        run: node --test qa/east-passage/hosting/verify-host.test.mjs
+        run: |
+          node --test qa/east-passage/hosting/*.test.mjs
+      - name: Reject Cloudflare Pages file count/size limit breaches
+        run: node qa/east-passage/hosting/check-pages-limits.mjs
       - name: Revalidate assets and existing gameplay regression
         run: |
           node scripts/validate.mjs
