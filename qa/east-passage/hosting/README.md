@@ -24,10 +24,10 @@ Codespacesは一定期間の非アクティブ状態で停止するため、一�
 CodespacesのURLを取得したら、必ず配信バイト検査を実施する（最初は`approved-origin.js`空欄と一致する）。
 ```bash
 node --test qa/east-passage/hosting/*.test.mjs
-node qa/east-passage/hosting/verify-host.mjs https://実際のQA-Aのホスト
-node qa/east-passage/hosting/verify-host.mjs https://実際のQA-Bのホスト
+node qa/east-passage/hosting/verify-host.mjs https://実際のQA-Aのホスト --codespaces-private
+node qa/east-passage/hosting/verify-host.mjs https://実際のQA-Bのホスト --codespaces-private
 ```
-ChromeやLinux WebKit上のPASSでは、実機SafariのPASSにはならない。
+この検証はCodespaces内のターミナルから実行する。認証にはCodespaces内の `GITHUB_TOKEN` をリクエストヘッダーに使うが、絶対に画面共有・コピー・ログへトークン値を出さない。HTTP 302/401などの失敗が出たらHOST STOPにする。\n\nChromeやLinux WebKit上のPASSでは、実機SafariのPASSにはならない。
 
 ## 保護ルール
 
