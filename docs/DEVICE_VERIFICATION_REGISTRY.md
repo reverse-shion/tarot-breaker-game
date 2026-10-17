@@ -318,3 +318,29 @@ An earlier four-item **human-confirmed PASS** for `f3b861098fa573f5b02ae60b3b02a
 Only `dialogue.js`'s three Shiopon text literals changed in production code. Existing approved speaker lines, Lumiere's 「シオン様」, event order, audio, progression, and Save/Continue code remain untouched. The PR additionally updates the dialogue tests and adds the historical original `dialogue.js` as a separate immutable Lumiere preview fixture, so past preview digests remain authentic. CI and human-device results are independent. This entry authorizes PR #153's **specific dialogue-correction device gate**, not unrelated story, map, lifecycle or broader platform claims.
 
 Release gate note: the first CI run on the evidence-registration commit read the previous pull-request body snapshot (PENDING / old runtime SHA), so it correctly rejected the stale Device Registry claim. The PR's authoritative standalone metadata has now been updated to `DEVICE_RUNTIME_SHA: 8c2554ec45c6f71ccf2993ed55ce75220c2ba2bd` and `DEVICE_RESULT: PASS`; the next CI run must verify the fresh metadata, exact evidence and unchanged game runtime. This documentation-only note makes no additional gameplay or device claim.
+
+
+## PR #154 east passage B-line — normal-route owner checks (2026-10-15)
+
+Candidate tested runtime: `587ed2e16b6e484993a54aca53a8eb4384188f39`. The developer supplied the immutable [normal-entry game URL](https://raw.githack.com/reverse-shion/tarot-breaker-game/587ed2e16b6e484993a54aca53a8eb4384188f39/index.html) with three numbered checks, and the product owner replied **「問題なかったよ」**. This was in an iPhone device verification conversation; the exact iOS version, browser engine and device model were not independently restated or instrumented. This is a human report about the supplied checklist, **not** an agent-run browser test or proof of unlisted actions.
+
+| Explicitly requested check | Result from owner | Evidence limits |
+|---|---|---|
+| 1. Before the Star Gate event, the photographed east B passage is blocked and Shion's warning appears | **PASS — scoped owner report** | Confirms tested opening state and placement; does not independently establish every intermediate stage or repeated push/tap behavior |
+| 2. After Future Shion and the complete Aftermath, the same east passage is open and traversable | **PASS — scoped owner report** | Confirms the complete normal-run before/after transition; no claim about failed completion, failed storage or mid-Aftermath reload |
+| 3. After reload and Continue, the passage remains open | **PASS — scoped owner report** | Confirms the requested durable recovery outcome; not a separate evidence of Garden → Landing → Garden roundtrip |
+
+Automated CI at the exact runtime `587ed2e16b6e484993a54aca53a8eb4384188f39`: [Validate #38742867459](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38742867459), **518/518 PASS, 0 failed, 0 skipped**. GitHub compare with the previously reviewed `861d92d23ed5f231bab06c19b2ddbfbb1c5b0f3e` returned **no changed files** after rolling back the unsuccessful checkpoint experiment. Any later docs-only commit does not change this tested executable runtime.
+
+**Device gate status: scoped normal-route checks 1–3 PASS; overall PR #154 integration / release gate remains PENDING.** Unverified on this SHA: post-Lumiere/pre-decision lock separately, repeated joystick/tap close-and-resume, failure/interruption recovery, east passage after Garden ↔ Landing roundtrip, old-save migration on real iPhone, and an isolated segment checkpoint. The product owner did not explicitly grant main-merge/public-release approval in the response above. Preserve the reviewed B-line coordinates `(1398,740) → (1398,844)`, all historical record entries, and `DEVICE_RESULT: PENDING` in PR metadata until the applicable final gates are actually met.
+
+
+## PR #154 east passage B-line — completed Garden ↔ Landing roundtrip (2026-10-15)
+
+Owner supplied confirmation **「問題ないので次に進めて」** directly in reply to the single specified check **「イベント完了後に庭園 → 離着陸場 → 庭園と移動し、戻っても東側通路が開放されたままか」**. The most recently supplied game link was the immutable normal-route `587ed2e16b6e484993a54aca53a8eb4384188f39/index.html` used in this PR's iPhone testing context.
+
+| Check | Fixed runtime SHA | Result | Evidence boundary |
+|---|---|---|---|
+| After completed Star Gate/Aftermath, Garden → Landing → Garden and B-line remains open after return | `587ed2e16b6e484993a54aca53a8eb4384188f39` | **PASS — human-reported single scenario** | Does not certify repeated joystick/tap contact, mid-event cancellation/reload, failed storage, old-save migration, general audio/visual gameplay regression or iPad |
+
+This supplements, but does not replace, the already recorded normal-route 3-item human report (pre-event warning/closure; after-final-Aftermath opening; reload/Continue keeps passage open). **Combined evidence: four specifically asked normal-route checks confirmed by owner at one unchanged executable runtime**, plus 518/518 automated regression on that code. No inference of full Device Gate or author permission to merge main; historical preview-source/independent-checkpoint gap remains outside the observed tests. PR `DEVICE_RESULT: PENDING` and Draft status stay in place until the remaining specific release criteria and merge authorization are satisfied.

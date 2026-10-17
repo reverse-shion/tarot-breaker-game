@@ -123,6 +123,12 @@
   let leavingMap = false;
   let gardenExitArmed = false;
   let gardenExitRef = { ...DEFAULT_SPAWN };
+  const eastPassage = window.TarotGardenEastPassage;
+  const eastPassageLine = eastPassage?.B_LINE;
+  const eastPassageFeedback = eastPassage?.createFeedbackThrottle?.(1500);
+  let eastPassageAttempt = false;
+  let eastPassageDialogue = null;
+  let eastPassageDialogueActive = false;
   let last = 0;
   let anim = 0;
   let lumiereManifest;
@@ -381,8 +387,27 @@
     } : data);
     walkAreas = collision.areas;
     collisionVersion = collision.version;
+    // The authored pathfinder remains unchanged across lock/unlock.
+    // Guard player movement only; scripted actors, map surfaces and
+    // verified Garden exits continue to use the base collision.
+    const playerCollision = enteringGardenRuntime && eastPassage?.validLine?.(eastPassageLine) ? {
+      ...collision,
+      segmentClear(from, to) {
+        if (!collision.segmentClear(from, to)) return false;
+        if (!eastPassage.wouldBlock(from, to, eastPassageLine, false)) return true;
+        if (eastPassage.routeKnown()) return true;
+        // Navigation search may probe the wall from far away. Only a
+        // nearby step originating from Shion may trigger his remark.
+        if (running && !eastPassageDialogueActive && !sceneLockOwner &&
+            refDistance(from, playerRef()) <= 9 &&
+            eastPassage.distanceToLine(playerRef(), eastPassageLine) <= 36) {
+          eastPassageAttempt = true;
+        }
+        return false;
+      },
+    } : collision;
     navigation = createNavigator(collision, 16);
-    controls = createControls(collision, navigation);
+    controls = createControls(playerCollision, navigation);
   }
 
   function findNearestSpawnRef() {
@@ -744,11 +769,38 @@
     return true;
   }
 
+  function showEastPassageDialogue() {
+    if (!eastPassageAttempt || !eastPassageFeedback) return;
+    eastPassageAttempt = false;
+    if (!running || eastPassageDialogueActive || sceneLockOwner ||
+        outsideInteraction || window.TarotDialogue?.getState?.().active) return;
+    if (!eastPassageFeedback.permit(performance.now())) return;
+    if (!window.TarotDialogueUI?.create) return;
+    if (!eastPassageDialogue) {
+      eastPassageDialogue = window.TarotDialogueUI.create({
+        mount: document.getElementById("game-shell"),
+        ids: {layer: "east-passage-dialogue", advance: "east-passage-advance",
+          speaker: "east-passage-speaker", text: "east-passage-text"},
+        onAdvance() {
+          eastPassageDialogue?.hide();
+          eastPassageDialogueActive = false;
+          if (!sceneLockOwner && !outsideInteraction) controls?.resume();
+        },
+      });
+    }
+    eastPassageDialogueActive = true;
+    controls?.suspend();
+    syncStick();
+    eastPassageDialogue.show({actor: "shion", speaker: "シオン",
+      text: "……この先は、しばらく使っていない道だ。今は引き返そう。"});
+  }
+
   function updatePlayer(dt) {
     if (leavingMap) return;
     if (updateStageActor("shion", dt)) return;
     const from = playerRef();
     const next = controls.step(from, dt, SPEED);
+    if (eastPassageAttempt) showEastPassageDialogue();
 
     // A proximity event can begin inside the wrapped controls.step call.
     if (stageMotions.shion) {
@@ -1834,16 +1886,25 @@
     // to the New Game reset/navigation path.
     if (!enteringGardenRuntime) {
       if (start) start.disabled = true;
-      const progress = window.TarotProgressCore?.createProgress();
-      if (!progress) {
+      // The title transition is owned by public-continue-title.js. A failed
+      // durable reset must also release its departing state, not merely this button.
+      function reportStartFailure(message) {
         if (start) start.disabled = false;
-        if (note) note.textContent = "セーブ機能を初期化できません";
+        if (note) note.textContent = message;
+        window.dispatchEvent(new CustomEvent("tarot-breaker:title-new-game-failed", { detail: { message } }));
+      }
+      let progress;
+      try { progress = window.TarotProgressCore?.createProgress(); }
+      catch (_) { progress = null; }
+      if (!progress) {
+        reportStartFailure("セーブ機能を初期化できません");
         return;
       }
-      const reset = progress.resetGame("title-new-game");
+      let reset;
+      try { reset = progress.resetGame("title-new-game"); }
+      catch (_) { reset = null; }
       if (!reset?.persisted) {
-        if (start) start.disabled = false;
-        if (note) note.textContent = "セーブデータを初期化できません。再試行してください";
+        reportStartFailure("セーブデータを初期化できません。再試行してください");
         return;
       }
       window.TarotJourney?.reset();
