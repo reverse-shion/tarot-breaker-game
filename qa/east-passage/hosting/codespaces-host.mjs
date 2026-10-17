@@ -55,7 +55,7 @@ export function makeHandler({root=process.cwd(),approvedOrigin='',qaPort=null,co
   if(approved && !GOOD_HOSTNAME.test(new URL(approved).hostname))
     throw Error('Only verified GitHub Codespaces port origins may be approved here');
   // Activating the *actual* Codespaces server requires one exact port-bound identity.
-  if(approved && qaPort!==null)
+  if(approved)
     assertPortBoundApproval({approved,port:qaPort,codespaceName});
   return async(req,res)=>{
     if(req.method!=='GET'&&req.method!=='HEAD')return send(res,405,'Method not allowed');
