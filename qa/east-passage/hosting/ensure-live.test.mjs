@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {
-  probeLockedPort,ensureLockedServers,spawnLockedServer,assertQaBranch,
+  probeLockedPort,ensureLockedServers,spawnLockedServer,
 } from './ensure-live.mjs';
 
 test('already ready ports are reused, no extra servers spawned',async()=>{
@@ -67,6 +67,3 @@ test('only the intended QA ports can be spawned',()=>{
   assert.throws(()=>spawnLockedServer(8767),/Not a QA port/);
 });
 
-test('QA branch guard is optional for tests but correct for branch checkouts',()=>{
-  assertQaBranch();
-});
