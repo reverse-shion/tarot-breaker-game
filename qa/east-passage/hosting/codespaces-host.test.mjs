@@ -75,6 +75,20 @@ test('supports precise audio-compatible single ranges including Safari suffix, H
   assert.equal(ifRange.status,200);
   assert.deepEqual(ifRange.bytes,original);
 });
+test('real game MP3 supports byte-range audio streaming for iPhone-oriented QA',async()=>{
+  const path='/assets/audio/ambience/alenon-orb-resonance.mp3';
+  const original=await readFile(root+path);
+  assert.ok(original.length>128000,'expected actual audio media fixture');
+  const audio=await probe(path,'GET','',{'Range':'bytes=0-1023'});
+  assert.equal(audio.status,206);
+  assert.equal(audio.headers.get('content-type'),'audio/mpeg');
+  assert.equal(audio.headers.get('accept-ranges'),'bytes');
+  assert.equal(audio.headers.get('content-range'),`bytes 0-1023/${original.length}`);
+  assert.deepEqual(audio.bytes,original.subarray(0,1024));
+  const late=await probe(path,'GET','',{'Range':`bytes=${original.length-128}-`});
+  assert.equal(late.status,206);
+  assert.deepEqual(late.bytes,original.subarray(original.length-128));
+});
 test('pure range accounting rejects malformed or unsafe offsets',()=>{
   assert.deepEqual(singleByteRange(undefined,100),{status:200,start:0,end:99});
   assert.deepEqual(singleByteRange('bytes=0-0',100),{status:206,start:0,end:0});
