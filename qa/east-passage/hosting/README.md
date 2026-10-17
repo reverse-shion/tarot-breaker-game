@@ -16,8 +16,8 @@ Codespacesは一定期間の非アクティブ状態で停止するため、一�
 
 1. GitHubで `reverse-shion/tarot-breaker-game` を開き、ブランチを `qa/east-passage-device-host-v1` に変更する。
 2. `Code` → `Codespaces` → `Create codespace`。構成を選べる画面では `.devcontainer/qa-device/devcontainer.json`（**isolated iPhone QA**）を選ぶ。2コアの最小構成で十分。
-3. 作成したCodespaceに設定された `postStartCommand` が、QA-A:8765とQA-B:8766の2つの静的配信サーバーを起動する。Terminalの設定や個別のデプロイサービスは不要な想定。ただし**実際の稼働とURLは未検証**。
-4. `PORTS`で8765と8766が `Private` であることを確認し、各URLをiPhone Safariで開く（GitHubログインが必要な場合あり）。GitHubの「接続用HTTPS URL」であり、サーバー自体はHTTPのままにする。**プライベート設定を勝手にパブリックへ変更しない**。
+3. 作成したCodespaceに設定された `postStartCommand` が、QA-A:8765とQA-B:8766の2つの静的配信サーバーを起動する。Devcontainerのポート属性には対応していない `visibility` 項目を使わず、GitHubのデフォルトPrivate設定を保護する。Terminalの設定や個別のデプロイサービスは不要な想定。ただし**実際の稼働とURLは未検証**。
+4. `PORTS`で8765と8766が **Private（GitHubの標準設定）** であることを確認し、各URLをiPhone Safariで開く（GitHubログインが必要な場合あり）。GitHubの「接続用HTTPS URL」であり、サーバー自体はHTTPのままにする。**プライベート設定を勝手にパブリックへ変更しない**。
 5. それぞれ `/qa/east-passage/index.html` を開く。画面に `安全ロック` が出ること、ボタンを押せないこと、正規ゲームタイトル画面と画像/音声が開くことを確認。URLが既存サイトとは別の `app.github.dev` のままか必ず確認。
 6. 実URL・2つのポート・GitHub上のCodespace ID・`git rev-parse HEAD`を記録。動作が不明なら**HOST PENDING**とし、保存は絶対に作らない。
 
@@ -46,3 +46,11 @@ ChromeやLinux WebKit上のPASSでは、実機SafariのPASSにはならない。
 
 Cloudflare Pagesの独立プロジェクト案も代替手段として残すが、当面は使わない。
 現在のGitHubアカウント／Codespacesだけで完結できるかを最優先で確認する。
+
+## 2026-10-17 自動監査補強（QA-only）
+
+- ブラウザ音声用に `Range: bytes=...` の単一バイト範囲を返し、`206 Partial Content` と `Content-Range` を設定。解決不能な範囲は `416` で停止。HEAD、先頭範囲、末尾範囲、開放範囲、範囲外を自動検証。iPhone Safari実機での音質・再開は依然未確認。
+- `verify-host.mjs` の `--enabled` は、**GitHubにコミットされた `approved-origin.js` を書き換えず**、CodespacesのHTTPサーバーが返す一時的な承認値と実オリジンの一致を検証する。ローカルHTTPサーバーで15ファイルの実データ比較をロック状態・一時承認状態の双方で検証する。実Codespaceホスト上の証拠ではない。
+- `portsAttributes.visibility` はDevcontainer仕様にないため使わない。GitHub側の標準Privateポートを維持し、Port Visibilityを実画面で確認する。
+- Codespaceの作成画面への公式形式の入口：[QA専用ブランチからCodespaceを作成](https://codespaces.new/reverse-shion/tarot-breaker-game/tree/qa/east-passage-device-host-v1) 。使用量と費用をGitHub上で確認し、対応する `.devcontainer/qa-device/devcontainer.json` を選ぶ。
+- **Codespaceの作成を自動で行ったとは報告しない。** 既存アカウントの本人による作成が必要。HOST/DEVICEの判定は外部実体の確認後に更新。
