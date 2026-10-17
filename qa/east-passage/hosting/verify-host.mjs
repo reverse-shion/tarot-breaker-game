@@ -52,7 +52,7 @@ export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fet
   for (const filename of FILES) {
     const localBytes = await readFile(join(base, filename));
     const expectedBytes = enabled && filename === 'qa/east-passage/approved-origin.js'
-      ? Buffer.from('window.TarotEastPassageQAApprovedOrigin = ' + JSON.stringify(origin) + ';\\n'.replace('\\n','\n'))
+      ? Buffer.from('window.TarotEastPassageQAApprovedOrigin = ' + JSON.stringify(origin) + ';' + String.fromCharCode(10))
       : localBytes;
     const url = new URL('/' + filename, origin);
     try {
