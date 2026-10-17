@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
-import {makeHandler,singleByteRange} from './codespaces-host.mjs';
+import {makeHandler,singleByteRange,assertPortBoundApproval} from './codespaces-host.mjs';
 import {readFile} from 'node:fs/promises';
 
 const root=process.cwd();
@@ -95,4 +95,19 @@ test('pure range accounting rejects malformed or unsafe offsets',()=>{
   assert.deepEqual(singleByteRange('bytes=99-',100),{status:206,start:99,end:99});
   for(const value of ['bytes=99-2','bytes=-0','bytes=','bytes=0-1,4-5','items=0-1','bytes=9999999999999999999999-'])
     assert.equal(singleByteRange(value,100).status,416,value);
+});
+
+test('QA activation origin bound to exact Codespace and selected port only',()=>{
+  const name='curly-space-happiness-69xx76qrr6wjc55r4';
+  const a='https://'+name+'-8765.app.github.dev';
+  const b='https://'+name+'-8766.app.github.dev';
+  assert.equal(assertPortBoundApproval({approved:a,port:8765,codespaceName:name}),a);
+  assert.equal(assertPortBoundApproval({approved:b,port:8766,codespaceName:name}),b);
+  assert.throws(()=>assertPortBoundApproval({approved:a,port:8766,codespaceName:name}));
+  assert.throws(()=>assertPortBoundApproval({approved:b,port:8765,codespaceName:name}));
+  assert.throws(()=>assertPortBoundApproval({approved:a,port:8765,codespaceName:'some-other-codespace'}));
+  assert.throws(()=>assertPortBoundApproval({approved:a,port:8767,codespaceName:name}));
+  assert.throws(()=>assertPortBoundApproval({approved:a,port:8765,codespaceName:''}));
+  assert.throws(()=>makeHandler({qaPort:8765,approvedOrigin:b,codespaceName:name}));
+  assert.doesNotThrow(()=>makeHandler({qaPort:8765,approvedOrigin:a,codespaceName:name}));
 });
