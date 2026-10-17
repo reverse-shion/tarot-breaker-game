@@ -36,10 +36,18 @@ export function validateOrigin(raw) {
   return u.origin;
 }
 
+export function validateAuthenticatedOrigin(raw, name = process.env.CODESPACE_NAME) {
+  if (typeof name !== 'string' || name.length > 120 || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name))
+    throw new Error('Invalid or missing current CODESPACE_NAME');
+  if (![8765, 8766].some(port => raw === `https://${name}-${port}.app.github.dev`))
+    throw new Error('Authenticated destination is not a current Codespace QA origin');
+  return validateOrigin(raw);
+}
+
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fetch, enabled = false, githubToken = null} = {}) {
-  const origin = validateOrigin(rawOrigin);
+  const origin = githubToken ? validateAuthenticatedOrigin(rawOrigin) : validateOrigin(rawOrigin);
   const base = resolve(root);
   const approved = await readFile(join(base, 'qa/east-passage/approved-origin.js'), 'utf8');
   const configured = approved.match(/TarotEastPassageQAApprovedOrigin\s*=\s*"([^"]*)"\s*;/);
@@ -67,7 +75,7 @@ export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fet
       if (hash(remoteBytes) !== hash(expectedBytes)) throw new Error('SHA256 bytes mismatch');
       results.push({filename, verdict: 'MATCH', sha256: hash(expectedBytes)});
     } catch (error) {
-      failures.push({filename, verdict: 'STOP', reason: String(error?.message || error)});
+      failures.push({filename, verdict: 'STOP', reason: githubToken ? 'Authenticated QA resource verification failed' : String(error?.message || error)});
     }
   }
   return {origin, phase: enabled ? 'APPROVED' : 'BOOTSTRAP_LOCKED', count: FILES.length,
@@ -87,7 +95,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     console.error('STOP: GITHUB_TOKEN missing; cannot verify private forwarded port');
     process.exitCode = 2;
   } else {
-    verifyHost(origin, {enabled, githubToken: privateCodespace ? process.env.GITHUB_TOKEN : null}).then(report => {
+    try { if (privateCodespace) validateAuthenticatedOrigin(origin); }
+    catch (_) { console.error('STOP: invalid current Codespace QA destination'); process.exitCode = 2; }
+    if (!process.exitCode) verifyHost(origin, {enabled, githubToken: privateCodespace ? process.env.GITHUB_TOKEN : null}).then(report => {
       console.log(JSON.stringify(report, null, 2));
       if (report.verdict !== 'CORE_BYTES_MATCH') process.exitCode = 1;
     }).catch(error => {console.error('STOP:', error.message); process.exitCode = 1;});

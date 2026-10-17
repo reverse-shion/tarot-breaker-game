@@ -5,7 +5,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const qa=require('../qa/east-passage/qa-safety.js');
 const core=require('../progress.js');
 const root=path.join(__dirname,'../qa/east-passage');
-const safeOrigin='https://tarot-breaker-east-qa-154.pages.dev';
+const safeOrigin='https://fixture-qa-8766.app.github.dev';
 const existing=['https://raw.githack.com','https://reverse-shion.github.io'];
 function store(){
  const m=new Map(),trace=[];
@@ -21,8 +21,8 @@ test('all known production/preview origins and missing configuration fail closed
   assert.deepEqual(storage.trace,[],actual);
  }
  for(const approvedOrigin of ['',undefined,'not a url',
-  'https://tarot-breaker-east-qa-154.pages.dev/path',
-  'https://tarot-breaker-east-qa-154.pages.dev/?a=1',
+  'https://fixture-qa-8766.app.github.dev/path',
+  'https://fixture-qa-8766.app.github.dev/?a=1',
   'https://raw.githack.com']){
   const storage=store(),attempt=qa.seed({
     actualOrigin:safeOrigin,approvedOrigin,storage,core,kind:'legacy-completed'});
@@ -31,7 +31,7 @@ test('all known production/preview origins and missing configuration fail closed
  }
  const denied=store();
  assert.equal(qa.seed({actualOrigin:'https://other-qa.pages.dev',approvedOrigin:safeOrigin,
-  storage:denied,core,kind:'pending-aftermath'}).ok,false);
+  storage:denied,core,kind:'legacy-completed'}).ok,false);
  assert.deepEqual(denied.trace,[]);
 });
 test('both synthetic fixtures match the actual current strict Progress schema',()=>{
@@ -65,7 +65,7 @@ test('approved QA origin must start with empty storage and write exactly one com
 test('storage access denial and misleading write readback fail visibly with no unauthorized fallback',()=>{
  let readCount=0;
  const denied={getItem(){readCount++;throw Error('blocked')},setItem(){throw Error('blocked')}};
- const args={actualOrigin:safeOrigin,approvedOrigin:safeOrigin,storage:denied,core,kind:'pending-aftermath'};
+ const args={actualOrigin:safeOrigin,approvedOrigin:safeOrigin,storage:denied,core,kind:'legacy-completed'};
  assert.deepEqual(qa.seed(args),{ok:false,reason:'qa-storage-write-unavailable'});
  assert.equal(readCount,1);
  let val=null;

@@ -123,3 +123,19 @@ FINAL=PRIVATE_HTTPS_BYTES_MATCH
 ```
 
 既存セーブの読取・作成・削除、QA保存許可設定の変更、ポート公開範囲の変更は**行わない**。Privateポート認証が `401` / `302` / `fetch failed` などになる場合はSTOPのまま、ポートをPublicへ切り替えず手順と認証経路を再監査する。Codespacesアカウントの本人認証やプロキシ側問題をゲームロジック障害と混同しない。HTTPSでの一部ファイル一致はiPhoneでの実ゲーム進行や保存復旧の合格ではない。
+
+
+## Gate C Remediation v1.1-F（現行検証仕様）
+
+保存ロック維持。v1.2承認までは実Codespacesの承認設定やSafari保存領域を操作しない。
+以前のfixture選択手順は廃止：承認済みの同一Codespacesオリジンで8765は `pending-aftermath`、8766は `legacy-completed` に固定。一般HTTPSホストは保存先にできない。
+
+- QA-A：開始時は星門未完了・星砂未判明・B封鎖。正規イベントの必要条件と独立した保存読戻しの成立後に開放。
+- QA-B：fixture読込直後は星門完了・星砂フラグなし・B封鎖。正規Continue復帰の既存移行で書込みと独立した読戻しが成功すると星砂フラグが永続化されB開放。正常移行を不具合として扱わない。
+- QA-B失敗：書込失敗と独立した読戻し失敗を別ケースで再現。writerメモリにフラグがあっても永続的な証拠がなければB封鎖。
+- 自動試験 `remediation.test.mjs` は実fixture、実Continueアダプタ、実 `star-gate-public.js`、実ProgressとB判定を実行する。移行ロジックは複製しない。使用する保存はプロセス内の合成メモリのみ。
+
+監査後の読み取り専用preflightには、Astraが承認した固定40桁SHAを外部から `QA_APPROVED_HEAD` に明示する。実行中HEADから期待SHAを自動生成しない。未指定、HEAD不一致、別ブランチ、未コミット・未追跡変更、選択ファイルのHEADバイト不一致は通信前にSTOPする。
+開発中HEADは承認済みHEADではない。CIのPR用一時マージコミットもPR本体の監査対象HEADではなく、実機preflightとして代用できない。CIでは一時Gitリポジトリによる一致・不一致試験を行い、CIのSHAを保存承認に変換しない。
+
+15ファイルの一致は選択サンプルの照合に限定され、全ファイル配信一致、実機PASS、保存有効化、Gate C解除を意味しない。認証付き検証は現在の `CODESPACE_NAME` の8765/8766のみ許可し、redirectは追従しない。

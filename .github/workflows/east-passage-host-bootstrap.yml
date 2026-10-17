@@ -8,6 +8,11 @@ on:
       - fix/title-newgame-save-failure-recovery-v1
     paths:
       - "qa/east-passage/hosting/**"
+      - "qa/east-passage/index.html"
+      - "qa/east-passage/launcher.js"
+      - "qa/east-passage/qa-safety.js"
+      - "tests/east-passage-qa-isolation.test.cjs"
+      - "qa/east-passage/tests/webkit-smoke.test.cjs"
       - ".github/workflows/east-passage-host-bootstrap.yml"
   workflow_dispatch:
 permissions:
@@ -31,7 +36,7 @@ jobs:
           git cat-file -e "$BASE^{commit}"
           while IFS= read -r name; do
             case "$name" in
-              qa/east-passage/hosting/*|.devcontainer/qa-device/devcontainer.json|.github/workflows/east-passage-host-bootstrap.yml) ;;
+              qa/east-passage/hosting/*|qa/east-passage/index.html|qa/east-passage/launcher.js|qa/east-passage/qa-safety.js|tests/east-passage-qa-isolation.test.cjs|qa/east-passage/tests/webkit-smoke.test.cjs|.devcontainer/qa-device/devcontainer.json|.github/workflows/east-passage-host-bootstrap.yml) ;;
               *) echo "STOP: non-QA delta: $name"; exit 1 ;;
             esac
           done < <(git diff --name-only "$BASE" HEAD)

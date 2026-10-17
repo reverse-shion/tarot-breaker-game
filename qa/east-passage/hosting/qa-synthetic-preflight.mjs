@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {privateCodespaceOrigins,verifyPrivateCodespace} from './verify-private-https.mjs';
+import {FILES} from './verify-host.mjs';
 import {checkBothPorts} from './verify-local-live.mjs';
 
 const require=createRequire(import.meta.url);
@@ -71,12 +72,13 @@ export function verifyFixtureMapping(codespaceName){
 
 export async function preflight({
   codespaceName=process.env.CODESPACE_NAME,
+  approvedHead=process.env.QA_APPROVED_HEAD,
   privateVerifier=verifyPrivateCodespace,
   localVerifier=checkBothPorts,
   branchVerifier=verifyLocalGit,
   guardVerifier=verifyLockedSource,
 }={}){
-  branchVerifier();
+  branchVerifier({approvedHead});
   await guardVerifier();
   const fixtures=verifyFixtureMapping(codespaceName);
   const local=await localVerifier();
@@ -92,12 +94,21 @@ export async function preflight({
     next:'INDEPENDENT_REVIEW_REQUIRED; NO QA SEED PERMITTED'};
 }
 
-export function verifyLocalGit({root=process.cwd()}={}){
+export function verifyLocalGit({root=process.cwd(),approvedHead=process.env.QA_APPROVED_HEAD}={}){
+  assert(typeof approvedHead==='string' && /^[0-9a-f]{40}$/.test(approvedHead),'explicit audited QA_APPROVED_HEAD required');
   const directory=resolve(root);
+  const head=execFileSync('git',['rev-parse','HEAD'],{cwd:directory,encoding:'utf8'}).trim();
+  assert(head===approvedHead,'HEAD differs from externally approved audited HEAD');
   const branch=execFileSync('git',['branch','--show-current'],{cwd:directory,encoding:'utf8'}).trim();
   assert(branch==='qa/east-passage-device-host-v1','wrong active Git branch');
   const changes=execFileSync('git',['status','--porcelain'],{cwd:directory,encoding:'utf8'}).trim();
   assert(changes==='','uncommitted or untracked files present; will not proceed');
+  for(const file of FILES){
+    const expected=execFileSync('git',['rev-parse',`HEAD:${file}`],{cwd:directory,encoding:'utf8'}).trim();
+    const actual=execFileSync('git',['hash-object','--',file],{cwd:directory,encoding:'utf8'}).trim();
+    assert(actual===expected,'selected source file differs from HEAD: '+file);
+  }
+  return {head,branch};
 }
 export async function verifyLockedSource({root=process.cwd()}={}){
   const source=await readFile(resolve(root,'qa/east-passage/approved-origin.js'),'utf8');
