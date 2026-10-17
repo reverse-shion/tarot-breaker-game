@@ -2,15 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
-import {makeHandler} from './codespaces-host.mjs';
+import {makeHandler,singleByteRange} from './codespaces-host.mjs';
+import {readFile} from 'node:fs/promises';
 
 const root=process.cwd();
-async function probe(path,method='GET',origin=''){
+async function probe(path,method='GET',origin='',headers={}){
   const server=createServer(makeHandler({root,approvedOrigin:origin}));
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   try{
-    const response=await fetch('http://127.0.0.1:'+server.address().port+path,{method,redirect:'manual'});
-    return {status:response.status,body:await response.text(),headers:response.headers};
+    const response=await fetch('http://127.0.0.1:'+server.address().port+path,{method,redirect:'manual',headers});
+    const bytes=Buffer.from(await response.arrayBuffer());
+    return {status:response.status,body:bytes.toString('utf8'),bytes,headers:response.headers};
   }finally{await new Promise(resolve=>server.close(resolve));}
 }
 test('serves real game root with no redirection and no-store',async()=>{
@@ -39,4 +41,44 @@ test('only exact Github Codespaces port origins enable isolated QA declaration',
   assert.doesNotMatch((await probe('/qa/east-passage/approved-origin.js')).body,/demo-8765\.app\.github\.dev/);
   assert.throws(()=>makeHandler({root,approvedOrigin:'https://reverse-shion.github.io'}));
   assert.throws(()=>makeHandler({root,approvedOrigin:'https://qa.example.net'}));
+});
+test('supports precise audio-compatible single ranges including Safari suffix, HEAD and 416',async()=>{
+  const path='/assets/maps/star-country-gate-garden-transparent.webp';
+  const original=await readFile(root+path);
+  const total=original.length;
+  assert.ok(total>1024);
+  const full=await probe(path);
+  assert.equal(full.status,200);
+  assert.equal(full.headers.get('accept-ranges'),'bytes');
+  assert.deepEqual(full.bytes,original);
+  const early=await probe(path,'GET','',{'Range':'bytes=0-31'});
+  assert.equal(early.status,206);
+  assert.equal(early.headers.get('content-range'),`bytes 0-31/${total}`);
+  assert.equal(early.headers.get('content-length'),'32');
+  assert.deepEqual(early.bytes,original.subarray(0,32));
+  const suffix=await probe(path,'GET','',{'Range':'bytes=-64'});
+  assert.equal(suffix.status,206);
+  assert.deepEqual(suffix.bytes,original.subarray(total-64));
+  const openEnded=await probe(path,'GET','',{'Range':`bytes=${total-16}-`});
+  assert.equal(openEnded.status,206);
+  assert.deepEqual(openEnded.bytes,original.subarray(total-16));
+  const head=await probe(path,'HEAD','',{'Range':'bytes=0-31'});
+  assert.equal(head.status,206);
+  assert.equal(head.bytes.length,0);
+  assert.equal(head.headers.get('content-length'),'32');
+  const invalid=await probe(path,'GET','',{'Range':`bytes=${total}-`});
+  assert.equal(invalid.status,416);
+  assert.equal(invalid.headers.get('content-range'),`bytes */${total}`);
+  const multi=await probe(path,'GET','',{'Range':'bytes=0-1,6-7'});
+  assert.equal(multi.status,416);
+  const ifRange=await probe(path,'GET','',{'Range':'bytes=0-31','If-Range':'"stale"'});
+  assert.equal(ifRange.status,200);
+  assert.deepEqual(ifRange.bytes,original);
+});
+test('pure range accounting rejects malformed or unsafe offsets',()=>{
+  assert.deepEqual(singleByteRange(undefined,100),{status:200,start:0,end:99});
+  assert.deepEqual(singleByteRange('bytes=0-0',100),{status:206,start:0,end:0});
+  assert.deepEqual(singleByteRange('bytes=99-',100),{status:206,start:99,end:99});
+  for(const value of ['bytes=99-2','bytes=-0','bytes=','bytes=0-1,4-5','items=0-1','bytes=9999999999999999999999-'])
+    assert.equal(singleByteRange(value,100).status,416,value);
 });
