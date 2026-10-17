@@ -1,0 +1,58 @@
+name: Isolated east-passage QA host bootstrap (NOT device PASS)
+on:
+  push:
+    branches:
+      - qa/east-passage-device-host-v1
+  pull_request:
+    branches:
+      - fix/title-newgame-save-failure-recovery-v1
+    paths:
+      - "qa/east-passage/hosting/**"
+      - ".github/workflows/east-passage-host-bootstrap.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Reject non-QA changes from PR 165 fixed SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=671b4282aea2d3e9cb21a873e99c7b2221fe27e5
+          git cat-file -e "$BASE^{commit}"
+          while IFS= read -r name; do
+            case "$name" in
+              qa/east-passage/hosting/*|.github/workflows/east-passage-host-bootstrap.yml) ;;
+              *) echo "STOP: non-QA delta: $name"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+      - name: Preserve QA entry as DISABLED until host is independently verified
+        run: |
+          grep -Eq 'TarotEastPassageQAApprovedOrigin = "";' qa/east-passage/approved-origin.js
+          node --check qa/east-passage/hosting/verify-host.mjs
+      - name: Test exact-origin guard
+        run: node --test qa/east-passage/hosting/verify-host.test.mjs
+      - name: Revalidate assets and existing gameplay regression
+        run: |
+          node scripts/validate.mjs
+          node scripts/validate-background-assets.mjs
+          node scripts/validate-audio.mjs
+          node scripts/test-regression-baseline.mjs
+      - name: Record correct limited verdict
+        if: always()
+        run: |
+          {
+            echo "## Isolated QA bootstrap"
+            echo "This workflow does **not** deploy an HTTPS host or run on a real iPhone."
+            echo "HOST_GATE=PENDING until external host, exact origin, deployment SHA and core-byte probe are verified."
+            echo "DEVICE_GATE=PENDING; RELEASE_GATE=STOP; MAIN_MERGE=STOP."
+          } >> "$GITHUB_STEP_SUMMARY"
