@@ -7,7 +7,8 @@ import {readFile} from 'node:fs/promises';
 
 const root=process.cwd();
 async function probe(path,method='GET',origin='',headers={}){
-  const server=createServer(makeHandler({root,approvedOrigin:origin}));
+  const server=createServer(makeHandler({root,approvedOrigin:origin,
+    qaPort:origin?8765:null,codespaceName:origin?'demo':undefined}));
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   try{
     const response=await fetch('http://127.0.0.1:'+server.address().port+path,{method,redirect:'manual',headers});
@@ -110,4 +111,5 @@ test('QA activation origin bound to exact Codespace and selected port only',()=>
   assert.throws(()=>assertPortBoundApproval({approved:a,port:8765,codespaceName:''}));
   assert.throws(()=>makeHandler({qaPort:8765,approvedOrigin:b,codespaceName:name}));
   assert.doesNotThrow(()=>makeHandler({qaPort:8765,approvedOrigin:a,codespaceName:name}));
+  assert.throws(()=>makeHandler({approvedOrigin:a,codespaceName:name}),'approval with missing explicit port must fail');
 });
