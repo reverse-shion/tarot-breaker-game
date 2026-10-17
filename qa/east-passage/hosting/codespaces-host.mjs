@@ -19,6 +19,24 @@ const MIME=Object.freeze({
 const BLOCKED=new Set(['.git','.github','.devcontainer','node_modules','tests','scripts','docs','hosting']);
 const send=(res,status,text)=>{res.writeHead(status,{'content-type':'text/plain; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','x-frame-options':'DENY','referrer-policy':'no-referrer'});res.end(text)};
 const GOOD_HOSTNAME=/^[a-z0-9-]+-\d+\.app\.github\.dev$/i;
+
+// Support single-range byte requests for actual audio/video seeking on iPhone.
+// Unsupported or unsatisfiable ranges fail visibly; no silent false media PASS.
+export function singleByteRange(raw,size){
+  if(raw === undefined) return {status:200,start:0,end:size-1};
+  const match=typeof raw==='string' && /^bytes=(\d*)-(\d*)$/.exec(raw);
+  if(!match||(!match[1]&&!match[2])||size<=0) return {status:416};
+  const start=match[1]?Number(match[1]):null;
+  const right=match[2]?Number(match[2]):null;
+  if((start!==null&&!Number.isSafeInteger(start)) ||
+     (right!==null&&!Number.isSafeInteger(right)))return {status:416};
+  let lo,hi;
+  if(start===null){if(right<=0)return {status:416};lo=Math.max(0,size-right);hi=size-1}
+  else{lo=start;hi=right===null?size-1:Math.min(right,size-1)}
+  if(lo>=size||lo>hi)return {status:416};
+  return {status:206,start:lo,end:hi};
+}
+
 export function makeHandler({root=process.cwd(),approvedOrigin=''}={}){
   const base=resolve(root);
   const approved=approvedOrigin?validateOrigin(approvedOrigin):'';
@@ -53,11 +71,20 @@ export function makeHandler({root=process.cwd(),approvedOrigin=''}={}){
         if(!(await stat(file)).isFile())return send(res,404,'Not found');
         body=await readFile(file);
       }
-      res.writeHead(200,{'content-type':MIME[ext],
-        'cache-control':'no-store','x-content-type-options':'nosniff',
-        'x-frame-options':'DENY','referrer-policy':'no-referrer',
-        'content-length':body.length,'cross-origin-resource-policy':'same-origin'});
-      res.end(req.method==='HEAD'?undefined:body);
+      const range=singleByteRange(req.headers['if-range']?undefined:req.headers.range,body.length);
+      const common={'content-type':MIME[ext], 'cache-control':'no-store',
+        'x-content-type-options':'nosniff','x-frame-options':'DENY',
+        'referrer-policy':'no-referrer','cross-origin-resource-policy':'same-origin',
+        'accept-ranges':'bytes'};
+      if(range.status===416){
+        res.writeHead(416,{...common,'content-range':'bytes */'+body.length,'content-length':0});
+        return res.end();
+      }
+      const bytes=body.subarray(range.start,range.end+1);
+      const headers={...common,'content-length':bytes.length};
+      if(range.status===206)headers['content-range']='bytes '+range.start+'-'+range.end+'/'+body.length;
+      res.writeHead(range.status,headers);
+      res.end(req.method==='HEAD'?undefined:bytes);
     }catch{return send(res,404,'Not found')}
   };
 }
