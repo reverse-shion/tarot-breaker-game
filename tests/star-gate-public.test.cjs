@@ -168,3 +168,71 @@ test('already-known memory cannot bypass migration readback or rewrite a verifie
  assert.equal(normal.bytes(),bytes);
  assert.equal(require('../garden-east-passage.js').routeKnown(normal.storage),true);
 });
+
+test('legacy completed save launches through Public Continue, rebinds Garden authority and migrates B exactly once',async()=>{
+ // Reuse scene/image/storage fixtures; all authority and migration modules below are real.
+ // Node VM integration only: no browser navigation, device storage or browser E2E claim.
+ const h=harness({completed:true}),legacy=h.bytes(),urls=[];
+ const storage={getItem(key){assert.equal(key,core.STORAGE_KEY);return h.storage.getItem(key);},
+  setItem(key,value){assert.equal(key,core.STORAGE_KEY);h.storage.setItem(key,value);}};
+ const journeyKey='tarot-breaker:map-journey-v1',session=new Map([[journeyKey,'{"unrelated":"kept"}']]);
+ const sessionStorage={getItem:key=>session.get(key)??null,
+  setItem(key,value){assert.equal(key,journeyKey);session.set(key,value);}};
+ const c={...h.window,localStorage:storage,sessionStorage,URLSearchParams,
+  console:{warn(){}},setTimeout,clearTimeout,
+  Image:class{naturalWidth=100;naturalHeight=100;set src(s){queueMicrotask(()=>this.onload())}decode(){return Promise.resolve()}}};
+ c.window=c;vm.createContext(c);
+ const run=file=>vm.runInContext(fs.readFileSync(file,'utf8'),c,{filename:file});
+ for(const file of ['route-registry.js','progress.js','progress-resume.js','public-continue.js',
+  'garden-resume.js','garden-public-continue.js','garden-east-passage.js','map-journey.js'])run(file);
+ const route='garden_star_sand_route_known';
+ assert.equal(JSON.parse(legacy).completedEvents.includes(EVENT),true);
+ assert.equal(JSON.parse(legacy).completedEvents.includes(route),false);
+ assert.equal(c.TarotGardenEastPassage.routeKnown(storage),false);
+ const controller=c.TarotPublicContinue.createController({storage,navigate:url=>urls.push(url)});
+ assert.equal(controller.inspect().ok,true);
+ assert.equal(controller.inspect().url,'./index.html?entry=continue');
+ assert.equal(controller.launch().ok,true);
+ assert.deepEqual(urls,['./index.html?entry=continue']);
+ c.location={search:new URL(urls[0],'https://test.invalid/').search};
+ const options={search:c.location.search,storage};
+ c.TarotGardenContinueTransit=c.TarotGardenPublicContinue.receive(options);
+ assert.equal(c.TarotGardenContinueTransit.ok,true);
+ run('garden-progress-observer.js');
+ const original=c.TarotStarGateProgress;
+ const fresh=c.TarotGardenPublicContinue.revalidate(c.TarotGardenContinueTransit,options);
+ assert.equal(fresh.ok,true);assert.notEqual(fresh.progress,original);
+ assert.equal(c.TarotGardenPublicContinue.projectJourney(fresh,
+  {journey:c.TarotJourney,storage:sessionStorage}).ok,true);
+ const projected=JSON.parse(session.get(journeyKey));
+ assert.equal(projected.unrelated,'kept');assert.equal(projected.landingMemoryDone,true);
+ assert.deepEqual(projected.gardenStory,{shioponDone:true,lumiereDone:true,joined:true});
+ assert.deepEqual(projected.companion,{mode:'following'});
+ c.TarotGardenContinueTransit=fresh;
+ assert.equal(c.TarotStarGateProgressAuthority.rebind(original),false);
+ assert.equal(c.TarotStarGateProgressAuthority.rebind(fresh.progress),true);
+ assert.equal(c.TarotStarGateProgress,fresh.progress);
+ assert.equal(h.writes(),0);assert.equal(h.bytes(),legacy);
+ run('star-gate-public.js');
+ await c.TarotStarGatePublic.prepareRestoration();
+ assert.equal(c.TarotStarGatePublic.restoreCompleted(),true);
+ assert.equal(h.scene.gateRestored,true);assert.equal(h.scene.lumiereEnabled,false);
+ assert.equal(h.writes(),1);
+ const loaded=c.TarotProgressCore.createProgress({storage}).load();
+ assert.equal(loaded.status,'valid');
+ assert.deepEqual(JSON.parse(JSON.stringify(loaded.state)),
+  {...JSON.parse(legacy),completedEvents:[...JSON.parse(legacy).completedEvents,route]});
+ assert.equal(fresh.progress.isEventCompleted(route),true,'rebound authority owns migration');
+ assert.equal(original.isEventCompleted(route),false,'stale authority was not the writer');
+ assert.equal(c.TarotGardenEastPassage.routeKnown(storage),true);
+ const migrated=h.bytes();
+ await c.TarotStarGatePublic.prepareRestoration();
+ assert.equal(c.TarotStarGatePublic.restoreCompleted(),false);
+ assert.equal(h.writes(),1);assert.equal(h.bytes(),migrated);
+ // A new observer also recognizes durable migration without another write.
+ run('star-gate-public.js');
+ await c.TarotStarGatePublic.prepareRestoration();
+ assert.equal(c.TarotStarGatePublic.restoreCompleted(),true);
+ assert.equal(h.writes(),1);assert.equal(h.bytes(),migrated);
+ assert.equal(c.TarotGardenEastPassage.routeKnown(storage),true);
+});
