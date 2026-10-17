@@ -44,6 +44,18 @@ jobs:
       - name: Test exact-origin guard
         run: |
           node --test qa/east-passage/hosting/*.test.mjs
+      - name: Smoke-test both local QA ports with idempotent locked startup
+        run: |
+          node --input-type=module -e '
+            import { ensureLockedServers } from "./qa/east-passage/hosting/ensure-live.mjs";
+            import { checkBothPorts } from "./qa/east-passage/hosting/verify-local-live.mjs";
+            const state = await ensureLockedServers();
+            if (state.length !== 2 || state.some(s => !["RESTARTED","ALREADY_READY"].includes(s.action))) process.exit(1);
+            const result = await checkBothPorts();
+            for (const r of result.results) console.log("PORT " + r.port + ": " + r.verdict + " " + r.matched + "/" + r.checked);
+            if (result.verdict !== "LOCAL_BYTES_MATCH") process.exit(1);
+            console.log("CI LOCAL QA BOTH PORTS PASS (not iPhone evidence)");
+          '
       - name: Reject Cloudflare Pages file count/size limit breaches
         run: node qa/east-passage/hosting/check-pages-limits.mjs
       - name: Revalidate assets and existing gameplay regression
