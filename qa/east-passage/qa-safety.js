@@ -28,6 +28,13 @@ function approve(actual,configured){
  return Object.freeze({ok:!!bound&&actual===bound,origin:bound||null,
   reason:!bound?"no-approved-disposable-origin":actual!==bound?"origin-mismatch":null});
 }
+function fixtureForOrigin(actual,configured){
+ const gate=approve(actual,configured);
+ if(!gate.ok)return Object.freeze({ok:false,reason:gate.reason});
+ const match=/^https:\/\/[a-z][a-z0-9]*(?:-[a-z0-9]+)*-(8765|8766)\.app\.github\.dev$/.exec(actual);
+ if(!match)return Object.freeze({ok:false,reason:"unapproved-qa-port-origin"});
+ return Object.freeze({ok:true,kind:match[1]==="8765"?"pending-aftermath":"legacy-completed"});
+}
 function fixture(kind){
  if(!["pending-aftermath","legacy-completed"].includes(kind))throw Error("unknown-qa-fixture");
  return {version:1,checkpoint:{mapId:"star_gate_garden",spawnId:"south_gate"},
@@ -36,8 +43,9 @@ function fixture(kind){
 }
 function prepare({actualOrigin,approvedOrigin,storage,core,kind}){
  // Check origin BEFORE touching storage, fixture, or Progress.
- const gate=approve(actualOrigin,approvedOrigin);
+ const gate=fixtureForOrigin(actualOrigin,approvedOrigin);
  if(!gate.ok)return Object.freeze({ok:false,reason:gate.reason});
+ if(kind!==gate.kind)return Object.freeze({ok:false,reason:"fixture-port-mismatch"});
  if(!core||core.STORAGE_KEY!==PROGRESS_KEY||typeof core.validateRecord!=="function")
   return Object.freeze({ok:false,reason:"progress-core-unavailable"});
  if(!storage||typeof storage.getItem!=="function"||typeof storage.setItem!=="function")
@@ -60,5 +68,5 @@ function seed({actualOrigin,approvedOrigin,storage,core,kind}){
   return Object.freeze({ok:true,kind});
  }catch(_){return Object.freeze({ok:false,reason:"qa-storage-write-unavailable"});}
 }
-return Object.freeze({PROGRESS_KEY,HISTORY,approve,fixture,prepare,seed});
+return Object.freeze({PROGRESS_KEY,HISTORY,approve,fixtureForOrigin,fixture,prepare,seed});
 });

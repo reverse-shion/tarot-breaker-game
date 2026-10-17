@@ -12,7 +12,7 @@ body{background:#101726;color:#eef1ff;max-width:560px;margin:0 auto;padding:26px
 h1{font-size:1.35rem}
 section{border:1px solid #465071;border-radius:14px;padding:16px;margin-top:14px}
 p,small{color:#c1cbe4}
-button,select{font:inherit;padding:12px;border-radius:9px}
+button{font:inherit;padding:12px;border-radius:9px}
 button{background:#91a8ff;color:#101726;font-weight:700;border:0;width:100%;margin-top:14px}
 button:disabled{opacity:.4}
 label{display:block;margin-top:12px}
@@ -28,11 +28,7 @@ code{overflow-wrap:anywhere}
 <small id="origin"></small>
 </section>
 <section>
-<label for="fixture">検証する状態</label>
-<select id="fixture">
-<option value="pending-aftermath">星門イベント前（Aftermath未完了）</option>
-<option value="legacy-completed">旧セーブ相当（星門完了・星砂フラグなし）</option>
-</select>
+<p>検証状態（ポートから固定）: <strong id="fixture"></strong></p>
 <label><input type="checkbox" id="consent"/> この独立QAサイトの保存先が空で、実際のセーブを扱わないことを確認しました。</label>
 <button id="start" disabled>隔離QAの保存を作ってゲームへ</button>
 <p id="message" role="alert"></p>

@@ -1,0 +1,80 @@
+name: Isolated east-passage QA host bootstrap (NOT device PASS)
+on:
+  push:
+    branches:
+      - qa/east-passage-device-host-v1
+  pull_request:
+    branches:
+      - fix/title-newgame-save-failure-recovery-v1
+    paths:
+      - "qa/east-passage/hosting/**"
+      - "qa/east-passage/index.html"
+      - "qa/east-passage/launcher.js"
+      - "qa/east-passage/qa-safety.js"
+      - "tests/east-passage-qa-isolation.test.cjs"
+      - "qa/east-passage/tests/webkit-smoke.test.cjs"
+      - ".github/workflows/east-passage-host-bootstrap.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Reject non-QA changes from PR 165 fixed SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=671b4282aea2d3e9cb21a873e99c7b2221fe27e5
+          git cat-file -e "$BASE^{commit}"
+          while IFS= read -r name; do
+            case "$name" in
+              qa/east-passage/hosting/*|qa/east-passage/index.html|qa/east-passage/launcher.js|qa/east-passage/qa-safety.js|tests/east-passage-qa-isolation.test.cjs|qa/east-passage/tests/webkit-smoke.test.cjs|.devcontainer/qa-device/devcontainer.json|.github/workflows/east-passage-host-bootstrap.yml) ;;
+              *) echo "STOP: non-QA delta: $name"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+      - name: Preserve QA entry as DISABLED until host is independently verified
+        run: |
+          grep -Eq 'TarotEastPassageQAApprovedOrigin = "";' qa/east-passage/approved-origin.js
+          node --check qa/east-passage/hosting/verify-host.mjs
+          node --check qa/east-passage/hosting/codespaces-host.mjs
+          node -e 'const f=require("fs");const c=JSON.parse(f.readFileSync(".devcontainer/qa-device/devcontainer.json","utf8"));for(const p of ["8765","8766"]){const x=c.portsAttributes[p];if(!x||Object.hasOwn(x,"visibility")||x.protocol!=="http"||!c.forwardPorts.includes(Number(p)))throw Error("Unsupported or unsafe Codespaces port configuration");}'
+      - name: Test exact-origin guard
+        run: |
+          node --test qa/east-passage/hosting/*.test.mjs
+      - name: Smoke-test both local QA ports with idempotent locked startup
+        run: |
+          node --input-type=module -e '
+            import { ensureLockedServers } from "./qa/east-passage/hosting/ensure-live.mjs";
+            import { checkBothPorts } from "./qa/east-passage/hosting/verify-local-live.mjs";
+            const state = await ensureLockedServers();
+            if (state.length !== 2 || state.some(s => !["RESTARTED","ALREADY_READY"].includes(s.action))) process.exit(1);
+            const result = await checkBothPorts();
+            for (const r of result.results) console.log("PORT " + r.port + ": " + r.verdict + " " + r.matched + "/" + r.checked);
+            if (result.verdict !== "LOCAL_BYTES_MATCH") process.exit(1);
+            console.log("CI LOCAL QA BOTH PORTS PASS (not iPhone evidence)");
+          '
+      - name: Reject Cloudflare Pages file count/size limit breaches
+        run: node qa/east-passage/hosting/check-pages-limits.mjs
+      - name: Revalidate assets and existing gameplay regression
+        run: |
+          node scripts/validate.mjs
+          node scripts/validate-background-assets.mjs
+          node scripts/validate-audio.mjs
+          node scripts/test-regression-baseline.mjs
+      - name: Record correct limited verdict
+        if: always()
+        run: |
+          {
+            echo "## Isolated QA bootstrap"
+            echo "This workflow does **not** deploy an HTTPS host or run on a real iPhone."
+            echo "HOST_GATE=PENDING until external host, exact origin, deployment SHA and core-byte probe are verified."
+            echo "DEVICE_GATE=PENDING; RELEASE_GATE=STOP; MAIN_MERGE=STOP."
+          } >> "$GITHUB_STEP_SUMMARY"

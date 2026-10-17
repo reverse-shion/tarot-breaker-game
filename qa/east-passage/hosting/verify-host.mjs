@@ -1,0 +1,105 @@
+/** Read-only QA deployment byte check. No storage, credentials or browser state. */
+import { readFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+
+export const FILES = Object.freeze([
+  'index.html',
+  'alenon.html',
+  'game.js',
+  'public-continue-title.js',
+  'runtime-entry.js',
+  'progress.js',
+  'route-registry.js',
+  'garden-east-passage.js',
+  'star-gate-public.js',
+  'qa/east-passage/index.html',
+  'qa/east-passage/qa-safety.js',
+  'qa/east-passage/launcher.js',
+  'qa/east-passage/approved-origin.js',
+  'assets/maps/star-country-gate-garden-collision.json',
+  'assets/maps/star-country-gate-garden-transparent.webp',
+]);
+
+export function validateOrigin(raw) {
+  if (typeof raw !== 'string' || !raw.trim()) throw new Error('Origin required');
+  const u = new URL(raw);
+  const host = u.hostname.toLowerCase();
+  const forbidden = ['github.io', 'github.com', 'githubusercontent.com', 'raw.githack.com', 'githack.com', 'localhost'];
+  if (u.protocol !== 'https:' || u.origin !== raw || u.username || u.password ||
+      u.pathname !== '/' || u.search || u.hash || (u.port && u.port !== '443') ||
+      forbidden.some(x => host === x || host.endsWith('.' + x)) ||
+      /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) || host.includes(':')) {
+    throw new Error('Not a permitted unique HTTPS QA origin');
+  }
+  return u.origin;
+}
+
+export function validateAuthenticatedOrigin(raw, name = process.env.CODESPACE_NAME) {
+  if (typeof name !== 'string' || name.length > 120 || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name))
+    throw new Error('Invalid or missing current CODESPACE_NAME');
+  if (![8765, 8766].some(port => raw === `https://${name}-${port}.app.github.dev`))
+    throw new Error('Authenticated destination is not a current Codespace QA origin');
+  return validateOrigin(raw);
+}
+
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+
+export async function verifyHost(rawOrigin, {root = process.cwd(), fetcher = fetch, enabled = false, githubToken = null} = {}) {
+  const origin = githubToken ? validateAuthenticatedOrigin(rawOrigin) : validateOrigin(rawOrigin);
+  const base = resolve(root);
+  const approved = await readFile(join(base, 'qa/east-passage/approved-origin.js'), 'utf8');
+  const configured = approved.match(/TarotEastPassageQAApprovedOrigin\s*=\s*"([^"]*)"\s*;/);
+  if (!configured) throw new Error('QA approval assignment missing or unsupported');
+  // The tracked source must remain disabled even after ephemeral QA activation.
+  // Approval is injected only by the isolated Codespaces HTTP handler.
+  if (configured[1] !== '') throw new Error('Tracked QA origin must remain disabled');
+  const failures = [];
+  const results = [];
+  for (const filename of FILES) {
+    const localBytes = await readFile(join(base, filename));
+    const expectedBytes = enabled && filename === 'qa/east-passage/approved-origin.js'
+      ? Buffer.from('window.TarotEastPassageQAApprovedOrigin = ' + JSON.stringify(origin) + ';' + String.fromCharCode(10))
+      : localBytes;
+    const url = new URL('/' + filename, origin);
+    try {
+      const response = await fetcher(url, {
+        redirect: 'manual', signal: AbortSignal.timeout(15000),
+        headers: {'cache-control': 'no-cache', ...(githubToken ? {'X-Github-Token':githubToken} : {})},
+      });
+      if (response.status !== 200 || new URL(response.url).origin !== origin) {
+        throw new Error('response status/origin mismatch: ' + response.status);
+      }
+      const remoteBytes = Buffer.from(await response.arrayBuffer());
+      if (hash(remoteBytes) !== hash(expectedBytes)) throw new Error('SHA256 bytes mismatch');
+      results.push({filename, verdict: 'MATCH', sha256: hash(expectedBytes)});
+    } catch (error) {
+      failures.push({filename, verdict: 'STOP', reason: githubToken ? 'Authenticated QA resource verification failed' : String(error?.message || error)});
+    }
+  }
+  return {origin, phase: enabled ? 'APPROVED' : 'BOOTSTRAP_LOCKED', count: FILES.length,
+    matched: results.length, verdict: failures.length ? 'STOP' : 'CORE_BYTES_MATCH',
+    results, failures, note: 'Core sample only; not complete asset/device acceptance.'};
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const args = process.argv.slice(2);
+  const enabled = args.includes('--enabled');
+  const privateCodespace = args.includes('--codespaces-private');
+  const origin = args.find(a => !a.startsWith('--'));
+  if (!origin) {
+    console.error('Usage: node qa/east-passage/hosting/verify-host.mjs https://qa.example.org [--enabled] [--codespaces-private]');
+    process.exitCode = 2;
+  } else if (privateCodespace && !process.env.GITHUB_TOKEN) {
+    console.error('STOP: GITHUB_TOKEN missing; cannot verify private forwarded port');
+    process.exitCode = 2;
+  } else {
+    try { if (privateCodespace) validateAuthenticatedOrigin(origin); }
+    catch (_) { console.error('STOP: invalid current Codespace QA destination'); process.exitCode = 2; }
+    if (!process.exitCode) verifyHost(origin, {enabled, githubToken: privateCodespace ? process.env.GITHUB_TOKEN : null}).then(report => {
+      console.log(JSON.stringify(report, null, 2));
+      if (report.verdict !== 'CORE_BYTES_MATCH') process.exitCode = 1;
+    }).catch(error => {console.error('STOP:', error.message); process.exitCode = 1;});
+  }
+}

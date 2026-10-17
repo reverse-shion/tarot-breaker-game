@@ -6,7 +6,7 @@ const fs=require('node:fs/promises'),path=require('node:path');
 const {webkit}=require('playwright');
 const {observe,instrumentRuntime,reloadToTitle}=require('./reload-diagnostics.cjs');
 const ROOT=path.resolve(__dirname,'../../..');
-const QA_A='https://east-a.playwright.test',QA_B='https://east-b.playwright.test';
+const QA_A='https://synthetic-webkit-8765.app.github.dev',QA_B='https://synthetic-webkit-8766.app.github.dev';
 const PREVIEW='https://raw.githack.com',PRODUCTION='https://reverse-shion.github.io';
 const ALLOWED=new Set([QA_A,QA_B,PREVIEW,PRODUCTION]);
 const KEY='tarot-breaker:progress-v1';
@@ -93,7 +93,8 @@ async function assertTouchMovement(page,label){
 }
 async function create(page,kind){
  assert.equal(await save(page),null,'fresh QA origin starts empty');
- await page.locator('#fixture').selectOption(kind);
+ assert.equal(await page.locator('#fixture').textContent(),kind);
+ assert.equal(await page.locator('select#fixture').count(),0);
  assert.equal(await page.locator('#start').isDisabled(),true);
  await page.locator('#consent').check();
  assert.equal(await page.locator('#start').isEnabled(),true);
@@ -207,7 +208,7 @@ for(const kind of ['pending-aftermath','legacy-completed']){
    test(`WebKit reload comparison: ${kind}, touch=${touch}, method=${method}`,{timeout:110000},async()=>withBrowser(async browser=>{
     const ctx=await contextFor(browser);
     try{
-     const page=await ctx.newPage();await open(page,QA_A);await create(page,kind);
+     const page=await ctx.newPage();await open(page,kind==='legacy-completed'?QA_B:QA_A);await create(page,kind);
      await assertGardenReady(page,kind==='legacy-completed','comparison-initial');
      if(touch)await assertTouchMovement(page,'comparison-touch');
      const result=await reloadToTitle(page,{method,label:kind+'-touch-'+touch+'-'+method});
