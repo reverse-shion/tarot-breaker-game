@@ -79,3 +79,27 @@ FINAL=LOCAL_BYTES_MATCH
 この検査は読み取り専用で、QA保存を作らず、本番データに触れず、外部サイトへのアクセスもしない。どちらか1件でも内容不一致ならSTOP。Codespacesのユーザー操作でHEAD更新されるため、直前までに未コミットのユーザー変更が存在しないことを確認すること。進行中サーバーの起動ターミナルは維持する。
 
 **この検査だけでは、Private HTTPS転送経由の全アセット表示やSafari実ゲーム進行、保存復元、旧セーブ模擬はPASSにならない。** QA合成セーブ作成承認は別工程。 
+
+
+## 2026-10-17 15:19：Codespacesの両ポートが一時停止した場合の自動復帰
+
+本人のiPad Codespaces端末で `verify-local-live.mjs` を実行した結果、8765と8766がともに `fetch failed` となり、0/15・FINAL=STOPを観測した。
+これはデータ不一致の検出ではなく、その時点でローカルHTTP接続に失敗した証拠。前に2つとも200 OKだったが、Codespacesの一時停止・手動起動プロセスの終了等、正確な停止原因は未確定。
+QA保存の安全ロックを維持し、すでに通っているポートを妨げず、止まった2ポートだけロック状態で回復する方式へ変更。
+
+**Codespacesで次に実行するコマンドはこれ1つ：**
+
+```bash
+git pull --ff-only && node qa/east-passage/hosting/ensure-live.mjs
+```
+
+- `qa/east-passage/approved-origin.js` が空の安全状態であることを必ず検査
+- 既に正しいサーバーが生きていれば `ALREADY_READY` として再利用
+- ローカルサーバーが停止していれば `RESTARTED` として安全な静的配信のみ起動
+- 想定外の応答や承認済みQAサイトが混入していればSTOPし、勝手なポート上書きや保存操作はしない
+- 15個のファイルを2つのローカルサーバーから読み直し、一致したら `FINAL=LOCAL_BYTES_MATCH`
+- iPhoneやiPadのSafari上での保存テストを実施したとは扱わない
+- サーバープロセスはCodespacesが停止すると終了し得る。Codespacesを起動し直したときの `postStartCommand` も同じ安全な起動ヘルパーへ置き換えた
+- 開発環境の自動復帰とコンテンツ一致は、実機Safariのゲーム本編動作・合成セーブ開放の承認ではない。Release STOP維持
+
+*注意：`git pull --ff-only`が失敗したら、その理由を調査するまで保存・起動コマンドを追加実行しない。*
