@@ -103,3 +103,23 @@ git pull --ff-only && node qa/east-passage/hosting/ensure-live.mjs
 - 開発環境の自動復帰とコンテンツ一致は、実機Safariのゲーム本編動作・合成セーブ開放の承認ではない。Release STOP維持
 
 *注意：`git pull --ff-only`が失敗したら、その理由を調査するまで保存・起動コマンドを追加実行しない。*
+
+
+## 2026-10-17 15:28：実Codespace復旧PASSの後に行うPrivate HTTPSの読取専用監査
+
+実機iPadから実施された `ensure-live.mjs` は `QA 8765 RESTARTED` / `QA 8766 RESTARTED` / 両ポート `LOCAL_BYTES_MATCH 15/15` / `FINAL=LOCAL_BYTES_MATCH` を表示し、ローカルHTTPの安全復旧・正確な15ファイルの照合は観測PASS。
+
+次は実際のCodespaces Private HTTPS転送を確認する。Codespaces自身の `CODESPACE_NAME` と `GITHUB_TOKEN` 環境変数を自動使用し、秘密値は表示しない。ドメイン `app.github.dev` とポート8765/8766は固定で、任意の外部ホストへのトークン送信は拒否する。
+
+```bash
+git pull --ff-only && node qa/east-passage/hosting/verify-private-https.mjs
+```
+
+成功時：
+```text
+PRIVATE HTTPS 8765: CORE_BYTES_MATCH 15/15
+PRIVATE HTTPS 8766: CORE_BYTES_MATCH 15/15
+FINAL=PRIVATE_HTTPS_BYTES_MATCH
+```
+
+既存セーブの読取・作成・削除、QA保存許可設定の変更、ポート公開範囲の変更は**行わない**。Privateポート認証が `401` / `302` / `fetch failed` などになる場合はSTOPのまま、ポートをPublicへ切り替えず手順と認証経路を再監査する。Codespacesアカウントの本人認証やプロキシ側問題をゲームロジック障害と混同しない。HTTPSでの一部ファイル一致はiPhoneでの実ゲーム進行や保存復旧の合格ではない。
