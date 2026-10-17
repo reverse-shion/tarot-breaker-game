@@ -54,3 +54,28 @@ Cloudflare Pagesの独立プロジェクト案も代替手段として残すが�
 - `portsAttributes.visibility` はDevcontainer仕様にないため使わない。GitHub側の標準Privateポートを維持し、Port Visibilityを実画面で確認する。
 - Codespaceの作成画面への公式形式の入口：[QA専用ブランチからCodespaceを作成](https://codespaces.new/reverse-shion/tarot-breaker-game/tree/qa/east-passage-device-host-v1) 。使用量と費用をGitHub上で確認し、対応する `.devcontainer/qa-device/devcontainer.json` を選ぶ。
 - **Codespaceの作成を自動で行ったとは報告しない。** 既存アカウントの本人による作成が必要。HOST/DEVICEの判定は外部実体の確認後に更新。
+
+
+## 2026-10-17 実機QA-A/B起動後：2ポートの読み込み一致検査
+
+本人がiPhone Safariで8765／8766それぞれの隔離QAページと安全ロックを確認済み。
+Codespaces内の `curl -I http://localhost:8765/qa/east-passage/index.html && curl -I http://localhost:8766/qa/east-passage/index.html` が両方とも200 OKを返したことも確認済み。
+ここまでの観測は表示・HTTP応答のみで、**配信ファイルすべてのハッシュ一致や保存動作の検証を意味しない。**
+
+QAブランチ最新コードへ安全に更新して、ローカルで実際に動いている2サーバーとGitHubの15個の基準ファイルを突合する：
+
+```bash
+git pull --ff-only && node qa/east-passage/hosting/verify-local-live.mjs
+```
+
+想定成功表示：
+
+```text
+PORT 8765: LOCAL_BYTES_MATCH 15/15
+PORT 8766: LOCAL_BYTES_MATCH 15/15
+FINAL=LOCAL_BYTES_MATCH
+```
+
+この検査は読み取り専用で、QA保存を作らず、本番データに触れず、外部サイトへのアクセスもしない。どちらか1件でも内容不一致ならSTOP。Codespacesのユーザー操作でHEAD更新されるため、直前までに未コミットのユーザー変更が存在しないことを確認すること。進行中サーバーの起動ターミナルは維持する。
+
+**この検査だけでは、Private HTTPS転送経由の全アセット表示やSafari実ゲーム進行、保存復元、旧セーブ模擬はPASSにならない。** QA合成セーブ作成承認は別工程。 
