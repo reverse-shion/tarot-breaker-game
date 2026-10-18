@@ -319,6 +319,18 @@ Only `dialogue.js`'s three Shiopon text literals changed in production code. Exi
 
 Release gate note: the first CI run on the evidence-registration commit read the previous pull-request body snapshot (PENDING / old runtime SHA), so it correctly rejected the stale Device Registry claim. The PR's authoritative standalone metadata has now been updated to `DEVICE_RUNTIME_SHA: 8c2554ec45c6f71ccf2993ed55ce75220c2ba2bd` and `DEVICE_RESULT: PASS`; the next CI run must verify the fresh metadata, exact evidence and unchanged game runtime. This documentation-only note makes no additional gameplay or device claim.
 
+## Gate H — direct-runtime limited owner confirmation (recorded 2026-10-18 UTC)
+
+| Event / checkpoint | Commit SHA | Device | Result | Locked observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| H direct delivery: official Continue to Garden | 5a3499a6343a30885e042353e8fa921a63adc5c7 | Physical device / Safari acceptance context; exact device model and OS/browser versions not specified in this confirmation | PASS — limited scenario only | Official Continue reaches Garden; Shion and Shiopon display; game is operable | Product owner explicitly confirms the exact H runtime and these observations in “Gate H証拠登録・Gate R最終準備” | Existing QA-B save retained; no re-seeding or initialization claimed. This is not an integrated-route, failure-path, or recovery PASS |
+
+The owner identifies the tested origin as `https://curly-space-happiness-69xx76qrr6wjc55r4-8766.app.github.dev` and confirms the H fixed-tree local HTTP comparison passed for 198 target files. The delivery result is owner-reported evidence, not a new agent-run measurement. Exact execution time and detailed device versions were not supplied; the date above is the evidence-registration date.
+
+Scope excludes direct verification of all Safari-received bytes, cache behavior, storage/write/readback failures, New Game failures, further B-line/reload/roundtrip checks on H, and R recovery/return compatibility. Earlier QA-A and QA-B scoped observations remain attached to their original provenance and are not rewritten as H PASS records.
+
+**H limited scenario PASS; overall PR #167 DEVICE_RESULT remains PENDING. Gate R is pending; RELEASE HOLD remains in force.** The exact runtime SHA remains H even when documentation-only evidence commits are added above it. This record authorizes neither merge nor publication and does not discharge other applicable release conditions.
+
 
 ## PR #154 east passage B-line — normal-route owner checks (2026-10-15)
 
