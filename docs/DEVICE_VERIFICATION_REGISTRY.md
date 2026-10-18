@@ -318,3 +318,61 @@ An earlier four-item **human-confirmed PASS** for `f3b861098fa573f5b02ae60b3b02a
 Only `dialogue.js`'s three Shiopon text literals changed in production code. Existing approved speaker lines, Lumiere's 「シオン様」, event order, audio, progression, and Save/Continue code remain untouched. The PR additionally updates the dialogue tests and adds the historical original `dialogue.js` as a separate immutable Lumiere preview fixture, so past preview digests remain authentic. CI and human-device results are independent. This entry authorizes PR #153's **specific dialogue-correction device gate**, not unrelated story, map, lifecycle or broader platform claims.
 
 Release gate note: the first CI run on the evidence-registration commit read the previous pull-request body snapshot (PENDING / old runtime SHA), so it correctly rejected the stale Device Registry claim. The PR's authoritative standalone metadata has now been updated to `DEVICE_RUNTIME_SHA: 8c2554ec45c6f71ccf2993ed55ce75220c2ba2bd` and `DEVICE_RESULT: PASS`; the next CI run must verify the fresh metadata, exact evidence and unchanged game runtime. This documentation-only note makes no additional gameplay or device claim.
+
+## Gate H — direct-runtime limited owner confirmation (recorded 2026-10-18 UTC)
+
+| Event / checkpoint | Commit SHA | Device | Result | Locked observable behavior | Human confirmation | Notes |
+|---|---|---|---|---|---|---|
+| H direct delivery: official Continue to Garden | 5a3499a6343a30885e042353e8fa921a63adc5c7 | Physical device / Safari acceptance context; exact device model and OS/browser versions not specified in this confirmation | PASS — limited scenario only | Official Continue reaches Garden; Shion and Shiopon display; game is operable | Product owner explicitly confirms the exact H runtime and these observations in “Gate H証拠登録・Gate R最終準備” | Existing QA-B save retained; no re-seeding or initialization claimed. This is not an integrated-route, failure-path, or recovery PASS |
+| H scoped integration: restored Garden to east B passage, Star Sand route already known | 5a3499a6343a30885e042353e8fa921a63adc5c7 | iPad Safari; model and OS/browser versions not specified | PASS — owner-approved IC-002 limited route | Normal movement crosses the authored B passage; no incorrect blockade, progress stall or abnormal transition | Product owner explicitly confirms the route on 2026-10-18 in “Gate R最終受入・実行指示” | H device acceptance for the agreed scope is complete. No repeat test required; no inference about untested failure paths or recovery |
+
+The owner identifies the tested origin as `https://curly-space-happiness-69xx76qrr6wjc55r4-8766.app.github.dev` and confirms the H fixed-tree local HTTP comparison passed for 198 target files. The delivery result is owner-reported evidence, not a new agent-run measurement. Exact execution time and detailed device versions were not supplied; the date above is the evidence-registration date.
+
+Scope excludes direct verification of all Safari-received bytes, cache behavior, storage/write/readback failures, New Game failures, additional H reload/roundtrip checks, and R recovery/return compatibility. Earlier QA-A and QA-B scoped observations remain attached to their original provenance and are not rewritten as H PASS records.
+
+**H acceptance PASS for the owner-approved limited scope; overall PR #167 DEVICE_RESULT remains PENDING until the agreed R/return acceptance and final evidence consolidation. Gate R is pending; RELEASE HOLD remains in force.** The exact runtime SHA remains H even when documentation-only evidence commits are added above it. This record authorizes neither merge nor publication and does not discharge other applicable release conditions.
+
+
+## PR #154 east passage B-line — normal-route owner checks (2026-10-15)
+
+Candidate tested runtime: `587ed2e16b6e484993a54aca53a8eb4384188f39`. The developer supplied the immutable [normal-entry game URL](https://raw.githack.com/reverse-shion/tarot-breaker-game/587ed2e16b6e484993a54aca53a8eb4384188f39/index.html) with three numbered checks, and the product owner replied **「問題なかったよ」**. This was in an iPhone device verification conversation; the exact iOS version, browser engine and device model were not independently restated or instrumented. This is a human report about the supplied checklist, **not** an agent-run browser test or proof of unlisted actions.
+
+| Explicitly requested check | Result from owner | Evidence limits |
+|---|---|---|
+| 1. Before the Star Gate event, the photographed east B passage is blocked and Shion's warning appears | **PASS — scoped owner report** | Confirms tested opening state and placement; does not independently establish every intermediate stage or repeated push/tap behavior |
+| 2. After Future Shion and the complete Aftermath, the same east passage is open and traversable | **PASS — scoped owner report** | Confirms the complete normal-run before/after transition; no claim about failed completion, failed storage or mid-Aftermath reload |
+| 3. After reload and Continue, the passage remains open | **PASS — scoped owner report** | Confirms the requested durable recovery outcome; not a separate evidence of Garden → Landing → Garden roundtrip |
+
+Automated CI at the exact runtime `587ed2e16b6e484993a54aca53a8eb4384188f39`: [Validate #38742867459](https://github.com/reverse-shion/tarot-breaker-game/actions/runs/38742867459), **518/518 PASS, 0 failed, 0 skipped**. GitHub compare with the previously reviewed `861d92d23ed5f231bab06c19b2ddbfbb1c5b0f3e` returned **no changed files** after rolling back the unsuccessful checkpoint experiment. Any later docs-only commit does not change this tested executable runtime.
+
+**Device gate status: scoped normal-route checks 1–3 PASS; overall PR #154 integration / release gate remains PENDING.** Unverified on this SHA: post-Lumiere/pre-decision lock separately, repeated joystick/tap close-and-resume, failure/interruption recovery, east passage after Garden ↔ Landing roundtrip, old-save migration on real iPhone, and an isolated segment checkpoint. The product owner did not explicitly grant main-merge/public-release approval in the response above. Preserve the reviewed B-line coordinates `(1398,740) → (1398,844)`, all historical record entries, and `DEVICE_RESULT: PENDING` in PR metadata until the applicable final gates are actually met.
+
+
+## PR #154 east passage B-line — completed Garden ↔ Landing roundtrip (2026-10-15)
+
+Owner supplied confirmation **「問題ないので次に進めて」** directly in reply to the single specified check **「イベント完了後に庭園 → 離着陸場 → 庭園と移動し、戻っても東側通路が開放されたままか」**. The most recently supplied game link was the immutable normal-route `587ed2e16b6e484993a54aca53a8eb4384188f39/index.html` used in this PR's iPhone testing context.
+
+| Check | Fixed runtime SHA | Result | Evidence boundary |
+|---|---|---|---|
+| After completed Star Gate/Aftermath, Garden → Landing → Garden and B-line remains open after return | `587ed2e16b6e484993a54aca53a8eb4384188f39` | **PASS — human-reported single scenario** | Does not certify repeated joystick/tap contact, mid-event cancellation/reload, failed storage, old-save migration, general audio/visual gameplay regression or iPad |
+
+This supplements, but does not replace, the already recorded normal-route 3-item human report (pre-event warning/closure; after-final-Aftermath opening; reload/Continue keeps passage open). **Combined evidence: four specifically asked normal-route checks confirmed by owner at one unchanged executable runtime**, plus 518/518 automated regression on that code. No inference of full Device Gate or author permission to merge main; historical preview-source/independent-checkpoint gap remains outside the observed tests. PR `DEVICE_RESULT: PENDING` and Draft status stay in place until the remaining specific release criteria and merge authorization are satisfied.
+
+
+## Gate H/R — final owner-confirmed limited acceptance (2026-10-18)
+
+Source: product owner's explicit final acceptance in this conversation. Same QA-B Safari environment, iPad Safari context; exact device model and OS/browser versions and individual operation times were not supplied. Origin: `https://curly-space-happiness-69xx76qrr6wjc55r4-8766.app.github.dev`. These are human observations, not agent-run device tests. The earlier pending entries above describe their historical state and remain unchanged.
+
+| Route / checkpoint | Exact runtime SHA | Device result | Explicit human-observed scope |
+|---|---|---|---|
+| H official Continue and authored east B route | 5a3499a6343a30885e042353e8fa921a63adc5c7 | PASS — agreed limited acceptance | Official Continue reaches Garden; with Star Sand route known, normal movement crosses east passage B without incorrect blockade, progress stall or abnormal transition. Shion and Shiopon display normally and game is operable. Earlier H checks are consolidated, not rerun or transferred from QA-A/B. |
+| R Continue, reload and ordinary-save roundtrip with existing QA-B save | 9c70f3b32e2e9c1d494e9e3d160939df6b5c60df | PASS — agreed limited recovery acceptance | Existing save -> official Continue -> Garden; Safari reload -> Continue restores; Garden <-> Landing roundtrip and normal saving succeed. No new seed, deletion, initialization or New Game is part of acceptance. |
+| H return after R normal saving | 5a3499a6343a30885e042353e8fa921a63adc5c7 | PASS — agreed return compatibility | After ordinary saving on R, delivery returns to fixed H and official Continue reaches Garden; Shion and Shiopon display normally and game is operable. This closes the agreed H -> R -> H acceptance sequence. |
+
+Delivery evidence: owner reports final `H_READY`, H local HTTP target comparison **198/198, mismatches 0**. Earlier fixed-H 198-target comparison remains separate delivery evidence. These measurements cover the enumerated local HTTP targets, not every Safari-received byte, browser cache, or a production Pages deployment. Exact server PID/root/time are retained in the owner's operational plan/logs; no unprovided values are invented here.
+
+**PR #167 H and PR #169 R: DEVICE_RESULT PASS for the owner-approved limited acceptance scope.** Old-format saves without the new ID were not tested on the device in this final sequence; existing 507-case R Node regression evidence covers old/new save logic, not real-device persistence. Phase B 537-case Node evidence is separate from H's 536-case regression and from device evidence. No independent storage-byte readback, injected storage/readback/New Game failures, Private Browsing/ITP, all Safari response bytes/cache, or production Pages deployment PASS is claimed. These limitations were retained under the owner's approved acceptance scope; no device evidence is manufactured.
+
+The owner approved the limited IC-002 applicability scope before execution. Unchanged historical Lumiere/Stage3/trigger observations and automated preservation evidence are reused only with their original provenance; their PASS is not relabeled as exact-H device testing. Historical QA-A/B records are preserved. Runtime code remains immutable; later documentation-only evidence commits do not change H/R.
+
+R is a retained save-compatible recovery candidate, not the normal gameplay integration target. Device acceptance is complete for the stated existing-save/return scope; production recovery, cache/deployment verification and incident-specific deployment approval remain separate. **RELEASE HOLD: no main merge or production publication is authorized by this record.**
