@@ -1,6 +1,6 @@
 # Phase C-0 — save-compatible recovery candidate
 
-UNAPPROVED CANDIDATE / Device PENDING / RELEASE HOLD. Nothing here authorizes deployment.
+LIMITED DEVICE ACCEPTANCE PASS / RETAINED RECOVERY CANDIDATE / RELEASE HOLD. Production recovery still requires incident-specific owner approval. See the final acceptance addendum below; earlier planning text records the original proposed scope, not new device evidence.
 
 ## Fixed identities and scope
 
@@ -63,3 +63,12 @@ For a later return to PR #167-equivalent runtime, select an approved immutable n
 STOP on invalid/unavailable save, unexpected ID/schema, bytes loss, changed checkpoint/history, repeated completed events, nonpersistent write, mismatched assets/scripts, unidentifiable deployed tree, competing publisher, new CI failure or failed device check. Suspend save-mutating acceptance work and preserve evidence; never reset, delete, remove the new flag or fall back to fixed old main. If recovery fails, do not repeatedly swap versions or overwrite saves; keep HOLD and request incident-specific authorization.
 
 Pending: real-device old/new compatibility and cache behavior, approved delivery path, Pages publishing ownership, deployed artifact verification, future return-to-new-version device check and explicit owner release/recovery approval. Code/CI PASS does not establish recoverability. PR #167/#168 remain untouched; no merge, hosting change, deployment or Device Registry PASS is performed.
+
+
+## Final owner-approved limited acceptance — 2026-10-18
+
+The owner explicitly accepted R `9c70f3b32e2e9c1d494e9e3d160939df6b5c60df` on the existing QA-B Safari save: official Continue -> Garden, Safari reload -> Continue, Garden <-> Landing roundtrip and normal saving. Delivery returned to H `5a3499a6343a30885e042353e8fa921a63adc5c7`, owner reports H_READY / local HTTP 198/198 / zero mismatches, then official Continue -> Garden PASS with Shion/Shiopon normally displayed and operable. Exact observations are appended to Device Registry. Do not rerun this accepted sequence.
+
+Before execution the owner approved this limited acceptance scope and ordinary Progress/sessionStorage writes. It supersedes the broader synthetic old/new-device acceptance proposal in the original preparation text above **for this candidate acceptance only**. No reseed, deletion or initialization took place or is authorized. Old-format saves without the new ID remain device UNVERIFIED; the 507-case injected-storage Node evidence is retained. Safari-received bytes/cache, direct durable bytes, injected failure cases and production Pages deployment/artifact verification remain unverified. They are not converted to PASS.
+
+Retain PR #169 as Draft, with fixed runtime R and later documentation-only evidence commits; do not merge it as the normal #167 gameplay integration. Preserve the immutable R source archive identified above (checksum is a source-archive digest, not a Pages artifact digest). This task records candidate device acceptance, not a production recovery deployment or future incident approval. At any future incident, verify then-current save schema/IDs and the actual publishing paths/artifact/cache as specified above, obtain explicit owner approval and use a reviewed recovery-release operation; never simply redeploy incompatible old main. Final #167 main merge/publication also awaits separate owner approval. RELEASE HOLD remains.
