@@ -21,15 +21,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#5458a6;tou
 #stick-ring{position:absolute;inset:0;border:1px solid #ffffff70;background:#0c102b33;border-radius:50%;backdrop-filter:blur(3px)}
 #stick-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;border:1px solid #f4db9ec2;background:#ece1d357;box-shadow:0 0 18px #a3b8ff38}
 #hint{display:none}body.debug #hint{display:block}
-#coord-panel{position:fixed;z-index:20;right:8px;top:calc(8px + env(safe-area-inset-top));width:min(270px,calc(100vw - 16px));box-sizing:border-box;padding:10px;border-radius:12px;background:#101b36eb;color:white;font:12px/1.5 system-ui;box-shadow:0 3px 18px #0007;touch-action:auto}#coord-panel button{font:inherit;background:#304878;color:white;border:1px solid #a5bbdb;border-radius:7px;padding:7px;margin:3px 2px 0 0}#coord-panel button[aria-pressed=true]{background:#7155a6}#coord-panel input{width:60px;font:inherit;padding:5px;color:white;background:#253b61;border:1px solid #8099bc;border-radius:5px}#coord-panel[hidden]{display:none}#coord-mark{position:absolute;z-index:9;width:18px;height:18px;border:2px solid #ffde65;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px #20112577}#coord-mark[hidden]{display:none}#coord-toggle{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));right:12px;z-index:21;border:1px solid #a5bbdb;border-radius:9px;padding:9px;background:#152546e9;color:white;font:12px system-ui}</style></head><body>
+#coord-panel{position:fixed;z-index:20;right:8px;top:calc(8px + env(safe-area-inset-top));width:min(270px,calc(100vw - 16px));box-sizing:border-box;padding:10px;border-radius:12px;background:#101b36eb;color:white;font:12px/1.5 system-ui;box-shadow:0 3px 18px #0007;touch-action:auto}#coord-panel button{font:inherit;background:#304878;color:white;border:1px solid #a5bbdb;border-radius:7px;padding:7px;margin:3px 2px 0 0}#coord-panel button[aria-pressed=true]{background:#7155a6}#coord-panel input{width:60px;font:inherit;padding:5px;color:white;background:#253b61;border:1px solid #8099bc;border-radius:5px}#coord-panel[hidden]{display:none}#coord-mark{position:absolute;z-index:9;width:18px;height:18px;border:2px solid #ffde65;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px #20112577}#coord-mark[hidden]{display:none}#coord-toggle{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));right:12px;z-index:21;border:1px solid #a5bbdb;border-radius:9px;padding:9px;background:#152546e9;color:white;font:12px system-ui}#caritas{position:absolute;left:1013px;top:253px;z-index:4;width:125px;height:96px;object-fit:contain;transform:translate(-50%,-90%);pointer-events:none;user-select:none}</style></head><body>
 <div id="view"><div id="world">
 <div class="scene-world-layer scene-farthest-sky"><img src="./assets/maps/star-country-farthest-sky-background.webp" alt=""></div>
 <div class="scene-world-layer scene-star-sky"><img src="./assets/maps/star-country-gate-garden-star-sky.webp" alt=""></div>
 <div class="scene-world-layer scene-cloud-main"><div class="scene-cloud-main-track"><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""></div></div>
 <img id="road" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道">
+<img id="caritas" src="./assets/events/hoshisuna/caritas/sg_rise_01.webp" alt="伏せて待つCaritas" draggable="false">
 <div id="actors"><canvas class="actor" id="shion" width="118" height="156"></canvas><canvas class="actor" id="shiopon" width="118" height="156"></canvas></div>
 <canvas id="foreground-mask" width="1448" height="1086"></canvas><div id="coord-mark" hidden></div></div></div><div id="stick" hidden><div id="stick-ring"></div><div id="stick-knob"></div></div>
-<section id="coord-panel" aria-label="開始座標調整"><strong>星砂・座標確認</strong><div id="coord-now">シオン X:-- Y:--</div><div id="coord-picked">指定 X:-- Y:--</div><div><button id="coord-pick" aria-pressed="false">場所をタップで指定</button><button id="coord-apply">指定位置で開始</button></div><div><label>X <input id="coord-x" type="number" min="0" max="1448" step="1" value="16"></label><label>Y <input id="coord-y" type="number" min="0" max="1086" step="1" value="446"></label></div><div><button id="coord-copy">座標とURLをコピー</button><button id="coord-hide">閉じる</button></div><div id="coord-status">マップ上をタップして位置を測定できます。</div></section><button id="coord-toggle" hidden>座標パネル</button><div id="hint">星砂マップ｜移動・当たり判定検証（保存なし）</div><div id="error">マップの読み込みに失敗しました</div>
+<section id="coord-panel" aria-label="開始座標調整"><strong>星砂・座標確認</strong><div id="coord-now">シオン X:-- Y:--</div><div id="coord-picked">指定 X:-- Y:--</div><div><button id="coord-pick" aria-pressed="false">場所をタップで指定</button><button id="coord-apply">指定位置で開始</button></div><div><label>X <input id="coord-x" type="number" min="0" max="1448" step="1" value="108"></label><label>Y <input id="coord-y" type="number" min="0" max="1086" step="1" value="488"></label></div><div><button id="coord-copy">座標とURLをコピー</button><button id="coord-hide">閉じる</button></div><div id="coord-status">マップ上をタップして位置を測定できます。</div></section><button id="coord-toggle" hidden>座標パネル</button><div id="hint">星砂マップ｜移動・当たり判定検証（保存なし）</div><div id="error">マップの読み込みに失敗しました</div>
 <script src="./scene-layout.js"></script>
 <script src="./navigation.js?v=0.7.1"></script>
 <script src="./controls.js?v=0.7.1"></script>
@@ -49,6 +50,11 @@ function drawForegroundMask(){
  for(const a of active){a.points.forEach(([x,y],i)=>i?foregroundCtx.lineTo(x,y):foregroundCtx.moveTo(x,y));foregroundCtx.closePath();}
  foregroundCtx.clip();foregroundCtx.drawImage(road,0,0,W,H);foregroundCtx.restore();
 }
+const caritas=document.querySelector('#caritas');
+const caritasFrames=['./assets/events/hoshisuna/caritas/sg_rise_01.webp','./assets/events/hoshisuna/caritas/sg_rise_02.webp'];
+caritasFrames.forEach(src=>{const preload=new Image();preload.src=src;});
+let lastBlink=-1;
+function updateCaritas(now){if(!caritas)return;const phase=now%5200;const frame=phase>4250&&phase<4510?1:0;if(frame!==lastBlink){lastBlink=frame;caritas.src=caritasFrames[frame];}}
 const actors={shion:document.querySelector('#shion'),shiopon:document.querySelector('#shiopon')};
 const dirOrder={down:0,up:1,left:2,right:3};
 const sprites={};
@@ -59,16 +65,16 @@ for(const name of Object.keys(actors)){
  }
 }
 // Start at the west-side starroad entrance shown in the acceptance screenshot.
-const player={x:16,y:446,dir:'right',frame:0,moving:false,clock:0};
-const companion={x:53,y:467,dir:'right',frame:0,moving:false,clock:0};
+const player={x:108,y:488,dir:'right',frame:0,moving:false,clock:0};
+const companion={x:148,y:505,dir:'right',frame:0,moving:false,clock:0};
 let collision=null,navigation=null,controls=null,zoom=1,camX=0,camY=0,last=0,followClock=0,followRoute=[],booted=false;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const panel=document.querySelector('#coord-panel'),mark=document.querySelector('#coord-mark');
 const coordX=document.querySelector('#coord-x'),coordY=document.querySelector('#coord-y'),status=document.querySelector('#coord-status');
-let pickMode=false,picked={x:16,y:446},pendingPick=null;
+let pickMode=false,picked={x:108,y:488},pendingPick=null;
 function showCoords(){document.querySelector('#coord-now').textContent='シオン X:'+Math.round(player.x)+' Y:'+Math.round(player.y);document.querySelector('#coord-picked').textContent='指定 X:'+picked.x+' Y:'+picked.y;}
 function setPicked(p){picked={x:Math.round(clamp(p.x,0,W)),y:Math.round(clamp(p.y,0,H))};coordX.value=picked.x;coordY.value=picked.y;mark.style.left=picked.x+'px';mark.style.top=picked.y+'px';mark.hidden=false;showCoords();}
-function placeAt(p){if(!collision)return;
+function placeAt(p){if(!collision){status.textContent='マップ読み込み中です';return;}
  const at=collision.isWalkable(p.x,p.y)?p:collision.nearestWalkable(p);
  if(!at){status.textContent='通行可能地点がありません';return;}
  Object.assign(player,at,{moving:false,clock:0});
@@ -77,10 +83,10 @@ function placeAt(p){if(!collision)return;
  controls?.clearInput('coord-set');followRoute=[];followClock=0;camera();
  status.textContent=(at.x!==p.x||at.y!==p.y)?'通行外のため補正: X'+Math.round(at.x)+' Y'+Math.round(at.y):'指定位置へ移動しました';showCoords();
 }
-document.querySelector('#coord-pick').onclick=()=>{pickMode=!pickMode;document.querySelector('#coord-pick').setAttribute('aria-pressed',String(pickMode));status.textContent=pickMode?'マップ上の開始地点をタップ':'通常操作';};
+document.querySelector('#coord-pick').onclick=()=>{pickMode=!pickMode;document.querySelector('#coord-pick').setAttribute('aria-pressed',String(pickMode));status.textContent=pickMode?'パネルを閉じてマップの位置をタップしてください':'通常操作';if(pickMode){panel.hidden=true;document.querySelector('#coord-toggle').hidden=false;document.querySelector('#coord-toggle').textContent='座標指定中・パネル表示';}};
 document.querySelector('#coord-apply').onclick=()=>{setPicked({x:Number(coordX.value),y:Number(coordY.value)});placeAt(picked);};
 document.querySelector('#coord-copy').onclick=async()=>{const u=new URL(location.href);u.searchParams.set('spawnX',String(picked.x));u.searchParams.set('spawnY',String(picked.y));const txt='星砂スタート X:'+picked.x+' Y:'+picked.y+'\n'+u.toString();try{await navigator.clipboard.writeText(txt);status.textContent='座標とURLをコピーしました';}catch(_){status.textContent=txt;}};
-document.querySelector('#coord-hide').onclick=()=>{panel.hidden=true;document.querySelector('#coord-toggle').hidden=false;};
+document.querySelector('#coord-hide').onclick=()=>{panel.hidden=true;document.querySelector('#coord-toggle').hidden=false;document.querySelector('#coord-toggle').textContent='座標パネル';};
 document.querySelector('#coord-toggle').onclick=()=>{panel.hidden=false;document.querySelector('#coord-toggle').hidden=true;};
 
 const ACTOR_COLLISION_DISTANCE=26,SHIOPON_FOLLOW_MIN_GAP=44;
@@ -109,7 +115,7 @@ function stick(){
 }
 view.addEventListener('pointerdown',e=>{if(pickMode){const p=point(e).world;pendingPick={id:e.pointerId,x:e.clientX,y:e.clientY,p};e.preventDefault();return;}if(!controls)return;if(controls.pointerDown(point(e))){view.setPointerCapture?.(e.pointerId);e.preventDefault();}});
 view.addEventListener('pointermove',e=>{if(pendingPick){if(Math.hypot(e.clientX-pendingPick.x,e.clientY-pendingPick.y)>14)pendingPick=null;return;}controls?.pointerMove(point(e));stick();});
-for(const type of ['pointerup','pointercancel'])view.addEventListener(type,e=>{if(pickMode){if(type==='pointerup'&&pendingPick?.id===e.pointerId){setPicked(pendingPick.p);status.textContent='座標を指定。開始する場合は「指定位置で開始」';}pendingPick=null;return;}if(!controls)return;const p=point(e);controls.pointerEnd({...p,cancelled:type==='pointercancel'},player);stick();});
+for(const type of ['pointerup','pointercancel'])view.addEventListener(type,e=>{if(pickMode){if(type==='pointerup'&&pendingPick?.id===e.pointerId){setPicked(pendingPick.p);pickMode=false;document.querySelector('#coord-pick').setAttribute('aria-pressed','false');panel.hidden=false;document.querySelector('#coord-toggle').hidden=true;status.textContent='座標 X:'+picked.x+' Y:'+picked.y+'。開始する場合は「指定位置で開始」';}pendingPick=null;return;}if(!controls)return;const p=point(e);controls.pointerEnd({...p,cancelled:type==='pointercancel'},player);stick();});
 window.addEventListener('keydown',e=>{if(controls?.keyDown(e.key))e.preventDefault();});
 window.addEventListener('keyup',e=>controls?.keyUp(e.key));
 window.addEventListener('blur',()=>{controls?.clearInput('blur');stick()});
@@ -133,7 +139,7 @@ function step(t){
    if(collision.segmentClear(companion,next)&&!movingIntoActor(companion,next,player,SHIOPON_FOLLOW_MIN_GAP)){face(companion,vx,vy);companion.x=next.x;companion.y=next.y;companion.moving=true;}}
   }
  }
- camera();showCoords();frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);drawForegroundMask();
+ camera();showCoords();updateCaritas(t);frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);drawForegroundMask();
  requestAnimationFrame(step);
 }
 async function boot(){
@@ -144,7 +150,7 @@ async function boot(){
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
-  const side=collision.nearestWalkable({x:player.x+38,y:player.y+20});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
+  const side=collision.nearestWalkable({x:player.x+40,y:player.y+17});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
   controls=window.TarotControls.createControls(collision,navigation);
   document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
   const urlParams=new URLSearchParams(location.search);if(urlParams.has('spawnX')&&urlParams.has('spawnY')){const p={x:Number(urlParams.get('spawnX')),y:Number(urlParams.get('spawnY'))};if(Number.isFinite(p.x)&&Number.isFinite(p.y)){setPicked(p);placeAt(p);}}else{setPicked({x:player.x,y:player.y});}resize();booted=true;requestAnimationFrame(step);
