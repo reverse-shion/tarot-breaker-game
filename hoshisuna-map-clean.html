@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>TAROT BREAKER — 星砂マップ確認</title>
+<link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0"><link rel="stylesheet" href="./cloud-motion-fix.css?v=1.7.0">
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#5458a6;touch-action:none}
+#view{position:fixed;inset:0;overflow:hidden;touch-action:none}
+#world{position:absolute;left:0;top:0;width:1448px;height:1086px;transform-origin:top left;isolation:isolate}
+#world .scene-world-layer{position:absolute;inset:0;width:1448px;height:1086px}
+.scene-farthest-sky{z-index:0!important}
+.scene-star-sky{z-index:1!important}
+.scene-cloud-main{z-index:2!important}
+#road{position:absolute;inset:0;width:1448px;height:1086px;z-index:3;pointer-events:none}
+#hint{position:fixed;left:12px;top:calc(12px + env(safe-area-inset-top));padding:7px 10px;border-radius:8px;background:#061126ad;color:white;font:12px system-ui;pointer-events:none}
+#error{display:none;position:fixed;inset:0;z-index:10;place-items:center;background:#090d20;color:white;font:16px system-ui}
+</style></head><body>
+<div id="view"><div id="world">
+<div class="scene-world-layer scene-farthest-sky"><img src="./assets/maps/star-country-farthest-sky-background.webp" alt=""></div>
+<div class="scene-world-layer scene-star-sky"><img src="./assets/maps/star-country-gate-garden-star-sky.webp" alt=""></div>
+<div class="scene-world-layer scene-cloud-main"><div class="scene-cloud-main-track"><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""></div></div>
+<img id="road" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道"></div></div>
+<div id="hint">星砂マップ確認｜指でドラッグして移動</div><div id="error">マップの読み込みに失敗しました</div>
+<script>
+(()=>{'use strict';const view=document.querySelector('#view'),world=document.querySelector('#world');
+const W=1448,H=1086;let zoom=1,x=850,y=450,drag=null;
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function render(){const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;x=clamp(x,vw/2,Math.max(vw/2,W-vw/2));y=clamp(y,vh/2,Math.max(vh/2,H-vh/2));world.style.transform='translate3d('+(view.clientWidth/2-x*zoom)+'px,'+(view.clientHeight/2-y*zoom)+'px,0) scale('+zoom+')';}
+function resize(){zoom=clamp(Math.min(view.clientWidth/390,view.clientHeight/844)*1.07,.88,1.22);render();}
+view.addEventListener('pointerdown',e=>{drag={id:e.pointerId,x:e.clientX,y:e.clientY};view.setPointerCapture(e.pointerId);});
+view.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;x-=(e.clientX-drag.x)/zoom;y-=(e.clientY-drag.y)/zoom;drag.x=e.clientX;drag.y=e.clientY;render();});
+for(const type of ['pointerup','pointercancel'])view.addEventListener(type,e=>{if(drag?.id===e.pointerId)drag=null;});
+window.addEventListener('resize',resize);resize();
+document.querySelector('#road').addEventListener('error',()=>document.querySelector('#error').style.display='grid');
+})();
+</script></body></html>
