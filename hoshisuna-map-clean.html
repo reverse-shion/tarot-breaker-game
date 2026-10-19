@@ -59,8 +59,8 @@ for(const name of Object.keys(actors)){
  }
 }
 // Start at the west-side starroad entrance shown in the acceptance screenshot.
-const player={x:32,y:469,dir:'right',frame:0,moving:false,clock:0};
-const companion={x:13,y:457,dir:'right',frame:0,moving:false,clock:0};
+const player={x:16,y:446,dir:'right',frame:0,moving:false,clock:0};
+const companion={x:53,y:467,dir:'right',frame:0,moving:false,clock:0};
 let collision=null,navigation=null,controls=null,zoom=1,camX=0,camY=0,last=0,followClock=0,followRoute=[],booted=false;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ACTOR_COLLISION_DISTANCE=26,SHIOPON_FOLLOW_MIN_GAP=44;
@@ -124,7 +124,7 @@ async function boot(){
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
-  const side=collision.nearestWalkable({x:player.x+29,y:player.y+9});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
+  const side=collision.nearestWalkable({x:player.x+38,y:player.y+20});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
   controls=window.TarotControls.createControls(collision,navigation);
   document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
   resize();booted=true;requestAnimationFrame(step);
