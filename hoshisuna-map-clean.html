@@ -13,23 +13,106 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#5458a6;tou
 #road{position:absolute;inset:0;width:1448px;height:1086px;z-index:3;pointer-events:none}
 #hint{position:fixed;left:12px;top:calc(12px + env(safe-area-inset-top));padding:7px 10px;border-radius:8px;background:#061126ad;color:white;font:12px system-ui;pointer-events:none}
 #error{display:none;position:fixed;inset:0;z-index:10;place-items:center;background:#090d20;color:white;font:16px system-ui}
+
+#actors{position:absolute;inset:0;z-index:5;pointer-events:none}
+.actor{position:absolute;width:59px;height:78px;transform:translate(-50%,-93.75%);pointer-events:none}
+#stick{position:fixed;z-index:8;width:144px;height:144px;margin:-72px 0 0 -72px;pointer-events:none}
+#stick[hidden]{display:none}
+#stick-ring{position:absolute;inset:0;border:1px solid #ffffff70;background:#0c102b33;border-radius:50%;backdrop-filter:blur(3px)}
+#stick-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;border:1px solid #f4db9ec2;background:#ece1d357;box-shadow:0 0 18px #a3b8ff38}
+#hint{display:none}body.debug #hint{display:block}
 </style></head><body>
 <div id="view"><div id="world">
 <div class="scene-world-layer scene-farthest-sky"><img src="./assets/maps/star-country-farthest-sky-background.webp" alt=""></div>
 <div class="scene-world-layer scene-star-sky"><img src="./assets/maps/star-country-gate-garden-star-sky.webp" alt=""></div>
 <div class="scene-world-layer scene-cloud-main"><div class="scene-cloud-main-track"><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""></div></div>
-<img id="road" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道"></div></div>
-<div id="hint">星砂マップ確認｜指でドラッグして移動</div><div id="error">マップの読み込みに失敗しました</div>
+<img id="road" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道">
+<div id="actors"><canvas class="actor" id="shion" width="118" height="156"></canvas><canvas class="actor" id="shiopon" width="118" height="156"></canvas></div>
+</div></div><div id="stick" hidden><div id="stick-ring"></div><div id="stick-knob"></div></div>
+<div id="hint">星砂マップ｜移動・当たり判定検証（保存なし）</div><div id="error">マップの読み込みに失敗しました</div>
+<script src="./navigation.js?v=0.7.1"></script>
+<script src="./controls.js?v=0.7.1"></script>
 <script>
-(()=>{'use strict';const view=document.querySelector('#view'),world=document.querySelector('#world');
-const W=1448,H=1086;let zoom=1,x=850,y=450,drag=null;
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-function render(){const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;x=clamp(x,vw/2,Math.max(vw/2,W-vw/2));y=clamp(y,vh/2,Math.max(vh/2,H-vh/2));world.style.transform='translate3d('+(view.clientWidth/2-x*zoom)+'px,'+(view.clientHeight/2-y*zoom)+'px,0) scale('+zoom+')';}
-function resize(){zoom=clamp(Math.min(view.clientWidth/390,view.clientHeight/844)*1.07,.88,1.22);render();}
-view.addEventListener('pointerdown',e=>{drag={id:e.pointerId,x:e.clientX,y:e.clientY};view.setPointerCapture(e.pointerId);});
-view.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;x-=(e.clientX-drag.x)/zoom;y-=(e.clientY-drag.y)/zoom;drag.x=e.clientX;drag.y=e.clientY;render();});
-for(const type of ['pointerup','pointercancel'])view.addEventListener(type,e=>{if(drag?.id===e.pointerId)drag=null;});
-window.addEventListener('resize',resize);resize();
-document.querySelector('#road').addEventListener('error',()=>document.querySelector('#error').style.display='grid');
+(()=>{'use strict';
+const view=document.querySelector('#view'),world=document.querySelector('#world');
+const W=1448,H=1086,road=document.querySelector('#road');
+const actors={shion:document.querySelector('#shion'),shiopon:document.querySelector('#shiopon')};
+const dirOrder={down:0,up:1,left:2,right:3};
+const sprites={};
+for(const name of Object.keys(actors)){
+ sprites[name]={};
+ for(const [dir,src] of Object.entries({idle:name+'_idle.png',down:name+'_walk_down.png',up:name+'_walk_up.png',left:name+'_walk_left.png',right:name+'_walk_right.png'})){
+  const im=new Image();im.src='./assets/sprites/'+name+'/'+src;sprites[name][dir]=im;
+ }
+}
+const player={x:1060,y:677,dir:'down',frame:0,moving:false,clock:0};
+const companion={x:1010,y:650,dir:'down',frame:0,moving:false,clock:0};
+let collision=null,navigation=null,controls=null,zoom=1,camX=0,camY=0,last=0,followClock=0,followRoute=[],booted=false;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function face(actor,dx,dy){if(Math.abs(dx)+Math.abs(dy)<.00001)return;actor.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
+function frameActor(actor,key,dt){
+ const canvas=actors[key],ctx=canvas.getContext('2d'),sheet=sprites[key][actor.moving?actor.dir:'idle'];
+ actor.clock=actor.moving?actor.clock+dt:0;
+ actor.frame=actor.moving?Math.floor(actor.clock*8)%4:dirOrder[actor.dir];
+ ctx.clearRect(0,0,118,156);
+ if(sheet.complete&&sheet.naturalWidth>=384*(actor.frame+1)){
+ ctx.imageSmoothingEnabled=true;ctx.drawImage(sheet,384*actor.frame,0,384,512,0,0,118,156);
+ }
+ canvas.style.left=actor.x+'px';canvas.style.top=actor.y+'px';
+}
+function camera(){
+ const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;
+ camX=clamp(player.x-vw/2,0,Math.max(0,W-vw));camY=clamp(player.y-58-vh/2,0,Math.max(0,H-vh));
+ world.style.transform='translate3d('+(-camX*zoom)+'px,'+(-camY*zoom)+'px,0) scale('+zoom+')';
+}
+function resize(){zoom=clamp(Math.min(view.clientWidth/620,view.clientHeight/560),1,1.22);camera();}
+function point(e){const r=view.getBoundingClientRect();return {id:e.pointerId,x:e.clientX-r.left,y:e.clientY-r.top,time:performance.now(),width:r.width,world:{x:camX+(e.clientX-r.left)/zoom,y:camY+(e.clientY-r.top)/zoom},primary:e.isPrimary,button:e.button};}
+function stick(){
+ const el=document.querySelector('#stick'),knob=document.querySelector('#stick-knob'),s=controls?.state.stick;
+ el.hidden=!s?.active;if(s?.active){el.style.left=s.ox+'px';el.style.top=s.oy+'px';knob.style.transform='translate('+s.knobX+'px,'+s.knobY+'px)';}
+}
+view.addEventListener('pointerdown',e=>{if(!controls)return;if(controls.pointerDown(point(e))){view.setPointerCapture?.(e.pointerId);e.preventDefault();}});
+view.addEventListener('pointermove',e=>{controls?.pointerMove(point(e));stick();});
+for(const type of ['pointerup','pointercancel'])view.addEventListener(type,e=>{if(!controls)return;const p=point(e);controls.pointerEnd({...p,cancelled:type==='pointercancel'},player);stick();});
+window.addEventListener('keydown',e=>{if(controls?.keyDown(e.key))e.preventDefault();});
+window.addEventListener('keyup',e=>controls?.keyUp(e.key));
+window.addEventListener('blur',()=>{controls?.clearInput('blur');stick()});
+function step(t){
+ const dt=Math.min((t-(last||t))/1000,.05);last=t;
+ if(controls){
+  const next=controls.step(player,dt,155);
+  const dx=next.x-player.x,dy=next.y-player.y;
+  player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;
+  // Follow with the same shared navigation graph, never cross a blocked polygon.
+  followClock-=dt;const distance=Math.hypot(player.x-companion.x,player.y-companion.y);
+  if(followClock<=0){followClock=.18;const target={x:player.x-42,y:player.y+14};
+    const path=navigation.findPath(companion,target);followRoute=path?path.points.slice(1):[];}
+  companion.moving=false;
+  if(distance>42&&followRoute.length){
+   const dst=followRoute[0],vx=dst.x-companion.x,vy=dst.y-companion.y,len=Math.hypot(vx,vy);
+   if(len<6)followRoute.shift();
+   else{const step=Math.min(len,210*dt),next={x:companion.x+vx/len*step,y:companion.y+vy/len*step};
+   if(collision.segmentClear(companion,next)){face(companion,vx,vy);companion.x=next.x;companion.y=next.y;companion.moving=true;}}
+  }
+ }
+ camera();frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);
+ requestAnimationFrame(step);
+}
+async function boot(){
+ try{
+  const r=await fetch('./assets/events/hoshisuna/map/starroad-collision.json',{cache:'no-store'});
+  if(!r.ok)throw Error('当たり判定JSONが取得できません');
+  const data=await r.json();if(!window.TarotNavigation||!window.TarotControls)throw Error('mainの操作モジュールが未読込');
+  collision=window.TarotNavigation.createCollision(data);
+  navigation=window.TarotNavigation.createNavigator(collision,16);
+  const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
+  const side=collision.nearestWalkable({x:player.x-50,y:player.y-15});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
+  controls=window.TarotControls.createControls(collision,navigation);
+  document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
+  resize();booted=true;requestAnimationFrame(step);
+ }catch(e){document.querySelector('#error').textContent='読み込み失敗: '+e.message;document.querySelector('#error').style.display='grid';}
+}
+window.addEventListener('resize',resize);road.addEventListener('error',()=>{document.querySelector('#error').style.display='grid'});
+boot();
 })();
 </script></body></html>
