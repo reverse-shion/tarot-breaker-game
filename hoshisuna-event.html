@@ -79,6 +79,7 @@ body.hoshisuna-shared-runtime #guide {display:none!important;}
         var params = new URLSearchParams(location.search);
         var fromLanding = params.get("from") === "landing";
         var gardenResume = !params.has("from") && /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || "");
+        gardenResume = gardenResume || (params.get("dev") === "hoshisuna-event");
         var publicGardenResume = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
           !params.has("from") && !params.has("dev");
         if ((fromLanding && !params.has("dev")) || publicGardenResume) {
