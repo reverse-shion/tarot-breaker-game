@@ -79,9 +79,8 @@ function placeAt(p){if(!collision){status.textContent='マップ読み込み中�
  const at=collision.isWalkable(p.x,p.y)?p:collision.nearestWalkable(p);
  if(!at){status.textContent='通行可能地点がありません';return;}
  Object.assign(player,at,{moving:false,clock:0});
- const target=collision.nearestWalkable({x:at.x-50,y:at.y});
- if(target&&Math.hypot(target.x-at.x,target.y-at.y)>=ACTOR_COLLISION_DISTANCE)Object.assign(companion,target,{moving:false,clock:0});
- controls?.clearInput('coord-set');followRoute=[];followClock=0;footprints=[{x:companion.x,y:companion.y},{x:player.x,y:player.y}];camera();
+ try{resetFollower();}catch(e){status.textContent=e.message;return;}
+ controls?.clearInput('coord-set');followRoute=[];followClock=0;camera();
  status.textContent=(at.x!==p.x||at.y!==p.y)?'通行外のため補正: X'+Math.round(at.x)+' Y'+Math.round(at.y):'指定位置へ移動しました';showCoords();
 }
 document.querySelector('#coord-pick').onclick=()=>{pickMode=!pickMode;document.querySelector('#coord-pick').setAttribute('aria-pressed',String(pickMode));status.textContent=pickMode?'パネルを閉じてマップの位置をタップしてください':'通常操作';if(pickMode){panel.hidden=true;document.querySelector('#coord-toggle').hidden=false;document.querySelector('#coord-toggle').textContent='座標指定中・パネル表示';}};
@@ -90,7 +89,12 @@ document.querySelector('#coord-copy').onclick=async()=>{const u=new URL(location
 document.querySelector('#coord-hide').onclick=()=>{panel.hidden=true;document.querySelector('#coord-toggle').hidden=false;document.querySelector('#coord-toggle').textContent='座標パネル';};
 document.querySelector('#coord-toggle').onclick=()=>{panel.hidden=false;document.querySelector('#coord-toggle').hidden=true;};
 
-const ACTOR_COLLISION_DISTANCE=26,SHIOPON_FOLLOW_MIN_GAP=44;
+const ACTOR_COLLISION_DISTANCE=32,SHIOPON_FOLLOW_MIN_GAP=50;
+const CARITAS={x:1013,y:253,rx:66,ry:32};
+function separation(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function clearCaritas(from,to,radius=15){const rx=CARITAS.rx+radius,ry=CARITAS.ry+radius;const a={x:(from.x-CARITAS.x)/rx,y:(from.y-CARITAS.y)/ry},b={x:(to.x-CARITAS.x)/rx,y:(to.y-CARITAS.y)/ry};const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy;const t=den?Math.max(0,Math.min(1,-(a.x*dx+a.y*dy)/den)):0;return Math.hypot(a.x+dx*t,a.y+dy*t)>=1;}
+function npcClear(from,to){return clearCaritas(from,to)&&collision.segmentClear(from,to);}
+function resetFollower(){const rear={x:player.x-54,y:player.y};const safe=collision.nearestWalkable(rear);if(!safe||!clearCaritas(safe,safe)||separation(safe,player)<ACTOR_COLLISION_DISTANCE)throw Error('しおぽんの後方配置地点がありません');Object.assign(companion,safe,{moving:false,clock:0,dir:player.dir});footprints=[{x:safe.x,y:safe.y},{x:player.x,y:player.y}];}
 function movingIntoActor(from,to,other,threshold=ACTOR_COLLISION_DISTANCE){const before=Math.hypot(from.x-other.x,from.y-other.y),after=Math.hypot(to.x-other.x,to.y-other.y);return after<threshold&&after<before-1e-6;}
 function face(actor,dx,dy){if(Math.abs(dx)+Math.abs(dy)<.00001)return;actor.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
 function frameActor(actor,key,dt){
@@ -125,8 +129,14 @@ function step(t){
  if(controls){
   const next=controls.step(player,dt,155);
   const dx=next.x-player.x,dy=next.y-player.y;
-  // Following companions yield to Shion; they must not block the player's route.
-  player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;
+  // Both NPCs have physical collision. On contact with the follower, first
+  // relocate them safely to a recorded rear waypoint, otherwise stop Shion.
+  let allowed=npcClear(player,next);
+  if(allowed&&separation(next,companion)<ACTOR_COLLISION_DISTANCE){
+    const rear=footprints.find(p=>separation(p,next)>=SHIOPON_FOLLOW_MIN_GAP&&separation(p,player)>=ACTOR_COLLISION_DISTANCE&&npcClear(companion,p));
+    if(rear){Object.assign(companion,rear,{moving:false,clock:0});}else allowed=false;
+  }
+  if(!allowed){controls.cancel('npc-collision');player.moving=false;}else{player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;}
   // Follow Shion's actual footprints, not a point beside or ahead of him.
   // The trail records traversed positions only, so tight bends stay on the path.
   const lastFoot=footprints[footprints.length-1];
@@ -150,7 +160,7 @@ function step(t){
   if(len>5){
     const amount=Math.min(len,180*dt);
     const candidate={x:companion.x+vx/len*amount,y:companion.y+vy/len*amount};
-    if(collision.segmentClear(companion,candidate)&&Math.hypot(candidate.x-player.x,candidate.y-player.y)>=ACTOR_COLLISION_DISTANCE){
+    if(npcClear(companion,candidate)&&Math.hypot(candidate.x-player.x,candidate.y-player.y)>=ACTOR_COLLISION_DISTANCE){
       face(companion,vx,vy);companion.x=candidate.x;companion.y=candidate.y;companion.moving=true;
     }
   }
@@ -166,7 +176,7 @@ async function boot(){
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
-  const side=collision.nearestWalkable({x:player.x-50,y:player.y});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);footprints=[{x:companion.x,y:companion.y},{x:player.x,y:player.y}];
+  resetFollower();
   controls=window.TarotControls.createControls(collision,navigation);
   document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
   const urlParams=new URLSearchParams(location.search);if(urlParams.has('spawnX')&&urlParams.has('spawnY')){const p={x:Number(urlParams.get('spawnX')),y:Number(urlParams.get('spawnY'))};if(Number.isFinite(p.x)&&Number.isFinite(p.y)){setPicked(p);placeAt(p);}}else{setPicked({x:player.x,y:player.y});}resize();booted=true;requestAnimationFrame(step);
