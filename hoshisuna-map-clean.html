@@ -14,7 +14,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#5458a6;tou
 #hint{position:fixed;left:12px;top:calc(12px + env(safe-area-inset-top));padding:7px 10px;border-radius:8px;background:#061126ad;color:white;font:12px system-ui;pointer-events:none}
 #error{display:none;position:fixed;inset:0;z-index:10;place-items:center;background:#090d20;color:white;font:16px system-ui}
 
-#actors{position:absolute;inset:0;z-index:5;pointer-events:none}
+#foreground-mask{position:absolute;inset:0;width:1448px;height:1086px;z-index:6;pointer-events:none}#actors{position:absolute;inset:0;z-index:5;pointer-events:none}
 .actor{position:absolute;width:59px;height:78px;transform:translate(-50%,-93.75%);pointer-events:none}
 #stick{position:fixed;z-index:8;width:144px;height:144px;margin:-72px 0 0 -72px;pointer-events:none}
 #stick[hidden]{display:none}
@@ -28,14 +28,27 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#5458a6;tou
 <div class="scene-world-layer scene-cloud-main"><div class="scene-cloud-main-track"><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""><img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt=""></div></div>
 <img id="road" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道">
 <div id="actors"><canvas class="actor" id="shion" width="118" height="156"></canvas><canvas class="actor" id="shiopon" width="118" height="156"></canvas></div>
-</div></div><div id="stick" hidden><div id="stick-ring"></div><div id="stick-knob"></div></div>
+<canvas id="foreground-mask" width="1448" height="1086"></canvas></div></div><div id="stick" hidden><div id="stick-ring"></div><div id="stick-knob"></div></div>
 <div id="hint">星砂マップ｜移動・当たり判定検証（保存なし）</div><div id="error">マップの読み込みに失敗しました</div>
+<script src="./scene-layout.js"></script>
 <script src="./navigation.js?v=0.7.1"></script>
 <script src="./controls.js?v=0.7.1"></script>
 <script>
 (()=>{'use strict';
 const view=document.querySelector('#view'),world=document.querySelector('#world');
 const W=1448,H=1086,road=document.querySelector('#road');
+const foreground=document.querySelector('#foreground-mask'),foregroundCtx=foreground.getContext('2d');
+let depthAreas=[];
+// Reuse Garden's polygon hit-testing. Foreground masks never change walking permission.
+function drawForegroundMask(){
+ foregroundCtx.clearRect(0,0,W,H);
+ if(!road.complete||!road.naturalWidth||!window.TarotSceneLayout)return;
+ const active=depthAreas.filter(a=>[player,companion].some(actor=>window.TarotSceneLayout.contains({x:actor.x,y:actor.y},a)));
+ if(!active.length)return;
+ foregroundCtx.save();foregroundCtx.beginPath();
+ for(const a of active){a.points.forEach(([x,y],i)=>i?foregroundCtx.lineTo(x,y):foregroundCtx.moveTo(x,y));foregroundCtx.closePath();}
+ foregroundCtx.clip();foregroundCtx.drawImage(road,0,0,W,H);foregroundCtx.restore();
+}
 const actors={shion:document.querySelector('#shion'),shiopon:document.querySelector('#shiopon')};
 const dirOrder={down:0,up:1,left:2,right:3};
 const sprites={};
@@ -95,14 +108,14 @@ function step(t){
    if(collision.segmentClear(companion,next)){face(companion,vx,vy);companion.x=next.x;companion.y=next.y;companion.moving=true;}}
   }
  }
- camera();frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);
+ camera();frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);drawForegroundMask();
  requestAnimationFrame(step);
 }
 async function boot(){
  try{
   const r=await fetch('./assets/events/hoshisuna/map/starroad-collision.json',{cache:'no-store'});
   if(!r.ok)throw Error('当たり判定JSONが取得できません');
-  const data=await r.json();if(!window.TarotNavigation||!window.TarotControls)throw Error('mainの操作モジュールが未読込');
+  const data=await r.json();depthAreas=(Array.isArray(data.behindForegroundAreas)?data.behindForegroundAreas:[]).filter(a=>a.type==='poly'&&Array.isArray(a.points)&&a.points.length>=3);if(!window.TarotSceneLayout)throw Error('mainの前景判定が未読込');if(!window.TarotNavigation||!window.TarotControls)throw Error('mainの操作モジュールが未読込');
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
