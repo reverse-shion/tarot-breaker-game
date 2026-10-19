@@ -81,8 +81,7 @@
     /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || ""));
   const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
     !params.has("from") && !params.has("dev");
-  const hoshisunaDev = params.get("dev") === "hoshisuna-event" && /\/hoshisuna-event\.html$/.test(location.pathname);
-  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic || hoshisunaDev;
+  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic;
   const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
     ? params.get("dev")
     : null;
@@ -92,7 +91,7 @@
 
   const config = document.currentScript?.dataset || {};
   const COLLISION_URL =
-    config.collisionUrl || (hoshisunaDev ? "./assets/events/hoshisuna/map/starroad-collision.json" : "./assets/maps/star-country-gate-garden-collision.json");
+    config.collisionUrl || "./assets/maps/star-country-gate-garden-collision.json";
   const SPRITE_BASE = config.spriteBase || "./assets/sprites/shion/";
   const SHIOPON_BASE = stage3Runtime ? "./assets/sprites/shiopon/" : (
     config.shioponBase ||
@@ -383,7 +382,7 @@
     const response = await fetch(COLLISION_URL, { cache: "no-store" });
     if (!response.ok) throw new Error("当たり判定データを読み込めません");
     const data = await response.json();
-    collision = createCollision(!hoshisunaDev && window.TarotSceneLayout ? {
+    collision = createCollision(window.TarotSceneLayout ? {
       ...data, blockedAreas: [...(data.blockedAreas || []), ...window.TarotSceneLayout.solidBases],
     } : data);
     walkAreas = collision.areas;
@@ -391,7 +390,7 @@
     // The authored pathfinder remains unchanged across lock/unlock.
     // Guard player movement only; scripted actors, map surfaces and
     // verified Garden exits continue to use the base collision.
-    const playerCollision = !hoshisunaDev && enteringGardenRuntime && eastPassage?.validLine?.(eastPassageLine) ? {
+    const playerCollision = enteringGardenRuntime && eastPassage?.validLine?.(eastPassageLine) ? {
       ...collision,
       segmentClear(from, to) {
         if (!collision.segmentClear(from, to)) return false;
@@ -1922,7 +1921,7 @@
     guide.hidden = true;
     resize();
     reset();
-    if (hoshisunaDev || window.TarotDialogue?.getState().joined) {
+    if (window.TarotDialogue?.getState().joined) {
       startShioponFollow();
       if (enteringGardenRuntime) placeShioponBesidePlayer();
     }
@@ -2613,12 +2612,9 @@
 
       await loadCollision();
       const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
-      if (!hoshisunaDev && (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y))
+      if (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y)
         throw new Error("garden-south-exit-unavailable");
-      if (hoshisunaDev) {
-        spawnRef = collision.nearestWalkable({x:1190,y:770}) || {x:1190,y:770};
-        gardenExitRef = {...spawnRef};
-      } else if (stage3Dev) {
+      if (stage3Dev) {
         spawnRef = {...window.TarotStage3DevFixture.context.spawn};
         gardenExitRef = {...spawnRef};
       } else if (gardenResumeDev || gardenResumePublic) {
