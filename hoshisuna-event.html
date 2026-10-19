@@ -73,7 +73,7 @@ body.hoshisuna-shared-runtime #map-layer {opacity:0!important;}
 body.hoshisuna-shared-runtime #guide {display:none!important;}
 </style>
 </head>
-  <body class="scene-booting hoshisuna-shared-runtime" data-audio-autostart="true">
+  <body class="scene-booting hoshisuna-shared-runtime" data-audio-autostart="false">
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -112,7 +112,7 @@ body.hoshisuna-shared-runtime #guide {display:none!important;}
       })();
     </script>
     <main id="game-shell" data-gate-state="normal" aria-label="TAROT BREAKER 1000年前の星の国">
-      <img id="map-layer" class="map-layer scene-map-base" src="./assets/maps/star-country-world-islands.webp?asset=34856728cf2b" alt="" aria-hidden="true" draggable="false" />
+      <img id="map-layer" class="map-layer scene-map-base" src="./assets/events/hoshisuna/map/starroad.webp" alt="" aria-hidden="true" draggable="false" />
       <div class="scene-world-layer scene-back scene-farthest-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" draggable="false" /></div>
       <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-sun-light" data-scene-object data-world-x="100" data-world-y="130" data-world-w="340" data-world-h="340" aria-hidden="true"></div>
@@ -210,9 +210,9 @@ body.hoshisuna-shared-runtime #guide {display:none!important;}
     <script src="./controls.js?v=0.7.1" defer></script>
     <script src="./audio.js?v=20260919-roundtrip-1" defer></script>
     <script src="./lumiere-outline.js?v=0.7.1" defer></script>
-    <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v3" defer></script>
-    <script src="./dialogue.js?v=20260920-dialogue-ui-v3" defer></script>
-    <script src="./story-event-guard.js?v=mandatory-story-v5-approved-dialogue" defer></script>
+    
+    
+
     <script src="./scene-layout.js?v=1.2.0" defer></script>
     <script src="./scene-preview41-fix.js?v=native-foreground-v7" defer></script>
     <script src="./single-map-occlusion.js?v=garden-arrival-v1" defer></script>
