@@ -1,7 +1,7 @@
 const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-map-clean.html'),'utf8');
 function source(name,next){const a=html.indexOf('function '+name+'(');const b=html.indexOf(next,a);assert(a>=0&&b>a);return html.slice(a,b);}
-const code=html.match(/const ACTOR_COLLISION_DISTANCE=32[^\n]*/)?.[0]+'\n'+source('separation','function movingIntoActor');
+const code=html.match(/const ACTOR_COLLISION_DISTANCE=32[^\n]*/)?.[0]+'\n'+html.slice(html.indexOf('const CARITAS='),html.indexOf('function movingIntoActor'));
 const ctx={Math};vm.createContext(ctx);vm.runInContext(code+';this.probe={clearCaritas,separation,CARITAS,ACTOR_COLLISION_DISTANCE};',ctx);
 const {clearCaritas,separation,CARITAS,ACTOR_COLLISION_DISTANCE}=ctx.probe;
 test('Caritas center and edge block player movement',()=>{assert.equal(clearCaritas({x:900,y:253},{x:1100,y:253}),false);assert.equal(clearCaritas({x:1013,y:253},{x:1013,y:253}),false);assert.equal(clearCaritas({x:900,y:350},{x:1100,y:350}),true);assert.deepEqual({...CARITAS},{x:1013,y:253,rx:66,ry:32});});
