@@ -20,10 +20,10 @@
   #world .scene-cloud-main {z-index:3!important;}
   #world .scene-sun-light {inset:auto;width:340px;height:340px;left:100px;top:130px;z-index:2!important;}
   #world .hoshisuna-map {position:absolute;inset:0;width:1448px;height:1086px;object-fit:contain;z-index:4;pointer-events:none;}
-  #world img {user-select:none;-webkit-user-drag:none;} #shion {position:absolute;width:59px;height:78px;z-index:6;transform:translate(-50%,-93.75%);pointer-events:none;} #shion-shadow {position:absolute;width:35px;height:12px;border-radius:50%;background:radial-gradient(ellipse,rgba(8,7,27,.5),transparent 72%);z-index:5;transform:translate(-50%,-50%);pointer-events:none;} #joystick {position:fixed;left:24px;bottom:max(32px,env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;border:2px solid #b5dfff80;background:#10214c80;z-index:11;touch-action:none;user-select:none;} #knob {position:absolute;left:34px;top:34px;width:42px;height:42px;border-radius:50%;background:#b5e3ffb0;box-shadow:0 0 14px #6cc9ff80;pointer-events:none;} #view{touch-action:none} 
-  #hud {position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 12px;border:1px solid #ffffff40;border-radius:9px;background:#071126c9;color:#eff7ff;font-size:12px;line-height:1.5;pointer-events:none;}
+  #world img {user-select:none;-webkit-user-drag:none;} #shion {position:absolute;width:59px;height:78px;z-index:6;transform:translate(-50%,-93.75%);pointer-events:none;} #shion-shadow {position:absolute;width:35px;height:12px;border-radius:50%;background:radial-gradient(ellipse,rgba(8,7,27,.5),transparent 72%);z-index:5;transform:translate(-50%,-50%);pointer-events:none;} #joystick {position:fixed;z-index:12;width:144px;height:144px;margin:-72px 0 0 -72px;pointer-events:none;touch-action:none;} .joystick__ring {position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,.44);background:rgba(12,16,43,.2);backdrop-filter:blur(3px);} #knob {position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;border:1px solid rgba(244,219,158,.76);background:rgba(236,225,211,.34);box-shadow:0 0 18px rgba(163,184,255,.22);pointer-events:none;} #view{touch-action:none} 
+  #hud {display:none;position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 12px;border:1px solid #ffffff40;border-radius:9px;background:#071126c9;color:#eff7ff;font-size:12px;line-height:1.5;pointer-events:none;}
   #error {display:none;position:fixed;z-index:20;inset:0;place-items:center;text-align:center;background:#0b1029;color:white;padding:20px;}
-  @media (prefers-reduced-motion:reduce){#hud{opacity:.8;}}
+  body.debug #hud {display:block;}
 </style>
 </head>
 <body>
@@ -42,7 +42,7 @@
     <canvas id="shion" width="118" height="156" role="img" aria-label="シオン"></canvas>
   </div>
 </div>
-<div id="joystick" hidden aria-label="シオンを移動する方向パッド"><div id="knob"></div></div>
+<div id="joystick" class="joystick" hidden aria-hidden="true"><div class="joystick__ring"></div><div id="knob" class="joystick__knob"></div></div>
 <div id="hud">TAROT BREAKER｜星砂への街道 / 自由探索<br>タップ移動・方向パッド｜隔離検証・保存なし</div>
 <div id="error" role="alert">素材の読み込みに失敗しました。プレビューを再読み込みしてください。</div>
 <script src="./controls.js?v=0.7.1"></script>
@@ -50,6 +50,7 @@
 (function(){
 'use strict';
 const world=document.getElementById('world'),view=document.getElementById('view');
+if(new URLSearchParams(location.search).get('debug')==='1')document.body.classList.add('debug');
 const shion=document.getElementById('shion'),shadow=document.getElementById('shion-shadow');
 const stick=document.getElementById('joystick'),knob=document.getElementById('knob');
 const W=1448,H=1086,player={x:1190,y:770,dir:'left',moving:false,frame:0};
@@ -75,7 +76,7 @@ function render(){
  ctx.clearRect(0,0,118,156);
  if(image?.complete&&image.naturalWidth>=384*(idx+1)){ctx.imageSmoothingEnabled=true;ctx.drawImage(image,idx*384,0,384,512,0,0,118,156);}
  const s=controls.state.stick;stick.hidden=!s.active;
- if(s.active){stick.style.left=(s.ox-55)+'px';stick.style.top=(s.oy-55)+'px';stick.style.bottom='auto';knob.style.transform='translate('+s.knobX*.54+'px,'+s.knobY*.54+'px)';}
+ if(s.active){stick.style.left=s.ox+'px';stick.style.top=s.oy+'px';stick.style.bottom='auto';knob.style.transform='translate('+s.knobX+'px,'+s.knobY+'px)';}
 }
 function pointer(e){const rect=view.getBoundingClientRect();return {id:e.pointerId,x:e.clientX-rect.left,y:e.clientY-rect.top,time:performance.now(),width:rect.width,world:{x:camX+(e.clientX-rect.left)/zoom,y:camY+(e.clientY-rect.top)/zoom},primary:e.isPrimary,button:e.button};}
 view.addEventListener('pointerdown',e=>{if(controls.pointerDown(pointer(e))){pointerId=e.pointerId;view.setPointerCapture?.(e.pointerId);e.preventDefault();}});
