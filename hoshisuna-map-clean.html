@@ -20,7 +20,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#5458a6;tou
 #stick[hidden]{display:none}
 #stick-ring{position:absolute;inset:0;border:1px solid #ffffff70;background:#0c102b33;border-radius:50%;backdrop-filter:blur(3px)}
 #stick-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;border:1px solid #f4db9ec2;background:#ece1d357;box-shadow:0 0 18px #a3b8ff38}
-#hint{display:none}body.debug #hint{display:block}
+#hint{display:none}body.debug #hint{display:block}body:not(.debug) #coord-panel,body:not(.debug) #coord-toggle,body:not(.debug) #coord-mark{display:none!important}
 #coord-panel{position:fixed;z-index:20;right:8px;top:calc(8px + env(safe-area-inset-top));width:min(270px,calc(100vw - 16px));box-sizing:border-box;padding:10px;border-radius:12px;background:#101b36eb;color:white;font:12px/1.5 system-ui;box-shadow:0 3px 18px #0007;touch-action:auto}#coord-panel button{font:inherit;background:#304878;color:white;border:1px solid #a5bbdb;border-radius:7px;padding:7px;margin:3px 2px 0 0}#coord-panel button[aria-pressed=true]{background:#7155a6}#coord-panel input{width:60px;font:inherit;padding:5px;color:white;background:#253b61;border:1px solid #8099bc;border-radius:5px}#coord-panel[hidden]{display:none}#coord-mark{position:absolute;z-index:9;width:18px;height:18px;border:2px solid #ffde65;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px #20112577}#coord-mark[hidden]{display:none}#coord-toggle{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));right:12px;z-index:21;border:1px solid #a5bbdb;border-radius:9px;padding:9px;background:#152546e9;color:white;font:12px system-ui}#caritas{position:absolute;left:1013px;top:253px;z-index:4;width:125px;height:96px;object-fit:contain;transform:translate(-50%,-90%);pointer-events:none;user-select:none}</style></head><body>
 <div id="view"><div id="world">
 <div class="scene-world-layer scene-farthest-sky"><img src="./assets/maps/star-country-farthest-sky-background.webp" alt=""></div>
@@ -68,6 +68,7 @@ for(const name of Object.keys(actors)){
 const player={x:108,y:488,dir:'right',frame:0,moving:false,clock:0};
 const companion={x:148,y:505,dir:'right',frame:0,moving:false,clock:0};
 let collision=null,navigation=null,controls=null,zoom=1,camX=0,camY=0,last=0,followClock=0,followRoute=[],booted=false;
+let footprints=[];const FOLLOW_LAG=54;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const panel=document.querySelector('#coord-panel'),mark=document.querySelector('#coord-mark');
 const coordX=document.querySelector('#coord-x'),coordY=document.querySelector('#coord-y'),status=document.querySelector('#coord-status');
@@ -80,7 +81,7 @@ function placeAt(p){if(!collision){status.textContent='マップ読み込み中�
  Object.assign(player,at,{moving:false,clock:0});
  const target=collision.nearestWalkable({x:at.x-50,y:at.y});
  if(target&&Math.hypot(target.x-at.x,target.y-at.y)>=ACTOR_COLLISION_DISTANCE)Object.assign(companion,target,{moving:false,clock:0});
- controls?.clearInput('coord-set');followRoute=[];followClock=0;camera();
+ controls?.clearInput('coord-set');followRoute=[];followClock=0;footprints=[{x:companion.x,y:companion.y},{x:player.x,y:player.y}];camera();
  status.textContent=(at.x!==p.x||at.y!==p.y)?'通行外のため補正: X'+Math.round(at.x)+' Y'+Math.round(at.y):'指定位置へ移動しました';showCoords();
 }
 document.querySelector('#coord-pick').onclick=()=>{pickMode=!pickMode;document.querySelector('#coord-pick').setAttribute('aria-pressed',String(pickMode));status.textContent=pickMode?'パネルを閉じてマップの位置をタップしてください':'通常操作';if(pickMode){panel.hidden=true;document.querySelector('#coord-toggle').hidden=false;document.querySelector('#coord-toggle').textContent='座標指定中・パネル表示';}};
@@ -126,40 +127,32 @@ function step(t){
   const dx=next.x-player.x,dy=next.y-player.y;
   // Following companions yield to Shion; they must not block the player's route.
   player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;
-  // Direction-relative follow target: behind first, then either side.
-  // The companion never seeks a point ahead of Shion.
-  followClock-=dt;
-  const directions={right:[1,0],left:[-1,0],up:[0,-1],down:[0,1]};
-  const [fx,fy]=directions[player.dir]||[0,1];
-  const targets=[
-   {x:player.x-fx*52,y:player.y-fy*52},
-   {x:player.x-fx*35-fy*35,y:player.y-fy*35+fx*35},
-   {x:player.x-fx*35+fy*35,y:player.y-fy*35-fx*35}
-  ];
-  if(followClock<=0){
-   followClock=.16;
-   const candidates=targets.filter(p=>collision.isWalkable(p.x,p.y));
-   const target=candidates.find(p=>collision.segmentClear(companion,p))||candidates[0];
-   const path=target?navigation.findPath(companion,target):null;
-   followRoute=path?.points?.slice(1)||[];
+  // Follow Shion's actual footprints, not a point beside or ahead of him.
+  // The trail records traversed positions only, so tight bends stay on the path.
+  const lastFoot=footprints[footprints.length-1];
+  if(!lastFoot||Math.hypot(player.x-lastFoot.x,player.y-lastFoot.y)>=5){
+    footprints.push({x:player.x,y:player.y});
   }
+  let total=0,target=footprints[0];
+  for(let i=footprints.length-1;i>0;i--){
+    const newer=footprints[i],older=footprints[i-1];
+    const len=Math.hypot(newer.x-older.x,newer.y-older.y);
+    if(total+len>=FOLLOW_LAG){
+      const ratio=(FOLLOW_LAG-total)/Math.max(len,1e-6);
+      target={x:newer.x+(older.x-newer.x)*ratio,y:newer.y+(older.y-newer.y)*ratio};
+      break;
+    }
+    total+=len;target=older;
+  }
+  if(footprints.length>700)footprints.splice(0,footprints.length-700);
   companion.moving=false;
-  const distance=Math.hypot(player.x-companion.x,player.y-companion.y);
-  // If the player comes close, Shion passes through rather than getting stuck;
-  // the companion subsequently moves into the rear-follow position.
-  if(followRoute.length){
-   const dst=followRoute[0],vx=dst.x-companion.x,vy=dst.y-companion.y,len=Math.hypot(vx,vy);
-   if(len<5)followRoute.shift();
-   else{
-    const amount=Math.min(len,210*dt),candidate={x:companion.x+vx/len*amount,y:companion.y+vy/len*amount};
+  const vx=target.x-companion.x,vy=target.y-companion.y,len=Math.hypot(vx,vy);
+  if(len>5){
+    const amount=Math.min(len,180*dt);
+    const candidate={x:companion.x+vx/len*amount,y:companion.y+vy/len*amount};
     if(collision.segmentClear(companion,candidate)&&Math.hypot(candidate.x-player.x,candidate.y-player.y)>=ACTOR_COLLISION_DISTANCE){
       face(companion,vx,vy);companion.x=candidate.x;companion.y=candidate.y;companion.moving=true;
     }
-   }
-  }
-  if(distance<ACTOR_COLLISION_DISTANCE){
-    const safe=targets.find(p=>collision.isWalkable(p.x,p.y)&&collision.segmentClear(player,p));
-    if(safe){Object.assign(companion,safe,{moving:false,clock:0});followRoute=[];followClock=0;}
   }
  }
  camera();showCoords();updateCaritas(t);frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);drawForegroundMask();
@@ -173,7 +166,7 @@ async function boot(){
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
-  const side=collision.nearestWalkable({x:player.x-52,y:player.y});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
+  const side=collision.nearestWalkable({x:player.x-50,y:player.y});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);footprints=[{x:companion.x,y:companion.y},{x:player.x,y:player.y}];
   controls=window.TarotControls.createControls(collision,navigation);
   document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
   const urlParams=new URLSearchParams(location.search);if(urlParams.has('spawnX')&&urlParams.has('spawnY')){const p={x:Number(urlParams.get('spawnX')),y:Number(urlParams.get('spawnY'))};if(Number.isFinite(p.x)&&Number.isFinite(p.y)){setPicked(p);placeAt(p);}}else{setPicked({x:player.x,y:player.y});}resize();booted=true;requestAnimationFrame(step);
