@@ -843,7 +843,7 @@
     // the lower corners cannot trigger a map transition.
     const gardenPos = { x: next.x, y: next.y };
     if (
-      !stage3Dev && enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
+      !hoshisunaDev && !stage3Dev && enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
       !window.TarotDialogue?.getState().active &&
       next.dy > 0 && gardenPos.y >= gardenExitRef.y - 4 &&
       gardenPos.x >= 610 &&
@@ -1630,7 +1630,7 @@
         },
       },
     ].filter(entry => (entry.actor !== shiopon || !shiopon.hidden) &&
-      (entry.actor !== lumiere || !stage3Runtime || aftermathLumiereEnabled)).sort((a, b) => {
+      (entry.actor !== lumiere || (!hoshisunaDev && (!stage3Runtime || aftermathLumiereEnabled)))).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
@@ -1872,7 +1872,7 @@
     }
     updatePlayer(dt);
     updateShiopon(dt);
-    updateLumiere(dt);
+    if (!hoshisunaDev) updateLumiere(dt);
     updateCamera(dt);
     draw();
     requestAnimationFrame(loop);
