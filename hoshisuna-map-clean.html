@@ -78,7 +78,7 @@ function placeAt(p){if(!collision){status.textContent='マップ読み込み中�
  const at=collision.isWalkable(p.x,p.y)?p:collision.nearestWalkable(p);
  if(!at){status.textContent='通行可能地点がありません';return;}
  Object.assign(player,at,{moving:false,clock:0});
- const target=collision.nearestWalkable({x:at.x+44,y:at.y+12});
+ const target=collision.nearestWalkable({x:at.x-50,y:at.y});
  if(target&&Math.hypot(target.x-at.x,target.y-at.y)>=ACTOR_COLLISION_DISTANCE)Object.assign(companion,target,{moving:false,clock:0});
  controls?.clearInput('coord-set');followRoute=[];followClock=0;camera();
  status.textContent=(at.x!==p.x||at.y!==p.y)?'通行外のため補正: X'+Math.round(at.x)+' Y'+Math.round(at.y):'指定位置へ移動しました';showCoords();
@@ -124,19 +124,42 @@ function step(t){
  if(controls){
   const next=controls.step(player,dt,155);
   const dx=next.x-player.x,dy=next.y-player.y;
-  const actorBlocked=movingIntoActor(player,next,companion);
-  player.moving=next.moving&&!actorBlocked;face(player,dx,dy);
-  if(actorBlocked){controls.cancel('shiopon-blocked');}else{player.x=next.x;player.y=next.y;}
-  // Follow with the same shared navigation graph, never cross a blocked polygon.
-  followClock-=dt;const distance=Math.hypot(player.x-companion.x,player.y-companion.y);
-  if(followClock<=0){followClock=.18;const target={x:player.x-42,y:player.y+14};
-    const path=navigation.findPath(companion,target);followRoute=path?path.points.slice(1):[];}
+  // Following companions yield to Shion; they must not block the player's route.
+  player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;
+  // Direction-relative follow target: behind first, then either side.
+  // The companion never seeks a point ahead of Shion.
+  followClock-=dt;
+  const directions={right:[1,0],left:[-1,0],up:[0,-1],down:[0,1]};
+  const [fx,fy]=directions[player.dir]||[0,1];
+  const targets=[
+   {x:player.x-fx*52,y:player.y-fy*52},
+   {x:player.x-fx*35-fy*35,y:player.y-fy*35+fx*35},
+   {x:player.x-fx*35+fy*35,y:player.y-fy*35-fx*35}
+  ];
+  if(followClock<=0){
+   followClock=.16;
+   const candidates=targets.filter(p=>collision.isWalkable(p.x,p.y));
+   const target=candidates.find(p=>collision.segmentClear(companion,p))||candidates[0];
+   const path=target?navigation.findPath(companion,target):null;
+   followRoute=path?.points?.slice(1)||[];
+  }
   companion.moving=false;
-  if(distance>SHIOPON_FOLLOW_MIN_GAP&&followRoute.length){
+  const distance=Math.hypot(player.x-companion.x,player.y-companion.y);
+  // If the player comes close, Shion passes through rather than getting stuck;
+  // the companion subsequently moves into the rear-follow position.
+  if(followRoute.length){
    const dst=followRoute[0],vx=dst.x-companion.x,vy=dst.y-companion.y,len=Math.hypot(vx,vy);
-   if(len<6)followRoute.shift();
-   else{const step=Math.min(len,210*dt),next={x:companion.x+vx/len*step,y:companion.y+vy/len*step};
-   if(collision.segmentClear(companion,next)&&!movingIntoActor(companion,next,player,SHIOPON_FOLLOW_MIN_GAP)){face(companion,vx,vy);companion.x=next.x;companion.y=next.y;companion.moving=true;}}
+   if(len<5)followRoute.shift();
+   else{
+    const amount=Math.min(len,210*dt),candidate={x:companion.x+vx/len*amount,y:companion.y+vy/len*amount};
+    if(collision.segmentClear(companion,candidate)&&Math.hypot(candidate.x-player.x,candidate.y-player.y)>=ACTOR_COLLISION_DISTANCE){
+      face(companion,vx,vy);companion.x=candidate.x;companion.y=candidate.y;companion.moving=true;
+    }
+   }
+  }
+  if(distance<ACTOR_COLLISION_DISTANCE){
+    const safe=targets.find(p=>collision.isWalkable(p.x,p.y)&&collision.segmentClear(player,p));
+    if(safe){Object.assign(companion,safe,{moving:false,clock:0});followRoute=[];followClock=0;}
   }
  }
  camera();showCoords();updateCaritas(t);frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);drawForegroundMask();
@@ -150,7 +173,7 @@ async function boot(){
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
-  const side=collision.nearestWalkable({x:player.x+40,y:player.y+17});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
+  const side=collision.nearestWalkable({x:player.x-52,y:player.y});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
   controls=window.TarotControls.createControls(collision,navigation);
   document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
   const urlParams=new URLSearchParams(location.search);if(urlParams.has('spawnX')&&urlParams.has('spawnY')){const p={x:Number(urlParams.get('spawnX')),y:Number(urlParams.get('spawnY'))};if(Number.isFinite(p.x)&&Number.isFinite(p.y)){setPicked(p);placeAt(p);}}else{setPicked({x:player.x,y:player.y});}resize();booted=true;requestAnimationFrame(step);
