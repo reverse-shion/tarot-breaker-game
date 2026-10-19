@@ -20,7 +20,7 @@
   #world .scene-cloud-main {z-index:3!important;}
   #world .scene-sun-light {inset:auto;width:340px;height:340px;left:100px;top:130px;z-index:2!important;}
   #world .hoshisuna-map {position:absolute;inset:0;width:1448px;height:1086px;object-fit:contain;z-index:4;pointer-events:none;}
-  #world img {user-select:none;-webkit-user-drag:none;} #shion {position:absolute;width:48px;height:64px;z-index:6;transform:translate(-50%,-93%);pointer-events:none;background-repeat:no-repeat;background-size:192px 64px;image-rendering:auto;} #shion-shadow {position:absolute;width:35px;height:12px;border-radius:50%;background:radial-gradient(ellipse,rgba(8,7,27,.5),transparent 72%);z-index:5;transform:translate(-50%,-50%);pointer-events:none;} #joystick {position:fixed;left:24px;bottom:max(32px,env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;border:2px solid #b5dfff80;background:#10214c80;z-index:11;touch-action:none;user-select:none;} #knob {position:absolute;left:34px;top:34px;width:42px;height:42px;border-radius:50%;background:#b5e3ffb0;box-shadow:0 0 14px #6cc9ff80;pointer-events:none;} #view{touch-action:none} 
+  #world img {user-select:none;-webkit-user-drag:none;} #shion {position:absolute;width:59px;height:78px;z-index:6;transform:translate(-50%,-93.75%);pointer-events:none;} #shion-shadow {position:absolute;width:35px;height:12px;border-radius:50%;background:radial-gradient(ellipse,rgba(8,7,27,.5),transparent 72%);z-index:5;transform:translate(-50%,-50%);pointer-events:none;} #joystick {position:fixed;left:24px;bottom:max(32px,env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;border:2px solid #b5dfff80;background:#10214c80;z-index:11;touch-action:none;user-select:none;} #knob {position:absolute;left:34px;top:34px;width:42px;height:42px;border-radius:50%;background:#b5e3ffb0;box-shadow:0 0 14px #6cc9ff80;pointer-events:none;} #view{touch-action:none} 
   #hud {position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 12px;border:1px solid #ffffff40;border-radius:9px;background:#071126c9;color:#eff7ff;font-size:12px;line-height:1.5;pointer-events:none;}
   #error {display:none;position:fixed;z-index:20;inset:0;place-items:center;text-align:center;background:#0b1029;color:white;padding:20px;}
   @media (prefers-reduced-motion:reduce){#hud{opacity:.8;}}
@@ -39,7 +39,7 @@
     </div></div>
     <img class="hoshisuna-map" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道" draggable="false">
     <div id="shion-shadow" aria-hidden="true"></div>
-    <div id="shion" role="img" aria-label="シオン"></div>
+    <canvas id="shion" width="118" height="156" role="img" aria-label="シオン"></canvas>
   </div>
 </div>
 <div id="joystick" aria-label="シオンを移動する方向パッド"><div id="knob"></div></div>
@@ -55,7 +55,7 @@
   const spriteBase='./assets/sprites/shion/shion_';
   const spritePaths={idle:spriteBase+'idle.png',down:spriteBase+'walk_down.png',up:spriteBase+'walk_up.png',left:spriteBase+'walk_left.png',right:spriteBase+'walk_right.png'};
   const sprites={};for(const [key,url] of Object.entries(spritePaths)){const im=new Image();im.src=url;sprites[key]=im;}
-  let facing='down',moving=false,walkClock=0,frameIndex=0;
+  let facing='down',moving=false,walkClock=0,frameIndex=0;const spriteCtx=shion.getContext('2d');
   const walk=[
     [1330,855],[1190,770],[1020,665],[840,616],[710,592],[530,585],
     [380,565],[210,514],[70,470],[680,588],[825,528],[945,465],[1045,358],[1040,288]
@@ -76,7 +76,7 @@
   let zoom=1.45,camX=0,camY=0,target=null,last=0,stickId=null;
   function size(){
     // Like Garden: view only part of the world. No full-map fit-to-screen.
-    zoom=clamp(Math.min(view.clientWidth/420,view.clientHeight/700)*1.65,0.75,1.65);
+    zoom=clamp(Math.min(view.clientWidth/390,view.clientHeight/844)*1.05,0.90,1.15);
     paint();
   }
   function paint(){
@@ -87,8 +87,13 @@
     shion.style.left=player.x+'px';shion.style.top=player.y+'px';
     shadow.style.left=player.x+'px';shadow.style.top=(player.y-4)+'px';
     const sheet=moving?facing:'idle';const idx=moving?frameIndex:({down:0,up:1,left:2,right:3}[facing]);
-    shion.style.backgroundImage='url("'+spritePaths[sheet]+'")';
-    shion.style.backgroundPosition=(-48*idx)+'px 0px';
+    spriteCtx.clearRect(0,0,118,156);
+    const image=sprites[sheet];
+    if(image && image.complete && image.naturalWidth >= 384*(idx+1)){
+      spriteCtx.imageSmoothingEnabled=true;
+      spriteCtx.imageSmoothingQuality='high';
+      spriteCtx.drawImage(image,384*idx,0,384,512,0,0,118,156);
+    }
   }
   function setStick(e){
     const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
@@ -120,7 +125,7 @@
     moving=m>.08;
     if(moving){facing=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');walkClock+=dt;frameIndex=Math.floor(walkClock*8)%4;}
     else {walkClock=0;frameIndex=0;}
-    if(m>0){dx/=Math.max(1,m);dy/=Math.max(1,m);const step=150*dt;
+    if(m>0){dx/=Math.max(1,m);dy/=Math.max(1,m);const step=155*dt;
       const nx=player.x+dx*step,ny=player.y+dy*step;
       if(permitted(nx,ny)){player.x=nx;player.y=ny;}
       else {if(permitted(nx,player.y))player.x=nx;if(permitted(player.x,ny))player.y=ny;target=null;}
