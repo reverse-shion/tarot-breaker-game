@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>TAROT BREAKER — 星砂イベント隔離プレビュー</title>
+<!-- Reuse Garden assets and CSS directly. Never duplicate/re-author cloud motion. -->
+<link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0">
+<link rel="stylesheet" href="./cloud-motion-fix.css?v=1.7.0">
+<style>
+  :root { color-scheme:dark; }
+  html,body { width:100%;height:100%;margin:0;overflow:hidden;background:#080d24; }
+  body { font-family:system-ui,-apple-system,sans-serif; }
+  #view {position:fixed;inset:0;overflow:hidden;touch-action:pan-x pan-y;display:grid;place-items:center;}
+  #world { position:absolute;width:1448px;height:1086px;transform-origin:top left;isolation:isolate;overflow:hidden; }
+  #world .scene-world-layer,#world .scene-object {position:absolute;inset:0;width:1448px;height:1086px;}
+  #world .scene-farthest-sky {z-index:0!important;}
+  #world .scene-star-sky {z-index:1!important;}
+  #world .scene-cloud-main {z-index:3!important;}
+  #world .scene-sun-light {inset:auto;width:340px;height:340px;left:100px;top:130px;z-index:2!important;}
+  #world .hoshisuna-map {position:absolute;inset:0;width:1448px;height:1086px;object-fit:contain;z-index:4;pointer-events:none;}
+  #world img {user-select:none;-webkit-user-drag:none;}
+  #hud {position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 12px;border:1px solid #ffffff40;border-radius:9px;background:#071126c9;color:#eff7ff;font-size:12px;line-height:1.5;pointer-events:none;}
+  #error {display:none;position:fixed;z-index:20;inset:0;place-items:center;text-align:center;background:#0b1029;color:white;padding:20px;}
+  @media (prefers-reduced-motion:reduce){#hud{opacity:.8;}}
+</style>
+</head>
+<body>
+<div id="view" aria-label="星砂イベントの背景・マップ検証">
+  <div id="world">
+    <div class="scene-world-layer scene-back scene-farthest-sky" aria-hidden="true"><img src="./assets/maps/star-country-farthest-sky-background.webp" alt="" draggable="false"></div>
+    <div class="scene-world-layer scene-back scene-star-sky" aria-hidden="true"><img src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false"></div>
+    <div class="scene-object scene-back scene-sun-light" aria-hidden="true"></div>
+    <div class="scene-world-layer scene-back scene-cloud scene-cloud-main" aria-hidden="true"><div class="scene-cloud-track scene-cloud-main-track">
+      <img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false">
+      <img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false">
+      <img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false">
+    </div></div>
+    <img class="hoshisuna-map" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道" draggable="false">
+  </div>
+</div>
+<div id="hud">TAROT BREAKER｜星砂イベント / 背景表示検証<br>星門庭園の空・雲・動作を共通利用｜本編・保存に非接続</div>
+<div id="error" role="alert">素材の読み込みに失敗しました。プレビューを再読み込みしてください。</div>
+<script>
+(function(){
+  'use strict';
+  const world=document.getElementById('world');
+  const view=document.getElementById('view');
+  function resize(){
+    const scale=Math.min(view.clientWidth/1448,view.clientHeight/1086);
+    world.style.transform='scale('+scale+')';
+    world.style.left=((view.clientWidth-1448*scale)/2)+'px';
+    world.style.top=((view.clientHeight-1086*scale)/2)+'px';
+  }
+  window.addEventListener('resize',resize,{passive:true});
+  resize();
+  const images=[...world.querySelectorAll('img')];
+  let failed=false;
+  for(const image of images){image.addEventListener('error',()=>{failed=true;document.getElementById('error').style.display='grid';},{once:true});}
+  // No saved-game access, scene boot, runtime entry or main game mutation.
+})();
+</script>
+</body>
+</html>
