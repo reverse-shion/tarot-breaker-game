@@ -12,15 +12,15 @@
   :root { color-scheme:dark; }
   html,body { width:100%;height:100%;margin:0;overflow:hidden;background:#080d24; }
   body { font-family:system-ui,-apple-system,sans-serif; }
-  #view {position:fixed;inset:0;overflow:hidden;touch-action:pan-x pan-y;display:grid;place-items:center;}
-  #world { position:absolute;width:1448px;height:1086px;transform-origin:top left;isolation:isolate;overflow:hidden; }
+  #view {position:fixed;inset:0;overflow:hidden;touch-action:none;display:grid;place-items:center;}
+  #world { position:absolute;left:0;top:0;width:1448px;height:1086px;transform-origin:top left;isolation:isolate;overflow:hidden;will-change:transform; }
   #world .scene-world-layer,#world .scene-object {position:absolute;inset:0;width:1448px;height:1086px;}
   #world .scene-farthest-sky {z-index:0!important;}
   #world .scene-star-sky {z-index:1!important;}
   #world .scene-cloud-main {z-index:3!important;}
   #world .scene-sun-light {inset:auto;width:340px;height:340px;left:100px;top:130px;z-index:2!important;}
   #world .hoshisuna-map {position:absolute;inset:0;width:1448px;height:1086px;object-fit:contain;z-index:4;pointer-events:none;}
-  #world img {user-select:none;-webkit-user-drag:none;}
+  #world img {user-select:none;-webkit-user-drag:none;} #shion {position:absolute;width:46px;height:64px;z-index:6;transform:translate(-50%,-87%);object-fit:contain;image-rendering:auto;pointer-events:none;} #joystick {position:fixed;left:24px;bottom:max(32px,env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;border:2px solid #b5dfff80;background:#10214c80;z-index:11;touch-action:none;user-select:none;} #knob {position:absolute;left:34px;top:34px;width:42px;height:42px;border-radius:50%;background:#b5e3ffb0;box-shadow:0 0 14px #6cc9ff80;pointer-events:none;} #view{touch-action:none} 
   #hud {position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 12px;border:1px solid #ffffff40;border-radius:9px;background:#071126c9;color:#eff7ff;font-size:12px;line-height:1.5;pointer-events:none;}
   #error {display:none;position:fixed;z-index:20;inset:0;place-items:center;text-align:center;background:#0b1029;color:white;padding:20px;}
   @media (prefers-reduced-motion:reduce){#hud{opacity:.8;}}
@@ -38,27 +38,84 @@
       <img class="scene-cloud-copy" src="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" alt="" draggable="false">
     </div></div>
     <img class="hoshisuna-map" src="./assets/events/hoshisuna/map/starroad.webp" alt="星砂への街道" draggable="false">
+    <img id="shion" src="./assets/sprites/shion/shion_idle.png" alt="" draggable="false">
   </div>
 </div>
-<div id="hud">TAROT BREAKER｜星砂イベント / 背景表示検証<br>星門庭園の空・雲・動作を共通利用｜本編・保存に非接続</div>
+<div id="joystick" aria-label="シオンを移動する方向パッド"><div id="knob"></div></div>
+<div id="hud">TAROT BREAKER｜星砂への街道 / 自由探索<br>タップ移動・方向パッド｜隔離検証・保存なし</div>
 <div id="error" role="alert">素材の読み込みに失敗しました。プレビューを再読み込みしてください。</div>
 <script>
 (function(){
   'use strict';
-  const world=document.getElementById('world');
-  const view=document.getElementById('view');
-  function resize(){
-    const scale=Math.min(view.clientWidth/1448,view.clientHeight/1086);
-    world.style.transform='scale('+scale+')';
-    world.style.left=((view.clientWidth-1448*scale)/2)+'px';
-    world.style.top=((view.clientHeight-1086*scale)/2)+'px';
+  const world=document.getElementById('world'), view=document.getElementById('view');
+  const shion=document.getElementById('shion'), stick=document.getElementById('joystick'),knob=document.getElementById('knob');
+  const W=1448,H=1086, player={x:1120,y:700}, direction={x:0,y:0};
+  const walk=[
+    [1330,855],[1190,770],[1020,665],[840,616],[710,592],[530,585],
+    [380,565],[210,514],[70,470],[680,588],[825,528],[945,465],[1045,358],[1040,288]
+  ];
+  const segments=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12],[12,13]];
+  function distanceToPath(x,y){
+    let best=Infinity;
+    for(const [a,b] of segments){
+      const A=walk[a],B=walk[b],dx=B[0]-A[0],dy=B[1]-A[1];
+      const t=Math.max(0,Math.min(1,((x-A[0])*dx+(y-A[1])*dy)/(dx*dx+dy*dy)));
+      best=Math.min(best,Math.hypot(x-(A[0]+t*dx),y-(A[1]+t*dy)));
+    }
+    return best;
   }
-  window.addEventListener('resize',resize,{passive:true});
-  resize();
-  const images=[...world.querySelectorAll('img')];
-  let failed=false;
-  for(const image of images){image.addEventListener('error',()=>{failed=true;document.getElementById('error').style.display='grid';},{once:true});}
-  // No saved-game access, scene boot, runtime entry or main game mutation.
+  // Conservative temporary road corridor, not a final authored collision map.
+  function permitted(x,y){return x>=18&&x<=1430&&y>=180&&y<=1020&&distanceToPath(x,y)<=60;}
+  function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+  let zoom=1.45,camX=0,camY=0,target=null,last=0,stickId=null;
+  function size(){
+    // Like Garden: view only part of the world. No full-map fit-to-screen.
+    zoom=clamp(Math.min(view.clientWidth/420,view.clientHeight/700)*1.65,0.75,1.65);
+    paint();
+  }
+  function paint(){
+    const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;
+    camX=clamp(player.x-vw/2,0,Math.max(0,W-vw));
+    camY=clamp(player.y-vh/2,0,Math.max(0,H-vh));
+    world.style.transform='translate3d('+(-camX*zoom)+'px,'+(-camY*zoom)+'px,0) scale('+zoom+')';
+    shion.style.left=player.x+'px';shion.style.top=player.y+'px';
+  }
+  function setStick(e){
+    const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy),strength=Math.min(1,m/42);
+    direction.x=m?dx/m*strength:0;direction.y=m?dy/m*strength:0;
+    knob.style.transform='translate('+(direction.x*34)+'px,'+(direction.y*34)+'px)';
+  }
+  stick.addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;stick.setPointerCapture(e.pointerId);target=null;setStick(e);});
+  stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)setStick(e);});
+  function end(e){if(e.pointerId!==stickId)return;stickId=null;direction.x=direction.y=0;knob.style.transform='none';}
+  stick.addEventListener('pointerup',end);stick.addEventListener('pointercancel',end);
+  view.addEventListener('pointerup',e=>{
+    if(e.target.closest('#joystick'))return;
+    const r=view.getBoundingClientRect(),x=(e.clientX-r.left)/zoom+camX,y=(e.clientY-r.top)/zoom+camY;
+    if(permitted(x,y))target={x,y};
+  });
+  const keys=new Set();
+  window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)){keys.add(e.key);e.preventDefault();}});
+  window.addEventListener('keyup',e=>keys.delete(e.key));
+  function frame(now){
+    const dt=Math.min(.04,(now-(last||now))/1000);last=now;
+    let dx=direction.x,dy=direction.y;
+    if(keys.has('ArrowUp')||keys.has('w'))dy--;
+    if(keys.has('ArrowDown')||keys.has('s'))dy++;
+    if(keys.has('ArrowLeft')||keys.has('a'))dx--;
+    if(keys.has('ArrowRight')||keys.has('d'))dx++;
+    if(target&&!dx&&!dy){const x=target.x-player.x,y=target.y-player.y,d=Math.hypot(x,y);if(d<4)target=null;else {dx=x/d;dy=y/d;}}
+    const m=Math.hypot(dx,dy);
+    if(m>0){dx/=Math.max(1,m);dy/=Math.max(1,m);const step=150*dt;
+      const nx=player.x+dx*step,ny=player.y+dy*step;
+      if(permitted(nx,ny)){player.x=nx;player.y=ny;}
+      else {if(permitted(nx,player.y))player.x=nx;if(permitted(player.x,ny))player.y=ny;target=null;}
+    }
+    paint();requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize',size,{passive:true});size();requestAnimationFrame(frame);
+  for(const img of world.querySelectorAll('img'))img.addEventListener('error',()=>{document.getElementById('error').style.display='grid';},{once:true});
 })();
 </script>
 </body>
