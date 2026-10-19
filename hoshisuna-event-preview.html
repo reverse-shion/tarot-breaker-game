@@ -42,99 +42,54 @@
     <canvas id="shion" width="118" height="156" role="img" aria-label="シオン"></canvas>
   </div>
 </div>
-<div id="joystick" aria-label="シオンを移動する方向パッド"><div id="knob"></div></div>
+<div id="joystick" hidden aria-label="シオンを移動する方向パッド"><div id="knob"></div></div>
 <div id="hud">TAROT BREAKER｜星砂への街道 / 自由探索<br>タップ移動・方向パッド｜隔離検証・保存なし</div>
 <div id="error" role="alert">素材の読み込みに失敗しました。プレビューを再読み込みしてください。</div>
+<script src="./controls.js?v=0.7.1"></script>
 <script>
 (function(){
-  'use strict';
-  const world=document.getElementById('world'), view=document.getElementById('view');
-  const shion=document.getElementById('shion'),shadow=document.getElementById('shion-shadow'), stick=document.getElementById('joystick'),knob=document.getElementById('knob');
-  const W=1448,H=1086, player={x:1190,y:770}, direction={x:0,y:0};
-  // Sprite sheets: four 384x512 cells, rendered as four 48x64 frames.
-  const spriteBase='./assets/sprites/shion/shion_';
-  const spritePaths={idle:spriteBase+'idle.png',down:spriteBase+'walk_down.png',up:spriteBase+'walk_up.png',left:spriteBase+'walk_left.png',right:spriteBase+'walk_right.png'};
-  const sprites={};for(const [key,url] of Object.entries(spritePaths)){const im=new Image();im.src=url;sprites[key]=im;}
-  let facing='down',moving=false,walkClock=0,frameIndex=0;const spriteCtx=shion.getContext('2d');
-  const walk=[
-    [1330,855],[1190,770],[1020,665],[840,616],[710,592],[530,585],
-    [380,565],[210,514],[70,470],[680,588],[825,528],[945,465],[1045,358],[1040,288]
-  ];
-  const segments=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12],[12,13]];
-  function distanceToPath(x,y){
-    let best=Infinity;
-    for(const [a,b] of segments){
-      const A=walk[a],B=walk[b],dx=B[0]-A[0],dy=B[1]-A[1];
-      const t=Math.max(0,Math.min(1,((x-A[0])*dx+(y-A[1])*dy)/(dx*dx+dy*dy)));
-      best=Math.min(best,Math.hypot(x-(A[0]+t*dx),y-(A[1]+t*dy)));
-    }
-    return best;
-  }
-  // Conservative temporary road corridor, not a final authored collision map.
-  function permitted(x,y){return x>=18&&x<=1430&&y>=180&&y<=1020&&distanceToPath(x,y)<=60;}
-  function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
-  let zoom=1.45,camX=0,camY=0,target=null,last=0,stickId=null;
-  function size(){
-    // Like Garden: view only part of the world. No full-map fit-to-screen.
-    zoom=clamp(Math.min(view.clientWidth/390,view.clientHeight/844)*1.05,0.90,1.15);
-    paint();
-  }
-  function paint(){
-    const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;
-    camX=clamp(player.x-vw/2,0,Math.max(0,W-vw));
-    camY=clamp(player.y-vh/2,0,Math.max(0,H-vh));
-    world.style.transform='translate3d('+(-camX*zoom)+'px,'+(-camY*zoom)+'px,0) scale('+zoom+')';
-    shion.style.left=player.x+'px';shion.style.top=player.y+'px';
-    shadow.style.left=player.x+'px';shadow.style.top=(player.y-4)+'px';
-    const sheet=moving?facing:'idle';const idx=moving?frameIndex:({down:0,up:1,left:2,right:3}[facing]);
-    spriteCtx.clearRect(0,0,118,156);
-    const image=sprites[sheet];
-    if(image && image.complete && image.naturalWidth >= 384*(idx+1)){
-      spriteCtx.imageSmoothingEnabled=true;
-      spriteCtx.imageSmoothingQuality='high';
-      spriteCtx.drawImage(image,384*idx,0,384,512,0,0,118,156);
-    }
-  }
-  function setStick(e){
-    const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-    const dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy),strength=Math.min(1,m/42);
-    direction.x=m?dx/m*strength:0;direction.y=m?dy/m*strength:0;
-    knob.style.transform='translate('+(direction.x*34)+'px,'+(direction.y*34)+'px)';
-  }
-  stick.addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;stick.setPointerCapture(e.pointerId);target=null;setStick(e);});
-  stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)setStick(e);});
-  function end(e){if(e.pointerId!==stickId)return;stickId=null;direction.x=direction.y=0;knob.style.transform='none';}
-  stick.addEventListener('pointerup',end);stick.addEventListener('pointercancel',end);
-  view.addEventListener('pointerup',e=>{
-    if(e.target.closest('#joystick'))return;
-    const r=view.getBoundingClientRect(),x=(e.clientX-r.left)/zoom+camX,y=(e.clientY-r.top)/zoom+camY;
-    if(permitted(x,y))target={x,y};
-  });
-  const keys=new Set();
-  window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)){keys.add(e.key);e.preventDefault();}});
-  window.addEventListener('keyup',e=>keys.delete(e.key));
-  function frame(now){
-    const dt=Math.min(.04,(now-(last||now))/1000);last=now;
-    let dx=direction.x,dy=direction.y;
-    if(keys.has('ArrowUp')||keys.has('w'))dy--;
-    if(keys.has('ArrowDown')||keys.has('s'))dy++;
-    if(keys.has('ArrowLeft')||keys.has('a'))dx--;
-    if(keys.has('ArrowRight')||keys.has('d'))dx++;
-    if(target&&!dx&&!dy){const x=target.x-player.x,y=target.y-player.y,d=Math.hypot(x,y);if(d<4)target=null;else {dx=x/d;dy=y/d;}}
-    const m=Math.hypot(dx,dy);
-    moving=m>.08;
-    if(moving){facing=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');walkClock+=dt;frameIndex=Math.floor(walkClock*8)%4;}
-    else {walkClock=0;frameIndex=0;}
-    if(m>0){dx/=Math.max(1,m);dy/=Math.max(1,m);const step=155*dt;
-      const nx=player.x+dx*step,ny=player.y+dy*step;
-      if(permitted(nx,ny)){player.x=nx;player.y=ny;}
-      else {if(permitted(nx,player.y))player.x=nx;if(permitted(player.x,ny))player.y=ny;target=null;}
-    }
-    paint();requestAnimationFrame(frame);
-  }
-  window.addEventListener('resize',size,{passive:true});size();requestAnimationFrame(frame);
-  for(const img of world.querySelectorAll('img'))img.addEventListener('error',()=>{document.getElementById('error').style.display='grid';},{once:true});
-  for(const sprite of Object.values(sprites))sprite.addEventListener('error',()=>{document.getElementById('error').style.display='grid';},{once:true});
+'use strict';
+const world=document.getElementById('world'),view=document.getElementById('view');
+const shion=document.getElementById('shion'),shadow=document.getElementById('shion-shadow');
+const stick=document.getElementById('joystick'),knob=document.getElementById('knob');
+const W=1448,H=1086,player={x:1190,y:770,dir:'left',moving:false,frame:0};
+const paths={idle:'shion_idle.png',down:'shion_walk_down.png',up:'shion_walk_up.png',left:'shion_walk_left.png',right:'shion_walk_right.png'};
+const sprites={};
+for(const [id,file] of Object.entries(paths)){const img=new Image();img.src='./assets/sprites/shion/'+file;sprites[id]=img;}
+const ctx=shion.getContext('2d');
+const points=[[1330,855],[1190,770],[1020,665],[840,616],[710,592],[530,585],[380,565],[210,514],[70,470],[825,528],[945,465],[1045,358],[1040,288]];
+const edges=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12]];
+function pathDistance(p){let min=Infinity;for(const [a,b] of edges){const A=points[a],B=points[b],dx=B[0]-A[0],dy=B[1]-A[1],t=Math.max(0,Math.min(1,((p.x-A[0])*dx+(p.y-A[1])*dy)/(dx*dx+dy*dy)));min=Math.min(min,Math.hypot(p.x-(A[0]+t*dx),p.y-(A[1]+t*dy)));}return min;}
+function valid(p){return p.x>=18&&p.x<=1430&&p.y>=180&&p.y<=1020&&pathDistance(p)<=60;}
+const collision={segmentClear(a,b){const len=Math.hypot(a.x-b.x,a.y-b.y),n=Math.max(1,Math.ceil(len/6));for(let i=0;i<=n;i++){const t=i/n;if(!valid({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}))return false;}return true;}};
+const navigator={findPath(from,to){if(!valid(to))return null;if(collision.segmentClear(from,to))return {target:to,points:[from,to]};return null;}};
+const controls=window.TarotControls.createControls(collision,navigator);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));let zoom=1,camX=0,camY=0,last=0,anim=0,pointerId=null;
+function size(){zoom=clamp(Math.min(view.clientWidth/390,view.clientHeight/844)*1.05,.9,1.15);render();}
+function render(){
+ const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;
+ camX=clamp(player.x-vw/2,0,Math.max(0,W-vw));camY=clamp(player.y-58-vh/2,0,Math.max(0,H-vh));
+ world.style.transform='translate3d('+(-camX*zoom)+'px,'+(-camY*zoom)+'px,0) scale('+zoom+')';
+ shion.style.left=player.x+'px';shion.style.top=player.y+'px';shadow.style.left=player.x+'px';shadow.style.top=(player.y-4)+'px';
+ const image=sprites[player.moving?player.dir:'idle'],idx=player.moving?player.frame:({down:0,up:1,left:2,right:3}[player.dir]);
+ ctx.clearRect(0,0,118,156);
+ if(image?.complete&&image.naturalWidth>=384*(idx+1)){ctx.imageSmoothingEnabled=true;ctx.drawImage(image,idx*384,0,384,512,0,0,118,156);}
+ const s=controls.state.stick;stick.hidden=!s.active;
+ if(s.active){stick.style.left=(s.ox-55)+'px';stick.style.top=(s.oy-55)+'px';stick.style.bottom='auto';knob.style.transform='translate('+s.knobX*.54+'px,'+s.knobY*.54+'px)';}
+}
+function pointer(e){const rect=view.getBoundingClientRect();return {id:e.pointerId,x:e.clientX-rect.left,y:e.clientY-rect.top,time:performance.now(),width:rect.width,world:{x:camX+(e.clientX-rect.left)/zoom,y:camY+(e.clientY-rect.top)/zoom},primary:e.isPrimary,button:e.button};}
+view.addEventListener('pointerdown',e=>{if(controls.pointerDown(pointer(e))){pointerId=e.pointerId;view.setPointerCapture?.(e.pointerId);e.preventDefault();}});
+view.addEventListener('pointermove',e=>{controls.pointerMove(pointer(e));});
+for(const type of ['pointerup','pointercancel'])view.addEventListener(type,e=>{const v=pointer(e);controls.pointerEnd({...v,cancelled:type==='pointercancel'},{x:player.x,y:player.y});pointerId=null;});
+window.addEventListener('keydown',e=>{if(controls.keyDown(e.key))e.preventDefault();});
+window.addEventListener('keyup',e=>controls.keyUp(e.key));
+window.addEventListener('blur',()=>controls.clearInput('blur'));
+function tick(t){const dt=Math.min(.04,(t-(last||t))/1000);last=t;const next=controls.step({x:player.x,y:player.y},dt,155);
+ player.x=next.x;player.y=next.y;player.moving=next.moving;
+ if(next.moving){player.dir=Math.abs(next.dx)>Math.abs(next.dy)?(next.dx>0?'right':'left'):(next.dy>0?'down':'up');anim+=dt;player.frame=Math.floor(anim*8)%4;}else{anim=0;player.frame=0;}
+ render();requestAnimationFrame(tick);}
+window.addEventListener('resize',size,{passive:true});size();requestAnimationFrame(tick);
+for(const img of world.querySelectorAll('img'))img.addEventListener('error',()=>{document.getElementById('error').style.display='grid';},{once:true});
 })();
 </script>
 </body>
