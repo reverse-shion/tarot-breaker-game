@@ -58,10 +58,13 @@ for(const name of Object.keys(actors)){
   const im=new Image();im.src='./assets/sprites/'+name+'/'+src;sprites[name][dir]=im;
  }
 }
-const player={x:1060,y:677,dir:'down',frame:0,moving:false,clock:0};
-const companion={x:1010,y:650,dir:'down',frame:0,moving:false,clock:0};
+// Start at the west-side starroad entrance shown in the acceptance screenshot.
+const player={x:259,y:558,dir:'down',frame:0,moving:false,clock:0};
+const companion={x:218,y:544,dir:'down',frame:0,moving:false,clock:0};
 let collision=null,navigation=null,controls=null,zoom=1,camX=0,camY=0,last=0,followClock=0,followRoute=[],booted=false;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ACTOR_COLLISION_DISTANCE=26,SHIOPON_FOLLOW_MIN_GAP=44;
+function movingIntoActor(from,to,other,threshold=ACTOR_COLLISION_DISTANCE){const before=Math.hypot(from.x-other.x,from.y-other.y),after=Math.hypot(to.x-other.x,to.y-other.y);return after<threshold&&after<before-1e-6;}
 function face(actor,dx,dy){if(Math.abs(dx)+Math.abs(dy)<.00001)return;actor.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
 function frameActor(actor,key,dt){
  const canvas=actors[key],ctx=canvas.getContext('2d'),sheet=sprites[key][actor.moving?actor.dir:'idle'];
@@ -95,17 +98,19 @@ function step(t){
  if(controls){
   const next=controls.step(player,dt,155);
   const dx=next.x-player.x,dy=next.y-player.y;
-  player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;
+  const actorBlocked=movingIntoActor(player,next,companion);
+  player.moving=next.moving&&!actorBlocked;face(player,dx,dy);
+  if(actorBlocked){controls.cancel('shiopon-blocked');}else{player.x=next.x;player.y=next.y;}
   // Follow with the same shared navigation graph, never cross a blocked polygon.
   followClock-=dt;const distance=Math.hypot(player.x-companion.x,player.y-companion.y);
   if(followClock<=0){followClock=.18;const target={x:player.x-42,y:player.y+14};
     const path=navigation.findPath(companion,target);followRoute=path?path.points.slice(1):[];}
   companion.moving=false;
-  if(distance>42&&followRoute.length){
+  if(distance>SHIOPON_FOLLOW_MIN_GAP&&followRoute.length){
    const dst=followRoute[0],vx=dst.x-companion.x,vy=dst.y-companion.y,len=Math.hypot(vx,vy);
    if(len<6)followRoute.shift();
    else{const step=Math.min(len,210*dt),next={x:companion.x+vx/len*step,y:companion.y+vy/len*step};
-   if(collision.segmentClear(companion,next)){face(companion,vx,vy);companion.x=next.x;companion.y=next.y;companion.moving=true;}}
+   if(collision.segmentClear(companion,next)&&!movingIntoActor(companion,next,player,SHIOPON_FOLLOW_MIN_GAP)){face(companion,vx,vy);companion.x=next.x;companion.y=next.y;companion.moving=true;}}
   }
  }
  camera();frameActor(player,'shion',dt);frameActor(companion,'shiopon',dt);drawForegroundMask();
@@ -119,7 +124,7 @@ async function boot(){
   collision=window.TarotNavigation.createCollision(data);
   navigation=window.TarotNavigation.createNavigator(collision,16);
   const safe=collision.nearestWalkable(player);if(!safe)throw Error('歩行開始位置がありません');Object.assign(player,safe);
-  const side=collision.nearestWalkable({x:player.x-50,y:player.y-15});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
+  const side=collision.nearestWalkable({x:player.x-48,y:player.y-12});if(!side)throw Error('しおぽん配置範囲がありません');Object.assign(companion,side);
   controls=window.TarotControls.createControls(collision,navigation);
   document.body.classList.toggle('debug',new URLSearchParams(location.search).get('debug')==='1');
   resize();booted=true;requestAnimationFrame(step);
