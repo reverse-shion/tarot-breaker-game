@@ -18,7 +18,7 @@ test('no instant Shiopon reposition from historic footprints during movement',()
 });
 const trailCode=html.slice(html.indexOf('function trailingPoint('),html.indexOf('function movingIntoActor('));
 const trailContext={Math};vm.createContext(trailContext);
-vm.runInContext(trailCode+';this.trail={trailingPoint,trimFootprints};',trailContext);
+vm.runInContext('const FOLLOW_LAG=56;'+trailCode+';this.trail={trailingPoint,trimFootprints};',trailContext);
 test('trailing point stays 56px behind around a corner',()=> {
   const f=trailContext.trail.trailingPoint;
   const point=f([{x:0,y:0},{x:100,y:0},{x:100,y:100}],56);
