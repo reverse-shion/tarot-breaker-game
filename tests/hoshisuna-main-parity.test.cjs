@@ -16,7 +16,7 @@ for(const [name,next] of [
 ]){
  test('main exact function: '+name,()=>assert.equal(fn(variant,name,next),fn(original,name,next)));
 }
-test('isolated entry uses Garden actors, sky, clouds, Starroad only',()=>{
+test('isolated entry uses Garden actors, sky, clouds, Starroad and the same Garden waterfall animation',()=>{
  assert.match(scene,/hoshisuna-main-game\.js/);
  assert.match(scene,/data-collision-url="\.\/assets\/events\/hoshisuna\/map\/starroad-collision\.json"/);
  assert.match(scene,/hoshisuna-scene-adapter\.js/);
