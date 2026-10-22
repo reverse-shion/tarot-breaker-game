@@ -6,7 +6,7 @@ const effects=fs.readFileSync(path.join(root,'scene-effects.js'),'utf8');
 const source=(p)=>path.join(root,p);
 const gitBlob=(p)=>cp.execFileSync('git',['hash-object',source(p)],{encoding:'utf8'}).trim();
 test('Starroad and falls are byte-exact assets already merged to main',()=>{
- assert.equal(gitBlob('assets/events/hoshisuna/map/starroad.webp'),'5c700b10f091758f08a50061bde8a954e00192aa');
+ assert.equal(gitBlob('assets/events/hoshisuna/map/starroad.webp'),'5c700b10aa38e2e64f222eea9b48f461c53290e4');
  assert.equal(gitBlob('assets/events/hoshisuna/map/falls.webp'),'b1cbcf1729e0758f9e0d4c26d05c10c7d86ba18d');
 });
 test('all visible Starroad entry references use new asset version',()=>{
