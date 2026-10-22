@@ -25,7 +25,7 @@ test('isolated entry uses Garden actors, sky, clouds, Starroad only',()=>{
  assert.doesNotMatch(scene,/story-event-guard\.js|public-continue-title\.js|single-map-occlusion\.js/);
 });
 test('Hoshisuna entry is isolated and no title save-reset',()=>{
- assert.match(variant,/hoshisunaIsolated \? \{/);
+ assert.match(variant,/collision = hoshisunaIsolated/);
  assert.match(variant,/if \(hoshisunaIsolated\) \{\s*player\.dir = "right"/);
  assert.match(variant,/if \(!hoshisunaIsolated && window\.TarotDialogue\?\.getState\(\)\.joined\)/);
  assert.match(variant,/!hoshisunaIsolated && !stage3Dev && enteringGardenRuntime/);
