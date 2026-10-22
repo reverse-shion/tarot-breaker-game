@@ -385,13 +385,14 @@
     const response = await fetch(COLLISION_URL, { cache: "no-store" });
     if (!response.ok) throw new Error("当たり判定データを読み込めません");
     const data = await response.json();
-    // Caritas is a static NPC on this preview; keep its body out of the walk graph.
-    const hoshisunaData = hoshisunaIsolated ? {
-      ...data, blockedAreas: [...(data.blockedAreas || []), {type:"poly", points:[[934,150],[1092,150],[1092,272],[934,272]]}]
-    } : data;
-    collision = createCollision(!hoshisunaIsolated && window.TarotSceneLayout ? {
+    // Shared navigation ignores blockedAreas; apply Starroad's NPC exclusion
+    // to all collision methods (including pathfinding), never to main Garden.
+    const baseCollision = createCollision(!hoshisunaIsolated && window.TarotSceneLayout ? {
       ...data, blockedAreas: [...(data.blockedAreas || []), ...window.TarotSceneLayout.solidBases],
-    } : hoshisunaData);
+    } : data);
+    collision = hoshisunaIsolated
+      ? window.TarotHoshisunaCollision.wrap(baseCollision)
+      : baseCollision;
     walkAreas = collision.areas;
     collisionVersion = collision.version;
     // The authored pathfinder remains unchanged across lock/unlock.
