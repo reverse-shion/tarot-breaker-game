@@ -155,6 +155,8 @@ function frameActor(actor,key,dt){
  ctx.imageSmoothingEnabled=true;ctx.drawImage(sheet,384*actor.frame,0,384,512,0,0,118,156);
  }
  canvas.style.left=actor.x+'px';canvas.style.top=actor.y+'px';
+ // Same as main draw ordering: Shiopon is behind Shion while following.
+ canvas.style.zIndex=key==='shiopon'?'1':'2';
 }
 function camera(){
  const vw=view.clientWidth/zoom,vh=view.clientHeight/zoom;
