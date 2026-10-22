@@ -68,7 +68,7 @@ for(const name of Object.keys(actors)){
 const player={x:108,y:488,dir:'right',frame:0,moving:false,clock:0};
 const companion={x:148,y:505,dir:'right',frame:0,moving:false,clock:0};
 let collision=null,navigation=null,controls=null,zoom=1,camX=0,camY=0,last=0,followClock=0,followRoute=[],booted=false;
-let footprints=[];const FOLLOW_LAG=54;
+let footprints=[];const FOLLOW_LAG=56;const FOLLOW_SPEED=210;const FOLLOW_STOP=3;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const panel=document.querySelector('#coord-panel'),mark=document.querySelector('#coord-mark');
 const coordX=document.querySelector('#coord-x'),coordY=document.querySelector('#coord-y'),status=document.querySelector('#coord-status');
@@ -110,7 +110,40 @@ function clearCaritas(from,to,radius=15){
  return lo>hi;
 }
 function npcClear(from,to){return clearCaritas(from,to)&&collision.segmentClear(from,to);}
-function resetFollower(){const rear={x:player.x-54,y:player.y};const safe=collision.nearestWalkable(rear);if(!safe||!clearCaritas(safe,safe)||separation(safe,player)<ACTOR_COLLISION_DISTANCE)throw Error('しおぽんの後方配置地点がありません');Object.assign(companion,safe,{moving:false,clock:0,dir:player.dir});footprints=[{x:safe.x,y:safe.y},{x:player.x,y:player.y}];}
+function resetFollower(){
+  // Match main's desired rear offset; never put Shiopon ahead at startup.
+  const behind={up:[0,1],down:[0,-1],left:[1,0],right:[-1,0]}[player.dir]||[-1,0];
+  let safe=null;
+  for(const gap of [FOLLOW_LAG,FOLLOW_LAG+8,FOLLOW_LAG-8]){
+    const candidate={x:player.x+behind[0]*gap,y:player.y+behind[1]*gap};
+    if(collision.isWalkable(candidate.x,candidate.y)&&npcClear(candidate,player)&&separation(candidate,player)>=44){safe=candidate;break;}
+  }
+  if(!safe)throw Error('しおぽんの後方配置地点がありません');
+  Object.assign(companion,safe,{moving:false,clock:0,dir:player.dir});
+  footprints=[{x:safe.x,y:safe.y},{x:player.x,y:player.y}];
+}
+// An arc-length position on Shion's actual walked route, rather than
+// a new pathfinding destination which might cut corners or jump around.
+function trailingPoint(trail,gap){
+  if(!trail.length)return null;
+  let remaining=gap;
+  for(let i=trail.length-1;i>0;i--){
+    const newer=trail[i],older=trail[i-1],length=Math.hypot(newer.x-older.x,newer.y-older.y);
+    if(length>=remaining){
+      const t=length?remaining/length:0;
+      return {x:newer.x+(older.x-newer.x)*t,y:newer.y+(older.y-newer.y)*t};
+    }
+    remaining-=length;
+  }
+  return {...trail[0]};
+}
+function trimFootprints(trail,maxDistance=FOLLOW_LAG+120){
+  let distance=0;
+  for(let i=trail.length-1;i>0;i--){
+    distance+=Math.hypot(trail[i].x-trail[i-1].x,trail[i].y-trail[i-1].y);
+    if(distance>maxDistance){if(i>1)trail.splice(0,i-1);return;}
+  }
+}
 function movingIntoActor(from,to,other,threshold=ACTOR_COLLISION_DISTANCE){const before=Math.hypot(from.x-other.x,from.y-other.y),after=Math.hypot(to.x-other.x,to.y-other.y);return after<threshold&&after<before-1e-6;}
 function face(actor,dx,dy){if(Math.abs(dx)+Math.abs(dy)<.00001)return;actor.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
 function frameActor(actor,key,dt){
@@ -145,39 +178,29 @@ function step(t){
  if(controls){
   const next=controls.step(player,dt,155);
   const dx=next.x-player.x,dy=next.y-player.y;
-  // Both NPCs have physical collision. On contact with the follower, first
-  // relocate them safely to a recorded rear waypoint, otherwise stop Shion.
-  let allowed=npcClear(player,next);
-  if(allowed&&separation(next,companion)<ACTOR_COLLISION_DISTANCE){
-    const rear=footprints.find(p=>separation(p,next)>=SHIOPON_FOLLOW_MIN_GAP&&separation(p,player)>=ACTOR_COLLISION_DISTANCE&&npcClear(companion,p));
-    if(rear){Object.assign(companion,rear,{moving:false,clock:0});}else allowed=false;
-  }
-  if(!allowed){controls.cancel('npc-collision');player.moving=false;}else{player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;}
-  // Follow Shion's actual footprints, not a point beside or ahead of him.
-  // The trail records traversed positions only, so tight bends stay on the path.
+  // No instant relocation: a follower can never appear at an old footprint.
+  // Collision is symmetric, including Caritas and Shiopon.
+  const allowed=npcClear(player,next)&&separation(next,companion)>=ACTOR_COLLISION_DISTANCE;
+  if(!allowed){controls.cancel('npc-collision');player.moving=false;}
+  else{player.moving=next.moving;face(player,dx,dy);player.x=next.x;player.y=next.y;}
   const lastFoot=footprints[footprints.length-1];
-  if(!lastFoot||Math.hypot(player.x-lastFoot.x,player.y-lastFoot.y)>=5){
+  if(!lastFoot||separation(player,lastFoot)>.01){
     footprints.push({x:player.x,y:player.y});
+    trimFootprints(footprints);
   }
-  let total=0,target=footprints[0];
-  for(let i=footprints.length-1;i>0;i--){
-    const newer=footprints[i],older=footprints[i-1];
-    const len=Math.hypot(newer.x-older.x,newer.y-older.y);
-    if(total+len>=FOLLOW_LAG){
-      const ratio=(FOLLOW_LAG-total)/Math.max(len,1e-6);
-      target={x:newer.x+(older.x-newer.x)*ratio,y:newer.y+(older.y-newer.y)*ratio};
-      break;
-    }
-    total+=len;target=older;
-  }
-  if(footprints.length>700)footprints.splice(0,footprints.length-700);
+  // Follow the same physical path as Shion, 56px behind, with bounded speed.
+  const target=trailingPoint(footprints,FOLLOW_LAG);
   companion.moving=false;
-  const vx=target.x-companion.x,vy=target.y-companion.y,len=Math.hypot(vx,vy);
-  if(len>5){
-    const amount=Math.min(len,180*dt);
-    const candidate={x:companion.x+vx/len*amount,y:companion.y+vy/len*amount};
-    if(npcClear(companion,candidate)&&Math.hypot(candidate.x-player.x,candidate.y-player.y)>=ACTOR_COLLISION_DISTANCE){
-      face(companion,vx,vy);companion.x=candidate.x;companion.y=candidate.y;companion.moving=true;
+  if(target){
+    const distance=separation(companion,target);
+    if(distance>FOLLOW_STOP){
+      const amount=Math.min(distance,FOLLOW_SPEED*dt);
+      const candidate={x:companion.x+(target.x-companion.x)*amount/distance,
+                       y:companion.y+(target.y-companion.y)*amount/distance};
+      if(npcClear(companion,candidate)&&separation(candidate,player)>=ACTOR_COLLISION_DISTANCE){
+        face(companion,candidate.x-companion.x,candidate.y-companion.y);
+        companion.x=candidate.x;companion.y=candidate.y;companion.moving=true;
+      }
     }
   }
  }
