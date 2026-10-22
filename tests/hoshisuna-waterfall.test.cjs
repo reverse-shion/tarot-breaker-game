@@ -30,7 +30,7 @@ test('two waterfall image layers use the transparent new falls, not old Garden w
 });
 test('reuse Garden main waterfall draw-mask and unmodified two-phase motion',()=>{
  assert.match(html,/src="\.\/scene-effects\.js\?/);
- assert.match(html,/src="\.\/game\.css\?/);
+ assert.match(html,/href="\.\/game\.css\?/);
  assert.match(effects,/for\(const l of document\.querySelectorAll\("\.scene-waterfall"\)\)/);
  assert.match(effects,/p\.drawImage\(img,0,0,REF\.w,REF\.h\)/);
  assert.match(effects,/l\.style\.maskImage=`url\("\$\{img\.src\}"\)`/);
