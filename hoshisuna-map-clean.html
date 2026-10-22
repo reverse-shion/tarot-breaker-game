@@ -1,5 +1,10 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<html lang="ja"><head>
+<script>
+if(new URLSearchParams(location.search).get("legacy")!=="1"){
+  location.replace("./hoshisuna-main.html?dev=hoshisuna");
+}
+</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
 <title>TAROT BREAKER — 星砂マップ確認</title>
 <link rel="stylesheet" href="./sky-atmosphere.css?v=1.0.0"><link rel="stylesheet" href="./cloud-motion-fix.css?v=1.7.0">
 <style>
