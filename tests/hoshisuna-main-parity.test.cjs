@@ -10,7 +10,6 @@ for(const [name,next] of [
  ['updateShioponFollow','startShioponRace'],
  ['updateCamera','drawSpritePass'],
  ['drawActor','drawGroundShadowAt'],
- ['drawActors','drawCollisionDebug'],
  ['pointerInfo','syncStick'],
  ['syncStick','placeShioponBesidePlayer'],
  ['startShioponFollow','stopShioponFollow']
@@ -36,3 +35,5 @@ test('Caritas body excluded from existing shared navigation graph',()=>{
  assert.match(scene,/data-world-x="950\.5"/);
  assert.match(scene,/data-world-y="166\.6"/);
 });
+
+test('main actor draw order retained; Garden-only Lumiere suppressed',()=>{const originalActors=fn(original,'drawActors','drawCollisionDebug');const starroadActors=fn(variant,'drawActors','drawCollisionDebug');assert.match(starroadActors,/shiopon\.following && a\.actor === shiopon \? player\.y - 0\.01/);assert.match(originalActors,/shiopon\.following && a\.actor === shiopon \? player\.y - 0\.01/);assert.match(starroadActors,/!hoshisunaIsolated && \(!stage3Runtime \|\| aftermathLumiereEnabled\)/);});
