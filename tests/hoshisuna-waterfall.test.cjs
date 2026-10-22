@@ -5,12 +5,12 @@ const css=fs.readFileSync(path.join(root,'game.css'),'utf8');
 const effects=fs.readFileSync(path.join(root,'scene-effects.js'),'utf8');
 const source=(p)=>path.join(root,p);
 const gitBlob=(p)=>cp.execFileSync('git',['hash-object',source(p)],{encoding:'utf8'}).trim();
-test('Starroad and falls are byte-exact assets already merged to main',()=>{
- assert.equal(gitBlob('assets/events/hoshisuna/map/starroad.webp'),'5c700b10aa38e2e64f222eea9b48f461c53290e4');
+test('cleaned Starroad remains byte-exact and falls are unchanged',()=>{
+ assert.equal(gitBlob('assets/events/hoshisuna/map/starroad.webp'),'c05db8c2ae2ec72ffcfc3496ffa7fc0a2ce41e33');
  assert.equal(gitBlob('assets/events/hoshisuna/map/falls.webp'),'b1cbcf1729e0758f9e0d4c26d05c10c7d86ba18d');
 });
 test('all visible Starroad entry references use new asset version',()=>{
- const src='./assets/events/hoshisuna/map/starroad.webp?asset=5c700b10';
+ const src='./assets/events/hoshisuna/map/starroad.webp?asset=c05db8c2';
  assert.ok((html.split(src).length-1)>=4);
  assert.doesNotMatch(html,/starroad\.webp"/);
  assert.match(html,/class="scene-world-layer scene-back scene-ground"[^>]*><img[^>]*starroad\.webp\?asset=/);
@@ -47,4 +47,14 @@ test('the existing Garden animation is not disabled by the Hoshisuna overlay',()
  assert.ok(rule.includes('z-index:11!important'));
  assert.match(html,/<div class="scene-world-layer scene-back scene-waterfall scene-waterfall-base"[^>]*><img[^>]*falls\.webp[^>]*><canvas width="1448" height="1086"><\/canvas><\/div>/);
  assert.match(html,/<div class="scene-world-layer scene-back scene-waterfall scene-waterfall-flow"[^>]*><img[^>]*falls\.webp[^>]*><canvas width="1448" height="1086"><\/canvas><\/div>/);
+});
+
+test('falls appear after ground and foreground in DOM as well as by z-index',()=>{
+  const ground=html.indexOf('scene-world-layer scene-back scene-ground');
+  const foreground=html.indexOf('scene-world-layer scene-front scene-foreground');
+  const waterfallBase=html.indexOf('scene-world-layer scene-back scene-waterfall scene-waterfall-base');
+  const waterfallFlow=html.indexOf('scene-world-layer scene-back scene-waterfall scene-waterfall-flow');
+  assert.ok(ground>=0 && foreground>ground && waterfallBase>foreground && waterfallFlow>waterfallBase);
+  assert.equal((html.match(/scene-waterfall scene-waterfall-base/g)||[]).length,1);
+  assert.equal((html.match(/scene-waterfall scene-waterfall-flow/g)||[]).length,1);
 });
