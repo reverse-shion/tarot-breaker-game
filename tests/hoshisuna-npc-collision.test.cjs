@@ -13,7 +13,7 @@ test('no instant Shiopon reposition from historic footprints during movement',()
   const step=source('step','async function boot()');
   assert.doesNotMatch(step,/footprints\.find\(/);
   assert.doesNotMatch(step,/Object\.assign\(companion/);
-  assert.match(step,/Math\.min\(distance,FOLLOW_SPEED\*dt\)/);
+  assert.match(step,/Math\.min\(distance,speed\*dt\)/);assert.match(step,/FOLLOW_SPRINT_SPEED/);
   assert.match(step,/trailingPoint\(footprints,FOLLOW_LAG\)/);
 });
 const trailCode=html.slice(html.indexOf('function trailingPoint('),html.indexOf('function movingIntoActor('));
@@ -26,7 +26,7 @@ test('trailing point stays 56px behind around a corner',()=> {
   const straight=f([{x:0,y:0},{x:120,y:0}],56);
   assert.ok(Math.abs(straight.x-64)<.01&&Math.abs(straight.y)<.01);
 });
-test('trail movement is continuous and bounded at 210px/s',()=>{
+test('trail movement is continuous and bounded at normal 210px/s',()=>{
   const f=trailContext.trail.trailingPoint,prune=trailContext.trail.trimFootprints;
   const trail=[{x:0,y:0},{x:56,y:0}];let companion={x:0,y:0},previous={...companion};
   for(let n=1;n<=140;n++){
