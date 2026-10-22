@@ -1600,7 +1600,7 @@
 
 
   function drawActors() {
-    if (!visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
+    if (!hoshisunaIsolated && !visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
 
@@ -1636,7 +1636,7 @@
         },
       },
     ].filter(entry => (entry.actor !== shiopon || !shiopon.hidden) &&
-      (entry.actor !== lumiere || !stage3Runtime || aftermathLumiereEnabled)).sort((a, b) => {
+      (entry.actor !== lumiere || (!hoshisunaIsolated && (!stage3Runtime || aftermathLumiereEnabled)))).sort((a, b) => {
       const ay =
         shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
       const by =
