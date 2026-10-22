@@ -16,7 +16,7 @@ test('all visible Starroad entry references use new asset version',()=>{
  assert.match(html,/class="scene-world-layer scene-back scene-ground"[^>]*><img[^>]*starroad\.webp\?asset=/);
 });
 test('two waterfall image layers use the transparent new falls, not old Garden waterfall',()=>{
- const matches=html.match(/class="scene-world-layer scene-back scene-waterfall scene-waterfall-(?:base|flow)"[^>]*>[\\s\\S]*?<img[^>]+falls\.webp\?asset=b1cbcf17/g)||[];
+ const matches=html.match(/class="scene-world-layer scene-back scene-waterfall scene-waterfall-(?:base|flow)"[^>]*>[\s\S]*?<img[^>]+falls\.webp\?asset=b1cbcf17/g)||[];
  assert.equal(matches.length,2);
  assert.doesNotMatch(html,/star-country-gate-garden-waterfall\.webp/);
  assert.doesNotMatch(html,/\.scene-background,\.scene-waterfall,/);
