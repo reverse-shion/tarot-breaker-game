@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0b1029" />
     <title>TAROT BREAKER — 星砂・main同一ゲームエンジン検証</title>
     <link rel="preload" as="image" href="./assets/maps/star-country-farthest-sky-background.webp" fetchpriority="high" />
-    <link rel="preload" as="image" href="./assets/events/hoshisuna/map/starroad.webp?asset=2dc27814" fetchpriority="high" />
+    <link rel="preload" as="image" href="./assets/events/hoshisuna/map/starroad.webp?asset=5c700b10" fetchpriority="high" />
     <link rel="preload" as="image" href="./assets/events/hoshisuna/map/falls.webp?asset=b1cbcf17" />
     <link rel="preload" as="image" href="./assets/maps/star-country-gate-garden-star-sky.webp" />
     <link rel="preload" as="image" href="./assets/maps/star-country-world-clouds.webp?asset=eaea4c9513cf" />
@@ -57,6 +57,9 @@
 .scene-gate-event,.scene-sun-light {display:none!important}
 #map-layer{opacity:0!important}
 .scene-ground{display:block!important;z-index:3!important}
+/* The three falls must sit above every Starroad pass, including authored foreground.
+   The Garden's main waterfall-flow animation and two masked canvases remain unchanged. */
+#game-shell .scene-waterfall{display:block!important;z-index:11!important;pointer-events:none}
 .hoshi-caritas{display:block!important;z-index:6!important;pointer-events:none}
 .hoshi-caritas img{width:100%;height:100%;object-fit:contain}
 #game{z-index:7!important}
@@ -102,7 +105,7 @@
       })();
     </script>
     <main id="game-shell" data-gate-state="normal" aria-label="TAROT BREAKER 1000年前の星の国">
-      <img id="map-layer" class="map-layer scene-map-base" src="./assets/events/hoshisuna/map/starroad.webp?asset=2dc27814" alt="" aria-hidden="true" draggable="false" />
+      <img id="map-layer" class="map-layer scene-map-base" src="./assets/events/hoshisuna/map/starroad.webp?asset=5c700b10" alt="" aria-hidden="true" draggable="false" />
       <div class="scene-world-layer scene-back scene-farthest-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-farthest-sky-background.webp" alt="" draggable="false" /></div>
       <div class="scene-world-layer scene-back scene-star-sky" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-sky.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-sun-light" data-scene-object data-world-x="100" data-world-y="130" data-world-w="340" data-world-h="340" aria-hidden="true"></div>
@@ -110,8 +113,8 @@
       <div class="scene-world-layer scene-back scene-background" data-scene-world aria-hidden="true"><canvas width="1448" height="1086"></canvas></div>
       <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-base" data-scene-world aria-hidden="true"><img crossorigin="anonymous" hidden src="./assets/events/hoshisuna/map/falls.webp?asset=b1cbcf17" alt="" draggable="false" /><canvas width="1448" height="1086"></canvas></div>
       <div class="scene-world-layer scene-back scene-waterfall scene-waterfall-flow" data-scene-world aria-hidden="true"><img crossorigin="anonymous" hidden src="./assets/events/hoshisuna/map/falls.webp?asset=b1cbcf17" alt="" draggable="false" /><canvas width="1448" height="1086"></canvas></div>
-      <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/events/hoshisuna/map/starroad.webp?asset=2dc27814" alt="" draggable="false" /></div>
-      <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true"><img crossorigin="anonymous" hidden src="./assets/events/hoshisuna/map/starroad.webp?asset=2dc27814" alt="" draggable="false" /><canvas width="1448" height="1086"></canvas></div>
+      <div class="scene-world-layer scene-back scene-ground" data-scene-world aria-hidden="true"><img crossorigin="anonymous" src="./assets/events/hoshisuna/map/starroad.webp?asset=5c700b10" alt="" draggable="false" /></div>
+      <div class="scene-world-layer scene-front scene-foreground" data-scene-world aria-hidden="true"><img crossorigin="anonymous" hidden src="./assets/events/hoshisuna/map/starroad.webp?asset=5c700b10" alt="" draggable="false" /><canvas width="1448" height="1086"></canvas></div>
       <div class="scene-object scene-back scene-gate-base" data-scene-object data-mask-only="true" data-world-x="521.5469613259668" data-world-y="-70" data-world-w="560" data-world-h="420" aria-hidden="true" hidden><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-star-gate-base.webp?v=gate-assembly-v1" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-fountain-base" data-scene-object data-world-x="625" data-world-y="388" data-world-w="350" data-world-h="245" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-base.webp" alt="" draggable="false" /></div>
       <div class="scene-object scene-back scene-fountain-water" data-scene-object data-world-x="650" data-world-y="409" data-world-w="300" data-world-h="176" aria-hidden="true"><img crossorigin="anonymous" src="./assets/maps/star-country-gate-garden-fountain-water.webp" alt="" draggable="false" /></div>
