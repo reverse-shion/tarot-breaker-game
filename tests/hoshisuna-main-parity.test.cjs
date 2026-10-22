@@ -30,8 +30,12 @@ test('Hoshisuna entry is isolated and no title save-reset',()=>{
  assert.match(variant,/if \(!hoshisunaIsolated && window\.TarotDialogue\?\.getState\(\)\.joined\)/);
  assert.match(variant,/!hoshisunaIsolated && !stage3Dev && enteringGardenRuntime/);
 });
-test('Caritas body excluded from existing shared navigation graph',()=>{
- assert.match(variant,/points:\[\[934,150\],\[1092,150\],\[1092,272\],\[934,272\]\]/);
+test('Caritas collision is applied to active shared collision before navigation and controls',()=>{
+ assert.match(variant,/collision = hoshisunaIsolated\s*\? window\.TarotHoshisunaCollision\.wrap\(baseCollision\)/);
+ assert.match(variant,/navigation = createNavigator\(collision, 16\)/);
+ assert.match(variant,/controls = createControls\(playerCollision, navigation\)/);
+ assert.match(scene,/hoshisuna-caritas-collision\.js/);
+ assert.ok(scene.indexOf('hoshisuna-caritas-collision.js')<scene.indexOf('hoshisuna-main-game.js'));
  assert.match(scene,/data-world-x="950\.5"/);
  assert.match(scene,/data-world-y="166\.6"/);
 });
