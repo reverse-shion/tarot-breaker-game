@@ -1,0 +1,2781 @@
+(() => {
+  "use strict";
+  if (window.__TAROT_STAGE3_ENTRY_REJECTED__ === true) return;
+
+  const canvas = document.getElementById("game");
+  let ctx = canvas.getContext("2d", { alpha: true });
+  const map = document.getElementById("map-layer");
+  const start = document.getElementById("start");
+  const startScreen = document.getElementById("start-screen");
+  const note = document.getElementById("load-note");
+  const guide = document.getElementById("guide");
+  const joystick = document.getElementById("joystick");
+  const knob = document.getElementById("joystick-knob");
+
+
+  const REF = { w: 1448, h: 1086 };
+  const DEFAULT_SPAWN = { x: 724, y: 1015 };
+  const SPEED = 155;
+  const DPR_LIMIT = 2;
+  const FRAME = { w: 384, h: 512, baseline: 480, count: 4 };
+  const DRAW_HEIGHT = 78;
+  const SHIOPON_DRAW_HEIGHT = 76;
+  const LUMIERE_DRAW_HEIGHT = 78;
+  const ACTOR_OUTLINES = {
+    player: { color: "rgba(54,31,34,.92)", width: 0.72, opacity: 0.72 },
+    shiopon: { color: "rgba(43,25,78,.96)", width: 1.05, opacity: 0.9 },
+  };
+  const SHIOPON_SPEED = 52;
+  const SHIOPON_HOME = { x: 810, y: 800 };
+  const SHIOPON_WANDER_RADIUS = 48;
+  const SHIOPON_FOLLOW_SPEED = 210;
+  const SHIOPON_FOLLOW_CATCHUP_SPEED = 285;
+  const SHIOPON_FOLLOW_SPRINT_SPEED = 360;
+  const SHIOPON_FOLLOW_DISTANCE = 56;
+  const SHIOPON_FOLLOW_STOP = 5;
+  const SHIOPON_FOLLOW_MIN_GAP = 44;
+  const SHIOPON_FOLLOW_REPLAN_INTERVAL = 0.18;
+  const SHIOPON_FOLLOW_REPLAN_DISTANCE = 14;
+  const SHIOPON_FOLLOW_EMERGENCY_GAP = 260;
+  const SHIOPON_RACE_SPEED = 235;
+  const SHIOPON_RACE_DISTANCE = 92;
+  const SHIOPON_TRIP_DURATION = 0.2;
+  const SHIOPON_TRIP_ANGLE = Math.PI * 0.32;
+  const ACTOR_COLLISION_DISTANCE = 26;
+  const LUMIERE_HOME = { x: 810, y: 212 };
+  const LUMIERE_COLLISION_DISTANCE = 32;
+  const LUMIERE_BOB_AMPLITUDE = 2.4;
+  const LUMIERE_BOB_PERIOD = 5.2;
+  const LUMIERE_BOTTOM_GAP = 2.7;
+  const CAMERA_MIN_ZOOM = 1.0;
+  const CAMERA_MAX_ZOOM = 1.22;
+  const CAMERA_BASE_OFFSET_Y = 58;
+  const CAMERA_LOOK_AHEAD_Y = 28;
+  const STAGE_LANDMARKS = Object.freeze({
+    flower: Object.freeze({ x: 930, y: 770 }),
+    fountain: Object.freeze({ x: 810, y: 500 }),
+    gate: Object.freeze({ x: 810, y: 105 }),
+  });
+  const STAGE_DIRECTIONS = Object.freeze({
+    down: Object.freeze({ x: 0, y: 1 }),
+    up: Object.freeze({ x: 0, y: -1 }),
+    left: Object.freeze({ x: -1, y: 0 }),
+    right: Object.freeze({ x: 1, y: 0 }),
+  });
+  function navigateRuntime(target) {
+    if (window.TarotRuntimeEntry?.navigate) {
+      const result = window.TarotRuntimeEntry.navigate(target);
+      if (result?.ok) return true;
+      console.warn("[Runtime Entry] handoff unavailable", result?.reason);
+      return false;
+    }
+    location.href = target;
+    return true;
+  }
+
+  const params = new URLSearchParams(location.search);
+  const stage3Dev = ["star-gate-full", "star-gate-from-lumiere"].includes(params.get("dev")) && window.__TAROT_DEV_STAGE3__ === true;
+  const stage3Runtime = stage3Dev || window.__TAROT_PUBLIC_STAR_GATE__ === true;
+  const enteringFromLanding = params.get("from") === "landing";
+  const gardenResumeDev = stage3Dev || (params.get("from") === null &&
+    /^garden-resume-(before-shiopon|after-shiopon|after-lumiere)$/.test(params.get("dev") || ""));
+  const gardenResumePublic = params.getAll("entry").length === 1 && params.get("entry") === "continue" &&
+    !params.has("from") && !params.has("dev");
+  const hoshisunaDev = params.get("dev") === "hoshisuna-event" && /\/hoshisuna-event\.html$/.test(location.pathname);
+  const enteringGardenRuntime = enteringFromLanding || gardenResumeDev || gardenResumePublic || hoshisunaDev;
+  const landingResumeDevId = enteringFromLanding && /^landing-resume-(arrival|memory-complete|waiting)$/.test(params.get("dev") || "")
+    ? params.get("dev")
+    : null;
+  if (enteringGardenRuntime && startScreen) startScreen.hidden = true;
+  const DEPTH_DEBUG = params.has("depthDebug");
+  const NAV_DEBUG = params.get("navDebug") === "1";
+
+  const config = document.currentScript?.dataset || {};
+  const COLLISION_URL =
+    config.collisionUrl || (hoshisunaDev ? "./assets/events/hoshisuna/map/starroad-collision.json" : "./assets/maps/star-country-gate-garden-collision.json");
+  const SPRITE_BASE = config.spriteBase || "./assets/sprites/shion/";
+  const SHIOPON_BASE = stage3Runtime ? "./assets/sprites/shiopon/" : (
+    config.shioponBase ||
+    "https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/main/assets/sprites/shiopon/");
+  const LUMIERE_BASE = stage3Runtime ? "./assets/sprites/lumiere/" : (
+    config.lumiereBase ||
+    "./assets/sprites/lumiere/");
+
+  const { createCollision, createNavigator } = window.TarotNavigation;
+  const { createControls } = window.TarotControls;
+
+  let manifest;
+  let collision;
+  let navigation;
+  let controls;
+  let tapEffect = null;
+  let debugStatus = null;
+  let npcSuspended = false;
+  let walkAreas = [];
+  let collisionVersion = 0;
+  let spawnRef = { ...DEFAULT_SPAWN };
+  let world = { w: REF.w, h: REF.h };
+  let scale = { x: 1, y: 1 };
+  let cssWidth = 1;
+  let cssHeight = 1;
+  let dpr = 1;
+  let ready = false;
+  let running = false;
+  let leavingMap = false;
+  let gardenExitArmed = false;
+  let gardenExitRef = { ...DEFAULT_SPAWN };
+  const eastPassage = window.TarotGardenEastPassage;
+  const eastPassageLine = eastPassage?.B_LINE;
+  const eastPassageFeedback = eastPassage?.createFeedbackThrottle?.(1500);
+  let eastPassageAttempt = false;
+  let eastPassageDialogue = null;
+  let eastPassageDialogueActive = false;
+  let last = 0;
+  let anim = 0;
+  let lumiereManifest;
+
+  if (NAV_DEBUG) {
+    debugStatus = document.createElement("output");
+    debugStatus.id = "nav-status";
+    debugStatus.className = "nav-status";
+    document.getElementById("game-shell").appendChild(debugStatus);
+    if (params.get("viewport") === "390x844") {
+      const shell = document.getElementById("game-shell");
+      shell.style.width = "390px";
+      shell.style.height = "844px";
+      shell.style.maxWidth = "100%";
+      shell.style.margin = "0 auto";
+    }
+  }
+
+  const files = {
+    idle: SPRITE_BASE + "shion_idle.png",
+    down: SPRITE_BASE + "shion_walk_down.png",
+    up: SPRITE_BASE + "shion_walk_up.png",
+    left: SPRITE_BASE + "shion_walk_left.png",
+    right: SPRITE_BASE + "shion_walk_right.png",
+  };
+  const shioponFiles = {
+    idle: SHIOPON_BASE + "shiopon_idle.png",
+    down: SHIOPON_BASE + "shiopon_walk_down.png",
+    up: SHIOPON_BASE + "shiopon_walk_up.png",
+    left: SHIOPON_BASE + "shiopon_walk_left.png",
+    right: SHIOPON_BASE + "shiopon_walk_right.png",
+  };
+  const lumiereFiles = {
+    down: LUMIERE_BASE + "lumiere_idle.webp",
+    up: LUMIERE_BASE + "lumiere_hover-back.webp",
+    left: LUMIERE_BASE + "lumiere_hover_left.webp",
+    right: LUMIERE_BASE + "lumiere_hover_right.webp",
+  };
+  const images = {};
+  const shioponImages = {};
+  const lumiereImages = {};
+  const lumiereCompositors = {};
+
+  function validateLumiereManifest(value) {
+    const render = value?.render;
+    if (value?.format !== "RGBA WebP (lossless)" || value.layout !== "single_pose" ||
+        value.movement_type !== "hover" || value.phase !== 2 || value.localized_sway !== true ||
+        render?.reference_body_height !== 420 || render.reference_cell_height !== FRAME.h ||
+        render.draw_cell_height !== DRAW_HEIGHT || render.bottom_gap !== LUMIERE_BOTTOM_GAP ||
+        render.bob_amplitude !== LUMIERE_BOB_AMPLITUDE || render.bob_period !== LUMIERE_BOB_PERIOD)
+      throw new Error("リュミエール設定が実装仕様と一致しません");
+    for (const dir of ["down", "up", "left", "right"]) {
+      const pose = value.poses?.[dir];
+      if (LUMIERE_BASE + value.files?.[dir] !== lumiereFiles[dir] ||
+          pose?.actual_direction !== dir || !Number.isInteger(pose.width) || pose.width <= 0 ||
+          !Number.isInteger(pose.height) || pose.height <= 0 ||
+          !Number.isFinite(pose.body_top) || !Number.isFinite(pose.baseline_y) ||
+          pose.body_top < 0 || pose.baseline_y <= pose.body_top || pose.baseline_y > pose.height ||
+          !Number.isFinite(pose.center_x) || pose.center_x < 0 || pose.center_x > pose.width)
+        throw new Error("リュミエール" + dir + "アンカー設定不正");
+    }
+  }
+
+  const player = {
+    x: DEFAULT_SPAWN.x,
+    y: DEFAULT_SPAWN.y,
+    dir: "up",
+    moving: false,
+    frame: 0,
+    stageOffsetY: 0,
+  };
+  const shiopon = {
+    x: SHIOPON_HOME.x,
+    y: SHIOPON_HOME.y,
+    homeRef: { ...SHIOPON_HOME },
+    dir: "left",
+    moving: false,
+    frame: 0,
+    anim: 0,
+    wait: 1.2,
+    target: null,
+    following: false,
+    followRoute: [],
+    followReplan: 0,
+    followTarget: null,
+    scripted: null,
+    rotation: 0,
+    visualOffsetY: 0,
+    stageOffsetY: 0,
+    hidden: window.TarotGardenDevTransit?.context?.companion === "waiting_at_landing",
+  };
+  const lumiere = {
+    x: LUMIERE_HOME.x,
+    y: LUMIERE_HOME.y,
+    homeRef: { ...LUMIERE_HOME },
+    dir: "down",
+    moving: false,
+    frame: 0,
+    anim: 0,
+    bobPhase: 0,
+    bobOffsetY: 0,
+    stageOffsetY: 0,
+  };
+  const camera = {
+    x: DEFAULT_SPAWN.x,
+    y: DEFAULT_SPAWN.y - CAMERA_BASE_OFFSET_Y,
+    zoom: 1,
+  };
+  const stageMotions = { shion: null, shiopon: null, lumiere: null };
+  let stageCommandId = 0;
+  // Page-local Aftermath ownership; absent from ordinary gameplay.
+  let aftermathPaused = false;
+  let aftermathFocusBaseline = null;
+  let aftermathOwner = null;
+  let aftermathLumiereEnabled = true;
+  const aftermathMotions = new Set();
+  const heldKeys = new Set(), heldPointers = new Set();
+  const releaseKeys = new Set(), releasePointers = new Set();
+
+  const cinematicCamera = {
+    active: false,
+    owned: false,
+    generation: 0,
+    allowOverscan: false,
+    startX: 0,
+    startY: 0,
+    startZoom: 1,
+    targetX: 0,
+    targetY: 0,
+    targetZoom: 1,
+    elapsed: 0,
+    duration: 0,
+    resolve: null,
+  };
+  const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
+  const VISION_REGISTRATION = Object.freeze({
+    // Static cinematic plate registration. Coverage safety is validated
+    // against every reachable Future Vision camera shot, not unused world edges.
+    // Keep the authored gate / stair / fountain axis centered while revealing
+    // more of the ruins above the player.
+    scale: 1.10,
+    offsetX: -72,
+    offsetY: -330,
+  });
+  const visionWorld = { image: null, src: "", opacity: 0, active: false, token: 0 };
+
+  function loadVisionWorld(src, {signal, prepared, token = ++visionWorld.token} = {}) {
+    const interrupted = () => { const error = new Error("Future Vision entry interrupted"); error.name = "AbortError"; return error; };
+    const live = () => !signal?.aborted && token === visionWorld.token;
+    if (!live()) return Promise.reject(interrupted());
+    if (prepared) {
+      if (!prepared.complete || !prepared.naturalWidth || !prepared.naturalHeight)
+        return Promise.reject(new Error("Future Vision prepared image unavailable"));
+      visionWorld.image = prepared;
+      visionWorld.src = src;
+      return Promise.resolve(prepared);
+    }
+    if (visionWorld.image && visionWorld.src === src && visionWorld.image.complete)
+      return Promise.resolve(visionWorld.image);
+    const image = new Image();
+    image.decoding = "async";
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        signal?.removeEventListener("abort", abort);
+        image.onload = image.onerror = null;
+        if (error) {
+          if (token === visionWorld.token) visionWorld.token++;
+          reject(error);
+        } else resolve(image);
+      };
+      const abort = () => finish(interrupted());
+      const timeout = setTimeout(() => finish(new Error("Future Vision image/decode deadline")), 10000);
+      signal?.addEventListener("abort", abort, {once:true});
+      image.onload = async () => {
+        try { await image.decode(); } catch (error) { finish(error); return; }
+        if (settled) return;
+        if (!live()) { finish(interrupted()); return; }
+        if (!image.naturalWidth || !image.naturalHeight) { finish(new Error("Future Vision decoded image unavailable")); return; }
+        visionWorld.image = image;
+        visionWorld.src = src;
+        finish();
+      };
+      image.onerror = () => finish(new Error("Future Vision world image failed to load"));
+      image.src = src;
+    });
+  }
+
+  function drawVisionWorld() {
+    if (!visionWorld.active || !visionWorld.image || visionWorld.opacity <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = visionWorld.opacity;
+    ctx.imageSmoothingEnabled = true;
+    // Cinematic Vision is a single authored plate registered once into the
+    // multi-layer garden world. Registration is immutable for the whole vision.
+    const r = VISION_REGISTRATION;
+    ctx.drawImage(
+      visionWorld.image,
+      r.offsetX * scale.x,
+      r.offsetY * scale.y,
+      world.w * r.scale,
+      world.h * r.scale,
+    );
+    ctx.restore();
+  }
+
+
+
+  // Keep the shrinking background plane's outer edge outside the viewport.
+  // Artwork registration and its scale are unchanged; only the drawing surface grows.
+  function stage3BackgroundBounds(width,height,anchor) {
+    const left=Math.floor(Math.min(0,-anchor.x/9))-1;
+    const top=Math.floor(Math.min(0,-anchor.y/9))-1;
+    const right=Math.ceil(Math.max(width,width+(width-anchor.x)/9))+1;
+    const bottom=Math.ceil(Math.max(height,height+(height-anchor.y)/9))+1;
+    return {left,top,width:right-left,height:bottom-top};
+  }
+
+  let normalCameraZoom = 1;
+  let absorptionSurface = null;
+  let sceneLockOwner = null;
+  let sceneLockPrior = null;
+  // One-time Stage3 to Aftermath return-camera lease.
+  let returnCameraHandoff = null;
+  let outsideInteraction = false;
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const randomDirection = () =>
+    ["down", "up", "left", "right"][Math.floor(Math.random() * 4)];
+  const refDistance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  function isWalkableRef(x, y) {
+    return collision.isWalkable(x, y);
+  }
+
+  function movingIntoActor(
+    from,
+    to,
+    other,
+    collisionDistance = ACTOR_COLLISION_DISTANCE,
+  ) {
+    const before = refDistance(from, other);
+    const after = refDistance(to, other);
+    return after < collisionDistance && after < before - 1e-6;
+  }
+
+  async function loadCollision() {
+    const response = await fetch(COLLISION_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error("当たり判定データを読み込めません");
+    const data = await response.json();
+    collision = createCollision(!hoshisunaDev && window.TarotSceneLayout ? {
+      ...data, blockedAreas: [...(data.blockedAreas || []), ...window.TarotSceneLayout.solidBases],
+    } : data);
+    walkAreas = collision.areas;
+    collisionVersion = collision.version;
+    // The authored pathfinder remains unchanged across lock/unlock.
+    // Guard player movement only; scripted actors, map surfaces and
+    // verified Garden exits continue to use the base collision.
+    const playerCollision = !hoshisunaDev && enteringGardenRuntime && eastPassage?.validLine?.(eastPassageLine) ? {
+      ...collision,
+      segmentClear(from, to) {
+        if (!collision.segmentClear(from, to)) return false;
+        if (!eastPassage.wouldBlock(from, to, eastPassageLine, false)) return true;
+        if (eastPassage.routeKnown()) return true;
+        // Navigation search may probe the wall from far away. Only a
+        // nearby step originating from Shion may trigger his remark.
+        if (running && !eastPassageDialogueActive && !sceneLockOwner &&
+            refDistance(from, playerRef()) <= 9 &&
+            eastPassage.distanceToLine(playerRef(), eastPassageLine) <= 36) {
+          eastPassageAttempt = true;
+        }
+        return false;
+      },
+    } : collision;
+    navigation = createNavigator(collision, 16);
+    controls = createControls(playerCollision, navigation);
+  }
+
+  function findNearestSpawnRef() {
+    if (isWalkableRef(DEFAULT_SPAWN.x, DEFAULT_SPAWN.y))
+      return { ...DEFAULT_SPAWN };
+    for (let radius = 5; radius <= 320; radius += 5) {
+      for (let i = 0; i < 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        const x = DEFAULT_SPAWN.x + Math.cos(angle) * radius;
+        const y = DEFAULT_SPAWN.y + Math.sin(angle) * radius;
+        if (isWalkableRef(x, y)) return { x, y };
+      }
+    }
+    const first = walkAreas[0];
+    if (first?.type === "poly")
+      return { x: first.points[0][0], y: first.points[0][1] };
+    if (first?.type === "ellipse") return { x: first.cx, y: first.cy };
+    return { ...DEFAULT_SPAWN };
+  }
+
+  function loadImage(src) {
+    const image = new Image();
+    // Lumiere's localized sway compositor reads pixels with getImageData().
+    // RawGitHack can redirect WebP assets to a different origin; request CORS
+    // before src is assigned so the resulting Canvas stays origin-clean.
+    if (Object.values(lumiereFiles).includes(src)) image.crossOrigin = "anonymous";
+    image.src = src;
+    return window.TarotSceneEffects.waitImage(image);
+  }
+
+  function waitForMap() {
+    return window.TarotSceneEffects.waitImage(map);
+  }
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    cssWidth = Math.max(1, rect.width);
+    cssHeight = Math.max(1, rect.height);
+    dpr = Math.min(window.devicePixelRatio || 1, DPR_LIMIT);
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    normalCameraZoom = clamp(
+      Math.min(cssWidth / 620, cssHeight / 560),
+      CAMERA_MIN_ZOOM,
+      CAMERA_MAX_ZOOM,
+    );
+    if (!cinematicCamera.owned) camera.zoom = normalCameraZoom;
+  }
+
+  function resetShiopon() {
+    let home = { ...SHIOPON_HOME };
+    if (!isWalkableRef(home.x, home.y))
+      home = collision.nearestWalkable(home) || home;
+    shiopon.homeRef = home;
+    shiopon.x = home.x * scale.x;
+    shiopon.y = home.y * scale.y;
+    shiopon.dir = "left";
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.9 + Math.random() * 1.4;
+    shiopon.target = null;
+    shiopon.following = false;
+    shiopon.followRoute = [];
+    shiopon.followReplan = 0;
+    shiopon.followTarget = null;
+    shiopon.scripted = null;
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.stageOffsetY = 0;
+  }
+
+  function resetLumiere() {
+    lumiere.x = LUMIERE_HOME.x * scale.x;
+    lumiere.y = LUMIERE_HOME.y * scale.y;
+    lumiere.homeRef = { ...LUMIERE_HOME };
+    lumiere.dir = "down";
+    lumiere.moving = false;
+    lumiere.frame = 0;
+    lumiere.anim = 0;
+    lumiere.bobPhase = 0;
+    lumiere.bobOffsetY = 0;
+    lumiere.stageOffsetY = 0;
+  }
+
+  function reset() {
+    cancelAllStageMotions(false);
+    controls?.clearInput("reset");
+    tapEffect = null;
+    anim = 0;
+    syncStick();
+    player.x = spawnRef.x * scale.x;
+    player.y = spawnRef.y * scale.y;
+    player.dir = "up";
+    player.moving = false;
+    player.frame = 0;
+    player.stageOffsetY = 0;
+    resetShiopon();
+    resetLumiere();
+    camera.x = player.x;
+    camera.y = player.y - CAMERA_BASE_OFFSET_Y * scale.y;
+  }
+
+  function playerRef() {
+    return { x: player.x / scale.x, y: player.y / scale.y };
+  }
+
+  function shioponRef() {
+    return { x: shiopon.x / scale.x, y: shiopon.y / scale.y };
+  }
+
+  function lumiereRef() {
+    return { x: lumiere.x / scale.x, y: lumiere.y / scale.y };
+  }
+
+  function setDirection(actor, dx, dy) {
+    if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return;
+    actor.dir =
+      Math.abs(dx) > Math.abs(dy)
+        ? dx < 0
+          ? "left"
+          : "right"
+        : dy < 0
+          ? "up"
+          : "down";
+  }
+
+  function stageActor(actorId) {
+    return { shion: player, shiopon, lumiere }[actorId] || null;
+  }
+
+  function stageActorRef(actorId) {
+    if (actorId === "shion") return playerRef();
+    if (actorId === "shiopon") return shioponRef();
+    if (actorId === "lumiere") return lumiereRef();
+    return null;
+  }
+
+  function stageTargetRef(target) {
+    if (typeof target === "string")
+      return stageActorRef(target) || STAGE_LANDMARKS[target] || null;
+    if (Number.isFinite(target?.x) && Number.isFinite(target?.y))
+      return { x: target.x, y: target.y };
+    return null;
+  }
+
+  function resolvedStageAction(id, result = { completed: true, skipped: false }) {
+    return Object.freeze({
+      id,
+      promise: Promise.resolve(result),
+      finish() {},
+      cancel() {},
+    });
+  }
+
+  function settleStageMotion(actorId, motion, { snap = false, skipped = false } = {}) {
+    if (stageMotions[actorId] !== motion) return;
+    const actor = stageActor(actorId);
+    if (actor && snap && motion.kind === "move") {
+      actor.x = motion.final.x * scale.x;
+      actor.y = motion.final.y * scale.y;
+    }
+    if (actor) {
+      actor.stageOffsetY = 0;
+      actor.moving = false;
+      actor.frame = 0;
+      if ("anim" in actor) actor.anim = 0;
+    }
+    if (actorId === "shion") anim = 0;
+    stageMotions[actorId] = null;
+    motion.resolve({ completed: true, skipped });
+  }
+
+  function cancelAllStageMotions(snap = false) {
+    for (const actorId of Object.keys(stageMotions)) {
+      const motion = stageMotions[actorId];
+      if (motion) settleStageMotion(actorId, motion, { snap, skipped: true });
+    }
+  }
+
+  function legalStageRoute(actorId, current, requested) {
+    if (actorId === "lumiere") return [{ ...requested }];
+    if (!collision || !navigation) return [];
+
+    const destination = isWalkableRef(requested.x, requested.y)
+      ? requested
+      : collision.nearestWalkable(requested);
+    if (!destination) return [];
+    if (collision.segmentClear(current, destination)) return [{ ...destination }];
+    return (
+      navigation.findPath(current, destination)?.points
+        ?.slice(1)
+        .map((point) => ({ ...point })) || []
+    );
+  }
+
+  function performStageCommand(command = {}) {
+    const id = ++stageCommandId;
+    const actorId = command.actor;
+    const actor = stageActor(actorId);
+    if (!actor) return resolvedStageAction(id, { completed: false, skipped: false });
+
+    if (command.type === "face" || command.type === "lookTarget") {
+      const target = stageTargetRef(command.target);
+      const current = stageActorRef(actorId);
+      if (target && current)
+        setDirection(actor, target.x - current.x, target.y - current.y);
+      actor.moving = false;
+      actor.frame = 0;
+      return resolvedStageAction(id);
+    }
+
+    if (!ready) return resolvedStageAction(id, { completed: false, skipped: false });
+    const existing = stageMotions[actorId];
+    if (existing)
+      settleStageMotion(actorId, existing, { snap: true, skipped: true });
+
+    const current = stageActorRef(actorId);
+    if (command.type === "bounce") {
+      let resolveMotion;
+      const motion = {
+        id,
+        kind: "bounce",
+        elapsed: 0,
+        duration: clamp(Number(command.duration) || 320, 80, 900) / 1000,
+        height: clamp(Number(command.height) || 7, 1, 14),
+        resolve: (value) => resolveMotion(value),
+      };
+      const promise = new Promise((resolve) => {
+        resolveMotion = resolve;
+      });
+      stageMotions[actorId] = motion;
+      return Object.freeze({
+        id,
+        promise,
+        finish: () =>
+          settleStageMotion(actorId, motion, { snap: true, skipped: true }),
+        cancel: () =>
+          settleStageMotion(actorId, motion, { snap: false, skipped: true }),
+      });
+    }
+
+    let requested = null;
+    if (command.type === "approach") {
+      const target = stageTargetRef(command.target);
+      if (target) {
+        let dx = current.x - target.x;
+        let dy = current.y - target.y;
+        let length = Math.hypot(dx, dy);
+        if (length < 1e-6) {
+          dx = 0;
+          dy = 1;
+          length = 1;
+        }
+        const gap = clamp(Number(command.distance) || 46, 32, 90);
+        requested = {
+          x: target.x + (dx / length) * gap,
+          y: target.y + (dy / length) * gap,
+        };
+      }
+    } else if (command.type === "step") {
+      const direction = STAGE_DIRECTIONS[command.direction || actor.dir];
+      if (direction) {
+        const distance = clamp(Number(command.distance) || 12, 2, 64);
+        requested = {
+          x: current.x + direction.x * distance,
+          y: current.y + direction.y * distance,
+        };
+      }
+    } else if (command.type === "move") {
+      requested = stageTargetRef(command.target || command.to);
+    }
+
+    if (!requested) return resolvedStageAction(id, { completed: false, skipped: false });
+    const route = legalStageRoute(actorId, current, requested);
+    if (!route.length)
+      return resolvedStageAction(id, { completed: false, skipped: false });
+
+    let previous = current;
+    let routeDistance = 0;
+    for (const point of route) {
+      routeDistance += refDistance(previous, point);
+      previous = point;
+    }
+    if (routeDistance < 0.5) return resolvedStageAction(id);
+
+    let resolveMotion;
+    const duration = clamp(Number(command.duration) || 240, 80, 1400) / 1000;
+    const motion = {
+      id,
+      kind: "move",
+      route,
+      final: { ...route.at(-1) },
+      speed: routeDistance / duration,
+      anim: 0,
+      resolve: (value) => resolveMotion(value),
+    };
+    const promise = new Promise((resolve) => {
+      resolveMotion = resolve;
+    });
+    stageMotions[actorId] = motion;
+    return Object.freeze({
+      id,
+      promise,
+      finish: () =>
+        settleStageMotion(actorId, motion, { snap: true, skipped: true }),
+      cancel: () =>
+        settleStageMotion(actorId, motion, { snap: false, skipped: true }),
+    });
+  }
+
+  function updateStageActor(actorId, dt) {
+    const motion = stageMotions[actorId];
+    if (!motion) return false;
+    if (stage3Runtime && aftermathPaused && aftermathMotions.has(motion.id)) return true;
+    const actor = stageActor(actorId);
+
+    if (motion.kind === "bounce") {
+      motion.elapsed += dt;
+      const progress = clamp(motion.elapsed / motion.duration, 0, 1);
+      actor.stageOffsetY = -Math.sin(progress * Math.PI) * motion.height * scale.y;
+      actor.moving = false;
+      actor.frame = 0;
+      if (progress >= 1) settleStageMotion(actorId, motion);
+      return true;
+    }
+
+    const current = stageActorRef(actorId);
+    while (motion.route.length && refDistance(current, motion.route[0]) <= 0.75)
+      motion.route.shift();
+    const target = motion.route[0];
+    if (!target) {
+      settleStageMotion(actorId, motion, { snap: true });
+      return true;
+    }
+
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    const step = Math.min(distance, motion.speed * dt);
+    actor.x = (current.x + (dx / distance) * step) * scale.x;
+    actor.y = (current.y + (dy / distance) * step) * scale.y;
+    actor.moving = true;
+    setDirection(actor, dx, dy);
+    if (actorId !== "lumiere") {
+      motion.anim += dt;
+      const frameDuration = actorId === "shion" ? 0.12 : 0.13;
+      while (motion.anim >= frameDuration) {
+        motion.anim -= frameDuration;
+        actor.frame = (actor.frame + 1) % FRAME.count;
+      }
+    }
+    if (step >= distance - 1e-6) {
+      motion.route.shift();
+      if (!motion.route.length)
+        settleStageMotion(actorId, motion, { snap: true });
+    }
+    return true;
+  }
+
+  function showEastPassageDialogue() {
+    if (!eastPassageAttempt || !eastPassageFeedback) return;
+    eastPassageAttempt = false;
+    if (!running || eastPassageDialogueActive || sceneLockOwner ||
+        outsideInteraction || window.TarotDialogue?.getState?.().active) return;
+    if (!eastPassageFeedback.permit(performance.now())) return;
+    if (!window.TarotDialogueUI?.create) return;
+    if (!eastPassageDialogue) {
+      eastPassageDialogue = window.TarotDialogueUI.create({
+        mount: document.getElementById("game-shell"),
+        ids: {layer: "east-passage-dialogue", advance: "east-passage-advance",
+          speaker: "east-passage-speaker", text: "east-passage-text"},
+        onAdvance() {
+          eastPassageDialogue?.hide();
+          eastPassageDialogueActive = false;
+          if (!sceneLockOwner && !outsideInteraction) controls?.resume();
+        },
+      });
+    }
+    eastPassageDialogueActive = true;
+    controls?.suspend();
+    syncStick();
+    eastPassageDialogue.show({actor: "shion", speaker: "シオン",
+      text: "……この先は、しばらく使っていない道だ。今は引き返そう。"});
+  }
+
+  function updatePlayer(dt) {
+    if (leavingMap) return;
+    if (updateStageActor("shion", dt)) return;
+    const from = playerRef();
+    const next = controls.step(from, dt, SPEED);
+    if (eastPassageAttempt) showEastPassageDialogue();
+
+    // A proximity event can begin inside the wrapped controls.step call.
+    if (stageMotions.shion) {
+      player.x = next.x * scale.x;
+      player.y = next.y * scale.y;
+      player.moving = false;
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
+
+    const shioponBlocked =
+      !shiopon.hidden && !shiopon.following && movingIntoActor(from, next, shioponRef());
+    const npcBlocked =
+      next.moving &&
+      (shioponBlocked ||
+        (!(stage3Runtime && !aftermathLumiereEnabled) && movingIntoActor(
+          from,
+          next,
+          lumiereRef(),
+          LUMIERE_COLLISION_DISTANCE,
+        )));
+    if (npcBlocked) {
+      setDirection(player, next.dx, next.dy);
+      controls.cancel("npc-blocked");
+      player.moving = false;
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
+
+    player.x = next.x * scale.x;
+    player.y = next.y * scale.y;
+
+    if (next.y < gardenExitRef.y - 8) gardenExitArmed = true;
+
+    // South edge of Star Gate Garden returns to the PAD landing map.
+    // Keep a small x window around the entrance path so ordinary movement near
+    // the lower corners cannot trigger a map transition.
+    const gardenPos = { x: next.x, y: next.y };
+    if (
+      !hoshisunaDev && !stage3Dev && enteringGardenRuntime && gardenExitArmed && !leavingMap && next.moving &&
+      !window.TarotDialogue?.getState().active &&
+      next.dy > 0 && gardenPos.y >= gardenExitRef.y - 4 &&
+      gardenPos.x >= 610 &&
+      gardenPos.x <= 838
+    ) {
+      leavingMap = true;
+      if (landingResumeDevId) {
+        const transit = window.TarotGardenDevTransit;
+        if (!transit?.ok) {
+          leavingMap = false;
+          controls.cancel("dev-return-blocked");
+          return;
+        }
+        try {
+          transit.progress.commitArrival({
+            sourceMapId: "star_gate_garden",
+            destinationMapId: "star_country_landing",
+            spawnId: "garden_entrance",
+            reason: "garden_to_landing",
+          });
+        } catch (error) {
+          leavingMap = false;
+          controls.cancel("dev-return-failed");
+          console.warn("[Garden Continue] return was not committed", error);
+          return;
+        }
+      } else {
+        window.TarotJourney?.set("companion", shiopon.following ? { mode: "following" } : null);
+      }
+      controls.cancel("map-return");
+      navigateRuntime(landingResumeDevId ? `./star-country-landing.html?from=garden&dev=${encodeURIComponent(landingResumeDevId)}` : "./star-country-landing.html?from=garden");
+      return;
+    }
+
+    player.moving = next.moving;
+    if (!player.moving) {
+      player.frame = 0;
+      anim = 0;
+      return;
+    }
+    setDirection(player, next.dx, next.dy);
+    anim += dt;
+    while (anim >= 0.12) {
+      anim -= 0.12;
+      player.frame = (player.frame + 1) % FRAME.count;
+    }
+  }
+
+  function chooseShioponTarget() {
+    if (Math.random() < 0.25) {
+      shiopon.dir = randomDirection();
+      shiopon.wait = 0.7 + Math.random() * 1.5;
+      return;
+    }
+
+    const current = shioponRef();
+    const playerNow = playerRef();
+    for (let attempt = 0; attempt < 28; attempt++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 14 + Math.random() * SHIOPON_WANDER_RADIUS;
+      const candidate = {
+        x: shiopon.homeRef.x + Math.cos(angle) * radius,
+        y: shiopon.homeRef.y + Math.sin(angle) * radius,
+      };
+      if (!isWalkableRef(candidate.x, candidate.y)) continue;
+      if (!collision.segmentClear(current, candidate)) continue;
+      if (refDistance(candidate, playerNow) < ACTOR_COLLISION_DISTANCE + 4)
+        continue;
+      shiopon.target = candidate;
+      setDirection(
+        shiopon,
+        candidate.x - current.x,
+        candidate.y - current.y,
+      );
+      shiopon.moving = true;
+      return;
+    }
+
+    shiopon.dir = randomDirection();
+    shiopon.wait = 0.8 + Math.random() * 1.4;
+  }
+
+  function stopShioponNearPlayer(current, playerNow) {
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.7 + Math.random() * 1.3;
+    setDirection(shiopon, playerNow.x - current.x, playerNow.y - current.y);
+  }
+
+  function faceShioponTowardPlayer() {
+    if (!ready) return;
+    const current = shioponRef();
+    const playerNow = playerRef();
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    setDirection(shiopon, playerNow.x - current.x, playerNow.y - current.y);
+  }
+
+  function shioponFollowTarget() {
+    const playerNow = playerRef();
+    const behind = {
+      up: { x: 0, y: 1 },
+      down: { x: 0, y: -1 },
+      left: { x: 1, y: 0 },
+      right: { x: -1, y: 0 },
+    }[player.dir] || { x: 0, y: 1 };
+
+    for (const gap of [
+      SHIOPON_FOLLOW_DISTANCE,
+      SHIOPON_FOLLOW_DISTANCE + 8,
+      SHIOPON_FOLLOW_DISTANCE - 8,
+    ]) {
+      const candidate = {
+        x: playerNow.x + behind.x * gap,
+        y: playerNow.y + behind.y * gap,
+      };
+      if (
+        isWalkableRef(candidate.x, candidate.y) &&
+        refDistance(candidate, playerNow) >= SHIOPON_FOLLOW_MIN_GAP
+      ) {
+        return candidate;
+      }
+    }
+
+    const fallback = collision.nearestWalkable({
+      x: playerNow.x + behind.x * SHIOPON_FOLLOW_DISTANCE,
+      y: playerNow.y + behind.y * SHIOPON_FOLLOW_DISTANCE,
+    });
+    if (
+      fallback &&
+      refDistance(fallback, playerNow) >= SHIOPON_FOLLOW_MIN_GAP
+    ) {
+      return fallback;
+    }
+    return shioponRef();
+  }
+
+  function moveShioponFollowStep(current, next, target) {
+    if (isWalkableRef(next.x, next.y) && collision.segmentClear(current, next))
+      return next;
+
+    const horizontal = { x: next.x, y: current.y };
+    const vertical = { x: current.x, y: next.y };
+    const candidates = [horizontal, vertical]
+      .filter(
+        (point) =>
+          isWalkableRef(point.x, point.y) &&
+          collision.segmentClear(current, point),
+      )
+      .sort((a, b) => refDistance(a, target) - refDistance(b, target));
+    return candidates[0] || current;
+  }
+
+  function planShioponFollowRoute(current, target) {
+    if (collision.segmentClear(current, target)) return [{ ...target }];
+    const plan = navigation?.findPath(current, target);
+    return plan?.points?.slice(1).map((point) => ({ ...point })) || [];
+  }
+
+  function updateShioponFollow(dt) {
+    const current = shioponRef();
+    const playerNow = playerRef();
+    const target = shioponFollowTarget();
+    const playerGap = refDistance(current, playerNow);
+    const targetMoved =
+      !shiopon.followTarget ||
+      refDistance(shiopon.followTarget, target) >= SHIOPON_FOLLOW_REPLAN_DISTANCE;
+
+    shiopon.followReplan -= dt;
+    if (
+      targetMoved ||
+      shiopon.followReplan <= 0 ||
+      !shiopon.followRoute.length
+    ) {
+      shiopon.followRoute = planShioponFollowRoute(current, target);
+      shiopon.followTarget = { ...target };
+      shiopon.followReplan = SHIOPON_FOLLOW_REPLAN_INTERVAL;
+    }
+
+    while (
+      shiopon.followRoute.length &&
+      refDistance(current, shiopon.followRoute[0]) <= SHIOPON_FOLLOW_STOP
+    ) {
+      shiopon.followRoute.shift();
+    }
+
+    let waypoint = shiopon.followRoute[0];
+    if (!waypoint && playerGap > SHIOPON_FOLLOW_EMERGENCY_GAP) {
+      if (isWalkableRef(target.x, target.y)) {
+        shiopon.x = target.x * scale.x;
+        shiopon.y = target.y * scale.y;
+        shiopon.followRoute = [];
+        shiopon.followTarget = { ...target };
+        shiopon.moving = false;
+        shiopon.frame = 0;
+        shiopon.anim = 0;
+        shiopon.dir = player.dir;
+        return;
+      }
+    }
+    waypoint ||= target;
+
+    const dx = waypoint.x - current.x;
+    const dy = waypoint.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= SHIOPON_FOLLOW_STOP) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.dir = player.dir;
+      return;
+    }
+
+    const speed =
+      playerGap > 170
+        ? SHIOPON_FOLLOW_SPRINT_SPEED
+        : playerGap > 95
+          ? SHIOPON_FOLLOW_CATCHUP_SPEED
+          : SHIOPON_FOLLOW_SPEED;
+    const step = Math.min(distance, speed * dt);
+    let next = {
+      x: current.x + (dx / distance) * step,
+      y: current.y + (dy / distance) * step,
+    };
+    next = moveShioponFollowStep(current, next, waypoint);
+
+    if (refDistance(next, playerNow) < SHIOPON_FOLLOW_MIN_GAP) {
+      const awayX = current.x - playerNow.x;
+      const awayY = current.y - playerNow.y;
+      const awayLength = Math.hypot(awayX, awayY);
+      if (awayLength > 1e-6) {
+        const separated = {
+          x: playerNow.x + (awayX / awayLength) * SHIOPON_FOLLOW_MIN_GAP,
+          y: playerNow.y + (awayY / awayLength) * SHIOPON_FOLLOW_MIN_GAP,
+        };
+        if (isWalkableRef(separated.x, separated.y)) next = separated;
+      } else {
+        next = target;
+      }
+    }
+
+    if (next.x === current.x && next.y === current.y) {
+      shiopon.followReplan = 0;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      return;
+    }
+
+    shiopon.x = next.x * scale.x;
+    shiopon.y = next.y * scale.y;
+    shiopon.moving = true;
+    setDirection(shiopon, next.x - current.x, next.y - current.y);
+    shiopon.anim += dt;
+    while (shiopon.anim >= 0.13) {
+      shiopon.anim -= 0.13;
+      shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+    }
+  }
+
+  function startShioponRace() {
+    if (!ready) return;
+    const current = shioponRef();
+    const requested = { x: current.x, y: current.y - SHIOPON_RACE_DISTANCE };
+    const target = collision.nearestWalkable(requested) || current;
+    const plan = navigation?.findPath(current, target);
+    const route =
+      plan?.points?.slice(1).map((point) => ({ ...point })) ||
+      (collision.segmentClear(current, target) ? [{ ...target }] : []);
+
+    shiopon.following = false;
+    shiopon.followRoute = [];
+    shiopon.followTarget = null;
+    shiopon.target = null;
+    shiopon.scripted = { type: "race", phase: "run", route, elapsed: 0 };
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.dir = "up";
+    shiopon.moving = route.length > 0;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+  }
+
+  function tripShiopon() {
+    if (!ready) return;
+    if (!shiopon.scripted)
+      shiopon.scripted = { type: "race", phase: "trip", route: [], elapsed: 0 };
+    shiopon.scripted.phase = "trip";
+    shiopon.scripted.elapsed = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+  }
+
+  function recoverShiopon() {
+    if (!ready) return;
+    shiopon.scripted = null;
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    faceShioponTowardPlayer();
+  }
+
+  function updateShioponScript(dt) {
+    const script = shiopon.scripted;
+    if (!script) return;
+
+    if (script.phase === "run") {
+      const current = shioponRef();
+      while (script.route.length && refDistance(current, script.route[0]) <= 3)
+        script.route.shift();
+      const target = script.route[0];
+      if (!target) {
+        shiopon.moving = false;
+        shiopon.frame = 0;
+        shiopon.anim = 0;
+        shiopon.dir = "up";
+        return;
+      }
+      const dx = target.x - current.x;
+      const dy = target.y - current.y;
+      const distance = Math.hypot(dx, dy);
+      const step = Math.min(distance, SHIOPON_RACE_SPEED * dt);
+      const next = {
+        x: current.x + (dx / distance) * step,
+        y: current.y + (dy / distance) * step,
+      };
+      if (isWalkableRef(next.x, next.y) && collision.segmentClear(current, next)) {
+        shiopon.x = next.x * scale.x;
+        shiopon.y = next.y * scale.y;
+        shiopon.moving = true;
+        setDirection(shiopon, dx, dy);
+        shiopon.anim += dt;
+        while (shiopon.anim >= 0.1) {
+          shiopon.anim -= 0.1;
+          shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+        }
+      } else {
+        script.route = planShioponFollowRoute(current, target);
+      }
+      return;
+    }
+
+    if (script.phase === "trip") {
+      script.elapsed += dt;
+      const progress = clamp(script.elapsed / SHIOPON_TRIP_DURATION, 0, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      shiopon.rotation = SHIOPON_TRIP_ANGLE * eased;
+      shiopon.visualOffsetY = Math.sin(progress * Math.PI) * 3;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      if (progress >= 1) {
+        script.phase = "fallen";
+        shiopon.visualOffsetY = 0;
+      }
+      return;
+    }
+
+    shiopon.moving = false;
+    shiopon.frame = 0;
+  }
+
+  function updateShiopon(dt) {
+    if (stage3Runtime && aftermathPaused) return;
+    if (shiopon.hidden) return;
+    if (updateStageActor("shiopon", dt)) return;
+    if (shiopon.scripted) {
+      updateShioponScript(dt);
+      return;
+    }
+
+    if (npcSuspended) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      return;
+    }
+
+    if (shiopon.following) {
+      updateShioponFollow(dt);
+      return;
+    }
+
+    if (!shiopon.target) {
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.wait -= dt;
+      if (shiopon.wait <= 0) chooseShioponTarget();
+      return;
+    }
+
+    const current = shioponRef();
+    const dx = shiopon.target.x - current.x;
+    const dy = shiopon.target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance <= 2.5) {
+      shiopon.x = shiopon.target.x * scale.x;
+      shiopon.y = shiopon.target.y * scale.y;
+      shiopon.target = null;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.anim = 0;
+      shiopon.wait = 1.0 + Math.random() * 2.2;
+      return;
+    }
+
+    const step = Math.min(distance, SHIOPON_SPEED * dt);
+    const next = {
+      x: current.x + (dx / distance) * step,
+      y: current.y + (dy / distance) * step,
+    };
+    const playerNow = playerRef();
+
+    if (movingIntoActor(current, next, playerNow)) {
+      stopShioponNearPlayer(current, playerNow);
+      return;
+    }
+
+    if (!isWalkableRef(next.x, next.y) || !collision.segmentClear(current, next)) {
+      shiopon.target = null;
+      shiopon.moving = false;
+      shiopon.frame = 0;
+      shiopon.wait = 0.7 + Math.random() * 1.3;
+      return;
+    }
+
+    shiopon.x = next.x * scale.x;
+    shiopon.y = next.y * scale.y;
+    shiopon.moving = true;
+    setDirection(shiopon, dx, dy);
+    shiopon.anim += dt;
+    while (shiopon.anim >= 0.16) {
+      shiopon.anim -= 0.16;
+      shiopon.frame = (shiopon.frame + 1) % FRAME.count;
+    }
+  }
+
+  function updateLumiere(dt) {
+    if (stage3Runtime && (aftermathPaused || !aftermathLumiereEnabled)) return;
+    updateStageActor("lumiere", dt);
+    lumiere.bobPhase =
+      (lumiere.bobPhase + (dt * Math.PI * 2) / LUMIERE_BOB_PERIOD) %
+      (Math.PI * 2);
+    lumiere.bobOffsetY =
+      Math.sin(lumiere.bobPhase) * LUMIERE_BOB_AMPLITUDE * scale.y;
+  }
+
+  function cameraOffsetY() {
+    let offset = CAMERA_BASE_OFFSET_Y;
+    if (player.moving && player.dir === "up") offset += CAMERA_LOOK_AHEAD_Y;
+    if (player.moving && player.dir === "down") offset -= CAMERA_LOOK_AHEAD_Y;
+    return offset * scale.y;
+  }
+
+  function updateCamera(dt) {
+    if (stage3Runtime && aftermathPaused && aftermathOwner) return;
+    if (cinematicCamera.active) {
+      cinematicCamera.elapsed += dt;
+      const t = cinematicCamera.duration > 0 ? Math.min(1, cinematicCamera.elapsed / cinematicCamera.duration) : 1;
+      const eased = t * t * (3 - 2 * t);
+      camera.x = cinematicCamera.startX + (cinematicCamera.targetX - cinematicCamera.startX) * eased;
+      camera.y = cinematicCamera.startY + (cinematicCamera.targetY - cinematicCamera.startY) * eased;
+      camera.zoom = cinematicCamera.startZoom + (cinematicCamera.targetZoom - cinematicCamera.startZoom) * eased;
+      if (t >= 1) {
+        cinematicCamera.active = false;
+        const done = cinematicCamera.resolve;
+        cinematicCamera.resolve = null;
+        done?.({ completed: true });
+      }
+      return;
+    }
+    if (cinematicCamera.owned) return;
+
+
+    const viewW = cssWidth / camera.zoom;
+    const viewH = cssHeight / camera.zoom;
+    const halfW = viewW / 2;
+    const halfH = viewH / 2;
+    const targetX = clamp(
+      player.x,
+      halfW,
+      Math.max(halfW, world.w - halfW),
+    );
+    const targetY = clamp(
+      player.y - cameraOffsetY(),
+      halfH,
+      Math.max(halfH, world.h - halfH),
+    );
+    const ease = 1 - Math.exp(-6.5 * dt);
+    camera.x += (targetX - camera.x) * ease;
+    camera.y += (targetY - camera.y) * ease;
+  }
+
+  function viewportOrigin() {
+    const viewW = cssWidth / camera.zoom;
+    const viewH = cssHeight / camera.zoom;
+    if (cinematicCamera.owned && cinematicCamera.allowOverscan) return {x: camera.x - viewW / 2, y: camera.y - viewH / 2};
+    return {
+      x: clamp(camera.x - viewW / 2, 0, Math.max(0, world.w - viewW)),
+      y: clamp(camera.y - viewH / 2, 0, Math.max(0, world.h - viewH)),
+    };
+  }
+
+  function spriteFrame(actor, actorImages, frameSpec = FRAME) {
+    const idleIndex = { down: 0, up: 1, left: 2, right: 3 }[actor.dir];
+    return {
+      image: actor.moving ? actorImages[actor.dir] : actorImages.idle,
+      sourceX: (actor.moving ? actor.frame : idleIndex) * frameSpec.w,
+    };
+  }
+
+  function drawSpritePass(
+    image,
+    sourceX,
+    sourceY,
+    sourceW,
+    sourceH,
+    dx,
+    dy,
+    drawW,
+    drawH,
+    shadowColor,
+    shadowBlur,
+  ) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.shadowColor = shadowColor;
+    ctx.shadowBlur = shadowBlur / camera.zoom;
+    ctx.drawImage(
+      image,
+      sourceX,
+      sourceY,
+      sourceW,
+      sourceH,
+      dx,
+      dy,
+      drawW,
+      drawH,
+    );
+    ctx.restore();
+  }
+
+  function drawOutlinePass(
+    image,
+    sourceX,
+    sourceY,
+    sourceW,
+    sourceH,
+    dx,
+    dy,
+    drawW,
+    drawH,
+    { color, width, opacity },
+  ) {
+    const step = width / camera.zoom;
+    const offsets = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+      [-0.72, -0.72],
+      [0.72, -0.72],
+      [-0.72, 0.72],
+      [0.72, 0.72],
+    ];
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = "brightness(0)";
+    ctx.globalAlpha = opacity;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 0;
+    for (const [offsetX, offsetY] of offsets) {
+      ctx.shadowOffsetX = offsetX * step;
+      ctx.shadowOffsetY = offsetY * step;
+      ctx.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        dx,
+        dy,
+        drawW,
+        drawH,
+      );
+    }
+    ctx.restore();
+  }
+
+  function drawActor(
+    actor,
+    actorImages,
+    drawHeight,
+    glowColor,
+    {
+      frameSpec = FRAME,
+      hover = false,
+      visualOffsetY = 0,
+      rotation = 0,
+      outline = ACTOR_OUTLINES.player,
+    } = {},
+  ) {
+    if (hover) {
+      const dir = actorImages[actor.dir] ? actor.dir : "down";
+      const compositor = lumiereCompositors[dir];
+      const image = compositor.draw(actor.bobPhase);
+      const pose = lumiereManifest.poses[dir];
+      const bodyHeight = DRAW_HEIGHT * lumiereManifest.render.reference_body_height / FRAME.h;
+      const poseScale = bodyHeight / (pose.baseline_y - pose.body_top);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.globalAlpha = 1;
+      // Keep the existing Lumiere shadow; do not add outlines or glow effects.
+      ctx.shadowColor = "rgba(54,41,58,.65)";
+      ctx.shadowBlur = 0.7 / camera.zoom;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.drawImage(image, 0, 0, compositor.width, compositor.height,
+        actor.x - pose.center_x * poseScale,
+        actor.y - LUMIERE_BOTTOM_GAP * scale.y - pose.baseline_y * poseScale + visualOffsetY,
+        pose.width * poseScale, pose.height * poseScale);
+      ctx.restore();
+      return;
+    }
+    const scaleDraw = drawHeight / frameSpec.h;
+    const sourceRect = { x: 0, y: 0, w: frameSpec.w, h: frameSpec.h };
+    const drawW = sourceRect.w * scaleDraw;
+    const drawH = sourceRect.h * scaleDraw;
+    const dx = actor.x - drawW / 2;
+    const dy = actor.y - frameSpec.baseline * scaleDraw + visualOffsetY;
+    const rotated = Math.abs(rotation) > 1e-6;
+    if (rotated) {
+      ctx.save();
+      ctx.translate(actor.x, actor.y);
+      ctx.rotate(rotation);
+      ctx.translate(-actor.x, -actor.y);
+    }
+    const { image, sourceX } = hover
+      ? {
+          image: actorImages.hover,
+          sourceX: actor.frame * frameSpec.w + sourceRect.x,
+        }
+      : spriteFrame(actor, actorImages, frameSpec);
+    drawOutlinePass(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      outline,
+    );
+    drawSpritePass(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      glowColor,
+      5,
+    );
+    drawSpritePass(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+      "rgba(6,9,28,.86)",
+      2,
+    );
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      image,
+      sourceX,
+      sourceRect.y,
+      sourceRect.w,
+      sourceRect.h,
+      dx,
+      dy,
+      drawW,
+      drawH,
+    );
+    ctx.restore();
+    if (rotated) ctx.restore();
+  }
+
+  function drawGroundShadowAt(actor, radius, opacity) {
+    ctx.save();
+    ctx.translate(actor.x, actor.y + 2);
+    ctx.scale(1, 0.34);
+    const gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, radius);
+    gradient.addColorStop(0, `rgba(5,7,20,${opacity})`);
+    gradient.addColorStop(
+      0.62,
+      `rgba(5,7,20,${opacity * 0.61})`,
+    );
+    gradient.addColorStop(1, "rgba(5,7,20,0)");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  let futureCurrentShionSurface = null;
+  function drawFutureCurrentShionComposite(entry, opacity) {
+    futureCurrentShionSurface ||= document.createElement("canvas");
+    const surface = futureCurrentShionSurface;
+    const density = Math.min(2, dpr * camera.zoom);
+    const left = player.x - 84 * scale.x;
+    const top = player.y + player.stageOffsetY - 110 * scale.y;
+    const width = 168 * scale.x, height = 142 * scale.y;
+    const pixelWidth = Math.ceil(width * density), pixelHeight = Math.ceil(height * density);
+    if (surface.width !== pixelWidth || surface.height !== pixelHeight) {surface.width=pixelWidth; surface.height=pixelHeight;}
+    const target=surface.getContext("2d");
+    target.setTransform(1,0,0,1,0,0); target.clearRect(0,0,pixelWidth,pixelHeight);
+    target.setTransform(pixelWidth/width,0,0,pixelHeight/height,-left*pixelWidth/width,-top*pixelHeight/height);
+    target.globalAlpha=1;
+    const previous=ctx; ctx=target;
+    try {
+      drawGroundShadowAt({x:player.x,y:player.y+player.stageOffsetY},20,.46);
+      drawActor(entry.actor,entry.actorImages,entry.drawHeight,entry.glowColor,entry.options);
+    } finally {ctx=previous;}
+    ctx.save(); ctx.globalAlpha *= opacity;
+    ctx.drawImage(surface,0,0,pixelWidth,pixelHeight,left,top,width,height);
+    ctx.restore();
+  }
+
+
+  function drawActors() {
+    if (!visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
+    if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
+    if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
+
+    const actors = [
+      {
+        actor: lumiere,
+        actorImages: lumiereImages,
+        drawHeight: LUMIERE_DRAW_HEIGHT,
+        glowColor: "rgba(226,210,255,.34)",
+        options: {
+          hover: true,
+          visualOffsetY: lumiere.bobOffsetY + lumiere.stageOffsetY,
+        },
+      },
+      {
+        actor: shiopon,
+        actorImages: shioponImages,
+        drawHeight: SHIOPON_DRAW_HEIGHT,
+        glowColor: "rgba(235,210,255,.22)",
+        options: {
+          outline: ACTOR_OUTLINES.shiopon,
+          visualOffsetY: shiopon.visualOffsetY + shiopon.stageOffsetY,
+          rotation: shiopon.rotation,
+        },
+      },
+      {
+        actor: player,
+        actorImages: images,
+        drawHeight: DRAW_HEIGHT,
+        glowColor: "rgba(255,236,190,.22)",
+        options: {
+          visualOffsetY: player.stageOffsetY,
+        },
+      },
+    ].filter(entry => (entry.actor !== shiopon || !shiopon.hidden) &&
+      (entry.actor !== lumiere || (!hoshisunaDev && (!stage3Runtime || aftermathLumiereEnabled)))).sort((a, b) => {
+      const ay =
+        shiopon.following && a.actor === shiopon ? player.y - 0.01 : a.actor.y;
+      const by =
+        shiopon.following && b.actor === shiopon ? player.y - 0.01 : b.actor.y;
+      return ay - by;
+    });
+
+    for (const entry of actors) {
+      const actorId = entry.actor === player ? "shion" : entry.actor === shiopon ? "shiopon" : "lumiere";
+      if (visionWorld.active && actorId !== "shion") continue;
+      const opacity = stage3Runtime ? actorVisibility[actorId] : 1;
+      if (opacity <= 0) continue;
+      if (visionWorld.active && actorId === "shion") {drawFutureCurrentShionComposite(entry,opacity); continue;}
+      ctx.save(); ctx.globalAlpha *= opacity;
+      const paint = (target) => {
+        const original = ctx;
+        ctx = target;
+        try {
+          drawActor(entry.actor, entry.actorImages, entry.drawHeight,
+            entry.glowColor, entry.options);
+        } finally { ctx = original; }
+      };
+      if (window.TarotSceneEffects && !visionWorld.active) {
+        window.TarotSceneEffects.drawMaskedActor(ctx, entry.actor, scale,
+          Math.min(2, dpr * camera.zoom), paint);
+      } else paint(ctx);
+      ctx.restore();
+    }
+  }
+
+  function traceRefShape(shape) {
+    ctx.beginPath();
+    if (shape.type === "ellipse") {
+      ctx.ellipse(
+        shape.cx * scale.x,
+        shape.cy * scale.y,
+        shape.rx * scale.x,
+        shape.ry * scale.y,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      return;
+    }
+    const points = shape.points;
+    ctx.moveTo(points[0][0] * scale.x, points[0][1] * scale.y);
+    for (let i = 1; i < points.length; i++)
+      ctx.lineTo(points[i][0] * scale.x, points[i][1] * scale.y);
+    ctx.closePath();
+  }
+
+  function drawCollisionDebug() {
+    if (!DEPTH_DEBUG && !NAV_DEBUG) return;
+    ctx.save();
+    ctx.lineWidth = 2 / camera.zoom;
+    ctx.strokeStyle = "rgba(70,255,120,.95)";
+    ctx.fillStyle = "rgba(70,255,120,.10)";
+    for (const area of walkAreas) {
+      traceRefShape(area);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTapEffect() {
+    if (!tapEffect) return;
+    const progress = tapEffect.age / 0.45;
+    ctx.save();
+    ctx.translate(tapEffect.x * scale.x, tapEffect.y * scale.y);
+    ctx.globalAlpha = (1 - progress) * 0.8;
+    ctx.lineWidth = 1.3 / camera.zoom;
+    ctx.strokeStyle = "#c9e7ff";
+    ctx.beginPath();
+    ctx.ellipse(
+      0,
+      0,
+      8 + 12 * progress,
+      4 + 6 * progress,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+    ctx.strokeStyle = "#fff0bd";
+    ctx.beginPath();
+    ctx.moveTo(-5, 0);
+    ctx.lineTo(5, 0);
+    ctx.moveTo(0, -7);
+    ctx.lineTo(0, 7);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawNavDebug() {
+    if (!NAV_DEBUG || !controls) return;
+    const state = controls.state;
+    ctx.save();
+    ctx.scale(scale.x, scale.y);
+    ctx.fillStyle = "rgba(170,220,255,.45)";
+    for (const point of navigation.nodes)
+      ctx.fillRect(point.x - 1, point.y - 1, 2, 2);
+
+    ctx.strokeStyle = "#ffe6a0";
+    ctx.lineWidth = 2 / camera.zoom;
+    ctx.beginPath();
+    ctx.moveTo(player.x / scale.x, player.y / scale.y);
+    for (const point of state.route) ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+
+    for (const point of state.route) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (state.requested) {
+      ctx.strokeStyle = "#d9f2ff";
+      ctx.beginPath();
+      ctx.arc(state.requested.x, state.requested.y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = "#e4b8ff";
+    ctx.beginPath();
+    ctx.arc(
+      shiopon.homeRef.x,
+      shiopon.homeRef.y,
+      SHIOPON_WANDER_RADIUS,
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+
+    const sr = shioponRef();
+    ctx.strokeStyle = "#ffb7df";
+    ctx.beginPath();
+    ctx.arc(sr.x, sr.y, ACTOR_COLLISION_DISTANCE, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const lr = lumiereRef();
+    ctx.strokeStyle = "#aeeeff";
+    ctx.beginPath();
+    ctx.arc(lr.x, lr.y, LUMIERE_COLLISION_DISTANCE, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    debugStatus.textContent =
+      `NAV 16px · ${navigation.nodes.length} cells\n` +
+      `${player.x.toFixed(1)}, ${player.y.toFixed(1)} · ${player.dir} ${player.moving ? "walk" : "idle"} ${player.frame}\n` +
+      `Shiopon ${shiopon.x.toFixed(1)}, ${shiopon.y.toFixed(1)} · ${shiopon.scripted?.phase || (shiopon.following ? "follow" : "wander")} · ${shiopon.dir} ${shiopon.moving ? "walk" : "idle"}\n` +
+      `Lumiere ${lumiere.x.toFixed(1)}, ${lumiere.y.toFixed(1)} · fixed hover ${lumiere.frame}\n` +
+      `${state.stick.active ? "stick" : state.keys.size ? "keyboard" : state.route.length ? "auto" : "idle"} · ${state.route.length} waypoints`;
+
+    debugStatus.dataset.state = JSON.stringify({
+      player: { ...player },
+      shiopon: {
+        x: shiopon.x,
+        y: shiopon.y,
+        dir: shiopon.dir,
+        moving: shiopon.moving,
+        frame: shiopon.frame,
+        wait: shiopon.wait,
+        target: shiopon.target,
+        homeRef: shiopon.homeRef,
+        following: shiopon.following,
+        scripted: shiopon.scripted,
+        followRoute: shiopon.followRoute,
+        rotation: shiopon.rotation,
+        stageOffsetY: shiopon.stageOffsetY,
+      },
+      lumiere: {
+        x: lumiere.x,
+        y: lumiere.y,
+        dir: lumiere.dir,
+        moving: lumiere.moving,
+        frame: lumiere.frame,
+        bobPhase: lumiere.bobPhase,
+        bobOffsetY: lumiere.bobOffsetY,
+        stageOffsetY: lumiere.stageOffsetY,
+        homeRef: lumiere.homeRef,
+      },
+      stage: Object.fromEntries(
+        Object.entries(stageMotions).map(([actorId, motion]) => [
+          actorId,
+          motion ? { id: motion.id, kind: motion.kind } : null,
+        ]),
+      ),
+      actorCollisionDistance: ACTOR_COLLISION_DISTANCE,
+      actorGap: refDistance(playerRef(), shioponRef()),
+      shioponFollowDistance: SHIOPON_FOLLOW_DISTANCE,
+      shioponFollowMinGap: SHIOPON_FOLLOW_MIN_GAP,
+      lumiereCollisionDistance: LUMIERE_COLLISION_DISTANCE,
+      lumiereGap: refDistance(playerRef(), lumiereRef()),
+      world: { ...world },
+      scale: { ...scale },
+      camera: { ...camera },
+      origin: viewportOrigin(),
+      cssWidth,
+      cssHeight,
+      route: state.route,
+      target: state.target,
+      requested: state.requested,
+      stick: state.stick.active,
+      suspended: state.suspended,
+      reason: state.cancelReason,
+      collisionVersion,
+    });
+  }
+
+  function draw() {
+    const origin = viewportOrigin();
+    map.style.width = world.w + "px";
+    map.style.height = world.h + "px";
+    map.style.transform =
+      `translate3d(${-origin.x * camera.zoom}px,${-origin.y * camera.zoom}px,0) scale(${camera.zoom})`;
+    window.TarotSceneEffects?.syncCamera({ world, origin, zoom: camera.zoom });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    if (visionWorld.active && !absorptionSurface) {ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cssWidth, cssHeight);}
+    ctx.save();
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-origin.x, -origin.y);
+    if (!absorptionSurface) drawVisionWorld();
+    if (!visionWorld.active) drawTapEffect();
+    drawActors();
+    drawCollisionDebug();
+    drawNavDebug();
+    window.TarotSceneEffects?.drawDebug(ctx, { player, shiopon, lumiere }, scale, camera.zoom);
+    ctx.restore();
+  }
+
+  function loop(now) {
+    if (!running) return;
+    const dt = Math.min(last ? (now - last) / 1000 : 0, 0.05);
+    last = now;
+    if (tapEffect) {
+      tapEffect.age += dt;
+      if (tapEffect.age >= 0.45) tapEffect = null;
+    }
+    updatePlayer(dt);
+    updateShiopon(dt);
+    if (!hoshisunaDev) updateLumiere(dt);
+    updateCamera(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function begin(event) {
+    event?.preventDefault();
+    if (!ready || running) return;
+
+    // Root title may start a new game. Any validated Garden runtime entry
+    // (Landing handoff, dev Continue, or Public Continue) must never fall through
+    // to the New Game reset/navigation path.
+    if (!enteringGardenRuntime) {
+      if (start) start.disabled = true;
+      // The title transition is owned by public-continue-title.js. A failed
+      // durable reset must also release its departing state, not merely this button.
+      function reportStartFailure(message) {
+        if (start) start.disabled = false;
+        if (note) note.textContent = message;
+        window.dispatchEvent(new CustomEvent("tarot-breaker:title-new-game-failed", { detail: { message } }));
+      }
+      let progress;
+      try { progress = window.TarotProgressCore?.createProgress(); }
+      catch (_) { progress = null; }
+      if (!progress) {
+        reportStartFailure("セーブ機能を初期化できません");
+        return;
+      }
+      let reset;
+      try { reset = progress.resetGame("title-new-game"); }
+      catch (_) { reset = null; }
+      if (!reset?.persisted) {
+        reportStartFailure("セーブデータを初期化できません。再試行してください");
+        return;
+      }
+      window.TarotJourney?.reset();
+      const audioDebug = new URLSearchParams(location.search).get("audioDebug") === "1" ? "&audioDebug=1" : "";
+      const orbComparison = audioDebug && new URLSearchParams(location.search).get("orbOutput") === "webAudio"
+        ? "&orbOutput=webAudio" : "";
+      navigateRuntime(`./alenon.html?from=title&build=6bc2a38e${audioDebug}${orbComparison}`);
+      return;
+    }
+
+    running = true;
+    startScreen.hidden = true;
+    window.dispatchEvent(new CustomEvent("tarot-breaker:world-enter"));
+    guide.hidden = true;
+    resize();
+    reset();
+    if (hoshisunaDev || window.TarotDialogue?.getState().joined) {
+      startShioponFollow();
+      if (enteringGardenRuntime) placeShioponBesidePlayer();
+    }
+    if (window.__TAROT_PUBLIC_STAR_GATE__ === true) window.TarotStarGatePublic?.restoreCompleted?.();
+    last = performance.now();
+    draw();
+    requestAnimationFrame(loop);
+    setTimeout(() => {
+      guide.hidden = true;
+    }, 5000);
+  }
+
+  function pointerInfo(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const origin = viewportOrigin();
+    return {
+      id: event.pointerId,
+      x,
+      y,
+      width: cssWidth,
+      time: event.timeStamp,
+      primary: event.isPrimary !== false,
+      button: event.button,
+      world: {
+        x: (origin.x + x / camera.zoom) / scale.x,
+        y: (origin.y + y / camera.zoom) / scale.y,
+      },
+    };
+  }
+
+  function syncStick() {
+    const stick = controls?.state.stick;
+    joystick.hidden = !stick?.active;
+    if (!stick) return;
+    joystick.style.left = stick.ox + "px";
+    joystick.style.top = stick.oy + "px";
+    knob.style.transform = `translate(${stick.knobX}px,${stick.knobY}px)`;
+  }
+
+  function pointerDown(event) {
+    if (!running || (stage3Runtime && releasePointers.has(event.pointerId))) return;
+    event.preventDefault();
+    if (!controls.pointerDown(pointerInfo(event))) return;
+    window.TarotAudio?.startFromMovement();
+    canvas.setPointerCapture?.(event.pointerId);
+    guide.hidden = true;
+  }
+
+  function pointerMove(event) {
+    if (!running || (stage3Runtime && releasePointers.has(event.pointerId))) return;
+    event.preventDefault();
+    controls.pointerMove(pointerInfo(event));
+    syncStick();
+  }
+
+  function pointerEnd(event) {
+    if (stage3Runtime && releasePointers.has(event.pointerId)) { releasePointers.delete(event.pointerId); clearInput("aftermath-release"); return; }
+    if (!running) return;
+    event.preventDefault();
+    const action = controls.pointerEnd(
+      { ...pointerInfo(event), cancelled: event.type !== "pointerup" },
+      playerRef(),
+    );
+    if (event.type === "pointerup" && !window.TarotDialogue?.getState().active)
+      window.TarotAudio?.startFromMovement();
+    if (action) tapEffect = { ...action.point, age: 0 };
+    if (canvas.hasPointerCapture?.(event.pointerId))
+      canvas.releasePointerCapture(event.pointerId);
+    syncStick();
+  }
+
+  function clearInput(reason) {
+    controls?.clearInput(reason);
+    syncStick();
+  }
+
+  function placeShioponBesidePlayer() {
+    const playerNow = playerRef();
+    const sideGap = SHIOPON_FOLLOW_DISTANCE;
+    const candidates = [
+      { x: playerNow.x - sideGap, y: playerNow.y },
+      { x: playerNow.x + sideGap, y: playerNow.y },
+      shioponFollowTarget(),
+    ];
+    const safe = candidates.find(
+      (candidate) =>
+        isWalkableRef(candidate.x, candidate.y) &&
+        refDistance(candidate, playerNow) >= SHIOPON_FOLLOW_MIN_GAP,
+    );
+    if (!safe) return false;
+    shiopon.x = safe.x * scale.x;
+    shiopon.y = safe.y * scale.y;
+    return true;
+  }
+
+  function startShioponFollow() {
+    if (!ready) return;
+    shiopon.scripted = null;
+    shiopon.rotation = 0;
+    shiopon.visualOffsetY = 0;
+    shiopon.following = true;
+    shiopon.followRoute = [];
+    shiopon.followReplan = 0;
+    shiopon.followTarget = null;
+    shiopon.target = null;
+    shiopon.wait = 0;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    const current = shioponRef();
+    const target = shioponFollowTarget();
+    if (
+      refDistance(current, playerRef()) > SHIOPON_FOLLOW_EMERGENCY_GAP &&
+      isWalkableRef(target.x, target.y)
+    ) {
+      shiopon.x = target.x * scale.x;
+      shiopon.y = target.y * scale.y;
+    }
+    shiopon.dir = player.dir;
+  }
+
+  function stopShioponFollow() {
+    shiopon.following = false;
+    shiopon.followRoute = [];
+    shiopon.followReplan = 0;
+    shiopon.followTarget = null;
+    shiopon.target = null;
+    shiopon.moving = false;
+    shiopon.frame = 0;
+    shiopon.anim = 0;
+    shiopon.wait = 0.9 + Math.random() * 1.4;
+  }
+
+  const sceneryPrior = new Map();
+  function setVisionScenery(hidden) {
+    for (const node of [map, ...document.querySelectorAll("[data-scene-world], [data-scene-object]")]) {
+      if (hidden) {
+        if (!sceneryPrior.has(node)) sceneryPrior.set(node, node.style.visibility);
+        node.style.visibility = "hidden";
+      } else if (sceneryPrior.has(node)) {
+        node.style.visibility = sceneryPrior.get(node); sceneryPrior.delete(node);
+      }
+    }
+  }
+  if (stage3Runtime) window.TarotStage3Scene = Object.freeze({
+    capture() {
+      if (!ready || !running || !map.complete || !images.idle?.complete || !collision || cssWidth <= 1 || cssHeight <= 1) throw new Error("P0 current resources not prepared");
+      if (visionWorld.active) throw new Error("P0 must precede Future Vision");
+      return { mapId: "star_gate_garden", player: {...playerRef(), dir: player.dir},
+        camera: {...camera}, viewport: {width:cssWidth,height:cssHeight}, owner:sceneLockOwner, npcLogical: {companion:stage3Dev ? window.TarotStage3DevFixture.context.companion : (shiopon.following ? "joined_with_shion" : (shiopon.hidden ? "waiting_at_landing" : "not_joined")), story:{...window.TarotJourney?.get("gardenStory")}}, actors: {shiopon: {...shioponRef(), dir:shiopon.dir, stageOffsetY:shiopon.stageOffsetY, visualOffsetY:shiopon.visualOffsetY, rotation:shiopon.rotation, following:shiopon.following}, lumiere: {...lumiereRef(), dir:lumiere.dir, stageOffsetY:lumiere.stageOffsetY}}, visibility: {...actorVisibility}, inputSuspended: !!controls?.state.suspended,
+        npcSuspended, hidden: shiopon.hidden, captured: performance.now() };
+    },
+    lock(owner) {
+      if (sceneLockOwner && sceneLockOwner !== owner) throw new Error("Scene lock already owned");
+      if (!sceneLockOwner) sceneLockPrior = {suspended: !!controls?.state.suspended, npcSuspended};
+      sceneLockOwner = owner; controls?.suspend(); npcSuspended = true; clearInput("stage3-dev");
+    },
+    unlock(owner) {
+      if (sceneLockOwner !== owner) return false;
+      sceneLockOwner = null;
+      if (!sceneLockPrior?.suspended && !outsideInteraction) controls?.resume();
+      npcSuspended = !!sceneLockPrior?.npcSuspended || outsideInteraction;
+      cinematicCamera.generation++;cinematicCamera.owned=false; cinematicCamera.allowOverscan=false;
+      sceneLockPrior = null; return true;
+    },
+    freezeCamera() {
+      cinematicCamera.generation++;
+      if (cinematicCamera.resolve) cinematicCamera.resolve({completed:false,interrupted:true});
+      cinematicCamera.resolve = null; cinematicCamera.active = false; cinematicCamera.owned = true;
+      return {...camera};
+    },
+    waitDraw({alive=()=>true}={}) { return new Promise(resolve => requestAnimationFrame(() => {if(alive())draw();resolve({completed:alive()});})); },
+    prepareBackground({anchor={x:cssWidth/2,y:cssHeight/2}}={}) {
+      if (!visionWorld.active || !visionWorld.image?.complete) throw new Error("Ruins not prepared");
+      const surface = document.createElement("canvas");
+      const bounds=stage3BackgroundBounds(cssWidth,cssHeight,anchor);
+      surface.width = Math.ceil(bounds.width*dpr); surface.height = Math.ceil(bounds.height*dpr);
+      surface.stage3Preparation={bounds,viewport:{width:cssWidth,height:cssHeight},anchor:{...anchor}};
+      const target = surface.getContext("2d");
+      target.setTransform(dpr,0,0,dpr,0,0); target.fillStyle = "#000";
+      target.fillRect(0,0,bounds.width,bounds.height);
+      target.translate(-bounds.left,-bounds.top);
+      const origin = viewportOrigin(); target.scale(camera.zoom,camera.zoom); target.translate(-origin.x,-origin.y);
+      const previous = ctx; ctx = target; try {drawVisionWorld();} finally {ctx=previous;}
+      Object.assign(surface.style, {position:"absolute",left:bounds.left+"px",top:bounds.top+"px",width:bounds.width+"px",height:bounds.height+"px",pointerEvents:"none",zIndex:"0",transformOrigin:(anchor.x-bounds.left)+"px "+(anchor.y-bounds.top)+"px"});
+      surface.dataset.stage3Background = "true";
+      return surface;
+    },
+    activateAbsorption(surface) {
+      if (!surface?.stage3Preparation || surface.stage3Preparation.viewport.width!==cssWidth || surface.stage3Preparation.viewport.height!==cssHeight || surface.width!==Math.ceil(surface.stage3Preparation.bounds.width*dpr) || surface.height!==Math.ceil(surface.stage3Preparation.bounds.height*dpr)) throw new Error("Invalid background preparation");
+      if (absorptionSurface) throw new Error("Background already active");
+      absorptionSurface = surface;
+      const substrate = document.createElement("div"); substrate.dataset.stage3Substrate="true";
+      Object.assign(substrate.style,{position:"absolute",inset:"0",background:"#080A12",zIndex:"0",pointerEvents:"none"});
+      canvas.parentNode.insertBefore(substrate,canvas); canvas.parentNode.insertBefore(surface,canvas);
+      draw(); return surface;
+    },
+    removeAbsorption() {
+      absorptionSurface?.remove(); absorptionSurface=null;
+      document.querySelectorAll("[data-stage3-substrate]").forEach(node=>node.remove());
+    },
+    async restore(p0, {alive=()=>true}={}) {
+      if(!alive())throw new Error("Expired P0 restoration");
+      if (!p0 || p0.mapId !== "star_gate_garden" || !ready) throw new Error("P0 unavailable");
+      cancelAllStageMotions(false);
+      this.removeAbsorption();
+      visionWorld.active=false; visionWorld.opacity=0; visionWorld.token++;
+      setVisionScenery(false);
+      player.x=p0.player.x*scale.x; player.y=p0.player.y*scale.y; player.dir=p0.player.dir;
+      player.stageOffsetY=0; player.moving=false; player.frame=0;
+      for (const [id, actor] of [["shiopon",shiopon],["lumiere",lumiere]]) {
+        const saved=p0.actors[id]; actor.x=saved.x*scale.x; actor.y=saved.y*scale.y; actor.dir=saved.dir;
+        actor.stageOffsetY=saved.stageOffsetY; actor.moving=false; actor.frame=0;
+      }
+      shiopon.visualOffsetY=p0.actors.shiopon.visualOffsetY; shiopon.rotation=p0.actors.shiopon.rotation;
+      shiopon.following=p0.actors.shiopon.following; shiopon.followRoute=[]; shiopon.followTarget=null;
+      shiopon.hidden=p0.npcLogical.companion === "waiting_at_landing";
+      for (const id of Object.keys(actorVisibility)) actorVisibility[id]=p0.visibility[id];
+      if (cinematicCamera.resolve) cinematicCamera.resolve({completed:false,interrupted:true});
+      cinematicCamera.generation++;cinematicCamera.active=false; cinematicCamera.resolve=null; cinematicCamera.owned=true;
+      cinematicCamera.allowOverscan=false; Object.assign(camera,p0.camera);
+      if (cssWidth !== p0.viewport.width || cssHeight !== p0.viewport.height) camera.zoom=normalCameraZoom;
+      await this.waitDraw({alive});
+      if(!alive())throw new Error("Expired P0 restoration");
+      if (!this.verify(p0).completed) throw new Error("P0 verification failed");
+      return {completed:true};
+    },
+    verify(p0) {
+      const logical = window.TarotJourney?.get("gardenStory");
+      const expectedHidden = p0?.npcLogical.companion === "waiting_at_landing";
+      const logicalMatch = !!p0 && ["shioponDone","lumiereDone","joined"].every(key=>logical?.[key] === p0.npcLogical.story[key]);
+      return {completed: !!p0 && ready && !visionWorld.active && !absorptionSurface &&
+        Math.abs(playerRef().x-p0.player.x)<.01 && Math.abs(playerRef().y-p0.player.y)<.01 &&
+        Object.keys(actorVisibility).every(id=>actorVisibility[id]===p0.visibility[id]) &&
+        shiopon.hidden===expectedHidden && logicalMatch &&
+        !!controls && controls.state.suspended && !!sceneLockOwner && cinematicCamera.owned,
+        mapId:"star_gate_garden", player:{...playerRef(),dir:player.dir},
+        npc:{shioponHidden:shiopon.hidden,logical}, camera:{...camera}, owner:sceneLockOwner};
+    },
+    getState() {return {presentPrepared:!!(ready && running && map.complete && images.idle?.complete && collision && cssWidth>1 && cssHeight>1),vision:visionWorld.active,absorption:!!absorptionSurface,viewport:{width:cssWidth,height:cssHeight,dpr},owner:sceneLockOwner};},
+  });
+
+  if (stage3Runtime) {
+    // Observe physical releases independently of UI propagation. No time-based cooldown.
+    window.addEventListener("keydown", e => heldKeys.add(e.key), true);
+    window.addEventListener("keyup", e => heldKeys.delete(e.key), true);
+    window.addEventListener("pointerdown", e => heldPointers.add(e.pointerId), true);
+    for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, e => heldPointers.delete(e.pointerId), true);
+    for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, e => releasePointers.delete(e.pointerId));
+    window.addEventListener("blur",()=>{heldKeys.clear();heldPointers.clear();releaseKeys.clear();releasePointers.clear();});
+    function clearAftermathInput() {
+      for (const key of heldKeys) releaseKeys.add(key);
+      for (const id of heldPointers) releasePointers.add(id);
+      clearInput("aftermath");
+    }
+    function captureAftermath() {
+      if (!ready || !running || visionWorld.active || absorptionSurface || sceneLockOwner)
+        throw new Error("Aftermath requires a cleaned-up present garden");
+      return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id => {
+        const actor=stageActor(id); return [id,{...stageActorRef(id),dir:actor.dir,stageOffsetY:actor.stageOffsetY/scale.y}];
+      })), following:shiopon.following,hidden:shiopon.hidden,rotation:shiopon.rotation,
+      visualOffsetY:shiopon.visualOffsetY/scale.y,visibility:{...actorVisibility},camera:{...camera},cameraRef:{x:camera.x/scale.x,y:camera.y/scale.y},
+      lumiereEnabled:aftermathLumiereEnabled,inputSuspended:!!controls?.state.suspended,npcSuspended,owner:sceneLockOwner,viewport:{width:cssWidth,height:cssHeight}};
+    }
+    function lumiereRenderRect() {
+      const origin=viewportOrigin();
+      const pose=lumiereManifest?.poses[lumiere.dir]||lumiereManifest?.poses.down;
+      if(!pose)return {left:0,right:0,top:0,bottom:0,width:0,height:0};
+      const bodyHeight=DRAW_HEIGHT*lumiereManifest.render.reference_body_height/FRAME.h;
+      const poseScale=bodyHeight/(pose.baseline_y-pose.body_top);
+      const visualOffset=lumiere.bobOffsetY+lumiere.stageOffsetY;
+      const left=(lumiere.x-pose.center_x*poseScale-origin.x)*camera.zoom;
+      const top=(lumiere.y-LUMIERE_BOTTOM_GAP*scale.y-pose.baseline_y*poseScale+visualOffset-origin.y)*camera.zoom;
+      const right=left+pose.width*poseScale*camera.zoom;
+      const imageBottom=top+pose.height*poseScale*camera.zoom;
+      const x=(lumiere.x-origin.x)*camera.zoom,y=(lumiere.y-origin.y)*camera.zoom;
+      const unionLeft=Math.min(left-2,x-18*camera.zoom);
+      const unionRight=Math.max(right+2,x+18*camera.zoom);
+      const unionTop=Math.min(top-2,y-5*camera.zoom);
+      const unionBottom=Math.max(imageBottom+2,y+9*camera.zoom);
+      return {left:unionLeft,right:unionRight,top:unionTop,bottom:unionBottom,
+        width:unionRight-unionLeft,height:unionBottom-unionTop};
+    }
+    window.TarotAftermathScene=Object.freeze({
+      capture:captureAftermath,captureA0:captureAftermath,
+      lock(owner){window.TarotStage3Scene.lock(owner);aftermathOwner=owner;clearAftermathInput();},
+      unlock(owner){clearAftermathInput();const released=window.TarotStage3Scene.unlock(owner);if(released)aftermathOwner=null;return released;},
+      clearInput:clearAftermathInput,
+      // Stage3 unlock is unchanged. Reclaim framing in the same JS task
+      // before notifying Aftermath, and abandon it if unconsumed.
+      armReturnCamera(id){
+        if(!Number.isFinite(id)||sceneLockOwner||!ready||!running||visionWorld.active||absorptionSurface||returnCameraHandoff)return false;
+        // normalCameraTarget is private to the separate cinematic-camera
+        // block. Access it through that block's API, never by free variable.
+        const target=window.TarotCinematicCamera?.getNormalTarget?.();
+        if(!Number.isFinite(target?.x)||!Number.isFinite(target?.y))return false;
+        returnCameraHandoff={id,generation:++cinematicCamera.generation,viewport:{width:cssWidth,height:cssHeight},
+          safeCamera:{x:target.x,y:target.y,zoom:normalCameraZoom},
+          safeCameraRef:{x:target.x/scale.x,y:target.y/scale.y}};
+        cinematicCamera.owned=true;cinematicCamera.allowOverscan=true;
+        return true;
+      },
+      takeReturnCamera(id){
+        const lease=returnCameraHandoff;
+        if(!lease||lease.id!==id||sceneLockOwner||!cinematicCamera.owned||lease.generation!==cinematicCamera.generation)return null;
+        if(lease.viewport.width!==cssWidth||lease.viewport.height!==cssHeight)return null;
+        returnCameraHandoff=null;
+        return {safeCamera:{...lease.safeCamera},safeCameraRef:{...lease.safeCameraRef}};
+      },
+      abandonReturnCamera(id){
+        const lease=returnCameraHandoff;
+        if(!lease||lease.id!==id)return false;
+        returnCameraHandoff=null;
+        if(sceneLockOwner||!cinematicCamera.owned||lease.generation!==cinematicCamera.generation)return false;
+        window.TarotCinematicCamera.release();draw();return true;
+      },
+      async returnToGameplayCamera(duration=450){
+        if(!aftermathOwner||sceneLockOwner!==aftermathOwner)return {completed:false,reason:"owner"};
+        const vp={width:cssWidth,height:cssHeight};
+        const done=await window.TarotCinematicCamera.returnToPlayer(duration);
+        if(!done?.completed||sceneLockOwner!==aftermathOwner||
+           cssWidth!==vp.width||cssHeight!==vp.height)return {completed:false,reason:"interrupted"};
+        window.TarotCinematicCamera.release();
+        const drawResult=await window.TarotStage3Scene.waitDraw();
+        return {completed:drawResult?.completed===true};
+      },
+      cancelReturnPan(){
+        if(aftermathOwner&&sceneLockOwner===aftermathOwner)window.TarotStage3Scene.freezeCamera();
+      },
+      pause(value){aftermathPaused=!!value;},setHiddenPaused(value){aftermathPaused=!!value;},
+      setActorVisibility(actorId,value){
+        if(!(actorId in actorVisibility))return false;
+        actorVisibility[actorId]=clamp(Number(value)||0,0,1);draw();return true;
+      },
+      placeReturnFormation(){
+        const shion=playerRef();
+        // Preserve Lumiere's restored pre-blackout world position exactly.
+        // Only Shiopon is repositioned beside her; this avoids the artificial
+        // Shion-centered symmetry that looked staged on device.
+        const lumiereAnchor={...stageActorRef("lumiere")};
+        const preferred={x:lumiereAnchor.x-62,y:lumiereAnchor.y};
+        const alternate={x:lumiereAnchor.x+62,y:lumiereAnchor.y};
+        let shioponPlaced=preferred;
+        if(!isWalkableRef(preferred.x,preferred.y)){
+          shioponPlaced=isWalkableRef(alternate.x,alternate.y)
+            ?alternate:(collision.nearestWalkable(preferred)||preferred);
+        }
+        shiopon.x=shioponPlaced.x*scale.x;shiopon.y=shioponPlaced.y*scale.y;
+        shiopon.stageOffsetY=0;shiopon.visualOffsetY=0;shiopon.rotation=0;
+        shiopon.moving=false;shiopon.frame=0;shiopon.followRoute=[];shiopon.followTarget=null;shiopon.target=null;
+        // Keep the authored return formation stable while the player freely checks both companions.
+        shiopon.wait=Number.POSITIVE_INFINITY;
+        lumiere.stageOffsetY=0;lumiere.moving=false;lumiere.frame=0;
+        setDirection(shiopon,lumiereAnchor.x-shioponPlaced.x,lumiereAnchor.y-shioponPlaced.y);
+        setDirection(lumiere,shion.x-lumiereAnchor.x,shion.y-lumiereAnchor.y);
+        draw();
+        return {shion:{...shion},shiopon:{...shioponPlaced},lumiere:{...lumiereAnchor}};
+      },
+      face(actor,target){return performStageCommand({type:"face",actor,target});},
+      perform(command){const action=performStageCommand(command);aftermathMotions.add(action.id);action.promise.finally(()=>aftermathMotions.delete(action.id));return action;},
+      gameplayCamera(){aftermathFocusBaseline=null;window.TarotCinematicCamera.release();return Promise.resolve({completed:true});},
+      focusGate(){
+        window.TarotStage3Scene.freezeCamera();
+        // A small, clamped focus shift at the existing gameplay zoom, never an upper pan.
+        if(!aftermathFocusBaseline)aftermathFocusBaseline={x:camera.x/scale.x,y:camera.y/scale.y};
+        camera.zoom=normalCameraZoom;
+        const baselineY=aftermathFocusBaseline.y*scale.y,gateY=105*scale.y;
+        const desiredY=gateY-cssHeight*.30/camera.zoom+cssHeight/2/camera.zoom;
+        camera.y=Math.max(baselineY-36*scale.y,Math.min(baselineY+36*scale.y,desiredY));
+        camera.x=aftermathFocusBaseline.x*scale.x;draw();return Promise.resolve({completed:true});
+      },
+      nearGate(distance=46){return refDistance(playerRef(),{x:810,y:105})<=distance;},
+      hitTestActor(clientX,clientY){
+        const rect=canvas.getBoundingClientRect();
+        const px=clientX-rect.left,py=clientY-rect.top,origin=viewportOrigin();
+        const candidates=["lumiere","shiopon"].map(id=>{
+          const actor=stageActor(id),ref=stageActorRef(id);
+          const x=(ref.x*scale.x-origin.x)*camera.zoom;
+          const feetY=(actor.y+actor.stageOffsetY-origin.y)*camera.zoom;
+          const halfW=(id==="lumiere"?54:34)*camera.zoom;
+          const height=(id==="lumiere"?88:82)*camera.zoom;
+          const top=feetY-height,bottom=feetY+10*camera.zoom;
+          return {id,x,centerY:(top+bottom)/2,left:x-halfW,right:x+halfW,top,bottom};
+        }).filter(hit=>px>=hit.left&&px<=hit.right&&py>=hit.top&&py<=hit.bottom);
+        candidates.sort((a,b)=>Math.hypot(px-a.x,py-a.centerY)-Math.hypot(px-b.x,py-b.centerY));
+        return candidates[0]?.id||null;
+      },
+      moveAway(){return this.nearGate(62)?this.perform({type:"step",actor:"shion",direction:"down",distance:12,duration:240}).promise:Promise.resolve({completed:true});},
+      flightPose(ref,offsetY=0){lumiere.x=ref.x*scale.x;lumiere.y=ref.y*scale.y;lumiere.stageOffsetY=offsetY*scale.y;lumiere.dir="right";lumiere.moving=false;},
+      setLumiereDeparted(value=true){aftermathLumiereEnabled=!value;},
+      setLumiereEnabled(value){aftermathLumiereEnabled=!!value;},
+      getState(){return {actors:Object.fromEntries(["shion","shiopon","lumiere"].map(id=>[id,{...stageActorRef(id),dir:stageActor(id).dir}])),following:shiopon.following,lumiereEnabled:aftermathLumiereEnabled,visibility:{...actorVisibility},lumiereRect:lumiereRenderRect(),viewport:{width:cssWidth,height:cssHeight},camera:{...camera},owner:sceneLockOwner,inputSuspended:!!controls?.state.suspended,npcSuspended};},
+      async restore(a0){
+        for(const id of aftermathMotions){for(const actorId of Object.keys(stageMotions)){const motion=stageMotions[actorId];if(motion?.id===id)settleStageMotion(actorId,motion,{skipped:true});}}
+        aftermathMotions.clear();aftermathPaused=false;
+        for(const [id,saved] of Object.entries(a0.actors)){const actor=stageActor(id);actor.x=saved.x*scale.x;actor.y=saved.y*scale.y;actor.dir=saved.dir;actor.stageOffsetY=saved.stageOffsetY*scale.y;actor.moving=false;}
+        shiopon.following=a0.following;shiopon.hidden=a0.hidden;shiopon.rotation=a0.rotation;shiopon.visualOffsetY=a0.visualOffsetY*scale.y;shiopon.followRoute=[];shiopon.followTarget=null;
+        Object.assign(actorVisibility,a0.visibility);aftermathLumiereEnabled=a0.lumiereEnabled;
+        window.TarotStage3Scene.freezeCamera();Object.assign(camera,a0.camera);
+        camera.x=a0.cameraRef.x*scale.x;camera.y=a0.cameraRef.y*scale.y;
+        if(cssWidth!==a0.viewport.width||cssHeight!==a0.viewport.height)camera.zoom=normalCameraZoom;
+        aftermathFocusBaseline=null;clearAftermathInput();draw();
+        return {completed:this.verify(a0).completed};
+      },
+      verify(a0){return {completed:!!a0&&!visionWorld.active&&!absorptionSurface&&Object.entries(a0.actors).every(([id,saved])=>refDistance(stageActorRef(id),saved)<.01&&stageActor(id).dir===saved.dir&&Math.abs(stageActor(id).stageOffsetY/scale.y-saved.stageOffsetY)<.01)&&Object.keys(actorVisibility).every(id=>actorVisibility[id]===a0.visibility[id])&&aftermathLumiereEnabled===a0.lumiereEnabled&&shiopon.following===a0.following&&shiopon.hidden===a0.hidden&&Math.abs(shiopon.rotation-a0.rotation)<1e-6&&Math.abs(shiopon.visualOffsetY/scale.y-a0.visualOffsetY)<.01&&Math.abs(camera.x/scale.x-a0.cameraRef.x)<.01&&Math.abs(camera.y/scale.y-a0.cameraRef.y)<.01&&Math.abs(camera.zoom-((cssWidth!==a0.viewport.width||cssHeight!==a0.viewport.height)?normalCameraZoom:a0.camera.zoom))<1e-6&&sceneLockOwner===aftermathOwner&&!!aftermathOwner&&!!controls?.state.suspended&&npcSuspended&&sceneLockPrior?.suspended===a0.inputSuspended&&!!sceneLockPrior?.npcSuspended===!!a0.npcSuspended};},
+    });
+  }
+
+  if (stage3Runtime) {
+  function beginCinematicPan(targetX, targetY, targetZoom, duration, allowOverscan = false) {
+    cinematicCamera.generation++;
+    if (cinematicCamera.resolve)
+      cinematicCamera.resolve({ completed: false, interrupted: true });
+    cinematicCamera.active = true;
+    cinematicCamera.owned = true;
+    cinematicCamera.allowOverscan = allowOverscan;
+    cinematicCamera.startX = camera.x;
+    cinematicCamera.startY = camera.y;
+    cinematicCamera.startZoom = camera.zoom;
+    cinematicCamera.targetX = targetX;
+    cinematicCamera.targetY = targetY;
+    cinematicCamera.targetZoom = targetZoom;
+    cinematicCamera.elapsed = 0;
+    cinematicCamera.duration = Math.max(0, duration / 1000);
+    return new Promise(resolve => { cinematicCamera.resolve = resolve; });
+  }
+
+  function normalCameraTarget() {
+    const viewW = cssWidth / normalCameraZoom;
+    const viewH = cssHeight / normalCameraZoom;
+    const halfW = viewW / 2;
+    const halfH = viewH / 2;
+    return {
+      x: clamp(player.x, halfW, Math.max(halfW, world.w - halfW)),
+      y: clamp(player.y - cameraOffsetY(), halfH, Math.max(halfH, world.h - halfH)),
+    };
+  }
+
+  window.TarotCinematicCamera = Object.freeze({
+    // Safe read-only bridge for Stage3->Aftermath return framing. It stays
+    // in this same lexical block as normalCameraTarget().
+    getNormalTarget() { return { ...normalCameraTarget() }; },
+    panTo(target = {}, duration = 1200, options = {}) {
+      const ref = stageTargetRef(target);
+      if (!ref) return Promise.resolve({ completed: false });
+      const zoom = Number.isFinite(options.zoom) && options.zoom > 0
+        ? options.zoom
+        : camera.zoom;
+      return beginCinematicPan(
+        ref.x * scale.x,
+        ref.y * scale.y,
+        zoom,
+        duration,
+        options.allowOverscan === true,
+      );
+    },
+    frameBounds(bounds = {}, duration = 1200, options = {}) {
+      const left = Number(bounds.left);
+      const top = Number(bounds.top);
+      const right = Number(bounds.right);
+      const bottom = Number(bounds.bottom);
+      if (![left, top, right, bottom].every(Number.isFinite) || right <= left || bottom <= top)
+        return Promise.resolve({ completed: false });
+      const padding = clamp(Number(options.padding) || 16, 0, Math.min(cssWidth, cssHeight) / 3);
+      const boundsW = (right - left) * scale.x;
+      const boundsH = (bottom - top) * scale.y;
+      const fitZoom = Math.min(
+        (cssWidth - padding * 2) / boundsW,
+        (cssHeight - padding * 2) / boundsH,
+        normalCameraZoom,
+      );
+      const minZoom = Number.isFinite(options.minZoom) ? options.minZoom : 0.55;
+      const zoom = clamp(fitZoom, Math.min(minZoom, normalCameraZoom), normalCameraZoom);
+      const renderedHeight = boundsH * zoom;
+      const topInset = clamp(
+        Number(options.topInset) || (cssHeight - renderedHeight) * 0.12,
+        padding,
+        Math.max(padding, cssHeight * 0.12),
+      );
+      const originX = ((left + right) * 0.5) * scale.x - cssWidth / zoom / 2;
+      const originY = top * scale.y - topInset / zoom;
+      return beginCinematicPan(
+        originX + cssWidth / zoom / 2,
+        originY + cssHeight / zoom / 2,
+        zoom,
+        duration,
+        true,
+      );
+    },
+    returnToPlayer(duration = 1200) {
+      const target = normalCameraTarget();
+      return beginCinematicPan(target.x, target.y, normalCameraZoom, duration, true);
+    },
+    release() {
+      cinematicCamera.generation++;
+      if (cinematicCamera.resolve)
+        cinematicCamera.resolve({ completed: false, interrupted: true });
+      cinematicCamera.active = false;
+      cinematicCamera.owned = false;
+      cinematicCamera.allowOverscan = false;
+      cinematicCamera.resolve = null;
+      camera.zoom = normalCameraZoom;
+      const target = normalCameraTarget();
+      camera.x = target.x;
+      camera.y = target.y;
+    },
+    getState: () => ({
+      active: cinematicCamera.active,
+      owned: cinematicCamera.owned,
+      allowOverscan: cinematicCamera.allowOverscan,
+      camera: { ...camera },
+      origin: viewportOrigin(),
+      viewport: { width: cssWidth, height: cssHeight, normalZoom: normalCameraZoom },
+      world: { ...world },
+      scale: { ...scale },
+      player: playerRef(),
+    }),
+    isViewportInsideWorld() {
+      const origin = viewportOrigin();
+      const viewW = cssWidth / camera.zoom;
+      const viewH = cssHeight / camera.zoom;
+      const epsilon = 0.5;
+      return origin.x >= -epsilon && origin.y >= -epsilon &&
+        origin.x + viewW <= world.w + epsilon &&
+        origin.y + viewH <= world.h + epsilon;
+    },
+  });
+  window.TarotVisionWorld = Object.freeze({
+    async begin(src, options = {}) {
+      const token = ++visionWorld.token;
+      await loadVisionWorld(src, {...options, token});
+      if (options.signal?.aborted || token !== visionWorld.token) {
+        const error = new Error("Future Vision entry expired"); error.name = "AbortError"; throw error;
+      }
+      visionWorld.active = true;
+      setVisionScenery(true);
+      visionWorld.opacity = 0;
+      return { completed: true };
+    },
+    setOpacity(opacity) {
+      visionWorld.opacity = clamp(Number(opacity) || 0, 0, 1);
+    },
+    end() {
+      visionWorld.active = false;
+      setVisionScenery(false);
+      visionWorld.opacity = 0;
+      visionWorld.image = null;
+      visionWorld.src = "";
+      visionWorld.token += 1;
+    },
+    getState: () => ({
+      active: visionWorld.active,
+      opacity: visionWorld.opacity,
+      src: visionWorld.src,
+      world: { width: world.w / scale.x, height: world.h / scale.y },
+      registration: { ...VISION_REGISTRATION },
+    }),
+  });
+
+  window.TarotActorScreenAnchor = Object.freeze({
+    get(actorId = "shion") {
+      if (actorId !== "shion") return null;
+      const origin = viewportOrigin();
+      const scaleDraw = DRAW_HEIGHT / FRAME.h;
+      const drawW = FRAME.w * scaleDraw;
+      const drawH = FRAME.h * scaleDraw;
+      const feetY = player.y + player.stageOffsetY;
+      return {
+        x: (player.x - origin.x) * camera.zoom,
+        feetY: (feetY - origin.y) * camera.zoom,
+        width: drawW * camera.zoom,
+        height: drawH * camera.zoom,
+      };
+    },
+  });
+  window.TarotActorVisibility = Object.freeze({
+    set(actorId, opacity) { if (actorId in actorVisibility) actorVisibility[actorId] = clamp(Number(opacity) || 0, 0, 1); },
+    reset() { actorVisibility.shion = actorVisibility.shiopon = actorVisibility.lumiere = 1; },
+    getState: () => ({ ...actorVisibility }),
+  });
+
+  }
+
+  window.TarotStage = Object.freeze({
+    perform: performStageCommand,
+    finishAll: () => cancelAllStageMotions(true),
+    cancelAll: () => cancelAllStageMotions(false),
+    getState: () => ({
+      actors: {
+        shion: { ...playerRef(), dir: player.dir },
+        shiopon: { ...shioponRef(), dir: shiopon.dir },
+        lumiere: { ...lumiereRef(), dir: lumiere.dir },
+      },
+      motions: Object.fromEntries(
+        Object.entries(stageMotions).map(([actorId, motion]) => [
+          actorId,
+          motion ? { id: motion.id, kind: motion.kind } : null,
+        ]),
+      ),
+    }),
+    landmarks: STAGE_LANDMARKS,
+  });
+
+  start?.addEventListener("click", begin);
+  canvas.addEventListener("pointerdown", pointerDown, { passive: false });
+  canvas.addEventListener("pointermove", pointerMove, { passive: false });
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
+    canvas.addEventListener(type, pointerEnd, { passive: false });
+  for (const type of [
+    "contextmenu",
+    "dragstart",
+    "selectstart",
+    "gesturestart",
+    "gesturechange",
+    "gestureend",
+  ]) {
+    canvas.addEventListener(type, (event) => event.preventDefault(), {
+      passive: false,
+    });
+  }
+
+  window.addEventListener("resize", () => {
+    clearInput("resize");
+    resize();
+    if (ready) draw();
+  });
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (stage3Runtime && releaseKeys.has(event.key)) return;
+      if (running && controls.keyDown(event.key)) {
+        window.TarotAudio?.startFromMovement();
+        guide.hidden = true;
+        event.preventDefault();
+      }
+    },
+    { passive: false },
+  );
+  window.addEventListener("keyup", (event) => { releaseKeys.delete(event.key); controls?.keyUp(event.key); });
+  window.addEventListener("blur", () => clearInput("blur"));
+  window.addEventListener("pagehide", () => clearInput("pagehide"));
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) clearInput("hidden");
+    last = 0;
+  });
+
+  window.addEventListener("tarot-breaker:interaction-start", () => {
+    outsideInteraction = true;
+    controls?.suspend();
+    npcSuspended = true;
+    syncStick();
+  });
+  window.addEventListener("tarot-breaker:interaction-end", () => {
+    outsideInteraction = false;
+    cancelAllStageMotions(true);
+    if (!sceneLockOwner) { controls?.resume(); npcSuspended = false; }
+  });
+  window.addEventListener("tarot-breaker:shiopon-face-player", faceShioponTowardPlayer);
+  window.addEventListener("tarot-breaker:shiopon-race-start", startShioponRace);
+  window.addEventListener("tarot-breaker:shiopon-trip", tripShiopon);
+  window.addEventListener("tarot-breaker:shiopon-recover", recoverShiopon);
+  window.addEventListener("tarot-breaker:shiopon-follow-start", startShioponFollow);
+  window.addEventListener("tarot-breaker:shiopon-follow-stop", stopShioponFollow);
+
+  (async () => {
+    try {
+      note.textContent = "手動当たり判定とキャラクターを読み込んでいます…";
+      const manifestResponse = await fetch(
+        SPRITE_BASE + "shion_sprite_manifest.json",
+      );
+      if (!manifestResponse.ok)
+        throw new Error("スプライト設定を読み込めません");
+      manifest = await manifestResponse.json();
+      if (
+        manifest.cell_size?.width !== FRAME.w ||
+        manifest.cell_size?.height !== FRAME.h ||
+        manifest.baseline_y !== FRAME.baseline
+      ) {
+        throw new Error("スプライト設定が実装仕様と一致しません");
+      }
+
+      const lumiereResponse = await fetch(LUMIERE_BASE + "lumiere_sprite_manifest.json");
+      if (!lumiereResponse.ok) throw new Error("リュミエール設定を読み込めません");
+      lumiereManifest = await lumiereResponse.json();
+      validateLumiereManifest(lumiereManifest);
+
+      await loadCollision();
+      const southExitRef = collision.nearestWalkable(DEFAULT_SPAWN);
+      if (!hoshisunaDev && (!southExitRef || southExitRef.y >= DEFAULT_SPAWN.y))
+        throw new Error("garden-south-exit-unavailable");
+      if (hoshisunaDev) {
+        spawnRef = collision.nearestWalkable({x:1190,y:770}) || {x:1190,y:770};
+        gardenExitRef = {...spawnRef};
+      } else if (stage3Dev) {
+        spawnRef = {...window.TarotStage3DevFixture.context.spawn};
+        gardenExitRef = {...spawnRef};
+      } else if (gardenResumeDev || gardenResumePublic) {
+        const session = gardenResumePublic ? window.TarotGardenContinueTransit : window.TarotGardenDevTransit;
+        if (!session?.ok || session.context?.mapId !== "star_gate_garden" ||
+            session.context?.spawnId !== "south_gate" || session.spawn?.x !== 724 || session.spawn?.y !== 944 ||
+            !collision.isWalkable(session.spawn.x, session.spawn.y) || session.spawn.y >= southExitRef.y - 8)
+          throw new Error("garden-continue-spawn-invalid");
+        spawnRef = {x:session.spawn.x, y:session.spawn.y};
+        gardenExitRef = {...southExitRef};
+      } else {
+        spawnRef = findNearestSpawnRef();
+        gardenExitRef = {...southExitRef};
+      }
+      if (enteringFromLanding)
+        spawnRef = collision.nearestWalkable({x: spawnRef.x, y: spawnRef.y - 16});
+
+      const loaded = await Promise.all([
+        waitForMap(),
+        window.TarotSceneEffects.ready,
+        ...Object.entries(files).map(async ([key, src]) => {
+          images[key] = await loadImage(src);
+        }),
+        ...Object.entries(shioponFiles).map(async ([key, src]) => {
+          shioponImages[key] = await loadImage(src);
+        }),
+        ...Object.entries(lumiereFiles).map(async ([key, src]) => {
+          lumiereImages[key] = await loadImage(src);
+        }),
+      ]);
+
+      const loadedMap = loaded[0];
+      if (!loadedMap.naturalWidth || !loadedMap.naturalHeight)
+        throw new Error("背景画像サイズを取得できません");
+
+      // Artwork files may be replaced with a larger source canvas, but game
+      // coordinates, collision data and every authored scene layer share the
+      // fixed 1448x1086 reference space. Keeping the world canonical prevents
+      // a replacement image's aspect ratio from stretching actors or shifting
+      // interaction points. Each raster layer handles its own visual fit.
+      world = { w: REF.w, h: REF.h };
+      scale = { x: 1, y: 1 };
+
+      for (const dir of ["down", "up", "left", "right"]) {
+        if (
+          images[dir].naturalWidth !== FRAME.w * 4 ||
+          images[dir].naturalHeight !== FRAME.h
+        )
+          throw new Error(dir + "歩行画像サイズ不正");
+        if (
+          shioponImages[dir].naturalWidth !== FRAME.w * 4 ||
+          shioponImages[dir].naturalHeight !== FRAME.h
+        )
+          throw new Error("しおぽん" + dir + "歩行画像サイズ不正");
+      }
+      if (
+        images.idle.naturalWidth !== FRAME.w * 4 ||
+        images.idle.naturalHeight !== FRAME.h
+      )
+        throw new Error("待機画像サイズ不正");
+      if (
+        shioponImages.idle.naturalWidth !== FRAME.w * 4 ||
+        shioponImages.idle.naturalHeight !== FRAME.h
+      )
+        throw new Error("しおぽん待機画像サイズ不正");
+
+      for (const dir of ["down", "up", "left", "right"]) {
+        const pose = lumiereManifest.poses[dir];
+        if (lumiereImages[dir].naturalWidth !== pose.width ||
+            lumiereImages[dir].naturalHeight !== pose.height)
+          throw new Error("リュミエール" + dir + "浮遊画像サイズ不正");
+      }
+
+      if (typeof window.TarotLumiereSway?.create !== "function")
+        throw new Error("リュミエール揺れ描画を読み込めません");
+      for (const dir of ["down", "up", "left", "right"]) {
+        const compositor = window.TarotLumiereSway.create(lumiereImages[dir], lumiereManifest.poses[dir]);
+        if (!compositor?.canvas || typeof compositor.draw !== "function" ||
+            !Number.isInteger(compositor.width) || compositor.width <= 0 ||
+            !Number.isInteger(compositor.height) || compositor.height <= 0 ||
+            compositor.canvas.width !== compositor.width || compositor.canvas.height !== compositor.height)
+          throw new Error("リュミエール" + dir + "揺れ描画設定不正");
+        lumiereCompositors[dir] = compositor;
+      }
+
+      if (document.body.classList.contains("scene-load-error")) return;
+      if (gardenResumePublic) {
+        const fresh = window.TarotGardenPublicContinue?.revalidate(window.TarotGardenContinueTransit, {
+          search: location.search,
+          storage: window.localStorage,
+        });
+        if (!fresh?.ok) throw new Error(fresh?.reason || "garden-public-revalidate-failed");
+        const projected = window.TarotGardenPublicContinue.projectJourney(fresh, {
+          journey: window.TarotJourney,
+          storage: window.sessionStorage,
+        });
+        if (!projected?.ok) throw new Error(projected?.reason || "garden-public-project-failed");
+        window.TarotGardenContinueTransit = fresh;
+        if (window.__TAROT_PUBLIC_STAR_GATE__ === true &&
+            window.TarotStarGateProgressAuthority?.rebind?.(fresh.progress) !== true) throw new Error("Star Gate Progress authority unavailable");
+      }
+      if (window.__TAROT_PUBLIC_STAR_GATE__ === true) {
+        if (typeof window.TarotStarGatePublic?.prepareRestoration !== "function" ||
+            typeof window.TarotStarGatePublic?.restoreCompleted !== "function") throw new Error("Star Gate observer unavailable");
+        await window.TarotStarGatePublic.prepareRestoration();
+      }
+      ready = true;
+      resize();
+      reset();
+      draw();
+
+      if (start) {
+        start.disabled = false;
+      }
+      note.textContent =
+        gardenResumePublic
+          ? "保存地点から星門庭園を再開"
+          : params.get("from") === "landing"
+            ? "PAD離着陸場から星門庭園へ到着"
+            : "星門庭園の読み込み完了";
+
+      // begin() applies the existing PAD spawn/companion handoff and draws
+      // again. Keep that final frame behind the gate light, not the earlier reset.
+      if (enteringGardenRuntime) {
+        begin();
+        document.body.classList.add("scene-rendered");
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        if (document.body.classList.contains("scene-load-error")) return;
+        clearTimeout(window.gardenArrivalTimeout);
+      }
+      document.body.classList.remove("scene-booting", "scene-load-error", "scene-rendered");
+      document.body.classList.add("scene-ready");
+    } catch (error) {
+      window.__lastGardenBootError = error?.message || String(error);
+      if (enteringGardenRuntime) window.failGardenArrival?.();
+      running = false;
+      ready = false;
+      console.error(error);
+      if (start) {
+        start.disabled = true;
+        const titleJp = start.querySelector?.(".title-screen__choice-jp");
+        const titleEn = start.querySelector?.(".title-screen__choice-en");
+        if (titleJp) {
+          titleJp.textContent = "起動できません";
+          if (titleEn) titleEn.textContent = "ERROR";
+        } else {
+          start.textContent = "起動できません";
+        }
+      }
+      note.textContent = error.message;
+      document.body.classList.remove("scene-booting", "scene-ready");
+      document.body.classList.add("scene-load-error");
+      const loadError = document.getElementById("load-error");
+      if (loadError) {
+        loadError.textContent = "読み込みに失敗しました。再読み込みしてください。";
+        loadError.hidden = false;
+      }
+    }
+  })();
+})();
