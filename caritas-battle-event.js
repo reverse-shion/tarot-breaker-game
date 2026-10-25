@@ -228,10 +228,12 @@ function init(){
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
  ui.finaleText=newEl("div","cb-finale-text");ui.finaleNext=newEl("button","","やり直す");
  ui.finaleNext.addEventListener("click",retry);ui.finale.append(ui.finaleText,ui.finaleNext);
- root.append(frame,ui.toast,ui.guide,ui.finale);document.body.appendChild(root);
+ root.append(frame,ui.toast,ui.guide,ui.finale);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
-   mount:document.body,
-   ids:{layer:"caritas-dialogue-layer",advance:"caritas-dialogue-advance",speaker:"caritas-dialogue-speaker",text:"caritas-dialogue-text"},
+   // Exactly the Garden main dialogue mount and element IDs. The battle UI
+   // also lives in the same shell so its stacking order stays predictable.
+   mount:shell,
+   ids:{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"},
    onAdvance:advanceDialogue
  });
  dialogue.elements.layer.classList.add("caritas-dialogue");
