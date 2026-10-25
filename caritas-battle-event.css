@@ -7,12 +7,31 @@
 #caritas-interaction-choice .star-gate-interaction-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #caritas-interaction-choice .star-gate-interaction-actions button{min-height:44px;border:1px solid rgba(226,207,158,.34);border-radius:8px;color:rgba(247,249,255,.96);background:rgba(255,255,255,.055);font:650 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.03em}
 #caritas-interaction-choice .star-gate-interaction-actions button:active{background:rgba(226,207,158,.16);transform:translateY(1px)}
-/* Same main dialogue implementation; only z-index + Caritas speaker hue are local. */
+/* Main uses the same shared-dialogue.js / shared-dialogue.css and game-shell mount.
+   Keep local stacking above the battle overlay, and make each main speaker hue
+   clearly legible instead of relying on near-white character glyphs alone. */
 .tb-dialogue-layer.caritas-dialogue{z-index:2600}
-.tb-dialogue-layer.caritas-dialogue[data-speaker="カリタス"]{--speaker-color:#F8F3FF;--speaker-glow-near:rgba(125,69,176,.82);--speaker-glow-far:rgba(87,25,140,.35)}
-/* Abyss-touched Caritas: both exploration sprite and battle sprite stay black-violet. */
-.hoshi-caritas img{filter:brightness(.34) contrast(1.38) saturate(2.25) hue-rotate(25deg) drop-shadow(0 0 9px #531170)!important}
-#caritas-event .cb-beast{filter:brightness(.34) contrast(1.38) saturate(2.25) hue-rotate(25deg) drop-shadow(0 0 16px #531170)}
+.tb-dialogue-layer.caritas-dialogue[data-speaker="シオン"]{
+ --speaker-color:#9CB7FF;
+ --speaker-glow-near:rgba(74,107,255,1);
+ --speaker-glow-far:rgba(74,107,255,.72);
+}
+.tb-dialogue-layer.caritas-dialogue[data-speaker="シオリエル"]{
+ --speaker-color:#C7ADFF;
+ --speaker-glow-near:rgba(146,111,255,1);
+ --speaker-glow-far:rgba(146,111,255,.72);
+}
+.tb-dialogue-layer.caritas-dialogue[data-speaker="カリタス"]{
+ --speaker-color:#D5B4EE;
+ --speaker-glow-near:rgba(167,106,221,.95);
+ --speaker-glow-far:rgba(128,69,192,.63);
+}
+.tb-dialogue-layer.caritas-dialogue .tb-dialogue-speaker{
+ color:var(--speaker-color);
+ text-shadow:0 0 3px var(--speaker-glow-near),0 0 10px var(--speaker-glow-far);
+}
+/* Caritas keeps the original white art for this candidate.
+   Do not apply destructive filters to the map sprite or battle sprite. */
 
 #caritas-event,#caritas-event *{box-sizing:border-box}
 #caritas-event{position:fixed;inset:0;z-index:2300;overflow:hidden;overscroll-behavior:none;background:#09132c;color:#fcf0dc;font-family:"Yu Mincho","Hiragino Mincho ProN",serif}
