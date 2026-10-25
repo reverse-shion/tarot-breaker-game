@@ -54,6 +54,10 @@ function enter(f){
 function read(f,root,words){
  for(const word of words||[])f.button(root,word).click();
  f.button(root,'この読みを届ける').click();
+ if(f.state().story==='enemy-turn'){
+  assert.ok(f.state().battle.hp<100,'an announced enemy turn must change HP');
+  f.advanceTime(1050);
+ }
  f.pointer.advance();f.pointer.advance();
 }
 test('Shion notices first, main-style two choices follow, leaving cannot loop',()=>{
@@ -108,6 +112,8 @@ test('Skill shows both face cutins then technique before applying its result exa
  f.advanceTime(1);assert.equal(f.state().story,'technique');assert.equal(f.state().battle.resonance,34);
  f.advanceTime(1499);assert.equal(f.state().battle.used,false);f.advanceTime(1);
  assert.equal(f.state().battle.resonance,67);assert.equal(f.state().battle.used,true);assert.equal(f.state().battle.turn,before.turn+1);
+ assert.equal(f.state().story,'enemy-turn');
+ f.advanceTime(1050);
  assert.equal(f.state().dialogueBusy,true);f.pointer.advance();f.button(root,'必殺技').click();assert.equal(f.state().battle.turn,before.turn+1);
 });
 test('Winning skill still shows full cutin/effect, then purification and player-controlled farewell',()=>{
@@ -127,7 +133,10 @@ test('Visibility and BFCache pause cinematic time and resume remaining stages wi
 });
 test('Reduced motion keeps semantic stages and defeat retry remains operable',()=>{
  const f=fixture({reduced:true});const root=enter(f);
- for(let i=0;i<40&&f.state().battle.phase!=='defeat';i++)f.button(root,'防御').click();
+ for(let i=0;i<40&&f.state().battle.phase!=='defeat';i++){
+  f.button(root,'防御').click();
+  if(f.state().story==='enemy-turn')f.advanceTime(1050);
+ }
  assert.equal(f.state().battle.phase,'defeat');assert.equal(f.pointer.colliding,true);
  f.button(root,'やり直す').click();assert.equal(f.state().battle.hp,100);assert.equal(f.state().story,'battle');
  read(f,root);read(f,root,['秘密','自制']);read(f,root,['無意識','勇気','希望']);
@@ -145,4 +154,47 @@ test('Map uses unmodified main dialogue mount, IDs and styles with no local over
  assert.doesNotMatch(js,/classList\.add\("caritas-dialogue"\)|dialogue\.elements\.[^;]*\.style/);
  assert.match(css,/#caritas-event\{[^}]*z-index:2200/);
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
+});
+
+test('Defending visibly absorbs 75% of a forecast hit while reading/skill permit counterattacks',()=>{
+ const normal=Core.defend(Core.newGame());
+ assert.equal(normal.hp,97,'normal 12 reduced by 75% is 3');
+ const heavy=Core.defend({...Core.newGame(),turn:1});
+ assert.equal(Core.forecast({...Core.newGame(),turn:1}),24);
+ assert.equal(heavy.hp,94,'heavy 24 reduced by 75% is 6');
+ const wrong=Core.read({...Core.newGame(),words:['無意識','勇気','癒し']});
+ assert.equal(wrong.hp,94,'tactical healing read takes 6, not free');
+ const skillReady={...Core.newGame(),resonance:34,dark:65};
+ const skilled=Core.skill(skillReady);
+ assert.equal(skilled.hp,88,'a non-winning skill also takes a normal hit');
+ assert.equal(skilled.turn,1);
+ const f=fixture(),root=enter(f);
+ f.button(root,'防御').click();
+ assert.equal(f.state().story,'enemy-turn');
+ assert.equal(f.state().battle.hp,97);
+ assert.match(root.querySelector('.cb-enemy-turn').flatten().map(el=>el.textContent).join(' '),/75%軽減/);
+ assert.equal(f.button(root,'この読みを届ける').disabled,true);
+ f.advanceTime(1049);
+ assert.equal(f.state().story,'enemy-turn');
+ f.advanceTime(1);
+ assert.equal(f.state().story,'battle');
+ assert.equal(f.state().battle.hp,97);
+ f.button(root,'この読みを届ける').click();
+ assert.equal(f.state().story,'enemy-turn');
+ assert.equal(f.state().battle.hp,85,'heavy 24 with healing-route 50% reduction costs 12 HP');
+ assert.match(root.querySelector('.cb-enemy-turn').flatten().map(el=>el.textContent).join(' '),/強攻撃/);
+ f.advanceTime(1050);
+ assert.equal(f.state().story,'battle');
+ assert.equal(f.state().dialogueBusy,true);
+});
+test('Attack interlude freezes on backgrounding and cannot be double-applied',()=>{
+ const f=fixture(),root=enter(f);
+ f.button(root,'防御').click();
+ assert.equal(f.state().battle.hp,97);
+ f.advanceTime(350);f.visibility(true);f.advanceTime(8000);
+ assert.equal(f.state().story,'enemy-turn');assert.equal(f.state().battle.hp,97);
+ f.visibility(false);f.advanceTime(699);assert.equal(f.state().story,'enemy-turn');
+ f.advanceTime(1);assert.equal(f.state().story,'battle');assert.equal(f.state().battle.hp,97);
+ f.button(root,'防御').click();assert.equal(f.state().battle.hp,91);
+ f.advanceTime(1050);assert.equal(f.state().battle.hp,91);
 });

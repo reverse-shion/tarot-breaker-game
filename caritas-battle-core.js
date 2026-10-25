@@ -32,11 +32,11 @@ const ENDING=Object.freeze([
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const newGame=()=>({phase:"read",step:0,hp:100,resonance:0,dark:100,used:false,turn:0,words:["不安","忍耐","癒し"],endIndex:0,spoken:"",result:""});
 const forecast=s=>s.turn%3===1?24:12;
-const power=hp=>hp>=50?1:hp>=25?.9:.8;
 const points=s=>STAGES[s.step].support.reduce((n,v,i)=>n+Number(v.includes(s.words[i])),0);
 const preview=s=>s.words.map(w=>MEANINGS[w]).join("、")+"。";
 function attack(s,guard){
- const damage=Math.ceil(forecast(s)*(1-guard*power(s.hp)));
+ // Fixed mitigation: Defense 75%; reading route 0/25/50%.
+ const damage=Math.ceil(forecast(s)*(1-guard));
  s.hp=clamp(s.hp-damage,0,100);s.turn++;
  if(s.hp===0)s.phase="defeat";
  return damage;
@@ -73,9 +73,12 @@ function defend(state){
 function skill(state){
  if(state.phase!=="read"||state.used||state.resonance<33||state.dark>67)return state;
  const s={...state,words:[...state.words],used:true,spoken:"シオリエル「……シオン、言葉は届いている。」"};
- s.resonance=clamp(s.resonance+33,0,100);s.dark=clamp(s.dark-25,0,100);s.turn++;
+ s.resonance=clamp(s.resonance+33,0,100);s.dark=clamp(s.dark-25,0,100);
  s.result="星の光が闇の揺らぎを押し返す。共鳴＋33／闇−25。";
- if(s.resonance===100){s.phase="ending";s.endIndex=0;}
+ if(s.resonance===100){s.phase="ending";s.endIndex=0;s.turn++;return s;}
+ // A technique also triggers one announced counterattack unless it wins.
+ const damage=attack(s,0);
+ s.result+="　HP−"+damage;
  return s;
 }
 function next(state){

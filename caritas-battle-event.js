@@ -142,7 +142,7 @@ function render(){
  const displayedDark=["purified","farewell","returning"].includes(story)?0:s.dark;
  setText(ui.res,s.resonance+"/100");setText(ui.dark,displayedDark+"/100");setText(ui.hp,s.hp+"/100");
  ui.resBar.style.width=s.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=s.hp+"%";
- setText(ui.forecast,"次の攻撃："+(C.forecast(s)===24?"強":"通常"));
+ setText(ui.forecast,"次の攻撃："+(C.forecast(s)===24?"強攻撃 24":"通常攻撃 12"));
  const stage=C.STAGES[Math.min(s.step,2)];
  setText(ui.speech,stage.speech);setText(ui.clue,stage.clue);
  setText(ui.preview,C.preview(s));setText(ui.tactic,C.TACTICS[s.words[2]].name);
@@ -165,7 +165,7 @@ function render(){
  const showGuide=reading&&!once&&!dialogueBusy;
  ui.guide.hidden=!showGuide;
  if(showGuide)ui.guide.textContent="最初の一回だけ。\nカードの下の言葉をタップすると、読み方が変わるよ。";
- ui.finale.hidden=!defeat;
+ ui.finale.hidden=!(defeat&&story==="battle");
  if(defeat){
   setText(ui.finaleText,"力尽きてしまった……\nもう一度、カードを読もう。");
   setText(ui.finaleNext,"やり直す");
@@ -187,8 +187,23 @@ function perform(kind){
  if(previous===next)return;
  if(kind==="skill"){
    clearTimeout(toastTimer);ui.toast.hidden=true;
-   stage("cutin",1700,()=>stage("technique",1500,()=>applyOutcome(previous,next,kind)));
+   stage("cutin",1700,()=>stage("technique",1500,()=>resolveTurn(previous,next,kind)));
    return;
+ }
+ resolveTurn(previous,next,kind);
+}
+// Core settles HP once; this is a presentation-only enemy phase.
+function resolveTurn(previous,next,kind){
+ const damage=Math.max(0,previous.hp-next.hp);
+ if(damage>0){
+  const raw=C.forecast(previous);
+  battle=next;
+  root.dataset.counter=raw===24?"heavy":"normal";
+  root.dataset.ward=kind==="defend"?"true":"false";
+  setText(ui.enemyCall,raw===24?"カリタスの強攻撃！":"カリタスの攻撃！");
+  setText(ui.enemyDamage,(kind==="defend"?"防御・75%軽減　":"")+"シオリエル HP −"+damage);
+  stage("enemy-turn",1050,()=>applyOutcome(previous,next,kind));
+  return;
  }
  applyOutcome(previous,next,kind);
 }
@@ -251,7 +266,7 @@ function init(){
  const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇"),ui.dark=newEl("span","","100/100"));
  ui.darkBar=newEl("i");const drb=newEl("div","cb-bar dark");drb.appendChild(ui.darkBar);
  enemy.append(er,erb,dr,drb);
- const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/caritas/sg_rise_01.webp";beast.alt="カリタス";
+ const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="カリタス";
  const veil=newEl("div","cb-abyss");veil.setAttribute("aria-hidden","true");
  for(let i=0;i<5;i++)veil.append(newEl("i"));
  const release=newEl("div","cb-release");release.setAttribute("aria-hidden","true");
@@ -260,13 +275,19 @@ function init(){
  const hr=newEl("div","cb-hud-row");hr.append(newEl("span","","HP"),ui.hp=newEl("span","","100/100"));
  ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);hero.append(hr,hb);
  ui.forecast=newEl("div","cb-forecast","次の攻撃：通常");
- arena.append(enemy,beast,veil,release,angel,hero,ui.forecast,newEl("div","cb-hero-name","シオン・シオリエル"));
+ const shion=newEl("div","cb-shion-sprite");shion.setAttribute("role","img");shion.setAttribute("aria-label","シオン");
+ const counter=newEl("div","cb-enemy-turn");
+ ui.enemyCall=newEl("strong","cb-enemy-call");
+ ui.enemyDamage=newEl("span","cb-enemy-damage");
+ counter.append(ui.enemyCall,ui.enemyDamage);
+ arena.append(enemy,beast,veil,release,shion,angel,hero,ui.forecast,
+  counter);
  const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");cardBox=newEl("div","cb-cards");
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
  const actions=newEl("div","cb-actions");
  ui.read=newEl("button","cb-read","この読みを届ける");
- ui.defend=newEl("button","","防御");ui.skill=newEl("button","cb-skill","必殺技");
+ ui.defend=newEl("button","cb-defend","防御");ui.defend.setAttribute("aria-label","防御・次の攻撃を75パーセント軽減");ui.skill=newEl("button","cb-skill","必殺技");
  ui.read.addEventListener("click",()=>perform("read"));ui.defend.addEventListener("click",()=>perform("defend"));ui.skill.addEventListener("click",()=>perform("skill"));
  actions.append(ui.read,ui.defend,ui.skill);ctr.append(cardBox,line,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
