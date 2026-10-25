@@ -1,6 +1,19 @@
 /* Isolated Starroad encounter only. One-screen iPhone layout. */
-#caritas-inspect{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1000;border:1px solid #ecd09d;border-radius:32px;color:#fff4d8;background:linear-gradient(125deg,#182750,#5b416c);padding:12px 30px;box-shadow:0 0 14px #d7ad7190;font-size:16px;touch-action:manipulation}
-#caritas-inspect[hidden],#caritas-event[hidden]{display:none!important}
+/* Use the same layout/interaction affordance as main star-gate-interaction.css. */
+#caritas-interaction-choice{position:fixed;left:50%;bottom:max(26px,calc(env(safe-area-inset-bottom) + 20px));z-index:2380;width:min(92vw,720px);box-sizing:border-box;transform:translate(-50%,10px);padding:16px 18px 17px;border:1px solid rgba(217,190,128,.48);border-radius:10px;background:linear-gradient(180deg,rgba(11,18,46,.96),rgba(5,10,29,.94));box-shadow:0 14px 38px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,243,207,.06);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .22s ease}
+#caritas-interaction-choice[hidden],#caritas-event[hidden]{display:none!important}
+#caritas-interaction-choice.visible{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#caritas-interaction-text{margin-bottom:13px;color:rgba(249,250,255,.98);font-size:clamp(17px,4.4vw,20px);font-weight:500;line-height:1.55;letter-spacing:.015em}
+#caritas-interaction-choice .star-gate-interaction-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#caritas-interaction-choice .star-gate-interaction-actions button{min-height:44px;border:1px solid rgba(226,207,158,.34);border-radius:8px;color:rgba(247,249,255,.96);background:rgba(255,255,255,.055);font:650 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.03em}
+#caritas-interaction-choice .star-gate-interaction-actions button:active{background:rgba(226,207,158,.16);transform:translateY(1px)}
+/* Same main dialogue implementation; only z-index + Caritas speaker hue are local. */
+.tb-dialogue-layer.caritas-dialogue{z-index:2600}
+.tb-dialogue-layer.caritas-dialogue[data-speaker="カリタス"]{--speaker-color:#F8F3FF;--speaker-glow-near:rgba(125,69,176,.82);--speaker-glow-far:rgba(87,25,140,.35)}
+/* Abyss-touched Caritas: both exploration sprite and battle sprite stay black-violet. */
+.hoshi-caritas img{filter:brightness(.34) contrast(1.38) saturate(2.25) hue-rotate(25deg) drop-shadow(0 0 9px #531170)!important}
+#caritas-event .cb-beast{filter:brightness(.34) contrast(1.38) saturate(2.25) hue-rotate(25deg) drop-shadow(0 0 16px #531170)}
+
 #caritas-event,#caritas-event *{box-sizing:border-box}
 #caritas-event{position:fixed;inset:0;z-index:2300;overflow:hidden;overscroll-behavior:none;background:#09132c;color:#fcf0dc;font-family:"Yu Mincho","Hiragino Mincho ProN",serif}
 #caritas-event button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
