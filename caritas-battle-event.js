@@ -281,7 +281,7 @@ function init(){
  ui.enemyDamage=newEl("span","cb-enemy-damage");
  counter.append(ui.enemyCall,ui.enemyDamage);
  arena.append(enemy,beast,veil,release,shion,angel,hero,ui.forecast,
-  newEl("div","cb-hero-name","シオン"),newEl("div","cb-shioriel-name","シオリエル"),counter);
+  counter);
  const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");cardBox=newEl("div","cb-cards");
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
