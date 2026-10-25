@@ -62,3 +62,17 @@ test('new scene is isolated from default map and does not reveal identity',()=>{
  assert.match(css,/height:100dvh/);
  assert.doesNotMatch(css,/overflow:\s*(auto|scroll)/);
 });
+
+test("Caritas battle displays the three actual tarot WebP assets in their existing roles",()=>{
+ const event=fs.readFileSync(path.join(root,"caritas-battle-event.js"),"utf8");
+ const css=fs.readFileSync(path.join(root,"caritas-battle-event.css"),"utf8");
+ for(const [name,file] of [["月","18-the-moon.webp"],["力","08-strength.webp"],["星","17-the-star.webp"]]){
+  const buf=fs.readFileSync(path.join(root,"assets/tarot/major",file));
+  assert.equal(buf.toString("ascii",0,4),"RIFF",file);
+  assert.equal(buf.toString("ascii",8,12),"WEBP",file);
+  assert.ok(event.includes(name+':"./assets/tarot/major/'+file+'"'),name+" asset path");
+ }
+ assert.match(event,/image\.src=CARD_IMAGES\[card\.name\]/);
+ assert.match(css,/\.cb-card-image\{[^}]*object-fit:contain/);
+ assert.doesNotMatch(event,/art\.append\(newEl\("div","cb-symbol"/);
+});

@@ -4,6 +4,7 @@
 const params=new URLSearchParams(location.search);
 if(!location.pathname.endsWith("/hoshisuna-main.html")||params.get("dev")!=="hoshisuna")return;
 const C=window.CaritasBattleCore;
+const CARD_IMAGES=Object.freeze({月:"./assets/tarot/major/18-the-moon.webp",力:"./assets/tarot/major/08-strength.webp",星:"./assets/tarot/major/17-the-star.webp"});
 if(!C){console.error("[Caritas] Battle core missing");return;}
 const onceKey="tb:dev:caritas:word-guide-once";
 const OWNER="hoshisuna_caritas_prompt";
@@ -151,7 +152,10 @@ function render(){
   const card=C.CARDS[i],section=newEl("section","cb-card");
   section.append(newEl("div","cb-role",card.role));
   const art=newEl("div","cb-card-art");
-  art.append(newEl("div","cb-symbol",card.mark),newEl("span","",card.name));section.append(art);
+  const image=newEl("img","cb-card-image");
+  image.src=CARD_IMAGES[card.name];image.alt=card.name+"のタロットカード";
+  image.loading="eager";image.decoding="async";
+  art.append(image);section.append(art);
   const words=newEl("div","cb-words");
   for(const word of card.words){
    const btn=newEl("button","cb-word",word);btn.type="button";
