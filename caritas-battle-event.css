@@ -254,7 +254,7 @@ body.caritas-departed .hoshi-caritas{display:none!important}
    Match portrait reference: Shioriel in front at lower center-right,
    Shion behind to her right. Sprite alpha is baked into WebP; no masks. */
 #caritas-event .cb-shion-sprite {
-  right: 18%;
+  right: 2%;
   bottom: 6.5%;
   width: 22%;
   height: 30%;
@@ -265,7 +265,7 @@ body.caritas-departed .hoshi-caritas{display:none!important}
   filter: drop-shadow(0 3px 3px rgba(24, 32, 61, .48));
 }
 #caritas-event .cb-angel {
-  right: 33%;
+  right: 17%;
   bottom: 6%;
   width: 25%;
   height: 35%;
