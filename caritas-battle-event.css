@@ -23,7 +23,7 @@
 .cb-intro-text{font-size:clamp(15px,4vw,20px);line-height:1.7;min-height:72px;white-space:pre-line}
 .cb-intro-next{display:block;float:right;margin-top:9px;border:1px solid #cfb083;border-radius:20px;background:#263860;padding:8px 20px}
 .cb-frame{height:100%;height:100dvh;width:min(100%,460px);margin:auto;display:grid;grid-template-rows:minmax(0,44fr) minmax(48px,10fr) minmax(0,46fr);background:linear-gradient(#172447,#080f28);padding-bottom:env(safe-area-inset-bottom)}
-.cb-arena{position:relative;overflow:hidden;min-height:0;background:radial-gradient(ellipse at 48% 28%,#566ba8b8,transparent 55%),linear-gradient(#182b52cc,#25324a),url('./assets/events/hoshisuna/map/starroad.webp') center/cover}
+.cb-arena{position:relative;overflow:hidden;min-height:0;background:radial-gradient(ellipse at 48% 28%,#566ba8b8,transparent 55%),linear-gradient(#182b52cc,#25324a),url('./assets/events/hoshisuna/battle/cave-bg.webp') center/cover}
 .cb-arena:after{content:"";pointer-events:none;position:absolute;inset:0;background:linear-gradient(transparent 75%,#08132e99)}
 .cb-title{position:absolute;left:34%;right:34%;top:1%;padding:5px 0;text-align:center;background:#0b1836df;border:1px solid #e5bd76;border-radius:30px;font-size:clamp(10px,3vw,16px);z-index:5}
 .cb-beast{position:absolute;top:27%;left:6%;width:55%;height:52%;object-fit:contain;filter:drop-shadow(0 0 15px #a2c2ffb8)}
@@ -129,12 +129,12 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 #caritas-event{background:#294b78;color:#fff9ea}
 #caritas-event .cb-frame{background:linear-gradient(180deg,#41698d 0%,#264b75 47%,#263c67 100%)}
 #caritas-event .cb-arena{
- background:
-  radial-gradient(ellipse at 51% 16%,rgba(255,254,225,.71),transparent 47%),
-  linear-gradient(180deg,rgba(83,132,179,.07),rgba(161,201,226,.19) 58%,rgba(37,73,117,.31)),
-  url('./assets/events/hoshisuna/map/starroad.webp') center 46%/cover no-repeat;
+ background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp');
+ background-position:center 45%;
+ background-size:cover;
+ background-repeat:no-repeat;
 }
-#caritas-event .cb-arena:after{background:linear-gradient(180deg,transparent 72%,rgba(42,73,112,.37) 100%)}
+#caritas-event .cb-arena:after{background:linear-gradient(180deg,transparent 86%,rgba(42,73,112,.15) 100%)}
 #caritas-event .cb-title{z-index:16;left:35%;right:35%;top:2%;border:1px solid #fff0bb;background:rgba(26,55,99,.91);color:#fff5d9;box-shadow:0 1px 12px #a4d4f18c}
 #caritas-event .cb-hud{z-index:14;background:rgba(17,46,86,.89);border:1px solid #ffe4ad;box-shadow:0 5px 20px rgba(16,35,66,.35);color:#fff9e9;padding:8px 9px}
 #caritas-event .cb-hud.enemy{left:3%;top:12%;width:40%}
