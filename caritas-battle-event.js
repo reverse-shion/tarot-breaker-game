@@ -7,6 +7,8 @@ const C=window.CaritasBattleCore;
 if(!C){console.error("[Caritas] Battle core missing");return;}
 const onceKey="tb:dev:caritas:word-guide-once";
 const OWNER="hoshisuna_caritas_prompt";
+// Only the original Caritas line after the shadow lifts; no additional lore.
+const FAREWELL=[C.ENDING[3]];
 const APPROACH_RADIUS=88,REARM_RADIUS=145;
 const NOTICE=[["シオン","……待て。あの獣の様子が妙だ。\n黒紫の光が……体を覆っている。"]];
 const INTRO=[
@@ -19,7 +21,8 @@ const INTRO=[
 ];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
-let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
+let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0,effectTimer=0;
+let battleReady=false;
 const newEl=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
 function distanceToCaritas(){
  const a=window.TarotStage?.getState?.().actors?.shion;
@@ -88,13 +91,22 @@ function leave(){
  if(story!=="choice")return;
  hidePrompt();armed=false;busy=false;story="idle";unlock();
 }
+function startBattle(){
+ story="battle";battle=C.newGame();battleReady=false;
+ root.hidden=false;root.dataset.phase="battle";root.dataset.scene="abyss";
+ ui.abyss.hidden=false;ui.cutin.hidden=true;ui.resolution.hidden=true;
+ render();
+ clearTimeout(effectTimer);
+ effectTimer=setTimeout(()=>{
+   if(story!=="battle")return;
+   ui.abyss.hidden=true;root.dataset.scene="play";battleReady=true;render();
+ },2300);
+}
 function start(){
  if(story!=="choice"||!owned||done)return;
  hidePrompt();story="intro";
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
- saySequence(INTRO,()=>{
-   story="battle";battle=C.newGame();root.hidden=false;root.dataset.phase="battle";render();
- });
+ saySequence(INTRO,startBattle);
 }
 function setText(el,value){el.textContent=String(value);}
 function render(){
@@ -120,9 +132,9 @@ function render(){
   }
   section.append(words);cardBox.append(section);
  }
- ui.read.disabled=!reading||dialogueBusy;ui.defend.disabled=!reading||dialogueBusy;
- ui.skill.disabled=!reading||dialogueBusy||s.used||s.resonance<33||s.dark>67;
- const showGuide=reading&&!once&&!dialogueBusy;
+ ui.read.disabled=!reading||dialogueBusy||!battleReady;ui.defend.disabled=!reading||dialogueBusy||!battleReady;
+ ui.skill.disabled=!reading||dialogueBusy||!battleReady||s.used||s.resonance<33||s.dark>67;
+ const showGuide=reading&&!once&&!dialogueBusy&&battleReady;
  ui.guide.hidden=!showGuide;
  if(showGuide)ui.guide.textContent="最初の一回だけ。\nカードの下の言葉をタップすると、読み方が変わるよ。";
  ui.finale.hidden=!defeat;
@@ -132,7 +144,7 @@ function render(){
  }
 }
 function choose(index,word){
- if(story!=="battle"||dialogueBusy||battle.phase!=="read")return;
+ if(story!=="battle"||dialogueBusy||!battleReady||battle.phase!=="read")return;
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}}
  battle=C.select(battle,index,word);render();
 }
@@ -140,8 +152,22 @@ function toast(message){
  clearTimeout(toastTimer);ui.toast.textContent=message;ui.toast.hidden=false;
  toastTimer=setTimeout(()=>{ui.toast.hidden=true;},2100);
 }
+function startResolution(){
+ if(story!=="battle"||battle.phase!=="ending")return;
+ battleReady=false;story="ending";
+ clearTimeout(toastTimer);ui.toast.hidden=true;
+ root.dataset.scene="release";
+ ui.abyss.hidden=true;ui.cutin.hidden=true;ui.resolution.hidden=false;
+ clearTimeout(effectTimer);
+ effectTimer=setTimeout(()=>{
+   if(story!=="ending")return;
+   root.dataset.scene="calm";ui.resolution.hidden=true;
+   // Preserve the scene and cleared Caritas until the player finishes this one line.
+   saySequence(FAREWELL,finish);
+ },2600);
+}
 function perform(kind){
- if(story!=="battle"||dialogueBusy||battle.phase!=="read")return;
+ if(story!=="battle"||dialogueBusy||!battleReady||battle.phase!=="read")return;
  const previous=battle;
  if(kind==="read")battle=C.read(battle);
  if(kind==="defend")battle=C.defend(battle);
@@ -153,23 +179,33 @@ function perform(kind){
  if(darkLoss)values.push("闇−"+darkLoss);
  if(hpLoss)values.push("HP−"+hpLoss);
  if(values.length)toast(values.join("　"));
- if(battle.phase==="ending"){
-   story="ending";root.hidden=true;clearTimeout(toastTimer);ui.toast.hidden=true;
-   saySequence(C.ENDING,finish);return;
- }
- const tactical=C.TACTICS[previous.words[2]],stage=previous.step;
- let lines=[];
- if(kind==="read"&&C.points(previous)>=2){
-   lines=[["シオン",tactical.speeches[stage]],["カリタス",tactical.replies[stage]]];
- }else if(kind==="read"){
-   lines=[["カリタス","……すまぬ。今は、まだその言葉を受け取れぬ。"]];
- }else if(kind==="skill"){
-   lines=[["シオリエル","シオン。言葉は、届いている。"]];
- }
- if(lines.length){
-   dialogueBusy=true;render();
-   saySequence(lines,()=>{if(story==="battle")render();});
- }else render();
+ const afterAction=()=>{
+   if(story!=="battle")return;
+   if(battle.phase==="ending"){startResolution();return;}
+   const tactical=C.TACTICS[previous.words[2]],stage=previous.step;
+   let lines=[];
+   if(kind==="read"&&C.points(previous)>=2){
+     lines=[["シオン",tactical.speeches[stage]],["カリタス",tactical.replies[stage]]];
+   }else if(kind==="read"){
+     lines=[["カリタス","……すまぬ。今は、まだその言葉を受け取れぬ。"]];
+   }else if(kind==="skill"){
+     lines=[["シオリエル","シオン。言葉は、届いている。"]];
+   }
+   if(lines.length){
+     dialogueBusy=true;render();
+     saySequence(lines,()=>{if(story==="battle")render();});
+   }else render();
+ };
+ if(kind==="skill"){
+   // A cinematic slot for two approved portrait assets; never substitute Shiopon for Shioriel.
+   battleReady=false;root.dataset.scene="skill";ui.cutin.hidden=false;render();
+   clearTimeout(effectTimer);
+   effectTimer=setTimeout(()=>{
+     if(story!=="battle")return;
+     ui.cutin.hidden=true;root.dataset.scene="play";battleReady=true;
+     afterAction();
+   },2000);
+ }else afterAction();
 }
 function retry(){
  if(story!=="battle"||battle.phase!=="defeat"||dialogueBusy)return;
@@ -178,6 +214,7 @@ function retry(){
 function finish(){
  if(done)return;
  done=true;story="complete";root.hidden=true;dialogue?.hide();
+ clearTimeout(effectTimer);battleReady=false;
  clearTimeout(toastTimer);
  const creature=document.querySelector(".hoshi-caritas");
  if(creature)creature.hidden=true;
@@ -214,7 +251,10 @@ function init(){
  const hr=newEl("div","cb-hud-row");hr.append(newEl("span","","HP"),ui.hp=newEl("span","","100/100"));
  ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);hero.append(hr,hb);
  ui.forecast=newEl("div","cb-forecast","次の攻撃：通常");
- arena.append(enemy,beast,angel,hero,ui.forecast,newEl("div","cb-hero-name","シオン・シオリエル"));
+ const mantle=newEl("div","cb-mantle");mantle.appendChild(beast);
+ ui.abyss=newEl("div","cb-abyss-sequence");ui.abyss.hidden=true;ui.abyss.setAttribute("aria-hidden","true");
+ ui.abyss.appendChild(newEl("div","cb-abyss-vortex"));
+ arena.append(enemy,mantle,angel,hero,ui.forecast,newEl("div","cb-hero-name","シオン・シオリエル"),ui.abyss);
  const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");cardBox=newEl("div","cb-cards");
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
@@ -228,7 +268,18 @@ function init(){
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
  ui.finaleText=newEl("div","cb-finale-text");ui.finaleNext=newEl("button","","やり直す");
  ui.finaleNext.addEventListener("click",retry);ui.finale.append(ui.finaleText,ui.finaleNext);
- root.append(frame,ui.toast,ui.guide,ui.finale);shell.appendChild(root);
+ ui.cutin=newEl("div","cb-cutin");ui.cutin.hidden=true;ui.cutin.setAttribute("aria-label","シオンとシオリエルの共鳴必殺技");
+ for(const [name,side] of [["シオン","shion"],["シオリエル","shioriel"]]){
+   const panel=newEl("div","cb-cutin-panel "+side);
+   // Keep the portrait slot blank until the approved artwork exists.
+   panel.append(newEl("div","cb-cutin-portrait"),newEl("strong","cb-cutin-name",name));
+   ui.cutin.appendChild(panel);
+ }
+ ui.cutin.appendChild(newEl("div","cb-cutin-strike","星響共鳴"));
+ ui.resolution=newEl("div","cb-resolution");ui.resolution.hidden=true;
+ ui.resolution.setAttribute("aria-label","闇が解けた");
+ ui.resolution.append(newEl("strong","cb-resolution-title","心象共鳴　成立"),newEl("span","cb-resolution-sub","黒紫の闇が、静かにほどけていく。"));
+ root.append(frame,ui.toast,ui.guide,ui.finale,ui.cutin,ui.resolution);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
    // Exactly the Garden main dialogue mount and element IDs. The battle UI
    // also lives in the same shell so its stacking order stays predictable.
@@ -238,9 +289,9 @@ function init(){
  });
  dialogue.elements.layer.classList.add("caritas-dialogue");
  timer=setInterval(tick,160);
- window.addEventListener("pagehide",()=>{clearInterval(timer);clearTimeout(toastTimer);});
+ window.addEventListener("pagehide",()=>{clearInterval(timer);clearTimeout(toastTimer);clearTimeout(effectTimer);});
  tick();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
-window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,battle:{...battle,words:[...battle.words]}})});
+window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,battleReady,scene:root?.dataset.scene,battle:{...battle,words:[...battle.words]}})});
 })();
