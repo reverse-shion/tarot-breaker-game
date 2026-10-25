@@ -96,15 +96,15 @@ test('Map uses exact main shared dialogue implementation and black-violet status
  assert.ok(html.indexOf('shared-dialogue.js')<html.indexOf('caritas-battle-event.js'));
  assert.match(js,/TarotDialogueUI\.create/);
  assert.match(css,/#caritas-interaction-choice\.visible/);
- assert.doesNotMatch(css,/caritas-dialogue\\[data-speaker="シオン"\\]/);
- assert.doesNotMatch(css,/caritas-dialogue\\[data-speaker="シオリエル"\\]/);
- assert.match(css,/caritas-dialogue\\[data-speaker="カリタス"\\]/);
- assert.match(css,/\\.cb-abyss-sequence/);
- assert.match(css,/\\.cb-cutin/);
- assert.match(css,/\\.cb-resolution/);
- assert.doesNotMatch(css,/hue-rotate\\(25deg\\)|brightness\\(\\.34\\)/);
+ assert.doesNotMatch(css,/caritas-dialogue\[data-speaker="シオン"\]/);
+ assert.doesNotMatch(css,/caritas-dialogue\[data-speaker="シオリエル"\]/);
+ assert.match(css,/caritas-dialogue\[data-speaker="カリタス"\]/);
+ assert.match(css,/\.cb-abyss-sequence/);
+ assert.match(css,/\.cb-cutin/);
+ assert.match(css,/\.cb-resolution/);
+ assert.doesNotMatch(css,/hue-rotate\(25deg\)|brightness\(\.34\)/);
  assert.match(js,/mount:shell/);
- assert.match(js,/ids:\\{layer:"dialogue-layer",advance:"dialogue-advance"/);
+ assert.match(js,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance"/);
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
 
