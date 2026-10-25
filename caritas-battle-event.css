@@ -123,3 +123,129 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-phase="technique"] .cb-technique-ring{opacity:.7}
  #caritas-event[data-phase="technique"] .cb-technique-ray{opacity:.45}
 }
+
+/* Caritas visual correction v1 — local battlefield only, never shared dialogue. */
+/* The star road stays radiant; the violet Abyss is confined to Caritas. */
+#caritas-event{background:#294b78;color:#fff9ea}
+#caritas-event .cb-frame{background:linear-gradient(180deg,#41698d 0%,#264b75 47%,#263c67 100%)}
+#caritas-event .cb-arena{
+ background:
+  radial-gradient(ellipse at 51% 16%,rgba(255,254,225,.71),transparent 47%),
+  linear-gradient(180deg,rgba(83,132,179,.07),rgba(161,201,226,.19) 58%,rgba(37,73,117,.31)),
+  url('./assets/events/hoshisuna/map/starroad.webp') center 46%/cover no-repeat;
+}
+#caritas-event .cb-arena:after{background:linear-gradient(180deg,transparent 72%,rgba(42,73,112,.37) 100%)}
+#caritas-event .cb-title{z-index:16;left:35%;right:35%;top:2%;border:1px solid #fff0bb;background:rgba(26,55,99,.91);color:#fff5d9;box-shadow:0 1px 12px #a4d4f18c}
+#caritas-event .cb-hud{z-index:14;background:rgba(17,46,86,.89);border:1px solid #ffe4ad;box-shadow:0 5px 20px rgba(16,35,66,.35);color:#fff9e9;padding:8px 9px}
+#caritas-event .cb-hud.enemy{left:3%;top:12%;width:40%}
+#caritas-event .cb-hud.hero{right:3%;top:12%;width:40%}
+#caritas-event .cb-bar{height:7px;background:#11274d;border-color:#98b2d9}
+#caritas-event .cb-bar>i{background:linear-gradient(90deg,#68c8e8,#b4fff5)}
+#caritas-event .cb-bar.dark>i{background:linear-gradient(90deg,#7b4dc9,#e2aaff)}
+#caritas-event .cb-bar.hp>i{background:linear-gradient(90deg,#68debc,#b4f8d5)}
+#caritas-event .cb-beast{
+ left:3%;top:26%;width:59%;height:58%;z-index:4;
+ filter:brightness(.85) contrast(1.06) saturate(1.15) drop-shadow(0 0 17px rgba(104,64,191,.68));
+}
+#caritas-event .cb-abyss{
+ left:3%;top:24%;width:58%;height:64%;z-index:5;
+ opacity:.67;filter:blur(1.8px);
+ -webkit-mask-image:radial-gradient(ellipse,#0009 0%,#0007 36%,transparent 69%);
+ mask-image:radial-gradient(ellipse,#0009 0%,#0007 36%,transparent 69%);
+}
+#caritas-event .cb-abyss i{mix-blend-mode:normal;opacity:.56}
+#caritas-event .cb-release{left:3%;top:24%;width:60%;height:63%;z-index:6}
+#caritas-event .cb-shion-sprite{
+ position:absolute;right:6%;bottom:11%;width:19%;aspect-ratio:3/4;z-index:6;
+ background:url('./assets/sprites/shion/shion_idle.png') left top/400% 100% no-repeat;
+ image-rendering:pixelated;filter:drop-shadow(0 5px 5px rgba(21,44,82,.65)) drop-shadow(0 0 9px rgba(223,240,255,.75));
+}
+#caritas-event .cb-angel{
+ position:absolute;right:22%;bottom:5%;width:27%;height:49%;z-index:8;
+ border-radius:0;clip-path:none;
+ background:url('./assets/events/hoshisuna/cutins/shioriel-reference.png') 11% 27%/375% auto no-repeat;
+ -webkit-mask-image:radial-gradient(ellipse at 50% 48%,#000 34%,#000e 57%,transparent 79%);
+ mask-image:radial-gradient(ellipse at 50% 48%,#000 34%,#000e 57%,transparent 79%);
+ filter:drop-shadow(0 0 14px rgba(220,208,255,.94));
+}
+#caritas-event .cb-hero-name,#caritas-event .cb-shioriel-name{
+ position:absolute;z-index:12;bottom:3%;padding:3px 5px;border-radius:6px;
+ background:rgba(19,49,92,.74);color:#fff6d9;font-size:11px;text-shadow:0 1px 2px #193150;
+}
+#caritas-event .cb-hero-name{right:5%}
+#caritas-event .cb-shioriel-name{right:29%}
+#caritas-event .cb-forecast{
+ z-index:12;right:3%;top:73%;padding:6px 8px;border:1px solid #f6d6a8;
+ background:rgba(21,55,98,.94);font-size:clamp(10px,2.7vw,12px);color:#fff2d3;
+ box-shadow:0 2px 9px rgba(18,49,93,.4);
+}
+#caritas-event .cb-narration{
+ border-color:#f1d5a8;background:linear-gradient(180deg,#244a76,#1b3965);color:#fff8ee;
+}
+#caritas-event .cb-narration small{color:#dce9fc}
+#caritas-event .cb-controls{background:linear-gradient(180deg,#254a75,#1b3261);padding-left:7px;padding-right:7px;gap:5px}
+#caritas-event .cb-card{
+ border:1px solid #e9c789;border-radius:9px;
+ background:linear-gradient(160deg,#3b4d82,#243865 68%,#253058);
+ box-shadow:inset 0 1px 0 rgba(255,246,206,.28),0 3px 10px rgba(9,31,59,.3)
+}
+#caritas-event .cb-card-art{
+ border-color:#f7dca8;
+ background:radial-gradient(circle at 45% 35%,#8589c4 0%,#475d93 55%,#23345f 100%);
+}
+#caritas-event .cb-symbol{color:#ffecaa;text-shadow:0 0 15px #fff1b4}
+#caritas-event .cb-word{
+ border:1px solid #b6c3e0;border-radius:5px;background:#294574;color:#fbf8f0;
+}
+#caritas-event .cb-word[aria-pressed="true"]{
+ background:linear-gradient(145deg,#b48e4e,#8152a6);border-color:#ffe6a9;
+ box-shadow:0 0 0 1px rgba(255,240,190,.8),0 0 10px #ebc77699;
+}
+#caritas-event .cb-readline{background:#2a4776;border-color:#ebcf9e;color:#fff9f2}
+#caritas-event .cb-actions button{background:linear-gradient(#456fa0,#294876);border-color:#d8c9a9;min-height:44px;color:#fff}
+#caritas-event .cb-actions button.cb-read{background:linear-gradient(110deg,#956337,#bc9573,#76538f);border-color:#fff1b1}
+#caritas-event .cb-actions button.cb-defend{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(#41818e,#285f82);font-size:clamp(11px,3vw,14px)}
+#caritas-event .cb-actions button.cb-defend:after{content:"75%軽減";font-size:9px;white-space:nowrap;color:#eafff9}
+#caritas-event .cb-actions button.cb-skill:enabled{background:linear-gradient(145deg,#8b58b7,#5e3790)}
+#caritas-event .cb-enemy-turn{
+ display:none;position:absolute;left:10%;right:10%;top:56%;z-index:25;
+ padding:10px 8px;flex-direction:column;align-items:center;gap:4px;
+ border:1px solid #f8ddb3;border-radius:12px;
+ background:linear-gradient(120deg,rgba(40,20,84,.91),rgba(30,70,121,.94));
+ box-shadow:0 5px 20px #19234580;color:#fff7df;text-align:center;
+ text-shadow:0 1px 6px rgba(2,5,24,.6);pointer-events:none
+}
+#caritas-event[data-phase="enemy-turn"] .cb-enemy-turn{display:flex;animation:cb-counter-notice 1.05s ease both}
+#caritas-event .cb-enemy-call{font-size:clamp(16px,4vw,21px)}
+#caritas-event .cb-enemy-damage{font-size:clamp(12px,3vw,15px);color:#d8f8ff}
+#caritas-event[data-phase="enemy-turn"] .cb-beast{animation:cb-counter-lunge 1.05s ease-out both}
+#caritas-event[data-phase="enemy-turn"] .cb-angel{animation:cb-counter-hit 1.05s ease both}
+#caritas-event[data-phase="enemy-turn"][data-ward="true"] .cb-angel{animation:cb-guard-shimmer 1.05s ease both}
+#caritas-event[data-phase="enemy-turn"][data-counter="heavy"] .cb-enemy-turn{border-color:#f8b9eb}
+#caritas-event[data-phase="enemy-turn"] .cb-hud{opacity:1}
+#caritas-event:is([data-phase="purified"],[data-phase="farewell"],[data-phase="returning"]) .cb-beast{
+ filter:brightness(1.06) drop-shadow(0 0 18px #fff4da);
+}
+#caritas-event[data-phase="engulfing"] .cb-beast{animation:cb-beast-engulf 2.6s ease-in-out both}
+@keyframes cb-beast-engulf{
+ 0%,13%{filter:brightness(1.08) drop-shadow(0 0 16px #d8e8ff)}
+ 80%,100%{filter:brightness(.85) contrast(1.06) saturate(1.15) drop-shadow(0 0 17px #7851bc)}
+}
+@keyframes cb-beast-release{
+ 0%{filter:brightness(.85) drop-shadow(0 0 17px #7851bc)}
+ 75%,100%{filter:brightness(1.06) drop-shadow(0 0 18px #fff4da)}
+}
+@keyframes cb-counter-lunge{0%,100%{transform:translateX(0)}20%{transform:translateX(9px)}38%{transform:translateX(24px)}58%{transform:translateX(7px)}}
+@keyframes cb-counter-hit{0%,40%,100%{filter:drop-shadow(0 0 14px #dcd0ff)}58%{filter:drop-shadow(0 0 22px #f7e9ff) brightness(1.4)}}
+@keyframes cb-guard-shimmer{0%,100%{filter:drop-shadow(0 0 12px #c4f8ff)}48%,72%{filter:drop-shadow(0 0 20px #a5fff3) brightness(1.3)}}
+@keyframes cb-counter-notice{0%{opacity:0;transform:translateY(10px)}18%,85%{opacity:1;transform:translateY(0)}100%{opacity:0}}
+@media(max-height:670px){
+ #caritas-event .cb-beast{top:25%;height:59%}
+ #caritas-event .cb-angel{height:46%}
+ #caritas-event .cb-actions button.cb-defend:after{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-phase="enemy-turn"] .cb-enemy-turn{animation:none;opacity:1}
+ #caritas-event[data-phase="enemy-turn"] .cb-beast,
+ #caritas-event[data-phase="enemy-turn"] .cb-angel{animation:none}
+}
