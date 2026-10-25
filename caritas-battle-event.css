@@ -297,3 +297,17 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 @media (prefers-reduced-motion: reduce) {
   #caritas-event[data-phase="enemy-turn"] .cb-angel { animation: none; }
 }
+
+/* Reference placement — only the Caritas battle actor, not the field or shared UI. */
+#caritas-event .cb-beast {
+  left: 2%;
+  top: 28%;
+  width: 58%;
+  height: 53%;
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: auto;
+}
+@media (max-height: 670px) {
+  #caritas-event .cb-beast { top: 27%; height: 54%; }
+}

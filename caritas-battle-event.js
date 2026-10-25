@@ -266,7 +266,7 @@ function init(){
  const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇"),ui.dark=newEl("span","","100/100"));
  ui.darkBar=newEl("i");const drb=newEl("div","cb-bar dark");drb.appendChild(ui.darkBar);
  enemy.append(er,erb,dr,drb);
- const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/caritas/sg_rise_01.webp";beast.alt="カリタス";
+ const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="カリタス";
  const veil=newEl("div","cb-abyss");veil.setAttribute("aria-hidden","true");
  for(let i=0;i<5;i++)veil.append(newEl("i"));
  const release=newEl("div","cb-release");release.setAttribute("aria-hidden","true");
