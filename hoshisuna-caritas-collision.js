@@ -8,6 +8,9 @@
   // Includes clearance around the displayed 125x96 sprite.
   const BOUNDS=Object.freeze({left:934,right:1092,top:150,bottom:272});
   const EPS=0.5;
+  let active=true;
+  const setActive=(value)=>{active=!!value;return active;};
+  const isActive=()=>active;
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const inside=(x,y)=>x>=BOUNDS.left&&x<=BOUNDS.right&&y>=BOUNDS.top&&y<=BOUNDS.bottom;
   // Rectangle clipping: blocks paths that cross the body even when both ends are outside.
@@ -31,7 +34,7 @@
   function wrap(base){
     if(!base||typeof base.isWalkable!=="function"||typeof base.segmentClear!=="function"||
        typeof base.nearestWalkable!=="function")throw new TypeError("Missing shared collision");
-    const isWalkable=(x,y)=>base.isWalkable(x,y)&&!inside(x,y);
+    const isWalkable=(x,y)=>base.isWalkable(x,y)&&(!active||!inside(x,y));
     function nearestWalkable(p){
       const candidate=base.nearestWalkable(p);
       if(!candidate)return null;
@@ -48,8 +51,8 @@
     }
     return {
       ...base,isWalkable,nearestWalkable,
-      segmentClear(a,b){return base.segmentClear(a,b)&&!crossesBody(a,b);}
+      segmentClear(a,b){return base.segmentClear(a,b)&&(!active||!crossesBody(a,b));}
     };
   }
-  return {BOUNDS,inside,crossesBody,wrap};
+  return {BOUNDS,inside,crossesBody,wrap,setActive,isActive};
 });
