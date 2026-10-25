@@ -58,7 +58,7 @@ test('Inspect opens shared intro, three tactical readings, shared farewell then 
  assert.equal(f.state().story,'intro');
  for(let i=0;i<6;i++)f.pointer.advance();
  assert.equal(f.state().story,'battle');
- const root=f.body.querySelector('#caritas-event');
+ const root=f.shell.querySelector('#caritas-event');
  f.button(root,'この読みを届ける').click();
  assert.equal(f.state().battle.resonance,34);
  assert.equal(f.state().dialogueBusy,true);
@@ -83,7 +83,12 @@ test('Map uses exact main shared dialogue implementation and black-violet status
  assert.ok(html.indexOf('shared-dialogue.js')<html.indexOf('caritas-battle-event.js'));
  assert.match(js,/TarotDialogueUI\.create/);
  assert.match(css,/#caritas-interaction-choice\.visible/);
- assert.match(css,/\.hoshi-caritas img\{filter:brightness/);
- assert.match(css,/#caritas-event \.cb-beast\{filter:brightness/);
+ assert.match(css,/caritas-dialogue\\[data-speaker="シオン"\\]/);
+ assert.match(css,/caritas-dialogue\\[data-speaker="シオリエル"\\]/);
+ assert.match(css,/caritas-dialogue\\[data-speaker="カリタス"\\]/);
+ assert.match(css,/color:var\\(--speaker-color\\)/);
+ assert.doesNotMatch(css,/hue-rotate\\(25deg\\)|brightness\\(\\.34\\)/);
+ assert.match(js,/mount:shell/);
+ assert.match(js,/ids:\\{layer:"dialogue-layer",advance:"dialogue-advance"/);
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
