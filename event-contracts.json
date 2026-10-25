@@ -60,6 +60,15 @@
       "segments": {
         "east-passage-b-line": "IMPLEMENTED"
       }
+    },
+    "hoshisuna-caritas": {
+      "map": "hoshisuna",
+      "status": "NOT TESTED",
+      "productionEnabled": false,
+      "startEvent": "tarot-breaker:caritas-approach",
+      "segments": {
+        "caritas-heart-resonance": "NOT TESTED"
+      }
     }
   }
 }
