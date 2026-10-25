@@ -20,6 +20,45 @@ const INTRO=[
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
+let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
+// Source art stays intact. CSS frames only the faces; technique art can be added
+// later through this isolated encounter's optional same-origin image slot.
+const CUTINS={shion:"./assets/sprites/shion/shion_card_03_check.webp",shioriel:"./assets/events/hoshisuna/cutins/shioriel-reference.png"};
+const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……世話になった。")];
+const suspended=()=>pageAway||document.hidden;
+function armCinematic(){
+ if(!cinematicCallback||suspended())return;
+ startedAt=performance.now();
+ cinematicTimer=setTimeout(()=>{
+   cinematicTimer=0;
+   if(suspended()){remaining=Math.max(0,remaining-(performance.now()-startedAt));return;}
+   const next=cinematicCallback;cinematicCallback=null;remaining=0;next();
+ },remaining);
+}
+function stage(name,duration,next){
+ clearTimeout(cinematicTimer);cinematicTimer=0;
+ story=name;root.dataset.phase=name;render();
+ cinematicCallback=next;remaining=duration;armCinematic();
+}
+function pauseCinematic(){
+ if(cinematicTimer){clearTimeout(cinematicTimer);cinematicTimer=0;remaining=Math.max(0,remaining-(performance.now()-startedAt));}
+ root.dataset.paused="true";
+}
+function resumeCinematic(){
+ if(suspended())return;
+ root.dataset.paused="false";
+ if(!cinematicTimer)armCinematic();
+}
+function beginBattle(){story="battle";root.dataset.phase="battle";render();}
+function beginEnding(){
+ clearTimeout(toastTimer);ui.toast.hidden=true;
+ stage("purifying",2600,()=>{
+   stage("purified",1100,()=>{
+     story="farewell";root.dataset.phase="farewell";
+     saySequence(FAREWELL,()=>stage("returning",900,finish));
+   });
+ });
+}
 const newEl=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
 function distanceToCaritas(){
  const a=window.TarotStage?.getState?.().actors?.shion;
@@ -52,7 +91,7 @@ function saySequence(lines,callback){
  currentLine();
 }
 function advanceDialogue(){
- if(!dialogueBusy)return;
+ if(!dialogueBusy||suspended())return;
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
@@ -89,19 +128,20 @@ function leave(){
  hidePrompt();armed=false;busy=false;story="idle";unlock();
 }
 function start(){
- if(story!=="choice"||!owned||done)return;
+ if(story!=="choice"||!owned||done||suspended())return;
  hidePrompt();story="intro";
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
  saySequence(INTRO,()=>{
-   story="battle";battle=C.newGame();root.hidden=false;root.dataset.phase="battle";render();
+   battle=C.newGame();root.hidden=false;
+   stage("engulfing",2600,beginBattle);
  });
 }
 function setText(el,value){el.textContent=String(value);}
 function render(){
- if(story!=="battle")return;
- const s=battle,reading=s.phase==="read",defeat=s.phase==="defeat";
- setText(ui.res,s.resonance+"/100");setText(ui.dark,s.dark+"/100");setText(ui.hp,s.hp+"/100");
- ui.resBar.style.width=s.resonance+"%";ui.darkBar.style.width=s.dark+"%";ui.hpBar.style.width=s.hp+"%";
+ const s=battle,reading=story==="battle"&&s.phase==="read",defeat=s.phase==="defeat";
+ const displayedDark=["purified","farewell","returning"].includes(story)?0:s.dark;
+ setText(ui.res,s.resonance+"/100");setText(ui.dark,displayedDark+"/100");setText(ui.hp,s.hp+"/100");
+ ui.resBar.style.width=s.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=s.hp+"%";
  setText(ui.forecast,"次の攻撃："+(C.forecast(s)===24?"強":"通常"));
  const stage=C.STAGES[Math.min(s.step,2)];
  setText(ui.speech,stage.speech);setText(ui.clue,stage.clue);
@@ -132,7 +172,7 @@ function render(){
  }
 }
 function choose(index,word){
- if(story!=="battle"||dialogueBusy||battle.phase!=="read")return;
+ if(story!=="battle"||dialogueBusy||suspended()||battle.phase!=="read")return;
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}}
  battle=C.select(battle,index,word);render();
 }
@@ -141,22 +181,25 @@ function toast(message){
  toastTimer=setTimeout(()=>{ui.toast.hidden=true;},2100);
 }
 function perform(kind){
- if(story!=="battle"||dialogueBusy||battle.phase!=="read")return;
+ if(story!=="battle"||dialogueBusy||suspended()||battle.phase!=="read")return;
  const previous=battle;
- if(kind==="read")battle=C.read(battle);
- if(kind==="defend")battle=C.defend(battle);
- if(kind==="skill")battle=C.skill(battle);
- if(previous===battle)return;
+ const next=kind==="read"?C.read(previous):kind==="defend"?C.defend(previous):kind==="skill"?C.skill(previous):previous;
+ if(previous===next)return;
+ if(kind==="skill"){
+   clearTimeout(toastTimer);ui.toast.hidden=true;
+   stage("cutin",1700,()=>stage("technique",1500,()=>applyOutcome(previous,next,kind)));
+   return;
+ }
+ applyOutcome(previous,next,kind);
+}
+function applyOutcome(previous,next,kind){
+ battle=next;story="battle";root.dataset.phase="battle";
  const hpLoss=previous.hp-battle.hp,resGain=battle.resonance-previous.resonance,darkLoss=previous.dark-battle.dark;
  const values=[];
  if(resGain)values.push("共鳴＋"+resGain);
  if(darkLoss)values.push("闇−"+darkLoss);
  if(hpLoss)values.push("HP−"+hpLoss);
  if(values.length)toast(values.join("　"));
- if(battle.phase==="ending"){
-   story="ending";root.hidden=true;clearTimeout(toastTimer);ui.toast.hidden=true;
-   saySequence(C.ENDING,finish);return;
- }
  const tactical=C.TACTICS[previous.words[2]],stage=previous.step;
  let lines=[];
  if(kind==="read"&&C.points(previous)>=2){
@@ -168,17 +211,17 @@ function perform(kind){
  }
  if(lines.length){
    dialogueBusy=true;render();
-   saySequence(lines,()=>{if(story==="battle")render();});
- }else render();
+   saySequence(lines,()=>{if(battle.phase==="ending")beginEnding();else render();});
+ }else if(battle.phase==="ending")beginEnding();else render();
 }
 function retry(){
- if(story!=="battle"||battle.phase!=="defeat"||dialogueBusy)return;
- battle=C.newGame();render();
+ if(story!=="battle"||battle.phase!=="defeat"||dialogueBusy||suspended())return;
+ battle=C.newGame();root.dataset.phase="battle";render();
 }
 function finish(){
  if(done)return;
  done=true;story="complete";root.hidden=true;dialogue?.hide();
- clearTimeout(toastTimer);
+ clearTimeout(toastTimer);clearTimeout(cinematicTimer);cinematicCallback=null;
  const creature=document.querySelector(".hoshi-caritas");
  if(creature)creature.hidden=true;
  document.body.classList.add("caritas-departed");
@@ -209,12 +252,15 @@ function init(){
  ui.darkBar=newEl("i");const drb=newEl("div","cb-bar dark");drb.appendChild(ui.darkBar);
  enemy.append(er,erb,dr,drb);
  const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/caritas/sg_rise_01.webp";beast.alt="カリタス";
+ const veil=newEl("div","cb-abyss");veil.setAttribute("aria-hidden","true");
+ for(let i=0;i<5;i++)veil.append(newEl("i"));
+ const release=newEl("div","cb-release");release.setAttribute("aria-hidden","true");
  const angel=newEl("div","cb-angel");
  const hero=newEl("div","cb-hud hero");hero.append(newEl("div","","シオリエル"));
  const hr=newEl("div","cb-hud-row");hr.append(newEl("span","","HP"),ui.hp=newEl("span","","100/100"));
  ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);hero.append(hr,hb);
  ui.forecast=newEl("div","cb-forecast","次の攻撃：通常");
- arena.append(enemy,beast,angel,hero,ui.forecast,newEl("div","cb-hero-name","シオン・シオリエル"));
+ arena.append(enemy,beast,veil,release,angel,hero,ui.forecast,newEl("div","cb-hero-name","シオン・シオリエル"));
  const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");cardBox=newEl("div","cb-cards");
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
@@ -228,7 +274,25 @@ function init(){
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
  ui.finaleText=newEl("div","cb-finale-text");ui.finaleNext=newEl("button","","やり直す");
  ui.finaleNext.addEventListener("click",retry);ui.finale.append(ui.finaleText,ui.finaleNext);
- root.append(frame,ui.toast,ui.guide,ui.finale);shell.appendChild(root);
+ const cutin=newEl("div","cb-cutin");cutin.setAttribute("aria-label","シオンとシオリエルの必殺技");
+ for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
+   const panel=newEl("div","cb-cut-panel cb-cut-"+actor);
+   const face=newEl("img","cb-cut-face");face.src=CUTINS[actor];face.alt=name;face.draggable=false;
+   // These hidden-at-boot img elements start loading before any battle action.
+   face.addEventListener("error",()=>{face.hidden=true;});
+   panel.append(face,newEl("span","cb-cut-name",name));cutin.append(panel);
+ }
+ cutin.append(newEl("div","cb-cut-title","必殺技"));
+ const technique=newEl("div","cb-technique");technique.setAttribute("aria-hidden","true");
+ technique.append(newEl("div","cb-technique-ray"),newEl("div","cb-technique-ring"));
+ // Set data-caritas-technique-art on game-shell when the dedicated art is ready.
+ // Absent/failed optional art keeps the light effect and never stalls the event.
+ const techniqueSource=shell.dataset.caritasTechniqueArt;
+ if(techniqueSource&&/^\.\/assets\/[^?#]+\.(?:png|webp|jpe?g)$/i.test(techniqueSource)){
+   const art=newEl("img","cb-technique-art");art.alt="";art.hidden=true;
+   art.addEventListener("load",()=>{art.hidden=false;});art.addEventListener("error",()=>{art.hidden=true;});art.src=techniqueSource;technique.append(art);
+ }
+ root.append(frame,ui.toast,ui.guide,ui.finale,cutin,technique);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
    // Exactly the Garden main dialogue mount and element IDs. The battle UI
    // also lives in the same shell so its stacking order stays predictable.
@@ -236,11 +300,12 @@ function init(){
    ids:{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"},
    onAdvance:advanceDialogue
  });
- dialogue.elements.layer.classList.add("caritas-dialogue");
  timer=setInterval(tick,160);
- window.addEventListener("pagehide",()=>{clearInterval(timer);clearTimeout(toastTimer);});
+ document.addEventListener("visibilitychange",()=>{if(suspended())pauseCinematic();else resumeCinematic();});
+ window.addEventListener("pagehide",()=>{pageAway=true;pauseCinematic();clearInterval(timer);timer=0;clearTimeout(toastTimer);ui.toast.hidden=true;});
+ window.addEventListener("pageshow",()=>{pageAway=false;if(!timer&&!done)timer=setInterval(tick,160);resumeCinematic();tick();});
  tick();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
-window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,battle:{...battle,words:[...battle.words]}})});
+window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,cinematicPending:!!cinematicCallback,battle:{...battle,words:[...battle.words]}})});
 })();
