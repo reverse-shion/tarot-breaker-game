@@ -53,3 +53,5 @@
 #caritas-event [hidden]{display:none!important}
 @media(max-height:670px){.cb-frame{grid-template-rows:minmax(0,41fr) minmax(46px,10fr) minmax(0,49fr)}.cb-controls{gap:3px;padding-top:3px}.cb-card{grid-template-rows:13px minmax(0,1fr) 29px;padding:2px}.cb-role{font-size:9px}.cb-readline{height:28px}.cb-actions{height:43px}.cb-narration small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#caritas-event *{transition:none!important;animation:none!important}}
+
+body.caritas-departed .hoshi-caritas{display:none!important}
