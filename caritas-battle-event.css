@@ -249,3 +249,51 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-phase="enemy-turn"] .cb-beast,
  #caritas-event[data-phase="enemy-turn"] .cb-angel{animation:none}
 }
+
+/* Battle actors from author's approved pixel illustrations.
+   Match portrait reference: Shioriel in front at lower center-right,
+   Shion behind to her right. Sprite alpha is baked into WebP; no masks. */
+#caritas-event .cb-shion-sprite {
+  right: 18%;
+  bottom: 6.5%;
+  width: 22%;
+  height: 30%;
+  aspect-ratio: auto;
+  z-index: 7;
+  background: url('./assets/events/hoshisuna/battle/shion-battle.webp') center bottom / contain no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 3px rgba(24, 32, 61, .48));
+}
+#caritas-event .cb-angel {
+  right: 33%;
+  bottom: 6%;
+  width: 25%;
+  height: 35%;
+  z-index: 9;
+  border: 0;
+  border-radius: 0;
+  clip-path: none;
+  background: url('./assets/events/hoshisuna/battle/shioriel-battle.webp') center bottom / contain no-repeat;
+  -webkit-mask-image: none;
+  mask-image: none;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 4px rgba(42, 37, 88, .47));
+}
+/* Preserve the counterattack / guarding animations with actual actor art. */
+@keyframes cb-party-hit {
+  0%, 35%, 100% { filter: drop-shadow(0 3px 4px rgba(42, 37, 88, .47)); }
+  51%, 65% { filter: drop-shadow(0 0 12px rgba(242, 221, 255, .95)) brightness(1.24); }
+}
+@keyframes cb-party-guard {
+  0%, 100% { filter: drop-shadow(0 3px 4px rgba(42, 37, 88, .47)); }
+  38%, 76% { filter: drop-shadow(0 0 14px rgba(137, 254, 246, .95)) brightness(1.14); }
+}
+#caritas-event[data-phase="enemy-turn"] .cb-angel {
+  animation: cb-party-hit 1.05s ease both;
+}
+#caritas-event[data-phase="enemy-turn"][data-ward="true"] .cb-angel {
+  animation: cb-party-guard 1.05s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  #caritas-event[data-phase="enemy-turn"] .cb-angel { animation: none; }
+}
