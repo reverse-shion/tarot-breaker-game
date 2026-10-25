@@ -7,28 +7,13 @@
 #caritas-interaction-choice .star-gate-interaction-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #caritas-interaction-choice .star-gate-interaction-actions button{min-height:44px;border:1px solid rgba(226,207,158,.34);border-radius:8px;color:rgba(247,249,255,.96);background:rgba(255,255,255,.055);font:650 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.03em}
 #caritas-interaction-choice .star-gate-interaction-actions button:active{background:rgba(226,207,158,.16);transform:translateY(1px)}
-/* Main uses the same shared-dialogue.js / shared-dialogue.css and game-shell mount.
-   Keep local stacking above the battle overlay, and make each main speaker hue
-   clearly legible instead of relying on near-white character glyphs alone. */
+/* Main dialogue window, typography, typing and named colors are shared unchanged.
+   Only Caritas (not present in main) receives a localized speaker tint. */
 .tb-dialogue-layer.caritas-dialogue{z-index:2600}
-.tb-dialogue-layer.caritas-dialogue[data-speaker="シオン"]{
- --speaker-color:#9CB7FF;
- --speaker-glow-near:rgba(74,107,255,1);
- --speaker-glow-far:rgba(74,107,255,.72);
-}
-.tb-dialogue-layer.caritas-dialogue[data-speaker="シオリエル"]{
- --speaker-color:#C7ADFF;
- --speaker-glow-near:rgba(146,111,255,1);
- --speaker-glow-far:rgba(146,111,255,.72);
-}
 .tb-dialogue-layer.caritas-dialogue[data-speaker="カリタス"]{
- --speaker-color:#D5B4EE;
+ --speaker-color:#F8F5FF;
  --speaker-glow-near:rgba(167,106,221,.95);
- --speaker-glow-far:rgba(128,69,192,.63);
-}
-.tb-dialogue-layer.caritas-dialogue .tb-dialogue-speaker{
- color:var(--speaker-color);
- text-shadow:0 0 3px var(--speaker-glow-near),0 0 10px var(--speaker-glow-far);
+ --speaker-glow-far:rgba(128,69,192,.36);
 }
 /* Caritas keeps the original white art for this candidate.
    Do not apply destructive filters to the map sprite or battle sprite. */
@@ -49,7 +34,18 @@
 .cb-arena{position:relative;overflow:hidden;min-height:0;background:radial-gradient(ellipse at 48% 28%,#566ba8b8,transparent 55%),linear-gradient(#182b52cc,#25324a),url('./assets/events/hoshisuna/map/starroad.webp') center/cover}
 .cb-arena:after{content:"";pointer-events:none;position:absolute;inset:0;background:linear-gradient(transparent 75%,#08132e99)}
 .cb-title{position:absolute;left:34%;right:34%;top:1%;padding:5px 0;text-align:center;background:#0b1836df;border:1px solid #e5bd76;border-radius:30px;font-size:clamp(10px,3vw,16px);z-index:5}
-.cb-beast{position:absolute;top:27%;left:6%;width:55%;height:52%;object-fit:contain;filter:drop-shadow(0 0 15px #a2c2ffb8)}
+.cb-mantle{position:absolute;top:27%;left:6%;width:55%;height:52%;z-index:2;isolation:isolate}
+.cb-beast{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #a2c2ffb8)}
+/* Non-destructive overlay: the approved original white sprite stays unchanged. */
+.cb-mantle::before,.cb-mantle::after{content:"";position:absolute;inset:-13%;border-radius:50%;pointer-events:none;transition:opacity 1.9s ease,transform 1.9s ease}
+.cb-mantle::before{z-index:2;mix-blend-mode:multiply;background:radial-gradient(ellipse at 48% 49%,rgba(16,3,36,.79) 0 22%,rgba(42,8,82,.72) 38%,rgba(87,29,123,.23) 60%,transparent 75%);opacity:.9;animation:cb-mantle-breathe 2.8s ease-in-out infinite}
+.cb-mantle::after{z-index:3;border:2px solid rgba(145,69,190,.55);box-shadow:inset 0 0 25px #3f0d67,0 0 25px #482169;opacity:.9}
+#caritas-event[data-scene="release"] .cb-mantle::before,#caritas-event[data-scene="release"] .cb-mantle::after,#caritas-event[data-scene="calm"] .cb-mantle::before,#caritas-event[data-scene="calm"] .cb-mantle::after{opacity:0;transform:scale(1.7);animation:none}
+@keyframes cb-mantle-breathe{0%,100%{filter:brightness(.8)}50%{filter:brightness(1.25)}}
+.cb-abyss-sequence{position:absolute;inset:0;z-index:9;pointer-events:auto;overflow:hidden;background:radial-gradient(ellipse at 40% 48%,rgba(71,8,110,.75),rgba(5,1,17,.88) 48%,rgba(4,1,15,.4) 90%);animation:cb-abyss-swallow 2.3s ease-in-out both}
+.cb-abyss-vortex{position:absolute;left:7%;top:22%;width:67%;aspect-ratio:1;border-radius:50%;background:repeating-conic-gradient(from 25deg,rgba(121,42,172,.35) 0deg,transparent 30deg,rgba(7,1,20,.7) 64deg);filter:blur(11px);animation:cb-abyss-turn 2.3s ease-in both}
+@keyframes cb-abyss-swallow{0%{opacity:0}25%{opacity:1}70%{opacity:.95}100%{opacity:0}}
+@keyframes cb-abyss-turn{0%{transform:scale(1.8) rotate(-115deg);opacity:0}60%{transform:scale(.65) rotate(85deg);opacity:1}100%{transform:scale(.3) rotate(170deg);opacity:0}}
 .cb-angel{position:absolute;right:18%;bottom:6%;width:20%;height:41%;border-radius:49% 49% 14% 14%;background:radial-gradient(ellipse at 50% 20%,#f8d7fc 0 9%,transparent 16%),linear-gradient(135deg,transparent 17%,#d7c3ffbb 27%,#704baaaf 60%,transparent 80%);filter:drop-shadow(0 0 12px #d5bbf1);clip-path:polygon(50% 0,66% 13%,80% 33%,100% 100%,0 100%,20% 32%,34% 13%)}
 .cb-hero-name{position:absolute;right:10%;bottom:0;font-size:11px;text-shadow:0 2px 4px #000}
 .cb-hud{position:absolute;z-index:4;padding:7px;background:#0b193be8;border:1px solid #c5a06b;border-radius:8px;box-shadow:0 3px 10px #0009;font-size:clamp(10px,2.7vw,13px)}
@@ -87,3 +83,23 @@
 @media(prefers-reduced-motion:reduce){#caritas-event *{transition:none!important;animation:none!important}}
 
 body.caritas-departed .hoshi-caritas{display:none!important}
+
+/* Cinematic layers are isolated from the canonical main dialogue component. */
+.cb-cutin,.cb-resolution{position:absolute;inset:0;z-index:35;overflow:hidden;pointer-events:auto}
+.cb-cutin{display:grid;grid-template-rows:1fr 1fr;background:rgba(3,6,25,.95);isolation:isolate}
+.cb-cutin-panel{position:relative;display:flex;align-items:center;gap:12px;padding:clamp(12px,5vw,25px);overflow:hidden}
+.cb-cutin-panel.shion{justify-content:flex-start;background:linear-gradient(120deg,#111b46,#314f98 60%,#0d1034);clip-path:polygon(0 0,100% 0,92% 100%,0 100%);animation:cb-cut-shion .55s cubic-bezier(.1,.8,.2,1) both}
+.cb-cutin-panel.shioriel{justify-content:flex-end;background:linear-gradient(310deg,#201047,#5e4294 60%,#0e092b);clip-path:polygon(8% 0,100% 0,100% 100%,0 100%);animation:cb-cut-shioriel .62s cubic-bezier(.1,.8,.2,1) both}
+.cb-cutin-portrait{width:40%;max-width:190px;height:84%;border-radius:42% 42% 12% 12%;border:1px solid rgba(226,220,255,.28);background:radial-gradient(ellipse at 50% 34%,rgba(209,206,255,.35),transparent 58%),linear-gradient(155deg,#24376488,#12162daa);box-shadow:0 0 32px rgba(184,153,255,.35),inset 0 0 28px rgba(127,96,201,.29)}
+/* Portrait placeholders only; add the approved cropped faces to these slots later. */
+.cb-cutin-name{position:relative;font:700 clamp(22px,6vw,36px)/1.3 "Yu Mincho",serif;letter-spacing:.08em;color:#fff8f0;text-shadow:0 2px 14px #000,0 0 18px #cbb3ff}
+.cb-cutin-strike{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);padding:5px 12px;white-space:nowrap;font:700 clamp(24px,8vw,45px)/1.2 "Yu Mincho",serif;color:#fffce4;text-shadow:0 0 15px #fff,0 0 30px #d79cfe;z-index:2;animation:cb-cut-strike 1.6s ease-out both}
+@keyframes cb-cut-shion{from{transform:translateX(-105%)}to{transform:translateX(0)}}
+@keyframes cb-cut-shioriel{from{transform:translateX(105%)}to{transform:translateX(0)}}
+@keyframes cb-cut-strike{0%,32%{opacity:0;scale:.8}55%{opacity:1;scale:1.08}100%{opacity:1;scale:1}}
+.cb-resolution{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:10px;padding:0 20px max(22%,calc(env(safe-area-inset-bottom) + 75px));text-align:center;background:radial-gradient(ellipse at center,transparent 15%,rgba(2,5,17,.7) 96%);animation:cb-release-bg 2.6s ease-out both}
+.cb-resolution-title{font:700 clamp(21px,6.5vw,32px)/1.4 "Yu Mincho",serif;color:#f6e6ac;letter-spacing:.1em;text-shadow:0 0 16px #f1dbb9;animation:cb-release-title 2.4s ease-out both}
+.cb-resolution-sub{font:500 clamp(13px,3.3vw,17px)/1.5 "Yu Mincho",serif;color:#f5f1ff;animation:cb-release-title 2.4s ease-out both}
+@keyframes cb-release-bg{from{background-color:rgba(25,2,51,.79)}to{background-color:rgba(3,6,25,.12)}}
+@keyframes cb-release-title{0%{opacity:0;transform:translateY(18px)}35%,75%{opacity:1;transform:none}100%{opacity:.6}}
+@media(prefers-reduced-motion:reduce){.cb-abyss-sequence,.cb-abyss-vortex,.cb-cutin-panel,.cb-cutin-strike,.cb-resolution,.cb-resolution-title,.cb-resolution-sub,.cb-mantle::before{animation:none!important}}
