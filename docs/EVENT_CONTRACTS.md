@@ -129,15 +129,15 @@ productionEnabled: false
 segment: caritas-heart-resonance
 start_event: tarot-breaker:caritas-approach
 trigger_owner: caritas-battle-event.js only on hoshisuna-main.html?dev=hoshisuna
-prerequisites: valid Starroad runtime, player near Caritas, explicit 調べる tap; no automatic start
-runtime: existing shared map movement/camera/companion stays untouched; tarot-breaker:interaction-start suspends and tarot-breaker:interaction-end resumes after actual encounter completion
-encounter: introductory dialogue and first invocation in normal map; Moon/Strength/Star, 9 words/27 combinations, three-stage resonance, tactical read/defend/skill, concluding dialogue
+prerequisites: Shion reaches Caritas vicinity; once-per-page automatic noticing dialogue using main shared window; then explicit main-style 調べる / 離れる choice; battle never starts from proximity alone
+runtime: existing shared map movement/camera/companion stays untouched; shared main TarotDialogueUI.create owns the original typing/tap-advance widget; interaction-start acquires scene pause before first notice, interaction-end resumes on Leave or real completion
+encounter: notice → examine/leave → introductory dialogue/first invocation → Moon/Strength/Star (9 meanings / 27 combinations), three-stage resonance, tactical read/defend/skill; battle responses and final farewell also use the main shared dialogue widget
 character_contract: Caritas never reveals identity/species/origin; references to Abyss allowed; Shioriel is the manifestation of Shiopon, not a second simultaneous unit
 progress_changes: none; no Production Journey/Progress/localStorage writes; only page-memory encounter completion and namespaced sessionStorage one-time tutorial
 departure: displayed Caritas hidden and his local collision footprint deactivated only after completing last dialogue line
 reload: isolated checkpoint restarts unresolved event from map; no durable completed state until a separately approved Production integration
-assets: existing Starroad and Caritas art; battle card artwork and Shioriel battle sprite are temporarily stylized placeholders, NOT final visual approval
+assets: existing Starroad and Caritas art; Abyss influence applies a scoped black-violet CSS color filter to the map and battle Caritas sprites; battle card artwork and Shioriel battle sprite are still placeholders, NOT final visual approval
 working_scope: caritas-battle-core.js / caritas-battle-event.js / caritas-battle-event.css / hoshisuna-main.html registration / local Caritas collision deactivation / candidate tests
 locked_scope: main title, Alenon, Landing, Garden, persistent Progress, existing scene movement, actual companion follow, shared navigation, audio and other story events
-qa: complete three correct readings, optional skill route, incorrect read retry, defense, defeat/retry, last-dialogue exit, absent collision after exit, re-entry suppression within current page, iPhone viewport/safe area, responsive no scrolling, sound, and reload
+qa: Shion automatically notices one time → main dialogue typing and tap reveal → explicit 2-button choice; Leave re-arms only after retreat; no duplicate notice; verify three readings, skill, incorrect retry, defense, defeat/retry, last-dialogue exit, removed collision, black-violet color in map and battle, iPhone viewport/safe area, no scroll, audio and reload
 promotion_gate: run event-preflight, required CI, independent review, exact-SHA iPhone human Device PASS, separate integration Gate; no main merge automatically
