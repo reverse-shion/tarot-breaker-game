@@ -91,6 +91,13 @@
     receivingRuntime:"real dialogue.js Lumiere completion -> existing choice -> real Stage3 -> Aftermath",
     expectedFirstRuntimeState:"decoded present Garden (810,400), Shiopon joined, Lumiere unfinished, no gate choice",
     durableWritePolicy:"FORBIDDEN; observed real dialogue facts in in-memory Journey only"});
+  register("hoshisuna", {event:"hoshisuna-caritas",segment:"caritas-heart-resonance",map:"hoshisuna",spawn:"existing starroad (108,488)",
+    temporaryState:Object.freeze({battleDone:false,companion:"existing map follower"}),
+    requiredRuntime:Object.freeze(["hoshisuna-main.html","hoshisuna-main-game.js","hoshisuna-caritas-collision.js","caritas-battle-core.js","caritas-battle-event.js"]),
+    entryAction:"walk up to Caritas and tap 調べる in the real Starroad runtime",emittedSignal:"tarot-breaker:caritas-approach",
+    receivingRuntime:"actual hoshi map movement -> shared interaction pause -> heart-resonance overlay -> map resume",
+    expectedFirstRuntimeState:"existing map spawns normally, Caritas blocks path until story completion",
+    durableWritePolicy:"no Production Progress/Journey/localStorage writes; current-page completion only; tutorial uses isolated sessionStorage"});
   Object.freeze(definitions);
   function get(id) { return Object.prototype.hasOwnProperty.call(definitions, id) ? definitions[id] : null; }
   function list() { return Object.values(definitions); }
