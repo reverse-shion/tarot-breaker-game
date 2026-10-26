@@ -172,6 +172,13 @@
   };
   const images = {};
   const shioponImages = {};
+  // Isolated Caritas invocation only. This atlas is the already-approved official
+  // four-view Shioriel art; quadrant 0 (top-left) is the screen-facing portrait.
+  let caritasShiorielAtlas = null;
+  const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false };
+  const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
+    ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
+    : caritasInvocation.phase==="revealed"?1:0;
   const lumiereImages = {};
   const lumiereCompositors = {};
 
@@ -1223,6 +1230,10 @@
     if (stage3Runtime && aftermathPaused) return;
     if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
+    // Scripted Caritas first invocation owns this very same actor, not a clone.
+    if (hoshisunaIsolated && caritasInvocation.locked) {
+      shiopon.moving=false;shiopon.frame=0;return;
+    }
     if (shiopon.scripted) {
       updateShioponScript(dt);
       return;
@@ -1600,6 +1611,62 @@
   }
 
 
+  // Draw directly inside the same camera-transformed/masked world actor pass.
+  // No fullscreen character layer: even the light rings follow Shiopon's feet.
+  function drawCaritasInvocation(actor) {
+    const phase=caritasInvocation.phase;
+    if(phase==="idle")return false;
+    const t=caritasInvocationProgress();
+    const x=actor.x,y=actor.y+actor.stageOffsetY;
+    const centerY=y-43;
+    ctx.save();
+    if(phase==="charging"){
+      const pulse=.5+.5*Math.sin(t*Math.PI*7);
+      const halo=ctx.createRadialGradient(x,centerY,7,x,centerY,60+t*12);
+      halo.addColorStop(0,"rgba(248,237,255,"+(.27+.32*t)+")");
+      halo.addColorStop(.38,"rgba(183,165,243,"+(.12+.23*t)+")");
+      halo.addColorStop(1,"rgba(129,132,208,0)");
+      ctx.fillStyle=halo;ctx.beginPath();ctx.arc(x,centerY,72,0,Math.PI*2);ctx.fill();
+      for(let ring=0;ring<2;ring++){
+        ctx.save();ctx.translate(x,centerY);ctx.rotate(ring?-.23:.29);
+        ctx.strokeStyle="rgba(226,217,255,"+(.19+.33*t+ring*.06)+")";
+        ctx.lineWidth=(ring?1.1:.8);
+        ctx.beginPath();ctx.ellipse(0,0,28+t*12+ring*8,46+t*7+ring*5,0,0,Math.PI*2);
+        ctx.stroke();ctx.restore();
+      }
+      for(let k=0;k<11;k++){
+        const a=k*2.39996+t*(.4+(k%3)*.17);
+        const radius=16+((k*17)%34)+7*t;
+        ctx.fillStyle="rgba(255,250,240,"+(.28+.54*(.5+.5*Math.sin(t*13+k)))+")";
+        ctx.beginPath();ctx.arc(x+Math.cos(a)*radius,centerY+Math.sin(a)*radius*.86,
+          .65+(k%3)*.42+pulse*.18,0,Math.PI*2);ctx.fill();
+      }
+    }
+    const shioponAlpha=phase==="charging"?Math.max(0,Math.min(1,(.55-t)/.11)):0;
+    if(shioponAlpha>0){
+      ctx.save();ctx.globalAlpha*=shioponAlpha;
+      drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
+        outline:ACTOR_OUTLINES.shiopon,visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
+      });
+      ctx.restore();
+    }
+    const revealedAlpha=phase==="revealed"?1:Math.max(0,Math.min(1,(t-.55)/.28));
+    if(revealedAlpha>0 && caritasShiorielAtlas){
+      const image=caritasShiorielAtlas;
+      const sw=image.naturalWidth/2,sh=image.naturalHeight/2;
+      const height=105*(phase==="charging"?.91+.09*Math.min(1,(t-.55)/.45):1);
+      const width=height*sw/sh;
+      ctx.save();
+      ctx.globalAlpha*=revealedAlpha;
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      ctx.shadowColor="rgba(193,165,254,.52)";ctx.shadowBlur=6/camera.zoom;
+      ctx.drawImage(image,0,0,sw,sh,x-width/2,y-height+5,width,height);
+      ctx.restore();
+    }
+    ctx.restore();
+    return true;
+  }
+
   function drawActors() {
     if (!hoshisunaIsolated && !visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
@@ -1656,8 +1723,10 @@
         const original = ctx;
         ctx = target;
         try {
-          drawActor(entry.actor, entry.actorImages, entry.drawHeight,
-            entry.glowColor, entry.options);
+          if(!(hoshisunaIsolated && actorId==="shiopon" && drawCaritasInvocation(entry.actor))) {
+            drawActor(entry.actor, entry.actorImages, entry.drawHeight,
+              entry.glowColor, entry.options);
+          }
         } finally { ctx = original; }
       };
       if (window.TarotSceneEffects && !visionWorld.active) {
@@ -2527,6 +2596,75 @@
 
   }
 
+  if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
+    moveForward(){
+      if(!ready||!running||!caritasShiorielAtlas||caritasInvocation.locked)
+        return Promise.resolve({completed:false,reason:"not-ready"});
+      const front=playerRef(),from=shioponRef();
+      // Select a legal spot on the Caritas-facing (north) side of Shion.
+      // Preserve the NPC collision/pathfinder, do not teleport through Caritas.
+      const candidates=[
+        {x:front.x,y:front.y-43},
+        {x:front.x-29,y:front.y-33},
+        {x:front.x+29,y:front.y-33},
+        {x:front.x-39,y:front.y-25},
+        {x:front.x+39,y:front.y-25}
+      ];
+      let spot=null;
+      for(const candidate of candidates){
+        if(!collision.isWalkable(candidate.x,candidate.y)||
+           refDistance(candidate,front)<27)continue;
+        if(legalStageRoute("shiopon",from,candidate).length){spot=candidate;break;}
+      }
+      if(!spot)return Promise.resolve({completed:false,reason:"front-blocked"});
+      caritasInvocation.locked=true;
+      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:780});
+      return move.promise.then(out=>{
+        if(!out.completed||out.skipped){
+          caritasInvocation.locked=false;
+          return {completed:false,reason:"move-interrupted"};
+        }
+        shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
+        draw();
+        return {completed:true,position:{...shioponRef()}};
+      });
+    },
+    faceFront(){
+      if(!caritasInvocation.locked)return false;
+      shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
+      draw();return true;
+    },
+    begin(){
+      if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasShiorielAtlas)return false;
+      caritasInvocation.phase="charging";caritasInvocation.elapsed=0;
+      caritasInvocation.paused=document.hidden;
+      caritasInvocation.since=performance.now();
+      draw();return true;
+    },
+    reveal(){
+      if(!caritasInvocation.locked||caritasInvocation.phase!=="charging")return false;
+      caritasInvocation.phase="revealed";
+      caritasInvocation.elapsed=3900;
+      draw();return true;
+    },
+    pause(){
+      if(caritasInvocation.phase!=="charging"||caritasInvocation.paused)return;
+      caritasInvocation.elapsed+=Math.max(0,performance.now()-caritasInvocation.since);
+      caritasInvocation.paused=true;
+    },
+    resume(){
+      if(caritasInvocation.phase!=="charging"||!caritasInvocation.paused||document.hidden)return;
+      caritasInvocation.since=performance.now();caritasInvocation.paused=false;
+    },
+    clear(){
+      caritasInvocation.phase="idle";caritasInvocation.locked=false;
+      caritasInvocation.elapsed=0;caritasInvocation.paused=false;
+      draw();return true;
+    },
+    getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
+      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas})
+  });
+
   window.TarotStage = Object.freeze({
     perform: performStageCommand,
     finishAll: () => cancelAllStageMotions(true),
@@ -2665,6 +2803,11 @@
         ...Object.entries(shioponFiles).map(async ([key, src]) => {
           shioponImages[key] = await loadImage(src);
         }),
+        ...(hoshisunaIsolated ? [loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
+          if(image.naturalWidth!==1086||image.naturalHeight!==1448)
+            throw new Error("シオリエル正面・四面図の寸法不正");
+          caritasShiorielAtlas=image;
+        })] : []),
         ...Object.entries(lumiereFiles).map(async ([key, src]) => {
           lumiereImages[key] = await loadImage(src);
         }),
