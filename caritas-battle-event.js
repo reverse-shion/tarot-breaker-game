@@ -14,10 +14,10 @@ const INTRO=[
  ["カリタス","……まさか、私がアビスに呑まれるとは……"],
  ["シオン","……大丈夫か。少し、話を聞かせてくれないか。"],
  ["カリタス","……この私が……なんと情けない……近づくでない。"],
- ["シオン","いくぞ、しおぽん。タロット展開。"],
- ["シオン","言の葉は鍵、星の光は道しるべ。\nステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"],
- ["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]
+ ["シオン","いくぞ、しおぽん。タロット展開。"]
 ];
+const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\nステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]];
+const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
@@ -131,10 +131,25 @@ function leave(){
 function start(){
  if(story!=="choice"||!owned||done||suspended())return;
  hidePrompt();story="intro";
+ // Keep the map visible. Shion faces Caritas until after Tarot Deployment.
+ window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:1013,y:210}});
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
  saySequence(INTRO,()=>{
-   battle=C.newGame();root.hidden=false;
-   stage("engulfing",2600,beginBattle);
+   window.TarotStage?.perform?.({type:"face",actor:"shion",target:"shiopon"});
+   window.TarotStage?.perform?.({type:"face",actor:"shiopon",target:"shion"});
+   root.hidden=false;
+   stage("manifest-focus",850,()=>{
+     saySequence(INVOCATION,()=>{
+       stage("manifestation",3900,()=>{
+         story="manifested";root.dataset.phase="manifested";render();
+         saySequence(REVEAL,()=>{
+           // No combat/engulfing before Shioriel finishes speaking.
+           battle=C.newGame();
+           stage("engulfing",2600,beginBattle);
+         });
+       });
+     });
+   });
  });
 }
 function setText(el,value){el.textContent=String(value);}
@@ -317,7 +332,21 @@ function init(){
    const art=newEl("img","cb-technique-art");art.alt="";art.hidden=true;
    art.addEventListener("load",()=>{art.hidden=false;});art.addEventListener("error",()=>{art.hidden=true;});art.src=techniqueSource;technique.append(art);
  }
- root.append(frame,ui.toast,ui.guide,ui.finale,cutin,technique);shell.appendChild(root);
+ // Scene-local sprite manifestation. Both forms occupy the same center.
+ const manifest=newEl("div","cb-manifest");manifest.setAttribute("aria-hidden","true");
+ manifest.append(newEl("div","cb-manifest-backdrop"));
+ const halo=newEl("div","cb-manifest-halo");
+ halo.append(newEl("i"),newEl("i"),newEl("i"));
+ const stars=newEl("div","cb-manifest-stars");
+ for(let i=0;i<12;i++)stars.append(newEl("i"));
+ const fox=newEl("div","cb-manifest-fox");
+ const foxFrame=newEl("div","cb-manifest-fox-viewport");
+ const foxImage=newEl("img");foxImage.src="./assets/sprites/shiopon/shiopon_idle.png";foxImage.alt="";foxImage.draggable=false;
+ foxFrame.append(foxImage);fox.append(foxFrame);
+ const revealed=newEl("img","cb-manifest-shioriel");
+ revealed.src="./assets/events/hoshisuna/battle/shioriel-battle.webp";revealed.alt="";revealed.draggable=false;
+ manifest.append(halo,stars,fox,revealed);
+ root.append(frame,ui.toast,ui.guide,ui.finale,cutin,technique,manifest);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
    // Exactly the Garden main dialogue mount and element IDs. The battle UI
    // also lives in the same shell so its stacking order stays predictable.
