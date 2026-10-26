@@ -285,7 +285,7 @@ function perform(kind){
   if(kind==="skill"){
    stage("cutin",1700,()=>stage("technique",1500,()=>{committing=false;beginEnding();}));
   }else{
-   saySequence([["シオン","この三枚が示す答えを、俺は君に届けたい。"]],()=>{committing=false;beginEnding();});
+   saySequence([["シオン",C.preview({...battle,words:battle.lastReading||battle.words})+"\nこの言葉を、君に届けたい。"]],()=>{committing=false;beginEnding();});
   }
   return;
  }
@@ -338,6 +338,8 @@ function finishRetreat(){
  dialogue?.hide();root.hidden=true;ui.modal.hidden=true;
  clearCheckpoint();battle=C.newGame();modalIndex=-1;committing=false;
  story="idle";busy=false;armed=false;noticed=true;unlock();
+ // Re-offer the *inspection choice* shortly after withdrawal, never auto-restart battle.
+ setTimeout(()=>{if(story==="idle"&&!done){armed=true;tick();}},1300);
 }
 function finish(){
  if(done)return;
