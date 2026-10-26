@@ -103,7 +103,7 @@ test('manifestation remains on the real map before entering battle',async()=>{
  assert.equal(root.hidden,false);assert.equal(f.state().story,'battle');
  assert.equal(f.button(root,'防御'),undefined);
  assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
- assert.equal(root.querySelector('.cb-hud enemy').className,'cb-hud enemy');
+ assert.equal(root.querySelector('.cb-hud').className,'cb-hud enemy');
  assert.ok(root.querySelector('.cb-mood'));
  assert.equal(f.button(root,'必殺技').disabled,true);
 });
