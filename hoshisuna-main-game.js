@@ -1611,8 +1611,8 @@
   }
 
 
-  // Draw directly inside the same camera-transformed/masked world actor pass.
-  // No fullscreen character layer: even the light rings follow Shiopon's feet.
+  // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
+  // Localised saturated starfield: readable on phone without a white flash.
   function drawCaritasInvocation(actor) {
     const phase=caritasInvocation.phase;
     if(phase==="idle")return false;
@@ -1621,27 +1621,74 @@
     const centerY=y-43;
     ctx.save();
     if(phase==="charging"){
-      const pulse=.5+.5*Math.sin(t*Math.PI*7);
-      const halo=ctx.createRadialGradient(x,centerY,7,x,centerY,60+t*12);
-      halo.addColorStop(0,"rgba(248,237,255,"+(.27+.32*t)+")");
-      halo.addColorStop(.38,"rgba(183,165,243,"+(.12+.23*t)+")");
-      halo.addColorStop(1,"rgba(129,132,208,0)");
-      ctx.fillStyle=halo;ctx.beginPath();ctx.arc(x,centerY,72,0,Math.PI*2);ctx.fill();
-      for(let ring=0;ring<2;ring++){
-        ctx.save();ctx.translate(x,centerY);ctx.rotate(ring?-.23:.29);
-        ctx.strokeStyle="rgba(226,217,255,"+(.19+.33*t+ring*.06)+")";
-        ctx.lineWidth=(ring?1.1:.8);
-        ctx.beginPath();ctx.ellipse(0,0,28+t*12+ring*8,46+t*7+ring*5,0,0,Math.PI*2);
+      const rise=Math.min(1,t/.22);
+      // The three "Stellan" echoes swell without strobing the whole scene.
+      const echoes=[.18,.43,.69].reduce((sum,beat)=>sum+
+        Math.exp(-Math.pow((t-beat)/.075,2)),0);
+      const strength=.62+.26*rise+.22*Math.min(1,echoes);
+      // A local dim halo isolates the event from the bright Starroad pixels.
+      const dusk=ctx.createRadialGradient(x,centerY,25,x,centerY,145);
+      dusk.addColorStop(0,"rgba(32,22,69,0)");
+      dusk.addColorStop(.56,"rgba(34,23,72,.08)");
+      dusk.addColorStop(1,"rgba(14,12,43,.26)");
+      ctx.fillStyle=dusk;ctx.beginPath();ctx.arc(x,centerY,145,0,Math.PI*2);ctx.fill();
+      // Soft, broad violet-blue light column, not a white rectangle.
+      ctx.save();ctx.translate(x,centerY-7);ctx.scale(.70,1.20);
+      const column=ctx.createRadialGradient(0,0,7,0,0,69);
+      column.addColorStop(0,"rgba(213,164,255,"+(.42*strength)+")");
+      column.addColorStop(.28,"rgba(157,125,245,"+(.34*strength)+")");
+      column.addColorStop(.65,"rgba(101,150,236,"+(.21*strength)+")");
+      column.addColorStop(1,"rgba(68,112,219,0)");
+      ctx.fillStyle=column;ctx.beginPath();ctx.arc(0,0,69,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+      // Energy rises from the feet: the broad floor-ring makes the source clear.
+      ctx.save();ctx.translate(x,y-3);
+      const ground=ctx.createRadialGradient(0,0,3,0,0,54);
+      ground.addColorStop(0,"rgba(238,199,255,"+(.45*strength)+")");
+      ground.addColorStop(.42,"rgba(130,113,238,"+(.28*strength)+")");
+      ground.addColorStop(1,"rgba(98,142,227,0)");
+      ctx.scale(1,.38);ctx.fillStyle=ground;ctx.beginPath();ctx.arc(0,0,54,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle="rgba(210,174,255,"+(.70*strength)+")";
+      ctx.lineWidth=3.3;ctx.beginPath();ctx.ellipse(0,0,40+rise*5,31+rise*3,0,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+      // Three clearly legible coloured rings, each changing phase slowly.
+      const palettes=[[211,152,255],[131,177,255],[255,220,155]];
+      for(let ring=0;ring<3;ring++){
+        ctx.save();ctx.translate(x,centerY);
+        ctx.rotate((ring%2?-.25:.22)+t*(ring%2?-.34:.29));
+        const [r,g,b]=palettes[ring];
+        const alpha=ring===0?.74:ring===1?.62:.52;
+        ctx.strokeStyle="rgba("+r+","+g+","+b+","+(alpha*strength)+")";
+        ctx.lineWidth=[3.3,2.7,2.2][ring];
+        ctx.shadowColor="rgba("+r+","+g+","+b+","+(strength*.50)+")";
+        ctx.shadowBlur=5/camera.zoom;
+        ctx.beginPath();
+        ctx.ellipse(0,0,26+t*9+ring*10,43+t*6+ring*7,0,0,Math.PI*2);
         ctx.stroke();ctx.restore();
       }
-      for(let k=0;k<11;k++){
-        const a=k*2.39996+t*(.4+(k%3)*.17);
-        const radius=16+((k*17)%34)+7*t;
-        ctx.fillStyle="rgba(255,250,240,"+(.28+.54*(.5+.5*Math.sin(t*13+k)))+")";
-        ctx.beginPath();ctx.arc(x+Math.cos(a)*radius,centerY+Math.sin(a)*radius*.86,
-          .65+(k%3)*.42+pulse*.18,0,Math.PI*2);ctx.fill();
+      // Clearly visible star motes circulate inward/outward, not random white noise.
+      for(let k=0;k<24;k++){
+        const a=k*2.39996+t*(.8+(k%3)*.18);
+        const radius=15+((k*17)%39)+(k%2?10*t:-7*t);
+        const px=x+Math.cos(a)*radius;
+        const py=centerY+Math.sin(a)*radius*.88;
+        const bright=.65+.35*Math.sin(t*12+k*.67);
+        const gold=k%6===0;
+        ctx.fillStyle=gold
+          ?"rgba(255,223,159,"+(bright*.90)+")"
+          :"rgba(195,170,255,"+(bright*.94)+")";
+        const size=1.2+(k%4)*.42;
+        ctx.beginPath();ctx.arc(px,py,size,0,Math.PI*2);ctx.fill();
+        if(k%5===0){
+          ctx.strokeStyle=gold?"rgba(255,226,169,.65)":"rgba(147,197,255,.66)";
+          ctx.lineWidth=1.05;ctx.beginPath();
+          ctx.moveTo(px-size-2,py);ctx.lineTo(px+size+2,py);
+          ctx.moveTo(px,py-size-2);ctx.lineTo(px,py+size+2);
+          ctx.stroke();
+        }
       }
     }
+    // Original Shiopon fades into the very same sprite slot as Shioriel.
     const shioponAlpha=phase==="charging"?Math.max(0,Math.min(1,(.55-t)/.11)):0;
     if(shioponAlpha>0){
       ctx.save();ctx.globalAlpha*=shioponAlpha;
@@ -1654,12 +1701,13 @@
     if(revealedAlpha>0 && caritasShiorielAtlas){
       const image=caritasShiorielAtlas;
       const sw=image.naturalWidth/2,sh=image.naturalHeight/2;
-      const height=105*(phase==="charging"?.91+.09*Math.min(1,(t-.55)/.45):1);
+      // 105 -> 96: ~8.6% smaller, preserving the existing foot registration.
+      const height=96*(phase==="charging"?.91+.09*Math.min(1,(t-.55)/.45):1);
       const width=height*sw/sh;
-      ctx.save();
-      ctx.globalAlpha*=revealedAlpha;
+      ctx.save();ctx.globalAlpha*=revealedAlpha;
       ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-      ctx.shadowColor="rgba(193,165,254,.52)";ctx.shadowBlur=6/camera.zoom;
+      ctx.shadowColor="rgba(166,125,231,.68)";
+      ctx.shadowBlur=7/camera.zoom;
       ctx.drawImage(image,0,0,sw,sh,x-width/2,y-height+5,width,height);
       ctx.restore();
     }
@@ -2657,9 +2705,18 @@
       caritasInvocation.since=performance.now();caritasInvocation.paused=false;
     },
     clear(){
+      // Reset the actual canvas sprite BEFORE the battle overlay goes away.
+      // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
-      caritasInvocation.elapsed=0;caritasInvocation.paused=false;
-      draw();return true;
+      caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
+      shiopon.hidden=false;shiopon.rotation=0;
+      shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
+      shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;
+      shiopon.target=null;shiopon.followRoute=[];shiopon.followTarget=null;
+      shiopon.followReplan=0;
+      if(ready)faceShioponTowardPlayer();
+      if(ready&&running)draw();
+      return true;
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
       position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas})
