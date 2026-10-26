@@ -151,6 +151,8 @@ test('HP0 causes shared-dialogue retreat and resets follower without purifying C
  assert.equal(root.hidden,true);assert.equal(f.state().done,false);
  assert.equal(f.pointer.colliding,true);assert.equal(f.creature.hidden,false);
  assert.equal(f.state().owned,false);assert.equal(f.state().armed,false);
+ f.advanceTime(1300);assert.equal(f.state().story,'choice');
+ assert.equal(f.button(f.shell,'調べる').disabled,false,'retry requires player inspection, not forced combat');
 });
 test('turn checkpoint restores HP, darkness and resonance without a second attack',async()=>{
  const persistentStore=new Map();
