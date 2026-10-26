@@ -28,7 +28,7 @@ test("one real world actor uses approved atlas and preserves foot position",()=>
  assert.match(game,/\.\/assets\/sprites\/shioriel\/shioriel-four-directions\.webp/);
  assert.match(game,/image\.naturalWidth\/2,sh=image\.naturalHeight\/2/);
  assert.match(game,/drawCaritasInvocation\(entry\.actor\)/);
- assert.match(game,/if\(hoshisunaIsolated && caritasInvocation\.locked\)/);
+ assert.match(game,/if\s*\(hoshisunaIsolated\s*&&\s*caritasInvocation\.locked\)/);
  assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:780\}\)/);
  assert.match(game,/shiopon\.dir="down"/);
  assert.match(game,/if\(!collision\.isWalkable\(candidate\.x,candidate\.y\)/);
