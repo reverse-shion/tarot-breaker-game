@@ -59,7 +59,12 @@ function beginEnding(){
  stage("purifying",2600,()=>{
    stage("purified",1100,()=>{
      story="farewell";root.dataset.phase="farewell";
-     saySequence(FAREWELL,()=>stage("returning",900,finish));
+     saySequence(FAREWELL,()=>{
+       // Restore the real Shiopon sprite while the battle screen still covers the map.
+       // The reveal cannot leave a one-frame afterimage during the return fade.
+       window.TarotHoshisunaManifestation?.clear?.();
+       stage("returning",900,finish);
+     });
    });
  });
 }
@@ -276,8 +281,9 @@ function retry(){
 }
 function finish(){
  if(done)return;
- done=true;story="complete";root.hidden=true;dialogue?.hide();
+ // Clear canvas actor first, THEN expose the world map.
  window.TarotHoshisunaManifestation?.clear?.();
+ done=true;story="complete";root.hidden=true;dialogue?.hide();
  clearTimeout(toastTimer);clearTimeout(cinematicTimer);cinematicCallback=null;
  const creature=document.querySelector(".hoshi-caritas");
  if(creature)creature.hidden=true;
