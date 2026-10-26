@@ -38,33 +38,31 @@ function fixture({reduced=false}={}){
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
 }
-function enter(f){
+async function enter(f){
  f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
  f.button(f.shell.querySelector('#caritas-interaction-choice'),'調べる').click();
  for(let i=0;i<4;i++)f.pointer.advance();
- assert.equal(f.state().story,'manifest-focus','after Shion addresses Caritas, he turns toward Shiopon');
- assert.equal(f.pointer.stageCommands.length,3);
- assert.equal(f.pointer.stageCommands[0].actor,'shion');
- assert.equal(f.pointer.stageCommands[0].type,'face');
- assert.equal(f.pointer.stageCommands[1].target,'shiopon');
- assert.equal(f.pointer.stageCommands[2].actor,'shiopon');
- const root=f.shell.querySelector('#caritas-event');
- assert.equal(root.hidden,false);assert.equal(f.button(root,'この読みを届ける').disabled,true);
- f.button(root,'この読みを届ける').click();f.button(root,'必殺技').click();
- assert.equal(f.state().battle.turn,0);assert.equal(f.state().battle.resonance,0);
- f.advanceTime(849);assert.equal(f.state().story,'manifest-focus');
- f.advanceTime(1);assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.equal(f.state().story,'intro');
+ assert.equal(f.lines.at(-1).speaker,'しおぽん');
+ assert.equal(f.lines.at(-1).text,'はい、シオンさん。');
+ assert.equal(f.pointer.walks,1);
+ f.pointer.advance();await Promise.resolve();await Promise.resolve();
+ assert.equal(f.state().story,'invocation');
+ assert.equal(f.pointer.front,true);
+ assert.equal(f.pointer.stageCommands.at(-1).target,'shiopon');
  assert.match(f.lines.at(-1).text,/来臨せよ、汝ーーシオリエル/);
+ const root=f.shell.querySelector('#caritas-event');
+ assert.equal(root.hidden,true);
  f.pointer.advance();
  assert.equal(f.state().story,'manifestation');
+ assert.equal(f.pointer.mapPhase,'charging');
  f.advanceTime(3899);assert.equal(f.state().story,'manifestation');
  f.advanceTime(1);assert.equal(f.state().story,'manifested');
+ assert.equal(f.pointer.mapPhase,'revealed');
  assert.equal(f.lines.at(-1).speaker,'シオリエル');
- assert.match(f.lines.at(-1).text,/まだ消えていない願い/);
- f.button(root,'この読みを届ける').click();
- assert.equal(f.state().battle.turn,0,'no early combat before Shioriel speaks');
+ assert.equal(root.hidden,true);
  f.pointer.advance();assert.equal(f.state().story,'engulfing');
- assert.equal(f.button(root,'この読みを届ける').disabled,true);
+ assert.equal(root.hidden,false);
  f.advanceTime(2599);assert.equal(f.state().story,'engulfing');
  f.advanceTime(1);assert.equal(f.state().story,'battle');
  return root;
@@ -94,8 +92,8 @@ test('Shion notices first, main-style two choices follow, leaving cannot loop',(
  f.pointer.actor={x:1013,y:305};f.tick();
  assert.equal(f.state().story,'choice');assert.equal(f.lines.length,1,'notice must be one-time per page');
 });
-test('Opening engulfing completes before input; final reading precedes purification, one farewell, then map unlock',()=>{
- const f=fixture();const root=enter(f);
+test('Opening engulfing completes before input; final reading precedes purification, one farewell, then map unlock',async()=>{
+ const f=fixture();const root=await enter(f);
  read(f,root);assert.equal(f.state().battle.resonance,34);
  read(f,root,['秘密','自制']);assert.equal(f.state().battle.resonance,67);
  for(const w of ['無意識','勇気','希望'])f.button(root,w).click();
@@ -118,8 +116,8 @@ test('Opening engulfing completes before input; final reading precedes purificat
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
  f.pointer.advance();f.tick();f.page('pageshow');assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
 });
-test('Skill shows both face cutins then technique before applying its result exactly once',()=>{
- const f=fixture();const root=enter(f);
+test('Skill shows both face cutins then technique before applying its result exactly once',async()=>{
+ const f=fixture();const root=await enter(f);
  read(f,root,['希望']);
  const before=f.state().battle;assert.equal(before.resonance,34);
  f.button(root,'必殺技').click();assert.equal(f.state().story,'cutin');assert.equal(f.state().battle.used,false);
@@ -134,23 +132,23 @@ test('Skill shows both face cutins then technique before applying its result exa
  f.advanceTime(1050);
  assert.equal(f.state().dialogueBusy,true);f.pointer.advance();f.button(root,'必殺技').click();assert.equal(f.state().battle.turn,before.turn+1);
 });
-test('Winning skill still shows full cutin/effect, then purification and player-controlled farewell',()=>{
- const f=fixture();const root=enter(f);read(f,root);read(f,root,['秘密','勇気','願い']);
+test('Winning skill still shows full cutin/effect, then purification and player-controlled farewell',async()=>{
+ const f=fixture();const root=await enter(f);read(f,root);read(f,root,['秘密','勇気','願い']);
  f.button(root,'必殺技').click();assert.equal(f.state().story,'cutin');assert.equal(f.state().battle.resonance,67);
  f.advanceTime(3200);assert.equal(f.state().battle.resonance,100);assert.equal(f.state().dialogueBusy,true);
  f.pointer.advance();assert.equal(f.state().story,'purifying');assert.equal(root.hidden,false);
  f.advanceTime(3700);assert.equal(f.state().story,'farewell');assert.equal(f.pointer.colliding,true);
 });
-test('Visibility and BFCache pause cinematic time and resume remaining stages without stale completion',()=>{
- const f=fixture();const root=enter(f);read(f,root,['希望']);f.button(root,'必殺技').click();
+test('Visibility and BFCache pause cinematic time and resume remaining stages without stale completion',async()=>{
+ const f=fixture();const root=await enter(f);read(f,root,['希望']);f.button(root,'必殺技').click();
  f.advanceTime(500);f.visibility(true);f.advanceTime(10000);assert.equal(f.state().story,'cutin');assert.equal(f.state().battle.used,false);
  f.visibility(false);f.advanceTime(1199);assert.equal(f.state().story,'cutin');f.advanceTime(1);assert.equal(f.state().story,'technique');
  f.advanceTime(600);f.page('pagehide');f.advanceTime(20000);assert.equal(f.state().story,'technique');
  f.page('pageshow');f.advanceTime(899);assert.equal(f.state().battle.used,false);f.advanceTime(1);assert.equal(f.state().battle.used,true);
  assert.equal(f.state().owned,true);assert.equal(root.hidden,false);assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,0);
 });
-test('Reduced motion keeps semantic stages and defeat retry remains operable',()=>{
- const f=fixture({reduced:true});const root=enter(f);
+test('Reduced motion keeps semantic stages and defeat retry remains operable',async()=>{
+ const f=fixture({reduced:true});const root=await enter(f);
  for(let i=0;i<40&&f.state().battle.phase!=='defeat';i++){
   f.button(root,'防御').click();
   if(f.state().story==='enemy-turn')f.advanceTime(1050);
@@ -174,7 +172,7 @@ test('Map uses unmodified main dialogue mount, IDs and styles with no local over
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
 
-test('Defending visibly absorbs 75% of a forecast hit while reading/skill permit counterattacks',()=>{
+test('Defending visibly absorbs 75% of a forecast hit while reading/skill permit counterattacks',async()=>{
  const normal=Core.defend(Core.newGame());
  assert.equal(normal.hp,97,'normal 12 reduced by 75% is 3');
  const heavy=Core.defend({...Core.newGame(),turn:1});
@@ -186,7 +184,7 @@ test('Defending visibly absorbs 75% of a forecast hit while reading/skill permit
  const skilled=Core.skill(skillReady);
  assert.equal(skilled.hp,88,'a non-winning skill also takes a normal hit');
  assert.equal(skilled.turn,1);
- const f=fixture(),root=enter(f);
+ const f=fixture(),root=await enter(f);
  f.button(root,'防御').click();
  assert.equal(f.state().story,'enemy-turn');
  assert.equal(f.state().battle.hp,97);
@@ -205,8 +203,8 @@ test('Defending visibly absorbs 75% of a forecast hit while reading/skill permit
  assert.equal(f.state().story,'battle');
  assert.equal(f.state().dialogueBusy,true);
 });
-test('Attack interlude freezes on backgrounding and cannot be double-applied',()=>{
- const f=fixture(),root=enter(f);
+test('Attack interlude freezes on backgrounding and cannot be double-applied',async()=>{
+ const f=fixture(),root=await enter(f);
  f.button(root,'防御').click();
  assert.equal(f.state().battle.hp,97);
  f.advanceTime(350);f.visibility(true);f.advanceTime(8000);
