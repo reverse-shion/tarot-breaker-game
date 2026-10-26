@@ -46,7 +46,7 @@ async function enter(f){
  assert.equal(f.lines.at(-1).speaker,'しおぽん');
  assert.equal(f.lines.at(-1).text,'はい、シオンさん。');
  assert.equal(f.pointer.walks,1);
- f.pointer.advance();await Promise.resolve();await Promise.resolve();
+ f.pointer.advance();await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.state().story,'invocation');
  assert.equal(f.pointer.front,true);
  assert.equal(f.pointer.stageCommands.at(-1).target,'shiopon');
