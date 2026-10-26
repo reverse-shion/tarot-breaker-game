@@ -22,7 +22,7 @@ function fixture({reduced=false}={}){
  const documentListeners={},windowListeners={};
  const doc={readyState:'complete',hidden:false,body,createElement:t=>new El(t),getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},advance:null,colliding:true,dialogueOptions:null};
- const window={CaritasBattleCore:Core,TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.mapPhase="idle";return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+ const window={CaritasBattleCore:Core,TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotDialogueUI:{create:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:new El('section'),button:new El('button')}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map();
@@ -109,9 +109,13 @@ test('Opening engulfing completes before input; final reading precedes purificat
  assert.equal(f.state().story,'farewell');assert.equal(f.lines.length,before+1);
  assert.equal(f.lines.at(-1).speaker,'カリタス');assert.equal(f.lines.at(-1).text,'……世話になった。');
  f.advanceTime(20000);assert.equal(f.state().story,'farewell','farewell waits for the player');assert.equal(f.pointer.colliding,true);
+ assert.equal(f.pointer.mapPhase,'revealed','manifestation stays active through the battle and farewell');
  f.pointer.advance();assert.equal(f.state().story,'returning');assert.equal(root.hidden,false);assert.equal(f.pointer.colliding,true);
+ assert.equal(f.pointer.mapPhase,'idle','the original Shiopon sprite is restored before battle fades');
+ assert.equal(f.pointer.clears,1,'returning entry clears Shioriel exactly once before unmask');
  f.advanceTime(899);assert.equal(f.state().done,false);f.advanceTime(1);
  assert.equal(f.state().story,'complete');assert.equal(root.hidden,true);assert.equal(f.state().done,true);
+ assert.equal(f.pointer.mapPhase,'idle');assert.ok(f.pointer.clears>=2,'finish is idempotently cleared before showing the map');
  assert.equal(f.pointer.colliding,false);assert.equal(f.creature.hidden,true);
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
  f.pointer.advance();f.tick();f.page('pageshow');assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
