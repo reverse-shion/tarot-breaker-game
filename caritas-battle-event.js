@@ -309,11 +309,9 @@ function init(){
  const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");
  arena.append(newEl("div","cb-title","心象共鳴"));
  const enemy=newEl("div","cb-hud enemy");enemy.append(newEl("div","","カリタス"));
- const er=newEl("div","cb-hud-row");er.append(newEl("span","","共鳴"),ui.res=newEl("span","","0/100"));
- ui.resBar=newEl("i");const erb=newEl("div","cb-bar");erb.appendChild(ui.resBar);
- const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇"),ui.dark=newEl("span","","100/100"));
+ const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇侵食"),ui.dark=newEl("span","","100/100"));
  ui.darkBar=newEl("i");const drb=newEl("div","cb-bar dark");drb.appendChild(ui.darkBar);
- enemy.append(er,erb,dr,drb);
+ ui.mood=newEl("div","cb-mood","心象：閉ざす");enemy.append(dr,drb,ui.mood);
  const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="カリタス";
  const veil=newEl("div","cb-abyss");veil.setAttribute("aria-hidden","true");
  for(let i=0;i<5;i++)veil.append(newEl("i"));
@@ -321,28 +319,36 @@ function init(){
  const angel=newEl("div","cb-angel");
  const hero=newEl("div","cb-hud hero");hero.append(newEl("div","","シオリエル"));
  const hr=newEl("div","cb-hud-row");hr.append(newEl("span","","HP"),ui.hp=newEl("span","","100/100"));
- ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);hero.append(hr,hb);
- ui.forecast=newEl("div","cb-forecast","次の攻撃：通常");
+ ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);
+ const rr=newEl("div","cb-hud-row");rr.append(newEl("span","","共鳴"),ui.res=newEl("span","","0/100"));
+ ui.resBar=newEl("i");const rb=newEl("div","cb-bar resonance");rb.appendChild(ui.resBar);
+ hero.append(hr,hb,rr,rb);
  const shion=newEl("div","cb-shion-sprite");shion.setAttribute("role","img");shion.setAttribute("aria-label","シオン");
  const counter=newEl("div","cb-enemy-turn");
- ui.enemyCall=newEl("strong","cb-enemy-call");
- ui.enemyDamage=newEl("span","cb-enemy-damage");
+ ui.enemyCall=newEl("strong","cb-enemy-call");ui.enemyDamage=newEl("span","cb-enemy-damage");
  counter.append(ui.enemyCall,ui.enemyDamage);
- arena.append(enemy,beast,veil,release,shion,angel,hero,ui.forecast,
-  counter);
+ arena.append(enemy,beast,veil,release,shion,angel,hero,counter);
  const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");cardBox=newEl("div","cb-cards");
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
+ ui.finisher=newEl("div","cb-finisher");ui.finisher.hidden=true;
  const actions=newEl("div","cb-actions");
- ui.read=newEl("button","cb-read","この読みを届ける");
- ui.defend=newEl("button","cb-defend","防御");ui.defend.setAttribute("aria-label","防御・次の攻撃を75パーセント軽減");ui.skill=newEl("button","cb-skill","必殺技");
- ui.read.addEventListener("click",()=>perform("read"));ui.defend.addEventListener("click",()=>perform("defend"));ui.skill.addEventListener("click",()=>perform("skill"));
- actions.append(ui.read,ui.defend,ui.skill);ctr.append(cardBox,line,actions);frame.append(arena,narr,ctr);
+ ui.read=newEl("button","cb-read","この読みを届ける");ui.skill=newEl("button","cb-skill","必殺技");
+ ui.read.addEventListener("click",()=>perform(battle.phase==="finisher"?"dialogue":"read"));
+ ui.skill.addEventListener("click",()=>perform("skill"));
+ actions.append(ui.read,ui.skill);ctr.append(cardBox,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
- ui.finaleText=newEl("div","cb-finale-text");ui.finaleNext=newEl("button","","やり直す");
- ui.finaleNext.addEventListener("click",retry);ui.finale.append(ui.finaleText,ui.finaleNext);
+ ui.modal=newEl("div","cb-card-overlay");ui.modal.hidden=true;ui.modal.setAttribute("role","dialog");
+ ui.modal.setAttribute("aria-modal","true");ui.modal.setAttribute("aria-label","カードの解釈");
+ const shade=newEl("button","cb-card-shade");shade.type="button";shade.setAttribute("aria-label","カードを閉じる");
+ shade.addEventListener("click",closeCard);
+ const panel=newEl("div","cb-card-panel");
+ const close=newEl("button","cb-modal-close","× 閉じる");close.type="button";close.addEventListener("click",closeCard);
+ ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
+ panel.append(close,ui.modalTitle,ui.modalImage,ui.modalWords);ui.modal.append(shade,panel);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modalIndex>=0){e.preventDefault();closeCard();}});
  const cutin=newEl("div","cb-cutin");cutin.setAttribute("aria-label","シオンとシオリエルの必殺技");
  for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
    const panel=newEl("div","cb-cut-panel cb-cut-"+actor);
@@ -361,7 +367,7 @@ function init(){
    const art=newEl("img","cb-technique-art");art.alt="";art.hidden=true;
    art.addEventListener("load",()=>{art.hidden=false;});art.addEventListener("error",()=>{art.hidden=true;});art.src=techniqueSource;technique.append(art);
  }
- root.append(frame,ui.toast,ui.guide,ui.finale,cutin,technique);shell.appendChild(root);
+ root.append(frame,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
    // Exactly the Garden main dialogue mount and element IDs. The battle UI
    // also lives in the same shell so its stacking order stays predictable.
