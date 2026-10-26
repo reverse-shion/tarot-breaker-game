@@ -6,53 +6,84 @@ const path=require("node:path");
 const root=path.resolve(__dirname,"..");
 const event=fs.readFileSync(path.join(root,"caritas-battle-event.js"),"utf8");
 const css=fs.readFileSync(path.join(root,"caritas-battle-event.css"),"utf8");
+const game=fs.readFileSync(path.join(root,"hoshisuna-main-game.js"),"utf8");
 const html=fs.readFileSync(path.join(root,"hoshisuna-main.html"),"utf8");
-
-test("first invocation stays on the map and has an explicit ordered handoff",()=>{
+test("actual map follower steps ahead, faces camera and then manifests before combat",()=>{
  const start=event.slice(event.indexOf("function start(){"),event.indexOf("function setText("));
- const ordered=[
-  'target:{x:1013,y:210}',
-  'saySequence(INTRO,()=>',
-  'target:"shiopon"',
-  'stage("manifest-focus",850',
-  'saySequence(INVOCATION,()=>',
-  'stage("manifestation",3900',
-  'story="manifested"',
-  'saySequence(REVEAL,()=>',
-  'battle=C.newGame()',
-  'stage("engulfing",2600,beginBattle)'
- ];
- let at=-1;
- for(const needle of ordered){
-  const next=start.indexOf(needle,at+1);
-  assert.ok(next>at,"missing or out-of-order step: "+needle);at=next;
- }
- assert.match(event,/const INTRO=\[/);
- assert.match(event,/const INVOCATION=\[/);
- assert.match(event,/const REVEAL=\[/);
- assert.ok(!event.slice(event.indexOf("const INTRO=["),event.indexOf("const INVOCATION=")).includes("シオリエル！"),
-  "Invocation must be its own dialogue phase");
+ const seq=['saySequence(INTRO,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",3900','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
+ // Walking is started while Shiopon's spoken reply is visible (parallel actions).
+ assert.ok(start.includes(seq[0]));
+ assert.ok(start.includes(seq[1]));
+ assert.ok(start.includes(seq[2]));
+ for(const v of seq.slice(3))assert.ok(start.includes(v),"missing ordered step "+v);
+ assert.match(event,/const SHIOPON_REPLY=\[\["しおぽん","はい、シオンさん。"\]\]/);
+ assert.match(event,/タロット展開。いくぞ、しおぽん。/);
+ assert.match(event,/speaker==="しおぽん"\?"shiopon"/);
+ assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",3900"));
+ assert.ok(start.indexOf("saySequence(REVEAL,()=>")<start.indexOf("root.hidden=false"));
 });
-
-test("Shiopon and Shioriel are staged as consecutive forms, not two units",()=>{
- assert.match(event,/shiopon_idle\.png/);
- assert.match(event,/battle\/shioriel-battle\.webp/);
- assert.match(css,/data-phase="manifestation"/);
- assert.match(css,/@keyframes cb-manifest-fox-yield/);
- assert.match(css,/@keyframes cb-manifest-reveal/);
- assert.match(css,/52%,100%\{opacity:0/);
- assert.match(css,/0%,51%\{opacity:0/);
- assert.match(css,/data-phase="manifested".*cb-manifest-shioriel/);
- assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(css,/pointer-events:none/);
+test("one real world actor uses approved atlas and preserves foot position",()=>{
+ assert.match(game,/TarotHoshisunaManifestation=Object\.freeze/);
+ assert.match(game,/caritasShiorielAtlas=image/);
+ assert.match(game,/\.\/assets\/sprites\/shioriel\/shioriel-four-directions\.webp/);
+ assert.match(game,/image\.naturalWidth\/2,sh=image\.naturalHeight\/2/);
+ assert.match(game,/drawCaritasInvocation\(entry\.actor\)/);
+ assert.match(game,/if\s*\(hoshisunaIsolated\s*&&\s*caritasInvocation\.locked\)/);
+ assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:780\}\)/);
+ assert.match(game,/shiopon\.dir="down"/);
+ assert.match(game,/if\(!collision\.isWalkable\(candidate\.x,candidate\.y\)/);
+ const asset=path.join(root,"assets/sprites/shioriel/shioriel-four-directions.webp");
+ assert.ok(fs.existsSync(asset),"Approved official sprite atlas must be copied into branch");
+ const b=fs.readFileSync(asset);
+ assert.equal(b.subarray(0,4).toString(),"RIFF");
+ assert.equal(b.subarray(8,12).toString(),"WEBP");
+ assert.doesNotMatch(event,/cb-manifest-fox|cb-manifest-shioriel/);
+ assert.doesNotMatch(css,/cb-manifest-fox|cb-manifest-shioriel/);
 });
-
-test("separate Dev scene leaves the production shared dialogue and combat intact",()=>{
+test("visible world-anchored starlight has colour, scale and non-strobing echoes",()=>{
+ const draw=game.slice(game.indexOf("function drawCaritasInvocation(actor)"),
+                       game.indexOf("function drawActors()"));
+ assert.match(draw,/const echoes=\[\.18,\.43,\.69\]/,
+  "three soft invocation pulses");
+ assert.match(draw,/const palettes=\[\[211,152,255\],\[131,177,255\],\[255,220,155\]\]/,
+  "violet, azure and star gold rather than white-only");
+ assert.match(draw,/for\(let ring=0;ring<3;ring\+\+\)/,
+  "three visible light rings");
+ assert.match(draw,/for\(let k=0;k<24;k\+\+\)/,
+  "star motes are readable on small screens");
+ assert.match(draw,/ctx\.scale\(\.70,1\.20\)/,
+  "soft broad violet-blue column surrounds the real actor");
+ assert.match(draw,/const height=96\*/,
+  "Shioriel is reduced by about nine percent from the former 105 world pixels");
+ assert.doesNotMatch(draw,/fillStyle\s*=\s*["']#fff/i,
+  "no full-screen white frame/flash");
+});
+test("returning fade resets Shiopon BEFORE the battle overlay is hidden",()=>{
+ const ending=event.slice(event.indexOf("function beginEnding()"),event.indexOf("const newEl="));
+ assert.match(ending,/TarotHoshisunaManifestation\?\.clear\?\.\(\);\s*stage\("returning",900,finish\)/);
+ const finish=event.slice(event.indexOf("function finish(){"),event.indexOf("function init(){"));
+ assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0);
+ assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")<finish.indexOf("root.hidden=true"),
+  "must restore actor before revealing the original map canvas");
+ const clear=game.slice(game.indexOf('    clear(){'),game.indexOf('    getState:()=>({phase:caritasInvocation.phase'));
+ for(const reset of [
+  'caritasInvocation.phase="idle"',
+  'caritasInvocation.locked=false',
+  'caritasInvocation.elapsed=0',
+  'caritasInvocation.paused=false',
+  'caritasInvocation.since=0',
+  'shiopon.frame=0',
+  'shiopon.followRoute=[]'
+ ])assert.ok(clear.includes(reset),"incomplete return reset: "+reset);
+ assert.match(clear,/faceShioponTowardPlayer\(\)/);
+});
+test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/window\.TarotDialogueUI\.create/);
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
- assert.match(html,/caritas-battle-event\.css\?v=caritas-manifestation-v01/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-manifestation-v01/);
- const snapshot=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
- assert.equal(snapshot.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
+ assert.match(html,/caritas-battle-event\.css\?v=caritas-starlight-v03/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-starlight-v03/);
+ const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
+ assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
