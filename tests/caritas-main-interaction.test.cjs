@@ -187,6 +187,6 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
   layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'
  });
  assert.doesNotMatch(css,/\\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue/);
- assert.match(css,/#caritas-event\\{[^}]*z-index:2200/);
+ assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
