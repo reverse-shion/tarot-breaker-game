@@ -22,7 +22,7 @@ function fixture({reduced=false}={}){
  const documentListeners={},windowListeners={};
  const doc={readyState:'complete',hidden:false,body,createElement:t=>new El(t),getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},advance:null,colliding:true,dialogueOptions:null};
- const window={CaritasBattleCore:Core,TarotStage:{getState:()=>({actors:{shion:pointer.actor}})},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+ const window={CaritasBattleCore:Core,TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotDialogueUI:{create:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:new El('section'),button:new El('button')}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map();
@@ -41,12 +41,30 @@ function fixture({reduced=false}={}){
 function enter(f){
  f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
  f.button(f.shell.querySelector('#caritas-interaction-choice'),'調べる').click();
- for(let i=0;i<6;i++)f.pointer.advance();
- assert.equal(f.state().story,'engulfing');
+ for(let i=0;i<4;i++)f.pointer.advance();
+ assert.equal(f.state().story,'manifest-focus','after Shion addresses Caritas, he turns toward Shiopon');
+ assert.equal(f.pointer.stageCommands.length,3);
+ assert.equal(f.pointer.stageCommands[0].actor,'shion');
+ assert.equal(f.pointer.stageCommands[0].type,'face');
+ assert.equal(f.pointer.stageCommands[1].target,'shiopon');
+ assert.equal(f.pointer.stageCommands[2].actor,'shiopon');
  const root=f.shell.querySelector('#caritas-event');
  assert.equal(root.hidden,false);assert.equal(f.button(root,'この読みを届ける').disabled,true);
  f.button(root,'この読みを届ける').click();f.button(root,'必殺技').click();
  assert.equal(f.state().battle.turn,0);assert.equal(f.state().battle.resonance,0);
+ f.advanceTime(849);assert.equal(f.state().story,'manifest-focus');
+ f.advanceTime(1);assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.match(f.lines.at(-1).text,/来臨せよ、汝ーーシオリエル/);
+ f.pointer.advance();
+ assert.equal(f.state().story,'manifestation');
+ f.advanceTime(3899);assert.equal(f.state().story,'manifestation');
+ f.advanceTime(1);assert.equal(f.state().story,'manifested');
+ assert.equal(f.lines.at(-1).speaker,'シオリエル');
+ assert.match(f.lines.at(-1).text,/まだ消えていない願い/);
+ f.button(root,'この読みを届ける').click();
+ assert.equal(f.state().battle.turn,0,'no early combat before Shioriel speaks');
+ f.pointer.advance();assert.equal(f.state().story,'engulfing');
+ assert.equal(f.button(root,'この読みを届ける').disabled,true);
  f.advanceTime(2599);assert.equal(f.state().story,'engulfing');
  f.advanceTime(1);assert.equal(f.state().story,'battle');
  return root;
