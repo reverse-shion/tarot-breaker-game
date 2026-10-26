@@ -17,7 +17,7 @@ class El{
  flatten(){return [this,...this.children.flatMap(c=>c.flatten())]}
  querySelector(q){return this.flatten().find(e=>q[0]==='#'?e.id===q.slice(1):e.className?.split(' ').includes(q.slice(1)))||null}
 }
-function fixture({reduced=false}={}){
+function fixture({reduced=false,persistentStore=new Map()}={}){
  const shell=new El('main'),creature=new El('div'),body=new El('body');body.classList.add('scene-ready');
  const documentListeners={},windowListeners={};
  const doc={readyState:'complete',hidden:false,body,createElement:t=>new El(t),getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
@@ -27,7 +27,8 @@ function fixture({reduced=false}={}){
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map();
  const sandbox={window,document:doc,location:{pathname:'/hoshisuna-main.html',search:'?dev=hoshisuna'},CustomEvent:MockEvent,Event:MockEvent,
-  sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},setInterval:cb=>(intervals.push(cb),intervals.length),
+  sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
+  localStorage:{getItem:k=>persistentStore.get(k)||null,setItem:(k,v)=>persistentStore.set(k,v),removeItem:k=>persistentStore.delete(k)},setInterval:cb=>(intervals.push(cb),intervals.length),
   clearInterval(){},setTimeout:(cb,ms)=>{tasks.set(++id,{cb,at:now+ms});return id},clearTimeout:n=>tasks.delete(n),performance:{now:()=>now},URLSearchParams,console};
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
  vm.runInNewContext(js,sandbox,{timeout:5000});
@@ -67,154 +68,127 @@ async function enter(f){
  f.advanceTime(1);assert.equal(f.state().story,'battle');
  return root;
 }
-function read(f,root,words){
- for(const word of words||[])f.button(root,word).click();
- f.button(root,'この読みを届ける').click();
- if(f.state().story==='enemy-turn'){
-  assert.ok(f.state().battle.hp<100,'an announced enemy turn must change HP');
-  f.advanceTime(1050);
- }
- f.pointer.advance();f.pointer.advance();
+
+function choose(f,root,words){
+ const buttons=root.flatten().filter(e=>e.className==='cb-card-button');
+ assert.equal(buttons.length,3);
+ words.forEach((word,i)=>{
+  buttons[i].click();
+  assert.equal(root.querySelector('.cb-card-overlay').hidden,false);
+  const option=f.button(root,word);
+  assert.ok(option,'missing foreground meaning '+word);option.click();
+  assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
+ });
 }
-test('Shion notices first, main-style two choices follow, leaving cannot loop',()=>{
- const f=fixture();
- assert.equal(f.state().story,'idle');
- f.pointer.actor={x:1013,y:305};f.tick();
- assert.equal(f.state().story,'notice');assert.equal(f.lines.length,1);assert.equal(f.lines[0].speaker,'シオン');
- assert.match(f.lines[0].text,/様子が妙だ/);
- assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-start').length,1);
- f.pointer.advance();assert.equal(f.state().story,'choice');
- const panel=f.shell.querySelector('#caritas-interaction-choice');assert.ok(f.button(panel,'調べる'));
- f.button(panel,'離れる').click();
+function read(f,root,words){
+ if(words)choose(f,root,words);
+ const button=f.button(root,'この読みを届ける');assert.ok(button);button.click();
+ if(f.state().story==='enemy-turn')f.advanceTime(1050);
+ if(f.state().battle.phase==='defeat')return;
+ if(f.state().dialogueBusy){f.pointer.advance();f.pointer.advance();}
+}
+test('map notices Caritas first, uses main prompt, leaving does not re-trigger',()=>{
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'notice');
+ assert.equal(f.lines[0].speaker,'シオン');f.pointer.advance();
+ assert.equal(f.state().story,'choice');
+ f.button(f.shell,'離れる').click();
  assert.equal(f.state().story,'idle');assert.equal(f.state().armed,false);
- f.tick();assert.equal(f.state().story,'idle');
- f.pointer.actor={x:90,y:100};f.tick();assert.equal(f.state().armed,true);
- f.pointer.actor={x:1013,y:305};f.tick();
- assert.equal(f.state().story,'choice');assert.equal(f.lines.length,1,'notice must be one-time per page');
+ f.pointer.actor={x:90,y:100};f.tick();
+ assert.equal(f.state().armed,true);
 });
-test('Opening engulfing completes before input; final reading precedes purification, one farewell, then map unlock',async()=>{
+test('manifestation remains on the real map before entering battle',async()=>{
  const f=fixture();const root=await enter(f);
- read(f,root);assert.equal(f.state().battle.resonance,34);
- read(f,root,['秘密','自制']);assert.equal(f.state().battle.resonance,67);
- for(const w of ['無意識','勇気','希望'])f.button(root,w).click();
+ assert.equal(f.pointer.mapPhase,'revealed');
+ assert.equal(root.hidden,false);assert.equal(f.state().story,'battle');
+ assert.equal(f.button(root,'防御'),undefined);
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
+ assert.equal(root.querySelector('.cb-hud').className,'cb-hud enemy');
+ assert.ok(root.querySelector('.cb-mood'));
+ assert.equal(f.button(root,'必殺技').disabled,true);
+});
+test('read chooses foreground meanings, accepts input once, then shows calculated counterattack',async()=>{
+ const f=fixture(),root=await enter(f);
+ assert.equal(f.button(root,'この読みを届ける').disabled,true);
+ choose(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.button(root,'この読みを届ける').disabled,false);
  f.button(root,'この読みを届ける').click();
- assert.equal(f.state().battle.resonance,100);assert.equal(f.state().story,'battle');
- assert.equal(f.lines.at(-1).speaker,'シオン','final tactical reading must not be discarded');
- f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'カリタス');f.pointer.advance();
- assert.equal(f.state().story,'purifying');assert.equal(root.hidden,false);assert.equal(f.pointer.colliding,true);
- const turn=f.state().battle.turn;f.button(root,'必殺技').click();f.button(root,'この読みを届ける').click();assert.equal(f.state().battle.turn,turn);
- f.advanceTime(2599);assert.equal(f.state().story,'purifying');f.advanceTime(1);assert.equal(f.state().story,'purified');
- assert.equal(f.pointer.colliding,true);assert.equal(root.hidden,false);
- const before=f.lines.length;f.advanceTime(1100);
- assert.equal(f.state().story,'farewell');assert.equal(f.lines.length,before+1);
- assert.equal(f.lines.at(-1).speaker,'カリタス');assert.equal(f.lines.at(-1).text,'……世話になった。');
- f.advanceTime(20000);assert.equal(f.state().story,'farewell','farewell waits for the player');assert.equal(f.pointer.colliding,true);
- assert.equal(f.pointer.mapPhase,'revealed','manifestation stays active through the battle and farewell');
- f.pointer.advance();assert.equal(f.state().story,'returning');assert.equal(root.hidden,false);assert.equal(f.pointer.colliding,true);
- assert.equal(f.pointer.mapPhase,'idle','the original Shiopon sprite is restored before battle fades');
- assert.equal(f.pointer.clears,1,'returning entry clears Shioriel exactly once before unmask');
- f.advanceTime(899);assert.equal(f.state().done,false);f.advanceTime(1);
- assert.equal(f.state().story,'complete');assert.equal(root.hidden,true);assert.equal(f.state().done,true);
- assert.equal(f.pointer.mapPhase,'idle');assert.ok(f.pointer.clears>=2,'finish is idempotently cleared before showing the map');
+ f.button(root,'この読みを届ける').click();
+ assert.equal(f.state().battle.turn,1);assert.equal(f.state().battle.hp,91);
+ assert.equal(f.state().story,'enemy-turn');
+ f.advanceTime(1050);assert.equal(f.state().dialogueBusy,true);
+ f.pointer.advance();f.pointer.advance();assert.equal(f.state().battle.turn,1);
+});
+test('ordinary tarot path unlocks finisher; skill cutin ends with exactly one farewell and map return',async()=>{
+ const f=fixture(),root=await enter(f);
+ for(let i=0;i<10;i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
+ assert.equal(f.state().battle.phase,'finisher');
+ assert.equal(f.state().battle.hp,7);
+ assert.equal(f.state().battle.resonance,100);
+ assert.equal(f.button(root,'対話で解放').disabled,false);
+ assert.equal(f.button(root,'必殺技').disabled,false);
+ f.button(root,'必殺技').click();assert.equal(f.state().story,'cutin');
+ f.button(root,'必殺技').click();assert.equal(f.state().battle.turn,10);
+ f.advanceTime(1700);assert.equal(f.state().story,'technique');
+ f.advanceTime(1500);assert.equal(f.state().story,'purifying');
+ f.advanceTime(2600);assert.equal(f.state().story,'purified');
+ f.advanceTime(1100);assert.equal(f.state().story,'farewell');
+ assert.equal(f.lines.at(-1).text,'……世話になった。');
+ f.pointer.advance();assert.equal(f.state().story,'returning');
+ assert.equal(f.pointer.mapPhase,'idle');
+ f.advanceTime(900);assert.equal(f.state().story,'complete');assert.equal(root.hidden,true);
  assert.equal(f.pointer.colliding,false);assert.equal(f.creature.hidden,true);
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
- f.pointer.advance();f.tick();f.page('pageshow');assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
 });
-test('Skill shows both face cutins then technique before applying its result exactly once',async()=>{
- const f=fixture();const root=await enter(f);
- read(f,root,['希望']);
- const before=f.state().battle;assert.equal(before.resonance,34);
- f.button(root,'必殺技').click();assert.equal(f.state().story,'cutin');assert.equal(f.state().battle.used,false);
- assert.ok(root.querySelector('.cb-cut-shion').querySelector('.cb-cut-face').src.endsWith('shion_card_03_check.webp'));
- assert.ok(root.querySelector('.cb-cut-shioriel').querySelector('.cb-cut-face').src.endsWith('shioriel-reference.png'));
- f.button(root,'必殺技').click();f.button(root,'この読みを届ける').click();f.button(root,'防御').click();
- assert.equal(f.state().battle.turn,before.turn);f.advanceTime(1699);assert.equal(f.state().story,'cutin');
- f.advanceTime(1);assert.equal(f.state().story,'technique');assert.equal(f.state().battle.resonance,34);
- f.advanceTime(1499);assert.equal(f.state().battle.used,false);f.advanceTime(1);
- assert.equal(f.state().battle.resonance,67);assert.equal(f.state().battle.used,true);assert.equal(f.state().battle.turn,before.turn+1);
- assert.equal(f.state().story,'enemy-turn');
- f.advanceTime(1050);
- assert.equal(f.state().dialogueBusy,true);f.pointer.advance();f.button(root,'必殺技').click();assert.equal(f.state().battle.turn,before.turn+1);
+test('HP0 causes shared-dialogue retreat and resets follower without purifying Caritas',async()=>{
+ const f=fixture(),root=await enter(f);
+ for(let i=0;i<5;i++)read(f,root,i===0?['秘密','勇気','希望']:null);
+ assert.equal(f.state().battle.phase,'defeat');assert.equal(f.state().story,'retreat');
+ assert.match(f.lines.at(-1).text,/一度撤退だ/);
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'シオリエル');
+ f.pointer.advance();assert.equal(f.state().story,'returning');assert.equal(f.pointer.mapPhase,'idle');
+ f.advanceTime(900);assert.equal(f.state().story,'idle');
+ assert.equal(root.hidden,true);assert.equal(f.state().done,false);
+ assert.equal(f.pointer.colliding,true);assert.equal(f.creature.hidden,false);
+ assert.equal(f.state().owned,false);assert.equal(f.state().armed,false);
+ f.advanceTime(1300);assert.equal(f.state().story,'choice');
+ assert.ok(f.button(f.shell,'調べる'),'retry requires player inspection, not forced combat');
 });
-test('Winning skill still shows full cutin/effect, then purification and player-controlled farewell',async()=>{
- const f=fixture();const root=await enter(f);read(f,root);read(f,root,['秘密','勇気','願い']);
- f.button(root,'必殺技').click();assert.equal(f.state().story,'cutin');assert.equal(f.state().battle.resonance,67);
- f.advanceTime(3200);assert.equal(f.state().battle.resonance,100);assert.equal(f.state().dialogueBusy,true);
- f.pointer.advance();assert.equal(f.state().story,'purifying');assert.equal(root.hidden,false);
- f.advanceTime(3700);assert.equal(f.state().story,'farewell');assert.equal(f.pointer.colliding,true);
+test('turn checkpoint restores HP, darkness and resonance without a second attack',async()=>{
+ const persistentStore=new Map();
+ const f=fixture({persistentStore}),root=await enter(f);
+ read(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.hp,91);assert.equal(f.state().battle.turn,1);
+ assert.ok([...persistentStore.keys()].some(k=>k.includes('caritas-v13c')));
+ const resumed=fixture({persistentStore});
+ assert.equal(resumed.state().story,'battle');
+ assert.equal(resumed.state().battle.turn,1);
+ assert.equal(resumed.state().battle.hp,91);
+ assert.equal(resumed.state().battle.dark,88);
+ assert.equal(resumed.state().battle.resonance,15);
+ assert.equal(resumed.shell.querySelector('#caritas-event').hidden,false);
 });
-test('Visibility and BFCache pause cinematic time and resume remaining stages without stale completion',async()=>{
- const f=fixture();const root=await enter(f);read(f,root,['希望']);f.button(root,'必殺技').click();
- f.advanceTime(500);f.visibility(true);f.advanceTime(10000);assert.equal(f.state().story,'cutin');assert.equal(f.state().battle.used,false);
- f.visibility(false);f.advanceTime(1199);assert.equal(f.state().story,'cutin');f.advanceTime(1);assert.equal(f.state().story,'technique');
- f.advanceTime(600);f.page('pagehide');f.advanceTime(20000);assert.equal(f.state().story,'technique');
- f.page('pageshow');f.advanceTime(899);assert.equal(f.state().battle.used,false);f.advanceTime(1);assert.equal(f.state().battle.used,true);
- assert.equal(f.state().owned,true);assert.equal(root.hidden,false);assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,0);
+test('visibility and BFCache pause cutin time without replaying finisher',async()=>{
+ const f=fixture(),root=await enter(f);
+ for(let i=0;i<10;i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
+ f.button(root,'必殺技').click();f.advanceTime(500);
+ f.visibility(true);f.advanceTime(15000);assert.equal(f.state().story,'cutin');
+ f.visibility(false);f.advanceTime(1200);assert.equal(f.state().story,'technique');
+ f.advanceTime(500);f.page('pagehide');f.advanceTime(15000);assert.equal(f.state().story,'technique');
+ f.page('pageshow');f.advanceTime(1000);assert.equal(f.state().story,'purifying');
+ assert.equal(f.state().battle.turn,10);
 });
-test('Reduced motion keeps semantic stages and defeat retry remains operable',async()=>{
- const f=fixture({reduced:true});const root=await enter(f);
- for(let i=0;i<40&&f.state().battle.phase!=='defeat';i++){
-  f.button(root,'防御').click();
-  if(f.state().story==='enemy-turn')f.advanceTime(1050);
- }
- assert.equal(f.state().battle.phase,'defeat');assert.equal(f.pointer.colliding,true);
- f.button(root,'やり直す').click();assert.equal(f.state().battle.hp,100);assert.equal(f.state().story,'battle');
- read(f,root);read(f,root,['秘密','自制']);read(f,root,['無意識','勇気','希望']);
- assert.equal(f.state().story,'purifying');f.advanceTime(2600);assert.equal(f.state().story,'purified');f.advanceTime(1100);assert.equal(f.state().story,'farewell');
-});
-test('Map uses unmodified main dialogue mount, IDs and styles with no local override',()=>{
+test('shared main dialogue IDs, nonproduction isolation and styling are unchanged',()=>{
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
  const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.css'),'utf8');
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ const f=fixture();
  assert.ok(html.indexOf('shared-dialogue.js')<html.indexOf('caritas-battle-event.js'));
- const f=fixture();assert.equal(f.pointer.dialogueOptions.mount,f.shell);
- assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'});
- assert.match(css,/#caritas-interaction-choice\.visible/);
- assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue/);
- assert.doesNotMatch(js,/classList\.add\("caritas-dialogue"\)|dialogue\.elements\.[^;]*\.style/);
- assert.match(css,/#caritas-event\{[^}]*z-index:2200/);
+ assert.equal(f.pointer.dialogueOptions.mount,f.shell);
+ assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{
+  layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'
+ });
+ assert.doesNotMatch(css,/\\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue/);
+ assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
-});
-
-test('Defending visibly absorbs 75% of a forecast hit while reading/skill permit counterattacks',async()=>{
- const normal=Core.defend(Core.newGame());
- assert.equal(normal.hp,97,'normal 12 reduced by 75% is 3');
- const heavy=Core.defend({...Core.newGame(),turn:1});
- assert.equal(Core.forecast({...Core.newGame(),turn:1}),24);
- assert.equal(heavy.hp,94,'heavy 24 reduced by 75% is 6');
- const wrong=Core.read({...Core.newGame(),words:['無意識','勇気','癒し']});
- assert.equal(wrong.hp,94,'tactical healing read takes 6, not free');
- const skillReady={...Core.newGame(),resonance:34,dark:65};
- const skilled=Core.skill(skillReady);
- assert.equal(skilled.hp,88,'a non-winning skill also takes a normal hit');
- assert.equal(skilled.turn,1);
- const f=fixture(),root=await enter(f);
- f.button(root,'防御').click();
- assert.equal(f.state().story,'enemy-turn');
- assert.equal(f.state().battle.hp,97);
- assert.match(root.querySelector('.cb-enemy-turn').flatten().map(el=>el.textContent).join(' '),/75%軽減/);
- assert.equal(f.button(root,'この読みを届ける').disabled,true);
- f.advanceTime(1049);
- assert.equal(f.state().story,'enemy-turn');
- f.advanceTime(1);
- assert.equal(f.state().story,'battle');
- assert.equal(f.state().battle.hp,97);
- f.button(root,'この読みを届ける').click();
- assert.equal(f.state().story,'enemy-turn');
- assert.equal(f.state().battle.hp,85,'heavy 24 with healing-route 50% reduction costs 12 HP');
- assert.match(root.querySelector('.cb-enemy-turn').flatten().map(el=>el.textContent).join(' '),/強攻撃/);
- f.advanceTime(1050);
- assert.equal(f.state().story,'battle');
- assert.equal(f.state().dialogueBusy,true);
-});
-test('Attack interlude freezes on backgrounding and cannot be double-applied',async()=>{
- const f=fixture(),root=await enter(f);
- f.button(root,'防御').click();
- assert.equal(f.state().battle.hp,97);
- f.advanceTime(350);f.visibility(true);f.advanceTime(8000);
- assert.equal(f.state().story,'enemy-turn');assert.equal(f.state().battle.hp,97);
- f.visibility(false);f.advanceTime(699);assert.equal(f.state().story,'enemy-turn');
- f.advanceTime(1);assert.equal(f.state().story,'battle');assert.equal(f.state().battle.hp,97);
- f.button(root,'防御').click();assert.equal(f.state().battle.hp,91);
- f.advanceTime(1050);assert.equal(f.state().battle.hp,91);
 });

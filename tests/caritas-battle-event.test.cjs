@@ -5,74 +5,84 @@ const path=require('node:path');
 const C=require('../caritas-battle-core.js');
 const H=require('../hoshisuna-caritas-collision.js');
 const root=path.join(__dirname,'..');
-test('three fixed cards expose exactly nine meanings and preserve their roles',()=>{
-  assert.deepEqual(C.CARDS.map(c=>[c.name,c.role]),[['月','COMPASS'],['力','TRIGGER'],['星','ROUTE']]);
-  assert.equal(C.CARDS.reduce((n,c)=>n+c.words.length,0),9);
+const TYPES=['P','F','S'];
+const wordFor=(i,type)=>C.CARDS[i].words.find(w=>C.TYPE[w]===type);
+const selectTypes=(s,types)=>types.split('').reduce((v,t,i)=>C.select(v,i,wordFor(i,t)),s);
+const vector=fs.readFileSync(path.join(__dirname,'fixtures/caritas_test_vectors_v1_3_C.csv'),'utf8').trim().split(/\r?\n/).slice(1).map(l=>{
+ const [state,pattern,dark,resonance,damage]=l.split(',');
+ return {state,pattern,dark:+dark,resonance:+resonance,damage:+damage};
 });
-test('all stages offer multiple valid readings and different tactics',()=>{
-  for(let step=0;step<3;step++){
-    const viable=[];
-    for(const a of C.CARDS[0].words)for(const b of C.CARDS[1].words)for(const c of C.CARDS[2].words){
-      const s={...C.newGame(),step,words:[a,b,c]};
-      if(C.points(s)>=2)viable.push(c);
-    }
-    assert.ok(viable.length>=2);
-    assert.ok(new Set(viable).size>=2);
+test('official cards retain their real images, roles and 9 tarot meanings',()=>{
+ assert.deepEqual(C.CARDS.map(c=>[c.name,c.role]),[['月','COMPASS'],['力','TRIGGER'],['星','ROUTE']]);
+ assert.equal(C.CARDS.reduce((n,c)=>n+c.words.length,0),9);
+ const event=fs.readFileSync(path.join(root,'caritas-battle-event.js'),'utf8');
+ const css=fs.readFileSync(path.join(root,'caritas-battle-event.css'),'utf8');
+ for(const [name,file] of [['月','18-the-moon.webp'],['力','08-strength.webp'],['星','17-the-star.webp']]){
+  const b=fs.readFileSync(path.join(root,'assets/tarot/major',file));
+  assert.equal(b.toString('ascii',0,4),'RIFF');
+  assert.equal(b.toString('ascii',8,12),'WEBP');
+  assert.ok(event.includes(name+':"./assets/tarot/major/'+file+'"'));
+ }
+ assert.match(event,/function openCard\(/);
+ assert.match(event,/cb-modal-words/);
+ assert.match(css,/\.cb-card-overlay/);
+ assert.doesNotMatch(event,/ui\.defend|ui\.forecast/);
+});
+test('30 frozen vectors, all 81 positional choices, exact integer damage and stable buckets',()=>{
+ assert.equal(vector.length,30);
+ for(const x of vector){
+  const stateDark={closed:100,storm:70,wavering:35}[x.state];
+  for(const perm of new Set([x.pattern,...[x.pattern[0]+x.pattern[2]+x.pattern[1],x.pattern[1]+x.pattern[0]+x.pattern[2],x.pattern[1]+x.pattern[2]+x.pattern[0],x.pattern[2]+x.pattern[0]+x.pattern[1],x.pattern[2]+x.pattern[1]+x.pattern[0]]])){
+   const s=selectTypes({...C.newGame(),dark:stateDark},perm),p=C.predict(s);
+   assert.equal(p.dark,x.dark,perm+' '+x.state+' dark');
+   assert.equal(p.resonance,x.resonance,perm+' '+x.state+' resonance');
+   assert.equal(p.damage,x.damage,perm+' '+x.state+' damage');
+   assert.equal(C.read(s).hp,100-x.damage);
+   assert.equal(C.bucket(p.dark),p.darkBucket);
+   assert.equal(C.bucket(p.resonance),p.resBucket);
   }
+ }
+ for(const dark of [71,70,36,35,1,0])assert.equal(C.stateFor(dark),dark>=71?'closed':dark>=36?'storm':dark>0?'wavering':'freed');
 });
-test('ordinary tarot readings reach max resonance without requiring skill',()=>{
+test('read without 3 selections is blocked and does not consume HP/turn',()=>{
+ const s=C.newGame();assert.equal(C.read(s),s);assert.equal(C.predict(s),null);
+ const partial=C.select(s,0,'不安');assert.equal(C.read(partial),partial);
+});
+test('ordinary readings reach resonance MAX without counterattack; either finisher ends identically',()=>{
  let s=C.newGame();
- s=C.read(s);assert.equal(s.resonance,34);
- s=C.select(s,0,'秘密');s=C.select(s,1,'自制');s=C.read(s);assert.equal(s.resonance,67);
- s=C.select(s,0,'無意識');s=C.select(s,1,'勇気');s=C.select(s,2,'希望');s=C.read(s);
- assert.equal(s.resonance,100);assert.equal(s.phase,'ending');assert.equal(s.used,false);
- for(let i=0;i<C.ENDING.length;i++)s=C.next(s);
- assert.equal(s.phase,'complete');
+ for(let i=0;i<10;i++)s=C.read(selectTypes(s,'PPP'));
+ assert.equal(s.turn,10);assert.equal(s.phase,'finisher');assert.equal(s.hp,7);
+ assert.equal(s.resonance,100);assert.equal(s.lastEffect.damage,0);
+ assert.equal(C.canSkill(s),true);
+ const a=C.finish(s,'dialogue'),b=C.finish(s,'skill');
+ assert.equal(a.dark,0);assert.equal(b.dark,0);assert.equal(a.phase,'ending');assert.equal(b.phase,'ending');
+ assert.equal(a.hp,b.hp);assert.equal(a.turn,b.turn);
+ assert.equal(C.finish(a,'skill'),a,'cannot execute second finisher');
 });
-test('wrong reading cannot gain resonance, and defense has no resonance reward',()=>{
- let s=C.newGame();
- s=C.select(s,0,'無意識');s=C.select(s,1,'勇気');s=C.select(s,2,'希望');
- s=C.read(s);assert.equal(s.resonance,0);assert.equal(s.dark,100);
- s=C.defend(s);assert.equal(s.resonance,0);
+test('minor-only cards can win by dialogue but cannot use cut-in skill',()=>{
+ const minors=C.CARDS.map(c=>({...c,major:false,id:'test-'+c.id}));
+ let s=C.newGame(minors);
+ for(let i=0;i<10;i++)s=C.read(selectTypes(s,'PPP'));
+ assert.equal(s.phase,'finisher');assert.equal(C.canSkill(s),false);
+ assert.equal(C.finish(s,'skill'),s);
+ assert.equal(C.finish(s,'dialogue').phase,'ending');
 });
-test('skill is locked before enough resonance and dark reduction',()=>{
- let s=C.newGame();assert.equal(C.skill(s),s);
- s=C.read(s);assert.equal(C.skill(s),s);
- s=C.select(s,0,'秘密');s=C.select(s,1,'勇気');s=C.select(s,2,'願い');s=C.read(s);
- s=C.skill(s);assert.equal(s.resonance,100);assert.equal(s.phase,'ending');
+test('risk matters: all-F and all-S eventually retreat, defense command is absent',()=>{
+ for(const type of ['F','S']){
+  let s=C.newGame();
+  for(let turn=0;turn<12&&s.phase==='read';turn++)s=C.read(selectTypes(s,type.repeat(3)));
+  assert.equal(s.phase,'defeat');
+ }
+ assert.equal(typeof C.defend,'undefined');
 });
-test('Caritas obstacle blocks before encounter and releases after departure',()=>{
- H.setActive(true);const base={isWalkable:()=>true,segmentClear:()=>true,nearestWalkable:q=>q},collision=H.wrap(base);
+test('Caritas still collides until purified, without edits to shared navigation',()=>{
+ H.setActive(true);const collision=H.wrap({isWalkable:()=>true,segmentClear:()=>true,nearestWalkable:q=>q});
  assert.equal(collision.isWalkable(1013,240),false);
  H.setActive(false);assert.equal(collision.isWalkable(1013,240),true);
- assert.equal(collision.segmentClear({x:920,y:240},{x:1110,y:240}),true);
  H.setActive(true);
-});
-test('new scene is isolated from default map and does not reveal identity',()=>{
  const html=fs.readFileSync(path.join(root,'hoshisuna-main.html'),'utf8');
  const event=fs.readFileSync(path.join(root,'caritas-battle-event.js'),'utf8');
- const core=fs.readFileSync(path.join(root,'caritas-battle-core.js'),'utf8');
- const css=fs.readFileSync(path.join(root,'caritas-battle-event.css'),'utf8');
  assert.match(html,/caritas-battle-event\.js/);
  assert.match(event,/params\.get\("dev"\)!=="hoshisuna"/);
- assert.match(event,/tarot-breaker:interaction-start/);
- assert.match(event,/tarot-breaker:interaction-end/);
- assert.match(event,/setActive\?\.\(false\)/);
- assert.doesNotMatch(event+core,/聖獣|王族|正体は/);
- assert.match(css,/height:100dvh/);
- assert.doesNotMatch(css,/overflow:\s*(auto|scroll)/);
-});
-
-test("Caritas battle displays the three actual tarot WebP assets in their existing roles",()=>{
- const event=fs.readFileSync(path.join(root,"caritas-battle-event.js"),"utf8");
- const css=fs.readFileSync(path.join(root,"caritas-battle-event.css"),"utf8");
- for(const [name,file] of [["月","18-the-moon.webp"],["力","08-strength.webp"],["星","17-the-star.webp"]]){
-  const buf=fs.readFileSync(path.join(root,"assets/tarot/major",file));
-  assert.equal(buf.toString("ascii",0,4),"RIFF",file);
-  assert.equal(buf.toString("ascii",8,12),"WEBP",file);
-  assert.ok(event.includes(name+':"./assets/tarot/major/'+file+'"'),name+" asset path");
- }
- assert.match(event,/image\.src=CARD_IMAGES\[card\.name\]/);
- assert.match(css,/\.cb-card-image\{[^}]*object-fit:contain/);
- assert.doesNotMatch(event,/art\.append\(newEl\("div","cb-symbol"/);
+ assert.doesNotMatch(event,/聖獣|王族|正体は/);
 });

@@ -10,7 +10,7 @@ const game=fs.readFileSync(path.join(root,"hoshisuna-main-game.js"),"utf8");
 const html=fs.readFileSync(path.join(root,"hoshisuna-main.html"),"utf8");
 test("actual map follower steps ahead, faces camera and then manifests before combat",()=>{
  const start=event.slice(event.indexOf("function start(){"),event.indexOf("function setText("));
- const seq=['saySequence(INTRO,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",3900','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
+ const seq=['saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",3900','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
  // Walking is started while Shiopon's spoken reply is visible (parallel actions).
  assert.ok(start.includes(seq[0]));
  assert.ok(start.includes(seq[1]));
@@ -81,9 +81,9 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/window\.TarotDialogueUI\.create/);
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
- assert.match(html,/caritas-battle-event\.css\?v=caritas-starlight-v03/);
+ assert.match(html,/caritas-battle-event\.css\?v=heart-resonance-v13c/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-starlight-v03/);
+ assert.match(html,/caritas-battle-event\.js\?v=heart-resonance-v13c/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
