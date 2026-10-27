@@ -27,3 +27,18 @@ test('unsupported Gemini evidence fails closed',async()=>{
  global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'見えない言葉',understandingIds:['self_blame'],shion:'読み',caritas:'……',nextCue:1})}]}}]})});
  try{const r=await call('POST','月と星を重ねて解釈してみたい');assert.equal(r.statusCode,502);assert.equal(r.body.error,'ai_invalid_response');}finally{global.fetch=original;}
 });
+
+test('allowed origin receives CORS preflight; others do not',async()=>{
+ const ok=await call('OPTIONS',null,'https://raw.githack.com');
+ assert.equal(ok.statusCode,204);
+ assert.equal(ok.headers['Access-Control-Allow-Origin'],'https://raw.githack.com');
+ const denied=await call('OPTIONS',null,'https://reverse-shion.github.io');
+ assert.equal(denied.statusCode,403);
+ assert.equal(denied.headers['Access-Control-Allow-Origin'],undefined);
+});
+test('browser game has an explicit HTTPS preview endpoint',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/window\.TAROBRE_CARITAS_API_URL="https:\/\/[^"]+\/api\/caritas-interpret"/);
+ assert.match(html,/TAROBRE_CARITAS_API_URL[\s\S]*caritas-battle-event\.js/);
+});
