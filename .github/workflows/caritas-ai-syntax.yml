@@ -29,3 +29,20 @@ jobs:
         run: node --test tests/caritas-ai-insight.test.cjs tests/caritas-ai-api.test.cjs
       - name: Test local HTTP API end to end (no Gemini quota)
         run: node tests/caritas-ai-http-integration.cjs
+
+  live-one-request:
+    # Exactly one opt-in live check; all other branch commits skip this job.
+    if: github.event_name == 'push' && github.event.head_commit.message == 'ci: run Caritas Gemini live probe once'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Live Gemini preview request (one call, no GitHub secrets)
+        env:
+          CARITAS_API_URL: https://tarot-breaker-api-git-feature-caritas-ai-347c71-re-verse-shion.vercel.app/api/caritas-interpret
+          CARITAS_ORIGIN: https://raw.githack.com
+          CARITAS_SMOKE_TURNS: '1'
+        run: node scripts/smoke-caritas-live.cjs
