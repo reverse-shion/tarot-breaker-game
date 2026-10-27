@@ -180,7 +180,7 @@ test('brief help is a grounded reading that can earn resonance',async()=>{
   const prompt=payload.contents[0].parts[0].text;
   assert.match(prompt,/offer_support/);
   assert.match(prompt,/acknowledge_pain/);
-  assert.match(prompt,/direct spoken lines/);
+  assert.match(prompt,/SPEAKING CHARACTERS/);
   return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({
    evidence:'助ける',understandingIds:['offer_support','acknowledge_pain'],
    shion:'つらいなら、俺たちが力を貸す。',caritas:'……私に、手を差し伸べるというのか。',nextCue:1
