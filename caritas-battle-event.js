@@ -287,7 +287,7 @@ function toast(message){
 }
 async function sendAiReading(){
  if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
- const reading=ui.aiInput.value.trim();
+ const reading=(ui.aiInput.value||"").trim();
  if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto.randomUUID();aiPendingText=reading;}
  const requestTurn=battle.turn;
