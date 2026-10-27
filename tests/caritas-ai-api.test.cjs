@@ -45,3 +45,22 @@ test('browser game has an explicit HTTPS preview endpoint',()=>{
  assert.match(html,/window\.TAROBRE_CARITAS_API_URL="https:\/\/[^"]+\/api\/caritas-interpret"/);
  assert.match(html,/TAROBRE_CARITAS_API_URL[\s\S]*caritas-battle-event\.js/);
 });
+
+test('Gemini upstream failure is handled without exposing details',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:false,status:429});
+ try{
+  const r=await call('POST','月の不安と星の希望が同時に見えます');
+  assert.equal(r.statusCode,502);
+  assert.deepEqual(r.body,{error:'ai_unavailable'});
+ }finally{global.fetch=original;}
+});
+test('Gemini invalid JSON is handled without crashing',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:'not-json'}]}}]})});
+ try{
+  const r=await call('POST','力は相手を押さえつけることではありません');
+  assert.equal(r.statusCode,502);
+  assert.deepEqual(r.body,{error:'ai_unavailable'});
+ }finally{global.fetch=original;}
+});
