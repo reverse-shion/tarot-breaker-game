@@ -66,23 +66,32 @@ module.exports=async function handler(req,res){
  try{
   const url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(MODEL)+":generateContent";
   const upstream=await fetch(url,{method:"POST",signal:controller.signal,headers:{"Content-Type":"application/json","x-goog-api-key":process.env.GEMINI_API_KEY},
-   body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:schema,temperature:0.35,maxOutputTokens:600}})});
-  if(!upstream.ok)return reply(res,502,{error:"ai_unavailable"});
+   body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:schema,temperature:0.35,maxOutputTokens:900,...(MODEL.startsWith("gemini-2.5-")?{thinkingConfig:{thinkingBudget:0}}:{})}})});
+  if(!upstream.ok){
+   // Report safe error categories only; never return Gemini's raw response or API credentials.
+   console.warn("[Caritas AI] Gemini HTTP status:",upstream.status);
+   if(upstream.status===429)return reply(res,429,{error:"ai_upstream_quota"});
+   if(upstream.status===404)return reply(res,502,{error:"ai_model_unavailable"});
+   if(upstream.status===401||upstream.status===403)return reply(res,503,{error:"ai_upstream_auth"});
+   return reply(res,502,{error:"ai_unavailable"});
+  }
   const json=await upstream.json(),raw=json.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("");
-  const result=JSON.parse(raw);
+  if(!raw)return reply(res,502,{error:"ai_empty_response"});
+  let result;
+  try{result=JSON.parse(raw);}catch(_){return reply(res,502,{error:"ai_invalid_json"});}
   if(!result||typeof result.evidence!=="string"||typeof result.shion!=="string"||typeof result.caritas!=="string"||
    !Array.isArray(result.understandingIds)||!Number.isInteger(result.nextCue)||
    result.nextCue<0||result.nextCue>Math.min(stage+1,2)||
    result.shion.length>90||result.caritas.length>90||
-   result.understandingIds.some(id=>!IDEAS.includes(id))||
-   (result.understandingIds.length>0 && (!result.evidence||!reading.includes(result.evidence))))
+   result.understandingIds.some(id=>!IDEAS.includes(id)))
    return reply(res,502,{error:"ai_invalid_response"});
-  const recognized=[...new Set(result.understandingIds)];
-  if(recognized.length&&result.evidence.length<2)return reply(res,502,{error:"insufficient_evidence"});
+  // Invalid evidence must never grant extra resonance, but it should not discard usable dialogue.
+  const grounded=result.evidence.length>=2&&reading.includes(result.evidence);
+  const recognized=grounded?[...new Set(result.understandingIds)]:[];
   // Stateless preview: no authoritative score or persistent session.
-  return reply(res,200,{shion:result.shion,caritas:result.caritas,evidence:result.evidence,
+  return reply(res,200,{shion:result.shion,caritas:result.caritas,evidence:grounded?result.evidence:"",
    understandingIds:recognized,previewOnly:true});
 
- }catch(e){return reply(res,502,{error:"ai_unavailable"});}
+ }catch(e){console.warn("[Caritas AI] Gemini transport/parse failure:",e?.name||"unknown");return reply(res,502,{error:"ai_unavailable"});}
  finally{clearTimeout(timer);}
 };
