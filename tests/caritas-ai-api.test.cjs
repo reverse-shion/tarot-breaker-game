@@ -121,3 +121,24 @@ test('game limits AI attempts to three and resets on a new encounter',()=>{
  assert.match(source,/aiCalls=Number\.isInteger\(data\.aiCalls\)/);
  assert.match(source,/ui\.aiSend\.disabled=!reading\|\|aiBusy\|\|aiCalls>=AI_CALL_LIMIT/);
 });
+
+test('Gemini receives a distinct visible cue for each battle turn',async()=>{
+ const original=global.fetch;
+ const seen=[];
+ global.fetch=async(_url,opts)=>{
+  const prompt=JSON.parse(opts.body).contents[0].parts[0].text;
+  seen.push(prompt);
+  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'言葉を受け止めた',caritas:'……',nextCue:0})}]}}]})};
+ };
+ try{
+  for(const turn of [0,1,2]){
+   const headers={origin:'https://reverse-shion.github.io','x-forwarded-for':'turn-'+(++serial)};
+   const res={statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;return this;},status(n){this.statusCode=n;return this;},end(body){this.body=body?JSON.parse(body):null;return this;}};
+   await handler({method:'POST',headers,body:{reading:'月と星の関係から心の変化を読みます',turn}},res);
+   assert.equal(res.statusCode,200);
+  }
+  assert.match(seen[0],/口を閉ざし、こちらを見ようとしない/);
+  assert.match(seen[1],/身をこわばらせ、爪が地面を引っかく/);
+  assert.match(seen[2],/視線が揺れ、言葉にならない本音が漏れる/);
+ }finally{global.fetch=original;}
+});
