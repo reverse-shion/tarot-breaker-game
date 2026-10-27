@@ -286,10 +286,11 @@ function toast(message){
  toastTimer=setTimeout(()=>{ui.toast.hidden=true;},2100);
 }
 async function sendAiReading(){
- if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||modalIndex>=0)return;
+ if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
  const reading=ui.aiInput.value.trim();
  if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto.randomUUID();aiPendingText=reading;}
+ const requestTurn=battle.turn;
  aiBusy=true;render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
@@ -303,7 +304,7 @@ async function sendAiReading(){
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
   const before=battle;
-  if(story==="battle"&&battle.phase==="read"&&C.applyAiInsight){
+  if(story==="battle"&&battle.phase==="read"&&battle.turn===requestTurn&&C.applyAiInsight){
    battle=C.applyAiInsight(battle,Array.isArray(data.understandingIds)?data.understandingIds:[]);
    if(battle!==before)checkpoint();
   }
