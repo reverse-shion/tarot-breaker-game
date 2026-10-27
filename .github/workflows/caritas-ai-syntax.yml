@@ -7,6 +7,7 @@ on:
       - 'caritas-battle-core.js'
       - 'tests/caritas-ai-insight.test.cjs'
       - 'tests/caritas-ai-api.test.cjs'
+      - 'tests/caritas-ai-http-integration.cjs'
       - '.github/workflows/caritas-ai-syntax.yml'
   push:
     branches:
@@ -26,3 +27,5 @@ jobs:
           node --check caritas-battle-core.js
       - name: Test AI resonance boundaries
         run: node --test tests/caritas-ai-insight.test.cjs tests/caritas-ai-api.test.cjs
+      - name: Test local HTTP API end to end (no Gemini quota)
+        run: node tests/caritas-ai-http-integration.cjs
