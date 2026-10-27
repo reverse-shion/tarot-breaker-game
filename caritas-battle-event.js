@@ -313,6 +313,10 @@ async function sendAiReading(){
    const code=typeof detail.error==="string"?detail.error:"";
    const messages={
     ai_upstream_quota:"Gemini側の利用上限に達しています。",
+    ai_model_unavailable:"指定されたAIモデルは現在利用できません。",
+    ai_upstream_auth:"Gemini APIキーの権限を確認する必要があります。",
+    ai_empty_response:"AIの返答が空でした。",
+    ai_invalid_json:"AIの返答を読み取れませんでした。",
     ai_unavailable:"AIの応答を取得できませんでした。",
     ai_invalid_response:"AIの返答形式に問題が発生しました。",
     ai_temporarily_disabled:"現在AI機能を停止しています。",
