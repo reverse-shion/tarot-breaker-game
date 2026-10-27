@@ -75,17 +75,19 @@ function read(s){
  next.phase=next.dark===0?"ending":next.resonance===100?"finisher":next.hp===0?"defeat":"read";
  return next;
 }
-// AI interpretation may add a small, one-time bonus to the current reading.
-// It never replaces the deterministic card selection or creates an instant finisher.
+// AI adds a limited one-time, grounded understanding bonus. Cards remain the
+// primary way to release darkness; AI alone cannot erase the last darkness point.
 function applyAiInsight(s,ids){
  if(s.phase!=="read"||s.aiInsightTurn===s.turn||!Array.isArray(ids))return s;
- const allowed=["fear_of_weakness","self_blame","wish_to_continue"];
+ const allowed=["fear_of_weakness","self_blame","wish_to_continue","acknowledge_pain","offer_support","respect_choice"];
  const count=new Set(ids.filter(id=>allowed.includes(id))).size;
  if(!count)return s;
  const bonus=Math.min(12,4*count,100-s.resonance);
- if(!bonus)return s;
- return {...s,resonance:s.resonance+bonus,aiInsightTurn:s.turn,
-  phase:s.resonance+bonus===100?"finisher":"read"};
+ const relief=Math.min(Math.max(0,s.dark-1),2*Math.min(3,count));
+ if(!bonus&&!relief)return s;
+ const resonance=s.resonance+bonus;
+ return {...s,resonance,dark:s.dark-relief,aiInsightTurn:s.turn,
+  phase:resonance===100?"finisher":"read"};
 }
 function canSkill(s){return s.phase==="finisher"&&s.cards.some(c=>c.major);}
 function finish(s,mode){
