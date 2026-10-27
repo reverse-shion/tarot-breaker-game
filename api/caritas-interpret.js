@@ -27,8 +27,9 @@ module.exports=async function handler(req,res){
   res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
  }
- if(req.method==="OPTIONS")return reply(res,ALLOWED_ORIGIN&&origin===ALLOWED_ORIGIN?204:403,{});
+ if(req.method==="OPTIONS"){res.statusCode=ALLOWED_ORIGIN&&origin===ALLOWED_ORIGIN?204:403;return res.end();}
  if(req.method!=="POST")return reply(res,405,{error:"method_not_allowed"});
+ if(!ALLOWED_ORIGIN)return reply(res,503,{error:"allowed_origin_not_configured"});
  if(ALLOWED_ORIGIN && origin!==ALLOWED_ORIGIN)return reply(res,403,{error:"origin_denied"});
  const ip=(req.headers["x-forwarded-for"]||"unknown").split(",")[0].trim();
  if(!limit(ip))return reply(res,429,{error:"rate_limited"});
