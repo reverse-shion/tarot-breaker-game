@@ -96,3 +96,17 @@ test('oversized declared body is rejected before Gemini',async()=>{
   assert.equal(called,false);
  }finally{global.fetch=original;}
 });
+
+test('actual oversized JSON is rejected even without content-length',async()=>{
+ const original=global.fetch;
+ let called=false;
+ global.fetch=async()=>{called=true;throw Error('should not call Gemini');};
+ try{
+  const headers={origin:'https://reverse-shion.github.io','x-forwarded-for':'body-'+(++serial)};
+  const res={statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;return this;},status(n){this.statusCode=n;return this;},end(body){this.body=body?JSON.parse(body):null;return this;}};
+  await handler({method:'POST',headers,body:{reading:'月の解釈を考えています',extra:'あ'.repeat(2000)}},res);
+  assert.equal(res.statusCode,413);
+  assert.equal(res.body.error,'request_too_large');
+  assert.equal(called,false);
+ }finally{global.fetch=original;}
+});
