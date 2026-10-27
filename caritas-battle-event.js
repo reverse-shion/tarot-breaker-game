@@ -22,13 +22,15 @@ const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えて�
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
  let aiLastState=null,aiBusy=false,aiPendingRequest=null,aiPendingText="";
+const AI_CALL_LIMIT=3;
+let aiCalls=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let modalIndex=-1,committing=false,attempts=0;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-v13c",SAVE_VERSION=13;
 function checkpoint(){
- try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle}));}catch(_){}
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,aiCalls}));}catch(_){}
 }
 function clearCheckpoint(){try{localStorage.removeItem(SAVE_KEY);}catch(_){}}
 function restoreCheckpoint(){
@@ -41,7 +43,7 @@ function restoreCheckpoint(){
     !Array.isArray(s.cards)||s.cards.length!==3||!Array.isArray(s.words)||s.words.length!==3){
     clearCheckpoint();return false;
   }
-  battle=s;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
+  battle=s;aiCalls=Number.isInteger(data.aiCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   if(s.phase==="ending"){render();beginEnding();}
   else if(s.phase==="defeat"){render();beginRetreat();}
   else render();
@@ -287,11 +289,12 @@ function toast(message){
 }
 async function sendAiReading(){
  if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
+ if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
  const reading=(ui.aiInput.value||"").trim();
  if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto.randomUUID();aiPendingText=reading;}
  const requestTurn=battle.turn;
- aiBusy=true;render();
+ aiBusy=true;aiCalls++;checkpoint();render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
   const configured=window.TAROBRE_CARITAS_API_URL;
