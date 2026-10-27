@@ -21,7 +21,7 @@ const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\n�
 const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
- let aiLastState=null,aiBusy=false;
+ let aiLastState=null,aiBusy=false,aiPendingRequest=null,aiPendingText="";
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
@@ -289,16 +289,17 @@ async function sendAiReading(){
  if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||modalIndex>=0)return;
  const reading=ui.aiInput.value.trim();
  if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
+ if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto.randomUUID();aiPendingText=reading;}
  aiBusy=true;render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
   const response=await fetch("/api/caritas-interpret",{method:"POST",signal:controller.signal,
    headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({reading,sessionId:aiSessionId,requestId:globalThis.crypto.randomUUID()})});
+   body:JSON.stringify({reading,sessionId:aiSessionId,requestId:aiPendingRequest})});
   if(!response.ok)throw Error("通信エラー："+response.status);
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
-  aiLastState=data.state;
+  aiLastState=data.state;aiPendingRequest=null;aiPendingText="";
   ui.aiResult.textContent=["シオン："+data.shion,"カリタス："+data.caritas,
    "AI共鳴："+(data.state?.resonance??0)+"/100"].join(String.fromCharCode(10));
  }catch(error){ui.aiResult.textContent="通信できません。文章は保持しています。 "+error.message;}
