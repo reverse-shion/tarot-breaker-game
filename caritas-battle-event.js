@@ -293,7 +293,10 @@ async function sendAiReading(){
  aiBusy=true;render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
-  const response=await fetch("/api/caritas-interpret",{method:"POST",signal:controller.signal,
+  const configured=window.TAROBRE_CARITAS_API_URL;
+  const endpoint=typeof configured==="string"&&/^https:\/\/[^\s]+$/.test(configured)
+   ?configured:"/api/caritas-interpret";
+  const response=await fetch(endpoint,{method:"POST",signal:controller.signal,
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({reading,sessionId:aiSessionId,requestId:aiPendingRequest})});
   if(!response.ok)throw Error("通信エラー："+response.status);
