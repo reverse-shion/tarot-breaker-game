@@ -3,7 +3,7 @@
  * No official Caritas backstory is invented: only observable cues are supplied.
  */
 const ALLOWED_ORIGINS = (process.env.TAROBRE_ALLOWED_ORIGIN || "").split(",").map(x=>x.trim()).filter(Boolean);
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 const CUES = Object.freeze([
  "カリタスは口を閉ざし、こちらを見ようとしない。",
  "カリタスは強く身をこわばらせ、爪が地面を引っかく。",
@@ -66,7 +66,7 @@ module.exports=async function handler(req,res){
  try{
   const url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(MODEL)+":generateContent";
   const upstream=await fetch(url,{method:"POST",signal:controller.signal,headers:{"Content-Type":"application/json","x-goog-api-key":process.env.GEMINI_API_KEY},
-   body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:schema,temperature:0.35,maxOutputTokens:900,...(MODEL.startsWith("gemini-2.5-")?{thinkingConfig:{thinkingBudget:0}}:{})}})});
+   body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:schema,temperature:0.35,maxOutputTokens:900,...(MODEL.startsWith("gemini-2.5-")?{thinkingConfig:{thinkingBudget:0}}:MODEL==="gemini-3.5-flash-lite"?{thinkingConfig:{thinkingLevel:"minimal"}}:{})}})});
   if(!upstream.ok){
    // Report safe error categories only; never return Gemini's raw response or API credentials.
    console.warn("[Caritas AI] Gemini HTTP status:",upstream.status);
