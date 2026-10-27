@@ -242,7 +242,7 @@ function render(){
  }
  if(ui.aiInput){
   ui.aiInput.disabled=!reading||aiBusy;
-  ui.aiSend.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||ui.aiInput.value.trim().length<8;
+  ui.aiSend.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||(ui.aiInput.value||"").trim().length<8;
   ui.aiSend.textContent=aiBusy?"読み解いています…":"AIに言葉を届ける（試作）";
   ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read");
  }
@@ -442,7 +442,7 @@ function init(){
  ui.aiInput.placeholder="カリタスに何を伝えたい？";label.append(ui.aiInput);
  ui.aiSend=newEl("button","cb-ai-send","AIに言葉を届ける（試作）");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||battle.aiInsightTurn===battle.turn||ui.aiInput.value.trim().length<8;});
+ ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||battle.aiInsightTurn===battle.turn||(ui.aiInput.value||"").trim().length<8;});
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
  ui.aiPanel.append(label,ui.aiSend,ui.aiResult);
  actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
