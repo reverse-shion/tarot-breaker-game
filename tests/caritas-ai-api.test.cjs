@@ -152,11 +152,11 @@ test('AI responses and errors explicitly disable HTTP caching',async()=>{
  assert.equal(invalid.headers['Cache-Control'],'no-store, max-age=0');
 });
 
-test('Gemini 2.5 Flash disables thinking so token cap leaves room for the structured reply',async()=>{
+test('Gemini 3.5 Flash-Lite uses minimal thinking so token cap leaves room for structured dialogue',async()=>{
  const original=global.fetch;
  global.fetch=async(_url,opts)=>{
   const config=JSON.parse(opts.body).generationConfig;
-  assert.equal(config.thinkingConfig.thinkingBudget,0);
+  assert.equal(config.thinkingConfig.thinkingLevel,'minimal');
   assert.equal(config.maxOutputTokens,900);
   return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'届いた',caritas:'……',nextCue:0})}]}}]})};
  };
