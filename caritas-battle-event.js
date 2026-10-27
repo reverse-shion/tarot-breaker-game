@@ -21,7 +21,7 @@ const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\n�
 const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
- let aiLastState=null;
+ let aiLastState=null,aiBusy=false;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
@@ -285,6 +285,25 @@ function toast(message){
  clearTimeout(toastTimer);ui.toast.textContent=message;ui.toast.hidden=false;
  toastTimer=setTimeout(()=>{ui.toast.hidden=true;},2100);
 }
+async function sendAiReading(){
+ if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||modalIndex>=0)return;
+ const reading=ui.aiInput.value.trim();
+ if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
+ aiBusy=true;render();
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ try{
+  const response=await fetch("/api/caritas-interpret",{method:"POST",signal:controller.signal,
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({reading,sessionId:aiSessionId,requestId:globalThis.crypto.randomUUID()})});
+  if(!response.ok)throw Error("通信エラー："+response.status);
+  const data=await response.json();
+  if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
+  aiLastState=data.state;
+  ui.aiResult.textContent=["シオン："+data.shion,"カリタス："+data.caritas,
+   "AI共鳴："+(data.state?.resonance??0)+"/100"].join(String.fromCharCode(10));
+ }catch(error){ui.aiResult.textContent="通信できません。文章は保持しています。 "+error.message;}
+ finally{clearTimeout(timer);aiBusy=false;render();}
+}
 function perform(kind){
  if(story!=="battle"||dialogueBusy||committing||suspended()||modalIndex>=0)return;
  if(battle.phase==="finisher"&&["skill","dialogue"].includes(kind)){
@@ -406,7 +425,16 @@ function init(){
  ui.read=newEl("button","cb-read","この読みを届ける");ui.skill=newEl("button","cb-skill","必殺技");
  ui.read.addEventListener("click",()=>perform(battle.phase==="finisher"?"dialogue":"read"));
  ui.skill.addEventListener("click",()=>perform("skill"));
- actions.append(ui.read,ui.skill);ctr.append(cardBox,line,ui.finisher,actions);frame.append(arena,narr,ctr);
+ ui.aiPanel=newEl("div","cb-ai-panel");
+ const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
+ ui.aiInput=newEl("textarea","cb-ai-input");ui.aiInput.rows=3;ui.aiInput.maxLength=700;
+ ui.aiInput.placeholder="カリタスに何を伝えたい？";label.append(ui.aiInput);
+ ui.aiSend=newEl("button","cb-ai-send","AIに言葉を届ける（試作）");ui.aiSend.type="button";
+ ui.aiSend.addEventListener("click",sendAiReading);
+ ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||ui.aiInput.value.trim().length<8;});
+ ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
+ ui.aiPanel.append(label,ui.aiSend,ui.aiResult);
+ actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
