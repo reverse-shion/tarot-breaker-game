@@ -22,10 +22,10 @@ test('valid Gemini JSON is sanitized and returned',async()=>{
  global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'弱さを恐れている',understandingIds:['fear_of_weakness'],shion:'弱さを恐れているのかもしれない',caritas:'……',nextCue:1})}]}}]})});
  try{const r=await call('POST','カリタスは弱さを恐れているように見える');assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,['fear_of_weakness']);assert.equal(r.body.previewOnly,true);}finally{global.fetch=original;}
 });
-test('unsupported Gemini evidence fails closed',async()=>{
+test('unsupported Gemini evidence cannot earn resonance but preserves dialogue',async()=>{
  const original=global.fetch;
  global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'見えない言葉',understandingIds:['self_blame'],shion:'読み',caritas:'……',nextCue:1})}]}}]})});
- try{const r=await call('POST','月と星を重ねて解釈してみたい');assert.equal(r.statusCode,502);assert.equal(r.body.error,'ai_invalid_response');}finally{global.fetch=original;}
+ try{const r=await call('POST','月と星を重ねて解釈してみたい');assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,[]);assert.equal(r.body.evidence,'');}finally{global.fetch=original;}
 });
 
 test('allowed origin receives CORS preflight; others do not',async()=>{
@@ -51,8 +51,8 @@ test('Gemini upstream failure is handled without exposing details',async()=>{
  global.fetch=async()=>({ok:false,status:429});
  try{
   const r=await call('POST','月の不安と星の希望が同時に見えます');
-  assert.equal(r.statusCode,502);
-  assert.deepEqual(r.body,{error:'ai_unavailable'});
+  assert.equal(r.statusCode,429);
+  assert.deepEqual(r.body,{error:'ai_upstream_quota'});
  }finally{global.fetch=original;}
 });
 test('Gemini invalid JSON is handled without crashing',async()=>{
@@ -61,7 +61,7 @@ test('Gemini invalid JSON is handled without crashing',async()=>{
  try{
   const r=await call('POST','力は相手を押さえつけることではありません');
   assert.equal(r.statusCode,502);
-  assert.deepEqual(r.body,{error:'ai_unavailable'});
+  assert.deepEqual(r.body,{error:'ai_invalid_json'});
  }finally{global.fetch=original;}
 });
 
@@ -116,9 +116,11 @@ test('game limits AI attempts to three and resets on a new encounter',()=>{
  const source=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
  assert.match(source,/const AI_CALL_LIMIT=3;/);
  assert.match(source,/if\(aiCalls>=AI_CALL_LIMIT\)/);
- assert.match(source,/aiBusy=true;aiCalls\+\+;checkpoint\(\);render\(\);/);
+ assert.match(source,/aiBusy=true;render\(\);/);
+ assert.match(source,/aiCalls\+\+;checkpoint\(\);/);
+ assert.match(source,/if\(!response\.ok\)[\s\S]*?return;/);
  assert.match(source,/battle=C\.newGame\(\);aiCalls=0;aiPendingRequest=null;aiPendingText="";/);
- assert.match(source,/aiCalls=Number\.isInteger\(data\.aiCalls\)/);
+ assert.match(source,/aiCalls=Number\.isInteger\(data\.aiConfirmedCalls\)/);
  assert.match(source,/ui\.aiSend\.disabled=!reading\|\|aiBusy\|\|aiCalls>=AI_CALL_LIMIT/);
 });
 
@@ -148,4 +150,25 @@ test('AI responses and errors explicitly disable HTTP caching',async()=>{
  assert.equal(health.headers['Cache-Control'],'no-store, max-age=0');
  const invalid=await call('POST','短い');
  assert.equal(invalid.headers['Cache-Control'],'no-store, max-age=0');
+});
+
+test('Gemini 2.5 Flash disables thinking so token cap leaves room for the structured reply',async()=>{
+ const original=global.fetch;
+ global.fetch=async(_url,opts)=>{
+  const config=JSON.parse(opts.body).generationConfig;
+  assert.equal(config.thinkingConfig.thinkingBudget,0);
+  assert.equal(config.maxOutputTokens,900);
+  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'届いた',caritas:'……',nextCue:0})}]}}]})};
+ };
+ try{const res=await call('POST','月と力と星の意味を考えて言葉にしてみます');assert.equal(res.statusCode,200);}finally{global.fetch=original;}
+});
+test('iPhone card layout is fixed-height and the AI editor is collapsed initially',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.css'),'utf8');
+ assert.match(js,/ui\.aiBody\.hidden=true/);
+ assert.match(js,/ui\.aiToggle\.addEventListener\("click"/);
+ assert.match(js,/ui\.guide\.hidden=true/);
+ assert.match(css,/#caritas-event \.cb-cards\{\s*flex:0 0 auto;/);
+ assert.match(css,/#caritas-event \.cb-controls\{\s*min-height:0;overflow-y:auto;/);
 });
