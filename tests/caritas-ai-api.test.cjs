@@ -64,3 +64,21 @@ test('Gemini invalid JSON is handled without crashing',async()=>{
   assert.deepEqual(r.body,{error:'ai_unavailable'});
  }finally{global.fetch=original;}
 });
+
+test('emergency switch disables AI before calling Gemini',async()=>{
+ const original=global.fetch;
+ const prior=process.env.TAROBRE_AI_ENABLED;
+ let called=false;
+ global.fetch=async()=>{called=true;throw Error('should not call Gemini');};
+ process.env.TAROBRE_AI_ENABLED='false';
+ try{
+  const r=await call('POST','月と星の読みを言葉にしてみます');
+  assert.equal(r.statusCode,503);
+  assert.equal(r.body.error,'ai_temporarily_disabled');
+  assert.equal(called,false);
+ }finally{
+  global.fetch=original;
+  if(prior===undefined)delete process.env.TAROBRE_AI_ENABLED;
+  else process.env.TAROBRE_AI_ENABLED=prior;
+ }
+});
