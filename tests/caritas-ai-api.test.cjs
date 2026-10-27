@@ -1,0 +1,29 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+process.env.TAROBRE_ALLOWED_ORIGIN='https://raw.githack.com';
+process.env.GEMINI_API_KEY='test-only-not-a-real-key';
+const handler=require('../api/caritas-interpret.js');
+let serial=0;
+async function call(method,reading,origin='https://raw.githack.com'){
+ const headers={origin,'x-forwarded-for':'test-'+(++serial)};
+ const res={statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;return this;},status(n){this.statusCode=n;return this;},end(body){this.body=body?JSON.parse(body):null;return this;}};
+ await handler({method,headers,body:{reading}},res);return res;
+}
+test('health check does not expose API key',async()=>{
+ const r=await call('GET');assert.equal(r.statusCode,200);assert.equal(r.body.geminiConfigured,true);assert.doesNotMatch(JSON.stringify(r.body),/test-only-not-a-real-key/);
+});
+test('wrong origin is denied before calling Gemini',async()=>{
+ const r=await call('POST','月と星の意味を考えます','https://example.org');assert.equal(r.statusCode,403);
+});
+test('short reading is rejected',async()=>{
+ const r=await call('POST','短い');assert.equal(r.statusCode,400);
+});
+test('valid Gemini JSON is sanitized and returned',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'弱さを恐れている',understandingIds:['fear_of_weakness'],shion:'弱さを恐れているのかもしれない',caritas:'……',nextCue:1})}]}}]})});
+ try{const r=await call('POST','カリタスは弱さを恐れているように見える');assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,['fear_of_weakness']);assert.equal(r.body.previewOnly,true);}finally{global.fetch=original;}
+});
+test('unsupported Gemini evidence fails closed',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'見えない言葉',understandingIds:['self_blame'],shion:'読み',caritas:'……',nextCue:1})}]}}]})});
+ try{const r=await call('POST','月と星を重ねて解釈してみたい');assert.equal(r.statusCode,502);assert.equal(r.body.error,'ai_invalid_response');}finally{global.fetch=original;}
+});
