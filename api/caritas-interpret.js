@@ -37,6 +37,7 @@ module.exports=async function handler(req,res){
  const {reading}=req.body||{};
  if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
   return reply(res,400,{error:"invalid_input"});
+ if(process.env.TAROBRE_AI_ENABLED==="false")return reply(res,503,{error:"ai_temporarily_disabled"});
  if(!process.env.GEMINI_API_KEY)return reply(res,503,{error:"ai_not_configured"});
  const stage=0,previousIds=[];
  const schema={type:"OBJECT",properties:{
