@@ -5,6 +5,7 @@ on:
       - 'api/caritas-interpret.js'
       - 'caritas-battle-event.js'
       - 'caritas-battle-core.js'
+      - 'tests/caritas-ai-insight.test.cjs'
       - '.github/workflows/caritas-ai-syntax.yml'
   push:
     branches:
@@ -22,3 +23,5 @@ jobs:
           node --check api/caritas-interpret.js
           node --check caritas-battle-event.js
           node --check caritas-battle-core.js
+      - name: Test AI resonance boundaries
+        run: node --test tests/caritas-ai-insight.test.cjs
