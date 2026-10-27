@@ -23,14 +23,14 @@ let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
  let aiLastState=null,aiBusy=false,aiPendingRequest=null,aiPendingText="";
 const AI_CALL_LIMIT=3;
-let aiCalls=0;
+let aiCalls=0,aiPanelOpen=false,aiRetryAt=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let modalIndex=-1,committing=false,attempts=0;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-v13c",SAVE_VERSION=13;
 function checkpoint(){
- try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,aiCalls}));}catch(_){}
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,aiCalls,aiConfirmedCalls:aiCalls}));}catch(_){}
 }
 function clearCheckpoint(){try{localStorage.removeItem(SAVE_KEY);}catch(_){}}
 function restoreCheckpoint(){
@@ -43,7 +43,7 @@ function restoreCheckpoint(){
     !Array.isArray(s.cards)||s.cards.length!==3||!Array.isArray(s.words)||s.words.length!==3){
     clearCheckpoint();return false;
   }
-  battle=s;aiCalls=Number.isInteger(data.aiCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
+  battle=s;aiCalls=Number.isInteger(data.aiConfirmedCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiConfirmedCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   if(s.phase==="ending"){render();beginEnding();}
   else if(s.phase==="defeat"){render();beginRetreat();}
   else render();
@@ -83,6 +83,7 @@ function resumeCinematic(){
 function beginBattle(){
  story="battle";root.dataset.phase="battle";modalIndex=-1;committing=false;
  checkpoint();render();
+ if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}toast("月・力・星のカードをタップして意味を選ぼう");}
 }
 function beginEnding(){
  clearTimeout(toastTimer);ui.toast.hidden=true;
@@ -196,7 +197,7 @@ function start(){
          if(!manifestation.reveal()){recover("reveal interrupted");return;}
          story="manifested";root.dataset.phase="manifested";render();
          saySequence(REVEAL,()=>{
-           battle=C.newGame();aiCalls=0;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
+           battle=C.newGame();aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
          });
        });
      });
@@ -244,8 +245,11 @@ function render(){
  }
  if(ui.aiInput){
   ui.aiInput.disabled=!reading||aiBusy;
-  ui.aiSend.disabled=!reading||aiBusy||aiCalls>=AI_CALL_LIMIT||s.aiInsightTurn===s.turn||(ui.aiInput.value||"").trim().length<8;
-  ui.aiSend.textContent=aiBusy?"読み解いています…":aiCalls>=AI_CALL_LIMIT?"AI読み取りは3回まで（使用済み）":"AIに言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
+  ui.aiSend.disabled=!reading||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||s.aiInsightTurn===s.turn||(ui.aiInput.value||"").trim().length<8;
+  ui.aiSend.textContent=aiBusy?"読み解いています…":aiCalls>=AI_CALL_LIMIT?"AI読み取りは3回まで（使用済み）":Date.now()<aiRetryAt?"再接続まで少しお待ちください":"AIに言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
+  ui.aiBody.hidden=!aiPanelOpen;
+  ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
+  ui.aiToggle.textContent=aiPanelOpen?"AIの自由記述を閉じる ▲":"AIで自分の言葉を届ける ▼";
   ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read");
  }
  ui.read.textContent=finisher?"対話で解放":"この読みを届ける";
@@ -253,8 +257,8 @@ function render(){
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
  if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　対話か必殺技で解放！");
- ui.guide.hidden=!(reading&&!once);
- if(!ui.guide.hidden)ui.guide.textContent="カードをタップして意味を選ぼう";
+ // Show a single short toast instead of an overlay that obscures the card row.
+ ui.guide.hidden=true;
  ui.finale.hidden=true;
  const show=modalIndex>=0&&reading;
  ui.modal.hidden=!show;
@@ -274,7 +278,7 @@ function render(){
 }
 function openCard(i){
  if(story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||suspended())return;
- modalIndex=i;render();
+ once=true;ui.guide.hidden=true;modalIndex=i;render();
  ui.modalWords.querySelector(".cb-modal-word")?.focus?.({preventScroll:true});
 }
 function closeCard(){if(modalIndex<0)return;modalIndex=-1;render();}
@@ -292,9 +296,10 @@ async function sendAiReading(){
  if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
  const reading=(ui.aiInput.value||"").trim();
  if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
- if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto.randomUUID();aiPendingText=reading;}
+ if(Date.now()<aiRetryAt){toast("AIの再接続には少し時間をあけてください");return;}
+ if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+aiSessionId;aiPendingText=reading;}
  const requestTurn=battle.turn;
- aiBusy=true;aiCalls++;checkpoint();render();
+ aiBusy=true;render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
   const configured=window.TAROBRE_CARITAS_API_URL;
@@ -304,18 +309,25 @@ async function sendAiReading(){
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({reading,turn:Math.min(2,Math.max(0,battle.turn)),sessionId:aiSessionId,requestId:aiPendingRequest})});
   if(!response.ok){
-    if(response.status===401||response.status===403){
-     ui.aiResult.textContent="AI開発版へのアクセスが認証で保護されています。通常のタロットバトルは続けられます。";
-     return;
-    }
-    if(response.status===503||response.status===429||response.status===502){
-     ui.aiResult.textContent=response.status===429?"AIが混み合っています。カードを選んで通常の読みを続けられます。":"AIは現在利用できません。カードを選んで通常の読みを続けられます。";
-     return;
-    }
-    throw Error("通信エラー："+response.status);
-   }
+   const detail=await response.json().catch(()=>({}));
+   const code=typeof detail.error==="string"?detail.error:"";
+   const messages={
+    ai_upstream_quota:"Gemini側の利用上限に達しています。",
+    ai_unavailable:"AIの応答を取得できませんでした。",
+    ai_invalid_response:"AIの返答形式に問題が発生しました。",
+    ai_temporarily_disabled:"現在AI機能を停止しています。",
+    ai_not_configured:"AIのサーバー設定が完了していません。",
+    origin_denied:"ゲームの接続元が許可されていません。"
+   };
+   const message=response.status===429?"AIの利用が集中しています。":messages[code]||(response.status===401||response.status===403?"AIへのアクセスが拒否されました。":"AIに接続できませんでした。");
+   ui.aiResult.textContent=message+" AIの利用回数は減りません。カードを選ぶ通常の読みは続けられます。";
+   aiRetryAt=Date.now()+8000;
+   setTimeout(()=>{if(root&&!root.hidden)render();},8100);
+   return;
+  }
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
+  aiCalls++;checkpoint();
   const before=battle;
   if(story==="battle"&&battle.phase==="read"&&battle.turn===requestTurn&&C.applyAiInsight){
    battle=C.applyAiInsight(battle,Array.isArray(data.understandingIds)?data.understandingIds:[]);
@@ -325,7 +337,11 @@ async function sendAiReading(){
   aiLastState=null;aiPendingRequest=null;aiPendingText="";
   ui.aiResult.textContent=["シオン："+data.shion,"カリタス："+data.caritas,
    gain>0?"読みから共鳴＋"+gain+"（このターンは適用済み）":"読みを受け止めた。共鳴ボーナスなし。"].join(String.fromCharCode(10));
- }catch(error){ui.aiResult.textContent="通信できません。文章は保持しています。 "+error.message;}
+ }catch(error){
+  ui.aiResult.textContent="通信できません。文章とAIの利用回数は保持しています。 "+(error.name==="AbortError"?"応答が時間切れになりました。":error.message);
+  aiRetryAt=Date.now()+8000;
+  setTimeout(()=>{if(root&&!root.hidden)render();},8100);
+ }
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
 function perform(kind){
@@ -455,9 +471,17 @@ function init(){
  ui.aiInput.placeholder="カリタスに何を伝えたい？";label.append(ui.aiInput);
  ui.aiSend=newEl("button","cb-ai-send","AIに言葉を届ける（試作）");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||aiCalls>=AI_CALL_LIMIT||battle.aiInsightTurn===battle.turn||(ui.aiInput.value||"").trim().length<8;});
+ ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||(ui.aiInput.value||"").trim().length<8;});
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
- ui.aiPanel.append(label,ui.aiSend,ui.aiResult);
+ ui.aiToggle=newEl("button","cb-ai-toggle","AIで自分の言葉を届ける ▼");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
+ ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
+ ui.aiToggle.addEventListener("click",()=>{
+  aiPanelOpen=!aiPanelOpen;ui.aiBody.hidden=!aiPanelOpen;
+  ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
+  ui.aiToggle.textContent=aiPanelOpen?"AIの自由記述を閉じる ▲":"AIで自分の言葉を届ける ▼";
+  if(aiPanelOpen)ui.aiPanel.scrollIntoView({block:"nearest",behavior:"smooth"});
+ });
+ ui.aiBody.append(label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.aiToggle,ui.aiBody);
  actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
