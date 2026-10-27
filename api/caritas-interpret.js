@@ -101,10 +101,20 @@ module.exports=async function handler(req,res){
    const output={shion:result.shion,caritas:result.caritas,evidence:result.evidence,
     understandingIds:accepted,state:sanitizeState(next)};
    // Cache successful request result before returning; retry uses same requestId.
-   await redis(["SET",sessionKey(sessionId)+":request:"+requestId,JSON.stringify(output),"EX",SESSION_TTL]);
-   await redis(["SET",sessionKey(sessionId),JSON.stringify(next),"EX",SESSION_TTL]);
+   // Commit state and retry cache atomically; never cache a result without its state.
+   const script="local current=redis.call('GET',KEYS[1]); "+
+    "if (current or '')~=ARGV[1] then return 0 end; "+
+    "redis.call('SET',KEYS[1],ARGV[2],'EX',ARGV[4]); "+
+    "redis.call('SET',KEYS[2],ARGV[3],'EX',ARGV[4]); return 1";
+   const committed=await redis(["EVAL",script,2,sessionKey(sessionId),
+    sessionKey(sessionId)+":request:"+requestId,latestRaw||"",
+    JSON.stringify(next),JSON.stringify(output),SESSION_TTL]);
+   if(committed!==1)return reply(res,409,{error:"stale_state"});
    return reply(res,200,output);
-  }finally{await redis(["DEL",lock]).catch(()=>{});}
+  }finally{
+   const unlock="if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end";
+   await redis(["EVAL",unlock,1,lock,requestId]).catch(()=>{});
+  }
 
  }catch(e){return reply(res,502,{error:"ai_unavailable"});}
  finally{clearTimeout(timer);}
