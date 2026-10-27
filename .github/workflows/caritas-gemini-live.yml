@@ -1,0 +1,36 @@
+name: Caritas Gemini Live Smoke (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_quota:
+        description: 'Type YES to spend up to 3 Gemini requests on this manual test'
+        required: true
+        default: 'NO'
+permissions:
+  contents: read
+jobs:
+  live-smoke:
+    if: ${{ inputs.confirm_quota == 'YES' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify required protected-preview credential
+        env:
+          VERCEL_OIDC_TOKEN: ${{ secrets.CARITAS_VERCEL_OIDC_TOKEN }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.CARITAS_VERCEL_BYPASS_SECRET }}
+        run: |
+          if [ -z "$VERCEL_OIDC_TOKEN" ] && [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            echo "::error::Protected Vercel preview needs CARITAS_VERCEL_OIDC_TOKEN (short-lived) or CARITAS_VERCEL_BYPASS_SECRET configured as a GitHub Actions secret."
+            exit 1
+          fi
+      - name: Test real Gemini replies through protected Vercel preview
+        env:
+          CARITAS_API_URL: https://tarot-breaker-api-git-feature-caritas-ai-347c71-re-verse-shion.vercel.app/api/caritas-interpret
+          CARITAS_ORIGIN: https://reverse-shion.github.io
+          VERCEL_OIDC_TOKEN: ${{ secrets.CARITAS_VERCEL_OIDC_TOKEN }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.CARITAS_VERCEL_BYPASS_SECRET }}
+        run: node scripts/smoke-caritas-live.cjs
