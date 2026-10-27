@@ -304,6 +304,10 @@ async function sendAiReading(){
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({reading,turn:Math.min(2,Math.max(0,battle.turn)),sessionId:aiSessionId,requestId:aiPendingRequest})});
   if(!response.ok){
+    if(response.status===401||response.status===403){
+     ui.aiResult.textContent="AI開発版へのアクセスが認証で保護されています。通常のタロットバトルは続けられます。";
+     return;
+    }
     if(response.status===503||response.status===429||response.status===502){
      ui.aiResult.textContent=response.status===429?"AIが混み合っています。カードを選んで通常の読みを続けられます。":"AIは現在利用できません。カードを選んで通常の読みを続けられます。";
      return;
