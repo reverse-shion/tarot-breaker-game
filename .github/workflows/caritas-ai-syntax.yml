@@ -32,7 +32,7 @@ jobs:
 
   live-one-request:
     # Exactly one opt-in live check; all other branch commits skip this job.
-    if: "github.ref == 'refs/heads/feature/caritas-ai-resonance-v1'"
+    if: "github.event_name == 'pull_request' && github.event.pull_request.number == 191"
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
