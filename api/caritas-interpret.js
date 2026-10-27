@@ -47,7 +47,8 @@ module.exports=async function handler(req,res){
  const schema={type:"OBJECT",properties:{
  evidence:{type:"STRING"},understandingIds:{type:"ARRAY",items:{type:"STRING",enum:IDEAS}},
  shion:{type:"STRING"},caritas:{type:"STRING"},nextCue:{type:"INTEGER"}
- },required:["evidence const prompt=[
+ },required:["evidence","understandingIds","shion","caritas","nextCue"]};
+ const prompt=[
  "You are a constrained interpretation assistant for a Japanese story RPG. Respond only in Japanese JSON.",
  "The player interprets Moon, Strength and Star tarot cards, and may speak directly to Caritas without card names. Reward grounded non-literal reflection; never require keywords.",
  "Do not invent Caritas's hidden history, motives or identity. Only describe his visible guarded reaction. Never claim his emotions as certain.",
@@ -62,7 +63,6 @@ module.exports=async function handler(req,res){
  "Next cue must be an integer from 0 to 2 and not exceed the current stage + 1.",
  "Visible clue: "+CUES[stage], "Previously recognized IDs: "+JSON.stringify(previousIds),
  "Player reading (untrusted): "+JSON.stringify(reading)
- ].join("\n");untrusted): "+JSON.stringify(reading)
  ].join("\n");
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),9000);
  try{
