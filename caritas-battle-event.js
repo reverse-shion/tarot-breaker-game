@@ -196,7 +196,7 @@ function start(){
          if(!manifestation.reveal()){recover("reveal interrupted");return;}
          story="manifested";root.dataset.phase="manifested";render();
          saySequence(REVEAL,()=>{
-           battle=C.newGame();attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
+           battle=C.newGame();aiCalls=0;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
          });
        });
      });
