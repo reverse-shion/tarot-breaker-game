@@ -30,3 +30,21 @@ jobs:
       - name: Test local HTTP API end to end (no Gemini quota)
         run: node tests/caritas-ai-http-integration.cjs
 
+
+  live-support-once:
+    if: "github.event_name == 'pull_request' && github.event.pull_request.number == 191"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check live compassionate reading
+        env:
+          CARITAS_API_URL: https://tarot-breaker-api-git-feature-caritas-ai-347c71-re-verse-shion.vercel.app/api/caritas-interpret
+          CARITAS_ORIGIN: https://raw.githack.com
+          CARITAS_SMOKE_TURNS: '1'
+          CARITAS_SMOKE_READING: '辛いから助けるよ'
+          CARITAS_EXPECT_SUPPORT: '1'
+        run: node scripts/smoke-caritas-live.cjs
