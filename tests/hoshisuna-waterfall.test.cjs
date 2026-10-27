@@ -6,7 +6,7 @@ const effects=fs.readFileSync(path.join(root,'scene-effects.js'),'utf8');
 const source=(p)=>path.join(root,p);
 const gitBlob=(p)=>cp.execFileSync('git',['hash-object',source(p)],{encoding:'utf8'}).trim();
 test('cleaned Starroad remains byte-exact and falls are unchanged',()=>{
- assert.equal(gitBlob('assets/events/hoshisuna/map/starroad.webp'),'c05db8c2ae2ec72ffcfc3496ffa7fc0a2ce41e33');
+ assert.equal(gitBlob('assets/events/hoshisuna/map/starroad.webp'),'5239c1fd5e3b35029833cc5a7b3a86ada1c9b2a7');
  assert.equal(gitBlob('assets/events/hoshisuna/map/falls.webp'),'b1cbcf1729e0758f9e0d4c26d05c10c7d86ba18d');
 });
 test('all visible Starroad entry references use new asset version',()=>{
