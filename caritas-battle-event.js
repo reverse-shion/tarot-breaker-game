@@ -242,7 +242,7 @@ function render(){
  }
  if(ui.aiInput){
   ui.aiInput.disabled=!reading||aiBusy;
-  ui.aiSend.disabled=!reading||aiBusy||ui.aiInput.value.trim().length<8;
+  ui.aiSend.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||ui.aiInput.value.trim().length<8;
   ui.aiSend.textContent=aiBusy?"読み解いています…":"AIに言葉を届ける（試作）";
   ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read");
  }
@@ -302,9 +302,15 @@ async function sendAiReading(){
   if(!response.ok)throw Error("通信エラー："+response.status);
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
+  const before=battle;
+  if(story==="battle"&&battle.phase==="read"&&C.applyAiInsight){
+   battle=C.applyAiInsight(battle,Array.isArray(data.understandingIds)?data.understandingIds:[]);
+   if(battle!==before)checkpoint();
+  }
+  const gain=battle.resonance-before.resonance;
   aiLastState=null;aiPendingRequest=null;aiPendingText="";
   ui.aiResult.textContent=["シオン："+data.shion,"カリタス："+data.caritas,
-   "読み取れた視点："+(data.understandingIds||[]).length+"件（試作・共鳴値には未反映）"].join(String.fromCharCode(10));
+   gain>0?"読みから共鳴＋"+gain+"（このターンは適用済み）":"読みを受け止めた。共鳴ボーナスなし。"].join(String.fromCharCode(10));
  }catch(error){ui.aiResult.textContent="通信できません。文章は保持しています。 "+error.message;}
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
@@ -435,7 +441,7 @@ function init(){
  ui.aiInput.placeholder="カリタスに何を伝えたい？";label.append(ui.aiInput);
  ui.aiSend=newEl("button","cb-ai-send","AIに言葉を届ける（試作）");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||ui.aiInput.value.trim().length<8;});
+ ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||battle.aiInsightTurn===battle.turn||ui.aiInput.value.trim().length<8;});
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
  ui.aiPanel.append(label,ui.aiSend,ui.aiResult);
  actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
