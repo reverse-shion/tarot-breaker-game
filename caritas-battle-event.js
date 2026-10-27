@@ -25,7 +25,7 @@ let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
-let modalIndex=-1,committing=false,attempts=0,aiBusy=false;
+let modalIndex=-1,committing=false,attempts=0;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-v13c",SAVE_VERSION=13;
 function checkpoint(){
  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle}));}catch(_){}
