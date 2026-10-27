@@ -2,7 +2,7 @@
 /* Manual live smoke test for the protected Caritas preview API.
  * No API keys are embedded. Run only against a deployment you own.
  * Usage: CARITAS_API_URL=https://.../api/caritas-interpret node scripts/smoke-caritas-live.cjs
- * If Deployment Protection requires an automation bypass, set VERCEL_AUTOMATION_BYPASS_SECRET locally.
+ * For protected previews, prefer a short-lived VERCEL_OIDC_TOKEN from authenticated Vercel CLI.\n * Do not commit tokens or bypass secrets.
  */
 'use strict';
 const assert=require('node:assert/strict');
@@ -10,6 +10,7 @@ const url=process.env.CARITAS_API_URL;
 if(!url||!/^https:\/\//.test(url)){console.error('Set CARITAS_API_URL to the HTTPS preview endpoint.');process.exit(2);}
 const origin=process.env.CARITAS_ORIGIN||'https://reverse-shion.github.io';
 const headers={'Content-Type':'application/json','Origin':origin};
+if(process.env.VERCEL_OIDC_TOKEN)headers['x-vercel-trusted-oidc-idp-token']=process.env.VERCEL_OIDC_TOKEN;
 if(process.env.VERCEL_AUTOMATION_BYPASS_SECRET)headers['x-vercel-protection-bypass']=process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 (async()=>{
  const health=await fetch(url,{method:'GET',headers,signal:AbortSignal.timeout(15000)});
