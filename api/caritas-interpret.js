@@ -92,7 +92,7 @@ module.exports=async function handler(req,res){
    const latest=latestRaw?JSON.parse(latestRaw):initialState();
    if(latest.turn!==state.turn)return reply(res,409,{error:"stale_state",state:sanitizeState(latest)});
    const accepted=newlyRecognized.filter(id=>!latest.ids.includes(id));
-   const next={ids:[...latest.ids,...accepted],resonance:Math.min(100,latest.resonance+accepted.length*25),
+   const next={ids:[...latest.ids,...accepted],resonance:Math.min(100,latest.resonance+accepted.length*35),
     stage:Math.max(latest.stage,result.nextCue),turn:latest.turn+1,complete:false};
    next.complete=next.resonance>=100;
    const output={shion:result.shion,caritas:result.caritas,evidence:result.evidence,
