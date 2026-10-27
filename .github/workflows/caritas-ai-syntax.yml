@@ -32,7 +32,7 @@ jobs:
 
   live-one-request:
     # Exactly one opt-in live check; all other branch commits skip this job.
-    if: github.event_name == 'push' && github.event.head_commit.message == 'ci: run Caritas Gemini live probe once'
+    if: "github.event_name == 'push' && github.event.head_commit.message == 'ci: run Caritas Gemini live probe once'"
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
