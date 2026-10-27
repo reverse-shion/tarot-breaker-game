@@ -110,3 +110,14 @@ test('actual oversized JSON is rejected even without content-length',async()=>{
   assert.equal(called,false);
  }finally{global.fetch=original;}
 });
+
+test('game limits AI attempts to three and resets on a new encounter',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const source=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(source,/const AI_CALL_LIMIT=3;/);
+ assert.match(source,/if\(aiCalls>=AI_CALL_LIMIT\)/);
+ assert.match(source,/aiBusy=true;aiCalls\+\+;checkpoint\(\);render\(\);/);
+ assert.match(source,/battle=C\.newGame\(\);aiCalls=0;aiPendingRequest=null;aiPendingText="";/);
+ assert.match(source,/aiCalls=Number\.isInteger\(data\.aiCalls\)/);
+ assert.match(source,/ui\.aiSend\.disabled=!reading\|\|aiBusy\|\|aiCalls>=AI_CALL_LIMIT/);
+});
