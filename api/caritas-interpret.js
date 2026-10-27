@@ -34,6 +34,8 @@ module.exports=async function handler(req,res){
  if(!ALLOWED_ORIGINS.includes(origin))return reply(res,403,{error:"origin_denied"});
  const ip=(req.headers["x-forwarded-for"]||"unknown").split(",")[0].trim();
  if(!limit(ip))return reply(res,429,{error:"rate_limited"});
+ const declaredLength=Number(req.headers["content-length"]||0);
+ if(declaredLength>4096)return reply(res,413,{error:"request_too_large"});
  const {reading}=req.body||{};
  if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
   return reply(res,400,{error:"invalid_input"});
