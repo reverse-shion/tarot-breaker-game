@@ -11,7 +11,7 @@ const CUES = Object.freeze([
 ]);
 const IDEAS = ["fear_of_weakness","self_blame","wish_to_continue"];
 const buckets = new Map();
-function reply(res,status,body){res.status(status).setHeader("Content-Type","application/json; charset=utf-8").end(JSON.stringify(body));}
+function reply(res,status,body){res.setHeader("Cache-Control","no-store, max-age=0");res.status(status).setHeader("Content-Type","application/json; charset=utf-8").end(JSON.stringify(body));}
 function limit(key){
  const now=Date.now(),b=buckets.get(key)||{at:now,count:0};
  if(now-b.at>60000){b.at=now;b.count=0;}
