@@ -294,8 +294,8 @@ async function sendAiReading(){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
   const configured=window.TAROBRE_CARITAS_API_URL;
-  const endpoint=typeof configured==="string"&&/^https:\/\/[^\s]+$/.test(configured)
-   ?configured:"/api/caritas-interpret";
+  if(typeof configured!=="string"||!/^https:\/\/[^\s]+$/.test(configured))throw Error("AI接続先が未設定です");
+  const endpoint=configured;
   const response=await fetch(endpoint,{method:"POST",signal:controller.signal,
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({reading,sessionId:aiSessionId,requestId:aiPendingRequest})});
