@@ -43,6 +43,8 @@ module.exports=async function handler(req,res){
  if(!process.env.UPSTASH_REDIS_REST_URL||!process.env.UPSTASH_REDIS_REST_TOKEN)return reply(res,503,{error:"state_store_not_configured"});
  let state;try{const saved=await redis(["GET",sessionKey(sessionId)]);state=saved?JSON.parse(saved):initialState();}
  catch(_){return reply(res,503,{error:"state_store_unavailable"});}
+ const cached=await redis(["GET",sessionKey(sessionId)+":request:"+requestId]).catch(()=>null);
+ if(cached)return reply(res,200,JSON.parse(cached));
  if(state.complete)return reply(res,409,{error:"battle_complete",state:sanitizeState(state)});
  const stage=state.stage,previousIds=state.ids;
  if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
@@ -82,6 +84,7 @@ module.exports=async function handler(req,res){
    (result.understandingIds.length>0 && (!result.evidence||!reading.includes(result.evidence))))
    return reply(res,502,{error:"ai_invalid_response"});
   const newlyRecognized=[...new Set(result.understandingIds)].filter(id=>!previousIds.includes(id));
+  if(result.understandingIds.length && result.evidence.length<2)return reply(res,502,{error:"insufficient_evidence"});
   // Atomic lock + idempotent response prevents parallel submissions and duplicate scoring.
   // Acquire before committing; race protection is provided by Redis SET NX.
   const lock=sessionKey(sessionId)+":lock";
@@ -97,6 +100,8 @@ module.exports=async function handler(req,res){
    next.complete=next.resonance>=100;
    const output={shion:result.shion,caritas:result.caritas,evidence:result.evidence,
     understandingIds:accepted,state:sanitizeState(next)};
+   // Cache successful request result before returning; retry uses same requestId.
+   await redis(["SET",sessionKey(sessionId)+":request:"+requestId,JSON.stringify(output),"EX",SESSION_TTL]);
    await redis(["SET",sessionKey(sessionId),JSON.stringify(next),"EX",SESSION_TTL]);
    return reply(res,200,output);
   }finally{await redis(["DEL",lock]).catch(()=>{});}
