@@ -45,8 +45,7 @@ module.exports=async function handler(req,res){
  catch(_){return reply(res,503,{error:"state_store_unavailable"});}
  if(state.complete)return reply(res,409,{error:"battle_complete",state:sanitizeState(state)});
  const stage=state.stage,previousIds=state.ids;
- if(typeof reading!=="string"||reading.trim().length<8||reading.length>700 ||
-
+ if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
  return reply(res,400,{error:"invalid_input"});
  if(!process.env.GEMINI_API_KEY)return reply(res,503,{error:"ai_not_configured"});
  const schema={type:"OBJECT",properties:{
