@@ -23,7 +23,7 @@ let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
-let modalIndex=-1,committing=false,attempts=0;
+let modalIndex=-1,committing=false,attempts=0,aiBusy=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-v13c",SAVE_VERSION=13;
 function checkpoint(){
  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle}));}catch(_){}
@@ -237,6 +237,12 @@ function render(){
   setText(ui.tactic,(s.resonance+p.resonance===100?"共鳴MAX":"共鳴："+resLabel)+" ／ "+(!p.hasCounter?"反撃なし":"予想被害："+p.damage));
  }else{
   setText(ui.preview,"三枚のカードを読もう");setText(ui.tactic,"");
+ }
+ if(ui.aiInput){
+  ui.aiInput.disabled=!reading||aiBusy;
+  ui.aiSend.disabled=!reading||aiBusy||ui.aiInput.value.trim().length<8;
+  ui.aiSend.textContent=aiBusy?"読み解いています…":"AIに言葉を届ける（試作）";
+  ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read");
  }
  ui.read.textContent=finisher?"対話で解放":"この読みを届ける";
  ui.read.disabled=!((reading&&!!p)||finisher);
