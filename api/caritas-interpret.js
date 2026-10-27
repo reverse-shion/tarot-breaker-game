@@ -28,6 +28,7 @@ module.exports=async function handler(req,res){
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
  }
  if(req.method==="OPTIONS"){res.statusCode=ALLOWED_ORIGIN&&origin===ALLOWED_ORIGIN?204:403;return res.end();}
+ if(req.method==="GET")return reply(res,200,{service:"caritas-interpret",mode:"stateless-preview",geminiConfigured:Boolean(process.env.GEMINI_API_KEY),originConfigured:Boolean(ALLOWED_ORIGIN),redisRequired:false});
  if(req.method!=="POST")return reply(res,405,{error:"method_not_allowed"});
  if(!ALLOWED_ORIGIN)return reply(res,503,{error:"allowed_origin_not_configured"});
  if(ALLOWED_ORIGIN && origin!==ALLOWED_ORIGIN)return reply(res,403,{error:"origin_denied"});
