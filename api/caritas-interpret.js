@@ -1,5 +1,5 @@
 /* TAROT BREAKER — isolated Gemini interpretation endpoint (Vercel Node runtime).
- * Set GEMINI_API_KEY and optional GEMINI_MODEL in Vercel; never expose the key in the client.
+ * Free-tier prototype: no Redis or paid database required. GEMINI_API_KEY stays server-side.
  * No official Caritas backstory is invented: only observable cues are supplied.
  */
 const ALLOWED_ORIGIN = process.env.TAROBRE_ALLOWED_ORIGIN || "";
@@ -10,20 +10,6 @@ const CUES = Object.freeze([
  "カリタスの視線が揺れ、言葉にならない本音が漏れる。"
 ]);
 const IDEAS = ["fear_of_weakness","self_blame","wish_to_continue"];
-const crypto=require("node:crypto");
-const SESSION_TTL=86400;
-async function redis(command){
- const url=process.env.UPSTASH_REDIS_REST_URL,token=process.env.UPSTASH_REDIS_REST_TOKEN;
- if(!url||!token)throw Error("state_store_not_configured");
- const r=await fetch(url,{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify(command)});
- if(!r.ok)throw Error("state_store_unavailable");
- const j=await r.json();if(j.error)throw Error("state_store_unavailable");return j.result;
-}
-function sessionKey(id){return "tarobre:caritas:ai:v1:"+id;}
-function validId(s){return typeof s==="string"&&/^[a-f0-9-]{36}$/.test(s);}
-function initialState(){return {ids:[],resonance:0,stage:0,turn:0,complete:false};}
-function sanitizeState(x){return {ids:x.ids,resonance:x.resonance,stage:x.stage,turn:x.turn,complete:x.complete};}
-
 const buckets = new Map();
 function reply(res,status,body){res.status(status).setHeader("Content-Type","application/json; charset=utf-8").end(JSON.stringify(body));}
 function limit(key){
@@ -46,18 +32,11 @@ module.exports=async function handler(req,res){
  if(ALLOWED_ORIGIN && origin!==ALLOWED_ORIGIN)return reply(res,403,{error:"origin_denied"});
  const ip=(req.headers["x-forwarded-for"]||"unknown").split(",")[0].trim();
  if(!limit(ip))return reply(res,429,{error:"rate_limited"});
- const {reading,sessionId,requestId}=req.body||{};
- if(!validId(sessionId)||!validId(requestId))return reply(res,400,{error:"invalid_session"});
- if(!process.env.UPSTASH_REDIS_REST_URL||!process.env.UPSTASH_REDIS_REST_TOKEN)return reply(res,503,{error:"state_store_not_configured"});
- let state;try{const saved=await redis(["GET",sessionKey(sessionId)]);state=saved?JSON.parse(saved):initialState();}
- catch(_){return reply(res,503,{error:"state_store_unavailable"});}
- const cached=await redis(["GET",sessionKey(sessionId)+":request:"+requestId]).catch(()=>null);
- if(cached)return reply(res,200,JSON.parse(cached));
- if(state.complete)return reply(res,409,{error:"battle_complete",state:sanitizeState(state)});
- const stage=state.stage,previousIds=state.ids;
+ const {reading}=req.body||{};
  if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
- return reply(res,400,{error:"invalid_input"});
+  return reply(res,400,{error:"invalid_input"});
  if(!process.env.GEMINI_API_KEY)return reply(res,503,{error:"ai_not_configured"});
+ const stage=0,previousIds=[];
  const schema={type:"OBJECT",properties:{
  evidence:{type:"STRING"},understandingIds:{type:"ARRAY",items:{type:"STRING",enum:IDEAS}},
  shion:{type:"STRING"},caritas:{type:"STRING"},nextCue:{type:"INTEGER"}
@@ -91,39 +70,9 @@ module.exports=async function handler(req,res){
    result.understandingIds.some(id=>!IDEAS.includes(id))||
    (result.understandingIds.length>0 && (!result.evidence||!reading.includes(result.evidence))))
    return reply(res,502,{error:"ai_invalid_response"});
-  const newlyRecognized=[...new Set(result.understandingIds)].filter(id=>!previousIds.includes(id));
-  if(result.understandingIds.length && result.evidence.length<2)return reply(res,502,{error:"insufficient_evidence"});
-  // Atomic lock + idempotent response prevents parallel submissions and duplicate scoring.
-  // Acquire before committing; race protection is provided by Redis SET NX.
-  const lock=sessionKey(sessionId)+":lock";
-  const got=await redis(["SET",lock,requestId,"EX",30,"NX"]);
-  if(got!=="OK")return reply(res,409,{error:"session_busy"});
-  try{
-   const latestRaw=await redis(["GET",sessionKey(sessionId)]);
-   const latest=latestRaw?JSON.parse(latestRaw):initialState();
-   if(latest.turn!==state.turn)return reply(res,409,{error:"stale_state",state:sanitizeState(latest)});
-   const accepted=newlyRecognized.filter(id=>!latest.ids.includes(id));
-   const next={ids:[...latest.ids,...accepted],resonance:Math.min(100,latest.resonance+accepted.length*35),
-    stage:Math.max(latest.stage,result.nextCue),turn:latest.turn+1,complete:false};
-   next.complete=next.resonance>=100;
-   const output={shion:result.shion,caritas:result.caritas,evidence:result.evidence,
-    understandingIds:accepted,state:sanitizeState(next)};
-   // Cache successful request result before returning; retry uses same requestId.
-   // Commit state and retry cache atomically; never cache a result without its state.
-   const script="local current=redis.call('GET',KEYS[1]); "+
-    "if (current or '')~=ARGV[1] then return 0 end; "+
-    "redis.call('SET',KEYS[1],ARGV[2],'EX',ARGV[4]); "+
-    "redis.call('SET',KEYS[2],ARGV[3],'EX',ARGV[4]); return 1";
-   const committed=await redis(["EVAL",script,2,sessionKey(sessionId),
-    sessionKey(sessionId)+":request:"+requestId,latestRaw||"",
-    JSON.stringify(next),JSON.stringify(output),SESSION_TTL]);
-   if(committed!==1)return reply(res,409,{error:"stale_state"});
-   return reply(res,200,output);
-  }finally{
-   const unlock="if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end";
-   await redis(["EVAL",unlock,1,lock,requestId]).catch(()=>{});
-  }
+  const recognized=[...new Set(result.understandingIds)];
+  if(recognized.length&&result.evidence.length<2)return reply(res,502,{error:"insufficient_evidence"});
+  // Stateless preview: no authoritative score or persistent session.
+  return reply(res,200,{shion:result.shion,caritas:result.caritas,evidence:result.evidence,
+   understandingIds:recognized,previewOnly:true});
 
- }catch(e){return reply(res,502,{error:"ai_unavailable"});}
- finally{clearTimeout(timer);}
-};
