@@ -30,6 +30,7 @@ module.exports=async function handler(req,res){
  if(req.method==="OPTIONS"){res.statusCode=ALLOWED_ORIGINS.includes(origin)?204:403;return res.end();}
  if(req.method==="GET")return reply(res,200,{service:"caritas-interpret",mode:"stateless-preview",geminiConfigured:Boolean(process.env.GEMINI_API_KEY),originConfigured:ALLOWED_ORIGINS.length>0,redisRequired:false});
  if(req.method!=="POST")return reply(res,405,{error:"method_not_allowed"});
+ if(process.env.TAROBRE_AI_ENABLED==="false")return reply(res,503,{error:"ai_temporarily_disabled"});
  if(!ALLOWED_ORIGINS.length)return reply(res,503,{error:"allowed_origin_not_configured"});
  if(!ALLOWED_ORIGINS.includes(origin))return reply(res,403,{error:"origin_denied"});
  const ip=(req.headers["x-forwarded-for"]||"unknown").split(",")[0].trim();
@@ -41,7 +42,6 @@ module.exports=async function handler(req,res){
  const {reading,turn}=req.body||{};
  if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
   return reply(res,400,{error:"invalid_input"});
- if(process.env.TAROBRE_AI_ENABLED==="false")return reply(res,503,{error:"ai_temporarily_disabled"});
  if(!process.env.GEMINI_API_KEY)return reply(res,503,{error:"ai_not_configured"});
  const stage=Number.isInteger(turn)&&turn>=0&&turn<=2?turn:0,previousIds=[];
  const schema={type:"OBJECT",properties:{
