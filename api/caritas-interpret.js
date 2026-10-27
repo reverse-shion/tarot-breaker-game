@@ -76,3 +76,6 @@ module.exports=async function handler(req,res){
   return reply(res,200,{shion:result.shion,caritas:result.caritas,evidence:result.evidence,
    understandingIds:recognized,previewOnly:true});
 
+ }catch(e){return reply(res,502,{error:"ai_unavailable"});}
+ finally{clearTimeout(timer);}
+};
