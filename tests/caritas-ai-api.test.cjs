@@ -172,3 +172,36 @@ test('iPhone card layout is fixed-height and the AI editor is collapsed initiall
  assert.match(css,/#caritas-event \.cb-cards\{\s*flex:0 0 auto;/);
  assert.match(css,/#caritas-event \.cb-controls\{\s*min-height:0;overflow-y:auto;/);
 });
+
+test('brief help is a grounded reading that can earn resonance',async()=>{
+ const original=global.fetch;
+ global.fetch=async(_url,options)=>{
+  const payload=JSON.parse(options.body);
+  const prompt=payload.contents[0].parts[0].text;
+  assert.match(prompt,/offer_support/);
+  assert.match(prompt,/acknowledge_pain/);
+  assert.match(prompt,/direct spoken lines/);
+  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({
+   evidence:'助ける',understandingIds:['offer_support','acknowledge_pain'],
+   shion:'つらいなら、俺たちが力を貸す。',caritas:'……私に、手を差し伸べるというのか。',nextCue:1
+  })}]}}]})};
+ };
+ try{
+  const res=await call('POST','辛いから助けるよ');
+  assert.equal(res.statusCode,200);
+  assert.deepEqual(res.body.understandingIds,['offer_support','acknowledge_pain']);
+  const C=require('../caritas-battle-core.js');
+  const state=C.applyAiInsight(C.newGame(),res.body.understandingIds);
+  assert.equal(state.resonance,8);
+  assert.equal(state.dark,96);
+ }finally{global.fetch=original;}
+});
+test('AI character lines use the exact main shared dialogue player and update meter HUD',()=>{
+ const fs=require('node:fs');
+ const js=fs.readFileSync(require('node:path').join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(js,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
+ assert.match(js,/dialogue\.show\(\{speaker,text,actor:/);
+ assert.match(js,/ui\.aiInput\.blur\(\)/);
+ assert.match(js,/const gain=battle\.resonance-before\.resonance,relief=before\.dark-battle\.dark/);
+ assert.doesNotMatch(js,/ui\.aiResult\.textContent=\["シオン："/);
+});
