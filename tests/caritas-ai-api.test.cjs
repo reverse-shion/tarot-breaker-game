@@ -142,3 +142,10 @@ test('Gemini receives a distinct visible cue for each battle turn',async()=>{
   assert.match(seen[2],/視線が揺れ、言葉にならない本音が漏れる/);
  }finally{global.fetch=original;}
 });
+
+test('AI responses and errors explicitly disable HTTP caching',async()=>{
+ const health=await call('GET');
+ assert.equal(health.headers['Cache-Control'],'no-store, max-age=0');
+ const invalid=await call('POST','短い');
+ assert.equal(invalid.headers['Cache-Control'],'no-store, max-age=0');
+});
