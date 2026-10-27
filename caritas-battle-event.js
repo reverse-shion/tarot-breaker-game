@@ -277,7 +277,7 @@ function render(){
  }
 }
 function openCard(i){
- if(story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||suspended())return;
+ if(story!=="battle"||battle.phase!=="read"||dialogueBusy||aiBusy||committing||suspended())return;
  once=true;ui.guide.hidden=true;modalIndex=i;render();
  ui.modalWords.querySelector(".cb-modal-word")?.focus?.({preventScroll:true});
 }
@@ -330,17 +330,31 @@ async function sendAiReading(){
    return;
   }
   const data=await response.json();
-  if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
-  aiCalls++;checkpoint();
+  if(typeof data.shion!=="string"||!data.shion.trim()||typeof data.caritas!=="string"||!data.caritas.trim())throw Error("応答が不正です");
+  // Only the same unresolved battle turn is allowed to receive the dialogue/bonus.
+  if(story!=="battle"||battle.phase!=="read"||battle.turn!==requestTurn)return;
   const before=battle;
-  if(story==="battle"&&battle.phase==="read"&&battle.turn===requestTurn&&C.applyAiInsight){
-   battle=C.applyAiInsight(battle,Array.isArray(data.understandingIds)?data.understandingIds:[]);
-   if(battle!==before)checkpoint();
-  }
-  const gain=battle.resonance-before.resonance;
+  battle=C.applyAiInsight(battle,Array.isArray(data.understandingIds)?data.understandingIds:[]);
+  aiCalls++;checkpoint(); // Charge only a successful, usable Gemini reply.
+  const gain=battle.resonance-before.resonance,relief=before.dark-battle.dark;
   aiLastState=null;aiPendingRequest=null;aiPendingText="";
-  ui.aiResult.textContent=["シオン："+data.shion,"カリタス："+data.caritas,
-   gain>0?"読みから共鳴＋"+gain+"（このターンは適用済み）":"読みを受け止めた。共鳴ボーナスなし。"].join(String.fromCharCode(10));
+  ui.aiInput.blur(); // Dismiss the iPhone keyboard before the cinematic dialogue.
+  aiPanelOpen=false;ui.aiResult.textContent="";
+  // Reuse the existing main-game speaker/name-coloured dialogue, never plain AI text.
+  saySequence([["シオン",data.shion],["カリタス",data.caritas]],()=>{
+   render();
+   if(gain>0||relief>0){
+    ui.resBar.parentElement.classList.add("cb-ai-meter-flash");
+    ui.darkBar.parentElement.classList.add("cb-ai-meter-flash");
+    setTimeout(()=>{
+     ui.resBar?.parentElement?.classList.remove("cb-ai-meter-flash");
+     ui.darkBar?.parentElement?.classList.remove("cb-ai-meter-flash");
+    },1200);
+    toast("心象共鳴＋"+gain+"　闇侵食−"+relief);
+   }else{
+    toast("言葉は届いた。次はカードの意味から、もう一歩考えてみよう");
+   }
+  });
  }catch(error){
   ui.aiResult.textContent="通信できません。文章とAIの利用回数は保持しています。 "+(error.name==="AbortError"?"応答が時間切れになりました。":error.message);
   aiRetryAt=Date.now()+8000;
@@ -349,7 +363,7 @@ async function sendAiReading(){
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
 function perform(kind){
- if(story!=="battle"||dialogueBusy||committing||suspended()||modalIndex>=0)return;
+ if(story!=="battle"||dialogueBusy||aiBusy||committing||suspended()||modalIndex>=0)return;
  if(battle.phase==="finisher"&&["skill","dialogue"].includes(kind)){
   const next=C.finish(battle,kind);if(next===battle)return;
   committing=true;battle=next;checkpoint();
