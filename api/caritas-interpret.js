@@ -2,7 +2,7 @@
  * Free-tier prototype: no Redis or paid database required. GEMINI_API_KEY stays server-side.
  * No official Caritas backstory is invented: only observable cues are supplied.
  */
-const ALLOWED_ORIGIN = process.env.TAROBRE_ALLOWED_ORIGIN || "";
+const ALLOWED_ORIGINS = (process.env.TAROBRE_ALLOWED_ORIGIN || "").split(",").map(x=>x.trim()).filter(Boolean);
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const CUES = Object.freeze([
  "カリタスは口を閉ざし、こちらを見ようとしない。",
@@ -21,17 +21,17 @@ function limit(key){
 }
 module.exports=async function handler(req,res){
  const origin=req.headers.origin||"";
- if(ALLOWED_ORIGIN && origin===ALLOWED_ORIGIN){
-  res.setHeader("Access-Control-Allow-Origin",ALLOWED_ORIGIN);
+ if(ALLOWED_ORIGINS.includes(origin)){
+  res.setHeader("Access-Control-Allow-Origin",origin);
   res.setHeader("Vary","Origin");
   res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
  }
- if(req.method==="OPTIONS"){res.statusCode=ALLOWED_ORIGIN&&origin===ALLOWED_ORIGIN?204:403;return res.end();}
- if(req.method==="GET")return reply(res,200,{service:"caritas-interpret",mode:"stateless-preview",geminiConfigured:Boolean(process.env.GEMINI_API_KEY),originConfigured:Boolean(ALLOWED_ORIGIN),redisRequired:false});
+ if(req.method==="OPTIONS"){res.statusCode=ALLOWED_ORIGINS.includes(origin)?204:403;return res.end();}
+ if(req.method==="GET")return reply(res,200,{service:"caritas-interpret",mode:"stateless-preview",geminiConfigured:Boolean(process.env.GEMINI_API_KEY),originConfigured:ALLOWED_ORIGINS.length>0,redisRequired:false});
  if(req.method!=="POST")return reply(res,405,{error:"method_not_allowed"});
- if(!ALLOWED_ORIGIN)return reply(res,503,{error:"allowed_origin_not_configured"});
- if(ALLOWED_ORIGIN && origin!==ALLOWED_ORIGIN)return reply(res,403,{error:"origin_denied"});
+ if(!ALLOWED_ORIGINS.length)return reply(res,503,{error:"allowed_origin_not_configured"});
+ if(!ALLOWED_ORIGINS.includes(origin))return reply(res,403,{error:"origin_denied"});
  const ip=(req.headers["x-forwarded-for"]||"unknown").split(",")[0].trim();
  if(!limit(ip))return reply(res,429,{error:"rate_limited"});
  const {reading}=req.body||{};
