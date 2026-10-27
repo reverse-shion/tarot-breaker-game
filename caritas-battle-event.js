@@ -302,7 +302,7 @@ async function sendAiReading(){
   const endpoint=configured;
   const response=await fetch(endpoint,{method:"POST",signal:controller.signal,
    headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({reading,sessionId:aiSessionId,requestId:aiPendingRequest})});
+   body:JSON.stringify({reading,turn:Math.min(2,Math.max(0,battle.turn)),sessionId:aiSessionId,requestId:aiPendingRequest})});
   if(!response.ok)throw Error("通信エラー："+response.status);
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
