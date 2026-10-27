@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-process.env.TAROBRE_ALLOWED_ORIGIN='https://raw.githack.com';
+process.env.TAROBRE_ALLOWED_ORIGIN='https://raw.githack.com,https://reverse-shion.github.io';
 process.env.GEMINI_API_KEY='test-only-not-a-real-key';
 const handler=require('../api/caritas-interpret.js');
 let serial=0;
@@ -32,7 +32,10 @@ test('allowed origin receives CORS preflight; others do not',async()=>{
  const ok=await call('OPTIONS',null,'https://raw.githack.com');
  assert.equal(ok.statusCode,204);
  assert.equal(ok.headers['Access-Control-Allow-Origin'],'https://raw.githack.com');
- const denied=await call('OPTIONS',null,'https://reverse-shion.github.io');
+ const github=await call('OPTIONS',null,'https://reverse-shion.github.io');
+ assert.equal(github.statusCode,204);
+ assert.equal(github.headers['Access-Control-Allow-Origin'],'https://reverse-shion.github.io');
+ const denied=await call('OPTIONS',null,'https://example.org');
  assert.equal(denied.statusCode,403);
  assert.equal(denied.headers['Access-Control-Allow-Origin'],undefined);
 });
