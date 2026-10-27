@@ -38,12 +38,12 @@ module.exports=async function handler(req,res){
  if(declaredLength>4096)return reply(res,413,{error:"request_too_large"});
  const bodyBytes=Buffer.byteLength(JSON.stringify(req.body||{}),"utf8");
  if(bodyBytes>4096)return reply(res,413,{error:"request_too_large"});
- const {reading}=req.body||{};
+ const {reading,turn}=req.body||{};
  if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
   return reply(res,400,{error:"invalid_input"});
  if(process.env.TAROBRE_AI_ENABLED==="false")return reply(res,503,{error:"ai_temporarily_disabled"});
  if(!process.env.GEMINI_API_KEY)return reply(res,503,{error:"ai_not_configured"});
- const stage=0,previousIds=[];
+ const stage=Number.isInteger(turn)&&turn>=0&&turn<=2?turn:0,previousIds=[];
  const schema={type:"OBJECT",properties:{
  evidence:{type:"STRING"},understandingIds:{type:"ARRAY",items:{type:"STRING",enum:IDEAS}},
  shion:{type:"STRING"},caritas:{type:"STRING"},nextCue:{type:"INTEGER"}
