@@ -303,7 +303,13 @@ async function sendAiReading(){
   const response=await fetch(endpoint,{method:"POST",signal:controller.signal,
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({reading,turn:Math.min(2,Math.max(0,battle.turn)),sessionId:aiSessionId,requestId:aiPendingRequest})});
-  if(!response.ok)throw Error("通信エラー："+response.status);
+  if(!response.ok){
+    if(response.status===503||response.status===429||response.status===502){
+     ui.aiResult.textContent=response.status===429?"AIが混み合っています。カードを選んで通常の読みを続けられます。":"AIは現在利用できません。カードを選んで通常の読みを続けられます。";
+     return;
+    }
+    throw Error("通信エラー："+response.status);
+   }
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
   const before=battle;
