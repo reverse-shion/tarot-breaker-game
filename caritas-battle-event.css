@@ -419,3 +419,12 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 @media(prefers-reduced-motion:reduce){
  #caritas-event .cb-card-panel,#caritas-event .cb-modal-image{animation:none;transition:none}
 }
+
+/* Isolated free-text interpretation prototype; mobile keyboard-friendly. */
+.cb-ai-panel{display:grid;gap:8px;margin:10px 0;padding:10px;border:1px solid rgba(224,202,148,.45);border-radius:10px;background:rgba(12,14,31,.84);color:#f7f0dd}
+.cb-ai-panel[hidden]{display:none!important}
+.cb-ai-label{display:grid;gap:6px;font-size:13px}
+.cb-ai-input{box-sizing:border-box;width:100%;min-height:72px;padding:10px;border:1px solid #c7b88e;border-radius:7px;background:#f9f5eb;color:#191728;font:16px/1.5 sans-serif;resize:vertical}
+.cb-ai-send{min-height:44px;padding:10px;border-radius:7px;background:#c8aa65;color:#181426;font-weight:700}
+.cb-ai-send:disabled{opacity:.55}
+.cb-ai-result{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6}
