@@ -302,9 +302,9 @@ async function sendAiReading(){
   if(!response.ok)throw Error("通信エラー："+response.status);
   const data=await response.json();
   if(typeof data.shion!=="string"||typeof data.caritas!=="string")throw Error("応答が不正です");
-  aiLastState=data.state;aiPendingRequest=null;aiPendingText="";
+  aiLastState=null;aiPendingRequest=null;aiPendingText="";
   ui.aiResult.textContent=["シオン："+data.shion,"カリタス："+data.caritas,
-   "AI共鳴："+(data.state?.resonance??0)+"/100"].join(String.fromCharCode(10));
+   "読み取れた視点："+(data.understandingIds||[]).length+"件（試作・共鳴値には未反映）"].join(String.fromCharCode(10));
  }catch(error){ui.aiResult.textContent="通信できません。文章は保持しています。 "+error.message;}
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
