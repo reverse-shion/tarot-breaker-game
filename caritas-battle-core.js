@@ -75,11 +75,25 @@ function read(s){
  next.phase=next.dark===0?"ending":next.resonance===100?"finisher":next.hp===0?"defeat":"read";
  return next;
 }
+// AI adds a limited one-time, grounded understanding bonus. Cards remain the
+// primary way to release darkness; AI alone cannot erase the last darkness point.
+function applyAiInsight(s,ids){
+ if(s.phase!=="read"||s.aiInsightTurn===s.turn||!Array.isArray(ids))return s;
+ const allowed=["fear_of_weakness","self_blame","wish_to_continue","acknowledge_pain","offer_support","respect_choice"];
+ const count=new Set(ids.filter(id=>allowed.includes(id))).size;
+ if(!count)return s;
+ const bonus=Math.min(12,4*count,100-s.resonance);
+ const relief=Math.min(Math.max(0,s.dark-1),2*Math.min(3,count));
+ if(!bonus&&!relief)return s;
+ const resonance=s.resonance+bonus;
+ return {...s,resonance,dark:s.dark-relief,aiInsightTurn:s.turn,
+  phase:resonance===100?"finisher":"read"};
+}
 function canSkill(s){return s.phase==="finisher"&&s.cards.some(c=>c.major);}
 function finish(s,mode){
  if(s.phase!=="finisher"||!["dialogue","skill"].includes(mode)||(mode==="skill"&&!canSkill(s)))return s;
  return {...s,phase:"ending",dark:0,used:mode==="skill",finisherType:mode};
 }
 function next(s){return s.phase==="ending"?{...s,phase:"complete"}:s;}
-return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,canSkill,finish,next});
+return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,applyAiInsight,canSkill,finish,next});
 });

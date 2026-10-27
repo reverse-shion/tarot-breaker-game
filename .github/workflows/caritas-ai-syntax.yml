@@ -1,0 +1,33 @@
+name: Caritas AI JavaScript syntax
+on:
+  pull_request:
+    paths:
+      - 'api/caritas-interpret.js'
+      - 'caritas-battle-event.js'
+      - 'caritas-battle-core.js'
+      - 'tests/caritas-ai-insight.test.cjs'
+      - 'tests/caritas-ai-api.test.cjs'
+      - 'tests/caritas-ai-http-integration.cjs'
+      - '.github/workflows/caritas-ai-syntax.yml'
+  push:
+    branches:
+      - feature/caritas-ai-resonance-v1
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check battle and API syntax
+        run: |
+          node --check api/caritas-interpret.js
+          node --check caritas-battle-event.js
+          node --check caritas-battle-core.js
+      - name: Test AI resonance boundaries
+        run: node --test tests/caritas-ai-insight.test.cjs tests/caritas-ai-api.test.cjs
+      - name: Test local HTTP API end to end (no Gemini quota)
+        run: node tests/caritas-ai-http-integration.cjs
+
+

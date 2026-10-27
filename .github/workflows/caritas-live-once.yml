@@ -1,0 +1,27 @@
+# One-shot live check on the development branch only.
+# Triggers only when this workflow file changes; not on normal game commits.
+# Does not touch main or production and sends at most ONE Gemini request.
+name: Caritas Gemini preview one-shot
+on:
+  push:
+    branches:
+      - feature/caritas-ai-resonance-v1
+    paths:
+      - '.github/workflows/caritas-live-once.yml'
+permissions:
+  contents: read
+jobs:
+  one-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify Gemini live preview (one actual POST)
+        env:
+          CARITAS_API_URL: https://tarot-breaker-api-git-feature-caritas-ai-347c71-re-verse-shion.vercel.app/api/caritas-interpret
+          CARITAS_ORIGIN: https://raw.githack.com
+          CARITAS_SMOKE_TURNS: '1'
+        run: node scripts/smoke-caritas-live.cjs

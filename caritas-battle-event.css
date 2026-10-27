@@ -419,3 +419,51 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 @media(prefers-reduced-motion:reduce){
  #caritas-event .cb-card-panel,#caritas-event .cb-modal-image{animation:none;transition:none}
 }
+
+/* Isolated free-text interpretation prototype; mobile keyboard-friendly. */
+.cb-ai-panel{display:grid;gap:8px;margin:10px 0;padding:10px;border:1px solid rgba(224,202,148,.45);border-radius:10px;background:rgba(12,14,31,.84);color:#f7f0dd}
+.cb-ai-panel[hidden]{display:none!important}
+.cb-ai-label{display:grid;gap:6px;font-size:13px}
+.cb-ai-input{box-sizing:border-box;width:100%;min-height:72px;padding:10px;border:1px solid #c7b88e;border-radius:7px;background:#f9f5eb;color:#191728;font:16px/1.5 sans-serif;resize:vertical}
+.cb-ai-send{min-height:44px;padding:10px;border-radius:7px;background:#c8aa65;color:#181426;font-weight:700}
+.cb-ai-send:disabled{opacity:.55}
+.cb-ai-result{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6}
+
+/* iPhone repair: fixed battle viewport with an always-visible, tappable tarot row.
+   The earlier flex:1 row collapsed to zero when the text editor was taller than the controls. */
+#caritas-event .cb-controls{
+ min-height:0;overflow-y:auto;overflow-x:hidden;
+ overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;
+}
+#caritas-event .cb-cards{
+ flex:0 0 auto;
+ height:clamp(168px,23dvh,235px);
+ min-height:168px;
+ align-items:stretch;
+}
+#caritas-event .cb-card{min-height:0}
+#caritas-event .cb-card-button{height:100%;min-height:44px}
+#caritas-event .cb-readline,
+#caritas-event .cb-actions,
+#caritas-event .cb-ai-panel{flex-shrink:0}
+#caritas-event .cb-ai-panel{
+ display:block;margin:0;padding:0;border:0;background:transparent;
+}
+#caritas-event .cb-ai-toggle{
+ display:block;width:100%;min-height:40px;padding:7px 12px;
+ border:1px solid #e6ce97;border-radius:8px;
+ background:linear-gradient(115deg,#345781,#2a3968);
+ color:#fff3d4;text-align:left;font-size:14px;
+}
+#caritas-event .cb-ai-body{
+ display:grid;gap:8px;padding:9px 8px;margin-top:4px;
+ border:1px solid rgba(224,202,148,.45);border-radius:9px;
+ background:rgba(12,14,31,.84);
+}
+#caritas-event .cb-ai-body[hidden]{display:none!important}
+#caritas-event .cb-ai-result:empty{display:none}
+#caritas-event .cb-tutorial{display:none!important}
+@media(max-height:670px){
+ #caritas-event .cb-cards{height:clamp(146px,23dvh,195px);min-height:146px}
+}
