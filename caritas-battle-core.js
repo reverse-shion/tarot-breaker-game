@@ -75,11 +75,23 @@ function read(s){
  next.phase=next.dark===0?"ending":next.resonance===100?"finisher":next.hp===0?"defeat":"read";
  return next;
 }
+// AI interpretation may add a small, one-time bonus to the current reading.
+// It never replaces the deterministic card selection or creates an instant finisher.
+function applyAiInsight(s,ids){
+ if(s.phase!=="read"||s.aiInsightTurn===s.turn||!Array.isArray(ids))return s;
+ const allowed=["fear_of_weakness","self_blame","wish_to_continue"];
+ const count=new Set(ids.filter(id=>allowed.includes(id))).size;
+ if(!count)return s;
+ const bonus=Math.min(12,4*count,100-s.resonance);
+ if(!bonus)return s;
+ return {...s,resonance:s.resonance+bonus,aiInsightTurn:s.turn,
+  phase:s.resonance+bonus===100?"finisher":"read"};
+}
 function canSkill(s){return s.phase==="finisher"&&s.cards.some(c=>c.major);}
 function finish(s,mode){
  if(s.phase!=="finisher"||!["dialogue","skill"].includes(mode)||(mode==="skill"&&!canSkill(s)))return s;
  return {...s,phase:"ending",dark:0,used:mode==="skill",finisherType:mode};
 }
 function next(s){return s.phase==="ending"?{...s,phase:"complete"}:s;}
-return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,canSkill,finish,next});
+return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,applyAiInsight,canSkill,finish,next});
 });
