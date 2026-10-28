@@ -70,15 +70,59 @@ const newGame=(cards=CARDS)=>({
 function valid(s){return Array.isArray(s.words)&&s.words.length===3&&s.words.every((w,i)=>s.cards?.[i]?.words?.includes(w)&&TYPE[w]);}
 function preview(s){return s.words.map(w=>w?MEANINGS[w]:"まだ選んでいない").join("、")+"。";}
 function points(){return 3;}
+// Each tarot position contributes a DIFFERENT attack property. Opponent's
+// disclosed heart-state changes the best choice; there is no universal best trio.
+const COMPASS_POWER=Object.freeze({
+ "不安":{closed:19,storm:14,wavering:13},
+ "秘密":{closed:14,storm:20,wavering:16},
+ "無意識":{closed:16,storm:16,wavering:21}
+});
+const TRIGGER_FORCE=Object.freeze({
+ "忍耐":{closed:1.35,storm:1.00,wavering:1.10},
+ "自制":{closed:1.05,storm:1.40,wavering:1.20},
+ "勇気":{closed:1.15,storm:1.20,wavering:1.45}
+});
+const ROUTE_PENETRATION=Object.freeze({
+ "希望":{closed:0.18,storm:0.34,wavering:0.40},
+ "癒し":{closed:0.56,storm:0.51,wavering:0.30},
+ "願い":{closed:0.28,storm:0.29,wavering:0.68}
+});
+const STATE_ARMOR=Object.freeze({closed:12,storm:9,wavering:7});
+const FIT=Object.freeze({
+ closed:["不安","忍耐","癒し"],
+ storm:["秘密","自制","癒し"],
+ wavering:["無意識","勇気","願い"]
+});
 function predict(s){
  if(s.phase!=="read"||!valid(s))return null;
- const state=stateFor(s.dark),v=s.words.map(w=>TABLE[state][TYPE[w]]);
- const dark=Math.min(s.dark,Math.floor((v[0][0]+v[1][0]+v[2][0]+1)/3));
- const resonance=Math.min(100-s.resonance,Math.floor((v[0][1]+v[1][1]+v[2][1]+1)/3));
+ const state=stateFor(s.dark);
+ const words=s.words;
+ const power=COMPASS_POWER[words[0]][state];
+ const force=TRIGGER_FORCE[words[1]][state];
+ const penetration=ROUTE_PENETRATION[words[2]][state];
+ const armor=STATE_ARMOR[state];
+ const hit=Math.max(4,Math.round(power*force-armor*(1-penetration)));
+ const match=words.filter((w,i)=>w===FIT[state][i]).length;
+ const dark=Math.min(s.dark,hit);
+ // Resonance reflects interpretive fit, not just brute attack damage.
+ const resonance=Math.min(100-s.resonance,8+Math.floor(hit/2)+3*match);
  const endDark=s.dark-dark===0,endRes=s.resonance+resonance===100;
+ const v=words.map(w=>TABLE[state][TYPE[w]]);
  const rawDamage=Math.floor((v[0][2]+v[1][2]+v[2][2]+1)/2);
  const damage=endDark||endRes?0:Math.min(s.hp,rawDamage);
- return {state,dark,resonance,damage,rawDamage,hasCounter:!endDark&&!endRes,darkBucket:bucket(dark),resBucket:bucket(resonance)};
+ return {state,dark,resonance,damage,rawDamage,hasCounter:!endDark&&!endRes,
+   power,force,penetration,match,hit,
+   darkBucket:bucket(dark),resBucket:bucket(resonance)};
+}
+function reaction(s,p){
+ const route=s.words[2],state=p.state;
+ const lines={
+  "希望":{closed:"……私にも、まだ守りたいものがあると言うのか。",storm:"……失いたくないものを……お前は見ているのか。",wavering:"……まだ、進む道はあるのだろうか。"},
+  "癒し":{closed:"……お前も、怖いのか。……それでも私に語るというのか。",storm:"……弱さを隠さずに話すとは……奇妙な者だ。",wavering:"……怖さを口にしても、よいのかもしれぬな。"},
+  "願い":{closed:"……答えを迫らぬと言うのか。",storm:"……私が選んでよい……そういうことか。",wavering:"……今すぐ答えなくとも、よいのだな。"}
+ };
+ // Show the player what their route delivered, regardless of score.
+ return lines[route]?.[state]||"……お前の言葉は、確かに聞こえた。";
 }
 function select(s,i,word){
  if(s.phase!=="read"||!s.cards[i]?.words.includes(word)||!TYPE[word])return s;
@@ -111,5 +155,5 @@ function finish(s,mode){
  return {...s,phase:"ending",dark:0,used:mode==="skill",finisherType:mode};
 }
 function next(s){return s.phase==="ending"?{...s,phase:"complete"}:s;}
-return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,READING_OPTIONS,readingPages,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,applyAiInsight,canSkill,finish,next});
+return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,READING_OPTIONS,readingPages,reaction,COMPASS_POWER,TRIGGER_FORCE,ROUTE_PENETRATION,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,applyAiInsight,canSkill,finish,next});
 });
