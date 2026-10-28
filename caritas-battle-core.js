@@ -149,11 +149,24 @@ function applyAiInsight(s,ids){
  return {...s,resonance,dark:s.dark-relief,aiInsightTurn:s.turn,
   phase:resonance===100?"finisher":"read"};
 }
+// A delivered personal reading earns a fixed participation reward. Its length
+// and the AI's recognized themes never change this bonus. The existing insight
+// calculation remains separate; even a reply with no themes consumes this turn.
+function applyWrittenReading(s,ids,firstDelivery=false){
+ if(s.phase!=="read"||s.aiInsightTurn===s.turn)return s;
+ const understood=applyAiInsight(s,Array.isArray(ids)?ids:[]);
+ const requestedBonus=firstDelivery===true?50:25;
+ const bonus=Math.min(requestedBonus,Math.max(0,100-understood.resonance));
+ const resonance=understood.resonance+bonus;
+ return {...understood,resonance,aiInsightTurn:s.turn,
+  lastWrittenReward:{bonus,requestedBonus,insight:understood.resonance-s.resonance,firstDelivery:firstDelivery===true},
+  phase:resonance===100?"finisher":"read"};
+}
 function canSkill(s){return s.phase==="finisher"&&s.cards.some(c=>c.major);}
 function finish(s,mode){
  if(s.phase!=="finisher"||!["dialogue","skill"].includes(mode)||(mode==="skill"&&!canSkill(s)))return s;
  return {...s,phase:"ending",dark:0,used:mode==="skill",finisherType:mode};
 }
 function next(s){return s.phase==="ending"?{...s,phase:"complete"}:s;}
-return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,READING_OPTIONS,readingPages,reaction,COMPASS_POWER,TRIGGER_FORCE,ROUTE_PENETRATION,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,applyAiInsight,canSkill,finish,next});
+return Object.freeze({CARDS,TYPE,TABLE,STATES,STAGES,TACTICS,ENDING,MEANINGS,READING_OPTIONS,readingPages,reaction,COMPASS_POWER,TRIGGER_FORCE,ROUTE_PENETRATION,newGame,forecast,stateFor,bucket,valid,points,preview,predict,select,read,applyAiInsight,applyWrittenReading,canSkill,finish,next});
 });

@@ -14,8 +14,19 @@ test('health check does not expose API key',async()=>{
 test('wrong origin is denied before calling Gemini',async()=>{
  const r=await call('POST','月と星の意味を考えます','https://example.org');assert.equal(r.statusCode,403);
 });
-test('short reading is rejected',async()=>{
- const r=await call('POST','短い');assert.equal(r.statusCode,400);
+test('empty or whitespace-only reading is rejected',async()=>{
+ for(const value of ['', ' \n\t　', null]){
+  const r=await call('POST',value);assert.equal(r.statusCode,400);
+ }
+});
+test('one-character and brief readings are accepted without a minimum-length penalty',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'この言葉を届けたい。',caritas:'……聞いておる。',nextCue:0})}]}}]})});
+ try{
+  for(const value of ['光','大丈夫',' 一緒に ']){
+   const r=await call('POST',value);assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,[]);
+  }
+ }finally{global.fetch=original;}
 });
 test('valid Gemini JSON is sanitized and returned',async()=>{
  const original=global.fetch;

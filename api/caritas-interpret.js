@@ -40,7 +40,7 @@ module.exports=async function handler(req,res){
  const bodyBytes=Buffer.byteLength(JSON.stringify(req.body||{}),"utf8");
  if(bodyBytes>4096)return reply(res,413,{error:"request_too_large"});
  const {reading,turn}=req.body||{};
- if(typeof reading!=="string"||reading.trim().length<8||reading.length>700)
+ if(typeof reading!=="string"||reading.trim().length<1||reading.trim().length>700)
   return reply(res,400,{error:"invalid_input"});
  if(!process.env.GEMINI_API_KEY)return reply(res,503,{error:"ai_not_configured"});
  const stage=Number.isInteger(turn)&&turn>=0&&turn<=2?turn:0,previousIds=[];
