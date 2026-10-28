@@ -584,3 +584,23 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-phase="written-light"] .cb-written-ring{opacity:.6;transform:none}
  #caritas-event[data-phase="written-light"] .cb-abyss{opacity:.4}
 }
+
+
+/* iPhone writing recovery: keep the send action reachable when the keyboard opens.
+   Only the isolated Caritas battle UI is affected. */
+#caritas-event .cb-ai-fallback{
+ display:block;min-height:48px;padding:10px 12px;
+ color:#fff0c8;border:1px solid #edc683;border-radius:9px;
+ background:linear-gradient(110deg,#3c4267,#5a3970);
+ font-size:14px;line-height:1.45;text-align:center;
+}
+#caritas-event .cb-ai-fallback[hidden]{display:none!important}
+#caritas-event[data-writing-open="true"] .cb-controls{
+ scroll-padding-bottom:clamp(90px,18dvh,180px);
+ padding-bottom:max(22px,env(safe-area-inset-bottom));
+}
+#caritas-event[data-writing-open="true"] .cb-ai-panel{
+ scroll-margin-bottom:calc(env(safe-area-inset-bottom) + 20px);
+}
+#caritas-event .cb-ai-send{position:sticky;bottom:0;z-index:2;box-shadow:0 3px 16px #050915a8}
+#caritas-event .cb-ai-result{color:#fff0c7}
