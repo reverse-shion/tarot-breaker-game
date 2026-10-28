@@ -28,7 +28,7 @@ let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialog
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
-let firstWrittenDelivered=false;
+let firstWrittenDelivered=false,offlineFallbackAllowed=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=14;
 function checkpoint(){
  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,firstWrittenDelivered,aiCalls,aiConfirmedCalls:aiCalls}));return true;}catch(_){return false;}
@@ -58,7 +58,7 @@ function restoreCheckpoint(){
 }
 // Source art stays intact. CSS frames only the faces; technique art can be added
 // later through this isolated encounter's optional same-origin image slot.
-const CUTINS={shion:"./assets/sprites/shion/shion_card_03_check.webp",shioriel:"./assets/events/hoshisuna/cutins/shioriel-reference.png"};
+const CUTINS=Object.freeze({shion:"./assets/battle/cutins/shion-cutin.webp",shioriel:"./assets/battle/cutins/shioriel-cutin.webp"});
 const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……世話になった。")];
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
@@ -256,6 +256,7 @@ function render(){
  if(ui.aiInput){
   ui.aiInput.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn;
   ui.aiSend.disabled=!reading||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||s.aiInsightTurn===s.turn||!(ui.aiInput.value||"").trim();
+  ui.aiFallback.hidden=!(offlineFallbackAllowed&&reading&&readingOpen&&!aiBusy&&s.aiInsightTurn!==s.turn);
   ui.aiSend.textContent=s.aiInsightTurn===s.turn?"このリーディングでは届け済み":aiBusy?"読み解いています…":aiCalls>=AI_CALL_LIMIT?"この戦闘では届け済み（3回）":Date.now()<aiRetryAt?"再接続まで少しお待ちください":"自分の言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
   ui.aiBody.hidden=!aiPanelOpen;
   root.dataset.writingOpen=String(aiPanelOpen&&readingOpen&&reading);
@@ -309,6 +310,43 @@ function toast(message){
  clearTimeout(toastTimer);ui.toast.textContent=message;ui.toast.hidden=false;
  toastTimer=setTimeout(()=>{ui.toast.hidden=true;},2100);
 }
+// Explicit offline fallback: never claim Gemini generated the following lines.
+// The player's own text remains the message; no AI insight bonus is granted.
+function deliverWithoutAi(){
+ if(!offlineFallbackAllowed||suspended()||!readingOpen||aiBusy||committing||dialogueBusy||
+    story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0||
+    aiCalls>=AI_CALL_LIMIT)return;
+ const reading=(ui.aiInput.value||"").trim();
+ if(!reading||reading.length>700){toast("1〜700文字で言葉を入力してね");return;}
+ const before=battle,requestTurn=battle.turn;
+ const shion="俺が今、お前に届けたいのは、この言葉だ。\n"+reading.slice(0,110);
+ const caritas="……お前の言葉は、確かに聞いた。\nどう進むかは、私自身で考えよう。";
+ ui.aiInput.blur();offlineFallbackAllowed=false;aiPanelOpen=false;ui.aiResult.textContent="";
+ committing=true;
+ saySequence([["シオン",shion],["カリタス",caritas]],()=>{
+  if(story!=="battle"||battle!==before||battle.turn!==requestTurn){committing=false;render();return;}
+  battle=C.applyWrittenReading(before,[],!firstWrittenDelivered);
+  if(battle===before){committing=false;render();return;}
+  const previousFirst=firstWrittenDelivered;firstWrittenDelivered=true;aiCalls++;
+  if(!checkpoint()){
+    battle=before;firstWrittenDelivered=previousFirst;aiCalls--;
+    committing=false;aiPanelOpen=true;offlineFallbackAllowed=true;
+    ui.aiResult.textContent="保存できなかったため、特典は加算していません。文章は残っています。";
+    render();return;
+  }
+  const gain=battle.resonance-before.resonance;
+  aiPendingRequest=null;aiPendingText="";ui.aiInput.value="";
+  setText(ui.writtenQuote,reading.length>84?reading.slice(0,84)+"…":reading);
+  setText(ui.writtenGain,"あなた自身の言葉が、星の力に変わった");
+  visualBattle=before;readingOpen=false;
+  stage("written-light",1400,()=>{
+    visualBattle=null;committing=false;story="battle";root.dataset.phase="battle";
+    setText(ui.writtenQuote,"");render();
+    toast("AIを使わず言葉が届いた　共鳴＋"+gain);
+  });
+ });
+ render();
+}
 async function sendAiReading(){
  if(suspended()||!readingOpen||aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
  if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
@@ -330,6 +368,8 @@ async function sendAiReading(){
    const detail=await response.json().catch(()=>({}));
    const code=typeof detail.error==="string"?detail.error:"";
    const messages={
+    invalid_input:"入力内容を確認してください。",
+    rate_limited:"しばらくしてから再度送信してください。",
     ai_upstream_quota:"Gemini側の利用上限に達しています。",
     ai_model_unavailable:"指定されたAIモデルは現在利用できません。",
     ai_upstream_auth:"Gemini APIキーの権限を確認する必要があります。",
@@ -342,7 +382,8 @@ async function sendAiReading(){
     origin_denied:"ゲームの接続元が許可されていません。"
    };
    const message=response.status===429?"AIの利用が集中しています。":messages[code]||(response.status===401||response.status===403?"AIへのアクセスが拒否されました。":"AIに接続できませんでした。");
-   ui.aiResult.textContent=message+" AIの利用回数は減りません。カードを選ぶ通常の読みは続けられます。";
+   ui.aiResult.textContent=message+" 入力した言葉は保持しました。再試行するか、AIなしで届ける方法を選べます。";
+   offlineFallbackAllowed=true;
    aiRetryAt=Date.now()+8000;
    setTimeout(()=>{if(root&&!root.hidden)render();},8100);
    return;
@@ -353,7 +394,7 @@ async function sendAiReading(){
   if(story!=="battle"||battle.phase!=="read"||battle.turn!==requestTurn)return;
   const before=battle;
   ui.aiInput.blur(); // Dismiss the keyboard before the unchanged shared dialogue.
-  aiPanelOpen=false;ui.aiResult.textContent="";
+  aiPanelOpen=false;offlineFallbackAllowed=false;ui.aiResult.textContent="";
   committing=true;
   // No reward, first-use receipt or API allowance is consumed until words are delivered.
   saySequence([["シオン",data.shion],["カリタス",data.caritas]],()=>{
@@ -383,7 +424,8 @@ async function sendAiReading(){
   });
   render();
  }catch(error){
-  ui.aiResult.textContent="通信できません。文章とAIの利用回数は保持しています。 "+(error.name==="AbortError"?"応答が時間切れになりました。":error.message);
+  ui.aiResult.textContent="AIと通信できません。文章は保持しました。再試行するか、AIなしで届ける方法を選べます。 "+(error.name==="AbortError"?"応答が時間切れになりました。":"接続を確認してください。");
+  offlineFallbackAllowed=true;
   aiRetryAt=Date.now()+8000;
   setTimeout(()=>{if(root&&!root.hidden)render();},8100);
  }
@@ -529,7 +571,14 @@ function init(){
  ui.writingReward=newEl("p","cb-writing-reward");ui.writingReward.id="cb-writing-reward";
  ui.aiSend=newEl("button","cb-ai-send","自分の言葉を届ける");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
+ ui.aiFallback=newEl("button","cb-ai-fallback","AIを使わずに自分の言葉を届ける");ui.aiFallback.type="button";ui.aiFallback.hidden=true;
+ ui.aiFallback.addEventListener("click",deliverWithoutAi);
+ const syncWritingInput=()=>{ui.aiSend.disabled=aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();
+  if(offlineFallbackAllowed)ui.aiFallback.disabled=aiBusy||!(ui.aiInput.value||"").trim();};
+ ui.aiInput.addEventListener("input",syncWritingInput);
+ // Japanese iOS IME sometimes commits the last character on compositionend.
+ ui.aiInput.addEventListener("compositionend",syncWritingInput);
+ ui.aiInput.addEventListener("change",syncWritingInput);
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
  ui.aiToggle=newEl("button","cb-ai-toggle","自分の言葉で届ける ▼");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
  ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
@@ -540,7 +589,7 @@ function init(){
   render();
   if(aiPanelOpen)ui.aiPanel.scrollIntoView({block:"nearest",behavior:"smooth"});
  });
- ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.aiToggle,ui.writingReward,ui.aiBody);
+ ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult,ui.aiFallback);ui.aiPanel.append(ui.aiToggle,ui.writingReward,ui.aiBody);
  actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;

@@ -92,9 +92,11 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 .cb-cut-panel{position:absolute;left:-3%;right:-3%;height:clamp(115px,20dvh,195px);overflow:hidden;border-top:1px solid #e9d8ae;border-bottom:1px solid #e9d8ae;box-shadow:0 0 36px #000b;isolation:isolate}
 .cb-cut-shion{top:23%;background:linear-gradient(95deg,#213b73,#0e1736 72%);animation:cb-cut-left 1.7s cubic-bezier(.16,.82,.23,1) both}
 .cb-cut-shioriel{top:47%;background:linear-gradient(95deg,#17132e,#624889);animation:cb-cut-right 1.7s cubic-bezier(.16,.82,.23,1) both}
-.cb-cut-face{position:absolute;max-width:none;max-height:none;object-fit:initial;image-rendering:auto}
-.cb-cut-shion .cb-cut-face{width:clamp(460px,145vw,670px);height:auto;left:50%;top:0;transform:translate(-50%,-17%)}
-.cb-cut-shioriel .cb-cut-face{width:clamp(1300px,390vw,1800px);height:auto;left:50%;top:50%;transform:translate(-25%,-16%)}
+/* Both official cut-in arts are cinematic 1536px-wide landscapes: fit the whole
+   fight stripe instead of magnifying their original 2.5:1 composition. */
+.cb-cut-face{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;object-position:60% 50%;image-rendering:auto}
+.cb-cut-shion .cb-cut-face{object-position:60% 50%}
+.cb-cut-shioriel .cb-cut-face{object-position:59% 50%}
 .cb-cut-name{position:absolute;z-index:2;bottom:7px;right:8%;font-size:clamp(17px,5vw,24px);letter-spacing:.12em;color:#fff7e7;text-shadow:0 2px 4px #000,0 0 12px #000}
 .cb-cut-shioriel .cb-cut-name{left:8%;right:auto}
 .cb-cut-title{position:absolute;top:72%;left:0;right:0;text-align:center;font-size:clamp(22px,6vw,32px);letter-spacing:.3em;color:#fff0c9;text-shadow:0 0 18px #cfb8ff}
@@ -584,3 +586,23 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-phase="written-light"] .cb-written-ring{opacity:.6;transform:none}
  #caritas-event[data-phase="written-light"] .cb-abyss{opacity:.4}
 }
+
+
+/* iPhone writing recovery: keep the send action reachable when the keyboard opens.
+   Only the isolated Caritas battle UI is affected. */
+#caritas-event .cb-ai-fallback{
+ display:block;min-height:48px;padding:10px 12px;
+ color:#fff0c8;border:1px solid #edc683;border-radius:9px;
+ background:linear-gradient(110deg,#3c4267,#5a3970);
+ font-size:14px;line-height:1.45;text-align:center;
+}
+#caritas-event .cb-ai-fallback[hidden]{display:none!important}
+#caritas-event[data-writing-open="true"] .cb-controls{
+ scroll-padding-bottom:clamp(90px,18dvh,180px);
+ padding-bottom:max(22px,env(safe-area-inset-bottom));
+}
+#caritas-event[data-writing-open="true"] .cb-ai-panel{
+ scroll-margin-bottom:calc(env(safe-area-inset-bottom) + 20px);
+}
+#caritas-event .cb-ai-send{position:sticky;bottom:0;z-index:2;box-shadow:0 3px 16px #050915a8}
+#caritas-event .cb-ai-result{color:#fff0c7}
