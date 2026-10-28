@@ -319,8 +319,8 @@ function deliverWithoutAi(){
  const reading=(ui.aiInput.value||"").trim();
  if(!reading||reading.length>700){toast("1〜700文字で言葉を入力してね");return;}
  const before=battle,requestTurn=battle.turn;
- const shion="俺が今、お前に届けたいのは、この言葉だ。\\n"+reading.slice(0,110);
- const caritas="……お前の言葉は、確かに聞いた。\\nどう進むかは、私自身で考えよう。";
+ const shion="俺が今、お前に届けたいのは、この言葉だ。\n"+reading.slice(0,110);
+ const caritas="……お前の言葉は、確かに聞いた。\nどう進むかは、私自身で考えよう。";
  ui.aiInput.blur();offlineFallbackAllowed=false;aiPanelOpen=false;ui.aiResult.textContent="";
  committing=true;
  saySequence([["シオン",shion],["カリタス",caritas]],()=>{
