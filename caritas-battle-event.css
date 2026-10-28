@@ -562,3 +562,25 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-phase="word-strike"] .cb-abyss{animation:none}
  #caritas-event[data-phase="word-strike"] .cb-release{opacity:.85}
 }
+
+/* Written words become starlight; all selectors stay inside the isolated encounter. */
+#caritas-event .cb-writing-hint{margin:4px 0 8px;font-size:13px;line-height:1.6;color:#eee6db}
+#caritas-event .cb-writing-reward{margin:4px 0;font-size:12px;line-height:1.5;color:#ffe2a3}
+#caritas-event[data-reading-open="true"] .cb-controls{overflow-y:auto;justify-content:flex-start;touch-action:pan-y}
+#caritas-event[data-writing-open="true"] .cb-cards{height:clamp(150px,26dvh,230px);flex-shrink:0}
+#caritas-event .cb-ai-input{font-size:16px;line-height:1.55;scroll-margin-bottom:90px}
+#caritas-event .cb-written-light{display:none;position:absolute;inset:0;z-index:32;pointer-events:none;background:radial-gradient(ellipse at 65% 30%,#f5cf7022,transparent 60%)}
+#caritas-event[data-phase="written-light"] .cb-written-light{display:block}
+#caritas-event .cb-written-quote{position:absolute;top:53%;left:8%;right:8%;margin:0;padding:16px;border:1px solid #e8c98599;border-radius:12px;background:#111b35ed;color:#fff5d9;text-align:center;line-height:1.75;font-size:clamp(15px,4vw,19px);white-space:pre-wrap;overflow-wrap:anywhere;max-height:27%;overflow:hidden}
+#caritas-event .cb-written-gain{position:absolute;top:83%;left:6%;right:6%;margin:0;text-align:center;font-size:14px;color:#ffe2a3;text-shadow:0 2px 5px #000}
+#caritas-event .cb-written-ring{position:absolute;left:53%;top:23%;width:120px;height:120px;border:2px solid #ffe2a3;border-radius:50%;box-shadow:0 0 22px #f5cd8180,inset 0 0 20px #f5cd8150;animation:cb-written-delivery 1.4s ease-out both}
+#caritas-event[data-phase="written-light"] .cb-abyss{animation:cb-written-unravel 1.4s ease-out both}
+#caritas-event[data-phase="written-light"] .cb-angel{filter:brightness(1.18) drop-shadow(0 0 15px #ffe2a3)}
+#caritas-event[data-phase="written-light"] .cb-hud{opacity:1}
+#caritas-event[data-phase="written-light"] .cb-bar.resonance{box-shadow:0 0 12px #ffe2a3}
+@keyframes cb-written-delivery{0%{transform:translate(0,0) scale(.15);opacity:0}25%{opacity:.9}80%{opacity:.6}100%{transform:translate(-90px,-40px) scale(2.4);opacity:0}}
+@keyframes cb-written-unravel{0%{opacity:.8}65%{opacity:.18}100%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-phase="written-light"] .cb-written-ring{opacity:.6;transform:none}
+ #caritas-event[data-phase="written-light"] .cb-abyss{opacity:.4}
+}

@@ -28,15 +28,21 @@ let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialog
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
+let firstWrittenDelivered=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=14;
 function checkpoint(){
- try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,aiCalls,aiConfirmedCalls:aiCalls}));}catch(_){}
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,firstWrittenDelivered,aiCalls,aiConfirmedCalls:aiCalls}));return true;}catch(_){return false;}
 }
-function clearCheckpoint(){try{localStorage.removeItem(SAVE_KEY);}catch(_){}}
+function clearCheckpoint(){
+ // Keep the first-delivery receipt after retreat/victory, in this dev namespace only.
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,firstWrittenDelivered,battle:null}));}catch(_){}
+}
 function restoreCheckpoint(){
  try{
   const raw=localStorage.getItem(SAVE_KEY);if(!raw)return false;
-  const data=JSON.parse(raw),s=data.battle;
+  const data=JSON.parse(raw),s=data?.battle;
+  firstWrittenDelivered=data?.firstWrittenDelivered===true;
+  if(!s)return false;
   if(data.version!==SAVE_VERSION||!s||!["read","finisher","ending","defeat"].includes(s.phase)||
     !Number.isInteger(s.turn)||s.turn<0||s.turn>1000||
     !["hp","dark","resonance"].every(k=>Number.isInteger(s[k])&&s[k]>=0&&s[k]<=100)||
@@ -248,12 +254,17 @@ function render(){
   setText(ui.preview,"選択 "+s.words.filter(Boolean).length+"/3　月→力→星");setText(ui.tactic,"");
  }
  if(ui.aiInput){
-  ui.aiInput.disabled=!reading||aiBusy;
-  ui.aiSend.disabled=!reading||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||s.aiInsightTurn===s.turn||(ui.aiInput.value||"").trim().length<8;
-  ui.aiSend.textContent=aiBusy?"読み解いています…":aiCalls>=AI_CALL_LIMIT?"AI読み取りは3回まで（使用済み）":Date.now()<aiRetryAt?"再接続まで少しお待ちください":"AIに言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
+  ui.aiInput.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn;
+  ui.aiSend.disabled=!reading||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||s.aiInsightTurn===s.turn||!(ui.aiInput.value||"").trim();
+  ui.aiSend.textContent=s.aiInsightTurn===s.turn?"このリーディングでは届け済み":aiBusy?"読み解いています…":aiCalls>=AI_CALL_LIMIT?"この戦闘では届け済み（3回）":Date.now()<aiRetryAt?"再接続まで少しお待ちください":"自分の言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
   ui.aiBody.hidden=!aiPanelOpen;
+  root.dataset.writingOpen=String(aiPanelOpen&&readingOpen&&reading);
+  ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードを選んで次の一歩へ。":
+   "ひと言でも大丈夫。長さや上手さで特典は変わりません。";
+  ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":
+   firstWrittenDelivered?"届けると共鳴＋25（上限100）":"初めて届けると共鳴＋50（次回から＋25／上限100）";
   ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
-  ui.aiToggle.textContent=aiPanelOpen?"AIの自由記述を閉じる ▲":"AIで自分の言葉を届ける ▼";
+  ui.aiToggle.textContent=aiPanelOpen?"自分の言葉を閉じる ▲":"自分の言葉で届ける ▼";
   ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read"&&readingOpen);
  }
  ui.read.textContent=finisher?"対話で解放":"この言葉を届ける";
@@ -299,10 +310,10 @@ function toast(message){
  toastTimer=setTimeout(()=>{ui.toast.hidden=true;},2100);
 }
 async function sendAiReading(){
- if(aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
+ if(suspended()||!readingOpen||aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
  if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
  const reading=(ui.aiInput.value||"").trim();
- if(reading.length<8||reading.length>700){toast("8〜700文字で入力してね");return;}
+ if(!reading||reading.length>700){toast("ひと言から700文字までで入力してね");return;}
  if(Date.now()<aiRetryAt){toast("AIの再接続には少し時間をあけてください");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+aiSessionId;aiPendingText=reading;}
  const requestTurn=battle.turn;
@@ -341,27 +352,36 @@ async function sendAiReading(){
   // Only the same unresolved battle turn is allowed to receive the dialogue/bonus.
   if(story!=="battle"||battle.phase!=="read"||battle.turn!==requestTurn)return;
   const before=battle;
-  battle=C.applyAiInsight(battle,Array.isArray(data.understandingIds)?data.understandingIds:[]);
-  aiCalls++;checkpoint(); // Charge only a successful, usable Gemini reply.
-  const gain=battle.resonance-before.resonance,relief=before.dark-battle.dark;
-  aiLastState=null;aiPendingRequest=null;aiPendingText="";
-  ui.aiInput.blur(); // Dismiss the iPhone keyboard before the cinematic dialogue.
+  ui.aiInput.blur(); // Dismiss the keyboard before the unchanged shared dialogue.
   aiPanelOpen=false;ui.aiResult.textContent="";
-  // Reuse the existing main-game speaker/name-coloured dialogue, never plain AI text.
+  committing=true;
+  // No reward, first-use receipt or API allowance is consumed until words are delivered.
   saySequence([["シオン",data.shion],["カリタス",data.caritas]],()=>{
-   render();
-   if(gain>0||relief>0){
-    ui.resBar.parentElement.classList.add("cb-ai-meter-flash");
-    ui.darkBar.parentElement.classList.add("cb-ai-meter-flash");
-    setTimeout(()=>{
-     ui.resBar?.parentElement?.classList.remove("cb-ai-meter-flash");
-     ui.darkBar?.parentElement?.classList.remove("cb-ai-meter-flash");
-    },1200);
-    toast("心象共鳴＋"+gain+"　闇侵食−"+relief);
-   }else{
-    toast("言葉は届いた。次はカードの意味から、もう一歩考えてみよう");
-   }
+   if(story!=="battle"||battle!==before){committing=false;render();return;}
+   battle=C.applyWrittenReading(before,Array.isArray(data.understandingIds)?data.understandingIds:[],!firstWrittenDelivered);
+   if(battle===before){committing=false;render();return;}
+   const wasFirstWrittenDelivered=firstWrittenDelivered;
+   firstWrittenDelivered=true;aiCalls++;
+   if(!checkpoint()){
+    battle=before;firstWrittenDelivered=wasFirstWrittenDelivered;aiCalls--;
+    committing=false;aiPanelOpen=true;
+    ui.aiResult.textContent="記録を保存できなかったため、特典はまだ加算していません。文章は残しています。保存できる状態で再送してください。";
+    render();return;
+   } // One atomic dev-only snapshot includes both meters and first-use receipt.
+   const gain=battle.resonance-before.resonance,relief=before.dark-battle.dark;
+   aiLastState=null;aiPendingRequest=null;aiPendingText="";
+   ui.aiInput.value="";
+   // Display original player words safely and briefly; never store the reading text.
+   setText(ui.writtenQuote,reading.length>84?reading.slice(0,84)+"…":reading);
+   setText(ui.writtenGain,"あなたの言葉が、星の力に変わった");
+   visualBattle=before;readingOpen=false;
+   stage("written-light",1400,()=>{
+    visualBattle=null;committing=false;story="battle";root.dataset.phase="battle";
+    setText(ui.writtenQuote,"");render();
+    toast("言葉が届いた　共鳴＋"+gain+(relief>0?"　闇−"+relief:"")+(battle.phase==="finisher"?"　必殺技が使えます":""));
+   });
   });
+  render();
  }catch(error){
   ui.aiResult.textContent="通信できません。文章とAIの利用回数は保持しています。 "+(error.name==="AbortError"?"応答が時間切れになりました。":error.message);
   aiRetryAt=Date.now()+8000;
@@ -490,7 +510,7 @@ function init(){
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.readingIntro=newEl("div","cb-reading-start");
  const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
- const introHint=newEl("p","cb-reading-start-hint","月は現在地、力は行動、星は届け方。三枚のカードを読み、ひとつの言葉にする。");
+ const introHint=newEl("p","cb-reading-start-hint","三枚の解釈を選んで届けよう。自分の言葉を添えると、共鳴がさらに満ちます。");
  const introButton=newEl("button","cb-reading-start-button","リーディングを始める");introButton.type="button";
  introButton.addEventListener("click",()=>{if(story!=="battle"||battle.phase!=="read"||committing||dialogueBusy)return;readingOpen=true;render();});
  ui.readingIntro.append(introTitle,introHint,introButton);
@@ -503,20 +523,24 @@ function init(){
  ui.aiPanel=newEl("div","cb-ai-panel");
  const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
  ui.aiInput=newEl("textarea","cb-ai-input");ui.aiInput.rows=3;ui.aiInput.maxLength=700;
- ui.aiInput.placeholder="カリタスに何を伝えたい？";label.append(ui.aiInput);
- ui.aiSend=newEl("button","cb-ai-send","AIに言葉を届ける（試作）");ui.aiSend.type="button";
+ ui.aiInput.placeholder="ひと言でも大丈夫。カリタスに何を伝えたい？";
+ ui.aiInput.setAttribute("aria-describedby","cb-writing-hint cb-writing-reward");label.append(ui.aiInput);
+ ui.writingHint=newEl("p","cb-writing-hint");ui.writingHint.id="cb-writing-hint";
+ ui.writingReward=newEl("p","cb-writing-reward");ui.writingReward.id="cb-writing-reward";
+ ui.aiSend=newEl("button","cb-ai-send","自分の言葉を届ける");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||(ui.aiInput.value||"").trim().length<8;});
+ ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
- ui.aiToggle=newEl("button","cb-ai-toggle","AIで自分の言葉を届ける ▼");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
+ ui.aiToggle=newEl("button","cb-ai-toggle","自分の言葉で届ける ▼");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
  ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
  ui.aiToggle.addEventListener("click",()=>{
   aiPanelOpen=!aiPanelOpen;ui.aiBody.hidden=!aiPanelOpen;
   ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
-  ui.aiToggle.textContent=aiPanelOpen?"AIの自由記述を閉じる ▲":"AIで自分の言葉を届ける ▼";
+  ui.aiToggle.textContent=aiPanelOpen?"自分の言葉を閉じる ▲":"自分の言葉で届ける ▼";
+  render();
   if(aiPanelOpen)ui.aiPanel.scrollIntoView({block:"nearest",behavior:"smooth"});
  });
- ui.aiBody.append(label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.aiToggle,ui.aiBody);
+ ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.aiToggle,ui.writingReward,ui.aiBody);
  actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
@@ -548,7 +572,10 @@ function init(){
    const art=newEl("img","cb-technique-art");art.alt="";art.hidden=true;
    art.addEventListener("load",()=>{art.hidden=false;});art.addEventListener("error",()=>{art.hidden=true;});art.src=techniqueSource;technique.append(art);
  }
- root.append(frame,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
+ const written=newEl("div","cb-written-light");written.setAttribute("aria-live","polite");
+ ui.writtenQuote=newEl("p","cb-written-quote");ui.writtenGain=newEl("p","cb-written-gain");
+ written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
+ root.append(frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
    // Exactly the Garden main dialogue mount and element IDs. The battle UI
    // also lives in the same shell so its stacking order stays predictable.
