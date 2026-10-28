@@ -81,10 +81,29 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/window\.TarotDialogueUI\.create/);
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
- assert.match(html,/caritas-battle-event\.css\?v=written-reward-v1-20261029/);
+ assert.match(html,/caritas-battle-event\.css\?v=official-cutins-20261029/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
- assert.match(html,/caritas-battle-event\.js\?v=written-reward-v1-20261029/);
+ assert.match(html,/caritas-battle-event\.js\?v=official-cutins-20261029/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
+});
+
+
+test("official Shion and Shioriel battle cut-ins exist in this preview branch and use original WebP art",()=>{
+ const targets=[["shion","shion-cutin.webp"],["shioriel","shioriel-cutin.webp"]];
+ for(const [character,filename] of targets){
+  const relative="./assets/battle/cutins/"+filename;
+  const file=path.join(root,"assets/battle/cutins",filename);
+  assert.ok(fs.existsSync(file),"missing cut-in in isolated branch: "+file);
+  const bytes=fs.readFileSync(file);
+  assert.equal(bytes.subarray(0,4).toString("ascii"),"RIFF");
+  assert.equal(bytes.subarray(8,12).toString("ascii"),"WEBP");
+  assert.ok(bytes.length>100000,"unexpectedly small/placeholder character art");
+  assert.ok(event.includes(character+':"'+relative+'"'),"battle must use official cut-in "+character);
+ }
+ assert.doesNotMatch(event,/shion_card_03_check\.webp/);
+ assert.doesNotMatch(event,/CUTINS=\{[^}]*shioriel-reference\.png/);
+ assert.match(css,/\.cb-cut-face\{[^}]*width:100%;height:100%;[^}]*object-fit:cover/);
+ assert.doesNotMatch(css,/\.cb-cut-shioriel \.cb-cut-face\{width:clamp\(1300px/);
 });
