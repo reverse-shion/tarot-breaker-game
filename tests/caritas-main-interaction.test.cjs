@@ -138,10 +138,23 @@ test('read chooses foreground meanings, accepts input once, then shows calculate
  assert.equal(f.state().battle.turn,1);assert.equal(f.state().battle.hp,91);
  assert.equal(f.state().battle.dark,80);assert.equal(f.state().battle.resonance,27);
  assert.equal(f.state().story,'word-strike');
+ const hero=root.flatten().find(e=>e.className==='cb-hud hero');
+ const enemy=root.flatten().find(e=>e.className==='cb-hud enemy');
+ const hpText=()=>hero.children[1].children[1].textContent;
+ const resonanceText=()=>hero.children[3].children[1].textContent;
+ const darknessText=()=>enemy.children[1].children[1].textContent;
+ assert.equal(hpText(),'100/100','HP is not lost before the counterattack');
+ assert.equal(resonanceText(),'0/100','meters wait for the attack impact');
+ assert.equal(darknessText(),'100/100');
  f.advanceTime(1050);assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(darknessText(),'80/100');
+ assert.equal(resonanceText(),'27/100');
+ assert.equal(hpText(),'100/100');
  assert.match(f.lines.at(-1).text,/怖いのか/);
  f.pointer.advance();assert.equal(f.state().story,'enemy-turn');
+ assert.equal(hpText(),'100/100');
  f.advanceTime(1050);assert.equal(f.state().battle.turn,1);
+ assert.equal(hpText(),'91/100','HP loss appears only after Caritas actually strikes');
 });
 test('ordinary tarot path unlocks finisher; skill cutin ends with exactly one farewell and map return',async()=>{
  const f=fixture(),root=await enter(f);
