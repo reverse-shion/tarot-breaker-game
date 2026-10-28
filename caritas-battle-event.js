@@ -27,7 +27,7 @@ let aiCalls=0,aiPanelOpen=false,aiRetryAt=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
-let modalIndex=-1,readingOpen=false,committing=false,attempts=0;
+let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=14;
 function checkpoint(){
  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,aiCalls,aiConfirmedCalls:aiCalls}));}catch(_){}
@@ -43,7 +43,7 @@ function restoreCheckpoint(){
     !Array.isArray(s.cards)||s.cards.length!==3||!Array.isArray(s.words)||s.words.length!==3){
     clearCheckpoint();return false;
   }
-  battle=s;readingOpen=false;aiCalls=Number.isInteger(data.aiConfirmedCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiConfirmedCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
+  battle=s;visualBattle=null;readingOpen=false;aiCalls=Number.isInteger(data.aiConfirmedCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiConfirmedCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   if(s.phase==="ending"){render();beginEnding();}
   else if(s.phase==="defeat"){render();beginRetreat();}
   else render();
@@ -197,7 +197,7 @@ function start(){
          if(!manifestation.reveal()){recover("reveal interrupted");return;}
          story="manifested";root.dataset.phase="manifested";render();
          saySequence(REVEAL,()=>{
-           battle=C.newGame();aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
+           battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
          });
        });
      });
@@ -212,16 +212,16 @@ function start(){
 }
 function setText(el,value){el.textContent=String(value);}
 function render(){
- const s=battle,reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing;
+ const s=battle,visible=visualBattle||s,reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing;
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing;
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
  ui.readingIntro.hidden=!(story==="battle"&&s.phase==="read"&&!readingOpen&&!dialogueBusy&&!committing);
  ui.controls.hidden=story==="battle"&&s.phase==="read"&&!readingOpen;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
- const displayedDark=["purified","farewell","returning"].includes(story)?0:s.dark;
- setText(ui.res,s.resonance+"/100");setText(ui.dark,displayedDark+"/100");setText(ui.hp,s.hp+"/100");
+ const displayedDark=["purified","farewell","returning"].includes(story)?0:visible.dark;
+ setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"/100");setText(ui.hp,visible.hp+"/100");
  setText(ui.mood,"心象："+C.STATES[C.stateFor(s.dark)]);
- ui.resBar.style.width=s.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=s.hp+"%";
+ ui.resBar.style.width=visible.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=visible.hp+"%";
  root.dataset.mood=C.stateFor(s.dark);
  const p=C.predict(s),idx=C.stateFor(s.dark)==="closed"?0:C.stateFor(s.dark)==="storm"?1:2;
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
@@ -394,11 +394,12 @@ function perform(kind){
    if(story!=="battle"||battle.turn!==previous.turn)return;
    const next=C.read(previous);
    battle=next;checkpoint(); // One committed attack, never replayed after reload.
+   visualBattle=previous; // Do not reveal the hit while Shioriel is attacking.
    stage("word-strike",1050,()=>applyOutcome(previous,next,p));
  });
 }
 function applyOutcome(previous,next,p){
- battle=next;story="battle";root.dataset.phase="battle";readingOpen=false;
+ battle=next;visualBattle={...next,hp:previous.hp};story="battle";root.dataset.phase="battle";readingOpen=false;
  // Show the impact and both meters BEFORE Caritas reacts. Counterattack follows.
  render();
  const values=["闇−"+p.dark,"共鳴＋"+p.resonance];
@@ -413,7 +414,7 @@ function applyOutcome(previous,next,p){
  });
 }
 function finalizeTurn(){
- story="battle";root.dataset.phase="battle";
+ visualBattle=null;story="battle";root.dataset.phase="battle";
  if(battle.phase==="defeat"){beginRetreat();return;}
  if(battle.phase==="ending"){beginEnding();return;}
  committing=false;readingOpen=false;checkpoint();render();
@@ -431,7 +432,7 @@ function finishRetreat(){
  clearTimeout(cinematicTimer);cinematicCallback=null;clearTimeout(toastTimer);
  window.TarotHoshisunaManifestation?.clear?.();
  dialogue?.hide();root.hidden=true;ui.modal.hidden=true;
- clearCheckpoint();battle=C.newGame();modalIndex=-1;committing=false;
+ clearCheckpoint();battle=C.newGame();visualBattle=null;modalIndex=-1;committing=false;
  story="idle";busy=false;armed=false;noticed=true;unlock();
  // Re-offer the *inspection choice* shortly after withdrawal, never auto-restart battle.
  setTimeout(()=>{if(story==="idle"&&!done){armed=true;tick();}},1300);
