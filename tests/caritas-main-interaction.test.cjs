@@ -360,3 +360,44 @@ test('failed reward storage leaves meters and first reward unclaimed and preserv
  assert.equal(saved(f).aiConfirmedCalls,1);
  assert.equal(saved(f).firstWrittenDelivered,true);
 });
+
+
+test('manual delivery remains available when the Gemini endpoint rejects a request',async()=>{
+ const f=fixture({fetchReply:async()=>({ok:false,status:503,json:async()=>({error:'ai_not_configured'})})});
+ const root=await enter(f);
+ f.button(root,'リーディングを始める').click();
+ f.button(root,'自分の言葉で届ける ▼').click();
+ const input=root.querySelector('.cb-ai-input');
+ input.value='この先の道はあなたが選んでいい';
+ input.listeners.input();
+ const button=root.querySelector('.cb-ai-send');
+ assert.equal(button.disabled,false);
+ button.click();
+ await new Promise(resolve=>setImmediate(resolve));
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.requests.length,1);
+ assert.equal(f.state().battle.resonance,0,'failed remote call does not grant a reward');
+ assert.equal(input.value,'この先の道はあなたが選んでいい');
+ assert.match(root.querySelector('.cb-ai-result').textContent,/AIなしで届ける/);
+ const fallback=root.querySelector('.cb-ai-fallback');
+ assert.equal(fallback.hidden,false,'manual delivery is explicitly offered, not secretly substituted');
+ fallback.click();
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.equal(f.state().battle.resonance,0,'speaking must finish before credit');
+ fallback.click();
+ f.pointer.advance();
+ assert.equal(f.lines.at(-1).speaker,'カリタス');
+ f.pointer.advance();
+ assert.equal(f.state().battle.resonance,50,'same first-time participation reward without AI insight');
+ assert.equal(f.state().battle.dark,100,'no invented insight relief');
+ assert.equal(f.state().story,'written-light');
+ f.advanceTime(1400);
+ assert.equal(f.state().story,'battle');
+ assert.equal(f.state().battle.resonance,50,'one delivery cannot be credited twice');
+});
+test('RawGitHack receives the game HTML; dedicated Vercel URL only receives interpretation POSTs',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/window\.TAROBRE_CARITAS_API_URL="https:\/\/tarot-breaker-h00dgrp2w-re-verse-shion\.vercel\.app\/api\/caritas-interpret"/);
+ assert.doesNotMatch(html,/tarot-breaker-api-git-feature-caritas-ai-347c71/);
+ assert.doesNotMatch(html,/tarot-breaker-api-git-feature-caritas-wri-ccd27e[^"]*\/hoshisuna-main\.html/);
+});
