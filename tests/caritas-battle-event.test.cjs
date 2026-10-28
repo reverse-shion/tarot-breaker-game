@@ -77,12 +77,14 @@ test('minor-only cards can win by dialogue but cannot use cut-in skill',()=>{
  assert.equal(C.finish(s,'skill'),s);
  assert.equal(C.finish(s,'dialogue').phase,'ending');
 });
-test('risk matters: all-F and all-S eventually retreat, defense command is absent',()=>{
- for(const type of ['F','S']){
-  let s=C.newGame();
-  for(let turn=0;turn<12&&s.phase==='read';turn++)s=C.read(selectTypes(s,type.repeat(3)));
-  assert.equal(s.phase,'defeat');
- }
+test('defensive choices change the battle outcome: reckless repetition retreats, another route can recover',()=>{
+ let reckless=C.newGame();
+ for(let turn=0;turn<12&&reckless.phase==='read';turn++)reckless=C.read(selectTypes(reckless,'FFF'));
+ assert.equal(reckless.phase,'defeat');
+ let measured=C.newGame();
+ for(let turn=0;turn<12&&measured.phase==='read';turn++)measured=C.read(selectTypes(measured,'SSS'));
+ assert.equal(measured.phase,'finisher');
+ assert.ok(measured.hp>0);
  assert.equal(typeof C.defend,'undefined');
 });
 test('Caritas still collides until purified, without edits to shared navigation',()=>{
