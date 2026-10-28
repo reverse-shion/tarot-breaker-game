@@ -81,10 +81,10 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/window\.TarotDialogueUI\.create/);
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
- assert.match(html,/caritas-battle-event\.css\?v=iphone-cards-ai-20261028/);
+ assert.match(html,/caritas-battle-event\.css\?v=full-read-v1-20261028/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03/);
- assert.match(html,/caritas-battle-core\.js\?v=ai-spoken-meter-20261028/);
- assert.match(html,/caritas-battle-event\.js\?v=ai-spoken-meter-20261028/);
+ assert.match(html,/caritas-battle-core\.js\?v=full-read-v1-20261028/);
+ assert.match(html,/caritas-battle-event\.js\?v=full-read-v1-20261028/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });

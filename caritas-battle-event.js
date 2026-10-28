@@ -27,8 +27,8 @@ let aiCalls=0,aiPanelOpen=false,aiRetryAt=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
-let modalIndex=-1,committing=false,attempts=0;
-const SAVE_KEY="tb:dev:hoshisuna:caritas-v13c",SAVE_VERSION=13;
+let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
+const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=14;
 function checkpoint(){
  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,aiCalls,aiConfirmedCalls:aiCalls}));}catch(_){}
 }
@@ -43,7 +43,7 @@ function restoreCheckpoint(){
     !Array.isArray(s.cards)||s.cards.length!==3||!Array.isArray(s.words)||s.words.length!==3){
     clearCheckpoint();return false;
   }
-  battle=s;aiCalls=Number.isInteger(data.aiConfirmedCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiConfirmedCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
+  battle=s;visualBattle=null;readingOpen=false;aiCalls=Number.isInteger(data.aiConfirmedCalls)?Math.max(0,Math.min(AI_CALL_LIMIT,data.aiConfirmedCalls)):0;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   if(s.phase==="ending"){render();beginEnding();}
   else if(s.phase==="defeat"){render();beginRetreat();}
   else render();
@@ -81,7 +81,7 @@ function resumeCinematic(){
  if(!cinematicTimer)armCinematic();
 }
 function beginBattle(){
- story="battle";root.dataset.phase="battle";modalIndex=-1;committing=false;
+ story="battle";root.dataset.phase="battle";modalIndex=-1;readingOpen=false;committing=false;
  checkpoint();render();
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}toast("月・力・星のカードをタップして意味を選ぼう");}
 }
@@ -197,7 +197,7 @@ function start(){
          if(!manifestation.reveal()){recover("reveal interrupted");return;}
          story="manifested";root.dataset.phase="manifested";render();
          saySequence(REVEAL,()=>{
-           battle=C.newGame();aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
+           battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
          });
        });
      });
@@ -212,12 +212,16 @@ function start(){
 }
 function setText(el,value){el.textContent=String(value);}
 function render(){
- const s=battle,reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing;
+ const s=battle,visible=visualBattle||s,reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing;
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing;
- const displayedDark=["purified","farewell","returning"].includes(story)?0:s.dark;
- setText(ui.res,s.resonance+"/100");setText(ui.dark,displayedDark+"/100");setText(ui.hp,s.hp+"/100");
+ root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
+ ui.readingIntro.hidden=!(story==="battle"&&s.phase==="read"&&!readingOpen&&!dialogueBusy&&!committing);
+ ui.controls.hidden=story==="battle"&&s.phase==="read"&&!readingOpen;
+ if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
+ const displayedDark=["purified","farewell","returning"].includes(story)?0:visible.dark;
+ setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"/100");setText(ui.hp,visible.hp+"/100");
  setText(ui.mood,"心象："+C.STATES[C.stateFor(s.dark)]);
- ui.resBar.style.width=s.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=s.hp+"%";
+ ui.resBar.style.width=visible.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=visible.hp+"%";
  root.dataset.mood=C.stateFor(s.dark);
  const p=C.predict(s),idx=C.stateFor(s.dark)==="closed"?0:C.stateFor(s.dark)==="storm"?1:2;
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
@@ -225,23 +229,23 @@ function render(){
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
   section.append(newEl("div","cb-role",card.role));
-  const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading;
+  const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading||!readingOpen;
   btn.setAttribute("aria-label",card.name+"を開いて意味を選ぶ");
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
   const art=newEl("div","cb-card-art"),image=newEl("img","cb-card-image");
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
   btn.addEventListener("click",()=>openCard(i));
-  section.append(btn,newEl("div","cb-chosen",s.words[i]||"タップして読む"));
+  section.append(btn,newEl("div","cb-chosen",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"タップして読む"));
   cardBox.append(section);
  }
  if(p){
   const darkLabel=p.darkBucket==="大きく"?"大きく減少":p.darkBucket==="通常"?"減少":p.darkBucket==="わずかに"?"わずかに減少":"変化なし";
   const resLabel=p.resBucket==="大きく"?"大きく上昇":p.resBucket==="通常"?"上昇":p.resBucket==="わずかに"?"わずかに上昇":"変化なし";
-  setText(ui.preview,p.dark===s.dark?"闇：解放":"闇："+darkLabel);
-  setText(ui.tactic,(s.resonance+p.resonance===100?"共鳴MAX":"共鳴："+resLabel)+" ／ "+(!p.hasCounter?"反撃なし":"予想被害："+p.damage));
+  setText(ui.preview,p.dark===s.dark?"闇：解放":"闇："+darkLabel+"（"+p.dark+"）");
+  setText(ui.tactic,"月 "+p.power+" × 力 "+p.force.toFixed(2)+" ／ 星 貫通"+Math.round(100*p.penetration)+"%　"+(s.resonance+p.resonance===100?"共鳴MAX":"共鳴＋"+p.resonance)+"　"+(!p.hasCounter?"反撃なし":"反撃−"+p.damage));
  }else{
-  setText(ui.preview,"三枚のカードを読もう");setText(ui.tactic,"");
+  setText(ui.preview,"選択 "+s.words.filter(Boolean).length+"/3　月→力→星");setText(ui.tactic,"");
  }
  if(ui.aiInput){
   ui.aiInput.disabled=!reading||aiBusy;
@@ -250,26 +254,29 @@ function render(){
   ui.aiBody.hidden=!aiPanelOpen;
   ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
   ui.aiToggle.textContent=aiPanelOpen?"AIの自由記述を閉じる ▲":"AIで自分の言葉を届ける ▼";
-  ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read");
+  ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read"&&readingOpen);
  }
- ui.read.textContent=finisher?"対話で解放":"この読みを届ける";
- ui.read.disabled=!((reading&&!!p)||finisher);
+ ui.read.textContent=finisher?"対話で解放":"この言葉を届ける";
+ ui.read.disabled=!((reading&&readingOpen&&!!p)||finisher);
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
  if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　対話か必殺技で解放！");
  // Show a single short toast instead of an overlay that obscures the card row.
  ui.guide.hidden=true;
  ui.finale.hidden=true;
- const show=modalIndex>=0&&reading;
+ const show=modalIndex>=0&&reading&&readingOpen;
  ui.modal.hidden=!show;
  if(show){
   const card=s.cards[modalIndex];
-  ui.modalTitle.textContent=card.name+"の意味を選ぶ";
+  ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
   for(const word of card.words){
-   const btn=newEl("button","cb-modal-word",word);btn.type="button";
+   const option=C.READING_OPTIONS[word];
+   const btn=newEl("button","cb-modal-word");btn.type="button";
+   btn.append(newEl("strong","cb-modal-word-title",option.title),newEl("span","cb-modal-word-desc",option.text));
+   btn.setAttribute("aria-label",option.title);
    btn.setAttribute("aria-pressed",String(s.words[modalIndex]===word));
    btn.addEventListener("click",()=>choose(modalIndex,word));
    ui.modalWords.append(btn);
@@ -277,7 +284,7 @@ function render(){
  }
 }
 function openCard(i){
- if(story!=="battle"||battle.phase!=="read"||dialogueBusy||aiBusy||committing||suspended())return;
+ if(story!=="battle"||battle.phase!=="read"||!readingOpen||dialogueBusy||aiBusy||committing||suspended())return;
  once=true;ui.guide.hidden=true;modalIndex=i;render();
  ui.modalWords.querySelector(".cb-modal-word")?.focus?.({preventScroll:true});
 }
@@ -374,39 +381,43 @@ function perform(kind){
   }
   return;
  }
- if(kind!=="read"||battle.phase!=="read")return;
+ if(kind!=="read"||battle.phase!=="read"||!readingOpen)return;
  const previous=battle,p=C.predict(previous);
  if(!p)return;
- committing=true;modalIndex=-1;
- const next=C.read(previous);battle=next;
- checkpoint(); // Persist committed outcome before animation; never count a second hit on reload.
- resolveTurn(previous,next,p);
-}
-function resolveTurn(previous,next,p){
- if(p.hasCounter&&p.damage>0){
-  root.dataset.counter="normal";root.dataset.ward="false";
-  setText(ui.enemyCall,"カリタスの反撃！");
-  setText(ui.enemyDamage,"シオリエル HP −"+p.damage);
-  stage("enemy-turn",1050,()=>applyOutcome(previous,next,p));
-  return;
- }
- applyOutcome(previous,next,p);
+ // Dialogue MUST complete before the battle model is mutated or any hit occurs.
+ // The selected three full meanings become one Shion reading in the main shared
+ // dialogue UI (three short pages, never duplicated keyword recitation).
+ committing=true;modalIndex=-1;readingOpen=false;render();
+ const pages=C.readingPages(previous).map(line=>["シオン",line]);
+ if(pages.length!==3){committing=false;readingOpen=true;render();return;}
+ saySequence(pages,()=>{
+   if(story!=="battle"||battle.turn!==previous.turn)return;
+   const next=C.read(previous);
+   battle=next;checkpoint(); // One committed attack, never replayed after reload.
+   visualBattle=previous; // Do not reveal the hit while Shioriel is attacking.
+   stage("word-strike",1050,()=>applyOutcome(previous,next,p));
+ });
 }
 function applyOutcome(previous,next,p){
- battle=next;story="battle";root.dataset.phase="battle";committing=false;
- const values=[];
- if(p.resonance)values.push("共鳴＋"+p.resonance);
- if(p.dark)values.push("闇−"+p.dark);
- if(p.damage)values.push("HP−"+p.damage);
+ battle=next;visualBattle={...next,hp:previous.hp};story="battle";root.dataset.phase="battle";readingOpen=false;
+ // Show the impact and both meters BEFORE Caritas reacts. Counterattack follows.
+ render();
+ const values=["闇−"+p.dark,"共鳴＋"+p.resonance];
  if(values.length)toast(values.join("　"));
- if(next.phase==="defeat"){beginRetreat();return;}
- const tactical=C.TACTICS[previous.words[2]],stageIdx=Math.min(previous.step,2);
- const lines=tactical?[["シオン",tactical.speeches[stageIdx]],["カリタス",tactical.replies[stageIdx]]]:
-  [["シオン",C.preview(previous)]];
- saySequence(lines,()=>{
-  if(battle.phase==="ending")beginEnding();
-  else{render();checkpoint();}
+ saySequence([["カリタス",C.reaction(previous,p)]],()=>{
+   if(p.hasCounter&&p.damage>0){
+     root.dataset.counter="normal";root.dataset.ward="false";
+     setText(ui.enemyCall,"カリタスの反撃！");
+     setText(ui.enemyDamage,"シオリエル HP −"+p.damage);
+     stage("enemy-turn",1050,finalizeTurn);
+   }else finalizeTurn();
  });
+}
+function finalizeTurn(){
+ visualBattle=null;story="battle";root.dataset.phase="battle";
+ if(battle.phase==="defeat"){beginRetreat();return;}
+ if(battle.phase==="ending"){beginEnding();return;}
+ committing=false;readingOpen=false;checkpoint();render();
 }
 function beginRetreat(){
  if(story==="retreat"||story==="returning")return;
@@ -421,7 +432,7 @@ function finishRetreat(){
  clearTimeout(cinematicTimer);cinematicCallback=null;clearTimeout(toastTimer);
  window.TarotHoshisunaManifestation?.clear?.();
  dialogue?.hide();root.hidden=true;ui.modal.hidden=true;
- clearCheckpoint();battle=C.newGame();modalIndex=-1;committing=false;
+ clearCheckpoint();battle=C.newGame();visualBattle=null;modalIndex=-1;committing=false;
  story="idle";busy=false;armed=false;noticed=true;unlock();
  // Re-offer the *inspection choice* shortly after withdrawal, never auto-restart battle.
  setTimeout(()=>{if(story==="idle"&&!done){armed=true;tick();}},1300);
@@ -476,11 +487,17 @@ function init(){
  counter.append(ui.enemyCall,ui.enemyDamage);
  arena.append(enemy,beast,veil,release,shion,angel,hero,counter);
  const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
- const ctr=newEl("div","cb-controls");cardBox=newEl("div","cb-cards");
+ const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
+ ui.readingIntro=newEl("div","cb-reading-start");
+ const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
+ const introHint=newEl("p","cb-reading-start-hint","月は現在地、力は行動、星は届け方。三枚のカードを読み、ひとつの言葉にする。");
+ const introButton=newEl("button","cb-reading-start-button","リーディングを始める");introButton.type="button";
+ introButton.addEventListener("click",()=>{if(story!=="battle"||battle.phase!=="read"||committing||dialogueBusy)return;readingOpen=true;render();});
+ ui.readingIntro.append(introTitle,introHint,introButton);
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
  ui.finisher=newEl("div","cb-finisher");ui.finisher.hidden=true;
  const actions=newEl("div","cb-actions");
- ui.read=newEl("button","cb-read","この読みを届ける");ui.skill=newEl("button","cb-skill","必殺技");
+ ui.read=newEl("button","cb-read","この言葉を届ける");ui.skill=newEl("button","cb-skill","必殺技");
  ui.read.addEventListener("click",()=>perform(battle.phase==="finisher"?"dialogue":"read"));
  ui.skill.addEventListener("click",()=>perform("skill"));
  ui.aiPanel=newEl("div","cb-ai-panel");
@@ -531,7 +548,7 @@ function init(){
    const art=newEl("img","cb-technique-art");art.alt="";art.hidden=true;
    art.addEventListener("load",()=>{art.hidden=false;});art.addEventListener("error",()=>{art.hidden=true;});art.src=techniqueSource;technique.append(art);
  }
- root.append(frame,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
+ root.append(frame,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.create({
    // Exactly the Garden main dialogue mount and element IDs. The battle UI
    // also lives in the same shell so its stacking order stays predictable.
@@ -547,5 +564,5 @@ function init(){
  tick();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
-window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,cinematicPending:!!cinematicCallback,battle:{...battle,words:[...battle.words]}})});
+window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,readingOpen,committing,cinematicPending:!!cinematicCallback,battle:{...battle,words:[...battle.words]}})});
 })();
