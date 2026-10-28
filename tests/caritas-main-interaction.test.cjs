@@ -195,7 +195,8 @@ test('turn checkpoint restores HP, darkness and resonance without a second attac
 });
 test('visibility and BFCache pause cutin time without replaying finisher',async()=>{
  const f=fixture(),root=await enter(f);
- for(let i=0;i<10;i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
+ for(let i=0;i<12&&f.state().battle.phase==='read';i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
+ assert.equal(f.state().battle.phase,'finisher');
  f.button(root,'必殺技').click();f.advanceTime(500);
  f.visibility(true);f.advanceTime(15000);assert.equal(f.state().story,'cutin');
  f.visibility(false);f.advanceTime(1200);assert.equal(f.state().story,'technique');
