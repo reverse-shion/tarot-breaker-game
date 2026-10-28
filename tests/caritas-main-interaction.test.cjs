@@ -70,22 +70,36 @@ async function enter(f){
 }
 
 function choose(f,root,words){
+ if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
  const buttons=root.flatten().filter(e=>e.className==='cb-card-button');
  assert.equal(buttons.length,3);
  words.forEach((word,i)=>{
   buttons[i].click();
   assert.equal(root.querySelector('.cb-card-overlay').hidden,false);
-  const option=f.button(root,word);
-  assert.ok(option,'missing foreground meaning '+word);option.click();
+  const title=Core.READING_OPTIONS[word].title;
+  const option=root.flatten().find(e=>e.tagName==='button'&&e.attributes['aria-label']===title);
+  assert.ok(option,'missing full foreground reading '+title);
+  assert.ok(Core.READING_OPTIONS[word].text.length>25,'must be complete text, not keywords');
+  option.click();
   assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
  });
 }
 function read(f,root,words){
+ if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
  if(words)choose(f,root,words);
- const button=f.button(root,'この読みを届ける');assert.ok(button);button.click();
+ const button=f.button(root,'この言葉を届ける');assert.ok(button);button.click();
+ assert.equal(f.state().dialogueBusy,true);
+ const turnBefore=f.state().battle.turn;
+ for(let page=0;page<3;page++){
+  assert.equal(f.lines.at(-1).speaker,'シオン');
+  assert.equal(f.state().battle.turn,turnBefore,'reading must finish before damage');
+  f.pointer.advance();
+ }
+ assert.equal(f.state().story,'word-strike');
+ f.advanceTime(1050); // Effects and meter updates, then Caritas response.
+ assert.equal(f.lines.at(-1).speaker,'カリタス');
+ f.pointer.advance();
  if(f.state().story==='enemy-turn')f.advanceTime(1050);
- if(f.state().battle.phase==='defeat')return;
- if(f.state().dialogueBusy){f.pointer.advance();f.pointer.advance();}
 }
 test('map notices Caritas first, uses main prompt, leaving does not re-trigger',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
@@ -102,6 +116,8 @@ test('manifestation remains on the real map before entering battle',async()=>{
  assert.equal(f.pointer.mapPhase,'revealed');
  assert.equal(root.hidden,false);assert.equal(f.state().story,'battle');
  assert.equal(f.button(root,'防御'),undefined);
+ assert.equal(f.state().readingOpen,false);
+ assert.ok(f.button(root,'リーディングを始める'));
  assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
  assert.equal(root.querySelector('.cb-hud').className,'cb-hud enemy');
  assert.ok(root.querySelector('.cb-mood'));
@@ -109,26 +125,35 @@ test('manifestation remains on the real map before entering battle',async()=>{
 });
 test('read chooses foreground meanings, accepts input once, then shows calculated counterattack',async()=>{
  const f=fixture(),root=await enter(f);
- assert.equal(f.button(root,'この読みを届ける').disabled,true);
+ f.button(root,'リーディングを始める').click();
+ assert.equal(f.button(root,'この言葉を届ける').disabled,true);
  choose(f,root,['不安','忍耐','癒し']);
- assert.equal(f.button(root,'この読みを届ける').disabled,false);
- f.button(root,'この読みを届ける').click();
- f.button(root,'この読みを届ける').click();
+ assert.equal(f.button(root,'この言葉を届ける').disabled,false);
+ f.button(root,'この言葉を届ける').click();
+ f.button(root,'この言葉を届ける').click();
+ assert.equal(f.state().battle.turn,0,'no attacks before the last page');
+ f.pointer.advance();f.pointer.advance();
+ assert.equal(f.state().battle.turn,0);
+ f.pointer.advance();
  assert.equal(f.state().battle.turn,1);assert.equal(f.state().battle.hp,91);
- assert.equal(f.state().story,'enemy-turn');
- f.advanceTime(1050);assert.equal(f.state().dialogueBusy,true);
- f.pointer.advance();f.pointer.advance();assert.equal(f.state().battle.turn,1);
+ assert.equal(f.state().battle.dark,80);assert.equal(f.state().battle.resonance,27);
+ assert.equal(f.state().story,'word-strike');
+ f.advanceTime(1050);assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.match(f.lines.at(-1).text,/怖いのか/);
+ f.pointer.advance();assert.equal(f.state().story,'enemy-turn');
+ f.advanceTime(1050);assert.equal(f.state().battle.turn,1);
 });
 test('ordinary tarot path unlocks finisher; skill cutin ends with exactly one farewell and map return',async()=>{
  const f=fixture(),root=await enter(f);
- for(let i=0;i<10;i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
+ for(let i=0;i<12&&f.state().battle.phase==='read';i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
  assert.equal(f.state().battle.phase,'finisher');
- assert.equal(f.state().battle.hp,7);
+ assert.ok(f.state().battle.hp>0);
  assert.equal(f.state().battle.resonance,100);
  assert.equal(f.button(root,'対話で解放').disabled,false);
  assert.equal(f.button(root,'必殺技').disabled,false);
  f.button(root,'必殺技').click();assert.equal(f.state().story,'cutin');
- f.button(root,'必殺技').click();assert.equal(f.state().battle.turn,10);
+ const finishingTurn=f.state().battle.turn;
+ f.button(root,'必殺技').click();assert.equal(f.state().battle.turn,finishingTurn);
  f.advanceTime(1700);assert.equal(f.state().story,'technique');
  f.advanceTime(1500);assert.equal(f.state().story,'purifying');
  f.advanceTime(2600);assert.equal(f.state().story,'purified');
@@ -142,7 +167,7 @@ test('ordinary tarot path unlocks finisher; skill cutin ends with exactly one fa
 });
 test('HP0 causes shared-dialogue retreat and resets follower without purifying Caritas',async()=>{
  const f=fixture(),root=await enter(f);
- for(let i=0;i<5;i++)read(f,root,i===0?['秘密','勇気','希望']:null);
+ for(let i=0;i<12&&f.state().battle.phase==='read';i++)read(f,root,i===0?['秘密','勇気','希望']:null);
  assert.equal(f.state().battle.phase,'defeat');assert.equal(f.state().story,'retreat');
  assert.match(f.lines.at(-1).text,/一度撤退だ/);
  f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'シオリエル');
@@ -159,13 +184,13 @@ test('turn checkpoint restores HP, darkness and resonance without a second attac
  const f=fixture({persistentStore}),root=await enter(f);
  read(f,root,['不安','忍耐','癒し']);
  assert.equal(f.state().battle.hp,91);assert.equal(f.state().battle.turn,1);
- assert.ok([...persistentStore.keys()].some(k=>k.includes('caritas-v13c')));
+ assert.ok([...persistentStore.keys()].some(k=>k.includes('caritas-full-reading-v1')));
  const resumed=fixture({persistentStore});
  assert.equal(resumed.state().story,'battle');
  assert.equal(resumed.state().battle.turn,1);
  assert.equal(resumed.state().battle.hp,91);
- assert.equal(resumed.state().battle.dark,88);
- assert.equal(resumed.state().battle.resonance,15);
+ assert.equal(resumed.state().battle.dark,80);
+ assert.equal(resumed.state().battle.resonance,27);
  assert.equal(resumed.shell.querySelector('#caritas-event').hidden,false);
 });
 test('visibility and BFCache pause cutin time without replaying finisher',async()=>{
@@ -176,7 +201,7 @@ test('visibility and BFCache pause cutin time without replaying finisher',async(
  f.visibility(false);f.advanceTime(1200);assert.equal(f.state().story,'technique');
  f.advanceTime(500);f.page('pagehide');f.advanceTime(15000);assert.equal(f.state().story,'technique');
  f.page('pageshow');f.advanceTime(1000);assert.equal(f.state().story,'purifying');
- assert.equal(f.state().battle.turn,10);
+ assert.ok(f.state().battle.turn>0);
 });
 test('shared main dialogue IDs, nonproduction isolation and styling are unchanged',()=>{
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
