@@ -58,7 +58,7 @@ function restoreCheckpoint(){
 }
 // Source art stays intact. CSS frames only the faces; technique art can be added
 // later through this isolated encounter's optional same-origin image slot.
-const CUTINS={shion:"./assets/sprites/shion/shion_card_03_check.webp",shioriel:"./assets/events/hoshisuna/cutins/shioriel-reference.png"};
+const CUTINS=Object.freeze({shion:"./assets/battle/cutins/shion-cutin.webp",shioriel:"./assets/battle/cutins/shioriel-cutin.webp"});
 const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……世話になった。")];
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
