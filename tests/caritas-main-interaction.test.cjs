@@ -343,3 +343,20 @@ test('completed battle retains first-delivery receipt after its checkpoint is cl
  await openWritten(again,rr).click();completeWritten(again);again.advanceTime(1400);
  assert.equal(again.state().battle.resonance,25,'first-ever bonus survives a new encounter');
 });
+
+test('failed reward storage leaves meters and first reward unclaimed and preserves draft',async()=>{
+ const store=new Map();let fail=false;
+ const set=store.set.bind(store);store.set=(k,v)=>{if(fail)throw Error('quota');return set(k,v)};
+ const f=fixture({persistentStore:store,fetchReply:()=>aiReply([])}),root=await enter(f);
+ fail=true;
+ await openWritten(f,root,'大丈夫').click();completeWritten(f);
+ assert.equal(f.state().battle.resonance,0);
+ assert.equal(f.state().committing,false);
+ assert.equal(root.querySelector('.cb-ai-input').value,'大丈夫');
+ assert.match(root.querySelector('.cb-ai-result').textContent,/保存できなかった/);
+ fail=false;
+ await openWritten(f,root,'大丈夫').click();completeWritten(f);
+ assert.equal(f.state().battle.resonance,50);
+ assert.equal(saved(f).aiConfirmedCalls,1);
+ assert.equal(saved(f).firstWrittenDelivered,true);
+});

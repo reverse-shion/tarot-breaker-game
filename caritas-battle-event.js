@@ -31,7 +31,7 @@ let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=
 let firstWrittenDelivered=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=14;
 function checkpoint(){
- try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,firstWrittenDelivered,aiCalls,aiConfirmedCalls:aiCalls}));}catch(_){}
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:SAVE_VERSION,battle,firstWrittenDelivered,aiCalls,aiConfirmedCalls:aiCalls}));return true;}catch(_){return false;}
 }
 function clearCheckpoint(){
  // Keep the first-delivery receipt after retreat/victory, in this dev namespace only.
@@ -360,7 +360,14 @@ async function sendAiReading(){
    if(story!=="battle"||battle!==before){committing=false;render();return;}
    battle=C.applyWrittenReading(before,Array.isArray(data.understandingIds)?data.understandingIds:[],!firstWrittenDelivered);
    if(battle===before){committing=false;render();return;}
-   firstWrittenDelivered=true;aiCalls++;checkpoint(); // One atomic dev-only snapshot includes both meters and first-use receipt.
+   const wasFirstWrittenDelivered=firstWrittenDelivered;
+   firstWrittenDelivered=true;aiCalls++;
+   if(!checkpoint()){
+    battle=before;firstWrittenDelivered=wasFirstWrittenDelivered;aiCalls--;
+    committing=false;aiPanelOpen=true;
+    ui.aiResult.textContent="記録を保存できなかったため、特典はまだ加算していません。文章は残しています。保存できる状態で再送してください。";
+    render();return;
+   } // One atomic dev-only snapshot includes both meters and first-use receipt.
    const gain=battle.resonance-before.resonance,relief=before.dark-battle.dark;
    aiLastState=null;aiPendingRequest=null;aiPendingText="";
    ui.aiInput.value="";
