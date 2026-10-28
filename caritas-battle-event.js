@@ -256,7 +256,7 @@ function render(){
   ui.aiToggle.textContent=aiPanelOpen?"AIの自由記述を閉じる ▲":"AIで自分の言葉を届ける ▼";
   ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read"&&readingOpen);
  }
- ui.read.textContent=finisher?"対話で解放":"この読みを届ける";
+ ui.read.textContent=finisher?"対話で解放":"この言葉を届ける";
  ui.read.disabled=!((reading&&readingOpen&&!!p)||finisher);
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
