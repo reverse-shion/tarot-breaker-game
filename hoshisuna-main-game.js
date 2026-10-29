@@ -175,7 +175,7 @@
   // Isolated Caritas invocation only. This atlas is the already-approved official
   // four-view Shioriel art; quadrant 0 (top-left) is the screen-facing portrait.
   let caritasShiorielAtlas = null;
-  const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false };
+  const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false, fx:null };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
     ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
     : caritasInvocation.phase==="revealed"?1:0;
@@ -1611,6 +1611,103 @@
   }
 
 
+
+  // This effect samples the ACTUAL approved map sprites. No generated character
+  // substitute, hard-coded screenshot or extra asset download is involved.
+  // Cache once when invocation starts; never sample canvas pixels per frame.
+  function prepareCaritasPixelManifestation() {
+    const source = shioponImages.idle || shioponImages.down;
+    if (!source || !caritasShiorielAtlas) return null;
+    const result = { fragments:[], silhouette:null, source };
+    const sample = document.createElement("canvas");
+    sample.width=96;sample.height=128;
+    try {
+      const g=sample.getContext("2d",{willReadFrequently:true});
+      g.imageSmoothingEnabled=false;
+      g.drawImage(source,0,0,FRAME.w,FRAME.h,0,0,96,128);
+      const rgba=g.getImageData(0,0,96,128).data;
+      // Use tiles from Shiopon's real sprite; omit transparent background.
+      for(let row=0;row<128;row+=7)for(let col=0;col<96;col+=7){
+        const px=Math.min(95,col+3),py=Math.min(127,row+3);
+        const alpha=rgba[(py*96+px)*4+3];
+        if(alpha<90 || (col*17+row*13)%5===0)continue;
+        const hash=((col*41+row*31)%97)/97;
+        result.fragments.push({
+          sx:col*FRAME.w/96,sy:row*FRAME.h/128,
+          sw:Math.min(7,96-col)*FRAME.w/96,
+          sh:Math.min(7,128-row)*FRAME.h/128,
+          vx:(hash-.5)*54,vy:24+hash*49,
+          delay:(row/128)*.24+hash*.10
+        });
+      }
+      // Build a colored silhouette from Shioriel's own front-facing pixels.
+      // The crystal, ears, long hair, robes, and wings keep their real outline.
+      const aura=document.createElement("canvas");
+      aura.width=caritasShiorielAtlas.naturalWidth/2;
+      aura.height=caritasShiorielAtlas.naturalHeight/2;
+      const a=aura.getContext("2d");
+      a.drawImage(caritasShiorielAtlas,0,0,aura.width,aura.height,0,0,aura.width,aura.height);
+      a.globalCompositeOperation="source-in";
+      a.fillStyle="#d0adff";a.fillRect(0,0,aura.width,aura.height);
+      result.silhouette=aura;
+    } catch(err) {
+      // A blocked canvas read must never block Caritas gameplay.
+      console.warn("[Caritas] pixel-dissolve unavailable; retaining starfield",err);
+    }
+    return result;
+  }
+
+  function paintCaritasPixelFragments(actor,t) {
+    const fx=caritasInvocation.fx;
+    if(!fx?.fragments.length||t<.18||t>.86)return;
+    const unit=SHIOPON_DRAW_HEIGHT/FRAME.h;
+    const left=actor.x-FRAME.w*unit/2;
+    const top=actor.y-FRAME.baseline*unit+actor.visualOffsetY+actor.stageOffsetY;
+    const progress=Math.min(1,Math.max(0,(t-.18)/.65));
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    for(const f of fx.fragments){
+      const p=Math.min(1,Math.max(0,(progress-f.delay)/(1-f.delay)));
+      if(p<=0||p>=1)continue;
+      const brightness=Math.sin(Math.PI*p);
+      const x=left+f.sx*unit+f.vx*p*p;
+      const y=top+f.sy*unit-f.vy*p*p;
+      const w=f.sw*unit*(1-.45*p),h=f.sh*unit*(1-.45*p);
+      ctx.globalAlpha=.95*Math.pow(1-p,.7);
+      ctx.drawImage(fx.source,f.sx,f.sy,f.sw,f.sh,x,y,w,h);
+      if(brightness>.35 && f.vy>59){
+        // A small prismatic core: sparkling fragments retain pixelated edges.
+        ctx.globalAlpha=brightness*.75;
+        ctx.fillStyle=(f.vx>0)?"#f8dc9c":"#c7adff";
+        ctx.fillRect(x+w/2-1,y+h/2-1,2.2,2.2);
+      }
+    }
+    ctx.restore();
+  }
+
+  function paintCaritasWingUnfold(x,y,height,t){
+    const opening=Math.min(1,Math.max(0,(t-.72)/.23));
+    if(!opening||opening>=1&&t>.99)return;
+    const ease=1-Math.pow(1-opening,3);
+    ctx.save();ctx.lineJoin="miter";ctx.lineCap="round";
+    for(const side of [-1,1]){
+      for(let ray=0;ray<3;ray++){
+        const span=(28+ray*15)*ease;
+        const spread=(43+ray*10)*ease;
+        ctx.beginPath();
+        ctx.moveTo(x+side*11,y-height*.63);
+        ctx.lineTo(x+side*(19+span*.48),y-height*(.70+.06*ray));
+        ctx.lineTo(x+side*(19+span),y-height*(.76+spread/180));
+        ctx.strokeStyle=ray===1?"rgba(255,221,157,"+(.74*(1-opening*.45))+")":
+          "rgba(189,164,255,"+(.85*(1-opening*.45))+")";
+        ctx.lineWidth=(2.6-ray*.35)/camera.zoom;
+        ctx.shadowColor=ray===1?"#ffd6a2":"#ba93ff";
+        ctx.shadowBlur=7/camera.zoom;
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
   // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
   // Localised saturated starfield: readable on phone without a white flash.
   function drawCaritasInvocation(actor) {
@@ -1688,28 +1785,62 @@
         }
       }
     }
-    // Original Shiopon fades into the very same sprite slot as Shioriel.
-    const shioponAlpha=phase==="charging"?Math.max(0,Math.min(1,(.55-t)/.11)):0;
-    if(shioponAlpha>0){
-      ctx.save();ctx.globalAlpha*=shioponAlpha;
+    // Dissolve Shiopon's original map sprite from the feet upward. Actual
+    // sprite-pixel fragments travel into the silhouette, rather than one crossfade.
+    const dissolve=phase==="charging"?Math.min(1,Math.max(0,(t-.19)/.43)):1;
+    if(dissolve<1){
+      const shioTop=y-FRAME.baseline*(SHIOPON_DRAW_HEIGHT/FRAME.h)
+        +actor.visualOffsetY+actor.stageOffsetY;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x-100,shioTop-12,200,
+        Math.max(0,(SHIOPON_DRAW_HEIGHT+24)*(1-dissolve)));
+      ctx.clip();
       drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
         outline:ACTOR_OUTLINES.shiopon,visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
       });
       ctx.restore();
     }
-    const revealedAlpha=phase==="revealed"?1:Math.max(0,Math.min(1,(t-.55)/.28));
-    if(revealedAlpha>0 && caritasShiorielAtlas){
+    paintCaritasPixelFragments(actor,t);
+    const reveal=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.51)/.40));
+    if(reveal>0&&caritasShiorielAtlas){
       const image=caritasShiorielAtlas;
       const sw=image.naturalWidth/2,sh=image.naturalHeight/2;
-      // 105 -> 96: ~8.6% smaller, preserving the existing foot registration.
+      // Keep the approved 96-world-pixel size and original foot anchor.
       const height=96*(phase==="charging"?.91+.09*Math.min(1,(t-.55)/.45):1);
       const width=height*sw/sh;
-      ctx.save();ctx.globalAlpha*=revealedAlpha;
-      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-      ctx.shadowColor="rgba(166,125,231,.68)";
-      ctx.shadowBlur=7/camera.zoom;
-      ctx.drawImage(image,0,0,sw,sh,x-width/2,y-height+5,width,height);
-      ctx.restore();
+      const top=y-height+5,left=x-width/2;
+      const fx=caritasInvocation.fx;
+      const silhouetteAlpha=phase==="revealed"?0:Math.max(0,Math.min(1,(t-.48)/.19));
+      if(fx?.silhouette&&silhouetteAlpha>0){
+        const band=height*reveal;
+        ctx.save();
+        ctx.beginPath();ctx.rect(left-12,top+height-band-5,width+24,band+14);ctx.clip();
+        ctx.globalAlpha*=silhouetteAlpha*.72;
+        ctx.shadowColor="#d6a7ff";ctx.shadowBlur=20/camera.zoom;
+        ctx.drawImage(fx.silhouette,left,top,width,height);
+        ctx.restore();
+      }
+      paintCaritasWingUnfold(x,y,height,t);
+      const revealedAlpha=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.72)/.19));
+      if(revealedAlpha>0){
+        ctx.save();ctx.globalAlpha*=revealedAlpha;
+        ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+        ctx.shadowColor="rgba(166,125,231,.68)";
+        ctx.shadowBlur=7/camera.zoom;
+        ctx.drawImage(image,0,0,sw,sh,left,top,width,height);
+        ctx.restore();
+      }
+      // A single restrained shockwave when the wings finish opening.
+      if(phase==="charging"&&t>.83&&t<.98){
+        const p=(t-.83)/.15;
+        ctx.save();ctx.translate(x,y-35);ctx.scale(1,.35);
+        ctx.strokeStyle="rgba(255,225,170,"+(.72*(1-p))+")";
+        ctx.lineWidth=(2.5*(1-p))/camera.zoom;
+        ctx.shadowColor="#ceaeff";ctx.shadowBlur=9/camera.zoom;
+        ctx.beginPath();ctx.arc(0,0,28+105*p,0,Math.PI*2);ctx.stroke();
+        ctx.restore();
+      }
     }
     ctx.restore();
     return true;
@@ -2685,6 +2816,7 @@
     begin(){
       if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasShiorielAtlas)return false;
       caritasInvocation.phase="charging";caritasInvocation.elapsed=0;
+      caritasInvocation.fx=prepareCaritasPixelManifestation();
       caritasInvocation.paused=document.hidden;
       caritasInvocation.since=performance.now();
       draw();return true;
@@ -2709,6 +2841,7 @@
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
+      caritasInvocation.fx=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;
@@ -2719,7 +2852,8 @@
       return true;
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
-      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas})
+      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas,
+      pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette})
   });
 
   window.TarotStage = Object.freeze({
