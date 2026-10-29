@@ -88,3 +88,27 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
+
+test("pixel manifestation derives fragments and light silhouette from the official sprite images",()=>{
+ const section=game.slice(game.indexOf("function prepareCaritasPixelManifestation()"),
+                          game.indexOf("function drawActors()"));
+ assert.match(section,/shioponImages\.idle\s*\|\|\s*shioponImages\.down/);
+ assert.match(section,/caritasShiorielAtlas\.naturalWidth\/2/);
+ assert.match(section,/getImageData\(0,0,96,128\)/);
+ assert.match(section,/paintCaritasPixelFragments\(actor,t\)/);
+ assert.match(section,/ctx\.drawImage\(fx\.source,f\.sx,f\.sy,f\.sw,f\.sh/);
+ assert.match(section,/paintCaritasWingUnfold\(x,y,height,t\)/);
+ assert.match(section,/fx\.silhouette/);
+ assert.match(section,/\.rect\(x-100,shioTop-12,200,/);
+ assert.match(section,/ctx\.clip\(\)/);
+ assert.match(section,/if\(phase==="charging"&&t>\.83&&t<\.98\)/);
+ assert.doesNotMatch(section,/new Image\(|\.src\s*=|fetch\(/);
+});
+test("manifestation is isolated, pauseable and cleans sprite particle resources on map return",()=>{
+ const api=game.slice(game.indexOf('if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze'));
+ assert.match(api,/caritasInvocation\.fx=prepareCaritasPixelManifestation\(\)/);
+ assert.match(api,/caritasInvocation\.fx=null/);
+ assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
+ assert.match(api,/caritasInvocation\.paused=document\.hidden/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03-pixelmanifest1/);
+});
