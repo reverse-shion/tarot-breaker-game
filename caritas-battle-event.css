@@ -95,8 +95,6 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 .cb-cut-face{position:absolute;max-width:none;max-height:none;object-fit:initial;image-rendering:auto}
 .cb-cut-shion .cb-cut-face{width:clamp(460px,145vw,670px);height:auto;left:50%;top:0;transform:translate(-50%,-17%)}
 .cb-cut-shioriel .cb-cut-face{width:clamp(1300px,390vw,1800px);height:auto;left:50%;top:50%;transform:translate(-25%,-16%)}
-.cb-cut-name{position:absolute;z-index:2;bottom:7px;right:8%;font-size:clamp(17px,5vw,24px);letter-spacing:.12em;color:#fff7e7;text-shadow:0 2px 4px #000,0 0 12px #000}
-.cb-cut-shioriel .cb-cut-name{left:8%;right:auto}
 .cb-cut-title{position:absolute;top:72%;left:0;right:0;text-align:center;font-size:clamp(22px,6vw,32px);letter-spacing:.3em;color:#fff0c9;text-shadow:0 0 18px #cfb8ff}
 .cb-technique{display:none;position:absolute;inset:0;z-index:50;pointer-events:none;overflow:hidden;background:radial-gradient(ellipse at 32% 23%,#e7d5ff2b,transparent 60%)}
 #caritas-event[data-phase="technique"] .cb-technique{display:block}
@@ -606,10 +604,8 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 #caritas-event[data-special="ART_PLAYBACK"] .cb-frame{visibility:hidden}
 #caritas-event .cb-special-art{position:absolute;inset:0;z-index:95;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse,#7770a8,#080a20 70%);height:100vh;height:100svh;height:100dvh;box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #caritas-event .cb-special-backdrop{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;filter:blur(24px) brightness(.35);opacity:.8}
-#caritas-event .cb-special-foreground{position:relative;width:88%;height:88%;object-fit:contain;z-index:1;min-height:0;min-width:0}
-#caritas-event .cb-special-title{position:absolute;z-index:2;left:3%;right:3%;bottom:max(3%,env(safe-area-inset-bottom));text-align:center;color:#fff0c7;text-shadow:0 2px 5px #000;font-size:clamp(16px,4.5vw,25px)}
+#caritas-event .cb-special-foreground{position:relative;width:100%;height:100%;object-fit:contain;z-index:1;min-height:0;min-width:0}
 #caritas-event[data-special="ART_PLAYBACK"][data-art-ready="false"] .cb-technique{display:block;z-index:96}
-#caritas-event[data-special="ART_PLAYBACK"][data-art-ready="false"] .cb-special-title{z-index:98}
 #caritas-event[data-phase="special"] .cb-cut-panel{animation:none;left:0;right:0;height:23%;border:0;box-shadow:none;background:transparent}
 #caritas-event[data-phase="special"] .cb-cut-face{width:100%;height:100%;inset:0;transform:none;object-fit:contain}
 #caritas-event[data-phase="special"] .cb-cut-title{display:none}
