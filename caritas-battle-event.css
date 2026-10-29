@@ -602,12 +602,12 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 #caritas-event .cb-special-short{display:flex;gap:10px;align-items:center;min-height:44px}
 #caritas-event[data-phase="special"] :is(.cb-controls,.cb-reading-start,.cb-narration,.cb-toast){display:none!important}
 #caritas-event[data-special="ART_PLAYBACK"] .cb-frame{visibility:hidden}
-#caritas-event .cb-special-art{position:absolute;inset:0;z-index:95;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse,#7770a8,#080a20 70%);height:100vh;height:100svh;height:100dvh;box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#caritas-event .cb-special-art{position:absolute;inset:0;z-index:95;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse,#7770a8,#080a20 70%);width:100vw;height:100vh;height:100svh;height:100dvh;box-sizing:border-box;padding:0}
 #caritas-event .cb-special-backdrop{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;filter:blur(24px) brightness(.35);opacity:.8}
-#caritas-event .cb-special-foreground{position:relative;width:100%;height:100%;object-fit:contain;z-index:1;min-height:0;min-width:0}
+#caritas-event .cb-special-foreground{position:relative;width:100%;height:100%;object-fit:cover;object-position:center center;transform-origin:center center;z-index:1;min-height:0;min-width:0}
 #caritas-event[data-special="ART_PLAYBACK"][data-art-ready="false"] .cb-technique{display:block;z-index:96}
-#caritas-event[data-phase="special"] .cb-cut-panel{animation:none;left:0;right:0;height:23%;border:0;box-shadow:none;background:transparent}
-#caritas-event[data-phase="special"] .cb-cut-face{width:100%;height:100%;inset:0;transform:none;object-fit:contain}
+#caritas-event[data-phase="special"] .cb-cut-panel{animation:none;left:0;right:0;width:100%;height:23%;border:0;box-shadow:none;background:transparent}
+#caritas-event[data-phase="special"] .cb-cut-face{width:100%;height:100%;inset:0;transform:none;object-fit:cover;object-position:center center;display:block}
 #caritas-event[data-phase="special"] .cb-cut-title{display:none}
 #caritas-event[data-phase="special"] .cb-cut-shion{top:20%}
 #caritas-event[data-phase="special"] .cb-cut-shioriel{top:44%}
