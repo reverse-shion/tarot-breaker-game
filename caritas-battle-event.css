@@ -584,3 +584,52 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-phase="written-light"] .cb-written-ring{opacity:.6;transform:none}
  #caritas-event[data-phase="written-light"] .cb-abyss{opacity:.4}
 }
+
+/* Resonance special v1.3-A. All rules are isolated to this encounter. */
+#caritas-event .cb-special-selection,#caritas-event .cb-save-problem{
+ position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;
+ padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));box-sizing:border-box;
+ background:#070c20ed;color:#fff2d2;overflow-y:auto;overscroll-behavior:contain;
+}
+#caritas-event .cb-save-problem{z-index:150;background:#101426f5}
+#caritas-event .cb-special-selection[hidden],#caritas-event .cb-save-problem[hidden],#caritas-event .cb-special-art[hidden]{display:none!important}
+#caritas-event .cb-special-selection h2{font-size:clamp(16px,4.4vw,22px);text-align:center}
+#caritas-event .cb-special-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:min(94%,520px)}
+#caritas-event .cb-special-card{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;padding:8px 3px;background:#162345;border:2px solid #6f7796;border-radius:9px;color:#fff0d0}
+#caritas-event .cb-special-card img{width:100%;height:min(27dvh,230px);object-fit:contain}
+#caritas-event .cb-special-card[aria-pressed="true"]{border-color:#ffebb0;box-shadow:0 0 18px #ead390b0}
+#caritas-event .cb-special-meaning{min-height:4em;max-width:480px;text-align:center;line-height:1.8}
+#caritas-event .cb-special-selection>button,#caritas-event .cb-save-problem button{min-height:46px;padding:10px 18px;border:1px solid #dfcda3;border-radius:8px;background:#303d63;color:#fff1ce}
+#caritas-event .cb-special-selection>button:disabled{opacity:.45}
+#caritas-event .cb-special-short{display:flex;gap:10px;align-items:center;min-height:44px}
+#caritas-event[data-phase="special"] :is(.cb-controls,.cb-reading-start,.cb-narration,.cb-toast){display:none!important}
+#caritas-event[data-special="ART_PLAYBACK"] .cb-frame{visibility:hidden}
+#caritas-event .cb-special-art{position:absolute;inset:0;z-index:95;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse,#7770a8,#080a20 70%);height:100vh;height:100svh;height:100dvh;box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#caritas-event .cb-special-backdrop{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;filter:blur(24px) brightness(.35);opacity:.8}
+#caritas-event .cb-special-foreground{position:relative;width:88%;height:88%;object-fit:contain;z-index:1;min-height:0;min-width:0}
+#caritas-event .cb-special-title{position:absolute;z-index:2;left:3%;right:3%;bottom:max(3%,env(safe-area-inset-bottom));text-align:center;color:#fff0c7;text-shadow:0 2px 5px #000;font-size:clamp(16px,4.5vw,25px)}
+#caritas-event[data-special="ART_PLAYBACK"][data-art-ready="false"] .cb-technique{display:block;z-index:96}
+#caritas-event[data-special="ART_PLAYBACK"][data-art-ready="false"] .cb-special-title{z-index:98}
+#caritas-event[data-phase="special"] .cb-cut-panel{animation:none;left:0;right:0;height:23%;border:0;box-shadow:none;background:transparent}
+#caritas-event[data-phase="special"] .cb-cut-face{width:100%;height:100%;inset:0;transform:none;object-fit:contain}
+#caritas-event[data-phase="special"] .cb-cut-title{display:none}
+#caritas-event[data-phase="special"] .cb-cut-shion{top:20%}
+#caritas-event[data-phase="special"] .cb-cut-shioriel{top:44%}
+#caritas-event:is([data-special="SHION_LINE"],[data-special="SHIORIEL_LINE"],[data-special="DUAL_INCANTATION"]) .cb-cutin{display:block}
+#caritas-event[data-special="SHION_LINE"] .cb-cut-shioriel,#caritas-event[data-special="SHIORIEL_LINE"] .cb-cut-shion{display:none}
+#caritas-event[data-special="SHIORIEL_LINE"] .cb-cut-shioriel{top:25%}
+#caritas-event[data-special="PURIFICATION"] .cb-abyss{animation:cb-unravel var(--cb-purification,1100ms) ease-out both}
+#caritas-event:is([data-special="CARITAS_REPLY"],[data-special="FAREWELL"],[data-special="RETURNING"]) .cb-abyss{opacity:0}
+#caritas-event:is([data-special="CARITAS_REPLY"],[data-special="FAREWELL"],[data-special="RETURNING"]) .cb-beast{filter:drop-shadow(0 0 20px #dbe3ffb8)}
+#caritas-event[data-card="18-the-moon"] .cb-release{background:radial-gradient(ellipse,#e6e9ff66,transparent 32%,#50376a88 50%,transparent 70%)}
+#caritas-event[data-card="08-strength"] .cb-release{background:radial-gradient(ellipse,transparent 25%,#ffe5a0cc 31%,#e8b75e66 44%,transparent 66%)}
+#caritas-event[data-card="17-the-star"] .cb-release{background:repeating-conic-gradient(from 25deg,#c9ddff00 0deg 24deg,#dceaffaa 25deg 26deg,#c9ddff00 27deg 40deg);border-radius:50%}
+#caritas-event[data-special="RETURNING"] .cb-frame{opacity:0;transition:opacity .9s ease}
+body.caritas-special-active [data-actor="shion-shioriel"] .tb-dialogue-speaker{color:#f3ddaa}
+#caritas-event[data-paused="true"] *{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-phase="special"] *,#caritas-event .cb-special-art *{animation:none!important;transition:none!important}
+ #caritas-event[data-special="PURIFICATION"] .cb-release{opacity:.65}
+}
+
+#caritas-event[data-save-error="true"]{animation:none!important;opacity:1!important}

@@ -128,10 +128,12 @@ test('game limits AI attempts to three and resets on a new encounter',()=>{
  assert.match(source,/const AI_CALL_LIMIT=3;/);
  assert.match(source,/if\(aiCalls>=AI_CALL_LIMIT\)/);
  assert.match(source,/aiBusy=true;render\(\);/);
- assert.match(source,/aiCalls\+\+;[\s\S]*if\(!checkpoint\(\)\)/);
+ assert.match(source,/persist\(\{[\s\S]*aiCalls:aiCalls\+1,aiConfirmedCalls:aiCalls\+1\},completeDelivery\)/);
+ assert.match(source,/aiCalls=record\.aiCalls/);
  assert.match(source,/if\(!response\.ok\)[\s\S]*?return;/);
  assert.match(source,/battle=C\.newGame\(\);visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";/);
- assert.match(source,/aiCalls=Number\.isInteger\(data\.aiConfirmedCalls\)/);
+ assert.match(source,/record=S\.migrate\(data,runId\(\)\)/);
+ assert.match(source,/aiCalls=record\.aiCalls/);
  assert.match(source,/ui\.aiSend\.disabled=!reading\|\|aiBusy\|\|aiCalls>=AI_CALL_LIMIT/);
 });
 
