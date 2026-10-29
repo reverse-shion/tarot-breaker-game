@@ -172,9 +172,14 @@
   };
   const images = {};
   const shioponImages = {};
-  // Isolated Caritas invocation only. This atlas is the already-approved official
-  // four-view Shioriel art; quadrant 0 (top-left) is the screen-facing portrait.
-  let caritasShiorielAtlas = null;
+  // User-approved transparent 4x3 sheet; decode once, advance with the event clock.
+  let caritasTransformationSheet = null;
+  const CARITAS_TRANSFORM_FRAME_ENDS = [700,850,990,1140,1300,1520,1720,1870,2030,2190,2410,3910];
+  function caritasTransformationFrame(progress) {
+    const elapsed=Math.max(0,Math.min(1,progress))*3910;
+    const frame=CARITAS_TRANSFORM_FRAME_ENDS.findIndex(end=>elapsed<end);
+    return frame<0?11:frame;
+  }
   const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
     ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
@@ -1611,106 +1616,21 @@
   }
 
 
-  // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
-  // Localised saturated starfield: readable on phone without a white flash.
+  // Replace the same world actor, retaining camera, depth masking and foot anchor.
+  // Keep the final sheet cell through the reveal dialogue: no looping or atlas swap.
   function drawCaritasInvocation(actor) {
     const phase=caritasInvocation.phase;
-    if(phase==="idle")return false;
-    const t=caritasInvocationProgress();
+    if(phase==="idle"||!caritasTransformationSheet)return false;
+    const frame=phase==="revealed"?11:caritasTransformationFrame(caritasInvocationProgress());
+    const cell=362, size=96;
     const x=actor.x,y=actor.y+actor.stageOffsetY;
-    const centerY=y-43;
+    // The generated sheet's feet sit at y=344 in each equal-sized cell.
+    // This retains the previous Shioriel footprint (~90px tall, foot y+4).
     ctx.save();
-    if(phase==="charging"){
-      const rise=Math.min(1,t/.22);
-      // The three "Stellan" echoes swell without strobing the whole scene.
-      const echoes=[.18,.43,.69].reduce((sum,beat)=>sum+
-        Math.exp(-Math.pow((t-beat)/.075,2)),0);
-      const strength=.62+.26*rise+.22*Math.min(1,echoes);
-      // A local dim halo isolates the event from the bright Starroad pixels.
-      const dusk=ctx.createRadialGradient(x,centerY,25,x,centerY,145);
-      dusk.addColorStop(0,"rgba(32,22,69,0)");
-      dusk.addColorStop(.56,"rgba(34,23,72,.08)");
-      dusk.addColorStop(1,"rgba(14,12,43,.26)");
-      ctx.fillStyle=dusk;ctx.beginPath();ctx.arc(x,centerY,145,0,Math.PI*2);ctx.fill();
-      // Soft, broad violet-blue light column, not a white rectangle.
-      ctx.save();ctx.translate(x,centerY-7);ctx.scale(.70,1.20);
-      const column=ctx.createRadialGradient(0,0,7,0,0,69);
-      column.addColorStop(0,"rgba(213,164,255,"+(.42*strength)+")");
-      column.addColorStop(.28,"rgba(157,125,245,"+(.34*strength)+")");
-      column.addColorStop(.65,"rgba(101,150,236,"+(.21*strength)+")");
-      column.addColorStop(1,"rgba(68,112,219,0)");
-      ctx.fillStyle=column;ctx.beginPath();ctx.arc(0,0,69,0,Math.PI*2);ctx.fill();
-      ctx.restore();
-      // Energy rises from the feet: the broad floor-ring makes the source clear.
-      ctx.save();ctx.translate(x,y-3);
-      const ground=ctx.createRadialGradient(0,0,3,0,0,54);
-      ground.addColorStop(0,"rgba(238,199,255,"+(.45*strength)+")");
-      ground.addColorStop(.42,"rgba(130,113,238,"+(.28*strength)+")");
-      ground.addColorStop(1,"rgba(98,142,227,0)");
-      ctx.scale(1,.38);ctx.fillStyle=ground;ctx.beginPath();ctx.arc(0,0,54,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle="rgba(210,174,255,"+(.70*strength)+")";
-      ctx.lineWidth=3.3;ctx.beginPath();ctx.ellipse(0,0,40+rise*5,31+rise*3,0,0,Math.PI*2);ctx.stroke();
-      ctx.restore();
-      // Three clearly legible coloured rings, each changing phase slowly.
-      const palettes=[[211,152,255],[131,177,255],[255,220,155]];
-      for(let ring=0;ring<3;ring++){
-        ctx.save();ctx.translate(x,centerY);
-        ctx.rotate((ring%2?-.25:.22)+t*(ring%2?-.34:.29));
-        const [r,g,b]=palettes[ring];
-        const alpha=ring===0?.74:ring===1?.62:.52;
-        ctx.strokeStyle="rgba("+r+","+g+","+b+","+(alpha*strength)+")";
-        ctx.lineWidth=[3.3,2.7,2.2][ring];
-        ctx.shadowColor="rgba("+r+","+g+","+b+","+(strength*.50)+")";
-        ctx.shadowBlur=5/camera.zoom;
-        ctx.beginPath();
-        ctx.ellipse(0,0,26+t*9+ring*10,43+t*6+ring*7,0,0,Math.PI*2);
-        ctx.stroke();ctx.restore();
-      }
-      // Clearly visible star motes circulate inward/outward, not random white noise.
-      for(let k=0;k<24;k++){
-        const a=k*2.39996+t*(.8+(k%3)*.18);
-        const radius=15+((k*17)%39)+(k%2?10*t:-7*t);
-        const px=x+Math.cos(a)*radius;
-        const py=centerY+Math.sin(a)*radius*.88;
-        const bright=.65+.35*Math.sin(t*12+k*.67);
-        const gold=k%6===0;
-        ctx.fillStyle=gold
-          ?"rgba(255,223,159,"+(bright*.90)+")"
-          :"rgba(195,170,255,"+(bright*.94)+")";
-        const size=1.2+(k%4)*.42;
-        ctx.beginPath();ctx.arc(px,py,size,0,Math.PI*2);ctx.fill();
-        if(k%5===0){
-          ctx.strokeStyle=gold?"rgba(255,226,169,.65)":"rgba(147,197,255,.66)";
-          ctx.lineWidth=1.05;ctx.beginPath();
-          ctx.moveTo(px-size-2,py);ctx.lineTo(px+size+2,py);
-          ctx.moveTo(px,py-size-2);ctx.lineTo(px,py+size+2);
-          ctx.stroke();
-        }
-      }
-    }
-    // Original Shiopon fades into the very same sprite slot as Shioriel.
-    const shioponAlpha=phase==="charging"?Math.max(0,Math.min(1,(.55-t)/.11)):0;
-    if(shioponAlpha>0){
-      ctx.save();ctx.globalAlpha*=shioponAlpha;
-      drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
-        outline:ACTOR_OUTLINES.shiopon,visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
-      });
-      ctx.restore();
-    }
-    const revealedAlpha=phase==="revealed"?1:Math.max(0,Math.min(1,(t-.55)/.28));
-    if(revealedAlpha>0 && caritasShiorielAtlas){
-      const image=caritasShiorielAtlas;
-      const sw=image.naturalWidth/2,sh=image.naturalHeight/2;
-      // 105 -> 96: ~8.6% smaller, preserving the existing foot registration.
-      const height=96*(phase==="charging"?.91+.09*Math.min(1,(t-.55)/.45):1);
-      const width=height*sw/sh;
-      ctx.save();ctx.globalAlpha*=revealedAlpha;
-      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-      ctx.shadowColor="rgba(166,125,231,.68)";
-      ctx.shadowBlur=7/camera.zoom;
-      ctx.drawImage(image,0,0,sw,sh,x-width/2,y-height+5,width,height);
-      ctx.restore();
-    }
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(caritasTransformationSheet,
+      (frame%4)*cell,Math.floor(frame/4)*cell,cell,cell,
+      x-size/2,y+4-344*size/cell,size,size);
     ctx.restore();
     return true;
   }
@@ -2646,7 +2566,7 @@
 
   if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
     moveForward(){
-      if(!ready||!running||!caritasShiorielAtlas||caritasInvocation.locked)
+      if(!ready||!running||!caritasTransformationSheet||caritasInvocation.locked)
         return Promise.resolve({completed:false,reason:"not-ready"});
       const front=playerRef(),from=shioponRef();
       // Select a legal spot on the Caritas-facing (north) side of Shion.
@@ -2683,7 +2603,7 @@
       draw();return true;
     },
     begin(){
-      if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasShiorielAtlas)return false;
+      if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasTransformationSheet)return false;
       caritasInvocation.phase="charging";caritasInvocation.elapsed=0;
       caritasInvocation.paused=document.hidden;
       caritasInvocation.since=performance.now();
@@ -2719,7 +2639,7 @@
       return true;
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
-      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas})
+      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasTransformationSheet})
   });
 
   window.TarotStage = Object.freeze({
@@ -2860,10 +2780,10 @@
         ...Object.entries(shioponFiles).map(async ([key, src]) => {
           shioponImages[key] = await loadImage(src);
         }),
-        ...(hoshisunaIsolated ? [loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
-          if(image.naturalWidth!==1086||image.naturalHeight!==1448)
-            throw new Error("シオリエル正面・四面図の寸法不正");
-          caritasShiorielAtlas=image;
+        ...(hoshisunaIsolated ? [loadImage("./assets/events/hoshisuna/effects/shiopon-to-shioriel-12frames.png").then(image=>{
+          if(image.naturalWidth!==1448||image.naturalHeight!==1086)
+            throw new Error("しおぽん変身スプライトシートの寸法不正");
+          caritasTransformationSheet=image;
         })] : []),
         ...Object.entries(lumiereFiles).map(async ([key, src]) => {
           lumiereImages[key] = await loadImage(src);
