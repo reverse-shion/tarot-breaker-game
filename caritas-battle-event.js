@@ -163,8 +163,8 @@ function runSpecialEffect(el,duration,callback,kind='hold'){
  const valid=()=>activeEffect===job&&effectGeneration===generation&&record.special.phase===phase&&!saveBlocked&&!recovery;
  function complete(){if(!valid()||suspended())return;cancelSpecialEffect();callback();}
  if(el?.animate&&!reduced&&kind!=='hold'){
-  // Hold art at its full initial size; retain the visible-time lifecycle clock.
-  const frames=kind==='art'?[{opacity:1},{opacity:1}]:kind==='purify'?[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}]:[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
+  // Begin at full viewport coverage, then slowly push in; the same lifecycle handles pause/reload.
+  const frames=kind==='art'?[{transform:'scale(1)'},{transform:'scale(1.08)'}]:kind==='purify'?[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}]:[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
   job.animation=el.animate(frames,{duration,fill:'forwards',easing:'ease-in-out'});
   job.animation.finished.then(complete,()=>{});
   if(suspended())job.animation.pause();
