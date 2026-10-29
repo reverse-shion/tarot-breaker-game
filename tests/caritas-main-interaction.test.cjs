@@ -235,6 +235,8 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
  const f=fixture();
  assert.ok(html.indexOf('shared-dialogue.js')<html.indexOf('caritas-battle-event.js'));
+ assert.ok(html.indexOf('caritas-special-state.js')<html.indexOf('caritas-battle-event.js'));
+ assert.ok(fs.readFileSync(path.join(__dirname,'../dev-checkpoints.js'),'utf8').includes('caritas-special-state.js'));
  assert.equal(f.pointer.dialogueOptions.mount,f.shell);
  assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{
   layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'

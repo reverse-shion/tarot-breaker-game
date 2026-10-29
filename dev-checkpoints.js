@@ -93,7 +93,7 @@
     durableWritePolicy:"FORBIDDEN; observed real dialogue facts in in-memory Journey only"});
   register("hoshisuna", {event:"hoshisuna-caritas",segment:"caritas-heart-resonance",map:"hoshisuna",spawn:"existing starroad (108,488)",
     temporaryState:Object.freeze({battleDone:false,companion:"existing map follower"}),
-    requiredRuntime:Object.freeze(["hoshisuna-main.html","hoshisuna-main-game.js","hoshisuna-caritas-collision.js","caritas-battle-core.js","caritas-battle-event.js"]),
+    requiredRuntime:Object.freeze(["hoshisuna-main.html","hoshisuna-main-game.js","hoshisuna-caritas-collision.js","caritas-battle-core.js","caritas-special-state.js","caritas-battle-event.js"]),
     entryAction:"walk up to Caritas and tap 調べる in the real Starroad runtime",emittedSignal:"tarot-breaker:caritas-approach",
     receivingRuntime:"actual hoshi map movement -> shared interaction pause -> heart-resonance overlay -> map resume",
     expectedFirstRuntimeState:"existing map spawns normally, Caritas blocks path until story completion",
