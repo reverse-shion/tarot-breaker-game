@@ -163,7 +163,8 @@ function runSpecialEffect(el,duration,callback,kind='hold'){
  const valid=()=>activeEffect===job&&effectGeneration===generation&&record.special.phase===phase&&!saveBlocked&&!recovery;
  function complete(){if(!valid()||suspended())return;cancelSpecialEffect();callback();}
  if(el?.animate&&!reduced&&kind!=='hold'){
-  const frames=kind==='art'?[{transform:'scale(1)'},{transform:'scale(1.06)'}]:kind==='purify'?[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}]:[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
+  // Hold art at its full initial size; retain the visible-time lifecycle clock.
+  const frames=kind==='art'?[{opacity:1},{opacity:1}]:kind==='purify'?[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}]:[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
   job.animation=el.animate(frames,{duration,fill:'forwards',easing:'ease-in-out'});
   job.animation.finished.then(complete,()=>{});
   if(suspended())job.animation.pause();
@@ -237,9 +238,9 @@ function playSpecialSequence(){
   if(['SHION_LINE','SHIORIEL_LINE','DUAL_INCANTATION'].includes(p))runSpecialEffect(ui.cutin,short?120:600,()=>{},'entry');
  }else if(p==='ART_PLAYBACK'){
   // Shared dialogue is hidden before any art frame becomes visible.
-  root.dataset.artReady='loading';ui.artPlayback.hidden=false;ui.artImage.hidden=true;ui.artBackdrop.hidden=true;ui.artTitle.textContent=t.title+' — '+t.reading;
+  root.dataset.artReady='loading';ui.artPlayback.hidden=false;ui.artImage.hidden=true;ui.artBackdrop.hidden=true;
   specialVisibleWait(1200,ready=>{
-   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の必殺技イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage,ui.artTitle);}
+   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の必殺技イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage);}
    root.dataset.artReady=String(ready);
    runSpecialEffect(ui.artImage,short?600:2600,()=>transitionSpecial('PURIFICATION',{imageDisplayed:ready&&ui.artImage.naturalWidth>0}),'art');
   });
@@ -735,7 +736,7 @@ function init(){
    const face=newEl("img","cb-cut-face");face.src=CUTINS[actor];face.alt=name;face.draggable=false;
    // These hidden-at-boot img elements start loading before any battle action.
    face.addEventListener("error",()=>{face.hidden=true;});
-   panel.append(face,newEl("span","cb-cut-name",name));cutin.append(panel);
+   panel.append(face);cutin.append(panel);
  }
  cutin.append(newEl("div","cb-cut-title","必殺技"));
  const technique=newEl("div","cb-technique");technique.setAttribute("aria-hidden","true");
@@ -744,7 +745,7 @@ function init(){
  ui.artPlayback=newEl("div","cb-special-art");ui.artPlayback.hidden=true;
  ui.artBackdrop=newEl("img","cb-special-backdrop");ui.artBackdrop.alt="";
  ui.artImage=newEl("img","cb-special-foreground");ui.artImage.alt="必殺技イラスト";
- ui.artTitle=newEl("div","cb-special-title");ui.artPlayback.append(ui.artBackdrop,ui.artImage,ui.artTitle);
+ ui.artPlayback.append(ui.artBackdrop,ui.artImage);
  const written=newEl("div","cb-written-light");written.setAttribute("aria-live","polite");
  ui.writtenQuote=newEl("p","cb-written-quote");ui.writtenGain=newEl("p","cb-written-gain");
  written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
