@@ -82,9 +82,111 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=resonance-special-v15/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v3/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
  assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
+});
+
+test("pixel manifestation derives fragments and light silhouette from the official sprite images",()=>{
+ const section=game.slice(game.indexOf("function prepareCaritasPixelManifestation()"),
+                          game.indexOf("function drawActors()"));
+ assert.match(section,/shioponImages\.idle\s*\|\|\s*shioponImages\.down/);
+ assert.match(section,/caritasShiorielAtlas\.naturalWidth\/2/);
+ assert.match(section,/getImageData\(0,0,96,128\)/);
+ assert.match(section,/paintCaritasPixelFragments\(actor,t\)/);
+ assert.match(section,/ctx\.drawImage\(fx\.source,f\.sx,f\.sy,f\.sw,f\.sh/);
+ assert.match(section,/paintCaritasWingUnfold\(x,y,height,t\)/);
+ assert.match(section,/fx\.silhouette/);
+ assert.match(section,/\.rect\(x-100,shioTop-12,200,/);
+ assert.match(section,/ctx\.clip\(\)/);
+ assert.match(section,/if\(phase==="charging"&&t>\.83&&t<\.98\)/);
+ assert.doesNotMatch(section,/new Image\(|\.src\s*=|fetch\(/);
+});
+test("manifestation is isolated, pauseable and cleans sprite particle resources on map return",()=>{
+ const api=game.slice(game.indexOf('if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze'));
+ assert.match(api,/caritasInvocation\.fx=caritasOwnerTransformationAtlas\?null:prepareCaritasPixelManifestation\(\)/);
+ assert.match(api,/caritasInvocation\.fx=null/);
+ assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
+ assert.match(api,/caritasInvocation\.paused=document\.hidden/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v3/);
+});
+
+test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
+ const drawing=game.slice(game.indexOf("function paintCaritasStarlightCocoon("),
+                          game.indexOf("function drawActors()"));
+ assert.match(drawing,/function paintCaritasStarlightCocoon\(x,y,t\)/);
+ assert.match(drawing,/if\(phase==="charging"\)paintCaritasStarlightCocoon\(x,y,t\)/);
+ assert.match(drawing,/ctx\.imageSmoothingEnabled=false/);
+ assert.match(drawing,/Luminous pixel tiles fan outward/);
+ assert.match(drawing,/stageOffsetY; do not apply the stage offset twice/);
+ assert.match(drawing,/const formed=phase==="revealed"\?1:/);
+ assert.match(drawing,/const revealEase=formed\*formed\*\(3-2\*formed\)/);
+ assert.match(drawing,/ctx\.rect\(left-3,top\+height-visibleHeight-3,width\+6,visibleHeight\+8\)/);
+ assert.match(drawing,/ctx\.drawImage\(image,0,0,sw,sh,left,top,width,height\)/);
+ assert.doesNotMatch(drawing,/new Image\(|\.src\s*=|fetch\(/);
+});
+
+test("owner-supplied 12-frame WebP replaces the old manifestation, remains world-anchored",()=>{
+ const asset=path.join(root,"assets/events/hoshisuna/battle/shiopon-shioriel-transformation-atlas.webp");
+ assert.ok(fs.existsSync(asset),"Owner's transparent transformation atlas must be committed");
+ const header=fs.readFileSync(asset);
+ assert.equal(header.subarray(0,4).toString(),"RIFF");
+ assert.equal(header.subarray(8,12).toString(),"WEBP");
+ assert.match(game,/const CARITAS_OWNER_TILE = 160/);
+ assert.match(game,/Object\.freeze\(\[700,150,140,150,160,220,200,150,160,160,220,1500\]\)/);
+ assert.match(game,/function drawCaritasOwnerTransformation\(actor,phase,t\)/);
+ assert.match(game,/const elapsed=phase==="revealed"\?3910:Math\.min\(3900,/);
+ assert.match(game,/ctx\.drawImage\(image,\(frame%4\)\*CARITAS_OWNER_TILE,/);
+ assert.match(game,/const x=actor\.x,y=actor\.y\+actor\.stageOffsetY\+actor\.visualOffsetY/);
+ assert.match(game,/if\(caritasOwnerTransformationAtlas\)return drawCaritasOwnerTransformation\(actor,phase,t\)/);
+ assert.match(game,/caritasOwnerTransformationAtlas=image/);
+ assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
+ assert.match(game,/\[Caritas\] owner transformation unavailable/);
+ assert.match(html,/caritas-owner-transformation-replay-v3/);
+});
+
+test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
+ const section=game.slice(game.indexOf("function measureCaritasVisibleMapActor("),
+                          game.indexOf("function drawCaritasInvocation(actor)"));
+ assert.match(section,/getImageData\(0,0,96,128\)/);
+ assert.match(section,/SHIOPON_DRAW_HEIGHT\)/);
+ assert.match(section,/DRAW_HEIGHT\)/);
+ assert.match(section,/const bodyHeight=scale\.shioponHeight\*\(1-blend\)\+scale\.shionHeight\*blend/);
+ assert.match(section,/const sourceBodyHeight=109\*\(1-blend\)\+133\*blend/);
+ assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
+ assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
+ assert.doesNotMatch(section,/const height=112,width=112/);
+ assert.match(html,/caritas-owner-transformation-replay-v3/);
+});
+
+test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
+ assert.match(event,/const transformationReplay=params\.getAll\("preview"\)\.length===1&&params\.get\("preview"\)==="manifestation"/);
+ assert.match(event,/const checkpointStore=transformationReplay\?replayStore:localStorage/);
+ assert.match(event,/const result=S\.write\(checkpointStore,SAVE_KEY,expectedRaw,next\)/);
+ assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
+ assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
+ assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
+ assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-framing2-replay-v3/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v3/);
+});
+test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
+ assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
+ assert.match(game,/spawnRef = \{x:108,y:488\};/);
+ assert.match(game,/if\(transformationReplay\)spawnRef = \{x:1088,y:331\};/);
+ const shape=JSON.parse(fs.readFileSync(path.join(root,"assets/events/hoshisuna/map/starroad-collision.json"),"utf8"));
+ const inside=(x,y,points)=>{
+   let found=false;
+   for(let i=0,j=points.length-1;i<points.length;j=i++){
+     const a=points[i],b=points[j];
+     if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])found=!found;
+   }
+   return found;
+ };
+ const walk=(x,y)=>shape.walkAreas.some(a=>a.type==="poly"&&inside(x,y,a.points));
+ assert.ok(walk(1088,331),"Shion spawn must be on official Starroad");
+ assert.ok(walk(1032,331),"Shiopon remains 56px behind on official walkable terrain");
+ assert.ok(walk(1059,298),"Shiopon's first front-facing manifestation target remains accessible");
+ assert.ok(!((1088>=934&&1088<=1092)&&(331>=150&&331<=272)),"spawn must not intersect Caritas body");
 });

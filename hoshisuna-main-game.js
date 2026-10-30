@@ -77,6 +77,8 @@
   // Isolated Hoshisuna map selector. Main actor, camera, controls, sprites,
   // routing, and Shiopon follow algorithms below remain identical to main.
   const hoshisunaIsolated = location.pathname.endsWith("/hoshisuna-main.html") && params.get("dev") === "hoshisuna";
+  const transformationReplay = hoshisunaIsolated &&
+    params.getAll("preview").length === 1 && params.get("preview") === "manifestation";
   const stage3Dev = ["star-gate-full", "star-gate-from-lumiere"].includes(params.get("dev")) && window.__TAROT_DEV_STAGE3__ === true;
   const stage3Runtime = stage3Dev || window.__TAROT_PUBLIC_STAR_GATE__ === true;
   const enteringFromLanding = params.get("from") === "landing";
@@ -175,7 +177,12 @@
   // Isolated Caritas invocation only. This atlas is the already-approved official
   // four-view Shioriel art; quadrant 0 (top-left) is the screen-facing portrait.
   let caritasShiorielAtlas = null;
-  const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false };
+  // Owner supplied 12-frame animated WebP converted lossily only into a
+  // transparent 4x3 sprite atlas; no character drawing is regenerated.
+  let caritasOwnerTransformationAtlas = null;
+  const CARITAS_OWNER_TILE = 160;
+  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([700,150,140,150,160,220,200,150,160,160,220,1500]);
+  const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false, fx:null };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
     ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
     : caritasInvocation.phase==="revealed"?1:0;
@@ -1611,12 +1618,232 @@
   }
 
 
+
+  // This effect samples the ACTUAL approved map sprites. No generated character
+  // substitute, hard-coded screenshot or extra asset download is involved.
+  // Cache once when invocation starts; never sample canvas pixels per frame.
+  function prepareCaritasPixelManifestation() {
+    const source = shioponImages.idle || shioponImages.down;
+    if (!source || !caritasShiorielAtlas) return null;
+    const result = { fragments:[], silhouette:null, source };
+    const sample = document.createElement("canvas");
+    sample.width=96;sample.height=128;
+    try {
+      const g=sample.getContext("2d",{willReadFrequently:true});
+      g.imageSmoothingEnabled=false;
+      g.drawImage(source,0,0,FRAME.w,FRAME.h,0,0,96,128);
+      const rgba=g.getImageData(0,0,96,128).data;
+      // Use tiles from Shiopon's real sprite; omit transparent background.
+      for(let row=0;row<128;row+=7)for(let col=0;col<96;col+=7){
+        const px=Math.min(95,col+3),py=Math.min(127,row+3);
+        const alpha=rgba[(py*96+px)*4+3];
+        if(alpha<90 || (col*17+row*13)%5===0)continue;
+        const hash=((col*41+row*31)%97)/97;
+        result.fragments.push({
+          sx:col*FRAME.w/96,sy:row*FRAME.h/128,
+          sw:Math.min(7,96-col)*FRAME.w/96,
+          sh:Math.min(7,128-row)*FRAME.h/128,
+          vx:(hash-.5)*54,vy:24+hash*49,
+          delay:(row/128)*.24+hash*.10
+        });
+      }
+      // Build a colored silhouette from Shioriel's own front-facing pixels.
+      // The crystal, ears, long hair, robes, and wings keep their real outline.
+      const aura=document.createElement("canvas");
+      aura.width=caritasShiorielAtlas.naturalWidth/2;
+      aura.height=caritasShiorielAtlas.naturalHeight/2;
+      const a=aura.getContext("2d");
+      a.drawImage(caritasShiorielAtlas,0,0,aura.width,aura.height,0,0,aura.width,aura.height);
+      a.globalCompositeOperation="source-in";
+      a.fillStyle="#d0adff";a.fillRect(0,0,aura.width,aura.height);
+      result.silhouette=aura;
+    } catch(err) {
+      // A blocked canvas read must never block Caritas gameplay.
+      console.warn("[Caritas] pixel-dissolve unavailable; retaining starfield",err);
+    }
+    return result;
+  }
+
+  function paintCaritasPixelFragments(actor,t) {
+    const fx=caritasInvocation.fx;
+    if(!fx?.fragments.length||t<.18||t>.86)return;
+    const unit=SHIOPON_DRAW_HEIGHT/FRAME.h;
+    const left=actor.x-FRAME.w*unit/2;
+    const top=actor.y-FRAME.baseline*unit+actor.visualOffsetY+actor.stageOffsetY;
+    const progress=Math.min(1,Math.max(0,(t-.18)/.65));
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    for(const f of fx.fragments){
+      const p=Math.min(1,Math.max(0,(progress-f.delay)/(1-f.delay)));
+      if(p<=0||p>=1)continue;
+      const brightness=Math.sin(Math.PI*p);
+      const x=left+f.sx*unit+f.vx*p*p;
+      const y=top+f.sy*unit-f.vy*p*p;
+      const w=f.sw*unit*(1-.45*p),h=f.sh*unit*(1-.45*p);
+      ctx.globalAlpha=.95*Math.pow(1-p,.7);
+      ctx.drawImage(fx.source,f.sx,f.sy,f.sw,f.sh,x,y,w,h);
+      if(brightness>.35 && f.vy>59){
+        // A small prismatic core: sparkling fragments retain pixelated edges.
+        ctx.globalAlpha=brightness*.75;
+        ctx.fillStyle=(f.vx>0)?"#f8dc9c":"#c7adff";
+        ctx.fillRect(x+w/2-1,y+h/2-1,2.2,2.2);
+      }
+    }
+    ctx.restore();
+  }
+
+  // Pixel-art light cocoon in world coordinates. Characters themselves stay
+  // untouched: this only paints small, camera-transformed light tiles behind them.
+  function paintCaritasStarlightCocoon(x,y,t) {
+    if(t<.16||t>.94)return;
+    const entering=Math.min(1,Math.max(0,(t-.16)/.20));
+    const departing=Math.min(1,Math.max(0,(.94-t)/.19));
+    const strength=Math.min(entering,departing);
+    const baseY=y-45;
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    // Two opposing ribbons enclose Shiopon before the silhouette reforms.
+    // Sampling the same t each frame prevents jump cuts on high-refresh phones.
+    for(const side of [-1,1]){
+      for(let i=0;i<31;i++){
+        const u=i/30;
+        const wave=Math.sin(u*Math.PI*2+t*11+side)*2.4;
+        const spread=(22+18*Math.sin(Math.PI*u))*Math.min(1,.45+t*1.3);
+        const px=Math.round(x+side*(spread+wave));
+        const py=Math.round(baseY+u*95-48);
+        const pulse=.72+.28*Math.sin(t*10+i*.47);
+        const alpha=strength*pulse*(i%5===0?.88:.54);
+        ctx.fillStyle=i%7===0?"rgba(255,219,156,"+alpha+")"
+          :"rgba(184,151,255,"+alpha+")";
+        const size=(i%6===0?3:2)/camera.zoom;
+        ctx.fillRect(px-size/2,py-size/2,size,size);
+      }
+    }
+    // Rising gold-violet sparks inside the cocoon; small and rhythmic, not noise.
+    for(let i=0;i<14;i++){
+      const u=((i*0.618034+t*.95)%1);
+      const angle=i*2.39996+t*5;
+      const px=x+Math.cos(angle)*(5+u*13);
+      const py=y-4-u*90;
+      const alpha=strength*(.38+.50*u);
+      ctx.fillStyle=i%4===0?"rgba(255,228,165,"+alpha+")"
+        :"rgba(213,181,255,"+alpha+")";
+      const d=(i%3===0?3:2)/camera.zoom;
+      ctx.fillRect(Math.round(px),Math.round(py),d,d);
+    }
+    ctx.restore();
+  }
+
+  function paintCaritasWingUnfold(x,y,height,t){
+    const opening=Math.min(1,Math.max(0,(t-.72)/.23));
+    if(!opening||opening>=1&&t>.99)return;
+    const ease=1-Math.pow(1-opening,3);
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    for(const side of [-1,1]){
+      for(let ray=0;ray<3;ray++){
+        // Luminous pixel tiles fan outward; no smooth CSS-like line overlay.
+        const span=(28+ray*15)*ease;
+        const climb=(12+ray*12)*ease;
+        for(let step=0;step<=12;step++){
+          const p=step/12;
+          const px=x+side*(11+span*p);
+          const py=y-height*.63-climb*Math.sin(p*Math.PI*.65)-ray*3*p;
+          const alpha=(.75*(1-opening*.35))*(1-p*.32);
+          ctx.fillStyle=ray===1?"rgba(255,221,157,"+alpha+")"
+            :"rgba(189,164,255,"+alpha+")";
+          const tile=(step%4===0?3.4:2.3)/camera.zoom;
+          ctx.fillRect(Math.round(px),Math.round(py),tile,tile);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // The map sprites use 384x512 source cells with transparent margins.
+  // Measure their actually visible height once, not the whole 76/78px cell.
+  // This avoids an apparent size jump at the first animation frame.
+  let caritasOwnerMapScale=null;
+  function measureCaritasVisibleMapActor(image,drawHeight){
+    if(!image)return null;
+    try{
+      const sample=document.createElement("canvas");
+      sample.width=96;sample.height=128;
+      const g=sample.getContext("2d",{willReadFrequently:true});
+      g.imageSmoothingEnabled=false;
+      g.drawImage(image,0,0,FRAME.w,FRAME.h,0,0,96,128);
+      const rgba=g.getImageData(0,0,96,128).data;
+      let minY=128,maxY=-1;
+      for(let y=0;y<128;y++)for(let x=0;x<96;x++){
+        if(rgba[(y*96+x)*4+3]>100){
+          if(y<minY)minY=y;
+          if(y>maxY)maxY=y;
+        }
+      }
+      if(maxY<minY)return null;
+      return {
+        height:(maxY-minY+1)*drawHeight/128,
+        footOffset:((maxY+1)-FRAME.baseline*128/FRAME.h)*drawHeight/128
+      };
+    }catch(error){
+      console.warn("[Caritas] map body sampling unavailable; keeping conservative scale",error);
+      return null;
+    }
+  }
+  function measureCaritasOwnerMapScale(){
+    if(caritasOwnerMapScale)return caritasOwnerMapScale;
+    const shiopon=measureCaritasVisibleMapActor(shioponImages.idle||shioponImages.down,SHIOPON_DRAW_HEIGHT);
+    const shion=measureCaritasVisibleMapActor(images.idle||images.down,DRAW_HEIGHT);
+    caritasOwnerMapScale={
+      shioponHeight:shiopon?.height||SHIOPON_DRAW_HEIGHT*.70,
+      // Shioriel must finish at Shion's visible on-map height.
+      shionHeight:shion?.height||DRAW_HEIGHT*.77,
+      shioponFootOffset:shiopon?.footOffset||0
+    };
+    return caritasOwnerMapScale;
+  }
+
   // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
   // Localised saturated starfield: readable on phone without a white flash.
+  // Exact ordered frames from the owner-supplied transformation WebP.
+  // Deterministic frame choice aligns to the existing 3900ms stage,
+  // including when Safari suspends and resumes in the middle of the event.
+  function drawCaritasOwnerTransformation(actor,phase,t){
+    const image=caritasOwnerTransformationAtlas;
+    if(!image)return false;
+    const elapsed=phase==="revealed"?3910:Math.min(3900,Math.max(0,t*3900));
+    let frame=CARITAS_OWNER_FRAME_TIMES_MS.length-1,until=0;
+    for(let i=0;i<CARITAS_OWNER_FRAME_TIMES_MS.length;i++){
+      until+=CARITAS_OWNER_FRAME_TIMES_MS[i];
+      if(elapsed<until){frame=i;break;}
+    }
+    // Anchor the owner's artwork to the ORIGINAL on-map body dimensions,
+    // not a fixed 112px square (which enlarged both characters on iPhone).
+    const scale=caritasOwnerMapScale || measureCaritasOwnerMapScale();
+    // Transition the scale while obscured by light, never snap it at a frame.
+    const morph=Math.max(0,Math.min(1,(elapsed-1500)/900));
+    const blend=morph*morph*(3-2*morph);
+    const bodyHeight=scale.shioponHeight*(1-blend)+scale.shionHeight*blend;
+    const sourceBodyHeight=109*(1-blend)+133*blend;
+    const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight;
+    const width=height;
+    const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
+    // Frames 0 and 11 both have their soles at source y=145.
+    const centerX=84*(1-blend)+79.5*blend;
+    const feetY=y+scale.shioponFootOffset;
+    ctx.save();
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    ctx.drawImage(image,(frame%4)*CARITAS_OWNER_TILE,
+      Math.floor(frame/4)*CARITAS_OWNER_TILE,
+      CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,
+      x-centerX*width/CARITAS_OWNER_TILE,
+      feetY-145*height/CARITAS_OWNER_TILE,width,height);
+    ctx.restore();
+    return true;
+  }
+
   function drawCaritasInvocation(actor) {
     const phase=caritasInvocation.phase;
     if(phase==="idle")return false;
     const t=caritasInvocationProgress();
+    if(caritasOwnerTransformationAtlas)return drawCaritasOwnerTransformation(actor,phase,t);
     const x=actor.x,y=actor.y+actor.stageOffsetY;
     const centerY=y-43;
     ctx.save();
@@ -1688,28 +1915,76 @@
         }
       }
     }
-    // Original Shiopon fades into the very same sprite slot as Shioriel.
-    const shioponAlpha=phase==="charging"?Math.max(0,Math.min(1,(.55-t)/.11)):0;
-    if(shioponAlpha>0){
-      ctx.save();ctx.globalAlpha*=shioponAlpha;
+    // Keep the luminous cocoon behind the approved sprite artwork.
+    if(phase==="charging")paintCaritasStarlightCocoon(x,y,t);
+    // Dissolve Shiopon's original map sprite from the feet upward. Actual
+    // sprite-pixel fragments travel into the silhouette, rather than one crossfade.
+    const dissolve=phase==="charging"?Math.min(1,Math.max(0,(t-.19)/.43)):1;
+    if(dissolve<1){
+      // y already includes stageOffsetY; do not apply the stage offset twice.
+      const shioTop=y-FRAME.baseline*(SHIOPON_DRAW_HEIGHT/FRAME.h)
+        +actor.visualOffsetY;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x-100,shioTop-12,200,
+        Math.max(0,(SHIOPON_DRAW_HEIGHT+24)*(1-dissolve)));
+      ctx.clip();
       drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
         outline:ACTOR_OUTLINES.shiopon,visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
       });
       ctx.restore();
     }
-    const revealedAlpha=phase==="revealed"?1:Math.max(0,Math.min(1,(t-.55)/.28));
-    if(revealedAlpha>0 && caritasShiorielAtlas){
+    paintCaritasPixelFragments(actor,t);
+    const reveal=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.51)/.40));
+    if(reveal>0&&caritasShiorielAtlas){
       const image=caritasShiorielAtlas;
       const sw=image.naturalWidth/2,sh=image.naturalHeight/2;
-      // 105 -> 96: ~8.6% smaller, preserving the existing foot registration.
+      // Keep the approved 96-world-pixel size and original foot anchor.
       const height=96*(phase==="charging"?.91+.09*Math.min(1,(t-.55)/.45):1);
       const width=height*sw/sh;
-      ctx.save();ctx.globalAlpha*=revealedAlpha;
-      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-      ctx.shadowColor="rgba(166,125,231,.68)";
-      ctx.shadowBlur=7/camera.zoom;
-      ctx.drawImage(image,0,0,sw,sh,x-width/2,y-height+5,width,height);
-      ctx.restore();
+      const top=y-height+5,left=x-width/2;
+      const fx=caritasInvocation.fx;
+      const silhouetteAlpha=phase==="revealed"?0:Math.max(0,Math.min(1,(t-.48)/.19));
+      if(fx?.silhouette&&silhouetteAlpha>0){
+        const band=height*reveal;
+        ctx.save();
+        ctx.beginPath();ctx.rect(left-12,top+height-band-5,width+24,band+14);ctx.clip();
+        ctx.globalAlpha*=silhouetteAlpha*.72;
+        ctx.shadowColor="#d6a7ff";ctx.shadowBlur=20/camera.zoom;
+        ctx.drawImage(fx.silhouette,left,top,width,height);
+        ctx.restore();
+      }
+      paintCaritasWingUnfold(x,y,height,t);
+      const revealedAlpha=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.72)/.19));
+      // The real Shioriel art appears progressively from the feet upward,
+      // inside the same world-space actor slot. A fade alone looked like a swap.
+      const formed=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.68)/.25));
+      const revealEase=formed*formed*(3-2*formed);
+      if(revealedAlpha>0&&revealEase>0){
+        const visibleHeight=height*revealEase;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(left-3,top+height-visibleHeight-3,width+6,visibleHeight+8);
+        ctx.clip();
+        ctx.globalAlpha*=revealedAlpha;
+        // The official high-resolution pixel illustration keeps its approved
+        // downsampling; only the separate light effects use hard-edged tiles.
+        ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+        ctx.shadowColor="rgba(166,125,231,.68)";
+        ctx.shadowBlur=7/camera.zoom;
+        ctx.drawImage(image,0,0,sw,sh,left,top,width,height);
+        ctx.restore();
+      }
+      // A single restrained shockwave when the wings finish opening.
+      if(phase==="charging"&&t>.83&&t<.98){
+        const p=(t-.83)/.15;
+        ctx.save();ctx.translate(x,y-35);ctx.scale(1,.35);
+        ctx.strokeStyle="rgba(255,225,170,"+(.72*(1-p))+")";
+        ctx.lineWidth=(2.5*(1-p))/camera.zoom;
+        ctx.shadowColor="#ceaeff";ctx.shadowBlur=9/camera.zoom;
+        ctx.beginPath();ctx.arc(0,0,28+105*p,0,Math.PI*2);ctx.stroke();
+        ctx.restore();
+      }
     }
     ctx.restore();
     return true;
@@ -2685,6 +2960,7 @@
     begin(){
       if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasShiorielAtlas)return false;
       caritasInvocation.phase="charging";caritasInvocation.elapsed=0;
+      caritasInvocation.fx=caritasOwnerTransformationAtlas?null:prepareCaritasPixelManifestation();
       caritasInvocation.paused=document.hidden;
       caritasInvocation.since=performance.now();
       draw();return true;
@@ -2709,6 +2985,7 @@
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
+      caritasInvocation.fx=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;
@@ -2719,7 +2996,9 @@
       return true;
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
-      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas})
+      position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas,
+      pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette,
+      ownerAnimationReady:!!caritasOwnerTransformationAtlas,ownerFrameCount:CARITAS_OWNER_FRAME_TIMES_MS.length})
   });
 
   window.TarotStage = Object.freeze({
@@ -2831,6 +3110,10 @@
         throw new Error("garden-south-exit-unavailable");
       if (hoshisunaIsolated) {
         spawnRef = {x:108,y:488};
+        // Opt-in author preview only: a legal Starroad spot near Caritas.
+        // The existing follower spawns 56 world units behind Shion, also on
+        // walkable ground. Default ?dev=hoshisuna spawn remains unchanged.
+        if(transformationReplay)spawnRef = {x:1088,y:331};
         if (!collision.isWalkable(spawnRef.x,spawnRef.y)) throw new Error("hoshisuna-player-spawn-invalid");
         gardenExitRef = {...spawnRef};
       } else if (stage3Dev) {
@@ -2860,11 +3143,21 @@
         ...Object.entries(shioponFiles).map(async ([key, src]) => {
           shioponImages[key] = await loadImage(src);
         }),
-        ...(hoshisunaIsolated ? [loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
-          if(image.naturalWidth!==1086||image.naturalHeight!==1448)
-            throw new Error("シオリエル正面・四面図の寸法不正");
-          caritasShiorielAtlas=image;
-        })] : []),
+        ...(hoshisunaIsolated ? [
+          loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
+            if(image.naturalWidth!==1086||image.naturalHeight!==1448)
+              throw new Error("シオリエル正面・四面図の寸法不正");
+            caritasShiorielAtlas=image;
+          }),
+          loadImage("./assets/events/hoshisuna/battle/shiopon-shioriel-transformation-atlas.webp").then(image=>{
+            if(image.naturalWidth!==640||image.naturalHeight!==480)
+              throw new Error("変身アトラスは640×480px（160px×12コマ）が必要です");
+            caritasOwnerTransformationAtlas=image;
+          }).catch(err=>{
+            // If the optional effect asset fails, keep the old safe manifestation.
+            console.warn("[Caritas] owner transformation unavailable",err);
+          }),
+        ] : []),
         ...Object.entries(lumiereFiles).map(async ([key, src]) => {
           lumiereImages[key] = await loadImage(src);
         }),

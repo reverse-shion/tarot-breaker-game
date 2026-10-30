@@ -3,6 +3,9 @@
 "use strict";
 const params=new URLSearchParams(location.search);
 if(!location.pathname.endsWith("/hoshisuna-main.html")||params.get("dev")!=="hoshisuna")return;
+// Explicit preview URL only. The ordinary ?dev=hoshisuna encounter keeps all
+// previously saved battle resume semantics; replay never reads or writes them.
+const transformationReplay=params.getAll("preview").length===1&&params.get("preview")==="manifestation";
 const C=window.CaritasBattleCore, S=window.CaritasSpecialState;
 const CARD_IMAGES=Object.freeze({月:"./assets/tarot/major/18-the-moon.webp",力:"./assets/tarot/major/08-strength.webp",星:"./assets/tarot/major/17-the-star.webp"});
 if(!C){console.error("[Caritas] Battle core missing");return;}
@@ -30,6 +33,14 @@ let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=fal
 let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
 let firstWrittenDelivered=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
+// In-memory revision-aware storage for author preview. The real dev battle
+// checkpoint is untouched, including when preview reaches combat.
+let replaySavedRaw=null;
+const replayStore=Object.freeze({
+ getItem:key=>key===SAVE_KEY?replaySavedRaw:null,
+ setItem:(key,value)=>{if(key!==SAVE_KEY)throw Error("invalid-replay-key");replaySavedRaw=String(value);}
+});
+const checkpointStore=transformationReplay?replayStore:localStorage;
 const runId=()=>globalThis.crypto?.randomUUID?.()||"caritas-"+Date.now()+"-"+Math.random().toString(36).slice(2);
 let record=S.create(battle,runId()),savedRaw=null,saveBlocked=false,recovery=false,retrySave=null;
 const specialLocked=()=>record.special.committed||saveBlocked||recovery;
@@ -51,7 +62,7 @@ function showSaveProblem(message,retry,corrupt=false){
 function persist(next,onSuccess,expectedRaw=savedRaw){
  try{
   if(recovery||expectedRaw!==savedRaw)return false;
-  const result=S.write(localStorage,SAVE_KEY,expectedRaw,next);
+  const result=S.write(checkpointStore,SAVE_KEY,expectedRaw,next);
   record=result.record;savedRaw=result.raw;root.dataset.saveError="false";saveBlocked=false;retrySave=null;ui.saveProblem.hidden=true;
   onSuccess?.();return true;
  }catch(error){
@@ -68,8 +79,11 @@ function clearCheckpoint(onSuccess){
  return persist({...record,battle:null,firstWrittenDelivered,aiCalls,aiConfirmedCalls:aiCalls},onSuccess);
 }
 function restoreCheckpoint(){
+ // Dedicated preview starts before the first encounter on every page load.
+ // Existing localStorage data is not inspected, reset or overwritten.
+ if(transformationReplay)return false;
  try{
-  savedRaw=localStorage.getItem(SAVE_KEY);if(!savedRaw)return false;
+  savedRaw=checkpointStore.getItem(SAVE_KEY);if(!savedRaw)return false;
   const data=JSON.parse(savedRaw);record=S.migrate(data,runId());
   firstWrittenDelivered=record.firstWrittenDelivered;aiCalls=record.aiCalls;
   if(!record.battle)return false;
@@ -760,7 +774,7 @@ function init(){
  });
  preloadSpecialArt();
  if(!restoreCheckpoint())render();
- window.addEventListener("storage",event=>{if(event.key===SAVE_KEY&&event.newValue!==savedRaw)recoveryScreen();});
+ if(!transformationReplay)window.addEventListener("storage",event=>{if(event.key===SAVE_KEY&&event.newValue!==savedRaw)recoveryScreen();});
  timer=setInterval(tick,160);
  document.addEventListener("visibilitychange",()=>{if(suspended())pauseCinematic();else resumeCinematic();});
  window.addEventListener("pagehide",()=>{pageAway=true;pauseCinematic();clearInterval(timer);timer=0;clearTimeout(toastTimer);ui.toast.hidden=true;});
@@ -768,5 +782,5 @@ function init(){
  tick();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
-window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,dialogueBusy,readingOpen,committing,cinematicPending:!!cinematicCallback,special:{...record.special},saveBlocked,recovery,revision:record.revision,battle:{...battle,words:[...battle.words]}})});
+window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,transformationReplay,dialogueBusy,readingOpen,committing,cinematicPending:!!cinematicCallback,special:{...record.special},saveBlocked,recovery,revision:record.revision,battle:{...battle,words:[...battle.words]}})});
 })();
