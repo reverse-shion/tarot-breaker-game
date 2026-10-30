@@ -110,5 +110,20 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03-pixelmanifest1/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03-pixelmanifest2/);
+});
+
+test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
+ const drawing=game.slice(game.indexOf("function paintCaritasStarlightCocoon("),
+                          game.indexOf("function drawActors()"));
+ assert.match(drawing,/function paintCaritasStarlightCocoon\(x,y,t\)/);
+ assert.match(drawing,/if\(phase==="charging"\)paintCaritasStarlightCocoon\(x,y,t\)/);
+ assert.match(drawing,/ctx\.imageSmoothingEnabled=false/);
+ assert.match(drawing,/Luminous pixel tiles fan outward/);
+ assert.match(drawing,/stageOffsetY; do not apply the stage offset twice/);
+ assert.match(drawing,/const formed=phase==="revealed"\?1:/);
+ assert.match(drawing,/const revealEase=formed\*formed\*\(3-2\*formed\)/);
+ assert.match(drawing,/ctx\.rect\(left-3,top\+height-visibleHeight-3,width\+6,visibleHeight\+8\)/);
+ assert.match(drawing,/ctx\.drawImage\(image,0,0,sw,sh,left,top,width,height\)/);
+ assert.doesNotMatch(drawing,/new Image\(|\.src\s*=|fetch\(/);
 });
