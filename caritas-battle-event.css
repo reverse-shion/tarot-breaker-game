@@ -1,13 +1,5 @@
-/* Isolated Starroad encounter only. One-screen iPhone layout. */
-/* Choice actions sit above the real main dialogue; no separate speech frame. */
-#caritas-interaction-choice{position:fixed;z-index:2380;box-sizing:border-box;opacity:0;pointer-events:none}
-#caritas-interaction-choice[hidden],#caritas-event[hidden]{display:none!important}
-#caritas-interaction-choice.visible{opacity:1;pointer-events:auto}
-#caritas-interaction-choice .star-gate-interaction-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-#caritas-interaction-choice .star-gate-interaction-actions button{min-height:44px;border:1px solid rgba(226,207,158,.34);border-radius:8px;color:rgba(247,249,255,.96);background:rgba(11,18,46,.96);font:650 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.03em}
-#caritas-interaction-choice .star-gate-interaction-actions button:active{background:rgba(226,207,158,.16);transform:translateY(1px)}
-/* Dialogue belongs entirely to the unchanged main shared-dialogue CSS/JS.
-   Battle stays below its canonical z-index:2300; no local dialogue overrides. */
+/* Isolated Starroad battlefield only. Main owns all dialogue and choice styling. */
+#caritas-event[hidden]{display:none!important}
 
 #caritas-event,#caritas-event *{box-sizing:border-box}
 #caritas-event{position:fixed;inset:0;z-index:2200;overflow:hidden;overscroll-behavior:none;background:#09132c;color:#fcf0dc;font-family:"Yu Mincho","Hiragino Mincho ProN",serif}
