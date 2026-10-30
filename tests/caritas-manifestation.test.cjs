@@ -158,13 +158,14 @@ test("returning fade resets Shiopon BEFORE the battle overlay is hidden",()=>{
  assert.match(clear,/faceShioponTowardPlayer\(\)/);
 });
 test("isolated main dialogue, combat and device cache retained",()=>{
- assert.match(event,/window\.TarotDialogueUI\.create/);
- assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
+ assert.match(event,/window\.TarotDialogueUI\.bind/);
+ assert.match(event,/layer:document\.getElementById\("dialogue-layer"\)/);
+  assert.doesNotMatch(event,/dialogue\.elements\.button\.focus\(/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
- assert.match(html,/caritas-battle-event\.css\?v=resonance-special-v16-main-dialogue/);
+ assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-edge-surge-v15/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
- assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v16-main-dialogue/);
+ assert.match(html,/caritas-battle-event\.js\?v=main-dialogue-choice-v17/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
@@ -248,7 +249,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v16-main-dialogue/);
+ assert.match(html,/caritas-battle-event\.js\?v=main-dialogue-choice-v17/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-edge-surge-v15/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
