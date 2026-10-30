@@ -1821,14 +1821,33 @@
     const morph=Math.max(0,Math.min(1,(elapsed-1500)/900));
     const blend=morph*morph*(3-2*morph);
     const bodyHeight=scale.shioponHeight*(1-blend)+scale.shionHeight*blend;
-    const sourceBodyHeight=109*(1-blend)+133*blend;
+    // Shioriel's crown-to-sole body is y=32..145 (113px).
+    // Horn, fox ears, wings and light are adornments, not body stature.
+    const sourceBodyHeight=109*(1-blend)+113*blend;
     const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight;
     const width=height;
     const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
     // Frames 0 and 11 both have their soles at source y=145.
     const centerX=84*(1-blend)+79.5*blend;
     const feetY=y+scale.shioponFootOffset;
+    // The generated Shiopon has a different head/cloak silhouette: matching
+    // bounding-box height alone still looks like an enlarged replacement.
+    // Keep the exact native actor until the opaque cocoon (frame 4) covers it.
+    // Fade in that cocoon during the existing opening frame timings; never
+    // display the generated Shiopon. The 3900ms event clock stays unchanged.
+    if(elapsed<1140){
+      ctx.save();
+      ctx.globalAlpha*=1-Math.max(0,Math.min(1,(elapsed-1000)/140));
+      drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
+        outline:ACTOR_OUTLINES.shiopon,
+        visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
+      });
+      ctx.restore();
+      if(elapsed<=700)return true;
+      frame=4;
+    }
     ctx.save();
+    if(elapsed<1140)ctx.globalAlpha*=Math.min(1,(elapsed-700)/440);
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
     ctx.drawImage(image,(frame%4)*CARITAS_OWNER_TILE,
       Math.floor(frame/4)*CARITAS_OWNER_TILE,
