@@ -180,11 +180,13 @@
   // Owner supplied 12-frame animated WebP converted lossily only into a
   // transparent 4x3 sprite atlas; no character drawing is regenerated.
   let caritasOwnerTransformationAtlas = null;
+  let caritasOwnerBlendSurface = null;
   const CARITAS_OWNER_TILE = 160;
-  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([700,150,140,150,160,220,200,150,160,160,220,1500]);
+  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([500,300,300,300,230,230,240,350,370,380,600,800]);
+  const CARITAS_MANIFESTATION_DURATION_MS = 4600;
   const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false, fx:null };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
-    ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
+    ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/CARITAS_MANIFESTATION_DURATION_MS)
     : caritasInvocation.phase==="revealed"?1:0;
   const lumiereImages = {};
   const lumiereCompositors = {};
@@ -1800,61 +1802,137 @@
     return caritasOwnerMapScale;
   }
 
-  // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
-  // Localised saturated starfield: readable on phone without a white flash.
-  // Exact ordered frames from the owner-supplied transformation WebP.
-  // Deterministic frame choice aligns to the existing 3900ms stage,
-  // including when Safari suspends and resumes in the middle of the event.
+  const caritasOwnerSmooth = (value) => {
+    const p=Math.max(0,Math.min(1,value));
+    return p*p*(3-2*p);
+  };
+
+  // Deterministic world-space particles, never a second animation clock.
+  // Draw behind the actor, away from the face during its emergence.
+  function paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed){
+    if(elapsed<500||elapsed>=3800)return;
+    const gathering=elapsed<1400;
+    const settling=elapsed>=3200;
+    if(!gathering&&!settling)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const p=caritasOwnerSmooth(gathering?(elapsed-500)/900:(elapsed-3200)/600);
+    const strength=Math.sin(p*Math.PI);
+    ctx.save();
+    ctx.imageSmoothingEnabled=false;
+    for(let i=0;i<24;i++){
+      const angle=i*2.399963;
+      const radius=gathering?(12+38*(1-p)):(20+14*p);
+      const drift=reduced?0:(gathering?1-p:p);
+      const px=x+Math.cos(angle)*(radius+5*Math.sin(i*.7))* (reduced?.7:1);
+      const py=gathering?feetY-bodyHeight*.5+Math.sin(angle)*radius*.75*(reduced?1:1-p)
+        :feetY-4-bodyHeight*(i%6)/8+drift*9;
+      const alpha=strength*(i%3===0?.72:.44);
+      ctx.fillStyle=i%3===0?"rgba(255,221,163,"+alpha+")":"rgba(191,164,255,"+alpha+")";
+      const d=i%5===0?2.4:1.5;
+      ctx.fillRect(px-d/2,py-d/2,d,d);
+    }
+    // One quiet foot ring expands after revelation, without a screen flash.
+    if(settling){
+      ctx.translate(x,feetY);ctx.scale(1,.32);
+      ctx.strokeStyle="rgba(215,186,255,"+(.38*strength)+")";
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(0,0,22+18*p,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function getCaritasOwnerBlendSurface(){
+    if(caritasOwnerBlendSurface)return caritasOwnerBlendSurface;
+    try{
+      const surface=document.createElement("canvas");
+      surface.width=surface.height=CARITAS_OWNER_TILE;
+      const context=surface.getContext("2d");
+      if(!context)return null;
+      caritasOwnerBlendSurface={surface,context};
+      return caritasOwnerBlendSurface;
+    }catch(_){return null;}
+  }
+
+  // Native map Shiopon -> cocoon -> fixed-size Shioriel -> quiet hold.
+  // The event timer and this renderer both use the same 4600ms duration.
   function drawCaritasOwnerTransformation(actor,phase,t){
     const image=caritasOwnerTransformationAtlas;
     if(!image)return false;
-    const elapsed=phase==="revealed"?3910:Math.min(3900,Math.max(0,t*3900));
-    let frame=CARITAS_OWNER_FRAME_TIMES_MS.length-1,until=0;
+    const elapsed=phase==="revealed"?CARITAS_MANIFESTATION_DURATION_MS:
+      Math.min(CARITAS_MANIFESTATION_DURATION_MS,Math.max(0,t*CARITAS_MANIFESTATION_DURATION_MS));
+    let frame=CARITAS_OWNER_FRAME_TIMES_MS.length-1,until=0,frameStart=0;
     for(let i=0;i<CARITAS_OWNER_FRAME_TIMES_MS.length;i++){
       until+=CARITAS_OWNER_FRAME_TIMES_MS[i];
-      if(elapsed<until){frame=i;break;}
+      if(elapsed<until){frame=i;frameStart=until-CARITAS_OWNER_FRAME_TIMES_MS[i];break;}
     }
-    // Anchor the owner's artwork to the ORIGINAL on-map body dimensions,
-    // not a fixed 112px square (which enlarged both characters on iPhone).
     const scale=caritasOwnerMapScale || measureCaritasOwnerMapScale();
-    // Transition the scale while obscured by light, never snap it at a frame.
-    const morph=Math.max(0,Math.min(1,(elapsed-1500)/900));
-    const blend=morph*morph*(3-2*morph);
+    // Complete all size/centre changes inside the opaque cocoon, BEFORE
+    // frame 7 shows a face at 2100ms. No visible bodily inflation afterward.
+    const blend=caritasOwnerSmooth((elapsed-1400)/650);
     const bodyHeight=scale.shioponHeight*(1-blend)+scale.shionHeight*blend;
-    // Shioriel's crown-to-sole body is y=32..145 (113px).
-    // Horn, fox ears, wings and light are adornments, not body stature.
+    // Crown-to-sole span excludes Shioriel's horn, ears, wings and light.
     const sourceBodyHeight=109*(1-blend)+113*blend;
-    const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight;
-    const width=height;
+    const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight,width=height;
     const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
-    // Frames 0 and 11 both have their soles at source y=145.
     const centerX=84*(1-blend)+79.5*blend;
     const feetY=y+scale.shioponFootOffset;
-    // The generated Shiopon has a different head/cloak silhouette: matching
-    // bounding-box height alone still looks like an enlarged replacement.
-    // Keep the exact native actor until the opaque cocoon (frame 4) covers it.
-    // Fade in that cocoon during the existing opening frame timings; never
-    // display the generated Shiopon. The 3900ms event clock stays unchanged.
-    if(elapsed<1140){
+    paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed);
+    if(elapsed<1400){
       ctx.save();
-      ctx.globalAlpha*=1-Math.max(0,Math.min(1,(elapsed-1000)/140));
+      ctx.globalAlpha*=1-caritasOwnerSmooth((elapsed-1200)/200);
       drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
         outline:ACTOR_OUTLINES.shiopon,
         visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
       });
       ctx.restore();
-      if(elapsed<=700)return true;
+      if(elapsed<=500)return true;
       frame=4;
     }
-    ctx.save();
-    if(elapsed<1140)ctx.globalAlpha*=Math.min(1,(elapsed-700)/440);
-    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-    ctx.drawImage(image,(frame%4)*CARITAS_OWNER_TILE,
-      Math.floor(frame/4)*CARITAS_OWNER_TILE,
-      CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,
-      x-centerX*width/CARITAS_OWNER_TILE,
-      feetY-145*height/CARITAS_OWNER_TILE,width,height);
-    ctx.restore();
+    const left=x-centerX*width/CARITAS_OWNER_TILE;
+    const top=feetY-145*height/CARITAS_OWNER_TILE;
+    const paint=(index,alpha)=>{
+      if(alpha<=0)return;
+      ctx.save();ctx.globalAlpha*=alpha;
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      ctx.drawImage(image,(index%4)*CARITAS_OWNER_TILE,
+        Math.floor(index/4)*CARITAS_OWNER_TILE,
+        CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,left,top,width,height);
+      ctx.restore();
+    };
+    const dissolve=(previous,next,mix)=>{
+      if(mix<=0){paint(previous,1);return;}
+      if(mix>=1){paint(next,1);return;}
+      const buffer=getCaritasOwnerBlendSurface();
+      if(!buffer){paint(previous,1);paint(next,mix);return;}
+      const g=buffer.context;
+      g.clearRect(0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE);
+      g.imageSmoothingEnabled=true;
+      // Add premultiplied layers on a TRANSPARENT 160px surface. Source-over
+      // weighted directly on the map dims opaque light to 75% mid-transition.
+      g.globalCompositeOperation="source-over";g.globalAlpha=1-mix;
+      g.drawImage(image,(previous%4)*CARITAS_OWNER_TILE,Math.floor(previous/4)*CARITAS_OWNER_TILE,
+        CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE);
+      g.globalCompositeOperation="lighter";g.globalAlpha=mix;
+      g.drawImage(image,(next%4)*CARITAS_OWNER_TILE,Math.floor(next/4)*CARITAS_OWNER_TILE,
+        CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE);
+      g.globalAlpha=1;g.globalCompositeOperation="source-over";
+      ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      ctx.drawImage(buffer.surface,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,left,top,width,height);
+      ctx.restore();
+    };
+    if(elapsed<1400){
+      paint(4,caritasOwnerSmooth((elapsed-500)/900));
+    }else if(elapsed>=3800){
+      // Full 800ms static final hold; finish all dissolves BEFORE this point.
+      paint(11,1);
+    }else if(frame===10&&elapsed>=3540){
+      dissolve(10,11,caritasOwnerSmooth((elapsed-3540)/260));
+    }else if(frame===4){
+      paint(frame,1);
+    }else{
+      const duration=frame===7?280:frame===10?260:140;
+      dissolve(frame-1,frame,caritasOwnerSmooth((elapsed-frameStart)/duration));
+    }
     return true;
   }
 
@@ -1862,6 +1940,7 @@
     const phase=caritasInvocation.phase;
     if(phase==="idle")return false;
     const t=caritasInvocationProgress();
+    window.TarotCaritasManifestationAudio?.syncMute?.();
     if(caritasOwnerTransformationAtlas)return drawCaritasOwnerTransformation(actor,phase,t);
     const x=actor.x,y=actor.y+actor.stageOffsetY;
     const centerY=y-43;
@@ -2982,29 +3061,34 @@
       caritasInvocation.fx=caritasOwnerTransformationAtlas?null:prepareCaritasPixelManifestation();
       caritasInvocation.paused=document.hidden;
       caritasInvocation.since=performance.now();
+      window.TarotCaritasManifestationAudio?.begin?.();
       draw();return true;
     },
     reveal(){
       if(!caritasInvocation.locked||caritasInvocation.phase!=="charging")return false;
       caritasInvocation.phase="revealed";
-      caritasInvocation.elapsed=3900;
+      caritasInvocation.elapsed=CARITAS_MANIFESTATION_DURATION_MS;
+      window.TarotCaritasManifestationAudio?.clear?.();
       draw();return true;
     },
     pause(){
       if(caritasInvocation.phase!=="charging"||caritasInvocation.paused)return;
       caritasInvocation.elapsed+=Math.max(0,performance.now()-caritasInvocation.since);
       caritasInvocation.paused=true;
+      window.TarotCaritasManifestationAudio?.pause?.();
     },
     resume(){
       if(caritasInvocation.phase!=="charging"||!caritasInvocation.paused||document.hidden)return;
       caritasInvocation.since=performance.now();caritasInvocation.paused=false;
+      window.TarotCaritasManifestationAudio?.resume?.();
     },
     clear(){
+      window.TarotCaritasManifestationAudio?.clear?.();
       // Reset the actual canvas sprite BEFORE the battle overlay goes away.
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
-      caritasInvocation.fx=null;
+      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;

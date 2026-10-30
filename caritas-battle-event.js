@@ -380,7 +380,7 @@ function start(){
      story="invocation";
      saySequence(INVOCATION,()=>{
        if(!manifestation.begin()){recover("map atlas not ready");return;}
-       stage("manifestation",3900,()=>{
+       stage("manifestation",4600,()=>{
          if(!manifestation.reveal()){recover("reveal interrupted");return;}
          story="manifested";root.dataset.phase="manifested";render();
          saySequence(REVEAL,()=>{
