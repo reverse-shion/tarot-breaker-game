@@ -54,9 +54,13 @@ test("one real world actor uses approved atlas and preserves foot position",()=>
  assert.match(game,/image\.naturalWidth\/2,sh=image\.naturalHeight\/2/);
  assert.match(game,/drawCaritasInvocation\(entry\.actor\)/);
  assert.match(game,/if\s*\(hoshisunaIsolated\s*&&\s*caritasInvocation\.locked\)/);
- assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:780\}\)/);
+ assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:780,caritasSafe:true\}\)/);
+ assert.match(game,/prepareLeft\(\)/);
+ assert.match(event,/const leftArrival=Promise\.resolve\(manifestation\?\.prepareLeft\?\.\(\)/);
+ assert.match(event,/if\(!prepared\?\.completed\)/);
  assert.match(game,/shiopon\.dir="down"/);
- assert.match(game,/if\(!collision\.isWalkable\(candidate\.x,candidate\.y\)/);
+ assert.match(game,/caritasSafeRoute\(from,candidate,true\)/);
+ assert.match(game,/caritasSafeCollision\(motion\.caritasCards\)\.segmentClear\(current,next\)/);
  const asset=path.join(root,"assets/sprites/shioriel/shioriel-four-directions.webp");
  assert.ok(fs.existsSync(asset),"Approved official sprite atlas must be copied into branch");
  const b=fs.readFileSync(asset);
@@ -64,6 +68,21 @@ test("one real world actor uses approved atlas and preserves foot position",()=>
  assert.equal(b.subarray(8,12).toString(),"WEBP");
  assert.doesNotMatch(event,/cb-manifest-fox|cb-manifest-shioriel/);
  assert.doesNotMatch(css,/cb-manifest-fox|cb-manifest-shioriel/);
+});
+test("Caritas-specific path avoids Shion, three card rectangles and map walls",()=>{
+ const safe=game.slice(game.indexOf("function caritasSafeCollision("),
+                       game.indexOf("// Invocation-only light:"));
+ assert.match(safe,/collision\.segmentClear\(a,b\)/,"map geometry must remain authoritative");
+ assert.match(safe,/refDistance\(p,shion\)>=ACTOR_COLLISION_DISTANCE\+8/);
+ assert.match(safe,/cards\.every\(r=>p\.x<r\.left\|\|p\.x>r\.right/);
+ assert.match(safe,/Math\.ceil\(refDistance\(a,b\)\/3\)/,"segment sampling prevents tunneling");
+ assert.match(safe,/caritasTarotLayout\(player,DRAW_HEIGHT/,"the visible tarot footprint is used");
+ assert.match(safe,/window\.TarotNavigation\.createNavigator\(blocked,12\)/);
+ assert.match(game,/if\(motion\.caritasSafe&&!caritasSafeCollision\(motion\.caritasCards\)\.segmentClear\(current,next\)\)/);
+ const api=game.slice(game.indexOf("if (hoshisunaIsolated) window.TarotHoshisunaManifestation="));
+ assert.match(api,/const candidates=\[\s*\{x:front\.x-64,y:front\.y-12\}/);
+ assert.match(api,/\{x:front\.x-64,y:front\.y-45\}/);
+ assert.doesNotMatch(api,/legalStageRoute\("shiopon",from,candidate\)/);
 });
 test("visible world-anchored starlight has colour, scale and non-strobing echoes",()=>{
  const draw=game.slice(game.indexOf("function drawCaritasInvocation(actor)"),
