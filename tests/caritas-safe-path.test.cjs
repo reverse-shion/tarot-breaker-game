@@ -63,3 +63,28 @@ test("same path rejects shortcut through Shion and through the left tarot card",
  // The actual Caritas footprint remains blocked by the source map wrapper.
  assert.equal(blocked.isWalkable(1013,260),false);
 });
+
+test("blocked step still starts manifestation in place, never crosses map or tarot",async()=>{
+ const stageSource=game.slice(game.indexOf("  if (hoshisunaIsolated) window.TarotHoshisunaManifestation="),
+                              game.indexOf("  window.TarotStage = Object.freeze"));
+ let draws=0;const fixed={x:1024,y:319};
+ const scope={Math,Promise,hoshisunaIsolated:true,ready:true,running:true,
+   window:{},caritasInvocation:{locked:false,phase:"idle"},
+   caritasShiorielAtlas:{},caritasTarotSpread:{active:true},
+   shiopon:{dir:"left",frame:2,moving:true},
+   shioponRef:()=>({...fixed}),caritasSafeCollision:()=>({segmentClear:()=>false}),
+   draw(){draws++;}
+ };
+ vm.createContext(scope);
+ vm.runInContext(stageSource,scope);
+ const result=await scope.window.TarotHoshisunaManifestation.moveForward();
+ assert.equal(result.completed,true,"blocked step must not cancel the entire invocation");
+ assert.equal(result.stepped,false,"must not falsely claim that an unsafe step occurred");
+ assert.equal(result.reason,"one-step-route-blocked");
+ assert.equal(result.position.x,fixed.x);
+ assert.equal(result.position.y,fixed.y);
+ assert.equal(scope.caritasInvocation.locked,true,"manifestation lock activates at safe current location");
+ assert.equal(scope.shiopon.moving,false);
+ assert.equal(scope.shiopon.dir,"down");
+ assert.ok(draws>0);
+});
