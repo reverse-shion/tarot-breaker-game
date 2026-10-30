@@ -2374,7 +2374,7 @@
   // playable actor sprites. No CSS bloom, stretched gradients, or stock fog.
   // Starts thin before the first dialogue; grows when Shiopon approaches.
   const caritasAbyss={
-    phase:"haze",opacity:.13,clock:0,
+    phase:"haze",opacity:.22,clock:0,
     palette:["#160e29","#251035","#36164d","#482060","#69347d","#875298"],
     motes:Array.from({length:105},(_,i)=>{
       const h=n=>{const x=Math.sin(n*91.167+5.77)*43758.5453;return x-Math.floor(x);};
@@ -2406,7 +2406,7 @@
       const spread=(23+24*opacity)*(1-.18*Math.abs(y-cy)/55);
       const x=cx+m.x*spread+drift;
       const rim=Math.min(1,Math.max(.15,1-Math.abs(y-cy)/67));
-      const alpha=opacity*(.18+(i%4)*.045)*rim;
+      const alpha=opacity*(.28+(i%4)*.055)*rim;
       const step=m.size*scale.x;
       const px=Math.round(x/3)*3,py=Math.round(y/3)*3;
       ctx.globalAlpha=alpha;
@@ -2709,7 +2709,7 @@
     }
     if(hoshisunaIsolated){
       caritasAbyss.clock+=dt;
-      const target={haze:.13,surging:.88,engulfed:1,cleared:0}[caritasAbyss.phase]??.13;
+      const target={haze:.22,surging:.88,engulfed:1,cleared:0}[caritasAbyss.phase]??.22;
       caritasAbyss.opacity+=(target-caritasAbyss.opacity)*Math.min(1,dt*1.8);
     }
     updatePlayer(dt);
