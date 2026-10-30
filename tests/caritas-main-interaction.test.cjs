@@ -13,7 +13,7 @@ class El{
  addEventListener(n,f){this.listeners[n]=f}
  setAttribute(k,v){this.attributes[k]=v}
  getBoundingClientRect(){return this.rect||{left:16,top:650,width:358,height:168};}
- focus(){}
+ focus(){this.focusCalls=(this.focusCalls||0)+1}
  blur(){}
  scrollIntoView(){}
  click(){return this.listeners.click?.({preventDefault(){},stopPropagation(){}})}
@@ -174,9 +174,12 @@ test('first Shion speech uses shared main dialogue; choices use main official pa
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
  const options=f.pointer.dialogueOptions;
  assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.equal(f.shell.querySelector('#dialogue-advance').focusCalls||0,0,'first Shion speech must not trigger visible focus outline');
  const count=f.lines.length;
  f.pointer.advance();
  const choice=f.shell.querySelector('#star-gate-interaction-choice');
+ assert.equal(f.shell.querySelector('#dialogue-advance').focusCalls||0,0,'conversation does not force focus');
+ assert.equal(choice.querySelector('#caritas-interaction-inspect').focusCalls||0,0,'original main choice does not force focus');
  assert.equal(f.pointer.dialogueOptions,options,'original shared controller throughout');
  assert.equal(f.lines.length,count,'choice does not add extra dialogue speech');
  assert.match(choice.querySelector('#star-gate-interaction-text').textContent,/調べてみるか/);
@@ -192,6 +195,7 @@ test('first Shion speech uses shared main dialogue; choices use main official pa
  assert.match(choice.querySelector('#star-gate-interaction-text').textContent,/調べてみるか/);
  f.button(choice,'調べる').click();
  assert.equal(choice.hidden,true);assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(f.shell.querySelector('#dialogue-advance').focusCalls||0,0,'subsequent lines do not force focus either');
 });
 test('real shared dialogue remains hidden during native main choice activation',()=>{
  for(const key of ['Enter',' ','Spacebar'])for(const label of ['調べる','離れる']){
@@ -357,6 +361,7 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
  assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue|#star-gate-interaction-choice|\.star-gate-interaction-actions/);
   assert.match(html,/star-gate-interaction\.css\?v=main-official-choice/,'official main choice stylesheet');
  assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
+ assert.doesNotMatch(js,/dialogue\.elements\.button\.focus\(|prompt\.querySelector\("#caritas-interaction-inspect"\)\?\.focus\(/,'no programmatic focus ring on dialogue or choice');
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
 
