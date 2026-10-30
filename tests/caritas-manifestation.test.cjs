@@ -19,14 +19,33 @@ test("actual map follower steps ahead, faces camera and then manifests before co
  assert.match(event,/const SHIOPON_REPLY=\[\["しおぽん","はい、シオンさん。"\]\]/);
  assert.match(event,/const TAROT_DECLARATION=\[\["シオン","タロット展開。"\]\]/);
  assert.match(event,/const SCOUT_REQUEST=\[/);
- assert.match(event,/しおぽんが守るの/);
- assert.match(event,/黒紫の光が強くなってるの/);
+ assert.match(event,/あの子、なんだか苦しそうなの/);
+ assert.match(event,/危険だ。近づくな/);
+ assert.match(event,/少しだけ、確かめてくるの/);
+ assert.match(event,/あの子のまわり、闇が/);
+ assert.doesNotMatch(event.slice(event.indexOf("const SCOUT_REQUEST="),event.indexOf("const TAROT_DECLARATION=")),/カリタス/,"Shiopon must not know the child's name");
  assert.ok(start.indexOf("saySequence(SCOUT_REQUEST,scoutAhead)")>start.indexOf("Promise.resolve(manifestation.prepareLeft())"),"code invokes scouting only after speech callback");
  assert.match(start,/actor:"shiopon",target:CARITAS_GAZE/);
+ assert.match(start,/abyss\?\.setPhase\?\.\("surging"\)/);
+ assert.match(start,/abyss\?\.setPhase\?\.\("engulfed"\)/);
+ assert.doesNotMatch(start,/actor:"shion",target:"shiopon"/,"Shion keeps Caritas in sight while chanting");
  assert.match(event,/const SHIOPON_CALL=\[\["シオン","いくぞ、しおぽん。"\]\]/);
  assert.match(event,/speaker==="しおぽん"\?"shiopon"/);
  assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",5500"));
  assert.ok(start.indexOf("saySequence(REVEAL,()=>")<start.indexOf("root.hidden=false"));
+});
+test("world anchored Caritas Abyss starts thin and gains opaque pixel cells during Shiopon's approach",()=>{
+ assert.match(game,/phase:"haze",opacity:\.13/);
+ const fog=game.slice(game.indexOf("function paintCaritasMiasma("),game.indexOf("function drawActors()"));
+ assert.match(fog,/950\.5\+125\/2/,"miasma must attach to Caritas' world position");
+ assert.match(fog,/ctx\.fillRect\(px,py,step\*2,step\)/,"pixel cluster rendering, not CSS-only smoke");
+ assert.match(fog,/opacity>\.35/,"purple accent appears only after darkening");
+ assert.match(game,/paintCaritasMiasma\(\)/);
+ assert.match(game,/\{haze:\.13,surging:\.88,engulfed:1,cleared:0\}/);
+ assert.match(game,/window\.TarotHoshisunaAbyss=Object\.freeze/);
+ assert.match(event,/abyss\?\.setPhase\?\.\("surging"\)/);
+ assert.match(event,/abyss\?\.setPhase\?\.\("engulfed"\)/);
+ assert.match(event,/TarotHoshisunaAbyss\?\.setPhase\?\.\("cleared"\)/);
 });
 test("tarot spread sits over the head and beside both arms without touching Shion",()=>{
  const vm=require("node:vm");
