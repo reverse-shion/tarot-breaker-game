@@ -46,16 +46,33 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
 }
+async function advanceScoutToTarot(f){
+ // Three Caritas/Shion introduction pages, then the protective two-page reply.
+ for(let i=0;i<3;i++)f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/カリタスの様子を見てくれ/);
+ assert.equal(f.pointer.leftPrepared,undefined,"no silent movement after inspection");
+ f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/しおぽんが守るの/);
+ assert.equal(f.pointer.leftPrepared,undefined,"Shiopon must explain before moving");
+ f.pointer.advance();
+ assert.equal(f.pointer.leftPrepared,1,"scouting walk starts after the protective reply");
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pointer.stageCommands.at(-1).actor,"shiopon");
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shiopon looks at Caritas when scouting");
+ assert.match(f.lines.at(-1).text,/黒紫の光が強くなってる/);
+ f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/俺たちの言葉を届けよう/);
+ f.pointer.advance();
+ assert.equal(f.lines.at(-1).text,"タロット展開。");
+ assert.equal(f.pointer.cards,undefined);
+ f.pointer.advance();
+}
 async function enter(f){
  f.pointer.actor={x:1013,y:305};f.tick();
  assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must face Caritas from the very first notice");
  f.pointer.advance();
  f.button(f.shell.querySelector('#caritas-interaction-choice'),'調べる').click();
- for(let i=0;i<3;i++)f.pointer.advance();
- assert.equal(f.lines.at(-1).text,'タロット展開。');
- assert.equal(f.pointer.cards,undefined);
- f.pointer.advance();await new Promise(resolve=>setImmediate(resolve));
- assert.equal(f.pointer.leftPrepared,1);
+ await advanceScoutToTarot(f);
  assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
  f.advanceTime(649);assert.equal(f.lines.at(-1).text,'タロット展開。');
  f.advanceTime(1);assert.equal(f.lines.at(-1).text,'いくぞ、しおぽん。');
@@ -481,8 +498,8 @@ test('dialogue-only release keeps legacy farewell, with visible retry before exp
 
 test('tarot deployment finishes before the separate buddy call and pauses across background/BFCache',async()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
- f.button(f.shell,'調べる').click();for(let i=0;i<4;i++)f.pointer.advance();
- await new Promise(resolve=>setImmediate(resolve));
+ f.button(f.shell,'調べる').click();
+ await advanceScoutToTarot(f);
  assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
  f.advanceTime(300);f.visibility(true);f.page('pagehide');f.advanceTime(5000);
  f.pointer.advance();assert.equal(f.lines.at(-1).text,'タロット展開。');assert.equal(f.pointer.walks,undefined);
@@ -495,8 +512,7 @@ test('tarot deployment finishes before the separate buddy call and pauses across
 test('unavailable card deployment recovers the prompt without advancing to chant or leaving cards',async()=>{
  const f=fixture();f.window.TarotHoshisunaManifestation.deployCards=()=>false;
  f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();f.button(f.shell,'調べる').click();
- for(let i=0;i<4;i++)f.pointer.advance();
- await new Promise(resolve=>setImmediate(resolve));
+ await advanceScoutToTarot(f);
  assert.equal(f.state().story,'choice');assert.equal(f.pointer.cards,false);assert.equal(f.pointer.walks,undefined);
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
 });
