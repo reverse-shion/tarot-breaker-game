@@ -2370,54 +2370,63 @@
     return true;
   }
 
-  // Pixel-art Abyss miasma fixed to Caritas' map coordinates, behind the
-  // playable actor sprites. No CSS bloom, stretched gradients, or stock fog.
-  // Starts thin before the first dialogue; grows when Shiopon approaches.
-  const caritasAbyss={
-    phase:"haze",opacity:.22,clock:0,
-    palette:["#160e29","#251035","#36164d","#482060","#69347d","#875298"],
-    motes:Array.from({length:105},(_,i)=>{
-      const h=n=>{const x=Math.sin(n*91.167+5.77)*43758.5453;return x-Math.floor(x);};
-      return Object.freeze({
-        x:h(i*3+1)*2-1,
-        y:h(i*3+2),
-        size:2+Math.floor(h(i*3+3)*3),
-        phase:h(i*3+9)*6.28318,
-        speed:4+h(i*3+13)*10,
-        shade:Math.floor(h(i*3+17)*6)
-      });
-    })
-  };
+  // Caritas-local alpha masks: only the inner rim is invaded at rest.
+  // The body remains untouched until the voluntary approach triggers surge.
+  const caritasAbyss={phase:"edge",opacity:0,clock:0,masks:new Map()};
+  function caritasAbyssMasks(image){
+    if(!image?.complete||!image.naturalWidth)return null;
+    const key=image.currentSrc||image.src;
+    if(caritasAbyss.masks.has(key))return caritasAbyss.masks.get(key);
+    const w=250,h=192;
+    const surface=()=>{const c=document.createElement("canvas");c.width=w;c.height=h;return c;};
+    const silhouette=surface(),sc=silhouette.getContext("2d");
+    const fit=Math.min(w/image.naturalWidth,h/image.naturalHeight);
+    const iw=image.naturalWidth*fit,ih=image.naturalHeight*fit;
+    sc.drawImage(image,(w-iw)/2,(h-ih)/2,iw,ih);
+    sc.globalCompositeOperation="source-in";sc.fillStyle="#190d27";sc.fillRect(0,0,w,h);
+    // Erode an exact copy of the alpha silhouette, then subtract its core.
+    // This leaves hair, shoulders, limbs and tail edges, never a box outline.
+    const core=surface(),cc=core.getContext("2d");cc.drawImage(silhouette,0,0);
+    cc.globalCompositeOperation="destination-in";
+    for(const [dx,dy] of [[3,0],[-3,0],[0,3],[0,-3],[2,2],[-2,2],[2,-2],[-2,-2]])
+      cc.drawImage(silhouette,dx,dy);
+    const edge=surface(),ec=edge.getContext("2d");ec.drawImage(silhouette,0,0);
+    ec.globalCompositeOperation="destination-out";ec.drawImage(core,0,0);
+    const masks={silhouette,edge};caritasAbyss.masks.set(key,masks);return masks;
+  }
+  function updateCaritasAbyss(dt){
+    caritasAbyss.clock+=dt;
+    if(caritasAbyss.phase==="edge"||caritasAbyss.phase==="cleared")caritasAbyss.opacity=0;
+    else caritasAbyss.opacity=Math.min(1,caritasAbyss.opacity+dt/.4);
+  }
   function paintCaritasMiasma(){
-    if(!hoshisunaIsolated||caritasAbyss.opacity<.005||
+    if(!hoshisunaIsolated||caritasAbyss.phase==="cleared"||
        document.body.classList.contains("caritas-departed"))return;
-    const opacity=caritasAbyss.opacity;
-    const cx=(950.5+125/2)*scale.x,cy=(166.6+96*.52)*scale.y;
-    const time=caritasAbyss.clock;
-    ctx.save();
-    // Low-res 3px grid and discrete dark-violet cloud cells. The idle state
-    // barely veils the creature; surging clusters grow in number and opacity.
-    const count=Math.round(28+77*opacity);
-    for(let i=0;i<count;i++){
-      const m=caritasAbyss.motes[i];
-      const band=(m.y*1.3+time*m.speed/96)%1.3;
-      const y=cy+42-band*88;
-      const drift=Math.sin(time*.43+m.phase)*4;
-      const spread=(23+24*opacity)*(1-.18*Math.abs(y-cy)/55);
-      const x=cx+m.x*spread+drift;
-      const rim=Math.min(1,Math.max(.15,1-Math.abs(y-cy)/67));
-      const alpha=opacity*(.28+(i%4)*.055)*rim;
-      const step=m.size*scale.x;
-      const px=Math.round(x/3)*3,py=Math.round(y/3)*3;
-      ctx.globalAlpha=alpha;
-      ctx.fillStyle=caritasAbyss.palette[m.shade];
-      ctx.fillRect(px,py,step*2,step);
-      ctx.fillRect(px+step,py-step,step,step);
-      if(i%3===0)ctx.fillRect(px-step,py+step,step,step);
-      if(opacity>.35&&i%7===0){
-        ctx.globalAlpha=(opacity-.35)*.24*rim;
-        ctx.fillStyle="#a060c5";
-        ctx.fillRect(px+step,py+step,Math.max(2,step/2),Math.max(2,step/2));
+    const image=document.getElementById("hoshisuna-caritas");
+    const masks=caritasAbyssMasks(image);if(!masks)return;
+    const x=950.5*scale.x,y=166.6*scale.y,w=125*scale.x,h=96*scale.y;
+    const strength=caritasAbyss.opacity,time=caritasAbyss.clock;
+    ctx.save();ctx.imageSmoothingEnabled=true;
+    ctx.globalAlpha=.64+.34*strength;
+    ctx.drawImage(masks.edge,x,y,w,h);
+    // No ambient cloud in edge: the untouched white interior stays readable.
+    if(strength>0){
+      ctx.globalAlpha=.82*strength;ctx.drawImage(masks.silhouette,x,y,w,h);
+      // Continuous overlapping plumes expand from the silhouette perimeter,
+      // wrapping across its front. No floating pixel cells or CSS filters.
+      for(let i=0;i<14;i++){
+        const angle=i*Math.PI*2/14;
+        const sway=Math.sin(time*1.4+i*2.1);
+        const cx=x+w*(.5+Math.cos(angle)*(.20+.12*strength));
+        const cy=y+h*(.52+Math.sin(angle)*(.25+.08*strength))+sway*2*scale.y;
+        const radius=(10+14*strength+2*sway)*scale.x;
+        const cloud=ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
+        cloud.addColorStop(0,"rgba(19,8,29,.78)");
+        cloud.addColorStop(.48,"rgba(43,15,59,.60)");
+        cloud.addColorStop(.78,"rgba(63,25,79,.28)");
+        cloud.addColorStop(1,"rgba(38,13,53,0)");
+        ctx.globalAlpha=strength;ctx.fillStyle=cloud;
+        ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.fill();
       }
     }
     ctx.restore();
@@ -2708,9 +2717,7 @@
       if (tapEffect.age >= 0.45) tapEffect = null;
     }
     if(hoshisunaIsolated){
-      caritasAbyss.clock+=dt;
-      const target={haze:.22,surging:.88,engulfed:1,cleared:0}[caritasAbyss.phase]??.22;
-      caritasAbyss.opacity+=(target-caritasAbyss.opacity)*Math.min(1,dt*1.8);
+      updateCaritasAbyss(dt);
     }
     updatePlayer(dt);
     updateShiopon(dt);
@@ -3364,8 +3371,9 @@
 
   if (hoshisunaIsolated) window.TarotHoshisunaAbyss=Object.freeze({
     setPhase(phase){
-      if(!["haze","surging","engulfed","cleared"].includes(phase))return false;
+      if(!["edge","surge","engulfed","cleared"].includes(phase))return false;
       caritasAbyss.phase=phase;
+      if(phase==="edge"||phase==="cleared")caritasAbyss.opacity=0;
       if(ready&&running)draw();
       return true;
     },

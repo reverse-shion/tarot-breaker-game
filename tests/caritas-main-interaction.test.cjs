@@ -66,7 +66,7 @@ async function advanceScoutToTarot(f){
  assert.equal(f.pointer.leftPrepared,undefined,"the child warns BEFORE the scouting move");
  f.pointer.advance();
  assert.equal(f.pointer.leftPrepared,1,"Shiopon leaves only after his own decision and Shion's warning");
- assert.equal(f.pointer.abyss,"surging","Abyss must swell while Shiopon walks");
+ assert.equal(f.pointer.abyss,"surge","Abyss must swell while Shiopon walks");
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.pointer.abyss,"engulfed");
  assert.equal(f.pointer.stageCommands.at(-1).actor,"shiopon");
