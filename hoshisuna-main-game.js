@@ -185,6 +185,7 @@
   let caritasResonanceSprites = null;
   let caritasTarotBack = null;
   const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
+  let caritasTarotShionBounds=null;
   const CARITAS_OWNER_TILE = 160;
   const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
   const CARITAS_MANIFESTATION_DURATION_MS = 5500;
@@ -1776,17 +1777,24 @@
       g.imageSmoothingEnabled=false;
       g.drawImage(image,0,0,FRAME.w,FRAME.h,0,0,96,128);
       const rgba=g.getImageData(0,0,96,128).data;
-      let minY=128,maxY=-1;
+      let minY=128,maxY=-1,minX=96,maxX=-1;
       for(let y=0;y<128;y++)for(let x=0;x<96;x++){
         if(rgba[(y*96+x)*4+3]>100){
           if(y<minY)minY=y;
           if(y>maxY)maxY=y;
+          if(x<minX)minX=x;
+          if(x>maxX)maxX=x;
         }
       }
       if(maxY<minY)return null;
       return {
         height:(maxY-minY+1)*drawHeight/128,
-        footOffset:((maxY+1)-FRAME.baseline*128/FRAME.h)*drawHeight/128
+        footOffset:((maxY+1)-FRAME.baseline*128/FRAME.h)*drawHeight/128,
+        // Alpha bounds in the same world coordinates as drawActor().
+        // Place the three cards beside the visible head/arms, not the empty 384x512 cell.
+        topOffset:(minY-FRAME.baseline*128/FRAME.h)*drawHeight/128,
+        leftOffset:(minX-48)*drawHeight/128,
+        rightOffset:(maxX+1-48)*drawHeight/128
       };
     }catch(error){
       console.warn("[Caritas] map body sampling unavailable; keeping conservative scale",error);
@@ -1812,14 +1820,18 @@
   }
 
   function caritasTarotLayout(actor,drawHeight,aspect){
-    const height=drawHeight*.34,width=height*aspect,gap=8;
-    const nativeWidth=FRAME.w*drawHeight/FRAME.h;
+    const height=drawHeight*.34,width=height*aspect,gap=9;
+    if(!caritasTarotShionBounds)
+      caritasTarotShionBounds=measureCaritasVisibleMapActor(images.idle||images.down,drawHeight);
+    const bounds=caritasTarotShionBounds;
     const feet=actor.y+actor.stageOffsetY;
-    const side=nativeWidth/2+gap+width/2;
+    const armY=feet-drawHeight*.44;
     return [
-      {x:actor.x-side,y:feet-drawHeight*.86,width,height},
-      {x:actor.x+side,y:feet-drawHeight*.48,width,height},
-      {x:actor.x-side,y:feet-drawHeight*.10,width,height}
+      // One card just above Shion's visible head; no collision with the sprite.
+      {x:actor.x,y:feet+(bounds?.topOffset??-drawHeight*.86)-gap-height/2,width,height},
+      // Two at equal arm height, with a visible air gap outside either arm.
+      {x:actor.x+(bounds?.leftOffset??-drawHeight*.26)-gap-width/2,y:armY,width,height},
+      {x:actor.x+(bounds?.rightOffset??drawHeight*.26)+gap+width/2,y:armY,width,height}
     ];
   }
 
@@ -1835,7 +1847,9 @@
     const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
     ctx.save();ctx.globalAlpha*=entrance*fade;
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-    ctx.shadowColor="rgba(255,224,151,.55)";ctx.shadowBlur=8/camera.zoom;
+    // A single restrained, soft pearl-gold halo on each original card back.
+    ctx.shadowColor="rgba(246,224,189,.63)";ctx.shadowBlur=11/camera.zoom;
+    ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
     for(const card of cards){
       ctx.drawImage(caritasTarotBack,card.x-card.width/2,card.y-card.height/2+lift,card.width,card.height);
     }
