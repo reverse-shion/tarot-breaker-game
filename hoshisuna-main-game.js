@@ -185,7 +185,7 @@
   let caritasResonanceSprites = null;
   let caritasTarotBack = null;
   const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
-  let caritasTarotShionBounds=null;
+  let caritasTarotShionBounds=null,caritasFoxBounds=null;
   let caritasSafeNavigator=null,caritasSafeNavigatorKey="";
   const CARITAS_OWNER_TILE = 160;
   const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
@@ -1872,7 +1872,9 @@
   // Stage move checks only map foot-points, so it may cut through either actor.
   function caritasSafeCollision(includeCards){
     const shion=playerRef();
-    const fox=measureCaritasVisibleMapActor(shioponImages.idle||shioponImages.down,SHIOPON_DRAW_HEIGHT);
+    if(!caritasFoxBounds)
+      caritasFoxBounds=measureCaritasVisibleMapActor(shioponImages.idle||shioponImages.down,SHIOPON_DRAW_HEIGHT);
+    const fox=caritasFoxBounds;
     const foxLeft=fox?.leftOffset??-15,foxRight=fox?.rightOffset??15;
     const foxTop=fox?.topOffset??-58,foxBottom=foxTop+(fox?.height??60);
     const cards=includeCards&&caritasTarotBack
@@ -3309,20 +3311,34 @@
         return Promise.resolve({completed:false,reason:"left-not-ready"});
       const front=playerRef(),from=shioponRef();
       const candidates=[
+        {x:front.x-69,y:front.y-12},
+        {x:front.x-71,y:front.y-13},
         {x:front.x-64,y:front.y-12},
         {x:front.x-65,y:front.y-8},
         {x:front.x-66,y:front.y-17},
         {x:front.x-60,y:front.y-17}
       ];
-      for(const spot of candidates){
-        const route=caritasSafeRoute(from,spot,false);
-        if(!route.length)continue;
+      // Reserve clearance for the next step BEFORE the cards are deployed.
+      // A staging point that traps the visible fox under the left tarot
+      // cannot be chosen merely because it is walkable before deployment.
+      const roomAhead=spot=>[18,15,12,9,6].some(n=>
+        caritasSafeCollision(true).segmentClear(spot,{x:spot.x,y:spot.y-n}));
+      const safe=candidates.filter(spot=>caritasSafeRoute(from,spot,false).length);
+      const spot=safe.find(roomAhead)||safe[0];
+      if(spot){
         const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:460,caritasSafe:true});
         return move.promise.then(out=>out.completed&&!out.skipped
           ?{completed:true,position:{...shioponRef()}}
-          :{completed:false,reason:"left-walk-interrupted"});
+          :collision.isWalkable(shioponRef().x,shioponRef().y)
+            ?{completed:true,position:{...shioponRef()},staged:false,reason:"left-walk-interrupted"}
+            :{completed:false,reason:"left-walk-interrupted"});
       }
-      return Promise.resolve({completed:false,reason:"left-route-blocked"});
+      // Never abort the entire transformation because a staging walk has
+      // no available corridor. Remain on the current legal map footpoint.
+      return Promise.resolve(collision.isWalkable(from.x,from.y)&&
+        refDistance(from,front)>=ACTOR_COLLISION_DISTANCE+8
+        ?{completed:true,position:{...from},staged:false,reason:"left-route-blocked"}
+        :{completed:false,reason:"left-position-unsafe"});
     },
     deployCards(){
       if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
@@ -3349,17 +3365,29 @@
         if(caritasSafeCollision(true).segmentClear(from,candidate)&&
            caritasSafeRoute(from,candidate,true).length){spot=candidate;break;}
       }
-      if(!spot)return Promise.resolve({completed:false,reason:"one-step-route-blocked"});
+      if(!spot){
+        // No tunneling through a card, Shion or the authored terrain; the
+        // invocation still continues from this very same valid footpoint.
+        caritasInvocation.locked=true;
+        shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
+        draw();
+        return Promise.resolve({completed:true,stepped:false,
+          reason:"one-step-route-blocked",position:{...from}});
+      }
       caritasInvocation.locked=true;
       const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:440,caritasSafe:true});
       return move.promise.then(out=>{
         if(!out.completed||out.skipped){
-          caritasInvocation.locked=false;
-          return {completed:false,reason:"move-interrupted"};
+          // A collision detected during the walk must not teleport the fox.
+          // Keep the last legal position and complete the map manifestation.
+          shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
+          draw();
+          return {completed:true,stepped:false,
+            reason:"move-interrupted",position:{...shioponRef()}};
         }
         shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
         draw();
-        return {completed:true,position:{...shioponRef()}};
+        return {completed:true,stepped:true,position:{...shioponRef()}};
       });
     },
     faceFront(){
