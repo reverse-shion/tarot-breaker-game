@@ -3333,25 +3333,25 @@
     moveForward(){
       if(!ready||!running||!caritasShiorielAtlas||caritasInvocation.locked)
         return Promise.resolve({completed:false,reason:"not-ready"});
-      const front=playerRef(),from=shioponRef();
-      // Select a legal spot on the Caritas-facing (north) side of Shion.
-      // Preserve the NPC collision/pathfinder, do not teleport through Caritas.
-      // Walk toward Caritas along the left-side passage, not straight through
-      // Shion or the left tarot. Route selection checks the ENTIRE journey.
+      const from=shioponRef();
+      // The preceding prepareLeft() established the exact safe staging point.
+      // One deliberate 18-world-pixel step toward Caritas (north), not a
+      // second large reposition or a teleport across Shion/the tarot.
       const candidates=[
-        {x:front.x-64,y:front.y-45},
-        {x:front.x-67,y:front.y-40},
-        {x:front.x-70,y:front.y-35},
-        {x:front.x-61,y:front.y-36},
-        {x:front.x-74,y:front.y-30}
+        {x:from.x,y:from.y-18},
+        {x:from.x-3,y:from.y-18},
+        {x:from.x+3,y:from.y-18},
+        {x:from.x,y:from.y-15},
+        {x:from.x,y:from.y-12}
       ];
       let spot=null;
       for(const candidate of candidates){
-        if(caritasSafeRoute(from,candidate,true).length){spot=candidate;break;}
+        if(caritasSafeCollision(true).segmentClear(from,candidate)&&
+           caritasSafeRoute(from,candidate,true).length){spot=candidate;break;}
       }
-      if(!spot)return Promise.resolve({completed:false,reason:"front-route-blocked"});
+      if(!spot)return Promise.resolve({completed:false,reason:"one-step-route-blocked"});
       caritasInvocation.locked=true;
-      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:780,caritasSafe:true});
+      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:440,caritasSafe:true});
       return move.promise.then(out=>{
         if(!out.completed||out.skipped){
           caritasInvocation.locked=false;
