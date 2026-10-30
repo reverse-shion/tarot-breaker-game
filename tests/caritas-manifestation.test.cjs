@@ -54,12 +54,15 @@ test("one real world actor uses approved atlas and preserves foot position",()=>
  assert.match(game,/image\.naturalWidth\/2,sh=image\.naturalHeight\/2/);
  assert.match(game,/drawCaritasInvocation\(entry\.actor\)/);
  assert.match(game,/if\s*\(hoshisunaIsolated\s*&&\s*caritasInvocation\.locked\)/);
- assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:780,caritasSafe:true\}\)/);
+ assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:440,caritasSafe:true\}\)/);
  assert.match(game,/prepareLeft\(\)/);
  assert.match(event,/const leftArrival=Promise\.resolve\(manifestation\?\.prepareLeft\?\.\(\)/);
  assert.match(event,/if\(!prepared\?\.completed\)/);
  assert.match(game,/shiopon\.dir="down"/);
  assert.match(game,/caritasSafeRoute\(from,candidate,true\)/);
+ assert.match(game,/\{x:from\.x,y:from\.y-18\}/,"one deliberate step from the previously established position");
+ assert.match(game,/caritasSafeCollision\(true\)\.segmentClear\(from,candidate\)/);
+ assert.doesNotMatch(game.slice(game.indexOf("    moveForward(){"),game.indexOf("    faceFront(){")),/\{x:front\.x-64,y:front\.y-45\}/,"do not jump to the former distant target");
  assert.match(game,/caritasSafeCollision\(motion\.caritasCards\)\.segmentClear\(current,next\)/);
  const asset=path.join(root,"assets/sprites/shioriel/shioriel-four-directions.webp");
  assert.ok(fs.existsSync(asset),"Approved official sprite atlas must be copied into branch");
