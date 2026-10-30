@@ -46,7 +46,15 @@ test("world anchored Abyss uses an alpha rim before the 400ms surge and clears i
  state.phase="cleared";sandbox.updateCaritasAbyss(0);assert.equal(state.opacity,0);
  state.phase="edge";sandbox.updateCaritasAbyss(1);assert.equal(state.opacity,0,"retreat restores only the rim");
  const fog=game.slice(game.indexOf("function paintCaritasMiasma("),game.indexOf("function drawActors()"));
- assert.match(fog,/950\.5\*scale\.x/);
+ assert.match(fog,/actor\.dataset\.worldX/,'read exact world bounds from visible creature');
+ assert.doesNotMatch(fog,/950\.5\*scale\.x/,'no detached hardcoded floor or world origin');
+ assert.match(game,/getImageData\(0,0,w,h\)/,'find the true opaque creature body');
+ assert.match(game,/const origin=\{x:/,'derive the inner torso center from alpha');
+ assert.match(game,/length:17/,'radial engulfing states cached once per sprite');
+ assert.match(fog,/caritasAbyssOrigin\(masks,\{x,y,w,h\}\)/);
+ assert.match(fog,/centerX\+Math\.cos\(angle\)\*bodyW/,'smoke travels from torso');
+ assert.match(fog,/centerY\+Math\.sin\(angle\)\*bodyH/);
+ assert.match(fog,/ctx\.drawImage\(masks\.flood\[frame\]/,'radial flood before full engulfment');
  assert.match(fog,/ctx\.drawImage\(masks\.edge/);
  assert.match(fog,/if\(strength>0\)/);
  assert.match(fog,/ctx\.drawImage\(masks\.silhouette/);
@@ -54,6 +62,16 @@ test("world anchored Abyss uses an alpha rim before the 400ms surge and clears i
  assert.doesNotMatch(fog,/fillRect|motes/);
  assert.match(game,/globalCompositeOperation="destination-out"/);
  assert.match(event,/TarotHoshisunaAbyss\?\.setPhase\?\.\("cleared"\)/);
+});
+test("Abyss coordinates originate inside the creature at alpha-weighted torso center",()=>{
+ const vm=require("node:vm");
+ const compute=game.slice(game.indexOf("function caritasAbyssOrigin("),game.indexOf("function paintCaritasMiasma("));
+ const box={};vm.runInNewContext(compute+"\nthis.origin=caritasAbyssOrigin;",box);
+ const center=box.origin({origin:{x:125,y:84},size:{w:250,h:192}},{x:950.5,y:166.6,w:125,h:96});
+ assert.equal(center.x,1013);
+ assert.equal(center.y,208.6);
+ const offset=box.origin({origin:{x:180,y:60},size:{w:250,h:192}},{x:100,y:200,w:150,h:120});
+ assert.equal(offset.x,208);assert.equal(offset.y,237.5);
 });
 test("tarot spread sits over the head and beside both arms without touching Shion",()=>{
  const vm=require("node:vm");
@@ -163,7 +181,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
   assert.doesNotMatch(event,/dialogue\.elements\.button\.focus\(/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-edge-surge-v15/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-abyss-heart-v16/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
  assert.match(html,/caritas-battle-event\.js\?v=main-dialogue-choice-v17/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
@@ -191,7 +209,7 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-edge-surge-v15/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-abyss-heart-v16/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -225,7 +243,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.match(game,/caritasOwnerTransformationAtlas=image/);
  assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
  assert.match(game,/\[Caritas\] owner transformation unavailable/);
- assert.match(html,/caritas-edge-surge-v15/);
+ assert.match(html,/caritas-abyss-heart-v16/);
 });
 
 test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
@@ -239,7 +257,7 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
  assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
  assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
  assert.doesNotMatch(section,/const height=112,width=112/);
- assert.match(html,/caritas-edge-surge-v15/);
+ assert.match(html,/caritas-abyss-heart-v16/);
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
@@ -250,7 +268,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
  assert.match(html,/caritas-battle-event\.js\?v=main-dialogue-choice-v17/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-edge-surge-v15/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-abyss-heart-v16/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
  assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
