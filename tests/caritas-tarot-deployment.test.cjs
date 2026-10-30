@@ -5,6 +5,8 @@ function fixture(){
   let now=0;const draws=[],stack=[];
   const scope={Math,performance:{now:()=>now},document:{hidden:false},window:{},ready:true,running:true,
     caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
+    caritasTarotShionBounds:null,images:{idle:{}},
+    measureCaritasVisibleMapActor:(_img,h)=>({topOffset:-h*.8,leftOffset:-h*.22,rightOffset:h*.22}),
     caritasInvocation:{phase:"idle",locked:false,elapsed:0,since:0,paused:false,fx:null},
     CARITAS_MANIFESTATION_DURATION_MS:5500,caritasInvocationProgress:()=>scope.progress,
     hoshisunaIsolated:true,FRAME:{w:384,h:512,baseline:480},DRAW_HEIGHT:78,camera:{zoom:1},
@@ -18,20 +20,24 @@ function fixture(){
     source.slice(source.indexOf("  if (hoshisunaIsolated) window.TarotHoshisunaManifestation="),source.indexOf("  window.TarotStage = Object.freeze")),scope);
   return {s:scope,api:scope.window.TarotHoshisunaManifestation,draws,at(ms){now=ms;draws.length=0;}};
 }
-test("three portrait cards form a triangle outside Shion's complete native sprite at varied scales",()=>{
+test("three portrait cards form head/left-arm/right-arm triangle with a nine pixel gap",()=>{
   const {s}=fixture();
   for(const height of [60,78,110])for(const aspect of [2/3,.58]){
     const actor={x:140,y:260,stageOffsetY:4},cards=s.caritasTarotLayout(actor,height,aspect);
-    assert.equal(cards.length,3);const fullWidth=384*height/512;
-    for(const c of cards){
-      assert.equal(c.height,height*.34);assert.equal(c.width/c.height,aspect);
-      assert.ok(c.x+c.width/2<=actor.x-fullWidth/2-8+1e-9||c.x-c.width/2>=actor.x+fullWidth/2+8-1e-9,
-        "full card, not only opaque centre, clears Shion by at least8 world px");
-    }
-    const [a,b,c]=cards;assert.ok(Math.abs((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y))>height*height/2);
-    for(let i=0;i<3;i++)for(let j=i+1;j<3;j++){
-      assert.ok(Math.abs(cards[i].x-cards[j].x)>(cards[i].width+cards[j].width)/2||Math.abs(cards[i].y-cards[j].y)>(cards[i].height+cards[j].height)/2);
-    }
+    assert.equal(cards.length,3);
+    for(const c of cards){assert.equal(c.height,height*.34);assert.equal(c.width/c.height,aspect);}
+    const [head,left,right]=cards,feet=actor.y+actor.stageOffsetY;
+    const top=feet-height*.8,armLeft=actor.x-height*.22,armRight=actor.x+height*.22;
+    assert.equal(head.x,actor.x,"top card centered over Shion head");
+    assert.ok(Math.abs(head.y+head.height/2-(top-9))<1e-9,"head card clears actual hair by 9px");
+    assert.ok(Math.abs(left.x+left.width/2-(armLeft-9))<1e-9,"left card clears visible left arm by 9px");
+    assert.ok(Math.abs(right.x-right.width/2-(armRight+9))<1e-9,"right card clears visible right arm by 9px");
+    assert.equal(left.y,right.y,"arm cards remain at equal height");
+    assert.ok(head.y<head.height/2+left.y,"head card stays higher");
+    for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)
+      assert.ok(Math.abs(cards[i].x-cards[j].x)>(cards[i].width+cards[j].width)/2||
+                Math.abs(cards[i].y-cards[j].y)>(cards[i].height+cards[j].height)/2,
+        "all three cards are separate without touching");
   }
 });
 test("deployment uses exactly the provided back three times, retains aspect/alpha and obeys pause before charging",()=>{
