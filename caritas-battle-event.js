@@ -18,9 +18,18 @@ const NOTICE=[["シオン","……待て。あの獣の様子が妙だ。\n黒�
 const INTRO=[
  ["カリタス","……まさか、私がアビスに呑まれるとは……"],
  ["シオン","……大丈夫か。少し、話を聞かせてくれないか。"],
- ["カリタス","……この私が……なんと情けない……近づくでない。"],
- ["シオン","タロット展開。"]
+ ["カリタス","……この私が……なんと情けない……近づくでない。"]
 ];
+// Shiopon's protective move is a response to Caritas, never silent staging.
+const SCOUT_REQUEST=[
+ ["シオン","……あの闇、普通じゃない。しおぽん、少し前でカリタスの様子を見てくれ。無理はするな。"],
+ ["しおぽん","うん！ シオンさんはそこで待ってて。何かあったら、しおぽんが守るの！"]
+];
+const SCOUT_REPORT=[
+ ["しおぽん","……黒紫の光が強くなってるの。あのままじゃ、カリタスが……！"],
+ ["シオン","……分かった。なら、俺たちの言葉を届けよう。"]
+];
+const TAROT_DECLARATION=[["シオン","タロット展開。"]];
 const SHIOPON_CALL=[["シオン","いくぞ、しおぽん。"]];
 const SHIOPON_REPLY=[["しおぽん","はい、シオンさん。"]];
 const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\nステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]];
@@ -364,58 +373,63 @@ function start(){
  faceCaritas();
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
  const manifestation=window.TarotHoshisunaManifestation;
- // Walk to the far-left staging position during the opening dialogue, before
- // summoning any cards. Never snap or pass through world collision.
- const leftArrival=Promise.resolve(manifestation?.prepareLeft?.()||
-   {completed:false,reason:"left-preparation-unavailable"});
  function recover(reason){
    console.error("[Caritas] map manifestation failed:",reason);
    manifestation?.clear?.();root.hidden=true;story="choice";showPrompt();
  }
- saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>{
-   leftArrival.then(prepared=>{
-     if(story!=="intro")return;
-     if(!prepared?.completed){recover(prepared?.reason||"left start blocked");return;}
-     if(!manifestation?.moveForward||!manifestation?.faceFront){
-       recover("map actor service unavailable");return;
-     }
-     if(!manifestation.deployCards?.()){recover("tarot card back not ready");return;}
+ function deployTarot(){
+   saySequence(TAROT_DECLARATION,()=>{
+     if(!manifestation?.deployCards?.()){recover("tarot card back not ready");return;}
      stage("tarot-deploy",650,()=>{
-   saySequence(SHIOPON_CALL,()=>{
-   story="intro";
-   // Shiopon speaks while the existing follower walks in front of Shion.
-   let lineDone=false,moveDone=false,failed=null,continued=false;
-   const whenReady=()=>{
-     if(!lineDone||continued)return;
-     if(failed){continued=true;recover(failed);return;}
-     if(!moveDone)return;
-     continued=true;
-     manifestation.faceFront();
-     window.TarotStage?.perform?.({type:"face",actor:"shion",target:"shiopon"});
-     story="invocation";
-     saySequence(INVOCATION,()=>{
-       // He addresses Shiopon for the chant, then faces the threat once
-       // their light resonates; do not leave him looking sideways.
-       faceCaritas();
-       if(!manifestation.begin()){recover("map atlas not ready");return;}
-       stage("manifestation",5500,()=>{
-         if(!manifestation.reveal()){recover("reveal interrupted");return;}
-         story="manifested";root.dataset.phase="manifested";render();
-         saySequence(REVEAL,()=>{
-           battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
-         });
+       saySequence(SHIOPON_CALL,()=>{
+         story="intro";
+         let lineDone=false,moveDone=false,failed=null,continued=false;
+         const whenReady=()=>{
+           if(!lineDone||continued)return;
+           if(failed){continued=true;recover(failed);return;}
+           if(!moveDone)return;
+           continued=true;
+           manifestation.faceFront();
+           window.TarotStage?.perform?.({type:"face",actor:"shion",target:"shiopon"});
+           story="invocation";
+           saySequence(INVOCATION,()=>{
+             // Shion addresses his companion, then confronts Caritas together.
+             faceCaritas();
+             if(!manifestation.begin()){recover("map atlas not ready");return;}
+             stage("manifestation",5500,()=>{
+               if(!manifestation.reveal()){recover("reveal interrupted");return;}
+               story="manifested";root.dataset.phase="manifested";render();
+               saySequence(REVEAL,()=>{
+                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
+               });
+             });
+           });
+         };
+         saySequence(SHIOPON_REPLY,()=>{lineDone=true;whenReady();});
+         Promise.resolve(manifestation.moveForward()).then(result=>{
+           if(result?.completed)moveDone=true;
+           else failed=result?.reason||"no safe position ahead of Shion";
+           whenReady();
+         }).catch(error=>{failed=error?.message||"walk failed";whenReady();});
        });
      });
-   };
-   saySequence(SHIOPON_REPLY,()=>{lineDone=true;whenReady();});
-   Promise.resolve(manifestation.moveForward()).then(result=>{
-     if(result?.completed)moveDone=true;
-     else failed=result?.reason||"no safe position ahead of Shion";
-     whenReady();
-   }).catch(error=>{failed=error?.message||"walk failed";whenReady();});
    });
-   });
-   }).catch(error=>recover(error?.message||"left-preparation-failed"));
+ }
+ function scoutAhead(){
+   if(!manifestation?.prepareLeft||!manifestation?.moveForward||!manifestation?.faceFront){
+     recover("map actor service unavailable");return;
+   }
+   // Only AFTER Shiopon says WHY does the real map actor leave Shion's side.
+   Promise.resolve(manifestation.prepareLeft()).then(prepared=>{
+     if(story!=="intro"||!owned||done)return;
+     if(!prepared?.completed){recover(prepared?.reason||"scouting route blocked");return;}
+     // On arrival, keep eyes on Caritas; no unexplained left-facing idle pose.
+     window.TarotStage?.perform?.({type:"face",actor:"shiopon",target:CARITAS_GAZE});
+     saySequence(SCOUT_REPORT,deployTarot);
+   }).catch(error=>recover(error?.message||"scouting walk failed"));
+ }
+ saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>{
+   saySequence(SCOUT_REQUEST,scoutAhead);
  });
 }
 function setText(el,value){el.textContent=String(value);}
