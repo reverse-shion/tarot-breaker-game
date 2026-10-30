@@ -324,8 +324,8 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
  assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{
   layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'
  });
-  assert.doesNotMatch(css,/\\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue|#star-gate-interaction-choice|\\.star-gate-interaction-actions/);
-  assert.match(html,/star-gate-interaction\\.css\\?v=main-official-choice/,'official main choice stylesheet');
+  assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue|#star-gate-interaction-choice|\.star-gate-interaction-actions/);
+  assert.match(html,/star-gate-interaction\.css\?v=main-official-choice/,'official main choice stylesheet');
  assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
