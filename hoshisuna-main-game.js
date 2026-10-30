@@ -1684,25 +1684,67 @@
     ctx.restore();
   }
 
+  // Pixel-art light cocoon in world coordinates. Characters themselves stay
+  // untouched: this only paints small, camera-transformed light tiles behind them.
+  function paintCaritasStarlightCocoon(x,y,t) {
+    if(t<.16||t>.94)return;
+    const entering=Math.min(1,Math.max(0,(t-.16)/.20));
+    const departing=Math.min(1,Math.max(0,(.94-t)/.19));
+    const strength=Math.min(entering,departing);
+    const baseY=y-45;
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    // Two opposing ribbons enclose Shiopon before the silhouette reforms.
+    // Sampling the same t each frame prevents jump cuts on high-refresh phones.
+    for(const side of [-1,1]){
+      for(let i=0;i<31;i++){
+        const u=i/30;
+        const wave=Math.sin(u*Math.PI*2+t*11+side)*2.4;
+        const spread=(22+18*Math.sin(Math.PI*u))*Math.min(1,.45+t*1.3);
+        const px=Math.round(x+side*(spread+wave));
+        const py=Math.round(baseY+u*95-48);
+        const pulse=.72+.28*Math.sin(t*10+i*.47);
+        const alpha=strength*pulse*(i%5===0?.88:.54);
+        ctx.fillStyle=i%7===0?"rgba(255,219,156,"+alpha+")"
+          :"rgba(184,151,255,"+alpha+")";
+        const size=(i%6===0?3:2)/camera.zoom;
+        ctx.fillRect(px-size/2,py-size/2,size,size);
+      }
+    }
+    // Rising gold-violet sparks inside the cocoon; small and rhythmic, not noise.
+    for(let i=0;i<14;i++){
+      const u=((i*0.618034+t*.95)%1);
+      const angle=i*2.39996+t*5;
+      const px=x+Math.cos(angle)*(5+u*13);
+      const py=y-4-u*90;
+      const alpha=strength*(.38+.50*u);
+      ctx.fillStyle=i%4===0?"rgba(255,228,165,"+alpha+")"
+        :"rgba(213,181,255,"+alpha+")";
+      const d=(i%3===0?3:2)/camera.zoom;
+      ctx.fillRect(Math.round(px),Math.round(py),d,d);
+    }
+    ctx.restore();
+  }
+
   function paintCaritasWingUnfold(x,y,height,t){
     const opening=Math.min(1,Math.max(0,(t-.72)/.23));
     if(!opening||opening>=1&&t>.99)return;
     const ease=1-Math.pow(1-opening,3);
-    ctx.save();ctx.lineJoin="miter";ctx.lineCap="round";
+    ctx.save();ctx.imageSmoothingEnabled=false;
     for(const side of [-1,1]){
       for(let ray=0;ray<3;ray++){
+        // Luminous pixel tiles fan outward; no smooth CSS-like line overlay.
         const span=(28+ray*15)*ease;
-        const spread=(43+ray*10)*ease;
-        ctx.beginPath();
-        ctx.moveTo(x+side*11,y-height*.63);
-        ctx.lineTo(x+side*(19+span*.48),y-height*(.70+.06*ray));
-        ctx.lineTo(x+side*(19+span),y-height*(.76+spread/180));
-        ctx.strokeStyle=ray===1?"rgba(255,221,157,"+(.74*(1-opening*.45))+")":
-          "rgba(189,164,255,"+(.85*(1-opening*.45))+")";
-        ctx.lineWidth=(2.6-ray*.35)/camera.zoom;
-        ctx.shadowColor=ray===1?"#ffd6a2":"#ba93ff";
-        ctx.shadowBlur=7/camera.zoom;
-        ctx.stroke();
+        const climb=(12+ray*12)*ease;
+        for(let step=0;step<=12;step++){
+          const p=step/12;
+          const px=x+side*(11+span*p);
+          const py=y-height*.63-climb*Math.sin(p*Math.PI*.65)-ray*3*p;
+          const alpha=(.75*(1-opening*.35))*(1-p*.32);
+          ctx.fillStyle=ray===1?"rgba(255,221,157,"+alpha+")"
+            :"rgba(189,164,255,"+alpha+")";
+          const tile=(step%4===0?3.4:2.3)/camera.zoom;
+          ctx.fillRect(Math.round(px),Math.round(py),tile,tile);
+        }
       }
     }
     ctx.restore();
@@ -1785,12 +1827,15 @@
         }
       }
     }
+    // Keep the luminous cocoon behind the approved sprite artwork.
+    if(phase==="charging")paintCaritasStarlightCocoon(x,y,t);
     // Dissolve Shiopon's original map sprite from the feet upward. Actual
     // sprite-pixel fragments travel into the silhouette, rather than one crossfade.
     const dissolve=phase==="charging"?Math.min(1,Math.max(0,(t-.19)/.43)):1;
     if(dissolve<1){
+      // y already includes stageOffsetY; do not apply the stage offset twice.
       const shioTop=y-FRAME.baseline*(SHIOPON_DRAW_HEIGHT/FRAME.h)
-        +actor.visualOffsetY+actor.stageOffsetY;
+        +actor.visualOffsetY;
       ctx.save();
       ctx.beginPath();
       ctx.rect(x-100,shioTop-12,200,
@@ -1823,9 +1868,18 @@
       }
       paintCaritasWingUnfold(x,y,height,t);
       const revealedAlpha=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.72)/.19));
-      if(revealedAlpha>0){
-        ctx.save();ctx.globalAlpha*=revealedAlpha;
-        ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      // The real Shioriel art appears progressively from the feet upward,
+      // inside the same world-space actor slot. A fade alone looked like a swap.
+      const formed=phase==="revealed"?1:Math.min(1,Math.max(0,(t-.68)/.25));
+      const revealEase=formed*formed*(3-2*formed);
+      if(revealedAlpha>0&&revealEase>0){
+        const visibleHeight=height*revealEase;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(left-3,top+height-visibleHeight-3,width+6,visibleHeight+8);
+        ctx.clip();
+        ctx.globalAlpha*=revealedAlpha;
+        ctx.imageSmoothingEnabled=false;
         ctx.shadowColor="rgba(166,125,231,.68)";
         ctx.shadowBlur=7/camera.zoom;
         ctx.drawImage(image,0,0,sw,sh,left,top,width,height);
