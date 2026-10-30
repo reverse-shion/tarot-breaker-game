@@ -12,6 +12,8 @@ if(!C){console.error("[Caritas] Battle core missing");return;}
 const onceKey="tb:dev:caritas:word-guide-once";
 const OWNER="hoshisuna_caritas_prompt";
 const APPROACH_RADIUS=88,REARM_RADIUS=145;
+const CARITAS_GAZE=Object.freeze({x:1013,y:210});
+const faceCaritas=()=>window.TarotStage?.perform?.({type:"face",actor:"shion",target:CARITAS_GAZE});
 const NOTICE=[["シオン","……待て。あの獣の様子が妙だ。\n黒紫の光が……体を覆っている。"]];
 const INTRO=[
  ["カリタス","……まさか、私がアビスに呑まれるとは……"],
@@ -336,11 +338,12 @@ function hidePrompt(){
 function notice(){
  if(story!=="idle"||!armed||!sceneReady()||busy)return;
  busy=true;noticed=true;story="notice";lock();
+ faceCaritas(); // face the creature on the very FIRST startled line
  saySequence(NOTICE,()=>{story="choice";showPrompt();});
 }
 function offerAgain(){
  if(story!=="idle"||!armed||busy)return;
- busy=true;story="choice";lock();showPrompt();
+ busy=true;story="choice";lock();faceCaritas();showPrompt();
 }
 function tick(){
  if(story!=="idle"||done||!sceneReady())return;
@@ -358,7 +361,7 @@ function leave(){
 function start(){
  if(story!=="choice"||!owned||done||suspended())return;
  hidePrompt();story="intro";
- window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:1013,y:210}});
+ faceCaritas();
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
  const manifestation=window.TarotHoshisunaManifestation;
  // Walk to the far-left staging position during the opening dialogue, before
@@ -391,6 +394,9 @@ function start(){
      window.TarotStage?.perform?.({type:"face",actor:"shion",target:"shiopon"});
      story="invocation";
      saySequence(INVOCATION,()=>{
+       // He addresses Shiopon for the chant, then faces the threat once
+       // their light resonates; do not leave him looking sideways.
+       faceCaritas();
        if(!manifestation.begin()){recover("map atlas not ready");return;}
        stage("manifestation",5500,()=>{
          if(!manifestation.reveal()){recover("reveal interrupted");return;}
