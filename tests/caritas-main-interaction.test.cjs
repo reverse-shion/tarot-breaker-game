@@ -319,6 +319,27 @@ test('visibility and BFCache pause art and purification without applying B early
  assert.equal(f.state().special.resolutionApplied,false);f.page('pageshow');f.advanceTime(800);
  assert.equal(f.state().special.phase,'CARITAS_REPLY');assert.equal(f.state().battle.dark,0);
 });
+test('original Alenon/main markup is used without any Caritas dialogue CSS',()=>{
+ const a=fs.readFileSync(path.join(__dirname,'../alenon.html'),'utf8');
+ const b=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ const section=(s,id)=>{
+  const start=s.indexOf('<section id="'+id+'" class="tb-dialogue-layer"');
+  assert.notEqual(start,-1);
+  const end=s.indexOf('</section>',start);
+  assert.notEqual(end,-1);
+  return s.slice(start,end+10);
+ };
+ const expected=section(a,'prologue-dialogue-layer')
+  .replaceAll('prologue-dialogue-layer','dialogue-layer')
+  .replaceAll('prologue-dialogue','dialogue-advance')
+  .replaceAll('prologue-speaker','dialogue-speaker')
+  .replaceAll('prologue-line','dialogue-text');
+ const actual=section(b,'dialogue-layer');
+ const compact=s=>s.replace(/\s+/g,' ').trim();
+ assert.equal(compact(actual),compact(expected),'original dialogue markup matches main');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.css'),'utf8');
+ assert.ok(!css.includes('.tb-dialogue')&&!css.includes('#dialogue-'),'event cannot style main dialogue');
+});
 test('shared main dialogue IDs, nonproduction isolation and styling are unchanged',()=>{
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
  const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.css'),'utf8');
