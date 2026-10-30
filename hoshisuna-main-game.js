@@ -1879,7 +1879,9 @@
         ctx.rect(left-3,top+height-visibleHeight-3,width+6,visibleHeight+8);
         ctx.clip();
         ctx.globalAlpha*=revealedAlpha;
-        ctx.imageSmoothingEnabled=false;
+        // The official high-resolution pixel illustration keeps its approved
+        // downsampling; only the separate light effects use hard-edged tiles.
+        ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
         ctx.shadowColor="rgba(166,125,231,.68)";
         ctx.shadowBlur=7/camera.zoom;
         ctx.drawImage(image,0,0,sw,sh,left,top,width,height);
