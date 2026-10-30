@@ -23,6 +23,30 @@ test("actual map follower steps ahead, faces camera and then manifests before co
  assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",5500"));
  assert.ok(start.indexOf("saySequence(REVEAL,()=>")<start.indexOf("root.hidden=false"));
 });
+test("tarot spread sits over the head and beside both arms without touching Shion",()=>{
+ const vm=require("node:vm");
+ const layout=game.slice(game.indexOf("function caritasTarotLayout("),
+                         game.indexOf("function paintCaritasTarotSpread("));
+ assert.match(layout,/const height=drawHeight\*\.34,width=height\*aspect,gap=9/);
+ const sandbox={
+   caritasTarotShionBounds:{topOffset:-66,leftOffset:-16,rightOffset:16},
+   images:{},measureCaritasVisibleMapActor:()=>{throw new Error("cached bounds should be used");}
+ };
+ vm.runInNewContext(layout+"\nthis.cards=caritasTarotLayout({x:100,y:200,stageOffsetY:0},78,2/3)",sandbox);
+ const [head,left,right]=sandbox.cards;
+ const halfHeight=head.height/2,halfWidth=head.width/2;
+ assert.equal(head.x,100);
+ assert.ok(Math.abs((head.y+halfHeight)-(200-66-9))<1e-8,"head card has 9px gap above visible hair");
+ assert.ok(Math.abs((left.x+halfWidth)-(100-16-9))<1e-8,"left card has 9px gap outside left arm");
+ assert.ok(Math.abs((right.x-halfWidth)-(100+16+9))<1e-8,"right card has 9px gap outside right arm");
+ assert.equal(left.y,right.y,"side cards must align at arm height");
+ assert.ok(head.y<left.y,"top card must be above both arm cards");
+ const painting=game.slice(game.indexOf("function paintCaritasTarotSpread("),
+                          game.indexOf("// Invocation-only light:"));
+ assert.match(painting,/shadowColor="rgba\(246,224,189,\.63\)"/);
+ assert.match(painting,/shadowBlur=11\/camera\.zoom/);
+ assert.match(painting,/ctx\.drawImage\(caritasTarotBack/);
+});
 test("one real world actor uses approved atlas and preserves foot position",()=>{
  assert.match(game,/TarotHoshisunaManifestation=Object\.freeze/);
  assert.match(game,/caritasShiorielAtlas=image/);
@@ -83,7 +107,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=resonance-special-v15/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-deployment-v8/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-deployment-v9-head-arms/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
  assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
@@ -111,7 +135,7 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-deployment-v8/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-deployment-v9-head-arms/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -145,7 +169,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.match(game,/caritasOwnerTransformationAtlas=image/);
  assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
  assert.match(game,/\[Caritas\] owner transformation unavailable/);
- assert.match(html,/caritas-tarot-deployment-v8/);
+ assert.match(html,/caritas-tarot-deployment-v9-head-arms/);
 });
 
 test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
@@ -159,7 +183,7 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
  assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
  assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
  assert.doesNotMatch(section,/const height=112,width=112/);
- assert.match(html,/caritas-tarot-deployment-v8/);
+ assert.match(html,/caritas-tarot-deployment-v9-head-arms/);
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
@@ -170,7 +194,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
  assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-framing2-tarot-v6/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-deployment-v8/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-deployment-v9-head-arms/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
  assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
