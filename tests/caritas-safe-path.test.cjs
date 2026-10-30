@@ -34,7 +34,7 @@ function scenario(){
 
 test("real Starroad path takes Shiopon safely from Shion's left to the front of Caritas",()=>{
  const s=scenario();
- const old={x:1032,y:331},left={x:1024,y:319},front={x:1024,y:286};
+ const old={x:1032,y:331},left={x:1024,y:319},front={x:1024,y:301};
  assert.ok(actualCollision.isWalkable(old.x,old.y));
  assert.ok(actualCollision.isWalkable(left.x,left.y));
  assert.ok(actualCollision.isWalkable(front.x,front.y));
@@ -49,7 +49,8 @@ test("real Starroad path takes Shiopon safely from Shion's left to the front of 
    assert.ok(s.caritasSafeCollision(true).segmentClear(prev,next),"entire walking segment avoids card, Shion and map");
    prev=next;
  }
- assert.ok(prev.y<left.y,"the real sprite advances toward Caritas, not sideways through Shion");
+ assert.equal(prev.y,left.y-18,"exactly one 18px step toward Caritas, never a large reposition");
+ assert.equal(prev.x,left.x,"the last step stays in the established left-side lane");
 });
 
 test("same path rejects shortcut through Shion and through the left tarot card",()=>{
