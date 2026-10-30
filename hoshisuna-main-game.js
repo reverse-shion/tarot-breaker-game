@@ -182,6 +182,7 @@
   let caritasOwnerTransformationAtlas = null;
   let caritasOwnerBlendSurface = null;
   let caritasOwnerStarAtlas = null;
+  let caritasResonanceSprites = null;
   const CARITAS_OWNER_TILE = 160;
   const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
   const CARITAS_MANIFESTATION_DURATION_MS = 5500;
@@ -1803,6 +1804,101 @@
     return caritasOwnerMapScale;
   }
 
+  // Invocation-only light: one shared clock, with Shion initiating the response.
+  function caritasResonanceAt(elapsed,reduced=false){
+    const fade=1-caritasOwnerSmooth((elapsed-4100)/600);
+    const breath=reduced?1:.88+.12*Math.cos((elapsed-1300)*Math.PI/900);
+    return {
+      shion:caritasOwnerSmooth((elapsed-120)/580)*fade*breath,
+      shiopon:caritasOwnerSmooth((elapsed-480)/620)*(1-caritasOwnerSmooth((elapsed-2100)/200))*breath,
+      sky:caritasOwnerSmooth((elapsed-800)/650)*(1-caritasOwnerSmooth((elapsed-2350)/500)),
+      dim:caritasOwnerSmooth(elapsed/700)*fade
+    };
+  }
+
+  function caritasResonanceElapsed(){
+    return hoshisunaIsolated&&caritasInvocation.phase==="charging"
+      ?caritasInvocationProgress()*CARITAS_MANIFESTATION_DURATION_MS:-1;
+  }
+
+  function paintCaritasResonanceWorld(){
+    const elapsed=caritasResonanceElapsed();
+    if(elapsed<0||elapsed>=4700)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const light=caritasResonanceAt(elapsed,reduced),origin=viewportOrigin();
+    const sizes=caritasOwnerMapScale||measureCaritasOwnerMapScale();
+    const sx=shiopon.x,sy=shiopon.y+shiopon.stageOffsetY+shiopon.visualOffsetY;
+    ctx.save();
+    // Dim the map behind both actors, never paint a full-screen white flash.
+    ctx.fillStyle=`rgba(15,13,35,${light.dim*.30})`;
+    ctx.fillRect(origin.x,origin.y,cssWidth/camera.zoom,cssHeight/camera.zoom);
+    const pool=(x,y,height,power)=>{
+      if(power<=0)return;
+      ctx.save();ctx.translate(x,y-height*.47);ctx.scale(.70,1);
+      const glow=ctx.createRadialGradient(0,0,3,0,0,height*1.05);
+      glow.addColorStop(0,`rgba(255,239,190,${power*.32})`);
+      glow.addColorStop(.45,`rgba(236,199,124,${power*.16})`);
+      glow.addColorStop(1,"rgba(205,175,255,0)");
+      ctx.fillStyle=glow;ctx.fillRect(-height*1.05,-height*1.05,height*2.1,height*2.1);ctx.restore();
+    };
+    pool(player.x,player.y+player.stageOffsetY,sizes.shionHeight,light.shion);
+    pool(sx,sy,sizes.shioponHeight,light.shiopon);
+    if(light.sky>0){
+      const skyY=Math.min(origin.y-24,sy-180);
+      const descent=reduced?1:caritasOwnerSmooth((elapsed-800)/650);
+      const bottom=skyY+(sy+12-skyY)*descent;
+      // Overlapping soft-edged curtains, 26–150px wide, rather than hairline rays.
+      for(const [offset,topWidth,baseWidth,alpha] of [[0,150,66,.34],[-28,64,30,.22],[24,54,26,.20]]){
+        const topX=sx+offset*1.7,baseX=sx+offset*.35;
+        const left=Math.min(topX-topWidth/2,baseX-baseWidth/2);
+        const right=Math.max(topX+topWidth/2,baseX+baseWidth/2);
+        const curtain=ctx.createLinearGradient(left,0,right,0);
+        curtain.addColorStop(0,"rgba(255,236,192,0)");
+        curtain.addColorStop(.35,`rgba(252,224,164,${alpha*light.sky})`);
+        curtain.addColorStop(.5,`rgba(255,247,216,${alpha*light.sky})`);
+        curtain.addColorStop(.65,`rgba(252,224,164,${alpha*light.sky})`);
+        curtain.addColorStop(1,"rgba(255,236,192,0)");
+        ctx.fillStyle=curtain;ctx.beginPath();ctx.moveTo(topX-topWidth/2,skyY);
+        ctx.lineTo(topX+topWidth/2,skyY);ctx.lineTo(baseX+baseWidth/2,bottom);
+        ctx.quadraticCurveTo(baseX,bottom+18,baseX-baseWidth/2,bottom);
+        ctx.closePath();ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Tint the exact current sprite alpha, retaining its face, pose and dimensions.
+  // Cache one small surface per actor; never recolour an enclosing rectangle.
+  function paintCaritasResonantActor(actor,actorImages,drawHeight,offset,kind,elapsed){
+    if(elapsed<0||elapsed>=4700)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const strength=caritasResonanceAt(elapsed,reduced)[kind];
+    if(!strength)return;
+    const {image,sourceX}=spriteFrame(actor,actorImages,FRAME);
+    if(!image)return;
+    if(!caritasResonanceSprites)caritasResonanceSprites={};
+    let cached=caritasResonanceSprites[kind];
+    if(!cached){
+      const surface=document.createElement("canvas");surface.width=96;surface.height=128;
+      const context=surface.getContext("2d");if(!context)return;
+      cached=caritasResonanceSprites[kind]={surface,context,image:null,sourceX:-1};
+    }
+    if(cached.image!==image||cached.sourceX!==sourceX){
+      const g=cached.context;g.clearRect(0,0,96,128);g.imageSmoothingEnabled=false;
+      g.globalCompositeOperation="source-over";
+      g.drawImage(image,sourceX,0,FRAME.w,FRAME.h,0,0,96,128);
+      g.globalCompositeOperation="source-in";g.fillStyle="#fff0c4";g.fillRect(0,0,96,128);
+      g.globalCompositeOperation="source-over";cached.image=image;cached.sourceX=sourceX;
+    }
+    const width=FRAME.w*drawHeight/FRAME.h;
+    ctx.save();ctx.globalAlpha*=strength*.26;ctx.globalCompositeOperation="screen";
+    ctx.imageSmoothingEnabled=false;ctx.shadowColor="rgba(255,227,164,.28)";ctx.shadowBlur=14/camera.zoom;
+    if(Math.abs(actor.rotation||0)>1e-6){ctx.translate(actor.x,actor.y);ctx.rotate(actor.rotation);ctx.translate(-actor.x,-actor.y);}
+    ctx.drawImage(cached.surface,0,0,96,128,actor.x-width/2,
+      actor.y-FRAME.baseline*drawHeight/FRAME.h+offset,width,drawHeight);
+    ctx.restore();
+  }
+
   const caritasOwnerSmooth = (value) => {
     const p=Math.max(0,Math.min(1,value));
     return p*p*(3-2*p);
@@ -1874,11 +1970,11 @@
         const tail=mote.tail;
         const trail=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);
         trail.addColorStop(0,`rgba(${rgb},0)`);
-        trail.addColorStop(1,`rgba(${rgb},${mote.alpha*.85})`);
-        ctx.strokeStyle=trail;ctx.lineWidth=i%7===0?1.6:1;ctx.lineCap="round";
+        trail.addColorStop(1,`rgba(${rgb},${mote.alpha*.32})`);
+        ctx.strokeStyle=trail;ctx.lineWidth=i%7===0?9:5;ctx.lineCap="round";
         ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(head.x,head.y);ctx.stroke();
       }
-      const size=i%7===0?18:11+(i%3);
+      const size=i%7===0?26:18+(i%3);
       ctx.globalAlpha=baseAlpha*mote.alpha*(i%7===0?1:.92);
       ctx.drawImage(atlas,color*32,0,32,32,head.x-size/2,head.y-size/2,size,size);
       ctx.globalAlpha=baseAlpha;
@@ -1949,6 +2045,8 @@
         outline:ACTOR_OUTLINES.shiopon,
         visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
       });
+      paintCaritasResonantActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,
+        actor.visualOffsetY+actor.stageOffsetY,"shiopon",elapsed);
       ctx.restore();
       if(elapsed<=1900)return true;
       frame=4;
@@ -2154,6 +2252,7 @@
   }
 
   function drawActors() {
+    paintCaritasResonanceWorld();
     if (!hoshisunaIsolated && !visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
@@ -2212,6 +2311,8 @@
           if(!(hoshisunaIsolated && actorId==="shiopon" && drawCaritasInvocation(entry.actor))) {
             drawActor(entry.actor, entry.actorImages, entry.drawHeight,
               entry.glowColor, entry.options);
+            if(actorId==="shion")paintCaritasResonantActor(entry.actor,entry.actorImages,entry.drawHeight,
+              entry.options.visualOffsetY,"shion",caritasResonanceElapsed());
           }
         } finally { ctx = original; }
       };
@@ -3153,7 +3254,7 @@
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
-      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;caritasOwnerStarAtlas=null;
+      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;caritasOwnerStarAtlas=null;caritasResonanceSprites=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;

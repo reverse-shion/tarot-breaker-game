@@ -17,7 +17,7 @@ function harness(){
     CARITAS_OWNER_FRAME_TIMES_MS:[800,500,500,500,230,230,240,350,370,380,600,800],
     CARITAS_MANIFESTATION_DURATION_MS:5500,window:{},document,caritasOwnerBlendSurface:null,caritasOwnerStarAtlas:null,viewportOrigin:()=>({y:0}),
     caritasOwnerMapScale:{shioponHeight:265*76/512,shionHeight:420*78/512,shioponFootOffset:0},
-    SHIOPON_DRAW_HEIGHT:76,shioponImages:{},ACTOR_OUTLINES:{shiopon:{}},
+    paintCaritasResonantActor(){},SHIOPON_DRAW_HEIGHT:76,shioponImages:{},ACTOR_OUTLINES:{shiopon:{}},
     drawActor(...args){calls.push({kind:"native",alpha:ctx.globalAlpha,args});}};
   vm.createContext(scope);
   vm.runInContext(game.slice(game.indexOf("  const caritasOwnerSmooth ="),
