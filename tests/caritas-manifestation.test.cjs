@@ -10,14 +10,19 @@ const game=fs.readFileSync(path.join(root,"hoshisuna-main-game.js"),"utf8");
 const html=fs.readFileSync(path.join(root,"hoshisuna-main.html"),"utf8");
 test("actual map follower steps ahead, faces camera and then manifests before combat",()=>{
  const start=event.slice(event.indexOf("function start(){"),event.indexOf("function setText("));
- const seq=['saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",5500','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
+ const seq=['saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>','saySequence(SCOUT_REQUEST,scoutAhead)','Promise.resolve(manifestation.prepareLeft())','saySequence(SCOUT_REPORT,deployTarot)','saySequence(TAROT_DECLARATION,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",5500','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
  // Walking is started while Shiopon's spoken reply is visible (parallel actions).
  assert.ok(start.includes(seq[0]));
  assert.ok(start.includes(seq[1]));
  assert.ok(start.includes(seq[2]));
  for(const v of seq.slice(3))assert.ok(start.includes(v),"missing ordered step "+v);
  assert.match(event,/const SHIOPON_REPLY=\[\["しおぽん","はい、シオンさん。"\]\]/);
- assert.match(event,/\["シオン","タロット展開。"\]/);
+ assert.match(event,/const TAROT_DECLARATION=\[\["シオン","タロット展開。"\]\]/);
+ assert.match(event,/const SCOUT_REQUEST=\[/);
+ assert.match(event,/しおぽんが守るの/);
+ assert.match(event,/黒紫の光が強くなってるの/);
+ assert.ok(start.indexOf("saySequence(SCOUT_REQUEST,scoutAhead)")>start.indexOf("Promise.resolve(manifestation.prepareLeft())"),"code invokes scouting only after speech callback");
+ assert.match(start,/actor:"shiopon",target:CARITAS_GAZE/);
  assert.match(event,/const SHIOPON_CALL=\[\["シオン","いくぞ、しおぽん。"\]\]/);
  assert.match(event,/speaker==="しおぽん"\?"shiopon"/);
  assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",5500"));
@@ -56,7 +61,8 @@ test("one real world actor uses approved atlas and preserves foot position",()=>
  assert.match(game,/if\s*\(hoshisunaIsolated\s*&&\s*caritasInvocation\.locked\)/);
  assert.match(game,/performStageCommand\(\{type:"move",actor:"shiopon",target:spot,duration:440,caritasSafe:true\}\)/);
  assert.match(game,/prepareLeft\(\)/);
- assert.match(event,/const leftArrival=Promise\.resolve\(manifestation\?\.prepareLeft\?\.\(\)/);
+ assert.match(event,/Promise\.resolve\(manifestation\.prepareLeft\(\)\)\.then\(prepared=>/);
+ assert.doesNotMatch(event,/const leftArrival=/,"No early silent staging during Caritas dialogue");
  assert.match(event,/if\(!prepared\?\.completed\)/);
  assert.match(game,/shiopon\.dir="down"/);
  assert.match(game,/caritasSafeRoute\(from,candidate,true\)/);
