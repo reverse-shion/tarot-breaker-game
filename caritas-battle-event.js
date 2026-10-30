@@ -361,16 +361,23 @@ function start(){
  window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:1013,y:210}});
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
  const manifestation=window.TarotHoshisunaManifestation;
+ // Walk to the far-left staging position during the opening dialogue, before
+ // summoning any cards. Never snap or pass through world collision.
+ const leftArrival=Promise.resolve(manifestation?.prepareLeft?.()||
+   {completed:false,reason:"left-preparation-unavailable"});
  function recover(reason){
    console.error("[Caritas] map manifestation failed:",reason);
    manifestation?.clear?.();root.hidden=true;story="choice";showPrompt();
  }
  saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>{
-   if(!manifestation?.moveForward||!manifestation?.faceFront){
-     recover("map actor service unavailable");return;
-   }
-   if(!manifestation.deployCards?.()){recover("tarot card back not ready");return;}
-   stage("tarot-deploy",650,()=>{
+   leftArrival.then(prepared=>{
+     if(story!=="intro")return;
+     if(!prepared?.completed){recover(prepared?.reason||"left start blocked");return;}
+     if(!manifestation?.moveForward||!manifestation?.faceFront){
+       recover("map actor service unavailable");return;
+     }
+     if(!manifestation.deployCards?.()){recover("tarot card back not ready");return;}
+     stage("tarot-deploy",650,()=>{
    saySequence(SHIOPON_CALL,()=>{
    story="intro";
    // Shiopon speaks while the existing follower walks in front of Shion.
@@ -402,6 +409,7 @@ function start(){
    }).catch(error=>{failed=error?.message||"walk failed";whenReady();});
    });
    });
+   }).catch(error=>recover(error?.message||"left-preparation-failed"));
  });
 }
 function setText(el,value){el.textContent=String(value);}
