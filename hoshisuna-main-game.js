@@ -3402,6 +3402,10 @@
     },
     clear(){
       window.TarotCaritasManifestationAudio?.clear?.();
+      // An interrupted/retried event must not leave the fox's scripted
+      // collision route running invisibly after returning to the world.
+      if(stageMotions.shiopon?.caritasSafe)
+        settleStageMotion("shiopon",stageMotions.shiopon,{skipped:true});
       caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
       caritasSafeNavigator=null;caritasSafeNavigatorKey="";
       caritasTarotSpread.since=0;caritasTarotSpread.paused=false;
