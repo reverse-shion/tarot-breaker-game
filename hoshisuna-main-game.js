@@ -77,6 +77,8 @@
   // Isolated Hoshisuna map selector. Main actor, camera, controls, sprites,
   // routing, and Shiopon follow algorithms below remain identical to main.
   const hoshisunaIsolated = location.pathname.endsWith("/hoshisuna-main.html") && params.get("dev") === "hoshisuna";
+  const transformationReplay = hoshisunaIsolated &&
+    params.getAll("preview").length === 1 && params.get("preview") === "manifestation";
   const stage3Dev = ["star-gate-full", "star-gate-from-lumiere"].includes(params.get("dev")) && window.__TAROT_DEV_STAGE3__ === true;
   const stage3Runtime = stage3Dev || window.__TAROT_PUBLIC_STAR_GATE__ === true;
   const enteringFromLanding = params.get("from") === "landing";
@@ -3108,6 +3110,10 @@
         throw new Error("garden-south-exit-unavailable");
       if (hoshisunaIsolated) {
         spawnRef = {x:108,y:488};
+        // Opt-in author preview only: a legal Starroad spot near Caritas.
+        // The existing follower spawns 56 world units behind Shion, also on
+        // walkable ground. Default ?dev=hoshisuna spawn remains unchanged.
+        if(transformationReplay)spawnRef = {x:1088,y:331};
         if (!collision.isWalkable(spawnRef.x,spawnRef.y)) throw new Error("hoshisuna-player-spawn-invalid");
         gardenExitRef = {...spawnRef};
       } else if (stage3Dev) {
