@@ -35,13 +35,13 @@ test("actual map follower steps ahead, faces camera and then manifests before co
  assert.ok(start.indexOf("saySequence(REVEAL,()=>")<start.indexOf("root.hidden=false"));
 });
 test("world anchored Caritas Abyss starts thin and gains opaque pixel cells during Shiopon's approach",()=>{
- assert.match(game,/phase:"haze",opacity:\.13/);
+ assert.match(game,/phase:"haze",opacity:\.22/);
  const fog=game.slice(game.indexOf("function paintCaritasMiasma("),game.indexOf("function drawActors()"));
  assert.match(fog,/950\.5\+125\/2/,"miasma must attach to Caritas' world position");
  assert.match(fog,/ctx\.fillRect\(px,py,step\*2,step\)/,"pixel cluster rendering, not CSS-only smoke");
  assert.match(fog,/opacity>\.35/,"purple accent appears only after darkening");
  assert.match(game,/paintCaritasMiasma\(\)/);
- assert.match(game,/\{haze:\.13,surging:\.88,engulfed:1,cleared:0\}/);
+ assert.match(game,/\{haze:\.22,surging:\.88,engulfed:1,cleared:0\}/);
  assert.match(game,/window\.TarotHoshisunaAbyss=Object\.freeze/);
  assert.match(event,/abyss\?\.setPhase\?\.\("surging"\)/);
  assert.match(event,/abyss\?\.setPhase\?\.\("engulfed"\)/);
