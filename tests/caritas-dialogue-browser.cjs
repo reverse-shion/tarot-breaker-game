@@ -41,11 +41,24 @@ function snapshot(){
 
   }
   while(await page.evaluate(()=>CaritasEncounterDebug.getState().story)==='notice')await advance();
-  await compare('inspection choice');
-  const bounds=await page.evaluate(()=>({dialogue:document.querySelector('#dialogue-advance').getBoundingClientRect().toJSON(),actions:document.querySelector('#caritas-interaction-choice').getBoundingClientRect().toJSON()}));
-  assert.ok(bounds.actions.bottom<=bounds.dialogue.top,'choices do not cover dialogue');
-  assert.ok(bounds.actions.top>=0,'choices remain on-screen');
-  assert.equal(await page.locator('#caritas-interaction-text').count(),0,'no custom speech window');
+  assert.equal(await page.locator('#dialogue-layer').isVisible(),false,'main speech hidden for official choice');
+  assert.equal(await page.locator('#star-gate-interaction-choice').isVisible(),true,'official main choice visible');
+  assert.match(await page.locator('#star-gate-interaction-text').textContent(),/調べてみるか/);
+  await reference.addStyleTag({path:path.join(root,'star-gate-interaction.css')});
+  await reference.evaluate(()=>{
+   const panel=document.createElement('aside');panel.id='star-gate-interaction-choice';panel.className='visible';
+   panel.innerHTML='<div id="star-gate-interaction-text">選択肢</div><div class="star-gate-interaction-actions"><button>調べる</button><button>離れる</button></div>';
+   document.getElementById('game-shell').appendChild(panel);
+  });
+  function choiceStyles(){
+   return ['#star-gate-interaction-choice','#star-gate-interaction-text','.star-gate-interaction-actions','.star-gate-interaction-actions button'].map(sel=>{
+    const s=getComputedStyle(document.querySelector(sel));
+    return Object.fromEntries(['position','bottom','left','width','padding','fontFamily','fontSize','color','borderRadius','background','display','gridTemplateColumns'].map(k=>[k,s[k]]));
+   });
+  }
+  assert.deepEqual(await page.evaluate(choiceStyles),await reference.evaluate(choiceStyles),'choice computed styles must match main');
+  const bounds=await page.locator('#star-gate-interaction-choice').boundingBox();
+  assert.ok(bounds.y>=0&&bounds.y+bounds.height<=viewport.height+1,'main choice stays in viewport');
   await page.getByRole('button',{name:'離れる',exact:true}).click();
   assert.equal(await page.locator('#dialogue-layer').isVisible(),false);
   // Fresh context route reaches the actual inspect/start path without seeded saves.
@@ -53,14 +66,14 @@ function snapshot(){
   while(await page.evaluate(()=>CaritasEncounterDebug.getState().story)==='notice')await advance();
   await page.getByRole('button',{name:'調べる',exact:true}).click();
   await compare('Caritas introduction');
-  assert.equal(await page.locator('#caritas-interaction-choice').isVisible(),false);
+  assert.equal(await page.locator('#star-gate-interaction-choice').isVisible(),false);
   // No encounter stylesheet may override any shared dialogue speaker.
   const stylesheet=fs.readFileSync(path.join(root,'caritas-battle-event.css'),'utf8');
   assert.doesNotMatch(stylesheet,/\.tb-dialogue|#dialogue-|--speaker-|\.cb-intro/);
   assert.deepEqual(errors,[]);
   const output=process.env.CARITAS_QA_OUTPUT;
   if(output){fs.mkdirSync(output,{recursive:true});await page.screenshot({path:path.join(output,`dialogue-${viewport.width}-${reduced}.png`)});}
-  await context.close();console.log(`PASS ${viewport.width}x${viewport.height} reduced=${reduced}: notice/choice/intro styles identical to main, leave/inspect, no overlap, page errors 0`);
+  await context.close();console.log(`PASS ${viewport.width}x${viewport.height} reduced=${reduced}: notice/intro dialogue and official choice styles identical to main, leave/inspect, no overlap, page errors 0`);
  }
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});
