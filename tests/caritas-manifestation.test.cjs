@@ -106,11 +106,11 @@ test("pixel manifestation derives fragments and light silhouette from the offici
 });
 test("manifestation is isolated, pauseable and cleans sprite particle resources on map return",()=>{
  const api=game.slice(game.indexOf('if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze'));
- assert.match(api,/caritasInvocation\.fx=prepareCaritasPixelManifestation\(\)/);
+ assert.match(api,/caritasInvocation\.fx=caritasOwnerTransformationAtlas\?null:prepareCaritasPixelManifestation\(\)/);
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-starlight-v03-pixelmanifest2/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-atlas12-v1/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -126,4 +126,23 @@ test("light cocoon and pixel wings maintain in-map continuity, character art int
  assert.match(drawing,/ctx\.rect\(left-3,top\+height-visibleHeight-3,width\+6,visibleHeight\+8\)/);
  assert.match(drawing,/ctx\.drawImage\(image,0,0,sw,sh,left,top,width,height\)/);
  assert.doesNotMatch(drawing,/new Image\(|\.src\s*=|fetch\(/);
+});
+
+test("owner-supplied 12-frame WebP replaces the old manifestation, remains world-anchored",()=>{
+ const asset=path.join(root,"assets/events/hoshisuna/battle/shiopon-shioriel-transformation-atlas.webp");
+ assert.ok(fs.existsSync(asset),"Owner's transparent transformation atlas must be committed");
+ const header=fs.readFileSync(asset);
+ assert.equal(header.subarray(0,4).toString(),"RIFF");
+ assert.equal(header.subarray(8,12).toString(),"WEBP");
+ assert.match(game,/const CARITAS_OWNER_TILE = 160/);
+ assert.match(game,/Object\.freeze\(\[700,150,140,150,160,220,200,150,160,160,220,1500\]\)/);
+ assert.match(game,/function drawCaritasOwnerTransformation\(actor,phase,t\)/);
+ assert.match(game,/const elapsed=phase==="revealed"\?3910:Math\.min\(3900,/);
+ assert.match(game,/ctx\.drawImage\(image,\(frame%4\)\*CARITAS_OWNER_TILE,/);
+ assert.match(game,/const x=actor\.x,y=actor\.y\+actor\.stageOffsetY\+actor\.visualOffsetY/);
+ assert.match(game,/if\(caritasOwnerTransformationAtlas\)return drawCaritasOwnerTransformation\(actor,phase,t\)/);
+ assert.match(game,/caritasOwnerTransformationAtlas=image/);
+ assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
+ assert.match(game,/\[Caritas\] owner transformation unavailable/);
+ assert.match(html,/caritas-owner-transformation-atlas12-v1/);
 });
