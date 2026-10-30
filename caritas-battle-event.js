@@ -677,6 +677,7 @@ function finishRetreat(){
  clearCheckpoint(()=>{
  clearTimeout(cinematicTimer);cinematicCallback=null;clearTimeout(toastTimer);
  window.TarotHoshisunaManifestation?.clear?.();
+ window.TarotHoshisunaAbyss?.setPhase?.("haze");
  dialogue?.hide();root.hidden=true;ui.modal.hidden=true;
  battle=C.newGame();visualBattle=null;modalIndex=-1;committing=false;
  story="idle";busy=false;armed=false;noticed=true;unlock();
@@ -691,8 +692,9 @@ function finish(){
 }
 function completeMapReturn(){
  if(done)return;
- // Clear canvas actor first, THEN expose the world map.
+ // Clear canvas actor and hostile miasma before exposing the world map.
  window.TarotHoshisunaManifestation?.clear?.();
+ window.TarotHoshisunaAbyss?.setPhase?.("cleared");
  done=true;story="complete";root.hidden=true;dialogue?.hide();
  clearTimeout(toastTimer);clearTimeout(cinematicTimer);cinematicCallback=null;
  const creature=document.querySelector(".hoshi-caritas");
