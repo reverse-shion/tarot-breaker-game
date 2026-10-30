@@ -22,12 +22,14 @@ const INTRO=[
 ];
 // Shiopon's protective move is a response to Caritas, never silent staging.
 const SCOUT_REQUEST=[
- ["シオン","……あの闇、普通じゃない。しおぽん、少し前でカリタスの様子を見てくれ。無理はするな。"],
- ["しおぽん","うん！ シオンさんはそこで待ってて。何かあったら、しおぽんが守るの！"]
+ ["しおぽん","……シオンさん。あの子、なんだか苦しそうなの。"],
+ ["シオン","待て、しおぽん。あの黒いモヤ……危険だ。近づくな。"],
+ ["しおぽん","でも……あの子の声が消えちゃいそうなの。少しだけ、確かめてくるの！"],
+ ["シオン","……しおぽん！"]
 ];
 const SCOUT_REPORT=[
- ["しおぽん","……黒紫の光が強くなってるの。あのままじゃ、カリタスが……！"],
- ["シオン","……分かった。なら、俺たちの言葉を届けよう。"]
+ ["しおぽん","……っ！ あの子のまわり、闇が……！"],
+ ["シオン","闇が広がっている……。このままじゃ、あの子まで呑まれる。"]
 ];
 const TAROT_DECLARATION=[["シオン","タロット展開。"]];
 const SHIOPON_CALL=[["シオン","いくぞ、しおぽん。"]];
@@ -373,12 +375,14 @@ function start(){
  faceCaritas();
  window.dispatchEvent(new Event("tarot-breaker:caritas-approach"));
  const manifestation=window.TarotHoshisunaManifestation;
+ const abyss=window.TarotHoshisunaAbyss;
  function recover(reason){
    console.error("[Caritas] map manifestation failed:",reason);
-   manifestation?.clear?.();root.hidden=true;story="choice";showPrompt();
+   manifestation?.clear?.();abyss?.setPhase?.("haze");root.hidden=true;story="choice";showPrompt();
  }
  function deployTarot(){
    saySequence(TAROT_DECLARATION,()=>{
+     abyss?.setPhase?.("engulfed");
      if(!manifestation?.deployCards?.()){recover("tarot card back not ready");return;}
      stage("tarot-deploy",650,()=>{
        saySequence(SHIOPON_CALL,()=>{
@@ -390,7 +394,8 @@ function start(){
            if(!moveDone)return;
            continued=true;
            manifestation.faceFront();
-           window.TarotStage?.perform?.({type:"face",actor:"shion",target:"shiopon"});
+           // Eyes stay on the threatened child for the entire chant.
+           faceCaritas();
            story="invocation";
            saySequence(INVOCATION,()=>{
              // Shion addresses his companion, then confronts Caritas together.
@@ -419,11 +424,14 @@ function start(){
    if(!manifestation?.prepareLeft||!manifestation?.moveForward||!manifestation?.faceFront){
      recover("map actor service unavailable");return;
    }
-   // Only AFTER Shiopon says WHY does the real map actor leave Shion's side.
+   // Shiopon moves voluntarily after Shion explicitly warns him not to.
+   // The child's haze thickens while Shiopon approaches the danger.
+   abyss?.setPhase?.("surging");
    Promise.resolve(manifestation.prepareLeft()).then(prepared=>{
      if(story!=="intro"||!owned||done)return;
      if(!prepared?.completed){recover(prepared?.reason||"scouting route blocked");return;}
-     // On arrival, keep eyes on Caritas; no unexplained left-facing idle pose.
+     abyss?.setPhase?.("engulfed");
+     // On arrival, keep eyes on the child, not the empty walkway.
      window.TarotStage?.perform?.({type:"face",actor:"shiopon",target:CARITAS_GAZE});
      saySequence(SCOUT_REPORT,deployTarot);
    }).catch(error=>recover(error?.message||"scouting walk failed"));
