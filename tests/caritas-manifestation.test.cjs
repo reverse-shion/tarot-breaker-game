@@ -84,7 +84,7 @@ test("Caritas-specific path avoids Shion, three card rectangles and map walls",(
  assert.match(game,/if\(motion\.caritasSafe&&!caritasSafeCollision\(motion\.caritasCards\)\.segmentClear\(current,next\)\)/);
  const api=game.slice(game.indexOf("if (hoshisunaIsolated) window.TarotHoshisunaManifestation="));
  assert.match(api,/const candidates=\[\s*\{x:front\.x-64,y:front\.y-12\}/);
- assert.match(api,/\{x:front\.x-64,y:front\.y-45\}/);
+ assert.match(api,/\{x:from\.x,y:from\.y-18\}/);
  assert.doesNotMatch(api,/legalStageRoute\("shiopon",from,candidate\)/);
 });
 test("visible world-anchored starlight has colour, scale and non-strobing echoes",()=>{
