@@ -1755,6 +1755,49 @@
     ctx.restore();
   }
 
+  // The map sprites use 384x512 source cells with transparent margins.
+  // Measure their actually visible height once, not the whole 76/78px cell.
+  // This avoids an apparent size jump at the first animation frame.
+  let caritasOwnerMapScale=null;
+  function measureCaritasVisibleMapActor(image,drawHeight){
+    if(!image)return null;
+    try{
+      const sample=document.createElement("canvas");
+      sample.width=96;sample.height=128;
+      const g=sample.getContext("2d",{willReadFrequently:true});
+      g.imageSmoothingEnabled=false;
+      g.drawImage(image,0,0,FRAME.w,FRAME.h,0,0,96,128);
+      const rgba=g.getImageData(0,0,96,128).data;
+      let minY=128,maxY=-1;
+      for(let y=0;y<128;y++)for(let x=0;x<96;x++){
+        if(rgba[(y*96+x)*4+3]>100){
+          if(y<minY)minY=y;
+          if(y>maxY)maxY=y;
+        }
+      }
+      if(maxY<minY)return null;
+      return {
+        height:(maxY-minY+1)*drawHeight/128,
+        footOffset:((maxY+1)-FRAME.baseline*128/FRAME.h)*drawHeight/128
+      };
+    }catch(error){
+      console.warn("[Caritas] map body sampling unavailable; keeping conservative scale",error);
+      return null;
+    }
+  }
+  function measureCaritasOwnerMapScale(){
+    if(caritasOwnerMapScale)return caritasOwnerMapScale;
+    const shiopon=measureCaritasVisibleMapActor(shioponImages.idle||shioponImages.down,SHIOPON_DRAW_HEIGHT);
+    const shion=measureCaritasVisibleMapActor(images.idle||images.down,DRAW_HEIGHT);
+    caritasOwnerMapScale={
+      shioponHeight:shiopon?.height||SHIOPON_DRAW_HEIGHT*.70,
+      // Shioriel must finish at Shion's visible on-map height.
+      shionHeight:shion?.height||DRAW_HEIGHT*.77,
+      shioponFootOffset:shiopon?.footOffset||0
+    };
+    return caritasOwnerMapScale;
+  }
+
   // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
   // Localised saturated starfield: readable on phone without a white flash.
   // Exact ordered frames from the owner-supplied transformation WebP.
@@ -1769,16 +1812,27 @@
       until+=CARITAS_OWNER_FRAME_TIMES_MS[i];
       if(elapsed<until){frame=i;break;}
     }
-    // Frame art is transparent and contains the complete glow, no CSS overlays.
-    // Register near the original Shiopon world feet and use the same world camera.
-    const height=112,width=112;
+    // Anchor the owner's artwork to the ORIGINAL on-map body dimensions,
+    // not a fixed 112px square (which enlarged both characters on iPhone).
+    const scale=caritasOwnerMapScale || measureCaritasOwnerMapScale();
+    // Transition the scale while obscured by light, never snap it at a frame.
+    const morph=Math.max(0,Math.min(1,(elapsed-1500)/900));
+    const blend=morph*morph*(3-2*morph);
+    const bodyHeight=scale.shioponHeight*(1-blend)+scale.shionHeight*blend;
+    const sourceBodyHeight=109*(1-blend)+133*blend;
+    const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight;
+    const width=height;
     const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
+    // Frames 0 and 11 both have their soles at source y=145.
+    const centerX=84*(1-blend)+79.5*blend;
+    const feetY=y+scale.shioponFootOffset;
     ctx.save();
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
     ctx.drawImage(image,(frame%4)*CARITAS_OWNER_TILE,
       Math.floor(frame/4)*CARITAS_OWNER_TILE,
       CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,
-      x-width/2,y-height*.95,width,height);
+      x-centerX*width/CARITAS_OWNER_TILE,
+      feetY-145*height/CARITAS_OWNER_TILE,width,height);
     ctx.restore();
     return true;
   }
