@@ -2383,6 +2383,21 @@
     const fit=Math.min(w/image.naturalWidth,h/image.naturalHeight);
     const iw=image.naturalWidth*fit,ih=image.naturalHeight*fit;
     sc.drawImage(image,(w-iw)/2,(h-ih)/2,iw,ih);
+    // Find the creature's actual opaque torso, not the frame center or floor.
+    let left=w,top=h,right=-1,bottom=-1,total=0,sumX=0,sumY=0;
+    try{
+      const pixels=sc.getImageData(0,0,w,h).data;
+      for(let py=0;py<h;py++)for(let px=0;px<w;px++){
+        const a=pixels[(py*w+px)*4+3];if(a<32)continue;
+        left=Math.min(left,px);right=Math.max(right,px);
+        top=Math.min(top,py);bottom=Math.max(bottom,py);
+        total+=a;sumX+=a*px;sumY+=a*py;
+      }
+    }catch(_){}
+    if(right<left){left=(w-iw)/2;right=left+iw;top=(h-ih)/2;bottom=top+ih;}
+    const bw=Math.max(1,right-left),bh=Math.max(1,bottom-top);
+    const origin={x:Math.max(left+bw*.32,Math.min(left+bw*.68,total?sumX/total:left+bw*.5)),
+                  y:Math.max(top+bh*.34,Math.min(top+bh*.55,total?sumY/total:top+bh*.46))};
     sc.globalCompositeOperation="source-in";sc.fillStyle="#190d27";sc.fillRect(0,0,w,h);
     // Erode an exact copy of the alpha silhouette, then subtract its core.
     // This leaves hair, shoulders, limbs and tail edges, never a box outline.
@@ -2392,40 +2407,74 @@
       cc.drawImage(silhouette,dx,dy);
     const edge=surface(),ec=edge.getContext("2d");ec.drawImage(silhouette,0,0);
     ec.globalCompositeOperation="destination-out";ec.drawImage(core,0,0);
-    const masks={silhouette,edge};caritasAbyss.masks.set(key,masks);return masks;
+    // Cache 17 silhouette-clipped radial flood steps: center -> whole body in 400ms.
+    const reach=Math.max(...[[left,top],[right,top],[left,bottom],[right,bottom]]
+      .map(([px,py])=>Math.hypot(px-origin.x,py-origin.y)));
+    const flood=Array.from({length:17},(_,step)=>{
+      const canvas=surface(),fc=canvas.getContext("2d");
+      fc.drawImage(silhouette,0,0);fc.globalCompositeOperation="destination-in";
+      const radius=reach*(.12+.98*step/16);
+      const g=fc.createRadialGradient(origin.x,origin.y,0,origin.x,origin.y,radius);
+      g.addColorStop(0,"rgba(255,255,255,1)");
+      g.addColorStop(.72,"rgba(255,255,255,.96)");
+      g.addColorStop(.89,"rgba(255,255,255,.62)");
+      g.addColorStop(1,"rgba(255,255,255,0)");
+      fc.fillStyle=g;fc.fillRect(0,0,w,h);return canvas;
+    });
+    const masks={silhouette,edge,flood,origin,bounds:{left,top,right,bottom},size:{w,h}};
+    caritasAbyss.masks.set(key,masks);return masks;
   }
   function updateCaritasAbyss(dt){
     caritasAbyss.clock+=dt;
     if(caritasAbyss.phase==="edge"||caritasAbyss.phase==="cleared")caritasAbyss.opacity=0;
     else caritasAbyss.opacity=Math.min(1,caritasAbyss.opacity+dt/.4);
   }
+  function caritasAbyssOrigin(masks,rect){
+    return {x:rect.x+rect.w*masks.origin.x/masks.size.w,
+            y:rect.y+rect.h*masks.origin.y/masks.size.h};
+  }
   function paintCaritasMiasma(){
     if(!hoshisunaIsolated||caritasAbyss.phase==="cleared"||
        document.body.classList.contains("caritas-departed"))return;
-    const image=document.getElementById("hoshisuna-caritas");
+    const actor=document.querySelector(".hoshi-caritas");
+    const image=actor?.querySelector("img");
     const masks=caritasAbyssMasks(image);if(!masks)return;
-    const x=950.5*scale.x,y=166.6*scale.y,w=125*scale.x,h=96*scale.y;
+    // Use the visible actor's exact world rectangle, never a detached ground point.
+    const coords=[actor.dataset.worldX,actor.dataset.worldY,actor.dataset.worldW,actor.dataset.worldH].map(Number);
+    if(coords.some(n=>!Number.isFinite(n))||coords[2]<=0||coords[3]<=0)return;
+    const [wx,wy,ww,wh]=coords;
+    const x=wx*scale.x,y=wy*scale.y,w=ww*scale.x,h=wh*scale.y;
+    const {x:centerX,y:centerY}=caritasAbyssOrigin(masks,{x,y,w,h});
     const strength=caritasAbyss.opacity,time=caritasAbyss.clock;
     ctx.save();ctx.imageSmoothingEnabled=true;
     ctx.globalAlpha=.64+.34*strength;
     ctx.drawImage(masks.edge,x,y,w,h);
-    // No ambient cloud in edge: the untouched white interior stays readable.
+    // Faint inner heart in the resting state; never on the surrounding ground.
+    ctx.globalAlpha=.24+.06*Math.sin(time*2.4);
+    ctx.drawImage(masks.flood[0],x,y,w,h);
     if(strength>0){
-      ctx.globalAlpha=.82*strength;ctx.drawImage(masks.silhouette,x,y,w,h);
-      // Continuous overlapping plumes expand from the silhouette perimeter,
-      // wrapping across its front. No floating pixel cells or CSS filters.
-      for(let i=0;i<14;i++){
-        const angle=i*Math.PI*2/14;
-        const sway=Math.sin(time*1.4+i*2.1);
-        const cx=x+w*(.5+Math.cos(angle)*(.20+.12*strength));
-        const cy=y+h*(.52+Math.sin(angle)*(.25+.08*strength))+sway*2*scale.y;
-        const radius=(10+14*strength+2*sway)*scale.x;
+      const frame=Math.min(16,Math.ceil(strength*16));
+      ctx.globalAlpha=Math.min(.96,.36+.64*strength);
+      ctx.drawImage(masks.flood[frame],x,y,w,h);
+      if(strength>=.99){
+        ctx.globalAlpha=.68;ctx.drawImage(masks.silhouette,x,y,w,h);
+      }
+      // Smoke starts at the torso and expands only as the radial flood expands.
+      const bodyW=(masks.bounds.right-masks.bounds.left)*w/masks.size.w;
+      const bodyH=(masks.bounds.bottom-masks.bounds.top)*h/masks.size.h;
+      const spread=Math.pow(strength,.85);
+      for(let i=0;i<10;i++){
+        const angle=i*Math.PI*2/10+Math.sin(time*.75+i)*.08;
+        const drift=Math.sin(time*1.4+i*1.7);
+        const cx=centerX+Math.cos(angle)*bodyW*.32*spread;
+        const cy=centerY+Math.sin(angle)*bodyH*.27*spread+drift*1.1*scale.y;
+        const radius=Math.max(1,(5+14*strength+drift)*Math.min(scale.x,scale.y));
         const cloud=ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
-        cloud.addColorStop(0,"rgba(19,8,29,.78)");
-        cloud.addColorStop(.48,"rgba(43,15,59,.60)");
-        cloud.addColorStop(.78,"rgba(63,25,79,.28)");
+        cloud.addColorStop(0,"rgba(18,7,30,.68)");
+        cloud.addColorStop(.50,"rgba(42,13,58,.50)");
+        cloud.addColorStop(.83,"rgba(62,25,83,.20)");
         cloud.addColorStop(1,"rgba(38,13,53,0)");
-        ctx.globalAlpha=strength;ctx.fillStyle=cloud;
+        ctx.globalAlpha=.58*strength;ctx.fillStyle=cloud;
         ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.fill();
       }
     }
