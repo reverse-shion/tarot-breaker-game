@@ -175,6 +175,11 @@
   // Isolated Caritas invocation only. This atlas is the already-approved official
   // four-view Shioriel art; quadrant 0 (top-left) is the screen-facing portrait.
   let caritasShiorielAtlas = null;
+  // Owner supplied 12-frame animated WebP converted lossily only into a
+  // transparent 4x3 sprite atlas; no character drawing is regenerated.
+  let caritasOwnerTransformationAtlas = null;
+  const CARITAS_OWNER_TILE = 160;
+  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([700,150,140,150,160,220,200,150,160,160,220,1500]);
   const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false, fx:null };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
     ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
@@ -1752,10 +1757,37 @@
 
   // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
   // Localised saturated starfield: readable on phone without a white flash.
+  // Exact ordered frames from the owner-supplied transformation WebP.
+  // Deterministic frame choice aligns to the existing 3900ms stage,
+  // including when Safari suspends and resumes in the middle of the event.
+  function drawCaritasOwnerTransformation(actor,phase,t){
+    const image=caritasOwnerTransformationAtlas;
+    if(!image)return false;
+    const elapsed=phase==="revealed"?3910:Math.min(3900,Math.max(0,t*3900));
+    let frame=CARITAS_OWNER_FRAME_TIMES_MS.length-1,until=0;
+    for(let i=0;i<CARITAS_OWNER_FRAME_TIMES_MS.length;i++){
+      until+=CARITAS_OWNER_FRAME_TIMES_MS[i];
+      if(elapsed<until){frame=i;break;}
+    }
+    // Frame art is transparent and contains the complete glow, no CSS overlays.
+    // Register near the original Shiopon world feet and use the same world camera.
+    const height=112,width=112;
+    const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
+    ctx.save();
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    ctx.drawImage(image,(frame%4)*CARITAS_OWNER_TILE,
+      Math.floor(frame/4)*CARITAS_OWNER_TILE,
+      CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,
+      x-width/2,y-height*.95,width,height);
+    ctx.restore();
+    return true;
+  }
+
   function drawCaritasInvocation(actor) {
     const phase=caritasInvocation.phase;
     if(phase==="idle")return false;
     const t=caritasInvocationProgress();
+    if(caritasOwnerTransformationAtlas)return drawCaritasOwnerTransformation(actor,phase,t);
     const x=actor.x,y=actor.y+actor.stageOffsetY;
     const centerY=y-43;
     ctx.save();
@@ -2872,7 +2904,7 @@
     begin(){
       if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasShiorielAtlas)return false;
       caritasInvocation.phase="charging";caritasInvocation.elapsed=0;
-      caritasInvocation.fx=prepareCaritasPixelManifestation();
+      caritasInvocation.fx=caritasOwnerTransformationAtlas?null:prepareCaritasPixelManifestation();
       caritasInvocation.paused=document.hidden;
       caritasInvocation.since=performance.now();
       draw();return true;
@@ -2909,7 +2941,8 @@
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
       position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas,
-      pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette})
+      pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette,
+      ownerAnimationReady:!!caritasOwnerTransformationAtlas,ownerFrameCount:CARITAS_OWNER_FRAME_TIMES_MS.length})
   });
 
   window.TarotStage = Object.freeze({
@@ -3050,11 +3083,21 @@
         ...Object.entries(shioponFiles).map(async ([key, src]) => {
           shioponImages[key] = await loadImage(src);
         }),
-        ...(hoshisunaIsolated ? [loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
-          if(image.naturalWidth!==1086||image.naturalHeight!==1448)
-            throw new Error("シオリエル正面・四面図の寸法不正");
-          caritasShiorielAtlas=image;
-        })] : []),
+        ...(hoshisunaIsolated ? [
+          loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
+            if(image.naturalWidth!==1086||image.naturalHeight!==1448)
+              throw new Error("シオリエル正面・四面図の寸法不正");
+            caritasShiorielAtlas=image;
+          }),
+          loadImage("./assets/events/hoshisuna/battle/shiopon-shioriel-transformation-atlas.webp").then(image=>{
+            if(image.naturalWidth!==640||image.naturalHeight!==480)
+              throw new Error("変身アトラスは640×480px（160px×12コマ）が必要です");
+            caritasOwnerTransformationAtlas=image;
+          }).catch(err=>{
+            // If the optional effect asset fails, keep the old safe manifestation.
+            console.warn("[Caritas] owner transformation unavailable",err);
+          }),
+        ] : []),
         ...Object.entries(lumiereFiles).map(async ([key, src]) => {
           lumiereImages[key] = await loadImage(src);
         }),
