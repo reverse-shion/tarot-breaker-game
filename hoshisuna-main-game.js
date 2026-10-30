@@ -2370,8 +2370,62 @@
     return true;
   }
 
+  // Pixel-art Abyss miasma fixed to Caritas' map coordinates, behind the
+  // playable actor sprites. No CSS bloom, stretched gradients, or stock fog.
+  // Starts thin before the first dialogue; grows when Shiopon approaches.
+  const caritasAbyss={
+    phase:"haze",opacity:.13,clock:0,
+    palette:["#160e29","#251035","#36164d","#482060","#69347d","#875298"],
+    motes:Array.from({length:105},(_,i)=>{
+      const h=n=>{const x=Math.sin(n*91.167+5.77)*43758.5453;return x-Math.floor(x);};
+      return Object.freeze({
+        x:h(i*3+1)*2-1,
+        y:h(i*3+2),
+        size:2+Math.floor(h(i*3+3)*3),
+        phase:h(i*3+9)*6.28318,
+        speed:4+h(i*3+13)*10,
+        shade:Math.floor(h(i*3+17)*6)
+      });
+    })
+  };
+  function paintCaritasMiasma(){
+    if(!hoshisunaIsolated||caritasAbyss.opacity<.005||
+       document.body.classList.contains("caritas-departed"))return;
+    const opacity=caritasAbyss.opacity;
+    const cx=(950.5+125/2)*scale.x,cy=(166.6+96*.52)*scale.y;
+    const time=caritasAbyss.clock;
+    ctx.save();
+    // Low-res 3px grid and discrete dark-violet cloud cells. The idle state
+    // barely veils the creature; surging clusters grow in number and opacity.
+    const count=Math.round(28+77*opacity);
+    for(let i=0;i<count;i++){
+      const m=caritasAbyss.motes[i];
+      const band=(m.y*1.3+time*m.speed/96)%1.3;
+      const y=cy+42-band*88;
+      const drift=Math.sin(time*.43+m.phase)*4;
+      const spread=(23+24*opacity)*(1-.18*Math.abs(y-cy)/55);
+      const x=cx+m.x*spread+drift;
+      const rim=Math.min(1,Math.max(.15,1-Math.abs(y-cy)/67));
+      const alpha=opacity*(.18+(i%4)*.045)*rim;
+      const step=m.size*scale.x;
+      const px=Math.round(x/3)*3,py=Math.round(y/3)*3;
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle=caritasAbyss.palette[m.shade];
+      ctx.fillRect(px,py,step*2,step);
+      ctx.fillRect(px+step,py-step,step,step);
+      if(i%3===0)ctx.fillRect(px-step,py+step,step,step);
+      if(opacity>.35&&i%7===0){
+        ctx.globalAlpha=(opacity-.35)*.24*rim;
+        ctx.fillStyle="#a060c5";
+        ctx.fillRect(px+step,py+step,Math.max(2,step/2),Math.max(2,step/2));
+      }
+    }
+    ctx.restore();
+  }
+
   function drawActors() {
     paintCaritasResonanceWorld();
+    paintCaritasMiasma();
     paintCaritasTarotSpread();
     if (!hoshisunaIsolated && !visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
@@ -2652,6 +2706,11 @@
     if (tapEffect) {
       tapEffect.age += dt;
       if (tapEffect.age >= 0.45) tapEffect = null;
+    }
+    if(hoshisunaIsolated){
+      caritasAbyss.clock+=dt;
+      const target={haze:.13,surging:.88,engulfed:1,cleared:0}[caritasAbyss.phase]??.13;
+      caritasAbyss.opacity+=(target-caritasAbyss.opacity)*Math.min(1,dt*1.8);
     }
     updatePlayer(dt);
     updateShiopon(dt);
@@ -3302,6 +3361,16 @@
   });
 
   }
+
+  if (hoshisunaIsolated) window.TarotHoshisunaAbyss=Object.freeze({
+    setPhase(phase){
+      if(!["haze","surging","engulfed","cleared"].includes(phase))return false;
+      caritasAbyss.phase=phase;
+      if(ready&&running)draw();
+      return true;
+    },
+    getState:()=>({phase:caritasAbyss.phase,opacity:caritasAbyss.opacity})
+  });
 
   if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
     // Before any card appears, move the real follower to the FAR LEFT.
