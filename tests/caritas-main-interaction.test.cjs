@@ -85,7 +85,7 @@ async function enter(f){
  f.pointer.actor={x:1013,y:305};f.tick();
  assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must face Caritas from the very first notice");
  f.pointer.advance();
- f.button(f.shell.querySelector('#caritas-interaction-choice'),'調べる').click();
+ f.button(f.shell.querySelector('#star-gate-interaction-choice'),'調べる').click();
  await advanceScoutToTarot(f);
  assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
  f.advanceTime(649);assert.equal(f.lines.at(-1).text,'タロット展開。');
@@ -163,39 +163,39 @@ test('map notices Caritas first, uses main prompt, leaving does not re-trigger',
  f.pointer.actor={x:90,y:100};f.tick();
  assert.equal(f.state().armed,true);
 });
-test('inspection text uses the same main dialogue instance; choices never form another speech frame',()=>{
+test('first Shion speech uses shared main dialogue; choices use main official panel',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
  const options=f.pointer.dialogueOptions;
  assert.equal(f.lines.at(-1).speaker,'シオン');
- f.pointer.advance();
- const choice=f.shell.querySelector('#caritas-interaction-choice');
- assert.equal(f.pointer.dialogueOptions,options,'one shared controller throughout');
- assert.equal(f.lines.at(-1).speaker,'シオン');
- assert.match(f.lines.at(-1).text,/調べてみるか/);
- assert.equal(choice.querySelector('#caritas-interaction-text'),null);
- assert.equal(choice.style.left,'16px');assert.equal(choice.style.width,'358px');
- assert.equal(choice.style.bottom,'202px','actions stay 8px above actual dialogue bounds');
  const count=f.lines.length;
+ f.pointer.advance();
+ const choice=f.shell.querySelector('#star-gate-interaction-choice');
+ assert.equal(f.pointer.dialogueOptions,options,'original shared controller throughout');
+ assert.equal(f.lines.length,count,'choice does not add extra dialogue speech');
+ assert.match(choice.querySelector('#star-gate-interaction-text').textContent,/調べてみるか/);
+ assert.equal(choice.style.left,undefined,'main stylesheet owns all choice positioning');
+ assert.equal(choice.style.width,undefined);
+ assert.equal(choice.style.bottom,undefined);
  f.pointer.advance();f.pointer.advance();
  assert.equal(f.state().story,'choice');assert.equal(f.lines.length,count,'dialogue taps cannot auto-select inspection');
  f.button(choice,'離れる').click();
  assert.equal(f.state().dialogueBusy,false);assert.equal(choice.hidden,true);
  f.pointer.actor={x:90,y:100};f.tick();f.pointer.actor={x:1013,y:305};f.tick();
- assert.equal(f.state().story,'choice');assert.match(f.lines.at(-1).text,/調べてみるか/);
+ assert.equal(f.state().story,'choice');
+ assert.match(choice.querySelector('#star-gate-interaction-text').textContent,/調べてみるか/);
  f.button(choice,'調べる').click();
  assert.equal(choice.hidden,true);assert.equal(f.lines.at(-1).speaker,'カリタス');
 });
-test('real shared dialogue does not swallow native Enter/Space on inspect and leave',()=>{
+test('real shared dialogue remains hidden during native main choice activation',()=>{
  for(const key of ['Enter',' ','Spacebar'])for(const label of ['調べる','離れる']){
   const f=fixture({reduced:true,realDialogue:true});f.pointer.actor={x:1013,y:305};f.tick();
   f.shell.querySelector('#dialogue-advance').click();
   assert.equal(f.state().story,'choice');
-  const choice=f.shell.querySelector('#caritas-interaction-choice');
-  let stopped=false,prevented=false;
-  const event={key,stopPropagation(){stopped=true;},preventDefault(){prevented=true;}};
-  choice.querySelector('.star-gate-interaction-actions').listeners.keydown(event);
-  if(!stopped)f.windowListeners.keydown(event);
-  assert.equal(stopped,true);assert.equal(prevented,false,'native button activation must remain enabled');
+  const choice=f.shell.querySelector('#star-gate-interaction-choice');
+  assert.equal(choice.querySelector('.star-gate-interaction-actions').listeners.keydown,undefined,'no custom choice key handler');
+  let prevented=false;
+  f.windowListeners.keydown({key,preventDefault(){prevented=true;},stopPropagation(){}});
+  assert.equal(prevented,false,'hidden shared controller cannot intercept native choice');
   f.button(choice,label).click();
   assert.equal(f.state().story,label==='調べる'?'intro':'idle');
   assert.equal(choice.hidden,true);
@@ -324,7 +324,8 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
  assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{
   layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'
  });
- assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue/);
+  assert.doesNotMatch(css,/\\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue|#star-gate-interaction-choice|\\.star-gate-interaction-actions/);
+  assert.match(html,/star-gate-interaction\\.css\\?v=main-official-choice/,'official main choice stylesheet');
  assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });
