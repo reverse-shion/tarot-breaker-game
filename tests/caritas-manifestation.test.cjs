@@ -221,7 +221,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-framing2-tarot-v7/);
+ assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-scout-reason-v8/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-facing-unblocked-v12/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
