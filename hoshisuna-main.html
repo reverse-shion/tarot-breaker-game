@@ -135,6 +135,14 @@
       <div id="joystick" class="joystick" hidden aria-hidden="true"><div class="joystick__ring"></div><div id="joystick-knob" class="joystick__knob"></div></div>
       <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
       <div id="load-error" class="load-error" hidden role="alert">読み込みに失敗しました。再読み込みしてください。</div>
+      <!-- Alenon/main canonical dialogue markup. CSS/JS source unchanged. -->
+      <section id="dialogue-layer" class="tb-dialogue-layer" hidden aria-live="polite">
+        <button id="dialogue-advance" class="tb-dialogue-window" type="button" aria-label="会話を進める">
+          <span id="dialogue-speaker" class="tb-dialogue-speaker">シオン</span>
+          <span id="dialogue-text" class="tb-dialogue-text"></span>
+          <span id="dialogue-next" class="tb-dialogue-next" aria-hidden="true">▼</span>
+        </button>
+      </section>
     </main>
     <!-- Only shared main movement/renderer prerequisites; no story or save modules. -->
     <script src="./navigation.js?v=0.7.1" defer></script>
