@@ -12,6 +12,7 @@ class El{
  replaceChildren(...v){for(const c of v)c.parentElement=this;this.children=v}
  addEventListener(n,f){this.listeners[n]=f}
  setAttribute(k,v){this.attributes[k]=v}
+ getBoundingClientRect(){return this.rect||{left:16,top:650,width:358,height:168};}
  focus(){}
  blur(){}
  scrollIntoView(){}
@@ -19,13 +20,13 @@ class El{
  flatten(){return [this,...this.children.flatMap(c=>c.flatten())]}
  querySelector(q){return this.flatten().find(e=>q[0]==='#'?e.id===q.slice(1):e.className?.split(' ').includes(q.slice(1)))||null}
 }
-function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false}={}){
+function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false,realDialogue=false}={}){
  const shell=new El('main'),creature=new El('div'),body=new El('body');body.classList.add('scene-ready');
  const documentListeners={},windowListeners={},animations=[];
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
- const doc={readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
+ const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},advance:null,colliding:true,dialogueOptions:null};
- const window={TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+ const window={innerHeight:844,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
   TarotDialogueUI:{create:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:new El('section'),button:new El('button')}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
@@ -36,11 +37,12 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   Date:ClockDate,AbortController,fetch:async(url,options)=>{requests.push({url,...options});if(!fetchReply)throw Error('unexpected fetch');return fetchReply(url,options);},
   sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
   localStorage:{getItem:k=>persistentStore.get(k)||null,setItem:(k,v)=>{if(storageFails)throw Error("quota");persistentStore.set(k,v)},removeItem:k=>persistentStore.delete(k)},setInterval:cb=>(intervals.push(cb),intervals.length),
-  clearInterval(){},setTimeout:(cb,ms)=>{tasks.set(++id,{cb,at:now+ms});return id},clearTimeout:n=>tasks.delete(n),performance:{now:()=>now},URLSearchParams,console};
+  requestAnimationFrame:fn=>{fn();return 1},clearInterval(){},setTimeout:(cb,ms)=>{tasks.set(++id,{cb,at:now+ms});return id},clearTimeout:n=>tasks.delete(n),performance:{now:()=>now},URLSearchParams,console};
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ if(realDialogue){delete window.TarotDialogueUI;vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../shared-dialogue.js'),'utf8'),sandbox);}
  vm.runInNewContext(js,sandbox,{timeout:5000});
  const advanceTime=ms=>{const target=now+ms;for(;;){const due=[...tasks].filter(([,v])=>v.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;now=due[1].at;tasks.delete(due[0]);due[1].cb();}now=target};
- return {shell,body,creature,lines,events,intervals,animations,pointer,window,advanceTime,requests,persistentStore,
+ return {shell,body,creature,lines,events,intervals,animations,pointer,window,advanceTime,requests,persistentStore,windowListeners,
   visibility:hidden=>{doc.hidden=hidden;documentListeners.visibilitychange?.()},
   page:n=>windowListeners[n]?.({persisted:true}),
   storage:raw=>windowListeners.storage?.({key:CHECKPOINT_KEY,newValue:raw}),
@@ -160,6 +162,44 @@ test('map notices Caritas first, uses main prompt, leaving does not re-trigger',
  assert.equal(f.state().story,'idle');assert.equal(f.state().armed,false);
  f.pointer.actor={x:90,y:100};f.tick();
  assert.equal(f.state().armed,true);
+});
+test('inspection text uses the same main dialogue instance; choices never form another speech frame',()=>{
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
+ const options=f.pointer.dialogueOptions;
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ f.pointer.advance();
+ const choice=f.shell.querySelector('#caritas-interaction-choice');
+ assert.equal(f.pointer.dialogueOptions,options,'one shared controller throughout');
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.match(f.lines.at(-1).text,/調べてみるか/);
+ assert.equal(choice.querySelector('#caritas-interaction-text'),null);
+ assert.equal(choice.style.left,'16px');assert.equal(choice.style.width,'358px');
+ assert.equal(choice.style.bottom,'202px','actions stay 8px above actual dialogue bounds');
+ const count=f.lines.length;
+ f.pointer.advance();f.pointer.advance();
+ assert.equal(f.state().story,'choice');assert.equal(f.lines.length,count,'dialogue taps cannot auto-select inspection');
+ f.button(choice,'離れる').click();
+ assert.equal(f.state().dialogueBusy,false);assert.equal(choice.hidden,true);
+ f.pointer.actor={x:90,y:100};f.tick();f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice');assert.match(f.lines.at(-1).text,/調べてみるか/);
+ f.button(choice,'調べる').click();
+ assert.equal(choice.hidden,true);assert.equal(f.lines.at(-1).speaker,'カリタス');
+});
+test('real shared dialogue does not swallow native Enter/Space on inspect and leave',()=>{
+ for(const key of ['Enter',' ','Spacebar'])for(const label of ['調べる','離れる']){
+  const f=fixture({reduced:true,realDialogue:true});f.pointer.actor={x:1013,y:305};f.tick();
+  f.shell.querySelector('#dialogue-advance').click();
+  assert.equal(f.state().story,'choice');
+  const choice=f.shell.querySelector('#caritas-interaction-choice');
+  let stopped=false,prevented=false;
+  const event={key,stopPropagation(){stopped=true;},preventDefault(){prevented=true;}};
+  choice.querySelector('.star-gate-interaction-actions').listeners.keydown(event);
+  if(!stopped)f.windowListeners.keydown(event);
+  assert.equal(stopped,true);assert.equal(prevented,false,'native button activation must remain enabled');
+  f.button(choice,label).click();
+  assert.equal(f.state().story,label==='調べる'?'intro':'idle');
+  assert.equal(choice.hidden,true);
+ }
 });
 test('manifestation remains on the real map before entering battle',async()=>{
  const f=fixture();const root=await enter(f);
@@ -284,7 +324,7 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
  assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{
   layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'
  });
- assert.doesNotMatch(css,/\\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue/);
+ assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue/);
  assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
 });

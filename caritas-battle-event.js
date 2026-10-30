@@ -15,6 +15,7 @@ const APPROACH_RADIUS=88,REARM_RADIUS=145;
 const CARITAS_GAZE=Object.freeze({x:1013,y:210});
 const faceCaritas=()=>window.TarotStage?.perform?.({type:"face",actor:"shion",target:CARITAS_GAZE});
 const NOTICE=[["シオン","……待て。あの獣の様子が妙だ。\n黒紫の光が……体を覆っている。"]];
+const INSPECT_CHOICE=[["シオン","獣を包む黒紫の光が揺れている。……調べてみるか？"]];
 const INTRO=[
  ["カリタス","……まさか、私がアビスに呑まれるとは……"],
  ["シオン","……大丈夫か。少し、話を聞かせてくれないか。"],
@@ -332,19 +333,29 @@ function saySequence(lines,callback){
  currentLine();
 }
 function advanceDialogue(){
- if(!dialogueBusy||suspended()||saveBlocked||recovery)return;
+ if(!dialogueBusy||suspended()||saveBlocked||recovery||story==="choice")return;
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
+function layoutPrompt(){
+ if(story!=="choice"||prompt.hidden)return;
+ const rect=dialogue.elements.button.getBoundingClientRect();
+ // Anchor only the action row; never resize or restyle the main dialogue.
+ prompt.style.left=rect.left+"px";
+ prompt.style.width=rect.width+"px";
+ prompt.style.bottom=Math.max(0,window.innerHeight-rect.top+8)+"px";
+}
 function showPrompt(){
  if(story!=="choice")return;
- prompt.hidden=false;prompt.classList.add("visible");
+ saySequence(INSPECT_CHOICE,null);
+ prompt.hidden=false;layoutPrompt();prompt.classList.add("visible");
  prompt.querySelector("#caritas-interaction-inspect")?.focus({preventScroll:true});
 }
 function hidePrompt(){
  prompt.classList.remove("visible");prompt.hidden=true;
+ dialogue.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
 }
 function notice(){
  if(story!=="idle"||!armed||!sceneReady()||busy)return;
@@ -357,6 +368,7 @@ function offerAgain(){
  busy=true;story="choice";lock();faceCaritas();showPrompt();
 }
 function tick(){
+ if(story==="choice")layoutPrompt();
  if(story!=="idle"||done||!sceneReady())return;
  const distance=distanceToCaritas();
  if(distance>=REARM_RADIUS){armed=true;return;}
@@ -710,12 +722,16 @@ function init(){
  if(!window.TarotDialogueUI?.create){console.error("[Caritas] Shared main dialogue unavailable");return;}
  try{once=sessionStorage.getItem(onceKey)==="1";}catch(_){once=false;}
  prompt=newEl("aside");prompt.id="caritas-interaction-choice";prompt.hidden=true;prompt.setAttribute("aria-label","獣の異変");
- const txt=newEl("div","", "獣を包む黒紫の光が揺れている。……調べてみるか？");txt.id="caritas-interaction-text";
  const options=newEl("div","star-gate-interaction-actions");
+ // Let native buttons handle Enter/Space, without the shared dialogue's
+ // window-level advance handler swallowing the choice activation.
+ options.addEventListener("keydown",event=>{
+   if(["Enter"," ","Spacebar"].includes(event.key))event.stopPropagation();
+ });
  const inspect=newEl("button","","調べる");inspect.type="button";inspect.id="caritas-interaction-inspect";
  const leaveBtn=newEl("button","","離れる");leaveBtn.type="button";
  inspect.addEventListener("click",start);leaveBtn.addEventListener("click",leave);
- options.append(inspect,leaveBtn);prompt.append(txt,options);shell.appendChild(prompt);
+ options.append(inspect,leaveBtn);prompt.append(options);shell.appendChild(prompt);
  root=newEl("section");root.id="caritas-event";root.hidden=true;root.dataset.phase="battle";
  root.setAttribute("aria-label","カリタス 心象共鳴");
  const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");
@@ -817,6 +833,8 @@ function init(){
    ids:{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"},
    onAdvance:advanceDialogue
  });
+ window.addEventListener("resize",layoutPrompt);
+ window.visualViewport?.addEventListener("resize",layoutPrompt);
  preloadSpecialArt();
  if(!restoreCheckpoint())render();
  if(!transformationReplay)window.addEventListener("storage",event=>{if(event.key===SAVE_KEY&&event.newValue!==savedRaw)recoveryScreen();});
