@@ -11,6 +11,7 @@ function fixture(){
     CARITAS_MANIFESTATION_DURATION_MS:5500,caritasInvocationProgress:()=>scope.progress,
     hoshisunaIsolated:true,FRAME:{w:384,h:512,baseline:480},DRAW_HEIGHT:78,camera:{zoom:1},
     player:{x:200,y:250,stageOffsetY:3},shiopon:{},draw(){},faceShioponTowardPlayer(){},
+    stageMotions:{shiopon:null},settleStageMotion(){},
     caritasOwnerBlendSurface:null,caritasOwnerStarAtlas:null,caritasResonanceSprites:null,
     ctx:{globalAlpha:.8,shadowBlur:0,save(){stack.push([this.globalAlpha,this.shadowBlur]);},restore(){[this.globalAlpha,this.shadowBlur]=stack.pop();},
       drawImage(...args){draws.push({alpha:this.globalAlpha,args});}}};
