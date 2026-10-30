@@ -186,6 +186,7 @@
   let caritasTarotBack = null;
   const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
   let caritasTarotShionBounds=null;
+  let caritasSafeNavigator=null,caritasSafeNavigatorKey="";
   const CARITAS_OWNER_TILE = 160;
   const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
   const CARITAS_MANIFESTATION_DURATION_MS = 5500;
@@ -712,7 +713,11 @@
     }
 
     if (!requested) return resolvedStageAction(id, { completed: false, skipped: false });
-    const route = legalStageRoute(actorId, current, requested);
+    const caritasSafe=hoshisunaIsolated&&actorId==="shiopon"&&command.caritasSafe===true;
+    const caritasCards=caritasSafe&&caritasTarotSpread.active;
+    const route=caritasSafe
+      ?caritasSafeRoute(current,requested,caritasCards)
+      :legalStageRoute(actorId,current,requested);
     if (!route.length)
       return resolvedStageAction(id, { completed: false, skipped: false });
 
@@ -732,6 +737,7 @@
       route,
       final: { ...route.at(-1) },
       speed: routeDistance / duration,
+      caritasSafe,caritasCards,
       anim: 0,
       resolve: (value) => resolveMotion(value),
     };
@@ -778,8 +784,13 @@
     const dy = target.y - current.y;
     const distance = Math.hypot(dx, dy);
     const step = Math.min(distance, motion.speed * dt);
-    actor.x = (current.x + (dx / distance) * step) * scale.x;
-    actor.y = (current.y + (dy / distance) * step) * scale.y;
+    const next={x:current.x+(dx/distance)*step,y:current.y+(dy/distance)*step};
+    if(motion.caritasSafe&&!caritasSafeCollision(motion.caritasCards).segmentClear(current,next)){
+      settleStageMotion(actorId,motion,{skipped:true});
+      return true;
+    }
+    actor.x = next.x * scale.x;
+    actor.y = next.y * scale.y;
     actor.moving = true;
     setDirection(actor, dx, dy);
     if (actorId !== "lumiere") {
@@ -1854,6 +1865,60 @@
       ctx.drawImage(caritasTarotBack,card.x-card.width/2,card.y-card.height/2+lift,card.width,card.height);
     }
     ctx.restore();
+  }
+
+  // Caritas encounter only: pathfinding must respect BOTH the authored Starroad
+  // collision AND the visible Shion / floating card silhouettes. A normal
+  // Stage move checks only map foot-points, so it may cut through either actor.
+  function caritasSafeCollision(includeCards){
+    const shion=playerRef();
+    const fox=measureCaritasVisibleMapActor(shioponImages.idle||shioponImages.down,SHIOPON_DRAW_HEIGHT);
+    const foxLeft=fox?.leftOffset??-15,foxRight=fox?.rightOffset??15;
+    const foxTop=fox?.topOffset??-58,foxBottom=foxTop+(fox?.height??60);
+    const cards=includeCards&&caritasTarotBack
+      ?caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight).map(card=>({
+        left:card.x-card.width/2-foxRight-4,
+        right:card.x+card.width/2-foxLeft+4,
+        top:card.y-card.height/2-foxBottom-4,
+        bottom:card.y+card.height/2-foxTop+4
+      })):[];
+    const valid=p=>collision.isWalkable(p.x,p.y)&&
+      refDistance(p,shion)>=ACTOR_COLLISION_DISTANCE+8&&
+      cards.every(r=>p.x<r.left||p.x>r.right||p.y<r.top||p.y>r.bottom);
+    return {
+      ...collision,
+      isWalkable:(x,y)=>valid({x,y}),
+      nearestWalkable:p=>valid(p)?{...p}:null,
+      segmentClear(a,b){
+        if(!valid(a)||!valid(b)||!collision.segmentClear(a,b))return false;
+        // Max 3px per sample: prevents a fast stage frame tunneling through
+        // the Shion radius or any portrait-card rectangle.
+        const steps=Math.max(1,Math.ceil(refDistance(a,b)/3));
+        for(let i=1;i<steps;i++){
+          const t=i/steps;
+          if(!valid({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}))return false;
+        }
+        return true;
+      }
+    };
+  }
+
+  function caritasSafeRoute(from,target,includeCards){
+    const blocked=caritasSafeCollision(includeCards);
+    if(!blocked.isWalkable(from.x,from.y)||!blocked.isWalkable(target.x,target.y))return [];
+    if(blocked.segmentClear(from,target))return [{...target}];
+    const key=(includeCards?"cards":"left")+":"+player.x+":"+player.y;
+    if(!caritasSafeNavigator||caritasSafeNavigatorKey!==key){
+      caritasSafeNavigator=window.TarotNavigation.createNavigator(blocked,12);
+      caritasSafeNavigatorKey=key;
+    }
+    const points=caritasSafeNavigator.findPath(from,target)?.points?.slice(1)||[];
+    let last=from;
+    for(const point of points){
+      if(!blocked.segmentClear(last,point))return [];
+      last=point;
+    }
+    return points.map(p=>({...p}));
   }
 
   // Invocation-only light: one shared clock, with Shion initiating the response.
@@ -3237,6 +3302,28 @@
   }
 
   if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
+    // Before any card appears, move the real follower to the FAR LEFT.
+    // It is an actual collision-checked walk, never a teleport or clone.
+    prepareLeft(){
+      if(!ready||!running||caritasInvocation.locked||caritasTarotSpread.active)
+        return Promise.resolve({completed:false,reason:"left-not-ready"});
+      const front=playerRef(),from=shioponRef();
+      const candidates=[
+        {x:front.x-64,y:front.y-12},
+        {x:front.x-65,y:front.y-8},
+        {x:front.x-66,y:front.y-17},
+        {x:front.x-60,y:front.y-17}
+      ];
+      for(const spot of candidates){
+        const route=caritasSafeRoute(from,spot,false);
+        if(!route.length)continue;
+        const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:460,caritasSafe:true});
+        return move.promise.then(out=>out.completed&&!out.skipped
+          ?{completed:true,position:{...shioponRef()}}
+          :{completed:false,reason:"left-walk-interrupted"});
+      }
+      return Promise.resolve({completed:false,reason:"left-route-blocked"});
+    },
     deployCards(){
       if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
       caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;
@@ -3249,22 +3336,22 @@
       const front=playerRef(),from=shioponRef();
       // Select a legal spot on the Caritas-facing (north) side of Shion.
       // Preserve the NPC collision/pathfinder, do not teleport through Caritas.
+      // Walk toward Caritas along the left-side passage, not straight through
+      // Shion or the left tarot. Route selection checks the ENTIRE journey.
       const candidates=[
-        {x:front.x,y:front.y-43},
-        {x:front.x-29,y:front.y-33},
-        {x:front.x+29,y:front.y-33},
-        {x:front.x-39,y:front.y-25},
-        {x:front.x+39,y:front.y-25}
+        {x:front.x-64,y:front.y-45},
+        {x:front.x-67,y:front.y-40},
+        {x:front.x-70,y:front.y-35},
+        {x:front.x-61,y:front.y-36},
+        {x:front.x-74,y:front.y-30}
       ];
       let spot=null;
       for(const candidate of candidates){
-        if(!collision.isWalkable(candidate.x,candidate.y)||
-           refDistance(candidate,front)<27)continue;
-        if(legalStageRoute("shiopon",from,candidate).length){spot=candidate;break;}
+        if(caritasSafeRoute(from,candidate,true).length){spot=candidate;break;}
       }
-      if(!spot)return Promise.resolve({completed:false,reason:"front-blocked"});
+      if(!spot)return Promise.resolve({completed:false,reason:"front-route-blocked"});
       caritasInvocation.locked=true;
-      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:780});
+      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:780,caritasSafe:true});
       return move.promise.then(out=>{
         if(!out.completed||out.skipped){
           caritasInvocation.locked=false;
@@ -3316,6 +3403,7 @@
     clear(){
       window.TarotCaritasManifestationAudio?.clear?.();
       caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
+      caritasSafeNavigator=null;caritasSafeNavigatorKey="";
       caritasTarotSpread.since=0;caritasTarotSpread.paused=false;
       // Reset the actual canvas sprite BEFORE the battle overlay goes away.
       // Idempotent: also safe during the returning phase and on final finish.
