@@ -17,8 +17,9 @@ const INTRO=[
  ["カリタス","……まさか、私がアビスに呑まれるとは……"],
  ["シオン","……大丈夫か。少し、話を聞かせてくれないか。"],
  ["カリタス","……この私が……なんと情けない……近づくでない。"],
- ["シオン","タロット展開。いくぞ、しおぽん。"]
+ ["シオン","タロット展開。"]
 ];
+const SHIOPON_CALL=[["シオン","いくぞ、しおぽん。"]];
 const SHIOPON_REPLY=[["しおぽん","はい、シオンさん。"]];
 const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\nステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]];
 const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]];
@@ -368,6 +369,10 @@ function start(){
    if(!manifestation?.moveForward||!manifestation?.faceFront){
      recover("map actor service unavailable");return;
    }
+   if(!manifestation.deployCards?.()){recover("tarot card back not ready");return;}
+   stage("tarot-deploy",650,()=>{
+   saySequence(SHIOPON_CALL,()=>{
+   story="intro";
    // Shiopon speaks while the existing follower walks in front of Shion.
    let lineDone=false,moveDone=false,failed=null,continued=false;
    const whenReady=()=>{
@@ -395,6 +400,8 @@ function start(){
      else failed=result?.reason||"no safe position ahead of Shion";
      whenReady();
    }).catch(error=>{failed=error?.message||"walk failed";whenReady();});
+   });
+   });
  });
 }
 function setText(el,value){el.textContent=String(value);}

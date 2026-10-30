@@ -183,6 +183,8 @@
   let caritasOwnerBlendSurface = null;
   let caritasOwnerStarAtlas = null;
   let caritasResonanceSprites = null;
+  let caritasTarotBack = null;
+  const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
   const CARITAS_OWNER_TILE = 160;
   const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
   const CARITAS_MANIFESTATION_DURATION_MS = 5500;
@@ -1804,6 +1806,42 @@
     return caritasOwnerMapScale;
   }
 
+  function caritasTarotElapsed(){
+    return caritasTarotSpread.elapsed+(caritasTarotSpread.paused?0:
+      Math.max(0,performance.now()-caritasTarotSpread.since));
+  }
+
+  function caritasTarotLayout(actor,drawHeight,aspect){
+    const height=drawHeight*.34,width=height*aspect,gap=8;
+    const nativeWidth=FRAME.w*drawHeight/FRAME.h;
+    const feet=actor.y+actor.stageOffsetY;
+    const side=nativeWidth/2+gap+width/2;
+    return [
+      {x:actor.x-side,y:feet-drawHeight*.86,width,height},
+      {x:actor.x+side,y:feet-drawHeight*.48,width,height},
+      {x:actor.x-side,y:feet-drawHeight*.10,width,height}
+    ];
+  }
+
+  function paintCaritasTarotSpread(){
+    if(!hoshisunaIsolated||!caritasTarotSpread.active||!caritasTarotBack)return;
+    const phase=caritasInvocation.phase;
+    if(phase==="revealed")return;
+    const entrance=caritasOwnerSmooth(caritasTarotElapsed()/450);
+    const fade=phase==="charging"?1-caritasOwnerSmooth((caritasInvocationProgress()*CARITAS_MANIFESTATION_DURATION_MS-4100)/600):1;
+    if(entrance*fade<=0)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const lift=reduced?0:(1-entrance)*8;
+    const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
+    ctx.save();ctx.globalAlpha*=entrance*fade;
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    ctx.shadowColor="rgba(255,224,151,.55)";ctx.shadowBlur=8/camera.zoom;
+    for(const card of cards){
+      ctx.drawImage(caritasTarotBack,card.x-card.width/2,card.y-card.height/2+lift,card.width,card.height);
+    }
+    ctx.restore();
+  }
+
   // Invocation-only light: one shared clock, with Shion initiating the response.
   function caritasResonanceAt(elapsed,reduced=false){
     const fade=1-caritasOwnerSmooth((elapsed-4100)/600);
@@ -2253,6 +2291,7 @@
 
   function drawActors() {
     paintCaritasResonanceWorld();
+    paintCaritasTarotSpread();
     if (!hoshisunaIsolated && !visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
@@ -3184,6 +3223,12 @@
   }
 
   if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
+    deployCards(){
+      if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
+      caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;
+      caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=document.hidden;
+      draw();return true;
+    },
     moveForward(){
       if(!ready||!running||!caritasShiorielAtlas||caritasInvocation.locked)
         return Promise.resolve({completed:false,reason:"not-ready"});
@@ -3238,18 +3283,26 @@
       draw();return true;
     },
     pause(){
+      if(caritasTarotSpread.active&&!caritasTarotSpread.paused){
+        caritasTarotSpread.elapsed=caritasTarotElapsed();caritasTarotSpread.paused=true;
+      }
       if(caritasInvocation.phase!=="charging"||caritasInvocation.paused)return;
       caritasInvocation.elapsed+=Math.max(0,performance.now()-caritasInvocation.since);
       caritasInvocation.paused=true;
       window.TarotCaritasManifestationAudio?.pause?.();
     },
     resume(){
+      if(caritasTarotSpread.active&&caritasTarotSpread.paused&&!document.hidden){
+        caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=false;
+      }
       if(caritasInvocation.phase!=="charging"||!caritasInvocation.paused||document.hidden)return;
       caritasInvocation.since=performance.now();caritasInvocation.paused=false;
       window.TarotCaritasManifestationAudio?.resume?.();
     },
     clear(){
       window.TarotCaritasManifestationAudio?.clear?.();
+      caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
+      caritasTarotSpread.since=0;caritasTarotSpread.paused=false;
       // Reset the actual canvas sprite BEFORE the battle overlay goes away.
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
@@ -3265,6 +3318,7 @@
       return true;
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
+      cardsActive:caritasTarotSpread.active,cardBackReady:!!caritasTarotBack,
       position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas,
       pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette,
       ownerAnimationReady:!!caritasOwnerTransformationAtlas,ownerFrameCount:CARITAS_OWNER_FRAME_TIMES_MS.length})
@@ -3413,6 +3467,7 @@
           shioponImages[key] = await loadImage(src);
         }),
         ...(hoshisunaIsolated ? [
+          loadImage("./assets/tarot/backs/tarot-card-back.webp").then(image=>{caritasTarotBack=image;}),
           loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
             if(image.naturalWidth!==1086||image.naturalHeight!==1448)
               throw new Error("シオリエル正面・四面図の寸法不正");
