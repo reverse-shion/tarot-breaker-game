@@ -47,7 +47,9 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
 }
 async function enter(f){
- f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must face Caritas from the very first notice");
+ f.pointer.advance();
  f.button(f.shell.querySelector('#caritas-interaction-choice'),'調べる').click();
  for(let i=0;i<3;i++)f.pointer.advance();
  assert.equal(f.lines.at(-1).text,'タロット展開。');
@@ -73,6 +75,7 @@ async function enter(f){
  f.pointer.advance();
  assert.equal(f.state().story,'manifestation');
  assert.equal(f.pointer.mapPhase,'charging');
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must turn back to Caritas before transformation");
  f.advanceTime(5499);assert.equal(f.state().story,'manifestation');
  f.advanceTime(1);assert.equal(f.state().story,'manifested');
  assert.equal(f.pointer.mapPhase,'revealed');
