@@ -22,13 +22,20 @@ class El{
 }
 function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false,realDialogue=false}={}){
  const shell=new El('main'),creature=new El('div'),body=new El('body');body.classList.add('scene-ready');
+ const layer=new El('section'),advance=new El('button'),speaker=new El('span'),speechText=new El('span'),next=new El('span');
+ layer.id='dialogue-layer';layer.className='tb-dialogue-layer';layer.hidden=true;
+ advance.id='dialogue-advance';advance.className='tb-dialogue-window';
+ speaker.id='dialogue-speaker';speaker.className='tb-dialogue-speaker';
+ speechText.id='dialogue-text';speechText.className='tb-dialogue-text';
+ next.id='dialogue-next';next.className='tb-dialogue-next';
+ advance.append(speaker,speechText,next);layer.append(advance);shell.append(layer);
  const documentListeners={},windowListeners={},animations=[];
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
- const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
+ const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},advance:null,colliding:true,dialogueOptions:null};
  const window={innerHeight:844,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
-  TarotDialogueUI:{create:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:new El('section'),button:new El('button')}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
+  TarotDialogueUI:{bind:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:o.layer,button:o.button}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map(),requests=[];
  class ClockDate extends Date{static now(){return now;}}
@@ -320,11 +327,13 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
  assert.ok(html.indexOf('shared-dialogue.js')<html.indexOf('caritas-battle-event.js'));
  assert.ok(html.indexOf('caritas-special-state.js')<html.indexOf('caritas-battle-event.js'));
  assert.ok(fs.readFileSync(path.join(__dirname,'../dev-checkpoints.js'),'utf8').includes('caritas-special-state.js'));
- assert.equal(f.pointer.dialogueOptions.mount,f.shell);
- assert.deepEqual(JSON.parse(JSON.stringify(f.pointer.dialogueOptions.ids)),{
-  layer:'dialogue-layer',advance:'dialogue-advance',speaker:'dialogue-speaker',text:'dialogue-text'
- });
-  assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue|#star-gate-interaction-choice|\.star-gate-interaction-actions/);
+ assert.equal(f.pointer.dialogueOptions.layer,f.shell.querySelector('#dialogue-layer'));
+ assert.equal(f.pointer.dialogueOptions.button,f.shell.querySelector('#dialogue-advance'));
+ assert.equal(f.pointer.dialogueOptions.speaker,f.shell.querySelector('#dialogue-speaker'));
+ assert.equal(f.pointer.dialogueOptions.text,f.shell.querySelector('#dialogue-text'));
+ assert.equal(f.pointer.dialogueOptions.next,f.shell.querySelector('#dialogue-next'));
+ assert.equal(f.shell.flatten().filter(el=>el.className==='tb-dialogue-layer').length,1,'exactly one canonical main layer');
+ assert.doesNotMatch(css,/\.tb-dialogue|#dialogue-|--speaker-|caritas-dialogue|#star-gate-interaction-choice|\.star-gate-interaction-actions/);
   assert.match(html,/star-gate-interaction\.css\?v=main-official-choice/,'official main choice stylesheet');
  assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
