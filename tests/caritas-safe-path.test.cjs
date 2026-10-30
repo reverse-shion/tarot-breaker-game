@@ -19,7 +19,7 @@ function scenario(){
    SHIOPON_DRAW_HEIGHT:76,DRAW_HEIGHT:78,ACTOR_COLLISION_DISTANCE:26,
    shioponImages:{idle:{}},images:{idle:{}},
    caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},
-   caritasTarotShionBounds:{topOffset:-66,leftOffset:-16,rightOffset:16},
+   caritasTarotShionBounds:{topOffset:-66,leftOffset:-16,rightOffset:16},caritasFoxBounds:null,
    caritasSafeNavigator:null,caritasSafeNavigatorKey:"",
    measureCaritasVisibleMapActor:()=>({leftOffset:-14,rightOffset:14,topOffset:-58,height:60}),
    refDistance:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)
