@@ -82,7 +82,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=resonance-special-v15/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-scaled-v2/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v3/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
  assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
@@ -110,7 +110,7 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-scaled-v2/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v3/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -144,7 +144,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.match(game,/caritasOwnerTransformationAtlas=image/);
  assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
  assert.match(game,/\[Caritas\] owner transformation unavailable/);
- assert.match(html,/caritas-owner-transformation-scaled-v2/);
+ assert.match(html,/caritas-owner-transformation-replay-v3/);
 });
 
 test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
@@ -158,5 +158,35 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
  assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
  assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
  assert.doesNotMatch(section,/const height=112,width=112/);
- assert.match(html,/caritas-owner-transformation-scaled-v2/);
+ assert.match(html,/caritas-owner-transformation-replay-v3/);
+});
+
+test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
+ assert.match(event,/const transformationReplay=params\.getAll\("preview"\)\.length===1&&params\.get\("preview"\)==="manifestation"/);
+ assert.match(event,/const checkpointStore=transformationReplay\?replayStore:localStorage/);
+ assert.match(event,/const result=S\.write\(checkpointStore,SAVE_KEY,expectedRaw,next\)/);
+ assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
+ assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
+ assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
+ assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-framing2-replay-v3/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v3/);
+});
+test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
+ assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
+ assert.match(game,/spawnRef = \{x:108,y:488\};/);
+ assert.match(game,/if\(transformationReplay\)spawnRef = \{x:1088,y:331\};/);
+ const shape=JSON.parse(fs.readFileSync(path.join(root,"assets/events/hoshisuna/map/starroad-collision.json"),"utf8"));
+ const inside=(x,y,points)=>{
+   let found=false;
+   for(let i=0,j=points.length-1;i<points.length;j=i++){
+     const a=points[i],b=points[j];
+     if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])found=!found;
+   }
+   return found;
+ };
+ const walk=(x,y)=>shape.walkAreas.some(a=>a.type==="poly"&&inside(x,y,a.points));
+ assert.ok(walk(1088,331),"Shion spawn must be on official Starroad");
+ assert.ok(walk(1032,331),"Shiopon remains 56px behind on official walkable terrain");
+ assert.ok(walk(1059,298),"Shiopon's first front-facing manifestation target remains accessible");
+ assert.ok(!((1088>=934&&1088<=1092)&&(331>=150&&331<=272)),"spawn must not intersect Caritas body");
 });
