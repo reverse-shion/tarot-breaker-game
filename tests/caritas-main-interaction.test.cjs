@@ -25,7 +25,8 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):null,querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},advance:null,colliding:true,dialogueOptions:null};
- const window={TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+ const window={TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+  TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
   TarotDialogueUI:{create:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:new El('section'),button:new El('button')}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map(),requests=[];
@@ -46,10 +47,49 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
 }
+async function advanceScoutToTarot(f){
+ // Three existing introduction lines. Shiopon notices the threat himself.
+ for(let i=0;i<3;i++)f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/あの子、なんだか苦しそうなの/);
+ assert.equal(f.lines.at(-1).speaker,"しおぽん");
+ assert.equal(f.pointer.leftPrepared,undefined,"no silent movement after inspection");
+ f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/危険だ。近づくな/);
+ assert.equal(f.lines.at(-1).speaker,"シオン");
+ assert.equal(f.pointer.leftPrepared,undefined);
+ f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/少しだけ、確かめてくるの/);
+ assert.equal(f.lines.at(-1).speaker,"しおぽん");
+ assert.equal(f.pointer.leftPrepared,undefined);
+ f.pointer.advance();
+ assert.equal(f.lines.at(-1).text,"……しおぽん！");
+ assert.equal(f.pointer.leftPrepared,undefined,"the child warns BEFORE the scouting move");
+ f.pointer.advance();
+ assert.equal(f.pointer.leftPrepared,1,"Shiopon leaves only after his own decision and Shion's warning");
+ assert.equal(f.pointer.abyss,"surging","Abyss must swell while Shiopon walks");
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pointer.abyss,"engulfed");
+ assert.equal(f.pointer.stageCommands.at(-1).actor,"shiopon");
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shiopon faces the child while scouting");
+ assert.match(f.lines.at(-1).text,/あの子のまわり、闇が/);
+ f.pointer.advance();
+ assert.match(f.lines.at(-1).text,/闇が広がっている/);
+ f.pointer.advance();
+ assert.equal(f.lines.at(-1).text,"タロット展開。");
+ assert.equal(f.pointer.cards,undefined);
+ f.pointer.advance();
+}
 async function enter(f){
- f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must face Caritas from the very first notice");
+ f.pointer.advance();
  f.button(f.shell.querySelector('#caritas-interaction-choice'),'調べる').click();
- for(let i=0;i<4;i++)f.pointer.advance();
+ await advanceScoutToTarot(f);
+ assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
+ f.advanceTime(649);assert.equal(f.lines.at(-1).text,'タロット展開。');
+ f.advanceTime(1);assert.equal(f.lines.at(-1).text,'いくぞ、しおぽん。');
+ assert.equal(f.pointer.walks,undefined);
+ f.pointer.advance();
  assert.equal(f.state().story,'intro');
  assert.equal(f.lines.at(-1).speaker,'しおぽん');
  assert.equal(f.lines.at(-1).text,'はい、シオンさん。');
@@ -57,14 +97,17 @@ async function enter(f){
  f.pointer.advance();await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.state().story,'invocation');
  assert.equal(f.pointer.front,true);
- assert.equal(f.pointer.stageCommands.at(-1).target,'shiopon');
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must keep looking at Caritas throughout the chant");
+ assert.equal(f.pointer.stageCommands.filter(x=>x.actor==="shion"&&x.target==="shiopon").length,0,
+   "Shion cannot turn toward Shiopon during the chant");
  assert.match(f.lines.at(-1).text,/来臨せよ、汝ーーシオリエル/);
  const root=f.shell.querySelector('#caritas-event');
  assert.equal(root.hidden,true);
  f.pointer.advance();
  assert.equal(f.state().story,'manifestation');
  assert.equal(f.pointer.mapPhase,'charging');
- f.advanceTime(3899);assert.equal(f.state().story,'manifestation');
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must turn back to Caritas before transformation");
+ f.advanceTime(5499);assert.equal(f.state().story,'manifestation');
  f.advanceTime(1);assert.equal(f.state().story,'manifested');
  assert.equal(f.pointer.mapPhase,'revealed');
  assert.equal(f.lines.at(-1).speaker,'シオリエル');
@@ -465,4 +508,25 @@ test('dialogue-only release keeps legacy farewell, with visible retry before exp
  f.advanceTime(900);assert.equal(root.hidden,false);assert.equal(f.state().done,false);assert.equal(f.state().owned,true);assert.equal(f.pointer.colliding,true);assert.equal(root.dataset.saveError,'true');
  fail=false;f.button(root,'再試行').click();assert.equal(f.state().done,true);assert.equal(root.hidden,true);assert.equal(f.pointer.colliding,false);
  assert.equal(f.lines.filter(l=>l.actor==='caritas').length,1,'special card replies never leak into dialogue route');
+});
+
+test('tarot deployment finishes before the separate buddy call and pauses across background/BFCache',async()=>{
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
+ f.button(f.shell,'調べる').click();
+ await advanceScoutToTarot(f);
+ assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
+ f.advanceTime(300);f.visibility(true);f.page('pagehide');f.advanceTime(5000);
+ f.pointer.advance();assert.equal(f.lines.at(-1).text,'タロット展開。');assert.equal(f.pointer.walks,undefined);
+ f.visibility(false);f.advanceTime(5000);assert.equal(f.lines.at(-1).text,'タロット展開。');
+ f.page('pageshow');f.advanceTime(349);assert.equal(f.lines.at(-1).text,'タロット展開。');
+ f.advanceTime(1);assert.equal(f.lines.at(-1).text,'いくぞ、しおぽん。');
+ assert.equal(f.lines.filter(l=>l.text==='いくぞ、しおぽん。').length,1);
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'しおぽん');assert.equal(f.pointer.walks,1);
+});
+test('unavailable card deployment recovers the prompt without advancing to chant or leaving cards',async()=>{
+ const f=fixture();f.window.TarotHoshisunaManifestation.deployCards=()=>false;
+ f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();f.button(f.shell,'調べる').click();
+ await advanceScoutToTarot(f);
+ assert.equal(f.state().story,'choice');assert.equal(f.pointer.cards,false);assert.equal(f.pointer.walks,undefined);
+ assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
 });

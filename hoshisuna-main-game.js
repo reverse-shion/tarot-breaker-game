@@ -180,11 +180,19 @@
   // Owner supplied 12-frame animated WebP converted lossily only into a
   // transparent 4x3 sprite atlas; no character drawing is regenerated.
   let caritasOwnerTransformationAtlas = null;
+  let caritasOwnerBlendSurface = null;
+  let caritasOwnerStarAtlas = null;
+  let caritasResonanceSprites = null;
+  let caritasTarotBack = null;
+  const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
+  let caritasTarotShionBounds=null,caritasFoxBounds=null;
+  let caritasSafeNavigator=null,caritasSafeNavigatorKey="";
   const CARITAS_OWNER_TILE = 160;
-  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([700,150,140,150,160,220,200,150,160,160,220,1500]);
+  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
+  const CARITAS_MANIFESTATION_DURATION_MS = 5500;
   const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false, fx:null };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
-    ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/3900)
+    ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/CARITAS_MANIFESTATION_DURATION_MS)
     : caritasInvocation.phase==="revealed"?1:0;
   const lumiereImages = {};
   const lumiereCompositors = {};
@@ -705,7 +713,11 @@
     }
 
     if (!requested) return resolvedStageAction(id, { completed: false, skipped: false });
-    const route = legalStageRoute(actorId, current, requested);
+    const caritasSafe=hoshisunaIsolated&&actorId==="shiopon"&&command.caritasSafe===true;
+    const caritasCards=caritasSafe&&caritasTarotSpread.active;
+    const route=caritasSafe
+      ?caritasSafeRoute(current,requested,caritasCards)
+      :legalStageRoute(actorId,current,requested);
     if (!route.length)
       return resolvedStageAction(id, { completed: false, skipped: false });
 
@@ -725,6 +737,7 @@
       route,
       final: { ...route.at(-1) },
       speed: routeDistance / duration,
+      caritasSafe,caritasCards,
       anim: 0,
       resolve: (value) => resolveMotion(value),
     };
@@ -771,8 +784,13 @@
     const dy = target.y - current.y;
     const distance = Math.hypot(dx, dy);
     const step = Math.min(distance, motion.speed * dt);
-    actor.x = (current.x + (dx / distance) * step) * scale.x;
-    actor.y = (current.y + (dy / distance) * step) * scale.y;
+    const next={x:current.x+(dx/distance)*step,y:current.y+(dy/distance)*step};
+    if(motion.caritasSafe&&!caritasSafeCollision(motion.caritasCards).segmentClear(current,next)){
+      settleStageMotion(actorId,motion,{skipped:true});
+      return true;
+    }
+    actor.x = next.x * scale.x;
+    actor.y = next.y * scale.y;
     actor.moving = true;
     setDirection(actor, dx, dy);
     if (actorId !== "lumiere") {
@@ -1770,17 +1788,24 @@
       g.imageSmoothingEnabled=false;
       g.drawImage(image,0,0,FRAME.w,FRAME.h,0,0,96,128);
       const rgba=g.getImageData(0,0,96,128).data;
-      let minY=128,maxY=-1;
+      let minY=128,maxY=-1,minX=96,maxX=-1;
       for(let y=0;y<128;y++)for(let x=0;x<96;x++){
         if(rgba[(y*96+x)*4+3]>100){
           if(y<minY)minY=y;
           if(y>maxY)maxY=y;
+          if(x<minX)minX=x;
+          if(x>maxX)maxX=x;
         }
       }
       if(maxY<minY)return null;
       return {
         height:(maxY-minY+1)*drawHeight/128,
-        footOffset:((maxY+1)-FRAME.baseline*128/FRAME.h)*drawHeight/128
+        footOffset:((maxY+1)-FRAME.baseline*128/FRAME.h)*drawHeight/128,
+        // Alpha bounds in the same world coordinates as drawActor().
+        // Place the three cards beside the visible head/arms, not the empty 384x512 cell.
+        topOffset:(minY-FRAME.baseline*128/FRAME.h)*drawHeight/128,
+        leftOffset:(minX-48)*drawHeight/128,
+        rightOffset:(maxX+1-48)*drawHeight/128
       };
     }catch(error){
       console.warn("[Caritas] map body sampling unavailable; keeping conservative scale",error);
@@ -1800,42 +1825,396 @@
     return caritasOwnerMapScale;
   }
 
-  // Same camera-transformed Shiopon world actor, not a fullscreen sprite.
-  // Localised saturated starfield: readable on phone without a white flash.
-  // Exact ordered frames from the owner-supplied transformation WebP.
-  // Deterministic frame choice aligns to the existing 3900ms stage,
-  // including when Safari suspends and resumes in the middle of the event.
+  function caritasTarotElapsed(){
+    return caritasTarotSpread.elapsed+(caritasTarotSpread.paused?0:
+      Math.max(0,performance.now()-caritasTarotSpread.since));
+  }
+
+  function caritasTarotLayout(actor,drawHeight,aspect){
+    const height=drawHeight*.34,width=height*aspect,gap=9;
+    if(!caritasTarotShionBounds)
+      caritasTarotShionBounds=measureCaritasVisibleMapActor(images.idle||images.down,drawHeight);
+    const bounds=caritasTarotShionBounds;
+    const feet=actor.y+actor.stageOffsetY;
+    const armY=feet-drawHeight*.44;
+    return [
+      // One card just above Shion's visible head; no collision with the sprite.
+      {x:actor.x,y:feet+(bounds?.topOffset??-drawHeight*.86)-gap-height/2,width,height},
+      // Two at equal arm height, with a visible air gap outside either arm.
+      {x:actor.x+(bounds?.leftOffset??-drawHeight*.26)-gap-width/2,y:armY,width,height},
+      {x:actor.x+(bounds?.rightOffset??drawHeight*.26)+gap+width/2,y:armY,width,height}
+    ];
+  }
+
+  function paintCaritasTarotSpread(){
+    if(!hoshisunaIsolated||!caritasTarotSpread.active||!caritasTarotBack)return;
+    const phase=caritasInvocation.phase;
+    if(phase==="revealed")return;
+    const entrance=caritasOwnerSmooth(caritasTarotElapsed()/450);
+    const fade=phase==="charging"?1-caritasOwnerSmooth((caritasInvocationProgress()*CARITAS_MANIFESTATION_DURATION_MS-4100)/600):1;
+    if(entrance*fade<=0)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const lift=reduced?0:(1-entrance)*8;
+    const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
+    ctx.save();ctx.globalAlpha*=entrance*fade;
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    // A single restrained, soft pearl-gold halo on each original card back.
+    ctx.shadowColor="rgba(246,224,189,.63)";ctx.shadowBlur=11/camera.zoom;
+    ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+    for(const card of cards){
+      ctx.drawImage(caritasTarotBack,card.x-card.width/2,card.y-card.height/2+lift,card.width,card.height);
+    }
+    ctx.restore();
+  }
+
+  // Caritas encounter only: pathfinding must respect BOTH the authored Starroad
+  // collision AND the visible Shion / floating card silhouettes. A normal
+  // Stage move checks only map foot-points, so it may cut through either actor.
+  function caritasSafeCollision(includeCards){
+    const shion=playerRef();
+    if(!caritasFoxBounds)
+      caritasFoxBounds=measureCaritasVisibleMapActor(shioponImages.idle||shioponImages.down,SHIOPON_DRAW_HEIGHT);
+    const fox=caritasFoxBounds;
+    const foxLeft=fox?.leftOffset??-15,foxRight=fox?.rightOffset??15;
+    const foxTop=fox?.topOffset??-58,foxBottom=foxTop+(fox?.height??60);
+    const cards=includeCards&&caritasTarotBack
+      ?caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight).map(card=>({
+        left:card.x-card.width/2-foxRight-4,
+        right:card.x+card.width/2-foxLeft+4,
+        top:card.y-card.height/2-foxBottom-4,
+        bottom:card.y+card.height/2-foxTop+4
+      })):[];
+    const valid=p=>collision.isWalkable(p.x,p.y)&&
+      refDistance(p,shion)>=ACTOR_COLLISION_DISTANCE+8&&
+      cards.every(r=>p.x<r.left||p.x>r.right||p.y<r.top||p.y>r.bottom);
+    return {
+      ...collision,
+      isWalkable:(x,y)=>valid({x,y}),
+      nearestWalkable:p=>valid(p)?{...p}:null,
+      segmentClear(a,b){
+        if(!valid(a)||!valid(b)||!collision.segmentClear(a,b))return false;
+        // Max 3px per sample: prevents a fast stage frame tunneling through
+        // the Shion radius or any portrait-card rectangle.
+        const steps=Math.max(1,Math.ceil(refDistance(a,b)/3));
+        for(let i=1;i<steps;i++){
+          const t=i/steps;
+          if(!valid({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}))return false;
+        }
+        return true;
+      }
+    };
+  }
+
+  function caritasSafeRoute(from,target,includeCards){
+    const blocked=caritasSafeCollision(includeCards);
+    if(!blocked.isWalkable(from.x,from.y)||!blocked.isWalkable(target.x,target.y))return [];
+    if(blocked.segmentClear(from,target))return [{...target}];
+    const key=(includeCards?"cards":"left")+":"+player.x+":"+player.y;
+    if(!caritasSafeNavigator||caritasSafeNavigatorKey!==key){
+      caritasSafeNavigator=window.TarotNavigation.createNavigator(blocked,12);
+      caritasSafeNavigatorKey=key;
+    }
+    const points=caritasSafeNavigator.findPath(from,target)?.points?.slice(1)||[];
+    let last=from;
+    for(const point of points){
+      if(!blocked.segmentClear(last,point))return [];
+      last=point;
+    }
+    return points.map(p=>({...p}));
+  }
+
+  // Invocation-only light: one shared clock, with Shion initiating the response.
+  function caritasResonanceAt(elapsed,reduced=false){
+    const fade=1-caritasOwnerSmooth((elapsed-4100)/600);
+    const breath=reduced?1:.88+.12*Math.cos((elapsed-1300)*Math.PI/900);
+    return {
+      shion:caritasOwnerSmooth((elapsed-120)/580)*fade*breath,
+      shiopon:caritasOwnerSmooth((elapsed-480)/620)*(1-caritasOwnerSmooth((elapsed-2100)/200))*breath,
+      sky:caritasOwnerSmooth((elapsed-800)/650)*(1-caritasOwnerSmooth((elapsed-2350)/500)),
+      dim:caritasOwnerSmooth(elapsed/700)*fade
+    };
+  }
+
+  function caritasResonanceElapsed(){
+    return hoshisunaIsolated&&caritasInvocation.phase==="charging"
+      ?caritasInvocationProgress()*CARITAS_MANIFESTATION_DURATION_MS:-1;
+  }
+
+  function paintCaritasResonanceWorld(){
+    const elapsed=caritasResonanceElapsed();
+    if(elapsed<0||elapsed>=4700)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const light=caritasResonanceAt(elapsed,reduced),origin=viewportOrigin();
+    const sizes=caritasOwnerMapScale||measureCaritasOwnerMapScale();
+    const sx=shiopon.x,sy=shiopon.y+shiopon.stageOffsetY+shiopon.visualOffsetY;
+    ctx.save();
+    // Dim the map behind both actors, never paint a full-screen white flash.
+    ctx.fillStyle=`rgba(15,13,35,${light.dim*.30})`;
+    ctx.fillRect(origin.x,origin.y,cssWidth/camera.zoom,cssHeight/camera.zoom);
+    const pool=(x,y,height,power)=>{
+      if(power<=0)return;
+      ctx.save();ctx.translate(x,y-height*.47);ctx.scale(.70,1);
+      const glow=ctx.createRadialGradient(0,0,3,0,0,height*1.05);
+      glow.addColorStop(0,`rgba(255,239,190,${power*.32})`);
+      glow.addColorStop(.45,`rgba(236,199,124,${power*.16})`);
+      glow.addColorStop(1,"rgba(205,175,255,0)");
+      ctx.fillStyle=glow;ctx.fillRect(-height*1.05,-height*1.05,height*2.1,height*2.1);ctx.restore();
+    };
+    pool(player.x,player.y+player.stageOffsetY,sizes.shionHeight,light.shion);
+    pool(sx,sy,sizes.shioponHeight,light.shiopon);
+    if(light.sky>0){
+      const skyY=Math.min(origin.y-24,sy-180);
+      const descent=reduced?1:caritasOwnerSmooth((elapsed-800)/650);
+      const bottom=skyY+(sy+12-skyY)*descent;
+      // Overlapping soft-edged curtains, 26–150px wide, rather than hairline rays.
+      for(const [offset,topWidth,baseWidth,alpha] of [[0,150,66,.34],[-28,64,30,.22],[24,54,26,.20]]){
+        const topX=sx+offset*1.7,baseX=sx+offset*.35;
+        const left=Math.min(topX-topWidth/2,baseX-baseWidth/2);
+        const right=Math.max(topX+topWidth/2,baseX+baseWidth/2);
+        const curtain=ctx.createLinearGradient(left,0,right,0);
+        curtain.addColorStop(0,"rgba(255,236,192,0)");
+        curtain.addColorStop(.35,`rgba(252,224,164,${alpha*light.sky})`);
+        curtain.addColorStop(.5,`rgba(255,247,216,${alpha*light.sky})`);
+        curtain.addColorStop(.65,`rgba(252,224,164,${alpha*light.sky})`);
+        curtain.addColorStop(1,"rgba(255,236,192,0)");
+        ctx.fillStyle=curtain;ctx.beginPath();ctx.moveTo(topX-topWidth/2,skyY);
+        ctx.lineTo(topX+topWidth/2,skyY);ctx.lineTo(baseX+baseWidth/2,bottom);
+        ctx.quadraticCurveTo(baseX,bottom+18,baseX-baseWidth/2,bottom);
+        ctx.closePath();ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Tint the exact current sprite alpha, retaining its face, pose and dimensions.
+  // Cache one small surface per actor; never recolour an enclosing rectangle.
+  function paintCaritasResonantActor(actor,actorImages,drawHeight,offset,kind,elapsed){
+    if(elapsed<0||elapsed>=4700)return;
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const strength=caritasResonanceAt(elapsed,reduced)[kind];
+    if(!strength)return;
+    const {image,sourceX}=spriteFrame(actor,actorImages,FRAME);
+    if(!image)return;
+    if(!caritasResonanceSprites)caritasResonanceSprites={};
+    let cached=caritasResonanceSprites[kind];
+    if(!cached){
+      const surface=document.createElement("canvas");surface.width=96;surface.height=128;
+      const context=surface.getContext("2d");if(!context)return;
+      cached=caritasResonanceSprites[kind]={surface,context,image:null,sourceX:-1};
+    }
+    if(cached.image!==image||cached.sourceX!==sourceX){
+      const g=cached.context;g.clearRect(0,0,96,128);g.imageSmoothingEnabled=false;
+      g.globalCompositeOperation="source-over";
+      g.drawImage(image,sourceX,0,FRAME.w,FRAME.h,0,0,96,128);
+      g.globalCompositeOperation="source-in";g.fillStyle="#fff0c4";g.fillRect(0,0,96,128);
+      g.globalCompositeOperation="source-over";cached.image=image;cached.sourceX=sourceX;
+    }
+    const width=FRAME.w*drawHeight/FRAME.h;
+    ctx.save();ctx.globalAlpha*=strength*.26;ctx.globalCompositeOperation="screen";
+    ctx.imageSmoothingEnabled=false;ctx.shadowColor="rgba(255,227,164,.28)";ctx.shadowBlur=14/camera.zoom;
+    if(Math.abs(actor.rotation||0)>1e-6){ctx.translate(actor.x,actor.y);ctx.rotate(actor.rotation);ctx.translate(-actor.x,-actor.y);}
+    ctx.drawImage(cached.surface,0,0,96,128,actor.x-width/2,
+      actor.y-FRAME.baseline*drawHeight/FRAME.h+offset,width,drawHeight);
+    ctx.restore();
+  }
+
+  const caritasOwnerSmooth = (value) => {
+    const p=Math.max(0,Math.min(1,value));
+    return p*p*(3-2*p);
+  };
+
+  // The small sprite atlas is drawn once in the map renderer, not with DOM/CSS.
+  // Gold / lavender / blue-white cores share a soft halo and four-point flare.
+  function getCaritasSkyStarAtlas(){
+    if(caritasOwnerStarAtlas!==null)return caritasOwnerStarAtlas||null;
+    try{
+      const surface=document.createElement("canvas");surface.width=96;surface.height=32;
+      const g=surface.getContext("2d");
+      if(!g)throw new Error("star atlas context unavailable");
+      const colors=[[255,214,139],[197,164,255],[176,215,255]];
+      for(let i=0;i<3;i++){
+        const [r,b,v]=colors[i],cx=i*32+16;
+        const halo=g.createRadialGradient(cx,16,0,cx,16,14);
+        halo.addColorStop(0,`rgba(${r},${b},${v},.75)`);
+        halo.addColorStop(.3,`rgba(${r},${b},${v},.32)`);
+        halo.addColorStop(1,`rgba(${r},${b},${v},0)`);
+        g.fillStyle=halo;g.fillRect(i*32,0,32,32);
+        g.fillStyle=`rgba(${r},${b},${v},.95)`;
+        g.beginPath();g.moveTo(cx,5);g.lineTo(cx+1.5,14.5);
+        g.lineTo(cx+7,16);g.lineTo(cx+1.5,17.5);
+        g.lineTo(cx,27);g.lineTo(cx-1.5,17.5);
+        g.lineTo(cx-7,16);g.lineTo(cx-1.5,14.5);g.closePath();g.fill();
+        g.fillStyle="#fff8e7";g.beginPath();g.arc(cx,16,1.4,0,Math.PI*2);g.fill();
+      }
+      caritasOwnerStarAtlas=surface;
+      return surface;
+    }catch(_){caritasOwnerStarAtlas=false;return null;}
+  }
+
+  // Every mote originates above the visible sky and converges DOWNWARD.
+  // No randomness or secondary clock: suspension paints the exact same path.
+  function caritasSkyMoteAt(index,elapsed,x,skyY,catchY){
+    const birth=800+index*23;
+    const duration=700+(index%5)*55;
+    const progress=(elapsed-birth)/duration;
+    if(progress<=0||progress>=1)return null;
+    const startX=x+Math.sin(index*2.399963)*(44+(index%4)*10);
+    const endX=x+Math.sin(index*1.73)*8;
+    const at=p=>{
+      const converge=caritasOwnerSmooth(p);
+      return {x:startX*(1-converge)+endX*converge+Math.sin(p*Math.PI)*Math.cos(index)*5,
+        y:skyY+(catchY-skyY)*Math.pow(p,1.35)};
+    };
+    return {head:at(progress),tail:at(Math.max(0,progress-.12)),progress,
+      alpha:caritasOwnerSmooth(progress/.12)*caritasOwnerSmooth((1-progress)/.20)};
+  }
+
+  function paintCaritasSkyfall(x,feetY,bodyHeight,elapsed){
+    if(elapsed<=800||elapsed>=2650)return;
+    const atlas=getCaritasSkyStarAtlas();
+    if(!atlas)return;
+    const catchY=feetY-bodyHeight*.60;
+    const skyY=Math.min(viewportOrigin().y-24,catchY-160);
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    ctx.save();
+    const baseAlpha=ctx.globalAlpha;
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    for(let i=0;i<40;i++){
+      const mote=caritasSkyMoteAt(i,elapsed,x,skyY,catchY);
+      if(!mote)continue;
+      const color=i%3;
+      const rgb=color===0?"255,219,157":color===1?"206,177,255":"192,222,255";
+      const head=reduced?{x:x+Math.sin(i*2.399963)*23,y:catchY-(i%6)*9}:mote.head;
+      if(!reduced){
+        const tail=mote.tail;
+        const trail=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);
+        trail.addColorStop(0,`rgba(${rgb},0)`);
+        trail.addColorStop(1,`rgba(${rgb},${mote.alpha*.32})`);
+        ctx.strokeStyle=trail;ctx.lineWidth=i%7===0?9:5;ctx.lineCap="round";
+        ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(head.x,head.y);ctx.stroke();
+      }
+      const size=i%7===0?26:18+(i%3);
+      ctx.globalAlpha=baseAlpha*mote.alpha*(i%7===0?1:.92);
+      ctx.drawImage(atlas,color*32,0,32,32,head.x-size/2,head.y-size/2,size,size);
+      ctx.globalAlpha=baseAlpha;
+    }
+    ctx.restore();
+  }
+
+  // The reveal settles locally; the incoming light itself comes from the sky.
+  function paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed){
+    if(elapsed<4100||elapsed>=4700)return;
+    const p=caritasOwnerSmooth((elapsed-4100)/600);
+    const strength=Math.sin(p*Math.PI);
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    for(let i=0;i<16;i++){
+      const angle=i*2.399963,radius=20+14*p;
+      const px=x+Math.cos(angle)*(radius+5*Math.sin(i*.7));
+      const py=feetY-4-bodyHeight*(i%6)/8+p*9;
+      ctx.fillStyle=i%3===0?"rgba(255,221,163,"+(strength*.6)+")":"rgba(191,164,255,"+(strength*.4)+")";
+      const d=i%5===0?2.4:1.5;ctx.fillRect(px-d/2,py-d/2,d,d);
+    }
+    ctx.translate(x,feetY);ctx.scale(1,.32);
+    ctx.strokeStyle="rgba(215,186,255,"+(.38*strength)+")";ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(0,0,22+18*p,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  }
+
+  function getCaritasOwnerBlendSurface(){
+    if(caritasOwnerBlendSurface)return caritasOwnerBlendSurface;
+    try{
+      const surface=document.createElement("canvas");
+      surface.width=surface.height=CARITAS_OWNER_TILE;
+      const context=surface.getContext("2d");
+      if(!context)return null;
+      caritasOwnerBlendSurface={surface,context};
+      return caritasOwnerBlendSurface;
+    }catch(_){return null;}
+  }
+
+  // Native map Shiopon -> cocoon -> fixed-size Shioriel -> quiet hold.
+  // The event timer and this renderer both use the same 5500ms duration.
   function drawCaritasOwnerTransformation(actor,phase,t){
     const image=caritasOwnerTransformationAtlas;
     if(!image)return false;
-    const elapsed=phase==="revealed"?3910:Math.min(3900,Math.max(0,t*3900));
-    let frame=CARITAS_OWNER_FRAME_TIMES_MS.length-1,until=0;
+    const elapsed=phase==="revealed"?CARITAS_MANIFESTATION_DURATION_MS:
+      Math.min(CARITAS_MANIFESTATION_DURATION_MS,Math.max(0,t*CARITAS_MANIFESTATION_DURATION_MS));
+    let frame=CARITAS_OWNER_FRAME_TIMES_MS.length-1,until=0,frameStart=0;
     for(let i=0;i<CARITAS_OWNER_FRAME_TIMES_MS.length;i++){
       until+=CARITAS_OWNER_FRAME_TIMES_MS[i];
-      if(elapsed<until){frame=i;break;}
+      if(elapsed<until){frame=i;frameStart=until-CARITAS_OWNER_FRAME_TIMES_MS[i];break;}
     }
-    // Anchor the owner's artwork to the ORIGINAL on-map body dimensions,
-    // not a fixed 112px square (which enlarged both characters on iPhone).
     const scale=caritasOwnerMapScale || measureCaritasOwnerMapScale();
-    // Transition the scale while obscured by light, never snap it at a frame.
-    const morph=Math.max(0,Math.min(1,(elapsed-1500)/900));
-    const blend=morph*morph*(3-2*morph);
+    // Complete all size/centre changes inside the opaque cocoon, BEFORE
+    // frame 7 shows a face at 3000ms. No visible bodily inflation afterward.
+    const blend=caritasOwnerSmooth((elapsed-2300)/650);
     const bodyHeight=scale.shioponHeight*(1-blend)+scale.shionHeight*blend;
-    const sourceBodyHeight=109*(1-blend)+133*blend;
-    const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight;
-    const width=height;
+    // Crown-to-sole span excludes Shioriel's horn, ears, wings and light.
+    const sourceBodyHeight=109*(1-blend)+113*blend;
+    const height=CARITAS_OWNER_TILE*bodyHeight/sourceBodyHeight,width=height;
     const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
-    // Frames 0 and 11 both have their soles at source y=145.
     const centerX=84*(1-blend)+79.5*blend;
     const feetY=y+scale.shioponFootOffset;
-    ctx.save();
-    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-    ctx.drawImage(image,(frame%4)*CARITAS_OWNER_TILE,
-      Math.floor(frame/4)*CARITAS_OWNER_TILE,
-      CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,
-      x-centerX*width/CARITAS_OWNER_TILE,
-      feetY-145*height/CARITAS_OWNER_TILE,width,height);
-    ctx.restore();
+    paintCaritasSkyfall(x,feetY,scale.shioponHeight,elapsed);
+    paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed);
+    if(elapsed<2300){
+      ctx.save();
+      ctx.globalAlpha*=1-caritasOwnerSmooth((elapsed-2100)/200);
+      drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
+        outline:ACTOR_OUTLINES.shiopon,
+        visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
+      });
+      paintCaritasResonantActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,
+        actor.visualOffsetY+actor.stageOffsetY,"shiopon",elapsed);
+      ctx.restore();
+      if(elapsed<=1900)return true;
+      frame=4;
+    }
+    const left=x-centerX*width/CARITAS_OWNER_TILE;
+    const top=feetY-145*height/CARITAS_OWNER_TILE;
+    const paint=(index,alpha)=>{
+      if(alpha<=0)return;
+      ctx.save();ctx.globalAlpha*=alpha;
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      ctx.drawImage(image,(index%4)*CARITAS_OWNER_TILE,
+        Math.floor(index/4)*CARITAS_OWNER_TILE,
+        CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,left,top,width,height);
+      ctx.restore();
+    };
+    const dissolve=(previous,next,mix)=>{
+      if(mix<=0){paint(previous,1);return;}
+      if(mix>=1){paint(next,1);return;}
+      const buffer=getCaritasOwnerBlendSurface();
+      if(!buffer){paint(previous,1);paint(next,mix);return;}
+      const g=buffer.context;
+      g.clearRect(0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE);
+      g.imageSmoothingEnabled=true;
+      // Add premultiplied layers on a TRANSPARENT 160px surface. Source-over
+      // weighted directly on the map dims opaque light to 75% mid-transition.
+      g.globalCompositeOperation="source-over";g.globalAlpha=1-mix;
+      g.drawImage(image,(previous%4)*CARITAS_OWNER_TILE,Math.floor(previous/4)*CARITAS_OWNER_TILE,
+        CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE);
+      g.globalCompositeOperation="lighter";g.globalAlpha=mix;
+      g.drawImage(image,(next%4)*CARITAS_OWNER_TILE,Math.floor(next/4)*CARITAS_OWNER_TILE,
+        CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE);
+      g.globalAlpha=1;g.globalCompositeOperation="source-over";
+      ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      ctx.drawImage(buffer.surface,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,left,top,width,height);
+      ctx.restore();
+    };
+    if(elapsed<2300){
+      paint(4,caritasOwnerSmooth((elapsed-1900)/400));
+    }else if(elapsed>=4700){
+      // Full 800ms static final hold; finish all dissolves BEFORE this point.
+      paint(11,1);
+    }else if(frame===10&&elapsed>=4440){
+      dissolve(10,11,caritasOwnerSmooth((elapsed-4440)/260));
+    }else if(frame===4){
+      paint(frame,1);
+    }else{
+      const duration=frame===7?280:frame===10?260:140;
+      dissolve(frame-1,frame,caritasOwnerSmooth((elapsed-frameStart)/duration));
+    }
     return true;
   }
 
@@ -1843,6 +2222,7 @@
     const phase=caritasInvocation.phase;
     if(phase==="idle")return false;
     const t=caritasInvocationProgress();
+    window.TarotCaritasManifestationAudio?.syncMute?.();
     if(caritasOwnerTransformationAtlas)return drawCaritasOwnerTransformation(actor,phase,t);
     const x=actor.x,y=actor.y+actor.stageOffsetY;
     const centerY=y-43;
@@ -1990,7 +2370,63 @@
     return true;
   }
 
+  // Pixel-art Abyss miasma fixed to Caritas' map coordinates, behind the
+  // playable actor sprites. No CSS bloom, stretched gradients, or stock fog.
+  // Starts thin before the first dialogue; grows when Shiopon approaches.
+  const caritasAbyss={
+    phase:"haze",opacity:.22,clock:0,
+    palette:["#160e29","#251035","#36164d","#482060","#69347d","#875298"],
+    motes:Array.from({length:105},(_,i)=>{
+      const h=n=>{const x=Math.sin(n*91.167+5.77)*43758.5453;return x-Math.floor(x);};
+      return Object.freeze({
+        x:h(i*3+1)*2-1,
+        y:h(i*3+2),
+        size:2+Math.floor(h(i*3+3)*3),
+        phase:h(i*3+9)*6.28318,
+        speed:4+h(i*3+13)*10,
+        shade:Math.floor(h(i*3+17)*6)
+      });
+    })
+  };
+  function paintCaritasMiasma(){
+    if(!hoshisunaIsolated||caritasAbyss.opacity<.005||
+       document.body.classList.contains("caritas-departed"))return;
+    const opacity=caritasAbyss.opacity;
+    const cx=(950.5+125/2)*scale.x,cy=(166.6+96*.52)*scale.y;
+    const time=caritasAbyss.clock;
+    ctx.save();
+    // Low-res 3px grid and discrete dark-violet cloud cells. The idle state
+    // barely veils the creature; surging clusters grow in number and opacity.
+    const count=Math.round(28+77*opacity);
+    for(let i=0;i<count;i++){
+      const m=caritasAbyss.motes[i];
+      const band=(m.y*1.3+time*m.speed/96)%1.3;
+      const y=cy+42-band*88;
+      const drift=Math.sin(time*.43+m.phase)*4;
+      const spread=(23+24*opacity)*(1-.18*Math.abs(y-cy)/55);
+      const x=cx+m.x*spread+drift;
+      const rim=Math.min(1,Math.max(.15,1-Math.abs(y-cy)/67));
+      const alpha=opacity*(.28+(i%4)*.055)*rim;
+      const step=m.size*scale.x;
+      const px=Math.round(x/3)*3,py=Math.round(y/3)*3;
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle=caritasAbyss.palette[m.shade];
+      ctx.fillRect(px,py,step*2,step);
+      ctx.fillRect(px+step,py-step,step,step);
+      if(i%3===0)ctx.fillRect(px-step,py+step,step,step);
+      if(opacity>.35&&i%7===0){
+        ctx.globalAlpha=(opacity-.35)*.24*rim;
+        ctx.fillStyle="#a060c5";
+        ctx.fillRect(px+step,py+step,Math.max(2,step/2),Math.max(2,step/2));
+      }
+    }
+    ctx.restore();
+  }
+
   function drawActors() {
+    paintCaritasResonanceWorld();
+    paintCaritasMiasma();
+    paintCaritasTarotSpread();
     if (!hoshisunaIsolated && !visionWorld.active && (!stage3Runtime || aftermathLumiereEnabled)) drawGroundShadowAt(lumiere, 18, 0.2);
     if (!visionWorld.active && !shiopon.hidden) drawGroundShadowAt(shiopon, 17, 0.36);
     if (!visionWorld.active) drawGroundShadowAt(player, 20, 0.46);
@@ -2049,6 +2485,8 @@
           if(!(hoshisunaIsolated && actorId==="shiopon" && drawCaritasInvocation(entry.actor))) {
             drawActor(entry.actor, entry.actorImages, entry.drawHeight,
               entry.glowColor, entry.options);
+            if(actorId==="shion")paintCaritasResonantActor(entry.actor,entry.actorImages,entry.drawHeight,
+              entry.options.visualOffsetY,"shion",caritasResonanceElapsed());
           }
         } finally { ctx = original; }
       };
@@ -2268,6 +2706,11 @@
     if (tapEffect) {
       tapEffect.age += dt;
       if (tapEffect.age >= 0.45) tapEffect = null;
+    }
+    if(hoshisunaIsolated){
+      caritasAbyss.clock+=dt;
+      const target={haze:.22,surging:.88,engulfed:1,cleared:0}[caritasAbyss.phase]??.22;
+      caritasAbyss.opacity+=(target-caritasAbyss.opacity)*Math.min(1,dt*1.8);
     }
     updatePlayer(dt);
     updateShiopon(dt);
@@ -2919,37 +3362,101 @@
 
   }
 
+  if (hoshisunaIsolated) window.TarotHoshisunaAbyss=Object.freeze({
+    setPhase(phase){
+      if(!["haze","surging","engulfed","cleared"].includes(phase))return false;
+      caritasAbyss.phase=phase;
+      if(ready&&running)draw();
+      return true;
+    },
+    getState:()=>({phase:caritasAbyss.phase,opacity:caritasAbyss.opacity})
+  });
+
   if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
+    // Before any card appears, move the real follower to the FAR LEFT.
+    // It is an actual collision-checked walk, never a teleport or clone.
+    prepareLeft(){
+      if(!ready||!running||caritasInvocation.locked||caritasTarotSpread.active)
+        return Promise.resolve({completed:false,reason:"left-not-ready"});
+      const front=playerRef(),from=shioponRef();
+      const candidates=[
+        {x:front.x-69,y:front.y-12},
+        {x:front.x-71,y:front.y-13},
+        {x:front.x-64,y:front.y-12},
+        {x:front.x-65,y:front.y-8},
+        {x:front.x-66,y:front.y-17},
+        {x:front.x-60,y:front.y-17}
+      ];
+      // Reserve clearance for the next step BEFORE the cards are deployed.
+      // A staging point that traps the visible fox under the left tarot
+      // cannot be chosen merely because it is walkable before deployment.
+      const roomAhead=spot=>[18,15,12,9,6].some(n=>
+        caritasSafeCollision(true).segmentClear(spot,{x:spot.x,y:spot.y-n}));
+      const safe=candidates.filter(spot=>caritasSafeRoute(from,spot,false).length);
+      const spot=safe.find(roomAhead)||safe[0];
+      if(spot){
+        const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:460,caritasSafe:true});
+        return move.promise.then(out=>out.completed&&!out.skipped
+          ?{completed:true,position:{...shioponRef()}}
+          :collision.isWalkable(shioponRef().x,shioponRef().y)
+            ?{completed:true,position:{...shioponRef()},staged:false,reason:"left-walk-interrupted"}
+            :{completed:false,reason:"left-walk-interrupted"});
+      }
+      // Never abort the entire transformation because a staging walk has
+      // no available corridor. Remain on the current legal map footpoint.
+      return Promise.resolve(collision.isWalkable(from.x,from.y)&&
+        refDistance(from,front)>=ACTOR_COLLISION_DISTANCE+8
+        ?{completed:true,position:{...from},staged:false,reason:"left-route-blocked"}
+        :{completed:false,reason:"left-position-unsafe"});
+    },
+    deployCards(){
+      if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
+      caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;
+      caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=document.hidden;
+      draw();return true;
+    },
     moveForward(){
       if(!ready||!running||!caritasShiorielAtlas||caritasInvocation.locked)
         return Promise.resolve({completed:false,reason:"not-ready"});
-      const front=playerRef(),from=shioponRef();
-      // Select a legal spot on the Caritas-facing (north) side of Shion.
-      // Preserve the NPC collision/pathfinder, do not teleport through Caritas.
+      const from=shioponRef();
+      // The preceding prepareLeft() established the exact safe staging point.
+      // One deliberate 18-world-pixel step toward Caritas (north), not a
+      // second large reposition or a teleport across Shion/the tarot.
       const candidates=[
-        {x:front.x,y:front.y-43},
-        {x:front.x-29,y:front.y-33},
-        {x:front.x+29,y:front.y-33},
-        {x:front.x-39,y:front.y-25},
-        {x:front.x+39,y:front.y-25}
+        {x:from.x,y:from.y-18},
+        {x:from.x-3,y:from.y-18},
+        {x:from.x+3,y:from.y-18},
+        {x:from.x,y:from.y-15},
+        {x:from.x,y:from.y-12}
       ];
       let spot=null;
       for(const candidate of candidates){
-        if(!collision.isWalkable(candidate.x,candidate.y)||
-           refDistance(candidate,front)<27)continue;
-        if(legalStageRoute("shiopon",from,candidate).length){spot=candidate;break;}
+        if(caritasSafeCollision(true).segmentClear(from,candidate)&&
+           caritasSafeRoute(from,candidate,true).length){spot=candidate;break;}
       }
-      if(!spot)return Promise.resolve({completed:false,reason:"front-blocked"});
+      if(!spot){
+        // No tunneling through a card, Shion or the authored terrain; the
+        // invocation still continues from this very same valid footpoint.
+        caritasInvocation.locked=true;
+        shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
+        draw();
+        return Promise.resolve({completed:true,stepped:false,
+          reason:"one-step-route-blocked",position:{...from}});
+      }
       caritasInvocation.locked=true;
-      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:780});
+      const move=performStageCommand({type:"move",actor:"shiopon",target:spot,duration:440,caritasSafe:true});
       return move.promise.then(out=>{
         if(!out.completed||out.skipped){
-          caritasInvocation.locked=false;
-          return {completed:false,reason:"move-interrupted"};
+          // A collision detected during the walk must not teleport the fox.
+          // Keep the last legal position and complete the map manifestation.
+          shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
+          draw();
+          return {completed:true,stepped:false,
+            reason:"move-interrupted",position:{...shioponRef()}};
         }
         shiopon.dir="down";shiopon.frame=0;shiopon.moving=false;
         draw();
-        return {completed:true,position:{...shioponRef()}};
+        return {completed:true,stepped:true,position:{...shioponRef()}};
       });
     },
     faceFront(){
@@ -2963,29 +3470,47 @@
       caritasInvocation.fx=caritasOwnerTransformationAtlas?null:prepareCaritasPixelManifestation();
       caritasInvocation.paused=document.hidden;
       caritasInvocation.since=performance.now();
+      window.TarotCaritasManifestationAudio?.begin?.();
       draw();return true;
     },
     reveal(){
       if(!caritasInvocation.locked||caritasInvocation.phase!=="charging")return false;
       caritasInvocation.phase="revealed";
-      caritasInvocation.elapsed=3900;
+      caritasInvocation.elapsed=CARITAS_MANIFESTATION_DURATION_MS;
+      window.TarotCaritasManifestationAudio?.clear?.();
       draw();return true;
     },
     pause(){
+      if(caritasTarotSpread.active&&!caritasTarotSpread.paused){
+        caritasTarotSpread.elapsed=caritasTarotElapsed();caritasTarotSpread.paused=true;
+      }
       if(caritasInvocation.phase!=="charging"||caritasInvocation.paused)return;
       caritasInvocation.elapsed+=Math.max(0,performance.now()-caritasInvocation.since);
       caritasInvocation.paused=true;
+      window.TarotCaritasManifestationAudio?.pause?.();
     },
     resume(){
+      if(caritasTarotSpread.active&&caritasTarotSpread.paused&&!document.hidden){
+        caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=false;
+      }
       if(caritasInvocation.phase!=="charging"||!caritasInvocation.paused||document.hidden)return;
       caritasInvocation.since=performance.now();caritasInvocation.paused=false;
+      window.TarotCaritasManifestationAudio?.resume?.();
     },
     clear(){
+      window.TarotCaritasManifestationAudio?.clear?.();
+      // An interrupted/retried event must not leave the fox's scripted
+      // collision route running invisibly after returning to the world.
+      if(stageMotions.shiopon?.caritasSafe)
+        settleStageMotion("shiopon",stageMotions.shiopon,{skipped:true});
+      caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
+      caritasSafeNavigator=null;caritasSafeNavigatorKey="";
+      caritasTarotSpread.since=0;caritasTarotSpread.paused=false;
       // Reset the actual canvas sprite BEFORE the battle overlay goes away.
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
-      caritasInvocation.fx=null;
+      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;caritasOwnerStarAtlas=null;caritasResonanceSprites=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;
@@ -2996,6 +3521,7 @@
       return true;
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
+      cardsActive:caritasTarotSpread.active,cardBackReady:!!caritasTarotBack,
       position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas,
       pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette,
       ownerAnimationReady:!!caritasOwnerTransformationAtlas,ownerFrameCount:CARITAS_OWNER_FRAME_TIMES_MS.length})
@@ -3144,6 +3670,7 @@
           shioponImages[key] = await loadImage(src);
         }),
         ...(hoshisunaIsolated ? [
+          loadImage("./assets/tarot/backs/tarot-card-back.webp").then(image=>{caritasTarotBack=image;}),
           loadImage("./assets/sprites/shioriel/shioriel-four-directions.webp").then(image=>{
             if(image.naturalWidth!==1086||image.naturalHeight!==1448)
               throw new Error("シオリエル正面・四面図の寸法不正");
