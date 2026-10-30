@@ -325,7 +325,6 @@ function currentLine(){
  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
   dialogue.elements.layer.classList.add('visible');dialogue.elements.button.classList.add('visible');
  }
- dialogue.elements.button.focus({preventScroll:true});
 }
 function saySequence(lines,callback){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
@@ -345,7 +344,6 @@ function showPrompt(){
  // no extra dialogue window or encounter-specific positioning.
  dialogue.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
  prompt.hidden=false;prompt.classList.add("visible");
- prompt.querySelector("#caritas-interaction-inspect")?.focus({preventScroll:true});
 }
 function hidePrompt(){
  prompt.classList.remove("visible");prompt.hidden=true;
