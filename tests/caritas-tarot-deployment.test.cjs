@@ -23,6 +23,7 @@ function fixture(){
 test("three portrait cards form head/left-arm/right-arm triangle with a nine pixel gap",()=>{
   const {s}=fixture();
   for(const height of [60,78,110])for(const aspect of [2/3,.58]){
+    s.caritasTarotShionBounds=null; // Each synthetic case represents a fresh actor at this scale.
     const actor={x:140,y:260,stageOffsetY:4},cards=s.caritasTarotLayout(actor,height,aspect);
     assert.equal(cards.length,3);
     for(const c of cards){assert.equal(c.height,height*.34);assert.equal(c.width/c.height,aspect);}
