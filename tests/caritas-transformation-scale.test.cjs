@@ -14,8 +14,8 @@ function harness(){
   const ctx={fillRect(){},translate(){},scale(){},beginPath(){},arc(){},stroke(){},globalAlpha:1,save(){stack.push(this.globalAlpha);},restore(){this.globalAlpha=stack.pop();},
     drawImage(...args){calls.push({kind:"atlas",alpha:this.globalAlpha,args});}};
   const scope={ctx,Math,caritasOwnerTransformationAtlas:{},CARITAS_OWNER_TILE:160,
-    CARITAS_OWNER_FRAME_TIMES_MS:[500,300,300,300,230,230,240,350,370,380,600,800],
-    CARITAS_MANIFESTATION_DURATION_MS:4600,window:{},document,caritasOwnerBlendSurface:null,
+    CARITAS_OWNER_FRAME_TIMES_MS:[800,500,500,500,230,230,240,350,370,380,600,800],
+    CARITAS_MANIFESTATION_DURATION_MS:5500,window:{},document,caritasOwnerBlendSurface:null,caritasOwnerStarAtlas:null,viewportOrigin:()=>({y:0}),
     caritasOwnerMapScale:{shioponHeight:265*76/512,shionHeight:420*78/512,shioponFootOffset:0},
     SHIOPON_DRAW_HEIGHT:76,shioponImages:{},ACTOR_OUTLINES:{shiopon:{}},
     drawActor(...args){calls.push({kind:"native",alpha:ctx.globalAlpha,args});}};
@@ -24,7 +24,7 @@ function harness(){
     game.indexOf("  function drawCaritasInvocation(actor)")),scope);
   const actor={x:120,y:300,stageOffsetY:3,visualOffsetY:-2,rotation:0};
   return {calls,composites,surfaces:()=>surfaces,scope,actor,draw(ms,phase="charging"){
-    calls.length=0;assert.equal(scope.drawCaritasOwnerTransformation(actor,phase,ms/4600),true);
+    calls.length=0;assert.equal(scope.drawCaritasOwnerTransformation(actor,phase,ms/5500),true);
     assert.equal(ctx.globalAlpha,1,"canvas alpha must not leak to Shion/other actors");
     return calls;
   }};
@@ -32,7 +32,7 @@ function harness(){
 
 test("opening keeps the actual map sprite at its native size, never the generated fox",()=>{
   const h=harness();
-  for(const ms of [0,350,700,850,1199]){
+  for(const ms of [0,350,700,850,2099]){
     const calls=h.draw(ms),native=calls.find(c=>c.kind==="native");
     assert.ok(native,"native sprite must remain visible until light covers it");
     assert.equal(native.alpha,1);
@@ -43,13 +43,13 @@ test("opening keeps the actual map sprite at its native size, never the generate
     }
   }
   assert.deepEqual(h.draw(0).map(c=>c.kind),["native"]);
-  assert.equal(h.draw(1300).find(c=>c.kind==="native").alpha,.5);
-  assert.equal(h.draw(1400).some(c=>c.kind==="native"),false);
+  assert.equal(h.draw(2200).find(c=>c.kind==="native").alpha,.5);
+  assert.equal(h.draw(2300).some(c=>c.kind==="native"),false);
 });
 
 test("revealed Shioriel body matches Shion independently of horn, ears and wings",()=>{
   const h=harness();
-  const render=h.draw(4600,"revealed").find(c=>c.kind==="atlas");
+  const render=h.draw(5500,"revealed").find(c=>c.kind==="atlas");
   const [,sx,sy,sw,sh,left,top,width,height]=render.args;
   assert.deepEqual([sx,sy,sw,sh],[480,320,160,160]);
   assert.ok(Math.abs(height*113/160-420*78/512)<1e-9);
@@ -61,44 +61,44 @@ test("revealed Shioriel body matches Shion independently of horn, ears and wings
 test("light handoff and final hold preserve dimensions on pause or stage boundary",()=>{
   const h=harness();
   const at=ms=>h.draw(ms).find(c=>c.kind==="atlas");
-  for(const ms of [701,1050,1400,1500,1900,2400,4599]){
+  for(const ms of [1901,2150,2300,2400,2800,3300,5499]){
     const a=at(ms),b=at(ms);
     assert.deepEqual(a,b,"same suspended clock must paint same frame and placement");
     assert.ok(a.args.slice(5).every(Number.isFinite));
   }
-  const before=at(1399).args.slice(5),after=at(1400).args.slice(5);
+  const before=at(2299).args.slice(5),after=at(2300).args.slice(5);
   assert.deepEqual(before,after,"no geometry snap on cocoon handoff");
-  assert.deepEqual(at(4600).args,h.draw(4600,"revealed")[0].args);
+  assert.deepEqual(at(5500).args,h.draw(5500,"revealed")[0].args);
 });
 
 test("all reveal frames keep final body geometry and the event waits for the full quiet hold",()=>{
-  const h=harness(),final=h.draw(4600,"revealed")[0].args.slice(5);
-  for(let ms=3800;ms<=4600;ms+=20){
+  const h=harness(),final=h.draw(5500,"revealed")[0].args.slice(5);
+  for(let ms=4700;ms<=5500;ms+=20){
     const calls=h.draw(ms);assert.equal(calls.length,1);
     assert.equal(calls[0].alpha,1);
-    assert.deepEqual(calls[0].args,h.draw(4600,"revealed")[0].args,"entire 800ms hold must use only final frame11");
+    assert.deepEqual(calls[0].args,h.draw(5500,"revealed")[0].args,"entire 800ms hold must use only final frame11");
   }
-  for(let ms=2100;ms<=4600;ms+=17){
+  for(let ms=3000;ms<=5500;ms+=17){
     const calls=h.draw(ms);
     assert.equal(calls.some(c=>c.kind==="native"),false);
     for(const c of calls)assert.deepEqual(c.args.slice(5),final,
       "no body growth, centre drift or foot slip while the face is visible");
   }
   const durations=JSON.parse(game.match(/CARITAS_OWNER_FRAME_TIMES_MS = Object\.freeze\((\[[^\]]+\])/)[1]);
-  assert.equal(durations.reduce((a,b)=>a+b,0),4600);
-  assert.equal(durations.slice(0,7).reduce((a,b)=>a+b,0),2100,"no face before cocoon resize finishes");
+  assert.equal(durations.reduce((a,b)=>a+b,0),5500);
+  assert.equal(durations.slice(0,7).reduce((a,b)=>a+b,0),3000,"no face before cocoon resize finishes");
   assert.equal(durations.at(-1),800,"quiet final hold");
   const event=fs.readFileSync(path.join(__dirname,"../caritas-battle-event.js"),"utf8");
-  assert.match(event,/stage\("manifestation",4600,/);
-  assert.match(game,/const CARITAS_MANIFESTATION_DURATION_MS = 4600/);
+  assert.match(event,/stage\("manifestation",5500,/);
+  assert.match(game,/const CARITAS_MANIFESTATION_DURATION_MS = 5500/);
 });
 
 test("adjacent light frames composite on a reusable transparent buffer without opacity dip",()=>{
   const h=harness();
-  const calls=h.draw(2240); // halfway through the 280ms cocoon-to-face dissolve
+  const calls=h.draw(3140); // halfway through the 280ms cocoon-to-face dissolve
   assert.equal(calls.length,1,"only the precomposited surface is painted over the map");
   assert.deepEqual(h.composites.map(c=>[c.op,c.alpha]),[["source-over",.5],["lighter",.5]]);
   assert.equal(h.composites.reduce((sum,c)=>sum+c.alpha,0),1,"opaque overlapping light retains full coverage");
-  h.draw(2250);h.draw(3310);h.draw(3600);
+  h.draw(3150);h.draw(4210);h.draw(4500);
   assert.equal(h.surfaces(),1,"no per-frame canvas allocation");
 });

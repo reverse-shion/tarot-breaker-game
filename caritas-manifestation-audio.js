@@ -36,12 +36,12 @@
         oscillator.start(now+start);oscillator.stop(now+end+.02);
       }
       // A quiet harmonic gathering, then a real gap as the cocoon closes.
-      voice(196,.5,1.4,.32,"sine",246.94);
-      voice(392,.58,1.38,.13,"sine",493.88);
+      voice(196,1,2.3,.32,"sine",246.94);
+      voice(392,1.08,2.28,.13,"sine",493.88);
       // One bell-like chord when the face begins to emerge. No impact boom.
-      voice(880,2.1,3.25,.38);
-      voice(1320,2.1,3.02,.12);
-      voice(1760,2.1,2.8,.055);
+      voice(880,3,4.15,.38);
+      voice(1320,3,3.92,.12);
+      voice(1760,3,3.7,.055);
       Promise.resolve(context.resume()).then(()=>{
         if(session!==current)return;
         if(current.paused||!allowed())pause();

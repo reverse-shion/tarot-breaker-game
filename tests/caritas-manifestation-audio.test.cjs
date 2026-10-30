@@ -20,9 +20,9 @@ function fixture({enabled=true,hidden=false,url="/hoshisuna-main.html",broken=fa
 test("invocation sound has a cocoon gap, one reveal chord, and no background music writes",async()=>{
   const f=fixture();assert.equal(f.api.begin(),true);await Promise.resolve();
   const c=f.contexts[0];assert.equal(c.voices.length,5);
-  assert.deepEqual(c.voices.map(v=>v.startAt),[.5,.58,2.1,2.1,2.1]);
-  assert.ok(c.voices.slice(0,2).every(v=>v.stopAt<1.43));
-  assert.ok(c.voices.slice(2).every(v=>v.stopAt<=3.27));
+  assert.deepEqual(c.voices.map(v=>v.startAt),[1,1.08,3,3,3]);
+  assert.ok(c.voices.slice(0,2).every(v=>v.stopAt<2.33));
+  assert.ok(c.voices.slice(2).every(v=>v.stopAt<=4.17));
   assert.equal(f.window.TarotAudio.enabled,true);
   assert.equal(c.gains[0].gain.value,.09);
 });

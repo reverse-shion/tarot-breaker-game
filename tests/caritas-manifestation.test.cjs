@@ -10,7 +10,7 @@ const game=fs.readFileSync(path.join(root,"hoshisuna-main-game.js"),"utf8");
 const html=fs.readFileSync(path.join(root,"hoshisuna-main.html"),"utf8");
 test("actual map follower steps ahead, faces camera and then manifests before combat",()=>{
  const start=event.slice(event.indexOf("function start(){"),event.indexOf("function setText("));
- const seq=['saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",4600','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
+ const seq=['saySequence(attempts>0?INTRO.slice(-1):INTRO,()=>','saySequence(SHIOPON_REPLY,()=>','manifestation.moveForward()', 'manifestation.faceFront()','saySequence(INVOCATION,()=>','manifestation.begin()','stage("manifestation",5500','manifestation.reveal()','saySequence(REVEAL,()=>','root.hidden=false','stage("engulfing",2600,beginBattle)'];
  // Walking is started while Shiopon's spoken reply is visible (parallel actions).
  assert.ok(start.includes(seq[0]));
  assert.ok(start.includes(seq[1]));
@@ -19,7 +19,7 @@ test("actual map follower steps ahead, faces camera and then manifests before co
  assert.match(event,/const SHIOPON_REPLY=\[\["しおぽん","はい、シオンさん。"\]\]/);
  assert.match(event,/タロット展開。いくぞ、しおぽん。/);
  assert.match(event,/speaker==="しおぽん"\?"shiopon"/);
- assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",4600"));
+ assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",5500"));
  assert.ok(start.indexOf("saySequence(REVEAL,()=>")<start.indexOf("root.hidden=false"));
 });
 test("one real world actor uses approved atlas and preserves foot position",()=>{
@@ -82,7 +82,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(event,/ids:\{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"\}/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=resonance-special-v15/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v5/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v6/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
  assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
@@ -110,7 +110,7 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v5/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v6/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -135,7 +135,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.equal(header.subarray(0,4).toString(),"RIFF");
  assert.equal(header.subarray(8,12).toString(),"WEBP");
  assert.match(game,/const CARITAS_OWNER_TILE = 160/);
- assert.match(game,/Object\.freeze\(\[500,300,300,300,230,230,240,350,370,380,600,800\]\)/);
+ assert.match(game,/Object\.freeze\(\[800,500,500,500,230,230,240,350,370,380,600,800\]\)/);
  assert.match(game,/function drawCaritasOwnerTransformation\(actor,phase,t\)/);
  assert.match(game,/const elapsed=phase==="revealed"\?CARITAS_MANIFESTATION_DURATION_MS:/);
  assert.match(game,/ctx\.drawImage\(image,\(index%4\)\*CARITAS_OWNER_TILE,/);
@@ -144,7 +144,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.match(game,/caritasOwnerTransformationAtlas=image/);
  assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
  assert.match(game,/\[Caritas\] owner transformation unavailable/);
- assert.match(html,/caritas-owner-transformation-replay-v5/);
+ assert.match(html,/caritas-owner-transformation-replay-v6/);
 });
 
 test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
@@ -158,7 +158,7 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
  assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
  assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
  assert.doesNotMatch(section,/const height=112,width=112/);
- assert.match(html,/caritas-owner-transformation-replay-v5/);
+ assert.match(html,/caritas-owner-transformation-replay-v6/);
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
@@ -168,8 +168,8 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-framing2-replay-v4/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v5/);
+ assert.match(html,/caritas-battle-event\.js\?v=resonance-special-v15-framing2-replay-v5/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-owner-transformation-replay-v6/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
  assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);

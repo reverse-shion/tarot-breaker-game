@@ -181,9 +181,10 @@
   // transparent 4x3 sprite atlas; no character drawing is regenerated.
   let caritasOwnerTransformationAtlas = null;
   let caritasOwnerBlendSurface = null;
+  let caritasOwnerStarAtlas = null;
   const CARITAS_OWNER_TILE = 160;
-  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([500,300,300,300,230,230,240,350,370,380,600,800]);
-  const CARITAS_MANIFESTATION_DURATION_MS = 4600;
+  const CARITAS_OWNER_FRAME_TIMES_MS = Object.freeze([800,500,500,500,230,230,240,350,370,380,600,800]);
+  const CARITAS_MANIFESTATION_DURATION_MS = 5500;
   const caritasInvocation = { phase:"idle", locked:false, elapsed:0, since:0, paused:false, fx:null };
   const caritasInvocationProgress = () => caritasInvocation.phase==="charging"
     ? Math.min(1,(caritasInvocation.elapsed+(caritasInvocation.paused?0:Math.max(0,performance.now()-caritasInvocation.since)))/CARITAS_MANIFESTATION_DURATION_MS)
@@ -1807,37 +1808,100 @@
     return p*p*(3-2*p);
   };
 
-  // Deterministic world-space particles, never a second animation clock.
-  // Draw behind the actor, away from the face during its emergence.
-  function paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed){
-    if(elapsed<500||elapsed>=3800)return;
-    const gathering=elapsed<1400;
-    const settling=elapsed>=3200;
-    if(!gathering&&!settling)return;
+  // The small sprite atlas is drawn once in the map renderer, not with DOM/CSS.
+  // Gold / lavender / blue-white cores share a soft halo and four-point flare.
+  function getCaritasSkyStarAtlas(){
+    if(caritasOwnerStarAtlas!==null)return caritasOwnerStarAtlas||null;
+    try{
+      const surface=document.createElement("canvas");surface.width=96;surface.height=32;
+      const g=surface.getContext("2d");
+      if(!g)throw new Error("star atlas context unavailable");
+      const colors=[[255,214,139],[197,164,255],[176,215,255]];
+      for(let i=0;i<3;i++){
+        const [r,b,v]=colors[i],cx=i*32+16;
+        const halo=g.createRadialGradient(cx,16,0,cx,16,14);
+        halo.addColorStop(0,`rgba(${r},${b},${v},.75)`);
+        halo.addColorStop(.3,`rgba(${r},${b},${v},.32)`);
+        halo.addColorStop(1,`rgba(${r},${b},${v},0)`);
+        g.fillStyle=halo;g.fillRect(i*32,0,32,32);
+        g.fillStyle=`rgba(${r},${b},${v},.95)`;
+        g.beginPath();g.moveTo(cx,5);g.lineTo(cx+1.5,14.5);
+        g.lineTo(cx+7,16);g.lineTo(cx+1.5,17.5);
+        g.lineTo(cx,27);g.lineTo(cx-1.5,17.5);
+        g.lineTo(cx-7,16);g.lineTo(cx-1.5,14.5);g.closePath();g.fill();
+        g.fillStyle="#fff8e7";g.beginPath();g.arc(cx,16,1.4,0,Math.PI*2);g.fill();
+      }
+      caritasOwnerStarAtlas=surface;
+      return surface;
+    }catch(_){caritasOwnerStarAtlas=false;return null;}
+  }
+
+  // Every mote originates above the visible sky and converges DOWNWARD.
+  // No randomness or secondary clock: suspension paints the exact same path.
+  function caritasSkyMoteAt(index,elapsed,x,skyY,catchY){
+    const birth=800+index*23;
+    const duration=700+(index%5)*55;
+    const progress=(elapsed-birth)/duration;
+    if(progress<=0||progress>=1)return null;
+    const startX=x+Math.sin(index*2.399963)*(44+(index%4)*10);
+    const endX=x+Math.sin(index*1.73)*8;
+    const at=p=>{
+      const converge=caritasOwnerSmooth(p);
+      return {x:startX*(1-converge)+endX*converge+Math.sin(p*Math.PI)*Math.cos(index)*5,
+        y:skyY+(catchY-skyY)*Math.pow(p,1.35)};
+    };
+    return {head:at(progress),tail:at(Math.max(0,progress-.12)),progress,
+      alpha:caritasOwnerSmooth(progress/.12)*caritasOwnerSmooth((1-progress)/.20)};
+  }
+
+  function paintCaritasSkyfall(x,feetY,bodyHeight,elapsed){
+    if(elapsed<=800||elapsed>=2650)return;
+    const atlas=getCaritasSkyStarAtlas();
+    if(!atlas)return;
+    const catchY=feetY-bodyHeight*.60;
+    const skyY=Math.min(viewportOrigin().y-24,catchY-160);
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    const p=caritasOwnerSmooth(gathering?(elapsed-500)/900:(elapsed-3200)/600);
-    const strength=Math.sin(p*Math.PI);
     ctx.save();
-    ctx.imageSmoothingEnabled=false;
-    for(let i=0;i<24;i++){
-      const angle=i*2.399963;
-      const radius=gathering?(12+38*(1-p)):(20+14*p);
-      const drift=reduced?0:(gathering?1-p:p);
-      const px=x+Math.cos(angle)*(radius+5*Math.sin(i*.7))* (reduced?.7:1);
-      const py=gathering?feetY-bodyHeight*.5+Math.sin(angle)*radius*.75*(reduced?1:1-p)
-        :feetY-4-bodyHeight*(i%6)/8+drift*9;
-      const alpha=strength*(i%3===0?.72:.44);
-      ctx.fillStyle=i%3===0?"rgba(255,221,163,"+alpha+")":"rgba(191,164,255,"+alpha+")";
-      const d=i%5===0?2.4:1.5;
-      ctx.fillRect(px-d/2,py-d/2,d,d);
+    const baseAlpha=ctx.globalAlpha;
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    for(let i=0;i<40;i++){
+      const mote=caritasSkyMoteAt(i,elapsed,x,skyY,catchY);
+      if(!mote)continue;
+      const color=i%3;
+      const rgb=color===0?"255,219,157":color===1?"206,177,255":"192,222,255";
+      const head=reduced?{x:x+Math.sin(i*2.399963)*23,y:catchY-(i%6)*9}:mote.head;
+      if(!reduced){
+        const tail=mote.tail;
+        const trail=ctx.createLinearGradient(tail.x,tail.y,head.x,head.y);
+        trail.addColorStop(0,`rgba(${rgb},0)`);
+        trail.addColorStop(1,`rgba(${rgb},${mote.alpha*.85})`);
+        ctx.strokeStyle=trail;ctx.lineWidth=i%7===0?1.6:1;ctx.lineCap="round";
+        ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(head.x,head.y);ctx.stroke();
+      }
+      const size=i%7===0?18:11+(i%3);
+      ctx.globalAlpha=baseAlpha*mote.alpha*(i%7===0?1:.92);
+      ctx.drawImage(atlas,color*32,0,32,32,head.x-size/2,head.y-size/2,size,size);
+      ctx.globalAlpha=baseAlpha;
     }
-    // One quiet foot ring expands after revelation, without a screen flash.
-    if(settling){
-      ctx.translate(x,feetY);ctx.scale(1,.32);
-      ctx.strokeStyle="rgba(215,186,255,"+(.38*strength)+")";
-      ctx.lineWidth=1;
-      ctx.beginPath();ctx.arc(0,0,22+18*p,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  }
+
+  // The reveal settles locally; the incoming light itself comes from the sky.
+  function paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed){
+    if(elapsed<4100||elapsed>=4700)return;
+    const p=caritasOwnerSmooth((elapsed-4100)/600);
+    const strength=Math.sin(p*Math.PI);
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    for(let i=0;i<16;i++){
+      const angle=i*2.399963,radius=20+14*p;
+      const px=x+Math.cos(angle)*(radius+5*Math.sin(i*.7));
+      const py=feetY-4-bodyHeight*(i%6)/8+p*9;
+      ctx.fillStyle=i%3===0?"rgba(255,221,163,"+(strength*.6)+")":"rgba(191,164,255,"+(strength*.4)+")";
+      const d=i%5===0?2.4:1.5;ctx.fillRect(px-d/2,py-d/2,d,d);
     }
+    ctx.translate(x,feetY);ctx.scale(1,.32);
+    ctx.strokeStyle="rgba(215,186,255,"+(.38*strength)+")";ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(0,0,22+18*p,0,Math.PI*2);ctx.stroke();
     ctx.restore();
   }
 
@@ -1854,7 +1918,7 @@
   }
 
   // Native map Shiopon -> cocoon -> fixed-size Shioriel -> quiet hold.
-  // The event timer and this renderer both use the same 4600ms duration.
+  // The event timer and this renderer both use the same 5500ms duration.
   function drawCaritasOwnerTransformation(actor,phase,t){
     const image=caritasOwnerTransformationAtlas;
     if(!image)return false;
@@ -1867,8 +1931,8 @@
     }
     const scale=caritasOwnerMapScale || measureCaritasOwnerMapScale();
     // Complete all size/centre changes inside the opaque cocoon, BEFORE
-    // frame 7 shows a face at 2100ms. No visible bodily inflation afterward.
-    const blend=caritasOwnerSmooth((elapsed-1400)/650);
+    // frame 7 shows a face at 3000ms. No visible bodily inflation afterward.
+    const blend=caritasOwnerSmooth((elapsed-2300)/650);
     const bodyHeight=scale.shioponHeight*(1-blend)+scale.shionHeight*blend;
     // Crown-to-sole span excludes Shioriel's horn, ears, wings and light.
     const sourceBodyHeight=109*(1-blend)+113*blend;
@@ -1876,16 +1940,17 @@
     const x=actor.x,y=actor.y+actor.stageOffsetY+actor.visualOffsetY;
     const centerX=84*(1-blend)+79.5*blend;
     const feetY=y+scale.shioponFootOffset;
+    paintCaritasSkyfall(x,feetY,scale.shioponHeight,elapsed);
     paintCaritasOwnerStarlight(x,feetY,bodyHeight,elapsed);
-    if(elapsed<1400){
+    if(elapsed<2300){
       ctx.save();
-      ctx.globalAlpha*=1-caritasOwnerSmooth((elapsed-1200)/200);
+      ctx.globalAlpha*=1-caritasOwnerSmooth((elapsed-2100)/200);
       drawActor(actor,shioponImages,SHIOPON_DRAW_HEIGHT,"rgba(235,210,255,.22)",{
         outline:ACTOR_OUTLINES.shiopon,
         visualOffsetY:actor.visualOffsetY+actor.stageOffsetY,rotation:actor.rotation
       });
       ctx.restore();
-      if(elapsed<=500)return true;
+      if(elapsed<=1900)return true;
       frame=4;
     }
     const left=x-centerX*width/CARITAS_OWNER_TILE;
@@ -1920,13 +1985,13 @@
       ctx.drawImage(buffer.surface,0,0,CARITAS_OWNER_TILE,CARITAS_OWNER_TILE,left,top,width,height);
       ctx.restore();
     };
-    if(elapsed<1400){
-      paint(4,caritasOwnerSmooth((elapsed-500)/900));
-    }else if(elapsed>=3800){
+    if(elapsed<2300){
+      paint(4,caritasOwnerSmooth((elapsed-1900)/400));
+    }else if(elapsed>=4700){
       // Full 800ms static final hold; finish all dissolves BEFORE this point.
       paint(11,1);
-    }else if(frame===10&&elapsed>=3540){
-      dissolve(10,11,caritasOwnerSmooth((elapsed-3540)/260));
+    }else if(frame===10&&elapsed>=4440){
+      dissolve(10,11,caritasOwnerSmooth((elapsed-4440)/260));
     }else if(frame===4){
       paint(frame,1);
     }else{
@@ -3088,7 +3153,7 @@
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
-      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;
+      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;caritasOwnerStarAtlas=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;

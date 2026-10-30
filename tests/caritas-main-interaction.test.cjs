@@ -64,7 +64,7 @@ async function enter(f){
  f.pointer.advance();
  assert.equal(f.state().story,'manifestation');
  assert.equal(f.pointer.mapPhase,'charging');
- f.advanceTime(4599);assert.equal(f.state().story,'manifestation');
+ f.advanceTime(5499);assert.equal(f.state().story,'manifestation');
  f.advanceTime(1);assert.equal(f.state().story,'manifested');
  assert.equal(f.pointer.mapPhase,'revealed');
  assert.equal(f.lines.at(-1).speaker,'シオリエル');
