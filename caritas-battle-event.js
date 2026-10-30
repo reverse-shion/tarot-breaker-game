@@ -712,7 +712,7 @@ function completeMapReturn(){
 function init(){
  const shell=document.getElementById("game-shell");
  if(!shell||!document.getElementById("hoshisuna-caritas"))return;
- if(!window.TarotDialogueUI?.create){console.error("[Caritas] Shared main dialogue unavailable");return;}
+ if(!window.TarotDialogueUI?.bind){console.error("[Caritas] Shared main dialogue unavailable");return;}
  try{once=sessionStorage.getItem(onceKey)==="1";}catch(_){once=false;}
  prompt=newEl("aside");prompt.id="star-gate-interaction-choice";prompt.hidden=true;prompt.setAttribute("aria-label","獣の異変");
  const promptText=newEl("div","",INSPECT_CHOICE);promptText.id="star-gate-interaction-text";
@@ -815,11 +815,13 @@ function init(){
  written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
  ui.saveProblem=newEl("div","cb-save-problem");ui.saveProblem.hidden=true;
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
- dialogue=window.TarotDialogueUI.create({
-   // Exactly the Garden main dialogue mount and element IDs. The battle UI
-   // also lives in the same shell so its stacking order stays predictable.
-   mount:shell,
-   ids:{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"},
+ dialogue=window.TarotDialogueUI.bind({
+   // Bind original main/Alenon DOM, never create an encounter-specific frame.
+   layer:document.getElementById("dialogue-layer"),
+   button:document.getElementById("dialogue-advance"),
+   speaker:document.getElementById("dialogue-speaker"),
+   text:document.getElementById("dialogue-text"),
+   next:document.getElementById("dialogue-next"),
    onAdvance:advanceDialogue
  });
  preloadSpecialArt();
