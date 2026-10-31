@@ -1983,6 +1983,7 @@
     ctx.restore();
   }
 
+  // Invocation-only light: transformation hold after the finished chant.
   // Existing transformation-only light: the large descending light belongs
   // to the five-and-a-half-second transformation, NOT the earlier chant.
   function caritasResonanceAt(elapsed,reduced=false){
