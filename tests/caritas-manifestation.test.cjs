@@ -214,9 +214,9 @@ test("isolated main dialogue, combat and device cache retained",()=>{
   assert.doesNotMatch(event,/dialogue\.elements\.button\.focus\(/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-abyss-heart-v16/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-chant-sync-warm-v1/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
- assert.match(html,/caritas-battle-event\.js\?v=main-dialogue-choice-v17/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-chant-sync-warm-v1/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
@@ -242,7 +242,7 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-abyss-heart-v16/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-chant-sync-warm-v1/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -300,8 +300,8 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=main-dialogue-choice-v17/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-abyss-heart-v16/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-chant-sync-warm-v1/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-chant-sync-warm-v1/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
  assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
