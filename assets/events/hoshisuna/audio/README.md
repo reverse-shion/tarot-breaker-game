@@ -1,8 +1,8 @@
 # 星砂へ続く道 / Field BGM
 
-このフォルダに、ユーザー制作の次のMP3をアップロードしてください。
+`assets/audio/bgm/`に、ユーザー制作の次のMP3をアップロードしてください。
 
-`hoshisuna-star-memory-time-prayer.mp3`
+`assets/audio/bgm/hoshisuna-star-memory-time-prayer.mp3`
 
 作品名：星砂へ続く道 — 星の記憶、時の祈り
 長さ：約2分38秒
