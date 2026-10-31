@@ -50,7 +50,7 @@ test("chant-only synced light uses one warm-white clock and separate 5500ms tran
   assert.match(chant,/const nodes=/);
   assert.match(chant,/const connections=/);
   assert.match(cards,/getCaritasTarotLuminousMask\(\)/);
-  assert.match(game,/if\(hoshisunaIsolated\)paintCaritasChantWorld\(\)/);
+  assert.match(game,/paintCaritasChantWorld\(\);paintCaritasRegroupStars\(\)/);
  assert.match(chant,/\.\.\.cards\.map\(/);
   assert.match(chant,/ctx\.drawImage\(atlas/);
  assert.doesNotMatch(chant,/getImageData|\.getContext\("2d",\{willReadFrequently:true\}\)/,
