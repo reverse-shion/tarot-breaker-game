@@ -137,6 +137,7 @@ function restoreCheckpoint(){
   firstWrittenDelivered=record.firstWrittenDelivered;aiCalls=record.aiCalls;
   if(!record.battle)return false;
   battle=record.battle;visualBattle=null;readingOpen=false;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
+  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-start"));
   if(record.special.committed){playSpecialSequence();return true;}
   if(battle.phase==="ending"){render();beginEnding();}
   else if(battle.phase==="defeat"){render();beginRetreat();}
@@ -194,6 +195,7 @@ function beginBattle(){
  preloadSpecialArt();
  story="battle";root.dataset.phase="battle";modalIndex=-1;readingOpen=false;committing=false;
  checkpoint();render();
+ window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-start"));
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}toast("月・力・星のカードをタップして意味を選ぼう");}
 }
 const TECHNIQUES=Object.freeze({
