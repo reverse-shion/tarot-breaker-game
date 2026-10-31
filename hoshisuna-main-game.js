@@ -185,6 +185,10 @@
   let caritasResonanceSprites = null;
   let caritasTarotBack = null;
   const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
+  let caritasTarotLuminousMask=null;
+  // The real companion is normalized beside Shion BEFORE the encounter dialogue.
+  // Nearby = collision-checked walk, distant/blocked = concealed star-step.
+  const caritasRegroup={phase:"idle",elapsed:0,target:null,resolve:null,shifted:false};
   // Pre-transformation only. A single shared clock governs all five lights:
   // Shion, three tarot cards and Shiopon. The 5500ms transformation is separate.
   const caritasChant={phase:"idle",elapsed:0,since:0,paused:false,sealedAt:0};
@@ -1254,7 +1258,52 @@
     shiopon.frame = 0;
   }
 
+  function caritasRegroupAlpha(){
+    if(caritasRegroup.phase!=="star-step")return 1;
+    const t=caritasRegroup.elapsed;
+    if(t<.36)return Math.max(0,1-t/.36);
+    if(t<.46)return 0;
+    return Math.min(1,(t-.46)/.40);
+  }
+  function updateCaritasRegroup(dt){
+    if(caritasRegroup.phase!=="star-step")return false;
+    // This updates with the world loop. Hidden tabs never skip a reveal.
+    caritasRegroup.elapsed+=dt;
+    if(caritasRegroup.elapsed>=.38&&!caritasRegroup.shifted){
+      const target=caritasRegroup.target;
+      shiopon.x=target.x*scale.x;shiopon.y=target.y*scale.y;
+      caritasRegroup.shifted=true;
+      shiopon.dir="right";shiopon.moving=false;shiopon.frame=0;
+    }
+    if(caritasRegroup.elapsed>=.88){
+      caritasRegroup.phase="idle";
+      const complete=caritasRegroup.resolve;caritasRegroup.resolve=null;
+      shiopon.moving=false;shiopon.frame=0;
+      complete?.({completed:true,staged:true,method:"star-step",position:{...shioponRef()}});
+    }
+    return true;
+  }
+  function paintCaritasRegroupStars(){
+    if(caritasRegroup.phase!=="star-step")return;
+    const atlas=getCaritasSkyStarAtlas();
+    if(!atlas)return;
+    const x=shiopon.x,y=shiopon.y+shiopon.stageOffsetY-22;
+    const t=caritasRegroup.elapsed;
+    const pulse=t<.36?1-t/.36:Math.max(0,1-Math.abs(t-.53)/.36);
+    if(pulse<=0)return;
+    ctx.save();ctx.imageSmoothingEnabled=true;
+    for(let i=0;i<12;i++){
+      const a=i*2.399963,r=7+(i%4)*4+7*t;
+      const size=(i%4===0?14:8)/camera.zoom;
+      ctx.globalAlpha=Math.min(.82,pulse*.65);
+      ctx.drawImage(atlas,(i%3===0?0:1)*32,0,32,32,
+        x+Math.cos(a)*r-size/2,y+Math.sin(a)*r*.75-size/2,size,size);
+    }
+    ctx.restore();
+  }
+
   function updateShiopon(dt) {
+    if(updateCaritasRegroup(dt))return;
     if (stage3Runtime && aftermathPaused) return;
     if (shiopon.hidden) return;
     if (updateStageActor("shiopon", dt)) return;
@@ -2678,6 +2727,7 @@
       if (opacity <= 0) continue;
       if (visionWorld.active && actorId === "shion") {drawFutureCurrentShionComposite(entry,opacity); continue;}
       ctx.save(); ctx.globalAlpha *= opacity;
+      if(actorId==="shiopon")ctx.globalAlpha*=caritasRegroupAlpha();
       const paint = (target) => {
         const original = ctx;
         ctx = target;
@@ -2697,7 +2747,7 @@
       ctx.restore();
     }
     // Foreground connectors and stars must NOT be obscured by opaque actors.
-    if(hoshisunaIsolated)paintCaritasChantWorld();
+    if(hoshisunaIsolated){paintCaritasChantWorld();paintCaritasRegroupStars();}
   }
 
   function traceRefShape(shape) {
@@ -3574,6 +3624,51 @@
   });
 
   if (hoshisunaIsolated) window.TarotHoshisunaManifestation=Object.freeze({
+    regroup(){
+      if(!ready||!running||caritasInvocation.locked||caritasTarotSpread.active)
+        return Promise.resolve({completed:false,reason:"regroup-not-ready"});
+      const shion=playerRef(),from=shioponRef();
+      // Photo composition: Shiopon stands left and a little ahead of Shion,
+      // both visible in the same frame before any dialogue is allowed.
+      const candidates=[];
+      for(const x of [-64,-60,-68,-56,-73,-52,-80,-46,58,66]){
+        for(const y of [-12,-18,-6,0,8,-26]){
+          candidates.push({x:shion.x+x,y:shion.y+y});
+        }
+      }
+      const valid=p=>collision.isWalkable(p.x,p.y)&&
+        refDistance(p,shion)>=ACTOR_COLLISION_DISTANCE+9;
+      const target=candidates.find(valid);
+      if(!target)return Promise.resolve({completed:false,reason:"no-safe-companion-position"});
+      // Freeze the previous free-roam target before staging the real sprite.
+      shiopon.target=null;shiopon.followTarget=null;shiopon.followRoute=[];
+      shiopon.moving=false;shiopon.frame=0;shiopon.rotation=0;
+      if(refDistance(from,target)<9){
+        setDirection(shiopon,shion.x-from.x,shion.y-from.y);
+        return Promise.resolve({completed:true,staged:true,method:"already-near",position:{...from}});
+      }
+      const distance=refDistance(from,target);
+      // Walking is preferred only when there is a short legal path.
+      if(distance<=125&&caritasSafeRoute(from,target,false).length){
+        const move=performStageCommand({type:"move",actor:"shiopon",target,
+          duration:Math.min(1050,430+distance*4),caritasSafe:true});
+        return move.promise.then(out=>{
+          if(out.completed&&!out.skipped){
+            const here=shioponRef();setDirection(shiopon,shion.x-here.x,shion.y-here.y);
+            return {completed:true,staged:true,method:"walk",position:{...here}};
+          }
+          return {completed:false,reason:"regroup-walk-interrupted"};
+        });
+      }
+      // A long follower catch-up would streak across the screen and collide
+      // with the scene. Conceal relocation in a short star-lit fade instead.
+      return new Promise(resolve=>{
+        caritasRegroup.phase="star-step";caritasRegroup.elapsed=0;
+        caritasRegroup.target=target;caritasRegroup.shifted=false;
+        caritasRegroup.resolve=resolve;
+      });
+    },
+
     // Before any card appears, move the real follower to the FAR LEFT.
     // It is an actual collision-checked walk, never a teleport or clone.
     prepareLeft(){
@@ -3727,6 +3822,12 @@
       // collision route running invisibly after returning to the world.
       if(stageMotions.shiopon?.caritasSafe)
         settleStageMotion("shiopon",stageMotions.shiopon,{skipped:true});
+      // Cancel any unfinished companion regroup on recovery or battle return.
+      if(caritasRegroup.phase!=="idle"){
+        caritasRegroup.phase="idle";
+        const pending=caritasRegroup.resolve;caritasRegroup.resolve=null;
+        pending?.({completed:false,reason:"regroup-cancelled"});
+      }
       caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
       caritasChant.phase="idle";caritasChant.elapsed=0;
       caritasChant.sealedAt=0;caritasChant.paused=false;
