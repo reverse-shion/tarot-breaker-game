@@ -64,7 +64,7 @@ function fixture({readyState=4,deferredPlay=false}={}) {
   };
 }
 
-test('prewarmed music starts in the SAME battle render event, with opening silence skipped',async()=>{
+test('prewarmed music starts 650ms after ink, 1950ms before the battle UI, with leading silence skipped',async()=>{
   const f=fixture();
   assert.equal(f.music.src,'./assets/battle/bgm/re-sonance-breaker.mp3');
   assert.equal(f.music.loop,true);
@@ -78,12 +78,15 @@ test('prewarmed music starts in the SAME battle render event, with opening silen
   // The muted prewarm may have progressed deep into the MP3.
   f.music.currentTime=18.7;
   f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
-  assert.equal(f.music.muted,true,'ink must remain silent');
+  assert.equal(f.music.muted,true,'first ink frame remains silent');
+  assert.equal([...f.timers.values()][0]?.ms,650,'first 650ms of the Abyss must be silent');
+  f.advance();
+  assert.equal(f.music.muted,false,'music must start DURING ink expansion, not after battle DOM');
   f.emit('tarot-breaker:hoshisuna-battle-start');
-  assert.equal(f.music.muted,false,'combat music must unmute synchronously, without another 650ms delay');
+  assert.equal(f.music.muted,false,'later combat notification must not restart the music');
   assert.equal(f.music.currentTime,0.25,'rewind to the first audible chime, not the advanced prewarm position');
   assert.equal(f.music.volume,.38);
-  assert.equal(f.timers.size,0,'no delayed battle reveal timer');
+  assert.equal(f.timers.size,0,'music cue fires once, with no post-battle delay');
   assert.equal(f.counts().plays,1,'do not restart or double play native audio');
   f.emit('tarot-breaker:hoshisuna-battle-stop');
   assert.equal(f.music.paused,true);
@@ -157,14 +160,58 @@ test('backgrounded combat resumes with user gesture while preserving original cu
   assert.equal(f.music.paused,true);
 });
 
+
+test('transition cue is owned, ignores duplicate notifications, and cancels on retreat',async()=>{
+  const f=fixture();
+  f.emit('tarot-breaker:interaction-start',OWNER);
+  f.emit('pointerdown');await flush();
+  f.emit('tarot-breaker:hoshisuna-transition-start','another_event');
+  assert.equal(f.timers.size,0,'unrelated event may not schedule combat audio');
+  f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
+  f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
+  assert.equal(f.timers.size,1,'only one scheduled early cue');
+  f.emit('tarot-breaker:hoshisuna-battle-stop');
+  assert.equal(f.timers.size,0,'retreat cancels pending cue');
+  f.advance();
+  assert.equal(f.music.muted,true);
+  assert.equal(f.music.paused,true);
+});
+
+test('lost timing callback is cancelled by the actual battle event; save restore stays audible',async()=>{
+  const f=fixture();
+  f.emit('tarot-breaker:interaction-start',OWNER);
+  f.emit('pointerdown');await flush();
+  f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
+  assert.equal(f.timers.size,1);
+  f.emit('tarot-breaker:hoshisuna-battle-start');
+  assert.equal(f.music.muted,false,'battle-start fallback must work even if early timer is delayed');
+  assert.equal(f.timers.size,0);
+  assert.equal(f.music.currentTime,.25);
+});
+
+test('backgrounding before the early cue prevents music from leaking after suspension',async()=>{
+  const f=fixture();
+  f.emit('tarot-breaker:interaction-start',OWNER);
+  f.emit('pointerdown');await flush();
+  f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
+  assert.equal(f.timers.size,1);
+  f.doc.hidden=true;
+  f.doc.dispatchEvent(new Event('visibilitychange'));
+  assert.equal(f.timers.size,0);
+  f.advance();
+  assert.equal(f.music.muted,true);
+  assert.equal(f.music.paused,true);
+});
+
 test('battle music uses real MP3 with confirmed 0.222s leading silence and existing scene wiring',()=>{
   const html=fs.readFileSync(path.join(root,'hoshisuna-main.html'),'utf8');
   const source=fs.readFileSync(path.join(root,'hoshisuna-battle-audio.js'),'utf8');
   const event=fs.readFileSync(path.join(root,'caritas-battle-event.js'),'utf8');
-  assert.match(html,/hoshisuna-battle-audio\.js\?v=2/);
+  assert.match(html,/hoshisuna-battle-audio\.js\?v=3/);
   assert.match(html,/data-bgm-url="\.\/assets\/audio\/bgm\/hoshisuna-star-memory-time-prayer\.mp3"/);
   assert.match(source,/const FIRST_SOUND_SEC = 0\.25;/);
   assert.ok(!source.includes('BATTLE_FADE_MS'));
+  assert.match(source,/const ABYSS_MUSIC_CUE_MS = 650;/);
   assert.ok((event.match(/tarot-breaker:hoshisuna-battle-stop/g)||[]).length>=2);
   assert.match(event,/root\.dataset\.phase="battle"[\s\S]*?tarot-breaker:hoshisuna-battle-start/);
   const bytes=fs.readFileSync(path.join(root,'assets/battle/bgm/re-sonance-breaker.mp3'));
