@@ -119,3 +119,13 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.match(svg,/<svg[\s\S]*?<path/);
   assert.equal((svg.match(/<path /g)||[]).length,3);
 });
+
+test('Caritas event preflight remains registered and editable in isolated sandbox',()=>{
+  const cp=require('node:child_process');
+  const report=cp.execFileSync(process.execPath,[path.join(root,'scripts/event-preflight.cjs'),'--target','hoshisuna-caritas'],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']});
+  const info=JSON.parse(report);
+  assert.equal(info.preflight,'PASS');
+  assert.equal(info.event,'hoshisuna-caritas');
+  assert.equal(info.changeAuthorized,true);
+  assert.equal(info.productionEnabled,false);
+});
