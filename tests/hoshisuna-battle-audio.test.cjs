@@ -59,6 +59,7 @@ function fixture({readyState=4,deferredPlay=false}={}) {
   }
   return {
     music:bgm, emit, cues, timers, doc, window,
+    advance(){const jobs=[...timers.values()];timers.clear();for(const job of jobs)job.fn();},
     completePlay(){for(const resolve of resolvers.splice(0))resolve();},
     counts:()=>({plays,pauses})
   };
