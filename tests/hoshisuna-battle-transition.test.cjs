@@ -52,7 +52,7 @@ function fixture({reduced=false,caritas=true}={}) {
   return {emit,time,doc,battle,nodes,timers,removed:()=>removed,docEvents};
 }
 
-test('Caritas encounter adds exactly one ground-origin ink overlay within existing battle window',()=>{
+test('Caritas encounter blurs the live map from ground origin before later blackout',()=>{
   const f=fixture();
   f.emit('tarot-breaker:hoshisuna-transition-start','not-caritas');
   assert.equal(f.nodes.length,0);
@@ -60,17 +60,20 @@ test('Caritas encounter adds exactly one ground-origin ink overlay within existi
   assert.equal(f.nodes.length,1);
   const layer=f.nodes[0];
   assert.equal(layer.className,'abyss-transition');
-  assert.equal(layer.children.length,3);
-  assert.equal(layer.children[1].src,'./assets/events/hoshisuna/battle/abyss-encroachment.webp');
+  assert.equal(layer.children.length,4);
+  assert.equal(layer.children[0].className,'abyss-transition__bleed');
+  assert.equal(layer.children[1].className,'abyss-transition__stain');
+  assert.equal(layer.children[2].src,'./assets/events/hoshisuna/battle/abyss-encroachment.webp');
+  assert.ok(+layer.style.props['--abyss-spread'] >= 2.4);
   assert.equal(layer.style.props['--abyss-x'],'295px');
   assert.equal(layer.style.props['--abyss-y'],'276.4px');
-  assert.equal(layer.children[2].className,'abyss-transition__veil');
+  assert.equal(layer.children[3].className,'abyss-transition__veil');
   assert.equal(f.battle.dataset.abyssTransition,'covering');
   f.emit('tarot-breaker:hoshisuna-transition-start','hoshisuna_caritas_prompt');
   assert.equal(f.nodes.length,1,'duplicate start must be ignored');
-  f.time(670);
+  f.time(1240);
   assert.equal(f.battle.dataset.abyssTransition,'revealing');
-  f.time(1000);
+  f.time(1650);
   assert.equal(f.battle.dataset.abyssTransition,undefined);
   assert.equal(f.removed(),1);
   assert.equal(f.timers.size,0);
@@ -116,6 +119,10 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.ok(!/html2canvas|canvas\.toDataURL|canvas\.toBlob/.test(css+fs.readFileSync(path.join(root,'hoshisuna-battle-transition.js'),'utf8')));
   assert.match(css,/prefers-reduced-motion/);
   assert.match(css,/#160e25/);
+  assert.match(css,/-webkit-backdrop-filter:blur\\(4px\\)/);
+  assert.match(css,/abyss-map-corruption/);
+  assert.match(css,/abyss-late-blackout/);
+  assert.ok(!css.includes('abyss-ink-expand'),'old fullscreen expanding fog must be removed');
   assert.equal(asset.toString('ascii',0,4),'RIFF');
   assert.equal(asset.toString('ascii',8,12),'WEBP');
   assert.equal(asset.length,74382);
