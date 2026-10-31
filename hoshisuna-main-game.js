@@ -1864,11 +1864,35 @@
     // Even before the chant the cards glow faintly; in the chant they share
     // exactly the same white/pearl-gold pulse as Shion and Shiopon.
     const sharedGlow=caritasChantStrength();
-    ctx.shadowColor=`rgba(255,243,204,${.42+sharedGlow*.30})`;
-    ctx.shadowBlur=(9+sharedGlow*5)/camera.zoom;
-    ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+    // The original shadow-only treatment disappeared on real iPhone screens.
+    // Paint a genuine diffuse halo BEHIND the official card, and a narrow,
+    // pearl-white luminous frame OVER it. No HTML or extra card sprites.
+    const baseGlow=reduced?.76:.70+.08*Math.sin(caritasTarotElapsed()*Math.PI/1100);
+    const light=Math.min(1.35,baseGlow+sharedGlow*.44);
     for(const card of cards){
-      ctx.drawImage(caritasTarotBack,card.x-card.width/2,card.y-card.height/2+lift,card.width,card.height);
+      const y=card.y+lift,left=card.x-card.width/2,top=y-card.height/2;
+      const radius=Math.max(card.height*.90,card.width*1.40);
+      if(typeof ctx.createRadialGradient==="function"){
+        const halo=ctx.createRadialGradient(card.x,y,card.width*.20,card.x,y,radius);
+        halo.addColorStop(0,`rgba(255,248,212,${.48*light})`);
+        halo.addColorStop(.42,`rgba(255,221,146,${.28*light})`);
+        halo.addColorStop(1,"rgba(255,218,146,0)");
+        ctx.fillStyle=halo;
+        ctx.fillRect(card.x-radius,y-radius,radius*2,radius*2);
+      }
+      ctx.shadowColor=`rgba(255,246,207,${.75+Math.min(.23,sharedGlow*.20)})`;
+      ctx.shadowBlur=(13+sharedGlow*8)/camera.zoom;
+      ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+      ctx.drawImage(caritasTarotBack,left,top,card.width,card.height);
+      // The luminous border is a separate intentional layer. A plain blurred
+      // image shadow was not visible enough at the card's ~18x27px map size.
+      ctx.save();
+      ctx.shadowBlur=0;
+      ctx.strokeStyle=`rgba(255,253,226,${Math.min(.95,.47+sharedGlow*.30)})`;
+      ctx.lineWidth=.8/camera.zoom;
+      if(typeof ctx.strokeRect==="function")
+        ctx.strokeRect(left-.75,top-.75,card.width+1.5,card.height+1.5);
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -1941,15 +1965,20 @@
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const ramp=caritasOwnerSmooth(elapsed/600);
     const sharedBeat=reduced?1:.85+.15*Math.cos(elapsed*Math.PI/760);
-    const peak=caritasChant.phase==="sealed"&&!reduced
-      ? .50*(1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/650)):0;
+    // A single crest on "来臨せよ", then sustained connected light while
+    // that line is being read. Previously it vanished in 650ms on iPhone.
+    const crest=caritasChant.phase==="sealed"&&!reduced
+      ? .48*(1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/1000)):0;
+    const peak=caritasChant.phase==="sealed"?.26+crest:0;
     return Math.max(0,Math.min(1.35,ramp*(sharedBeat+peak)));
   }
-  // Lightweight deterministic particles around real world-space locations.
-  // Only a cached 3-tile atlas is drawn; no per-frame sprite contour sampling.
+  // Connected starlight is drawn AFTER cards and actors. This is essential:
+  // the previous effects were hidden behind the opaque character sprites.
+  // All threads and motes share the same clock, pearl-white/gold palette and
+  // luminosity. No solid laser beam or additional character art is used.
   function paintCaritasChantWorld(){
     const strength=caritasChantStrength();
-    if(strength<=0)return;
+    if(strength<=0||!caritasTarotSpread.active)return;
     const atlas=getCaritasSkyStarAtlas();
     if(!atlas)return;
     const elapsed=caritasChantElapsed();
@@ -1957,28 +1986,74 @@
     const sizes=caritasOwnerMapScale||measureCaritasOwnerMapScale();
     const cards=caritasTarotBack?caritasTarotLayout(player,DRAW_HEIGHT,
       caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight):[];
-    const lights=[
-      {x:player.x,y:player.y+player.stageOffsetY-sizes.shionHeight*.53,rx:20,ry:sizes.shionHeight*.42},
-      ...cards.map(card=>({x:card.x,y:card.y,rx:card.width*.68,ry:card.height*.62})),
-      {x:shiopon.x,y:shiopon.y+shiopon.stageOffsetY+shiopon.visualOffsetY-
-        sizes.shioponHeight*.53,rx:18,ry:sizes.shioponHeight*.40}
+    if(cards.length!==3)return;
+    const shion={x:player.x,y:player.y+player.stageOffsetY-sizes.shionHeight*.52};
+    const fox={x:shiopon.x,y:shiopon.y+shiopon.stageOffsetY+
+      shiopon.visualOffsetY-sizes.shioponHeight*.55};
+    const nodes=[
+      {...shion,rx:20,ry:sizes.shionHeight*.38},
+      ...cards.map(c=>({x:c.x,y:c.y,rx:c.width*.78,ry:c.height*.72})),
+      {...fox,rx:20,ry:sizes.shioponHeight*.42}
     ];
-    ctx.save();ctx.imageSmoothingEnabled=true;
-    const oldAlpha=ctx.globalAlpha;
-    const seconds=reduced?0:elapsed/1000;
-    for(let point=0;point<lights.length;point++){
-      const center=lights[point];
-      // All five lights share the identical clock, palette and brightness.
-      for(let i=0;i<7;i++){
-        const angle=i*2.399963+seconds*.45+(point%2)*.22;
-        const drift=reduced?1:1+.10*Math.sin(seconds*1.5+i*.9);
+    const time=reduced?0:elapsed/1000;
+    const alpha=Math.min(1,strength);
+    ctx.save();
+    const originalAlpha=ctx.globalAlpha;
+    ctx.imageSmoothingEnabled=true;
+    // Four linked paths: Shion feeds all cards, all three cards answer the
+    // fox. Draw as curved, broken constellations of warm stars, never rays.
+    const connections=[];
+    for(let i=0;i<3;i++){
+      connections.push([nodes[0],nodes[i+1],i,0]);
+      connections.push([nodes[i+1],nodes[4],i,1]);
+    }
+    const curve=(a,b,group,p)=>{
+      const spread=group===0?-1:1;
+      const bend=(b.x-a.x)*.11+spread*(group===0?7:12);
+      const mid={x:(a.x+b.x)/2+bend,y:(a.y+b.y)/2-Math.min(25,Math.abs(a.x-b.x)*.14)};
+      const v=1-p;
+      return {x:v*v*a.x+2*v*p*mid.x+p*p*b.x,
+        y:v*v*a.y+2*v*p*mid.y+p*p*b.y};
+    };
+    // Continuous faint structure makes the link readable even at zero motion.
+    for(const [a,b,index,group] of connections){
+      const count=13;
+      for(let i=1;i<count;i++){
+        const p=i/count,pos=curve(a,b,group,p);
+        const travel=reduced?.50:((time*(group===0?.38:.50)+i/count+index*.12)%1);
+        const wave=reduced?.64:Math.max(.18,1-Math.abs(travel-p)*2.3);
+        const sparkle=(i+index*3)%5===0;
+        const size=(sparkle?9:5)/camera.zoom;
+        ctx.globalAlpha=originalAlpha*alpha*wave*(sparkle?.56:.32);
+        ctx.drawImage(atlas,sparkle?0:1,0,32,32,
+          pos.x-size/2,pos.y-size/2,size,size);
+      }
+    }
+    // Identical breathing light at each of the five real world-space nodes.
+    // The tiny offset between them only avoids perfectly overlapping dots;
+    // it never changes the shared brightness or color.
+    for(let node=0;node<nodes.length;node++){
+      const center=nodes[node];
+      for(let i=0;i<9;i++){
+        const angle=i*2.399963+time*.30;
+        const drift=reduced?1:1+.07*Math.sin(time*1.5+i*.8);
         const x=center.x+Math.cos(angle)*center.rx*drift;
         const y=center.y+Math.sin(angle)*center.ry*drift;
-        const tile=i%7===6?2:i%3===0?1:0;
-        const size=(i%3===0?11:7)/camera.zoom;
-        ctx.globalAlpha=oldAlpha*Math.min(.72,strength*(i%3===0?.48:.34));
-        ctx.drawImage(atlas,tile*32,0,32,32,x-size/2,y-size/2,size,size);
+        const white=i%3===0,size=(white?13:9)/camera.zoom;
+        ctx.globalAlpha=originalAlpha*alpha*(white?.76:.46);
+        ctx.drawImage(atlas,white?0:1,0,32,32,x-size/2,y-size/2,size,size);
       }
+    }
+    // One shared focal crest, near Shiopon rather than on top of the cards.
+    if(caritasChant.phase==="sealed"){
+      const p=Math.max(0,1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/1100));
+      const radius=(16+18*(1-p))/camera.zoom;
+      const halo=ctx.createRadialGradient(fox.x,fox.y,0,fox.x,fox.y,radius);
+      halo.addColorStop(0,`rgba(255,251,226,${.36*p+.10})`);
+      halo.addColorStop(.48,`rgba(255,226,153,${.19*p+.05})`);
+      halo.addColorStop(1,"rgba(255,223,160,0)");
+      ctx.globalAlpha=originalAlpha;
+      ctx.fillStyle=halo;ctx.fillRect(fox.x-radius,fox.y-radius,radius*2,radius*2);
     }
     ctx.restore();
   }
@@ -2003,9 +2078,8 @@
   }
 
   function paintCaritasResonanceWorld(){
-    if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle"){
-      paintCaritasChantWorld();return;
-    }
+    // The connected chant effect is drawn in the foreground, after sprites.
+    if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle")return;
     const elapsed=caritasResonanceElapsed();
     if(elapsed<0||elapsed>=4700)return;
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -2054,9 +2128,10 @@
   // Tint the exact current sprite alpha, retaining its face, pose and dimensions.
   // Cache one small surface per actor; never recolour an enclosing rectangle.
   function paintCaritasResonantActor(actor,actorImages,drawHeight,offset,kind,elapsed){
-    if(elapsed<0||elapsed>=4700)return;
+    const chantPower=caritasChantStrength();
+    if((elapsed<0||elapsed>=4700)&&chantPower<=0)return;
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    const strength=caritasResonanceAt(elapsed,reduced)[kind];
+    const strength=chantPower>0?Math.min(1.25,chantPower):caritasResonanceAt(elapsed,reduced)[kind];
     if(!strength)return;
     const {image,sourceX}=spriteFrame(actor,actorImages,FRAME);
     if(!image)return;
@@ -2075,7 +2150,7 @@
       g.globalCompositeOperation="source-over";cached.image=image;cached.sourceX=sourceX;
     }
     const width=FRAME.w*drawHeight/FRAME.h;
-    ctx.save();ctx.globalAlpha*=strength*.26;ctx.globalCompositeOperation="screen";
+    ctx.save();ctx.globalAlpha*=strength*(chantPower>0?.42:.26);ctx.globalCompositeOperation="screen";
     ctx.imageSmoothingEnabled=false;ctx.shadowColor="rgba(255,227,164,.28)";ctx.shadowBlur=14/camera.zoom;
     if(Math.abs(actor.rotation||0)>1e-6){ctx.translate(actor.x,actor.y);ctx.rotate(actor.rotation);ctx.translate(-actor.x,-actor.y);}
     ctx.drawImage(cached.surface,0,0,96,128,actor.x-width/2,
@@ -2609,8 +2684,8 @@
           if(!(hoshisunaIsolated && actorId==="shiopon" && drawCaritasInvocation(entry.actor))) {
             drawActor(entry.actor, entry.actorImages, entry.drawHeight,
               entry.glowColor, entry.options);
-            if(actorId==="shion")paintCaritasResonantActor(entry.actor,entry.actorImages,entry.drawHeight,
-              entry.options.visualOffsetY,"shion",caritasResonanceElapsed());
+            if(actorId==="shion"||actorId==="shiopon")paintCaritasResonantActor(entry.actor,entry.actorImages,entry.drawHeight,
+              entry.options.visualOffsetY,actorId,caritasResonanceElapsed());
           }
         } finally { ctx = original; }
       };
@@ -2620,6 +2695,8 @@
       } else paint(ctx);
       ctx.restore();
     }
+    // Foreground connectors and stars must NOT be obscured by opaque actors.
+    if(hoshisunaIsolated)paintCaritasChantWorld();
   }
 
   function traceRefShape(shape) {
