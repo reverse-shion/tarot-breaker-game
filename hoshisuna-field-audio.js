@@ -1,52 +1,57 @@
-/* Starroad BGM: keep the field melody through dialogue and manifestation.
- * Only the actual battle handoff silences the music on iOS Safari. */
+/* Starroad field BGM: dialogue and manifestation stay audible.
+ * Native hard mute occurs SYNCHRONOUSLY at the first abyss stain frame.
+ * The still-running transport stays muted through combat and is released only
+ * on returning to the map (iOS Safari autoplay-safe). */
 (() => {
   'use strict';
   const OWNER = 'hoshisuna_caritas_prompt';
   let encounterActive = false;
   let encounterSession = null;
-  let muteTimer = 0;
 
   function release() {
-    if (muteTimer) clearTimeout(muteTimer);
-    muteTimer = 0;
     const session = encounterSession;
     encounterSession = null;
     session?.release();
   }
 
-  // The first approach and every conversation stay musical. The shared audio
-  // controller already lowers its normal BGM volume for dialogue.
+  function hardSilence() {
+    if (!encounterActive) return;
+    if (encounterSession) {
+      encounterSession.holdSilent();
+      return;
+    }
+    const audio = window.TarotAudio;
+    if (!audio?.beginEventSession) {
+      console.warn('[Hoshisuna BGM] Native silence controller unavailable');
+      return;
+    }
+    try {
+      const session = audio.beginEventSession();
+      encounterSession = session;
+      // No fade and no timer: HTMLMediaElement.muted is applied on THIS call.
+      // Volume-only fades are unreliable on iPhone Safari.
+      session.holdSilent();
+    } catch (error) {
+      console.error('[Hoshisuna BGM] Immediate hard mute failed', error);
+    }
+  }
+
   window.addEventListener('tarot-breaker:interaction-start', event => {
     if (event.detail?.source === OWNER) encounterActive = true;
   });
 
-  // The battle engine dispatches this exactly when combat becomes playable.
-  // Keep the native transport alive while muted, so scripted return-to-map
-  // does not require another iOS Safari user gesture.
-  window.addEventListener('tarot-breaker:hoshisuna-battle-start', () => {
-    if (!encounterActive || encounterSession) return;
-    const audio = window.TarotAudio;
-    if (!audio?.beginEventSession) return;
-    try {
-      const session = audio.beginEventSession();
-      encounterSession = session;
-      session.tweenCoefficient(0, 650, false);
-      muteTimer = setTimeout(() => {
-        muteTimer = 0;
-        if (encounterSession === session) session.holdSilent();
-      }, 650);
-    } catch (error) {
-      console.warn('[Hoshisuna BGM] Battle music handoff unavailable', error);
-    }
+  // First ink on map is also the exact frame when exploration music stops.
+  window.addEventListener('tarot-breaker:hoshisuna-transition-start', event => {
+    if (event.detail?.source === OWNER) hardSilence();
   });
+  // Resume from an in-progress battle without replaying the transition.
+  window.addEventListener('tarot-breaker:hoshisuna-battle-start', hardSilence);
 
   window.addEventListener('tarot-breaker:interaction-end', event => {
     if (event.detail?.source !== OWNER) return;
     encounterActive = false;
     release();
   });
-  // BFCache must not retain a retired event session.
   window.addEventListener('pagehide', () => {
     encounterActive = false;
     release();
