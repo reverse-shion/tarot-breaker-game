@@ -13,7 +13,7 @@ function fixture({isolated=true,phase="charging",reduced=false}={}){
     drawImage(...args){calls.push({kind:"sprite",args,alpha:this.globalAlpha,op:this.globalCompositeOperation});}};
   const image={},player={x:200,y:300,stageOffsetY:2},shiopon={x:160,y:270,stageOffsetY:3,visualOffsetY:-2};
   const scope={ctx,Math,hoshisunaIsolated:isolated,caritasInvocation:{phase},
-    caritasChant:{phase:"idle"},
+    caritasChant:{phase:"idle"},caritasChantStrength:()=>0,
     caritasInvocationProgress:()=>ms/5500,CARITAS_MANIFESTATION_DURATION_MS:5500,
     window:{matchMedia:()=>({matches:reduced})},viewportOrigin:()=>({x:20,y:30}),
     cssWidth:390,cssHeight:700,camera:{zoom:1.5},player,shiopon,caritasOwnerMapScale:{shionHeight:64,shioponHeight:40},
