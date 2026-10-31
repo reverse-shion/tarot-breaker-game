@@ -56,7 +56,8 @@ test("chant-only synced light uses one warm-white clock and separate 5500ms tran
  assert.doesNotMatch(chant,/getImageData|\.getContext\("2d",\{willReadFrequently:true\}\)/,
    "chant may not scan actor alpha or build outline surfaces each frame");
  assert.match(cards,/const sharedGlow=caritasChantStrength\(\)/);
-  assert.ok(world.includes('if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle")return;'));
+  assert.ok(world.includes('if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle"){'));
+  assert.ok(world.includes('ctx.fillRect(origin.x,origin.y,cssWidth/camera.zoom,cssHeight/camera.zoom)'),"chant contrast dims only the map behind actors");
  assert.match(currentLine,/if\(dialogueIndex===0\)window\.TarotHoshisunaManifestation\?\.startChant\?\.\(\)/);
  assert.match(currentLine,/else if\(dialogueIndex===1\)window\.TarotHoshisunaManifestation\?\.sealChant\?\.\(\)/);
  assert.match(methods,/startChant\(\)/);
