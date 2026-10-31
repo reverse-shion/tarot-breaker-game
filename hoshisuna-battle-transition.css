@@ -1,23 +1,77 @@
-/* Starroad-only abyss battle transition. No capture of mixed DOM/canvas map. */
-.abyss-transition{position:fixed;inset:0;z-index:2300;pointer-events:none;overflow:hidden;isolation:isolate;contain:layout paint;--abyss-max-scale:16}
-.abyss-transition__fallback,.abyss-transition__mass{position:absolute;left:var(--abyss-x,50%);top:var(--abyss-y,45%);width:clamp(180px,38vmin,360px);height:auto;aspect-ratio:1;transform-origin:center;will-change:transform,opacity;animation:abyss-ink-expand 630ms cubic-bezier(.35,0,.72,1) both}
-.abyss-transition__fallback{border-radius:44% 56% 62% 38%;background:radial-gradient(ellipse,#10091a 12%,#21122f 47%,#381d4c 67%,transparent 74%);opacity:.78}
-.abyss-transition__mass{display:block;object-fit:contain;image-rendering:auto;filter:none;opacity:.92}
+/* STARROAD battle transition v2 — visual corruption of the LIVE mixed DOM/Canvas map.
+ * One localized WebKit backdrop blur + growing dark stain. No screen capture. */
+.abyss-transition{
+  position:fixed;inset:0;z-index:2300;pointer-events:none;overflow:hidden;
+  isolation:isolate;contain:layout paint;
+  --abyss-x:50%;--abyss-y:45%;--abyss-spread:4;
+}
+.abyss-transition__bleed,.abyss-transition__stain{
+  position:absolute;
+  left:var(--abyss-x);top:var(--abyss-y);
+  width:clamp(230px,74vmin,460px);
+  aspect-ratio:1;transform-origin:50% 50%;
+  border-radius:50%;
+  will-change:transform,opacity;
+  animation:abyss-map-corruption 1300ms cubic-bezier(.26,.04,.32,1) both;
+}
+/* This actually defocuses/desaturates the existing Starroad ground, characters
+ * and world underneath, rather than covering them with an opaque smoke image. */
+.abyss-transition__bleed{
+  background:rgba(23,12,35,.09);
+  -webkit-backdrop-filter:blur(4px) saturate(.52) contrast(1.16) brightness(.76);
+  backdrop-filter:blur(4px) saturate(.52) contrast(1.16) brightness(.76);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 0 35%,#000d 54%,#0006 67%,transparent 83%);
+  mask-image:radial-gradient(ellipse at center,#000 0 35%,#000d 54%,#0006 67%,transparent 83%);
+}
+.abyss-transition__stain{
+  background:radial-gradient(ellipse at center,rgba(15,6,24,.78) 0%,rgba(38,14,55,.50) 38%,rgba(53,25,72,.25) 61%,transparent 80%);
+  animation-delay:70ms;
+}
+.abyss-transition__mass{
+  position:absolute;left:var(--abyss-x);top:var(--abyss-y);
+  width:clamp(210px,57vmin,340px);height:auto;aspect-ratio:1;
+  object-fit:contain;transform-origin:center;
+  pointer-events:none;image-rendering:auto;
+  filter:none;mix-blend-mode:multiply;
+  will-change:transform,opacity;
+  animation:abyss-edge-ink 1220ms ease-out both;
+}
 .abyss-transition__mass[hidden]{display:none!important}
-.abyss-transition__veil{position:absolute;inset:-1px;background:#160e25;will-change:transform,opacity;animation:abyss-veil-rise 960ms linear both}
-#caritas-event[data-phase="engulfing"][data-abyss-transition="covering"]{visibility:hidden!important}
-@keyframes abyss-ink-expand{
-  0%{transform:translate3d(-50%,-50%,0) scale(.16) scaleY(.7);opacity:.45}
-  38%{opacity:.86}
-  100%{transform:translate3d(-50%,-50%,0) scale(var(--abyss-max-scale)) scaleY(.8);opacity:1}
+/* Not a descending opaque wall: let the mapped world visibly break down
+ * first, then cover for the scene handoff and melt back into the battle. */
+.abyss-transition__veil{
+  position:absolute;inset:-1px;background:#160e25;opacity:0;
+  will-change:opacity;animation:abyss-late-blackout 1650ms linear both;
 }
-@keyframes abyss-veil-rise{
-  0%,36%{opacity:0;transform:translate3d(0,0,0)}
-  62%,76%{opacity:1;transform:translate3d(0,0,0)}
-  100%{opacity:1;transform:translate3d(0,-105%,0)}
+#caritas-event[data-phase="engulfing"][data-abyss-transition="covering"]{
+  visibility:hidden!important
 }
-@media (prefers-reduced-motion: reduce){
-  .abyss-transition__mass,.abyss-transition__fallback{display:none!important;animation:none}
-  .abyss-transition__veil{animation:abyss-reduced-veil 150ms ease-out both}
+@keyframes abyss-map-corruption{
+  0%{transform:translate3d(-50%,-50%,0) scale(.06) scaleY(.7);opacity:0}
+  12%{opacity:.64}
+  48%{transform:translate3d(-50%,-50%,0) scale(1.18) scaleY(.82);opacity:.94}
+  100%{transform:translate3d(-50%,-50%,0) scale(var(--abyss-spread)) scaleY(.88);opacity:1}
+}
+@keyframes abyss-edge-ink{
+  0%{transform:translate3d(-50%,-50%,0) scale(.22) scaleY(.63);opacity:0}
+  25%{opacity:.26}
+  65%{transform:translate3d(-50%,-50%,0) scale(1.75) scaleY(.78);opacity:.19}
+  100%{transform:translate3d(-50%,-50%,0) scale(2.8) scaleY(.85);opacity:.04}
+}
+@keyframes abyss-late-blackout{
+  0%,59%{opacity:0}
+  72%,81%{opacity:1}
+  100%{opacity:0}
+}
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .abyss-transition__bleed{
+    background:radial-gradient(ellipse,#1b0d31a8 5%,#25123d85 43%,transparent 79%);
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .abyss-transition__bleed,.abyss-transition__stain,.abyss-transition__mass{
+    display:none!important;animation:none!important
+  }
+  .abyss-transition__veil{animation:abyss-reduced-veil 160ms ease-out both}
   @keyframes abyss-reduced-veil{0%{opacity:1}100%{opacity:0}}
 }
