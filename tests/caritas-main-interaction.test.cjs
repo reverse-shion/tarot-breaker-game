@@ -163,8 +163,9 @@ async function advanceScoutToTarot(f){
  assert.equal(f.pointer.abyss,'surge');
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.pointer.abyss,'engulfed');
- assert.equal(f.pointer.stageCommands.at(-1).actor,'shiopon');
- assert.equal(f.pointer.stageCommands.at(-1).target.y,210);
+ assert.ok(f.pointer.stageCommands.some(command=>command.actor==='shiopon'&&command.target?.y===210),
+   'Shiopon must look at Caritas before reporting the Abyss');
+ assertShionWatchingCaritas(f);
  const reaction=[
   ['しおぽん','……っ！闇が広がる！'],
   ['シオン','まずい……このままじゃ、あの星獣が呑まれる。'],
@@ -181,7 +182,7 @@ async function advanceScoutToTarot(f){
 }
 async function enter(f){
  f.pointer.actor={x:1013,y:305};f.tick();
- assert.equal(f.pointer.stageCommands.at(-1).target.y,210);
+ assertShionSideFacing(f);
  advanceNotice(f);
  f.button(f.shell.querySelector('#star-gate-interaction-choice'),'調べる').click();
  await advanceScoutToTarot(f);
