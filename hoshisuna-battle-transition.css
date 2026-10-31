@@ -1,0 +1,23 @@
+/* Starroad-only abyss battle transition. No capture of mixed DOM/canvas map. */
+.abyss-transition{position:fixed;inset:0;z-index:2300;pointer-events:none;overflow:hidden;isolation:isolate;contain:layout paint;--abyss-max-scale:16}
+.abyss-transition__fallback,.abyss-transition__mass{position:absolute;left:var(--abyss-x,50%);top:var(--abyss-y,45%);width:clamp(180px,38vmin,360px);height:auto;aspect-ratio:1;transform-origin:center;will-change:transform,opacity;animation:abyss-ink-expand 630ms cubic-bezier(.35,0,.72,1) both}
+.abyss-transition__fallback{border-radius:44% 56% 62% 38%;background:radial-gradient(ellipse,#10091a 12%,#21122f 47%,#381d4c 67%,transparent 74%);opacity:.78}
+.abyss-transition__mass{display:block;object-fit:contain;image-rendering:auto;filter:none;opacity:.92}
+.abyss-transition__mass[hidden]{display:none!important}
+.abyss-transition__veil{position:absolute;inset:-1px;background:#160e25;will-change:transform,opacity;animation:abyss-veil-rise 960ms linear both}
+#caritas-event[data-phase="engulfing"][data-abyss-transition="covering"]{visibility:hidden!important}
+@keyframes abyss-ink-expand{
+  0%{transform:translate3d(-50%,-50%,0) scale(.16) scaleY(.7);opacity:.45}
+  38%{opacity:.86}
+  100%{transform:translate3d(-50%,-50%,0) scale(var(--abyss-max-scale)) scaleY(.8);opacity:1}
+}
+@keyframes abyss-veil-rise{
+  0%,36%{opacity:0;transform:translate3d(0,0,0)}
+  62%,76%{opacity:1;transform:translate3d(0,0,0)}
+  100%{opacity:1;transform:translate3d(0,-105%,0)}
+}
+@media (prefers-reduced-motion: reduce){
+  .abyss-transition__mass,.abyss-transition__fallback{display:none!important;animation:none}
+  .abyss-transition__veil{animation:abyss-reduced-veil 150ms ease-out both}
+  @keyframes abyss-reduced-veil{0%{opacity:1}100%{opacity:0}}
+}
