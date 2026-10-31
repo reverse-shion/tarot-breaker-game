@@ -2025,7 +2025,7 @@
         const sparkle=(i+index*3)%5===0;
         const size=(sparkle?9:5)/camera.zoom;
         ctx.globalAlpha=originalAlpha*alpha*wave*(sparkle?.56:.32);
-        ctx.drawImage(atlas,sparkle?0:1,0,32,32,
+        ctx.drawImage(atlas,(sparkle?0:1)*32,0,32,32,
           pos.x-size/2,pos.y-size/2,size,size);
       }
     }
