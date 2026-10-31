@@ -116,8 +116,9 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.ok(!/html2canvas|canvas\.toDataURL|canvas\.toBlob/.test(css+fs.readFileSync(path.join(root,'hoshisuna-battle-transition.js'),'utf8')));
   assert.match(css,/prefers-reduced-motion/);
   assert.match(css,/#160e25/);
-  assert.match(svg,/<svg[\s\S]*?<path/);
-  assert.equal((svg.match(/<path /g)||[]).length,3);
+  assert.equal(asset.toString('ascii',0,4),'RIFF');
+  assert.equal(asset.toString('ascii',8,12),'WEBP');
+  assert.equal(asset.length,74382);
 });
 
 test('Caritas event preflight remains registered and editable in isolated sandbox',()=>{
