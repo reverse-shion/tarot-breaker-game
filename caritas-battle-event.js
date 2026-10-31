@@ -320,6 +320,7 @@ function returnToMap(){
 }
 
 function beginEnding(){
+ window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
  clearTimeout(toastTimer);ui.toast.hidden=true;
  stage("purifying",2600,()=>{
    stage("purified",1100,()=>{
@@ -751,6 +752,7 @@ function finalizeTurn(){
 }
 function beginRetreat(){
  if(story==="retreat"||story==="returning")return;
+ window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
  committing=true;modalIndex=-1;story="retreat";root.dataset.phase="retreat";render();
  saySequence([["シオン","……これ以上は危険だ。一度撤退だ、シオリエル！"],
   ["シオリエル","……承知した、シオン。"]],()=>{
