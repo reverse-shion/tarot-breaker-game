@@ -5,6 +5,7 @@ function fixture(){
   let now=0;const draws=[],stack=[];
   const scope={Math,performance:{now:()=>now},document:{hidden:false},window:{},ready:true,running:true,
     caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
+     caritasChant:{phase:"idle",elapsed:0,since:0,paused:false,sealedAt:0},
     caritasTarotShionBounds:null,images:{idle:{}},
     measureCaritasVisibleMapActor:(_img,h)=>({topOffset:-h*.8,leftOffset:-h*.22,rightOffset:h*.22}),
     caritasInvocation:{phase:"idle",locked:false,elapsed:0,since:0,paused:false,fx:null},
