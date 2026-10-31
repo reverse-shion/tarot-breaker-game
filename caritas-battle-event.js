@@ -72,6 +72,7 @@ let aiCalls=0,aiPanelOpen=false,aiRetryAt=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
+let pendingRegroupNext=null;
 let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
 let firstWrittenDelivered=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
@@ -180,6 +181,7 @@ function resumeCinematic(){
  if(suspended())return;
  window.TarotHoshisunaManifestation?.resume?.();
  root.dataset.paused="false";
+ if(pendingRegroupNext){const next=pendingRegroupNext;pendingRegroupNext=null;next();}
  if(!cinematicTimer)armCinematic();
 }
 function beginBattle(){
@@ -397,15 +399,36 @@ function hidePrompt(){
  prompt.classList.remove("visible");prompt.hidden=true;
  dialogue.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
 }
+// Own the stage before the first line. Free-roam follower positions must never
+// leak into the fixed seven-scene composition. The existing main dialogue and
+// official choice become visible only after the REAL Shiopon is beside Shion.
+function beginRegroup(next){
+ if(story!=="idle"||!armed||busy)return;
+ busy=true;story="regroup";lock();faceCaritas();
+ const regroup=window.TarotHoshisunaManifestation?.regroup;
+ const finish=()=>{
+   if(story!=="regroup"||!owned||done)return;
+   const show=()=>{if(story==="regroup"&&owned){pendingRegroupNext=null;next();}};
+   if(suspended())pendingRegroupNext=show;
+   else show();
+ };
+ if(typeof regroup!=="function"){finish();return;}
+ Promise.resolve().then(()=>regroup()).then(out=>{
+   if(out?.completed===false)console.warn("[Caritas] safe regroup unavailable:",out.reason);
+   finish();
+ }).catch(error=>{console.warn("[Caritas] regroup fallback:",error);finish();});
+}
 function notice(){
  if(story!=="idle"||!armed||!sceneReady()||busy)return;
- busy=true;noticed=true;story="notice";lock();
- faceCaritas(); // face the creature on the very FIRST startled line
- saySequence(NOTICE,()=>{story="choice";showPrompt();});
+ noticed=true;
+ beginRegroup(()=>{
+   story="notice";
+   saySequence(NOTICE,()=>{story="choice";showPrompt();});
+ });
 }
 function offerAgain(){
  if(story!=="idle"||!armed||busy)return;
- busy=true;story="choice";lock();faceCaritas();showPrompt();
+ beginRegroup(()=>{story="choice";showPrompt();});
 }
 function tick(){
  if(story!=="idle"||done||!sceneReady())return;
