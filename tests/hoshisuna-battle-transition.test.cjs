@@ -61,7 +61,7 @@ test('Caritas encounter adds exactly one ground-origin ink overlay within existi
   const layer=f.nodes[0];
   assert.equal(layer.className,'abyss-transition');
   assert.equal(layer.children.length,3);
-  assert.equal(layer.children[1].src,'./assets/events/hoshisuna/battle/abyss-encroachment.svg');
+  assert.equal(layer.children[1].src,'./assets/events/hoshisuna/battle/abyss-encroachment.webp');
   assert.equal(layer.style.props['--abyss-x'],'295px');
   assert.equal(layer.style.props['--abyss-y'],'276.4px');
   assert.equal(layer.children[2].className,'abyss-transition__veil');
@@ -105,7 +105,7 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   const event=fs.readFileSync(path.join(root,'caritas-battle-event.js'),'utf8');
   const html=fs.readFileSync(path.join(root,'hoshisuna-main.html'),'utf8');
   const css=fs.readFileSync(path.join(root,'hoshisuna-battle-transition.css'),'utf8');
-  const svg=fs.readFileSync(path.join(root,'assets/events/hoshisuna/battle/abyss-encroachment.svg'),'utf8');
+  const asset=fs.readFileSync(path.join(root,'assets/events/hoshisuna/battle/abyss-encroachment.webp'));
   assert.match(event,/tarot-breaker:hoshisuna-transition-start/);
   assert.match(event,/stage\("engulfing",2600,beginBattle\)/);
   assert.equal(event.match(/tarot-breaker:hoshisuna-transition-start/g).length,1);
