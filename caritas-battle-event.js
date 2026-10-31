@@ -14,6 +14,16 @@ const OWNER="hoshisuna_caritas_prompt";
 const APPROACH_RADIUS=88,REARM_RADIUS=145;
 const CARITAS_GAZE=Object.freeze({x:1013,y:210});
 const faceCaritas=()=>window.TarotStage?.perform?.({type:"face",actor:"shion",target:CARITAS_GAZE});
+// Turn Shion sideways toward the actual companion, without moving either actor.
+// The stage engine uses the original left/right map sprite.
+function faceShioponSide(){
+ const actors=window.TarotStage?.getState?.().actors;
+ const shion=actors?.shion,companion=actors?.shiopon;
+ if(!Number.isFinite(shion?.x)||!Number.isFinite(shion?.y)||!Number.isFinite(companion?.x))return;
+ const side=companion.x>=shion.x?1:-1;
+ window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:shion.x+side*64,y:shion.y}});
+}
+
 // Latest approved Caritas encounter dialogue (2026-10-31).
 // Each row is one official shared-main dialogue window. Preserve character wording.
 const NOTICE=[
@@ -336,6 +346,21 @@ function unlock(){
 function currentLine(){
  if(!dialogueBusy)return;
  const [speaker,text]=dialogueLines[dialogueIndex]||["",""];
+ // Physical facing is scoped to the seven prebattle scenes only:
+ // Shion acknowledges Shiopon sideways during their exchanges, then
+ // watches Caritas during its warnings, the crisis and the entire chant.
+ if(dialogueLines===NOTICE){
+   if(dialogueIndex===0)faceShioponSide();else faceCaritas();
+ }else if(dialogueLines===INTRO){
+   if(dialogueIndex===1||dialogueIndex===2)faceShioponSide();else faceCaritas();
+ }else if(dialogueLines===SCOUT_REQUEST){
+   if(dialogueIndex>=1)faceShioponSide();else faceCaritas();
+ }else if(dialogueLines===SHIOPON_CALL||dialogueLines===SHIOPON_REPLY){
+   faceShioponSide();
+ }else if(dialogueLines===SCOUT_REPORT||dialogueLines===TAROT_DECLARATION||
+          dialogueLines===INVOCATION||dialogueLines===REVEAL){
+   faceCaritas();
+ }
  dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
