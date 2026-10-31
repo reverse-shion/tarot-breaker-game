@@ -125,9 +125,9 @@ test("tarot spread sits over the head and beside both arms without touching Shio
  assert.equal(left.y,right.y,"side cards must align at arm height");
  assert.ok(head.y<left.y,"top card must be above both arm cards");
  const painting=game.slice(game.indexOf("function paintCaritasTarotSpread("),
-                          game.indexOf("// Invocation-only light:"));
- assert.match(painting,/shadowColor="rgba\(246,224,189,\.63\)"/);
- assert.match(painting,/shadowBlur=11\/camera\.zoom/);
+                          game.indexOf("  // Caritas encounter only: pathfinding"));
+  assert.ok(painting.includes("const sharedGlow=caritasChantStrength()"),"cards must share the invocation pulse");
+  assert.ok(painting.includes("ctx.shadowBlur=(9+sharedGlow*5)/camera.zoom"),"gold halo must track common pulse");
  assert.match(painting,/ctx\.drawImage\(caritasTarotBack/);
 });
 test("one real world actor uses approved atlas and preserves foot position",()=>{
@@ -158,7 +158,7 @@ test("one real world actor uses approved atlas and preserves foot position",()=>
 });
 test("Caritas-specific path avoids Shion, three card rectangles and map walls",()=>{
  const safe=game.slice(game.indexOf("function caritasSafeCollision("),
-                       game.indexOf("// Invocation-only light:"));
+                       game.indexOf("  function caritasChantElapsed(){"));
  assert.match(safe,/collision\.segmentClear\(a,b\)/,"map geometry must remain authoritative");
  assert.match(safe,/refDistance\(p,shion\)>=ACTOR_COLLISION_DISTANCE\+8/);
  assert.match(safe,/cards\.every\(r=>p\.x<r\.left\|\|p\.x>r\.right/);
