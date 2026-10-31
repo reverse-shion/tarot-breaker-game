@@ -71,7 +71,7 @@ test("reduced motion keeps identical steady post-chant actor illumination",()=>{
 test("real actor pass lights Shion after native sprite, keeps sky behind actors, and releases tint caches",()=>{
   const actors=source.slice(source.indexOf("  function drawActors()"),source.indexOf("  function traceRefShape"));
   assert.ok(actors.indexOf("paintCaritasResonanceWorld();")<actors.indexOf("const actors ="));
-  assert.match(actors,/if\(actorId==="shion"\)paintCaritasResonantActor/);
+  assert.match(actors,/if\(actorId==="shion"\|\|actorId==="shiopon"\)paintCaritasResonantActor/);
   assert.match(source,/caritasOwnerStarAtlas=null;caritasResonanceSprites=null;/);
   assert.match(source,/paintCaritasResonantActor\(actor,shioponImages,SHIOPON_DRAW_HEIGHT,/);
 });
