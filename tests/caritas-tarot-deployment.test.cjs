@@ -6,7 +6,8 @@ function fixture(){
   const scope={Math,performance:{now:()=>now},document:{hidden:false,createElement:()=>({getContext:()=>({
        clearRect(){},drawImage(){},fillRect(){},globalCompositeOperation:"source-over"
      })})},window:{},ready:true,running:true,
-    caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotLuminousMask:null,caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
+    caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotLuminousMask:null,
+    caritasRegroup:{phase:"idle",elapsed:0,resolve:null},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
      caritasChant:{phase:"idle",elapsed:0,since:0,paused:false,sealedAt:0},
     caritasTarotShionBounds:null,images:{idle:{}},
     measureCaritasVisibleMapActor:(_img,h)=>({topOffset:-h*.8,leftOffset:-h*.22,rightOffset:h*.22}),
