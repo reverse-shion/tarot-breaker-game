@@ -1,10 +1,9 @@
 /* RE:SONANCE BREAKER — Caritas battle BGM.
- * The map BGM is already hard-muted at the FIRST ink frame by the separate
- * field controller. Keep this transport muted through the 2600ms transition;
- * reveal it immediately when the battle DOM becomes playable.
- *
- * A muted gesture-primed HTMLAudioElement keeps iPhone Safari playback
- * permission and decoding ready. No arbitrary battle-start delay/fade. */
+ * The field BGM hard-mutes at the first Abyss stain. A 650ms dramatic silence
+ * follows, then the battle song begins WHILE the map is dissolving: 1950ms
+ * before the existing 2600ms battle-stage handoff. A real user gesture during
+ * dialogue primes the muted audio so iPhone Safari need not autoplay later.
+ * Battle-start remains a failsafe for restored checkpoints and interruptions. */
 (() => {
   'use strict';
   if (typeof Audio !== 'function') return;
@@ -12,6 +11,7 @@
   const OWNER = 'hoshisuna_caritas_prompt';
   const SOURCE = './assets/battle/bgm/re-sonance-breaker.mp3';
   const VOLUME = 0.38;
+  const ABYSS_MUSIC_CUE_MS = 650;
   // Actual MP3 silence_end at -45 dB: 0.222146s; preserve the first chime.
   const FIRST_SOUND_SEC = 0.25;
   const music = new Audio(SOURCE);
@@ -26,6 +26,12 @@
   let playAttempt = null;
   let playGeneration = 0;
   let cuePending = false;
+  let cueTimer = 0;
+
+  function cancelCue() {
+    if (cueTimer) clearTimeout(cueTimer);
+    cueTimer = 0;
+  }
 
   const permitted = () => !document.hidden && window.TarotAudio?.enabled !== false;
 
@@ -103,6 +109,7 @@
   }
 
   function stopCombat() {
+    cancelCue();
     inBattle = false;
     cuePending = false;
     pauseForBackground();
@@ -127,14 +134,25 @@
     if (event.detail?.source === OWNER) encounter = true;
   });
 
-  window.addEventListener('tarot-breaker:hoshisuna-battle-start', () => {
+  function activateBattleMusic() {
+    cancelCue();
     if (!encounter || inBattle) return;
     inBattle = true;
-    cueOpening();
-    // This event follows the actual battle DOM render: no 650ms wait.
+    cueOpening(); // Reset any elapsed muted-prewarm time to the first chime.
     reveal();
     if (music.paused) startNative();
+  }
+
+  window.addEventListener('tarot-breaker:hoshisuna-transition-start', event => {
+    if (event.detail?.source !== OWNER || !encounter || inBattle || cueTimer) return;
+    // The field-music listener runs synchronously on this same event and
+    // hard-mutes before the timer begins. Music starts while ink is spreading.
+    cueTimer = setTimeout(activateBattleMusic, ABYSS_MUSIC_CUE_MS);
   });
+
+  // The existing battle DOM event is a fallback for restored checkpoints,
+  // missed timers and devices that suspended the transition.
+  window.addEventListener('tarot-breaker:hoshisuna-battle-start', activateBattleMusic);
 
   window.addEventListener('tarot-breaker:hoshisuna-battle-stop', stopCombat);
   window.addEventListener('tarot-breaker:interaction-end', event => {
@@ -144,9 +162,9 @@
   window.addEventListener('pointerdown', gesture, {capture:true, passive:true});
   window.addEventListener('touchstart', gesture, {capture:true, passive:true});
   window.addEventListener('keydown', gesture, true);
-  window.addEventListener('pagehide', pauseForBackground);
+  window.addEventListener('pagehide', () => {cancelCue(); pauseForBackground();});
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) pauseForBackground();
+    if (document.hidden) {cancelCue(); pauseForBackground();}
   });
   music.addEventListener('error', () => console.warn('[Hoshisuna] combat BGM unavailable:', SOURCE));
 })();
