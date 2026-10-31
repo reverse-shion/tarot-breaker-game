@@ -1898,6 +1898,26 @@
     ];
   }
 
+  // Lazily cache a tiny silhouette mask from the approved transparent back.
+  // The tint follows the actual card alpha, NOT a square border or CSS box.
+  function getCaritasTarotLuminousMask(){
+    if(caritasTarotLuminousMask)return caritasTarotLuminousMask;
+    if(!caritasTarotBack||!document.createElement)return null;
+    try{
+      const tile=document.createElement("canvas");tile.width=64;tile.height=96;
+      const g=tile.getContext("2d");
+      if(!g)return null;
+      g.clearRect(0,0,tile.width,tile.height);
+      g.imageSmoothingEnabled=true;
+      g.drawImage(caritasTarotBack,0,0,tile.width,tile.height);
+      g.globalCompositeOperation="source-in";
+      g.fillStyle="rgb(255,245,205)";
+      g.fillRect(0,0,tile.width,tile.height);
+      g.globalCompositeOperation="source-over";
+      caritasTarotLuminousMask=tile;
+      return tile;
+    }catch(error){console.warn("[Caritas] tarot glow mask unavailable:",error);return null;}
+  }
   function paintCaritasTarotSpread(){
     if(!hoshisunaIsolated||!caritasTarotSpread.active||!caritasTarotBack)return;
     const phase=caritasInvocation.phase;
@@ -1908,39 +1928,37 @@
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const lift=reduced?0:(1-entrance)*8;
     const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
+    const sharedGlow=caritasChantStrength();
+    const elapsed=caritasTarotElapsed();
+    const calm=reduced?1:.94+.06*Math.cos(elapsed*Math.PI/1050);
+    const envelope=Math.min(1.35,.20+sharedGlow*.42)*calm;
+    const mask=getCaritasTarotLuminousMask();
     ctx.save();ctx.globalAlpha*=entrance*fade;
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-    // Even before the chant the cards glow faintly; in the chant they share
-    // exactly the same white/pearl-gold pulse as Shion and Shiopon.
-    const sharedGlow=caritasChantStrength();
-    // The original shadow-only treatment disappeared on real iPhone screens.
-    // Paint a genuine diffuse halo BEHIND the official card, and a narrow,
-    // pearl-white luminous frame OVER it. No HTML or extra card sprites.
-    const baseGlow=reduced?.76:.70+.08*Math.sin(caritasTarotElapsed()*Math.PI/1100);
-    const light=Math.min(1.35,baseGlow+sharedGlow*.44);
     for(const card of cards){
       const y=card.y+lift,left=card.x-card.width/2,top=y-card.height/2;
-      const radius=Math.max(card.height*.90,card.width*1.40);
-      if(typeof ctx.createRadialGradient==="function"){
-        const halo=ctx.createRadialGradient(card.x,y,card.width*.20,card.x,y,radius);
-        halo.addColorStop(0,`rgba(255,248,212,${.48*light})`);
-        halo.addColorStop(.42,`rgba(255,221,146,${.28*light})`);
-        halo.addColorStop(1,"rgba(255,218,146,0)");
-        ctx.fillStyle=halo;
-        ctx.fillRect(card.x-radius,y-radius,radius*2,radius*2);
+      // Diffuse light behind the true alpha card silhouette.
+      if(mask){
+        ctx.save();ctx.globalAlpha*=Math.min(.8,.46+sharedGlow*.12);
+        ctx.shadowColor="rgba(255,237,175,.90)";
+        ctx.shadowBlur=(15+sharedGlow*9)/camera.zoom;
+        ctx.drawImage(mask,left,top,card.width,card.height);
+        ctx.restore();
+      }else{
+        // An older iPhone canvas without the small mask still gets a soft halo.
+        const radius=card.height*1.20;
+        const halo=ctx.createRadialGradient(card.x,y,0,card.x,y,radius);
+        halo.addColorStop(0,"rgba(255,243,194,.36)");
+        halo.addColorStop(1,"rgba(255,243,194,0)");
+        ctx.fillStyle=halo;ctx.fillRect(card.x-radius,y-radius,radius*2,radius*2);
       }
-      ctx.shadowColor=`rgba(255,246,207,${.75+Math.min(.23,sharedGlow*.20)})`;
-      ctx.shadowBlur=(13+sharedGlow*8)/camera.zoom;
-      ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+      // Official card back remains the source artwork, aspect and size intact.
       ctx.drawImage(caritasTarotBack,left,top,card.width,card.height);
-      // The luminous border is a separate intentional layer. A plain blurred
-      // image shadow was not visible enough at the card's ~18x27px map size.
-      ctx.save();
-      ctx.shadowBlur=0;
-      ctx.strokeStyle=`rgba(255,253,226,${Math.min(.95,.47+sharedGlow*.30)})`;
-      ctx.lineWidth=.8/camera.zoom;
-      if(typeof ctx.strokeRect==="function")
-        ctx.strokeRect(left-.75,top-.75,card.width+1.5,card.height+1.5);
+      // The IMAGE itself shines: screen a premasked pearl-white tint over the
+      // card face, retaining its motifs and transparency. No strokeRect.
+      ctx.save();ctx.globalCompositeOperation="screen";
+      ctx.globalAlpha*=Math.min(.78,envelope);
+      ctx.drawImage(mask||caritasTarotBack,left,top,card.width,card.height);
       ctx.restore();
     }
     ctx.restore();
@@ -2016,10 +2034,13 @@
     const sharedBeat=reduced?1:.85+.15*Math.cos(elapsed*Math.PI/760);
     // A single crest on "来臨せよ", then sustained connected light while
     // that line is being read. Previously it vanished in 650ms on iPhone.
-    const crest=caritasChant.phase==="sealed"&&!reduced
-      ? .48*(1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/1000)):0;
-    const peak=caritasChant.phase==="sealed"?.26+crest:0;
-    return Math.max(0,Math.min(1.35,ramp*(sharedBeat+peak)));
+    const finished=caritasChant.phase==="sealed";
+    // The united trinity is visually the strongest state and remains bright
+    // while the player reads the second chant line. No rapid fading to nothing.
+    const crest=finished&&!reduced
+      ? .24*(1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/1050)):0;
+    const peak=finished?.66+crest:0;
+    return Math.max(0,Math.min(1.55,ramp*(sharedBeat+peak)));
   }
   // Connected starlight is drawn AFTER cards and actors. This is essential:
   // the previous effects were hidden behind the opaque character sprites.
@@ -2094,16 +2115,20 @@
         ctx.drawImage(atlas,(white?0:1)*32,0,32,32,x-size/2,y-size/2,size,size);
       }
     }
-    // One shared focal crest, near Shiopon rather than on top of the cards.
+    // Five matching star-crowns reach their brightest in the same beat:
+    // Shion + three cards + Shiopon are visible as ONE connected constellation.
     if(caritasChant.phase==="sealed"){
-      const p=Math.max(0,1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/1100));
-      const radius=(16+18*(1-p))/camera.zoom;
-      const halo=ctx.createRadialGradient(fox.x,fox.y,0,fox.x,fox.y,radius);
-      halo.addColorStop(0,`rgba(255,251,226,${.36*p+.10})`);
-      halo.addColorStop(.48,`rgba(255,226,153,${.19*p+.05})`);
-      halo.addColorStop(1,"rgba(255,223,160,0)");
-      ctx.globalAlpha=originalAlpha;
-      ctx.fillStyle=halo;ctx.fillRect(fox.x-radius,fox.y-radius,radius*2,radius*2);
+      const p=Math.max(0,1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/1250));
+      for(const center of nodes){
+        const radius=(24+12*p)/camera.zoom;
+        const halo=ctx.createRadialGradient(center.x,center.y,0,center.x,center.y,radius);
+        halo.addColorStop(0,`rgba(255,253,232,${.38+.17*p})`);
+        halo.addColorStop(.38,`rgba(255,235,172,${.23+.09*p})`);
+        halo.addColorStop(1,"rgba(255,223,160,0)");
+        ctx.globalAlpha=originalAlpha;
+        ctx.fillStyle=halo;
+        ctx.fillRect(center.x-radius,center.y-radius,radius*2,radius*2);
+      }
     }
     ctx.restore();
   }
@@ -3837,7 +3862,7 @@
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;
       caritasInvocation.elapsed=0;caritasInvocation.paused=false;caritasInvocation.since=0;
-      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;caritasOwnerStarAtlas=null;caritasResonanceSprites=null;
+      caritasInvocation.fx=null;caritasOwnerBlendSurface=null;caritasOwnerStarAtlas=null;caritasResonanceSprites=null;caritasTarotLuminousMask=null;
       shiopon.hidden=false;shiopon.rotation=0;
       shiopon.visualOffsetY=0;shiopon.stageOffsetY=0;
       shiopon.frame=0;shiopon.anim=0;shiopon.moving=false;
