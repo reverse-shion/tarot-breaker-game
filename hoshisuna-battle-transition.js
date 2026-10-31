@@ -3,7 +3,7 @@
 (() => {
   'use strict';
   const OWNER = 'hoshisuna_caritas_prompt';
-  const SOURCE = './assets/events/hoshisuna/battle/abyss-encroachment.svg';
+  const SOURCE = './assets/events/hoshisuna/battle/abyss-encroachment.webp';
   const DURATION_MS = 1000;
   const REVEAL_MS = 670;
   let active = null;
