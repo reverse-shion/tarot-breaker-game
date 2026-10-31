@@ -361,6 +361,12 @@ function currentLine(){
           dialogueLines===INVOCATION||dialogueLines===REVEAL){
    faceCaritas();
  }
+ // Pre-transformation resonance: shared particles and shared luminosity.
+ // The last invocation text line seals the resonance before transformation.
+ if(dialogueLines===INVOCATION){
+   if(dialogueIndex===0)window.TarotHoshisunaManifestation?.startChant?.();
+   else if(dialogueIndex===1)window.TarotHoshisunaManifestation?.sealChant?.();
+ }
  dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
