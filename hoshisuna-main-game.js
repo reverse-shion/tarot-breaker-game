@@ -2020,11 +2020,12 @@
       const count=13;
       for(let i=1;i<count;i++){
         const p=i/count,pos=curve(a,b,group,p);
-        const travel=reduced?.50:((time*(group===0?.38:.50)+i/count+index*.12)%1);
-        const wave=reduced?.64:Math.max(.18,1-Math.abs(travel-p)*2.3);
+        const travel=reduced?.50:((time*(group===0?.27:.35)+index*.12-group*.16+1)%1);
+        const distance=Math.min(Math.abs(travel-p),1-Math.abs(travel-p));
+        const wave=reduced?.68:.35+.65*Math.max(0,1-distance*3.7);
         const sparkle=(i+index*3)%5===0;
-        const size=(sparkle?9:5)/camera.zoom;
-        ctx.globalAlpha=originalAlpha*alpha*wave*(sparkle?.56:.32);
+        const size=(sparkle?10:7)/camera.zoom;
+        ctx.globalAlpha=originalAlpha*alpha*wave*(sparkle?.78:.54);
         ctx.drawImage(atlas,(sparkle?0:1)*32,0,32,32,
           pos.x-size/2,pos.y-size/2,size,size);
       }
@@ -2041,7 +2042,7 @@
         const y=center.y+Math.sin(angle)*center.ry*drift;
         const white=i%3===0,size=(white?13:9)/camera.zoom;
         ctx.globalAlpha=originalAlpha*alpha*(white?.76:.46);
-        ctx.drawImage(atlas,white?0:1,0,32,32,x-size/2,y-size/2,size,size);
+        ctx.drawImage(atlas,(white?0:1)*32,0,32,32,x-size/2,y-size/2,size,size);
       }
     }
     // One shared focal crest, near Shiopon rather than on top of the cards.
