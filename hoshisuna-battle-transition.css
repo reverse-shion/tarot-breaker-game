@@ -2,7 +2,7 @@
  * One localized WebKit backdrop blur + growing dark stain. No screen capture. */
 .abyss-transition{
   position:fixed;inset:0;z-index:2300;pointer-events:none;overflow:hidden;
-  isolation:isolate;contain:layout paint;
+  /* No backdrop-isolating parent: blur must sample the LIVE map underneath. */
   --abyss-x:50%;--abyss-y:45%;--abyss-spread:4;
 }
 .abyss-transition__bleed,.abyss-transition__stain{
