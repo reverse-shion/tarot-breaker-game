@@ -2153,8 +2153,20 @@
   }
 
   function paintCaritasResonanceWorld(){
-    // The connected chant effect is drawn in the foreground, after sprites.
-    if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle")return;
+    // During the chant, very lightly subdue the colorful Starroad scenery
+    // BEHIND actors and cards. Otherwise pale star-white light disappears
+    // against the bright gold map on a small iPhone display.
+    if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle"){
+      const strength=caritasChantStrength();
+      if(strength>0){
+        const origin=viewportOrigin();
+        ctx.save();
+        ctx.fillStyle=`rgba(10,13,33,${Math.min(.24,.06+strength*.12)})`;
+        ctx.fillRect(origin.x,origin.y,cssWidth/camera.zoom,cssHeight/camera.zoom);
+        ctx.restore();
+      }
+      return;
+    }
     const elapsed=caritasResonanceElapsed();
     if(elapsed<0||elapsed>=4700)return;
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
