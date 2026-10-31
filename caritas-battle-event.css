@@ -614,3 +614,51 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 }
 
 #caritas-event[data-save-error="true"]{animation:none!important;opacity:1!important}
+
+/* The same object-fit box and alpha silhouette anchor every pose's moving Abyss
+   to the beast itself. No independent ground plume or full-screen darkness. */
+#caritas-event[data-dark-cleared] .cb-abyss{
+ left:2%;top:28%;width:58%;height:60%;
+ opacity:var(--cb-darkness, .94)!important;
+ animation:none!important;transform:none;
+ isolation:isolate;filter:blur(.7px);
+ -webkit-mask-image:var(--cb-caritas-mask);mask-image:var(--cb-caritas-mask);
+ -webkit-mask-size:contain;mask-size:contain;
+ -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+ -webkit-mask-position:center bottom;mask-position:center bottom;
+ transition:opacity .6s ease;
+}
+#caritas-event[data-dark-cleared="false"][data-phase="enemy-turn"] .cb-abyss{
+ animation:cb-counter-lunge 1.05s ease-out both!important;
+}
+#caritas-event[data-dark-cleared] .cb-abyss i{
+ inset:-18%;border-radius:43% 57% 59% 41%;
+ background:radial-gradient(ellipse at 37% 41%,#0c0618 0 17%,#29113fe8 32%,transparent 65%),
+  conic-gradient(from 20deg,transparent,#170923 17%,#422252de 38%,transparent 53%,#10071fee 72%,transparent 94%);
+ mix-blend-mode:normal;opacity:.72;
+ animation:cb-caritas-smoke 8s ease-in-out infinite;
+}
+#caritas-event[data-dark-cleared] .cb-abyss i:nth-child(2){inset:-12%;animation-duration:11s;animation-delay:-4s;animation-direction:reverse;opacity:.64}
+#caritas-event[data-dark-cleared] .cb-abyss i:nth-child(3){inset:4%;animation-duration:6s;animation-delay:-2s;opacity:.6}
+#caritas-event[data-dark-cleared] .cb-abyss i:nth-child(4){inset:-22%;animation-duration:13s;animation-delay:-7s;opacity:.52}
+#caritas-event[data-dark-cleared] .cb-abyss i:nth-child(5){inset:-6%;animation-duration:9s;animation-delay:-5s;animation-direction:reverse;opacity:.58}
+#caritas-event[data-dark-cleared="false"] .cb-beast{
+ filter:drop-shadow(0 0 12px #50317599);
+}
+/* Hard zero overrides old hit/written/special animation opacity and filters.
+   The original uncorrupted illustration becomes visible with the zero meter. */
+#caritas-event[data-dark-cleared="true"] .cb-abyss{opacity:0!important;visibility:hidden}
+#caritas-event[data-dark-cleared="true"] .cb-abyss i{animation:none!important}
+#caritas-event[data-dark-cleared="true"] .cb-beast{
+ animation:none!important;filter:drop-shadow(0 0 14px #dbe3ff8a)!important;
+}
+@keyframes cb-caritas-smoke{
+ 0%,100%{transform:translate(-3%,2%) rotate(-12deg) scale(.94)}
+ 35%{transform:translate(4%,-4%) rotate(38deg) scale(1.12)}
+ 70%{transform:translate(-2%,-1%) rotate(83deg) scale(1.02)}
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-dark-cleared][data-phase="enemy-turn"] .cb-abyss{animation:none!important}
+ #caritas-event[data-dark-cleared] .cb-abyss i{animation:none!important;transform:none}
+ #caritas-event[data-dark-cleared] .cb-abyss{transition:none}
+}

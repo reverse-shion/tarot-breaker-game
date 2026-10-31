@@ -65,6 +65,12 @@ const INVOCATION=[
 ];
 const REVEAL=[["シオリエル","シオン。星獣が完全に喰べられる前に、闇から解き放つ。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
+let caritasView=null,caritasResponse="";
+function renderCaritas(){
+ const visible=getBattleView();
+ caritasView?.update({dark:visible.dark,phase:story,special:record.special.phase,
+  finisher:visible.phase==="finisher",speaking:dialogueBusy&&dialogueLines[dialogueIndex]?.[0]==="カリタス",response:caritasResponse});
+}
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
  let aiLastState=null,aiBusy=false,aiPendingRequest=null,aiPendingText="";
 const AI_CALL_LIMIT=3;
@@ -370,15 +376,16 @@ function currentLine(){
    else if(dialogueIndex===1)window.TarotHoshisunaManifestation?.sealChant?.();
  }
  dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
+ renderCaritas();
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
   dialogue.elements.layer.classList.add('visible');dialogue.elements.button.classList.add('visible');
  }
 }
-function saySequence(lines,callback){
+function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
- dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;
+ dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
  currentLine();
 }
 function advanceDialogue(){
@@ -386,6 +393,7 @@ function advanceDialogue(){
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
+ caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
 function showPrompt(){
@@ -516,6 +524,7 @@ function start(){
 }
 function setText(el,value){el.textContent=String(value);}
 function render(){
+ renderCaritas();
  const s=battle,visible=getBattleView(),reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing&&!specialLocked();
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
@@ -679,7 +688,7 @@ async function sendAiReading(){
    });
    };
    persist({...record,battle:pendingBattle,firstWrittenDelivered:true,aiCalls:aiCalls+1,aiConfirmedCalls:aiCalls+1},completeDelivery);
-  });
+  },"written");
   render();
  }catch(error){
   ui.aiResult.textContent="通信できません。文章とAIの利用回数は保持しています。 "+(error.name==="AbortError"?"応答が時間切れになりました。":error.message);
@@ -730,7 +739,7 @@ function applyOutcome(previous,next,p){
      setText(ui.enemyDamage,"シオリエル HP −"+p.damage);
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
- });
+ },previous.words[2]);
 }
 function finalizeTurn(){
  visualBattle=null;story="battle";root.dataset.phase="battle";
@@ -801,6 +810,7 @@ function init(){
  const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="カリタス";
  const veil=newEl("div","cb-abyss");veil.setAttribute("aria-hidden","true");
  for(let i=0;i<5;i++)veil.append(newEl("i"));
+ caritasView=window.CaritasBattlePresentation?.createView({root,beast,veil})||null;
  const release=newEl("div","cb-release");ui.release=release;release.setAttribute("aria-hidden","true");
  const angel=newEl("div","cb-angel");
  const hero=newEl("div","cb-hud hero");hero.append(newEl("div","","シオリエル"));
