@@ -38,6 +38,35 @@ test("actual map follower steps ahead, faces camera and then manifests before co
  assert.ok(start.indexOf("saySequence(INVOCATION,()=>")<start.indexOf("stage(\"manifestation\",5500"));
  assert.ok(start.indexOf("saySequence(REVEAL,()=>")<start.indexOf("root.hidden=false"));
 });
+test("chant-only synced light uses one warm-white clock and separate 5500ms transformation",()=>{
+ const chant=game.slice(game.indexOf("  function caritasChantElapsed(){"),game.indexOf("  // Existing transformation-only light:"));
+ const cards=game.slice(game.indexOf("  function paintCaritasTarotSpread(){"),game.indexOf("  // Caritas encounter only: pathfinding"));
+ const methods=game.slice(game.indexOf("  if (hoshisunaIsolated) window.TarotHoshisunaManifestation"),game.indexOf("  window.TarotStage = Object.freeze"));
+ const currentLine=event.slice(event.indexOf("function currentLine(){"),event.indexOf("function saySequence("));
+ const world=game.slice(game.indexOf("  function paintCaritasResonanceWorld(){"),game.indexOf("  // Tint the exact current sprite alpha"));
+ assert.match(game,/const caritasChant=\{phase:"idle"/);
+ assert.match(chant,/const sharedBeat=/);
+ assert.match(chant,/const strength=caritasChantStrength\(\)/);
+ assert.match(chant,/const lights=\[/);
+ assert.match(chant,/\.\.\.cards\.map\(/);
+ assert.match(chant,/ctx\.drawImage\(atlas,tile\*32/);
+ assert.doesNotMatch(chant,/getImageData|\.getContext\("2d",\{willReadFrequently:true\}\)/,
+   "chant may not scan actor alpha or build outline surfaces each frame");
+ assert.match(cards,/const sharedGlow=caritasChantStrength\(\)/);
+ assert.match(world,/paintCaritasChantWorld\(\);return;/);
+ assert.match(currentLine,/if\(dialogueIndex===0\)window\.TarotHoshisunaManifestation\?\.startChant\?\.\(\)/);
+ assert.match(currentLine,/else if\(dialogueIndex===1\)window\.TarotHoshisunaManifestation\?\.sealChant\?\.\(\)/);
+ assert.match(methods,/startChant\(\)/);
+ assert.match(methods,/sealChant\(\)/);
+ assert.match(methods,/caritasChant\.phase="idle";caritasChant\.elapsed=0/);
+ assert.match(methods,/caritasChant\.elapsed=caritasChantElapsed\(\);caritasChant\.paused=true/);
+ assert.match(methods,/caritasChant\.since=performance\.now\(\);caritasChant\.paused=false/);
+ assert.match(game,/const CARITAS_MANIFESTATION_DURATION_MS = 5500/);
+ assert.match(game,/const colors=\[\[255,246,223\],\[255,221,165\],\[205,183,225\]\]/);
+ assert.match(game,/sky:caritasOwnerSmooth\(\(elapsed-800\)\/650\)/);
+ assert.doesNotMatch(game,/CSSKeyframes|setInterval\(.*particle/i);
+});
+
 test("world anchored Abyss uses an alpha rim before the 400ms surge and clears immediately",()=>{
  const vm=require("node:vm");
  const update=game.slice(game.indexOf("function updateCaritasAbyss("),game.indexOf("function paintCaritasMiasma("));
