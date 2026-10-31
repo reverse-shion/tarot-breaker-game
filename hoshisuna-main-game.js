@@ -185,6 +185,9 @@
   let caritasResonanceSprites = null;
   let caritasTarotBack = null;
   const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
+  // Pre-transformation only. A single shared clock governs all five lights:
+  // Shion, three tarot cards and Shiopon. The 5500ms transformation is separate.
+  const caritasChant={phase:"idle",elapsed:0,since:0,paused:false,sealedAt:0};
   let caritasTarotShionBounds=null,caritasFoxBounds=null;
   let caritasSafeNavigator=null,caritasSafeNavigatorKey="";
   const CARITAS_OWNER_TILE = 160;
@@ -1858,8 +1861,11 @@
     const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
     ctx.save();ctx.globalAlpha*=entrance*fade;
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-    // A single restrained, soft pearl-gold halo on each original card back.
-    ctx.shadowColor="rgba(246,224,189,.63)";ctx.shadowBlur=11/camera.zoom;
+    // Even before the chant the cards glow faintly; in the chant they share
+    // exactly the same white/pearl-gold pulse as Shion and Shiopon.
+    const sharedGlow=caritasChantStrength();
+    ctx.shadowColor=`rgba(255,243,204,${.42+sharedGlow*.30})`;
+    ctx.shadowBlur=(9+sharedGlow*5)/camera.zoom;
     ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
     for(const card of cards){
       ctx.drawImage(caritasTarotBack,card.x-card.width/2,card.y-card.height/2+lift,card.width,card.height);
@@ -1923,13 +1929,68 @@
     return points.map(p=>({...p}));
   }
 
-  // Invocation-only light: one shared clock, with Shion initiating the response.
+  function caritasChantElapsed(){
+    return caritasChant.elapsed+(caritasChant.paused?0:
+      Math.max(0,performance.now()-caritasChant.since));
+  }
+  // Peak occurs while the final invocation line is visible, BEFORE the 5.5s
+  // transformation begins. Never start a second "synchronization" inside it.
+  function caritasChantStrength(){
+    if(!hoshisunaIsolated||caritasChant.phase==="idle"||caritasInvocation.phase!=="idle")return 0;
+    const elapsed=caritasChantElapsed();
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const ramp=caritasOwnerSmooth(elapsed/600);
+    const sharedBeat=reduced?1:.85+.15*Math.cos(elapsed*Math.PI/760);
+    const peak=caritasChant.phase==="sealed"&&!reduced
+      ? .50*(1-caritasOwnerSmooth((elapsed-caritasChant.sealedAt)/650)):0;
+    return Math.max(0,Math.min(1.35,ramp*(sharedBeat+peak)));
+  }
+  // Lightweight deterministic particles around real world-space locations.
+  // Only a cached 3-tile atlas is drawn; no per-frame sprite contour sampling.
+  function paintCaritasChantWorld(){
+    const strength=caritasChantStrength();
+    if(strength<=0)return;
+    const atlas=getCaritasSkyStarAtlas();
+    if(!atlas)return;
+    const elapsed=caritasChantElapsed();
+    const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const sizes=caritasOwnerMapScale||measureCaritasOwnerMapScale();
+    const cards=caritasTarotBack?caritasTarotLayout(player,DRAW_HEIGHT,
+      caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight):[];
+    const lights=[
+      {x:player.x,y:player.y+player.stageOffsetY-sizes.shionHeight*.53,rx:20,ry:sizes.shionHeight*.42},
+      ...cards.map(card=>({x:card.x,y:card.y,rx:card.width*.68,ry:card.height*.62})),
+      {x:shiopon.x,y:shiopon.y+shiopon.stageOffsetY+shiopon.visualOffsetY-
+        sizes.shioponHeight*.53,rx:18,ry:sizes.shioponHeight*.40}
+    ];
+    ctx.save();ctx.imageSmoothingEnabled=true;
+    const oldAlpha=ctx.globalAlpha;
+    const seconds=reduced?0:elapsed/1000;
+    for(let point=0;point<lights.length;point++){
+      const center=lights[point];
+      // All five lights share the identical clock, palette and brightness.
+      for(let i=0;i<7;i++){
+        const angle=i*2.399963+seconds*.45+(point%2)*.22;
+        const drift=reduced?1:1+.10*Math.sin(seconds*1.5+i*.9);
+        const x=center.x+Math.cos(angle)*center.rx*drift;
+        const y=center.y+Math.sin(angle)*center.ry*drift;
+        const tile=i%7===6?2:i%3===0?1:0;
+        const size=(i%3===0?11:7)/camera.zoom;
+        ctx.globalAlpha=oldAlpha*Math.min(.72,strength*(i%3===0?.48:.34));
+        ctx.drawImage(atlas,tile*32,0,32,32,x-size/2,y-size/2,size,size);
+      }
+    }
+    ctx.restore();
+  }
+
+  // Existing transformation-only light: the large descending light belongs
+  // to the five-and-a-half-second transformation, NOT the earlier chant.
   function caritasResonanceAt(elapsed,reduced=false){
     const fade=1-caritasOwnerSmooth((elapsed-4100)/600);
-    const breath=reduced?1:.88+.12*Math.cos((elapsed-1300)*Math.PI/900);
+    const shared=.70*fade*(reduced?1:.94+.06*Math.cos(elapsed*Math.PI/900));
     return {
-      shion:caritasOwnerSmooth((elapsed-120)/580)*fade*breath,
-      shiopon:caritasOwnerSmooth((elapsed-480)/620)*(1-caritasOwnerSmooth((elapsed-2100)/200))*breath,
+      shion:shared,
+      shiopon:shared*(1-caritasOwnerSmooth((elapsed-2100)/200)),
       sky:caritasOwnerSmooth((elapsed-800)/650)*(1-caritasOwnerSmooth((elapsed-2350)/500)),
       dim:caritasOwnerSmooth(elapsed/700)*fade
     };
@@ -1941,6 +2002,9 @@
   }
 
   function paintCaritasResonanceWorld(){
+    if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle"){
+      paintCaritasChantWorld();return;
+    }
     const elapsed=caritasResonanceElapsed();
     if(elapsed<0||elapsed>=4700)return;
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -2031,7 +2095,8 @@
       const surface=document.createElement("canvas");surface.width=96;surface.height=32;
       const g=surface.getContext("2d");
       if(!g)throw new Error("star atlas context unavailable");
-      const colors=[[255,214,139],[197,164,255],[176,215,255]];
+      // Star-white and pearl gold dominate; lavender is only an accent.
+      const colors=[[255,246,223],[255,221,165],[205,183,225]];
       for(let i=0;i<3;i++){
         const [r,b,v]=colors[i],cx=i*32+16;
         const halo=g.createRadialGradient(cx,16,0,cx,16,14);
@@ -2083,7 +2148,7 @@
       const mote=caritasSkyMoteAt(i,elapsed,x,skyY,catchY);
       if(!mote)continue;
       const color=i%3;
-      const rgb=color===0?"255,219,157":color===1?"206,177,255":"192,222,255";
+      const rgb=color===0?"255,246,223":color===1?"255,221,165":"205,183,225";
       const head=reduced?{x:x+Math.sin(i*2.399963)*23,y:catchY-(i%6)*9}:mote.head;
       if(!reduced){
         const tail=mote.tail;
@@ -3466,6 +3531,20 @@
         ?{completed:true,position:{...from},staged:false,reason:"left-route-blocked"}
         :{completed:false,reason:"left-position-unsafe"});
     },
+    startChant(){
+      if(!ready||!running||!caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
+      if(caritasChant.phase!=="idle")return true;
+      caritasChant.phase="rising";caritasChant.elapsed=0;caritasChant.sealedAt=0;
+      caritasChant.paused=document.hidden;caritasChant.since=performance.now();
+      return true;
+    },
+    sealChant(){
+      if(caritasChant.phase==="idle")return false;
+      if(caritasChant.phase==="sealed")return true;
+      caritasChant.sealedAt=caritasChantElapsed();
+      caritasChant.phase="sealed";
+      return true;
+    },
     deployCards(){
       if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
       caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;
@@ -3523,6 +3602,9 @@
     },
     begin(){
       if(!caritasInvocation.locked||caritasInvocation.phase!=="idle"||!caritasShiorielAtlas)return false;
+      // No second completion beat: invocation is already sealed.
+      caritasChant.phase="idle";caritasChant.elapsed=0;caritasChant.sealedAt=0;
+      caritasChant.paused=false;
       caritasInvocation.phase="charging";caritasInvocation.elapsed=0;
       caritasInvocation.fx=caritasOwnerTransformationAtlas?null:prepareCaritasPixelManifestation();
       caritasInvocation.paused=document.hidden;
@@ -3538,6 +3620,9 @@
       draw();return true;
     },
     pause(){
+      if(caritasChant.phase!=="idle"&&!caritasChant.paused){
+        caritasChant.elapsed=caritasChantElapsed();caritasChant.paused=true;
+      }
       if(caritasTarotSpread.active&&!caritasTarotSpread.paused){
         caritasTarotSpread.elapsed=caritasTarotElapsed();caritasTarotSpread.paused=true;
       }
@@ -3547,6 +3632,9 @@
       window.TarotCaritasManifestationAudio?.pause?.();
     },
     resume(){
+      if(caritasChant.phase!=="idle"&&caritasChant.paused&&!document.hidden){
+        caritasChant.since=performance.now();caritasChant.paused=false;
+      }
       if(caritasTarotSpread.active&&caritasTarotSpread.paused&&!document.hidden){
         caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=false;
       }
@@ -3561,6 +3649,8 @@
       if(stageMotions.shiopon?.caritasSafe)
         settleStageMotion("shiopon",stageMotions.shiopon,{skipped:true});
       caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
+      caritasChant.phase="idle";caritasChant.elapsed=0;
+      caritasChant.sealedAt=0;caritasChant.paused=false;
       caritasSafeNavigator=null;caritasSafeNavigatorKey="";
       caritasTarotSpread.since=0;caritasTarotSpread.paused=false;
       // Reset the actual canvas sprite BEFORE the battle overlay goes away.
@@ -3579,6 +3669,7 @@
     },
     getState:()=>({phase:caritasInvocation.phase,locked:caritasInvocation.locked,
       cardsActive:caritasTarotSpread.active,cardBackReady:!!caritasTarotBack,
+      chantPhase:caritasChant.phase,chantStrength:caritasChantStrength(),
       position:{...shioponRef()},direction:shiopon.dir,atlasReady:!!caritasShiorielAtlas,
       pixelFragments:caritasInvocation.fx?.fragments.length||0,hasSilhouette:!!caritasInvocation.fx?.silhouette,
       ownerAnimationReady:!!caritasOwnerTransformationAtlas,ownerFrameCount:CARITAS_OWNER_FRAME_TIMES_MS.length})
