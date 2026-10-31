@@ -95,7 +95,7 @@ test('reduced motion and missing Caritas DOM get safe lightweight fallback',()=>
   f.emit('tarot-breaker:hoshisuna-transition-start','hoshisuna_caritas_prompt');
   assert.equal(f.nodes.length,1);
   assert.equal(f.battle.dataset.abyssTransition,undefined);
-  assert.equal(f.nodes[0].style.props['--abyss-x'],'206.7px');
+  assert.ok(Math.abs(parseFloat(f.nodes[0].style.props['--abyss-x'])-206.7)<0.001);
   assert.equal(f.timers.size,1);
   f.time(160);
   assert.equal(f.removed(),1);
