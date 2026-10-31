@@ -13,6 +13,7 @@ function fixture({isolated=true,phase="charging",reduced=false}={}){
     drawImage(...args){calls.push({kind:"sprite",args,alpha:this.globalAlpha,op:this.globalCompositeOperation});}};
   const image={},player={x:200,y:300,stageOffsetY:2},shiopon={x:160,y:270,stageOffsetY:3,visualOffsetY:-2};
   const scope={ctx,Math,hoshisunaIsolated:isolated,caritasInvocation:{phase},
+    caritasChant:{phase:"idle"},caritasChantStrength:()=>0,
     caritasInvocationProgress:()=>ms/5500,CARITAS_MANIFESTATION_DURATION_MS:5500,
     window:{matchMedia:()=>({matches:reduced})},viewportOrigin:()=>({x:20,y:30}),
     cssWidth:390,cssHeight:700,camera:{zoom:1.5},player,shiopon,caritasOwnerMapScale:{shionHeight:64,shioponHeight:40},
@@ -21,12 +22,13 @@ function fixture({isolated=true,phase="charging",reduced=false}={}){
   vm.createContext(scope);vm.runInContext(source.slice(source.indexOf("  // Invocation-only light:"),source.indexOf("  // The small sprite atlas")),scope);
   return {scope,ctx,calls,allocations:()=>allocations,at(t){ms=t;calls.length=0;},frame(x){sourceX=x;}};
 }
-test("Shion initiates, Shiopon responds, and both share a deterministic gentle pulse",()=>{
+test("completed chant carries a restrained synchronized glow into the transformation",()=>{
   const {scope:s}=fixture();
-  assert.equal(s.caritasResonanceAt(0).shion,0);
-  assert.ok(s.caritasResonanceAt(400).shion>0);
-  assert.equal(s.caritasResonanceAt(400).shiopon,0);
-  const peak=s.caritasResonanceAt(1300);assert.equal(peak.shion,peak.shiopon);assert.ok(peak.shion>.9);
+  const first=s.caritasResonanceAt(0);
+  assert.ok(first.shion>0&&first.shion<=.7);
+  assert.equal(first.shion,first.shiopon,"post-chant transformation starts with shared color and strength");
+  assert.equal(s.caritasResonanceAt(400).shion,s.caritasResonanceAt(400).shiopon);
+  const peak=s.caritasResonanceAt(1300);assert.equal(peak.shion,peak.shiopon);assert.ok(peak.shion>0&&peak.shion<=.7);
   assert.equal(s.caritasResonanceAt(800).sky,0);assert.ok(s.caritasResonanceAt(1450).sky>.9);
   assert.equal(s.caritasResonanceAt(2850).sky,0);
   for(const ms of [0,400,1400,2200,3000,4300,4700,5500]){
@@ -59,16 +61,17 @@ test("actor illumination follows exact source alpha, frame, foot and size, with 
   assert.equal(f.ctx.globalAlpha,.8);assert.equal(f.ctx.globalCompositeOperation,"source-over");assert.equal(f.ctx.shadowBlur,0);
   f.at(4700);s.paintCaritasResonantActor(s.player,{},78,2,"shion",4700);assert.equal(f.calls.length,0);
 });
-test("reduced motion removes shared pulsation while retaining gradual illumination",()=>{
+test("reduced motion keeps identical steady post-chant actor illumination",()=>{
   const {scope:s}=fixture({reduced:true});
-  assert.equal(s.caritasResonanceAt(1200,true).shion,1);
-  assert.equal(s.caritasResonanceAt(2000,true).shion,1);
-  assert.ok(s.caritasResonanceAt(300,true).shion<1);
+  assert.equal(s.caritasResonanceAt(1200,true).shion,.7);
+  assert.equal(s.caritasResonanceAt(2000,true).shion,.7);
+  assert.equal(s.caritasResonanceAt(300,true).shion,.7);
+  assert.equal(s.caritasResonanceAt(1200,true).shion,s.caritasResonanceAt(1200,true).shiopon);
 });
 test("real actor pass lights Shion after native sprite, keeps sky behind actors, and releases tint caches",()=>{
   const actors=source.slice(source.indexOf("  function drawActors()"),source.indexOf("  function traceRefShape"));
   assert.ok(actors.indexOf("paintCaritasResonanceWorld();")<actors.indexOf("const actors ="));
-  assert.match(actors,/if\(actorId==="shion"\)paintCaritasResonantActor/);
+  assert.match(actors,/if\(actorId==="shion"\|\|actorId==="shiopon"\)paintCaritasResonantActor/);
   assert.match(source,/caritasOwnerStarAtlas=null;caritasResonanceSprites=null;/);
   assert.match(source,/paintCaritasResonantActor\(actor,shioponImages,SHIOPON_DRAW_HEIGHT,/);
 });

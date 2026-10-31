@@ -17,7 +17,8 @@
     <link rel="stylesheet" href="./audio.css?v=0.8.0" />
     <link rel="stylesheet" href="./dialogue.css?v=20260920-dialogue-ui-v3" />
     <link rel="stylesheet" href="./shared-dialogue.css?v=20260920-dialogue-ui-v3" />
-    <link rel="stylesheet" href="./caritas-battle-event.css?v=resonance-special-v15-framing2-fullbleed" />
+    <link rel="stylesheet" href="./star-gate-interaction.css?v=main-official-choice" />
+    <link rel="stylesheet" href="./caritas-battle-event.css?v=main-dialogue-choice-v17" />
     <!-- These existing styles must settle before the first scene frame. -->
     <link rel="stylesheet" href="./gate-polish.css?v=20260916-gate-polish-v2" data-gate-polish="v2" />
     <link rel="stylesheet" href="./layer-order-fix.css?v=20260917-v6" data-layer-order="v6" />
@@ -134,6 +135,14 @@
       <div id="joystick" class="joystick" hidden aria-hidden="true"><div class="joystick__ring"></div><div id="joystick-knob" class="joystick__knob"></div></div>
       <button id="audio-toggle" class="audio-toggle" type="button" aria-label="BGMをオフにする" aria-pressed="true" hidden>♪</button>
       <div id="load-error" class="load-error" hidden role="alert">読み込みに失敗しました。再読み込みしてください。</div>
+      <!-- Alenon/main canonical dialogue markup. CSS/JS source unchanged. -->
+      <section id="dialogue-layer" class="tb-dialogue-layer" hidden aria-live="polite">
+        <button id="dialogue-advance" class="tb-dialogue-window" type="button" aria-label="会話を進める">
+          <span id="dialogue-speaker" class="tb-dialogue-speaker">シオン</span>
+          <span id="dialogue-text" class="tb-dialogue-text"></span>
+          <span id="dialogue-next" class="tb-dialogue-next" aria-hidden="true">▼</span>
+        </button>
+      </section>
     </main>
     <!-- Only shared main movement/renderer prerequisites; no story or save modules. -->
     <script src="./navigation.js?v=0.7.1" defer></script>
@@ -145,13 +154,13 @@
     <script src="./lumiere-sway.js?v=lumiere-local-sway-v1" defer></script>
     <script src="./hoshisuna-caritas-collision.js" defer></script>
     <script src="./caritas-manifestation-audio.js?v=invocation-skyfall-5500-v1" defer></script>
-    <script src="./hoshisuna-main-game.js?v=caritas-pixel-abyss-v14" data-collision-url="./assets/events/hoshisuna/map/starroad-collision.json" data-shiopon-base="./assets/sprites/shiopon/" data-lumiere-base="./assets/sprites/lumiere/" defer></script>
+    <script src="./hoshisuna-main-game.js?v=caritas-stage-and-luminous-trinity-v3" data-collision-url="./assets/events/hoshisuna/map/starroad-collision.json" data-shiopon-base="./assets/sprites/shiopon/" data-lumiere-base="./assets/sprites/lumiere/" defer></script>
     <script src="./shared-dialogue.js?v=20260920-dialogue-ui-v3" defer></script>
     <script src="./caritas-battle-core.js?v=written-reward-v1-20261029" defer></script>
     <!-- Development preview API only; currently publicly reachable. Never use this endpoint for the main release without quota and abuse controls. -->
     <script>window.TAROBRE_CARITAS_API_URL="https://tarot-breaker-api-git-feature-caritas-ai-347c71-re-verse-shion.vercel.app/api/caritas-interpret";</script>
     <script src="./caritas-special-state.js?v=15" defer></script>
-    <script src="./caritas-battle-event.js?v=resonance-special-v15-abyss-scout-v9" defer></script>
+    <script src="./caritas-battle-event.js?v=caritas-stage-and-luminous-trinity-v3" defer></script>
     <script defer>
     // Caritas has only idle blink animation here; no dialogue or movement.
     document.addEventListener("DOMContentLoaded",()=>{

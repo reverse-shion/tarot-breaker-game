@@ -1,4 +1,4 @@
-/* Caritas: map discovery -> main-style choice -> shared dialogue -> tarot battle. */
+/* Caritas: main shared dialogue -> main official interaction choice -> tarot battle. */
 (function(){
 "use strict";
 const params=new URLSearchParams(location.search);
@@ -14,28 +14,56 @@ const OWNER="hoshisuna_caritas_prompt";
 const APPROACH_RADIUS=88,REARM_RADIUS=145;
 const CARITAS_GAZE=Object.freeze({x:1013,y:210});
 const faceCaritas=()=>window.TarotStage?.perform?.({type:"face",actor:"shion",target:CARITAS_GAZE});
-const NOTICE=[["シオン","……待て。あの獣の様子が妙だ。\n黒紫の光が……体を覆っている。"]];
-const INTRO=[
- ["カリタス","……まさか、私がアビスに呑まれるとは……"],
- ["シオン","……大丈夫か。少し、話を聞かせてくれないか。"],
- ["カリタス","……この私が……なんと情けない……近づくでない。"]
+// Turn Shion sideways toward the actual companion, without moving either actor.
+// The stage engine uses the original left/right map sprite.
+function faceShioponSide(){
+ const actors=window.TarotStage?.getState?.().actors;
+ const shion=actors?.shion,companion=actors?.shiopon;
+ if(!Number.isFinite(shion?.x)||!Number.isFinite(shion?.y)||!Number.isFinite(companion?.x))return;
+ const side=companion.x>=shion.x?1:-1;
+ window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:shion.x+side*64,y:shion.y}});
+}
+
+// Latest approved Caritas encounter dialogue (2026-10-31).
+// Each row is one official shared-main dialogue window. Preserve character wording.
+const NOTICE=[
+ ["シオン","……しおぽん、待て。星獣がいる。"],
+ ["シオン","滅多に星の国に来ないのに……何か様子がおかしい。"],
+ ["シオン","黒紫の靄が……体を覆っている。"]
 ];
-// Shiopon's protective move is a response to Caritas, never silent staging.
+const INSPECT_CHOICE="星獣を包む黒紫の靄が揺れている。……調べてみるか？";
+const INTRO=[
+ ["カリタス","く、苦しい……アビスが体を侵蝕するなぞとは……"],
+ ["シオン","あの星獣、言葉が話せるぞ、しおぽん。"],
+ ["しおぽん","ほんとなの！？"],
+ ["カリタス","アビス……どうしてだ……この世の理が崩れたとでもいうのか。"],
+ ["カリタス","まさか……"],
+ ["カリタス","二人とも近づくでない。"],
+ ["カリタス","今の私は何をするか分からんぞ！"]
+];
+// Shiopon's protective move is his own decision after warning, never silent staging.
 const SCOUT_REQUEST=[
- ["しおぽん","……シオンさん。あの子、なんだか苦しそうなの。"],
- ["シオン","待て、しおぽん。あの黒いモヤ……危険だ。近づくな。"],
- ["しおぽん","でも……あの子の声が消えちゃいそうなの。少しだけ、確かめてくるの！"],
+ ["しおぽん","アビスが喰べてる？ そんな事って……"],
+ ["しおぽん","シオンさん。あの子、なんだか苦しそうなの。"],
+ ["しおぽん","……助けなきゃ。"],
+ ["シオン","待て、しおぽん。あの黒い靄……危険だ。近づくな。"],
+ ["しおぽん","でも……あの子、喰べられて声が消えちゃいそうなの。"],
+ ["しおぽん","確かめてくるの！"],
  ["シオン","……しおぽん！"]
 ];
 const SCOUT_REPORT=[
- ["しおぽん","……っ！ あの子のまわり、闇が……！"],
- ["シオン","闇が広がっている……。このままじゃ、あの子まで呑まれる。"]
+ ["しおぽん","……っ！闇が広がる！"],
+ ["シオン","まずい……このままじゃ、あの星獣が呑まれる。"],
+ ["シオン","……何とか助けないと。"]
 ];
-const TAROT_DECLARATION=[["シオン","タロット展開。"]];
+const TAROT_DECLARATION=[["シオン","タロット展開！！"]];
 const SHIOPON_CALL=[["シオン","いくぞ、しおぽん。"]];
 const SHIOPON_REPLY=[["しおぽん","はい、シオンさん。"]];
-const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\nステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]];
-const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]];
+const INVOCATION=[
+ ["シオン","言の葉は鍵、星の光は道しるべ。"],
+ ["シオン","ステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]
+];
+const REVEAL=[["シオリエル","シオン。星獣が完全に喰べられる前に、闇から解き放つ。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
  let aiLastState=null,aiBusy=false,aiPendingRequest=null,aiPendingText="";
@@ -44,6 +72,7 @@ let aiCalls=0,aiPanelOpen=false,aiRetryAt=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
+let pendingRegroupNext=null;
 let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
 let firstWrittenDelivered=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
@@ -152,6 +181,7 @@ function resumeCinematic(){
  if(suspended())return;
  window.TarotHoshisunaManifestation?.resume?.();
  root.dataset.paused="false";
+ if(pendingRegroupNext){const next=pendingRegroupNext;pendingRegroupNext=null;next();}
  if(!cinematicTimer)armCinematic();
 }
 function beginBattle(){
@@ -318,13 +348,33 @@ function unlock(){
 function currentLine(){
  if(!dialogueBusy)return;
  const [speaker,text]=dialogueLines[dialogueIndex]||["",""];
+ // Physical facing is scoped to the seven prebattle scenes only:
+ // Shion acknowledges Shiopon sideways during their exchanges, then
+ // watches Caritas during its warnings, the crisis and the entire chant.
+ if(dialogueLines===NOTICE){
+   if(dialogueIndex===0)faceShioponSide();else faceCaritas();
+ }else if(dialogueLines===INTRO){
+   if(dialogueIndex===1||dialogueIndex===2)faceShioponSide();else faceCaritas();
+ }else if(dialogueLines===SCOUT_REQUEST){
+   if(dialogueIndex>=1)faceShioponSide();else faceCaritas();
+ }else if(dialogueLines===SHIOPON_CALL||dialogueLines===SHIOPON_REPLY){
+   faceShioponSide();
+ }else if(dialogueLines===SCOUT_REPORT||dialogueLines===TAROT_DECLARATION||
+          dialogueLines===INVOCATION||dialogueLines===REVEAL){
+   faceCaritas();
+ }
+ // Pre-transformation resonance: shared particles and shared luminosity.
+ // The last invocation text line seals the resonance before transformation.
+ if(dialogueLines===INVOCATION){
+   if(dialogueIndex===0)window.TarotHoshisunaManifestation?.startChant?.();
+   else if(dialogueIndex===1)window.TarotHoshisunaManifestation?.sealChant?.();
+ }
  dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
   dialogue.elements.layer.classList.add('visible');dialogue.elements.button.classList.add('visible');
  }
- dialogue.elements.button.focus({preventScroll:true});
 }
 function saySequence(lines,callback){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
@@ -332,7 +382,7 @@ function saySequence(lines,callback){
  currentLine();
 }
 function advanceDialogue(){
- if(!dialogueBusy||suspended()||saveBlocked||recovery)return;
+ if(!dialogueBusy||suspended()||saveBlocked||recovery||story==="choice")return;
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
@@ -340,21 +390,45 @@ function advanceDialogue(){
 }
 function showPrompt(){
  if(story!=="choice")return;
+ // Main uses a standalone, official interaction panel for choices;
+ // no extra dialogue window or encounter-specific positioning.
+ dialogue.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
  prompt.hidden=false;prompt.classList.add("visible");
- prompt.querySelector("#caritas-interaction-inspect")?.focus({preventScroll:true});
 }
 function hidePrompt(){
  prompt.classList.remove("visible");prompt.hidden=true;
+ dialogue.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
+}
+// Own the stage before the first line. Free-roam follower positions must never
+// leak into the fixed seven-scene composition. The existing main dialogue and
+// official choice become visible only after the REAL Shiopon is beside Shion.
+function beginRegroup(next){
+ if(story!=="idle"||!armed||busy)return;
+ busy=true;story="regroup";lock();faceCaritas();
+ const regroup=window.TarotHoshisunaManifestation?.regroup;
+ const finish=()=>{
+   if(story!=="regroup"||!owned||done)return;
+   const show=()=>{if(story==="regroup"&&owned){pendingRegroupNext=null;next();}};
+   if(suspended())pendingRegroupNext=show;
+   else show();
+ };
+ if(typeof regroup!=="function"){finish();return;}
+ Promise.resolve().then(()=>regroup()).then(out=>{
+   if(out?.completed===false)console.warn("[Caritas] safe regroup unavailable:",out.reason);
+   finish();
+ }).catch(error=>{console.warn("[Caritas] regroup fallback:",error);finish();});
 }
 function notice(){
  if(story!=="idle"||!armed||!sceneReady()||busy)return;
- busy=true;noticed=true;story="notice";lock();
- faceCaritas(); // face the creature on the very FIRST startled line
- saySequence(NOTICE,()=>{story="choice";showPrompt();});
+ noticed=true;
+ beginRegroup(()=>{
+   story="notice";
+   saySequence(NOTICE,()=>{story="choice";showPrompt();});
+ });
 }
 function offerAgain(){
  if(story!=="idle"||!armed||busy)return;
- busy=true;story="choice";lock();faceCaritas();showPrompt();
+ beginRegroup(()=>{story="choice";showPrompt();});
 }
 function tick(){
  if(story!=="idle"||done||!sceneReady())return;
@@ -378,7 +452,7 @@ function start(){
  const abyss=window.TarotHoshisunaAbyss;
  function recover(reason){
    console.error("[Caritas] map manifestation failed:",reason);
-   manifestation?.clear?.();abyss?.setPhase?.("haze");root.hidden=true;story="choice";showPrompt();
+   manifestation?.clear?.();abyss?.setPhase?.("edge");root.hidden=true;story="choice";showPrompt();
  }
  function deployTarot(){
    saySequence(TAROT_DECLARATION,()=>{
@@ -398,7 +472,7 @@ function start(){
            faceCaritas();
            story="invocation";
            saySequence(INVOCATION,()=>{
-             // Shion addresses his companion, then confronts Caritas together.
+             // Shion continues to face Caritas through the transformation.
              faceCaritas();
              if(!manifestation.begin()){recover("map atlas not ready");return;}
              stage("manifestation",5500,()=>{
@@ -425,8 +499,8 @@ function start(){
      recover("map actor service unavailable");return;
    }
    // Shiopon moves voluntarily after Shion explicitly warns him not to.
-   // The child's haze thickens while Shiopon approaches the danger.
-   abyss?.setPhase?.("surging");
+   // The invaded outline erupts while Shiopon approaches the danger.
+   abyss?.setPhase?.("surge");
    Promise.resolve(manifestation.prepareLeft()).then(prepared=>{
      if(story!=="intro"||!owned||done)return;
      if(!prepared?.completed){recover(prepared?.reason||"scouting route blocked");return;}
@@ -677,7 +751,7 @@ function finishRetreat(){
  clearCheckpoint(()=>{
  clearTimeout(cinematicTimer);cinematicCallback=null;clearTimeout(toastTimer);
  window.TarotHoshisunaManifestation?.clear?.();
- window.TarotHoshisunaAbyss?.setPhase?.("haze");
+ window.TarotHoshisunaAbyss?.setPhase?.("edge");
  dialogue?.hide();root.hidden=true;ui.modal.hidden=true;
  battle=C.newGame();visualBattle=null;modalIndex=-1;committing=false;
  story="idle";busy=false;armed=false;noticed=true;unlock();
@@ -707,15 +781,15 @@ function completeMapReturn(){
 function init(){
  const shell=document.getElementById("game-shell");
  if(!shell||!document.getElementById("hoshisuna-caritas"))return;
- if(!window.TarotDialogueUI?.create){console.error("[Caritas] Shared main dialogue unavailable");return;}
+ if(!window.TarotDialogueUI?.bind){console.error("[Caritas] Shared main dialogue unavailable");return;}
  try{once=sessionStorage.getItem(onceKey)==="1";}catch(_){once=false;}
- prompt=newEl("aside");prompt.id="caritas-interaction-choice";prompt.hidden=true;prompt.setAttribute("aria-label","獣の異変");
- const txt=newEl("div","", "獣を包む黒紫の光が揺れている。……調べてみるか？");txt.id="caritas-interaction-text";
+ prompt=newEl("aside");prompt.id="star-gate-interaction-choice";prompt.hidden=true;prompt.setAttribute("aria-label","獣の異変");
+ const promptText=newEl("div","",INSPECT_CHOICE);promptText.id="star-gate-interaction-text";
  const options=newEl("div","star-gate-interaction-actions");
  const inspect=newEl("button","","調べる");inspect.type="button";inspect.id="caritas-interaction-inspect";
  const leaveBtn=newEl("button","","離れる");leaveBtn.type="button";
  inspect.addEventListener("click",start);leaveBtn.addEventListener("click",leave);
- options.append(inspect,leaveBtn);prompt.append(txt,options);shell.appendChild(prompt);
+ options.append(inspect,leaveBtn);prompt.append(promptText,options);shell.appendChild(prompt);
  root=newEl("section");root.id="caritas-event";root.hidden=true;root.dataset.phase="battle";
  root.setAttribute("aria-label","カリタス 心象共鳴");
  const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");
@@ -810,11 +884,13 @@ function init(){
  written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
  ui.saveProblem=newEl("div","cb-save-problem");ui.saveProblem.hidden=true;
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
- dialogue=window.TarotDialogueUI.create({
-   // Exactly the Garden main dialogue mount and element IDs. The battle UI
-   // also lives in the same shell so its stacking order stays predictable.
-   mount:shell,
-   ids:{layer:"dialogue-layer",advance:"dialogue-advance",speaker:"dialogue-speaker",text:"dialogue-text"},
+ dialogue=window.TarotDialogueUI.bind({
+   // Bind original main/Alenon DOM, never create an encounter-specific frame.
+   layer:document.getElementById("dialogue-layer"),
+   button:document.getElementById("dialogue-advance"),
+   speaker:document.getElementById("dialogue-speaker"),
+   text:document.getElementById("dialogue-text"),
+   next:document.getElementById("dialogue-next"),
    onAdvance:advanceDialogue
  });
  preloadSpecialArt();

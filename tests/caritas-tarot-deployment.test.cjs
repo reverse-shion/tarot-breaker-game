@@ -3,8 +3,12 @@ const test=require("node:test"),assert=require("node:assert/strict"),fs=require(
 const source=fs.readFileSync(path.join(__dirname,"../hoshisuna-main-game.js"),"utf8");
 function fixture(){
   let now=0;const draws=[],stack=[];
-  const scope={Math,performance:{now:()=>now},document:{hidden:false},window:{},ready:true,running:true,
-    caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
+  const scope={Math,performance:{now:()=>now},document:{hidden:false,createElement:()=>({getContext:()=>({
+       clearRect(){},drawImage(){},fillRect(){},globalCompositeOperation:"source-over"
+     })})},window:{},ready:true,running:true,
+    caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotLuminousMask:null,
+    caritasRegroup:{phase:"idle",elapsed:0,resolve:null},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
+     caritasChant:{phase:"idle",elapsed:0,since:0,paused:false,sealedAt:0},
     caritasTarotShionBounds:null,images:{idle:{}},
     measureCaritasVisibleMapActor:(_img,h)=>({topOffset:-h*.8,leftOffset:-h*.22,rightOffset:h*.22}),
     caritasInvocation:{phase:"idle",locked:false,elapsed:0,since:0,paused:false,fx:null},
@@ -13,13 +17,15 @@ function fixture(){
     player:{x:200,y:250,stageOffsetY:3},shiopon:{},draw(){},faceShioponTowardPlayer(){},
     stageMotions:{shiopon:null},settleStageMotion(){},
     caritasOwnerBlendSurface:null,caritasOwnerStarAtlas:null,caritasResonanceSprites:null,
-    ctx:{globalAlpha:.8,shadowBlur:0,save(){stack.push([this.globalAlpha,this.shadowBlur]);},restore(){[this.globalAlpha,this.shadowBlur]=stack.pop();},
+    ctx:{globalAlpha:.8,shadowBlur:0,globalCompositeOperation:"source-over",
+      save(){stack.push([this.globalAlpha,this.shadowBlur,this.globalCompositeOperation]);},
+      restore(){[this.globalAlpha,this.shadowBlur,this.globalCompositeOperation]=stack.pop();},
       drawImage(...args){draws.push({alpha:this.globalAlpha,args});}}};
   vm.createContext(scope);
   vm.runInContext(source.slice(source.indexOf("  function caritasTarotElapsed()"),source.indexOf("  // Invocation-only light:"))+
     source.slice(source.indexOf("  const caritasOwnerSmooth ="),source.indexOf("  // The small sprite atlas"))+
     source.slice(source.indexOf("  if (hoshisunaIsolated) window.TarotHoshisunaManifestation="),source.indexOf("  window.TarotStage = Object.freeze")),scope);
-  return {s:scope,api:scope.window.TarotHoshisunaManifestation,draws,at(ms){now=ms;draws.length=0;}};
+  return {s:scope,api:scope.window.TarotHoshisunaManifestation,draws,official:()=>draws.filter(d=>d.args[0]===scope.caritasTarotBack),at(ms){now=ms;draws.length=0;}};
 }
 test("three portrait cards form head/left-arm/right-arm triangle with a nine pixel gap",()=>{
   const {s}=fixture();
@@ -45,18 +51,18 @@ test("three portrait cards form head/left-arm/right-arm triangle with a nine pix
 test("deployment uses exactly the provided back three times, retains aspect/alpha and obeys pause before charging",()=>{
   const f=fixture(),s=f.s;assert.equal(f.api.deployCards(),true);assert.equal(f.api.deployCards(),false);
   s.paintCaritasTarotSpread();assert.equal(f.draws.length,0);
-  f.at(225);s.paintCaritasTarotSpread();assert.equal(f.draws.length,3);
-  for(const d of f.draws){assert.equal(d.args[0],s.caritasTarotBack);assert.equal(d.alpha,.4);assert.equal(d.args[3]/d.args[4],2/3);}
+  f.at(225);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  for(const d of f.official()){assert.equal(d.alpha,.4);assert.equal(d.args[3]/d.args[4],2/3);}
   const before=JSON.stringify(f.draws);f.api.pause();f.at(9000);s.paintCaritasTarotSpread();
   assert.equal(JSON.stringify(f.draws),before,"background time cannot skip deployment");
   s.document.hidden=true;f.api.resume();assert.equal(s.caritasTarotSpread.paused,true);
   s.document.hidden=false;f.api.resume();f.at(9225);s.paintCaritasTarotSpread();
-  assert.equal(f.draws.length,3);assert.ok(f.draws.every(d=>d.alpha===.8));
+  assert.equal(f.official().length,3);assert.ok(f.official().every(d=>d.alpha===.8));
   assert.equal(s.ctx.globalAlpha,.8);assert.equal(s.ctx.shadowBlur,0);
 });
 test("cards stay through the chant, fade before quiet hold, and disappear on reveal/recovery/map return",()=>{
-  const f=fixture(),s=f.s;f.api.deployCards();f.at(10000);s.paintCaritasTarotSpread();assert.equal(f.draws.length,3);
-  s.caritasInvocation.phase="charging";s.progress=4400/5500;f.at(10100);s.paintCaritasTarotSpread();assert.ok(f.draws.every(d=>Math.abs(d.alpha-.4)<1e-9));
+  const f=fixture(),s=f.s;f.api.deployCards();f.at(10000);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  s.caritasInvocation.phase="charging";s.progress=4400/5500;f.at(10100);s.paintCaritasTarotSpread();assert.ok(f.official().every(d=>Math.abs(d.alpha-.4)<1e-9));
   s.progress=4700/5500;f.at(10200);s.paintCaritasTarotSpread();assert.equal(f.draws.length,0);
   s.caritasInvocation.phase="revealed";f.at(10300);s.paintCaritasTarotSpread();assert.equal(f.draws.length,0);
   f.api.clear();assert.equal(s.caritasTarotSpread.active,false);assert.equal(s.caritasTarotSpread.elapsed,0);
