@@ -490,7 +490,9 @@ function start(){
                if(!manifestation.reveal()){recover("reveal interrupted");return;}
                story="manifested";root.dataset.phase="manifested";render();
                saySequence(REVEAL,()=>{
-                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;stage("engulfing",2600,beginBattle);
+                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;
+                  window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-transition-start",{detail:{source:OWNER}}));
+                  stage("engulfing",2600,beginBattle);
                });
              });
            });
