@@ -56,46 +56,68 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
 }
+function advanceNotice(f){
+ for(const t of ['……しおぽん、待て。星獣がいる。','滅多に星の国に来ないのに……何か様子がおかしい。','黒紫の靄が……体を覆っている。']){
+  assert.equal(f.state().story,'notice');
+  assert.equal(f.lines.at(-1).speaker,'シオン');
+  assert.equal(f.lines.at(-1).text,t);
+  f.pointer.advance();
+ }
+ assert.equal(f.state().story,'choice');
+}
 async function advanceScoutToTarot(f){
- // Three existing introduction lines. Shiopon notices the threat himself.
- for(let i=0;i<3;i++)f.pointer.advance();
- assert.match(f.lines.at(-1).text,/あの子、なんだか苦しそうなの/);
- assert.equal(f.lines.at(-1).speaker,"しおぽん");
- assert.equal(f.pointer.leftPrepared,undefined,"no silent movement after inspection");
- f.pointer.advance();
- assert.match(f.lines.at(-1).text,/危険だ。近づくな/);
- assert.equal(f.lines.at(-1).speaker,"シオン");
- assert.equal(f.pointer.leftPrepared,undefined);
- f.pointer.advance();
- assert.match(f.lines.at(-1).text,/少しだけ、確かめてくるの/);
- assert.equal(f.lines.at(-1).speaker,"しおぽん");
- assert.equal(f.pointer.leftPrepared,undefined);
- f.pointer.advance();
- assert.equal(f.lines.at(-1).text,"……しおぽん！");
- assert.equal(f.pointer.leftPrepared,undefined,"the child warns BEFORE the scouting move");
- f.pointer.advance();
- assert.equal(f.pointer.leftPrepared,1,"Shiopon leaves only after his own decision and Shion's warning");
- assert.equal(f.pointer.abyss,"surge","Abyss must swell while Shiopon walks");
+ const introduction=[
+  ['カリタス','く、苦しい……アビスが体を侵蝕するなぞとは……'],
+  ['シオン','あの星獣、言葉が話せるぞ、しおぽん。'],
+  ['しおぽん','ほんとなの！？'],
+  ['カリタス','アビス……どうしてだ……この世の理が崩れたとでもいうのか。'],
+  ['カリタス','まさか……'],
+  ['カリタス','二人とも近づくでない。'],
+  ['カリタス','今の私は何をするか分からんぞ！']
+ ];
+ const decision=[
+  ['しおぽん','アビスが喰べてる？ そんな事って……'],
+  ['しおぽん','シオンさん。あの子、なんだか苦しそうなの。'],
+  ['しおぽん','……助けなきゃ。'],
+  ['シオン','待て、しおぽん。あの黒い靄……危険だ。近づくな。'],
+  ['しおぽん','でも……あの子、喰べられて声が消えちゃいそうなの。'],
+  ['しおぽん','確かめてくるの！'],
+  ['シオン','……しおぽん！']
+ ];
+ for(const [speaker,t] of [...introduction,...decision]){
+  assert.equal(f.lines.at(-1).speaker,speaker);
+  assert.equal(f.lines.at(-1).text,t);
+  assert.equal(f.pointer.leftPrepared,undefined,'Shiopon must not move during dialogue');
+  f.pointer.advance();
+ }
+ assert.equal(f.pointer.leftPrepared,1,'scouting begins after his own decision and Shion warning');
+ assert.equal(f.pointer.abyss,'surge');
  await new Promise(resolve=>setImmediate(resolve));
- assert.equal(f.pointer.abyss,"engulfed");
- assert.equal(f.pointer.stageCommands.at(-1).actor,"shiopon");
- assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shiopon faces the child while scouting");
- assert.match(f.lines.at(-1).text,/あの子のまわり、闇が/);
- f.pointer.advance();
- assert.match(f.lines.at(-1).text,/闇が広がっている/);
- f.pointer.advance();
- assert.equal(f.lines.at(-1).text,"タロット展開。");
+ assert.equal(f.pointer.abyss,'engulfed');
+ assert.equal(f.pointer.stageCommands.at(-1).actor,'shiopon');
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210);
+ const reaction=[
+  ['しおぽん','……っ！闇が広がる！'],
+  ['シオン','まずい……このままじゃ、あの星獣が呑まれる。'],
+  ['シオン','……何とか助けないと。']
+ ];
+ for(const [speaker,t] of reaction){
+  assert.equal(f.lines.at(-1).speaker,speaker);
+  assert.equal(f.lines.at(-1).text,t);
+  f.pointer.advance();
+ }
+ assert.equal(f.lines.at(-1).text,'タロット展開！！');
  assert.equal(f.pointer.cards,undefined);
  f.pointer.advance();
 }
 async function enter(f){
  f.pointer.actor={x:1013,y:305};f.tick();
- assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must face Caritas from the very first notice");
- f.pointer.advance();
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210);
+ advanceNotice(f);
  f.button(f.shell.querySelector('#star-gate-interaction-choice'),'調べる').click();
  await advanceScoutToTarot(f);
  assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
- f.advanceTime(649);assert.equal(f.lines.at(-1).text,'タロット展開。');
+ f.advanceTime(649);assert.equal(f.lines.at(-1).text,'タロット展開！！');
  f.advanceTime(1);assert.equal(f.lines.at(-1).text,'いくぞ、しおぽん。');
  assert.equal(f.pointer.walks,undefined);
  f.pointer.advance();
@@ -106,20 +128,23 @@ async function enter(f){
  f.pointer.advance();await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.state().story,'invocation');
  assert.equal(f.pointer.front,true);
- assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must keep looking at Caritas throughout the chant");
- assert.equal(f.pointer.stageCommands.filter(x=>x.actor==="shion"&&x.target==="shiopon").length,0,
-   "Shion cannot turn toward Shiopon during the chant");
- assert.match(f.lines.at(-1).text,/来臨せよ、汝ーーシオリエル/);
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210);
+ assert.equal(f.pointer.stageCommands.filter(x=>x.actor==="shion"&&x.target==="shiopon").length,0);
+ assert.equal(f.lines.at(-1).text,'言の葉は鍵、星の光は道しるべ。');
  const root=f.shell.querySelector('#caritas-event');
  assert.equal(root.hidden,true);
  f.pointer.advance();
+ assert.equal(f.lines.at(-1).text,'ステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！');
+ assert.equal(f.state().story,'invocation');
+ f.pointer.advance();
  assert.equal(f.state().story,'manifestation');
  assert.equal(f.pointer.mapPhase,'charging');
- assert.equal(f.pointer.stageCommands.at(-1).target.y,210,"Shion must turn back to Caritas before transformation");
+ assert.equal(f.pointer.stageCommands.at(-1).target.y,210);
  f.advanceTime(5499);assert.equal(f.state().story,'manifestation');
  f.advanceTime(1);assert.equal(f.state().story,'manifested');
  assert.equal(f.pointer.mapPhase,'revealed');
  assert.equal(f.lines.at(-1).speaker,'シオリエル');
+ assert.equal(f.lines.at(-1).text,'シオン。星獣が完全に喰べられる前に、闇から解き放つ。');
  assert.equal(root.hidden,true);
  f.pointer.advance();assert.equal(f.state().story,'engulfing');
  assert.equal(root.hidden,false);
@@ -163,8 +188,7 @@ function read(f,root,words){
 test('map notices Caritas first, uses main prompt, leaving does not re-trigger',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
  assert.equal(f.state().story,'notice');
- assert.equal(f.lines[0].speaker,'シオン');f.pointer.advance();
- assert.equal(f.state().story,'choice');
+ advanceNotice(f);
  f.button(f.shell,'離れる').click();
  assert.equal(f.state().story,'idle');assert.equal(f.state().armed,false);
  f.pointer.actor={x:90,y:100};f.tick();
@@ -176,18 +200,18 @@ test('first Shion speech uses shared main dialogue; choices use main official pa
  assert.equal(f.lines.at(-1).speaker,'シオン');
  assert.equal(f.shell.querySelector('#dialogue-advance').focusCalls||0,0,'first Shion speech must not trigger visible focus outline');
  const count=f.lines.length;
- f.pointer.advance();
- const choice=f.shell.querySelector('#star-gate-interaction-choice');
+  advanceNotice(f);
+  const choice=f.shell.querySelector('#star-gate-interaction-choice');
  assert.equal(f.shell.querySelector('#dialogue-advance').focusCalls||0,0,'conversation does not force focus');
  assert.equal(choice.querySelector('#caritas-interaction-inspect').focusCalls||0,0,'original main choice does not force focus');
  assert.equal(f.pointer.dialogueOptions,options,'original shared controller throughout');
- assert.equal(f.lines.length,count,'choice does not add extra dialogue speech');
+ assert.equal(f.lines.length,count+2,'three notice lines before choice');
  assert.match(choice.querySelector('#star-gate-interaction-text').textContent,/調べてみるか/);
  assert.equal(choice.style.left,undefined,'main stylesheet owns all choice positioning');
  assert.equal(choice.style.width,undefined);
  assert.equal(choice.style.bottom,undefined);
  f.pointer.advance();f.pointer.advance();
- assert.equal(f.state().story,'choice');assert.equal(f.lines.length,count,'dialogue taps cannot auto-select inspection');
+ assert.equal(f.state().story,'choice');assert.equal(f.lines.length,count+2,'dialogue taps cannot auto-select inspection');
  f.button(choice,'離れる').click();
  assert.equal(f.state().dialogueBusy,false);assert.equal(choice.hidden,true);
  f.pointer.actor={x:90,y:100};f.tick();f.pointer.actor={x:1013,y:305};f.tick();
@@ -200,8 +224,8 @@ test('first Shion speech uses shared main dialogue; choices use main official pa
 test('real shared dialogue remains hidden during native main choice activation',()=>{
  for(const key of ['Enter',' ','Spacebar'])for(const label of ['調べる','離れる']){
   const f=fixture({reduced:true,realDialogue:true});f.pointer.actor={x:1013,y:305};f.tick();
-  f.shell.querySelector('#dialogue-advance').click();
-  assert.equal(f.state().story,'choice');
+  for(let i=0;i<3;i++)f.shell.querySelector('#dialogue-advance').click();
+   assert.equal(f.state().story,'choice');
   const choice=f.shell.querySelector('#star-gate-interaction-choice');
   assert.equal(choice.querySelector('.star-gate-interaction-actions').listeners.keydown,undefined,'no custom choice key handler');
   let prevented=false;
@@ -587,21 +611,21 @@ test('dialogue-only release keeps legacy farewell, with visible retry before exp
 });
 
 test('tarot deployment finishes before the separate buddy call and pauses across background/BFCache',async()=>{
- const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();
- f.button(f.shell,'調べる').click();
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();advanceNotice(f);
+  f.button(f.shell,'調べる').click();
  await advanceScoutToTarot(f);
  assert.equal(f.state().story,'tarot-deploy');assert.equal(f.pointer.cards,true);
  f.advanceTime(300);f.visibility(true);f.page('pagehide');f.advanceTime(5000);
- f.pointer.advance();assert.equal(f.lines.at(-1).text,'タロット展開。');assert.equal(f.pointer.walks,undefined);
- f.visibility(false);f.advanceTime(5000);assert.equal(f.lines.at(-1).text,'タロット展開。');
- f.page('pageshow');f.advanceTime(349);assert.equal(f.lines.at(-1).text,'タロット展開。');
+ f.pointer.advance();assert.equal(f.lines.at(-1).text,'タロット展開！！');assert.equal(f.pointer.walks,undefined);
+ f.visibility(false);f.advanceTime(5000);assert.equal(f.lines.at(-1).text,'タロット展開！！');
+ f.page('pageshow');f.advanceTime(349);assert.equal(f.lines.at(-1).text,'タロット展開！！');
  f.advanceTime(1);assert.equal(f.lines.at(-1).text,'いくぞ、しおぽん。');
  assert.equal(f.lines.filter(l=>l.text==='いくぞ、しおぽん。').length,1);
  f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'しおぽん');assert.equal(f.pointer.walks,1);
 });
 test('unavailable card deployment recovers the prompt without advancing to chant or leaving cards',async()=>{
  const f=fixture();f.window.TarotHoshisunaManifestation.deployCards=()=>false;
- f.pointer.actor={x:1013,y:305};f.tick();f.pointer.advance();f.button(f.shell,'調べる').click();
+ f.pointer.actor={x:1013,y:305};f.tick();advanceNotice(f);f.button(f.shell,'調べる').click();
  await advanceScoutToTarot(f);
  assert.equal(f.state().story,'choice');assert.equal(f.pointer.cards,false);assert.equal(f.pointer.walks,undefined);
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
