@@ -115,7 +115,7 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.match(html,/hoshisuna-battle-transition\.css\?v=abyss-transition-v1/);
   assert.match(html,/hoshisuna-battle-transition\.js\?v=abyss-transition-v1/);
   assert.match(html,/data-bgm-url="\.\/assets\/audio\/bgm\/hoshisuna-star-memory-time-prayer\.mp3"/);
-  assert.match(html,/hoshisuna-battle-audio\.js\?v=2/);
+  assert.match(html,/hoshisuna-battle-audio\.js\?v=3/);
   assert.ok(!/html2canvas|canvas\.toDataURL|canvas\.toBlob/.test(css+fs.readFileSync(path.join(root,'hoshisuna-battle-transition.js'),'utf8')));
   assert.match(css,/prefers-reduced-motion/);
   assert.match(css,/#160e25/);
