@@ -53,7 +53,7 @@ test('approach and prebattle dialogue stay audible; only combat transition fades
   assert.equal(f.calls.length, 0, 'opening Caritas dialogue must not mute the field');
   f.emit('tarot-breaker:hoshisuna-battle-start');
   assert.equal(f.calls.length, 1);
-  assert.deepEqual(Array.from(f.calls[0].fade[0]), [0, 650]);
+  assert.deepEqual(Array.from(f.calls[0].fade[0]), [0, 650, false]);
   assert.equal(f.timers.size, 1);
   f.runTimers();
   assert.equal(f.calls[0].hold, 1, 'combat silence uses iOS-native mute');
