@@ -14,29 +14,46 @@ const OWNER="hoshisuna_caritas_prompt";
 const APPROACH_RADIUS=88,REARM_RADIUS=145;
 const CARITAS_GAZE=Object.freeze({x:1013,y:210});
 const faceCaritas=()=>window.TarotStage?.perform?.({type:"face",actor:"shion",target:CARITAS_GAZE});
-const NOTICE=[["シオン","……待て。あの獣の様子が妙だ。\n黒紫の光が……体を覆っている。"]];
-const INSPECT_CHOICE="獣を包む黒紫の光が揺れている。……調べてみるか？";
-const INTRO=[
- ["カリタス","……まさか、私がアビスに呑まれるとは……"],
- ["シオン","……大丈夫か。少し、話を聞かせてくれないか。"],
- ["カリタス","……この私が……なんと情けない……近づくでない。"]
+// Latest approved Caritas encounter dialogue (2026-10-31).
+// Each row is one official shared-main dialogue window. Preserve character wording.
+const NOTICE=[
+ ["シオン","……しおぽん、待て。星獣がいる。"],
+ ["シオン","滅多に星の国に来ないのに……何か様子がおかしい。"],
+ ["シオン","黒紫の靄が……体を覆っている。"]
 ];
-// Shiopon's protective move is a response to Caritas, never silent staging.
+const INSPECT_CHOICE="星獣を包む黒紫の靄が揺れている。……調べてみるか？";
+const INTRO=[
+ ["カリタス","く、苦しい……アビスが体を侵蝕するなぞとは……"],
+ ["シオン","あの星獣、言葉が話せるぞ、しおぽん。"],
+ ["しおぽん","ほんとなの！？"],
+ ["カリタス","アビス……どうしてだ……この世の理が崩れたとでもいうのか。"],
+ ["カリタス","まさか……"],
+ ["カリタス","二人とも近づくでない。"],
+ ["カリタス","今の私は何をするか分からんぞ！"]
+];
+// Shiopon's protective move is his own decision after warning, never silent staging.
 const SCOUT_REQUEST=[
- ["しおぽん","……シオンさん。あの子、なんだか苦しそうなの。"],
- ["シオン","待て、しおぽん。あの黒いモヤ……危険だ。近づくな。"],
- ["しおぽん","でも……あの子の声が消えちゃいそうなの。少しだけ、確かめてくるの！"],
+ ["しおぽん","アビスが喰べてる？ そんな事って……"],
+ ["しおぽん","シオンさん。あの子、なんだか苦しそうなの。"],
+ ["しおぽん","……助けなきゃ。"],
+ ["シオン","待て、しおぽん。あの黒い靄……危険だ。近づくな。"],
+ ["しおぽん","でも……あの子、喰べられて声が消えちゃいそうなの。"],
+ ["しおぽん","確かめてくるの！"],
  ["シオン","……しおぽん！"]
 ];
 const SCOUT_REPORT=[
- ["しおぽん","……っ！ あの子のまわり、闇が……！"],
- ["シオン","闇が広がっている……。このままじゃ、あの子まで呑まれる。"]
+ ["しおぽん","……っ！闇が広がる！"],
+ ["シオン","まずい……このままじゃ、あの星獣が呑まれる。"],
+ ["シオン","……何とか助けないと。"]
 ];
-const TAROT_DECLARATION=[["シオン","タロット展開。"]];
+const TAROT_DECLARATION=[["シオン","タロット展開！！"]];
 const SHIOPON_CALL=[["シオン","いくぞ、しおぽん。"]];
 const SHIOPON_REPLY=[["しおぽん","はい、シオンさん。"]];
-const INVOCATION=[["シオン","言の葉は鍵、星の光は道しるべ。\nステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]];
-const REVEAL=[["シオリエル","シオン。恐れの奥に、まだ消えていない願いがある。"]];
+const INVOCATION=[
+ ["シオン","言の葉は鍵、星の光は道しるべ。"],
+ ["シオン","ステラン、ステラン、ステランーーー 来臨せよ、汝ーーシオリエル！"]
+];
+const REVEAL=[["シオリエル","シオン。星獣が完全に喰べられる前に、闇から解き放つ。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
  const aiSessionId=(globalThis.crypto?.randomUUID?.()||"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0"));
  let aiLastState=null,aiBusy=false,aiPendingRequest=null,aiPendingText="";
