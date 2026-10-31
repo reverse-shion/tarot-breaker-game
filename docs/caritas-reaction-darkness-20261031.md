@@ -39,3 +39,13 @@ Smoke opacity follows the visible meter continuously (0.94 at 100, 0 at zero); i
 - Shared dialogue and all locked files remain unchanged.
 - Pure projection/async-image tests, full existing suite and all contract checks; independent review.
 - Real iPhone Safari: start with dense mobile smoke; deliver differing card readings/personal words; see reaction and counterattack; finish -> zero -> original normal image, farewell -> map, no dark residue. This remains PENDING until human confirmation. Desktop browser QA is not DEVICE VERIFIED.
+
+## Verification evidence
+
+- Main baseline: 536/536 Node tests PASS; original sandbox: 695/695 PASS; final candidate: 701/701 PASS, zero failures and no altered existing tests.
+- Asset/background/audio validators and JS syntax PASS.
+- Independent review identified an initial alpha-mask position/counter-lunge mismatch. Fixed before final review: identical 2% left / 58% width / 28% top / 60% height, `center bottom`, shared counter-lunge and Reduced Motion override. Re-review PASS.
+- New optional `tests/caritas-reaction-browser.cjs` runs the real dev battle in Chromium at 390×844 and 844×390, normal and Reduced Motion. It validates all eight poses, actual card-reading/reply/counter, exact image/mask alignment, moving/static smoke, held visible meter during strike, actual special purification -> zero -> original art, and reload. Browser-only test writes the existing isolated dev battle key; external network calls are blocked.
+- Browser observation prompted an explicit zero-state `transition:none`: smoke is immediately opacity zero and hidden, with no leftover opacity transition. Original normal artwork and dense start were visually inspected.
+- The older optional `tests/caritas-special-browser.cjs` has an existing early cut-in left-edge assertion failure on both original sandbox e48b1e9 and this candidate in the same browser environment. Its assertion runs while the existing entry translation is still active. No cut-in source/test was changed or weakened; this separate baseline discrepancy is not reported as a pass.
+- Physical iPhone Safari verification and integration/main merge remain PENDING / not authorized. Desktop Chromium is not real-device evidence.

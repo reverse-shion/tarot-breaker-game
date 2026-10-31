@@ -647,7 +647,7 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 }
 /* Hard zero overrides old hit/written/special animation opacity and filters.
    The original uncorrupted illustration becomes visible with the zero meter. */
-#caritas-event[data-dark-cleared="true"] .cb-abyss{opacity:0!important;visibility:hidden}
+#caritas-event[data-dark-cleared="true"] .cb-abyss{opacity:0!important;visibility:hidden;transition:none}
 #caritas-event[data-dark-cleared="true"] .cb-abyss i{animation:none!important}
 #caritas-event[data-dark-cleared="true"] .cb-beast{
  animation:none!important;filter:drop-shadow(0 0 14px #dbe3ff8a)!important;
