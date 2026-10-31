@@ -32,8 +32,8 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  const documentListeners={},windowListeners={},animations=[];
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
- const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},advance:null,colliding:true,dialogueOptions:null};
- const window={innerHeight:844,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+ const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},companion:{x:950,y:305},advance:null,colliding:true,dialogueOptions:null};
+ const window={innerHeight:844,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
   TarotDialogueUI:{bind:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:o.layer,button:o.button}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
@@ -56,6 +56,75 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
 }
+function assertShionSideFacing(f,side=-1){
+ const last=f.pointer.stageCommands.at(-1);
+ assert.equal(last.type,'face');
+ assert.equal(last.actor,'shion');
+ assert.equal(last.target.x,f.pointer.actor.x+side*64,'Shion must face left/right toward Shiopon');
+ assert.equal(last.target.y,f.pointer.actor.y,'sideways means a horizontal facing vector');
+}
+function assertShionWatchingCaritas(f){
+ const last=f.pointer.stageCommands.at(-1);
+ assert.equal(last.type,'face');
+ assert.equal(last.actor,'shion');
+ assert.equal(last.target.x,1013);
+ assert.equal(last.target.y,210);
+}
+test('prebattle conversation turns Shion sideways to Shiopon without moving actors',async()=>{
+ const f=fixture();
+ f.pointer.actor={x:1013,y:305};
+ f.pointer.companion={x:950,y:500}; // Vertical offset must not cause an up/down facing.
+ f.tick();
+ assertShionSideFacing(f);
+ f.pointer.advance();assertShionWatchingCaritas(f);
+ f.pointer.advance();assertShionWatchingCaritas(f);
+ f.pointer.advance();
+ f.button(f.shell,'調べる').click();
+ assertShionWatchingCaritas(f);
+ f.pointer.advance(); // Shion: "言葉が話せるぞ、しおぽん。"
+ assertShionSideFacing(f);
+ f.pointer.advance(); // Shiopon: "ほんとなの！？"
+ assertShionSideFacing(f);
+ f.pointer.advance(); // Caritas interrupts
+ assertShionWatchingCaritas(f);
+ for(let i=0;i<4;i++)f.pointer.advance(); // To Shiopon's first observation
+ assertShionWatchingCaritas(f);
+ f.pointer.advance(); // Shiopon: "シオンさん。あの子、なんだか苦しそうなの。"
+ assertShionSideFacing(f);
+ f.pointer.advance(); // Shiopon: "……助けなきゃ。"
+ assertShionSideFacing(f);
+ f.pointer.advance(); // Shion's warning
+ assertShionSideFacing(f);
+ f.pointer.advance(); // Shiopon's explanation
+ assertShionSideFacing(f);
+ f.pointer.advance(); // "確かめてくるの！"
+ assertShionSideFacing(f);
+ f.pointer.advance(); // Shion: "……しおぽん！"
+ assertShionSideFacing(f);
+ assert.equal(f.pointer.leftPrepared,undefined,'direction alone never starts movement');
+ f.pointer.advance(); // Shiopon moves only after the warning
+ assert.equal(f.pointer.leftPrepared,1);
+ await new Promise(resolve=>setImmediate(resolve));
+ assertShionWatchingCaritas(f); // Abyss swells
+ f.pointer.advance();assertShionWatchingCaritas(f);
+ f.pointer.advance();assertShionWatchingCaritas(f);
+ f.pointer.advance();assertShionWatchingCaritas(f); // Tarot deployment
+ f.pointer.advance();
+ f.advanceTime(650);
+ assertShionSideFacing(f); // "いくぞ、しおぽん。"
+ f.pointer.advance();
+ assertShionSideFacing(f); // "はい、シオンさん。"
+ f.pointer.advance();await new Promise(resolve=>setImmediate(resolve));
+ assertShionWatchingCaritas(f); // Invocation
+ f.pointer.advance();assertShionWatchingCaritas(f);
+ f.pointer.advance();assertShionWatchingCaritas(f); // Transformation
+});
+test('Shion faces right when Shiopon stands to the right',()=>{
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.pointer.companion={x:1100,y:180};
+ f.tick();assertShionSideFacing(f,1);
+ f.pointer.advance();assertShionWatchingCaritas(f);
+});
+
 function advanceNotice(f){
  for(const t of ['……しおぽん、待て。星獣がいる。','滅多に星の国に来ないのに……何か様子がおかしい。','黒紫の靄が……体を覆っている。']){
   assert.equal(f.state().story,'notice');
