@@ -47,13 +47,16 @@ test("chant-only synced light uses one warm-white clock and separate 5500ms tran
  assert.match(game,/const caritasChant=\{phase:"idle"/);
  assert.match(chant,/const sharedBeat=/);
  assert.match(chant,/const strength=caritasChantStrength\(\)/);
- assert.match(chant,/const lights=\[/);
+  assert.match(chant,/const nodes=/);
+  assert.match(chant,/const connections=/);
+  assert.match(cards,/ctx\.strokeRect/);
+  assert.match(game,/if\(hoshisunaIsolated\)paintCaritasChantWorld\(\)/);
  assert.match(chant,/\.\.\.cards\.map\(/);
- assert.match(chant,/ctx\.drawImage\(atlas,tile\*32/);
+  assert.match(chant,/ctx\.drawImage\(atlas/);
  assert.doesNotMatch(chant,/getImageData|\.getContext\("2d",\{willReadFrequently:true\}\)/,
    "chant may not scan actor alpha or build outline surfaces each frame");
  assert.match(cards,/const sharedGlow=caritasChantStrength\(\)/);
- assert.match(world,/paintCaritasChantWorld\(\);return;/);
+  assert.ok(world.includes('if(caritasChant.phase!=="idle"&&caritasInvocation.phase==="idle")return;'));
  assert.match(currentLine,/if\(dialogueIndex===0\)window\.TarotHoshisunaManifestation\?\.startChant\?\.\(\)/);
  assert.match(currentLine,/else if\(dialogueIndex===1\)window\.TarotHoshisunaManifestation\?\.sealChant\?\.\(\)/);
  assert.match(methods,/startChant\(\)/);
@@ -127,7 +130,7 @@ test("tarot spread sits over the head and beside both arms without touching Shio
  const painting=game.slice(game.indexOf("function paintCaritasTarotSpread("),
                           game.indexOf("  // Caritas encounter only: pathfinding"));
   assert.ok(painting.includes("const sharedGlow=caritasChantStrength()"),"cards must share the invocation pulse");
-  assert.ok(painting.includes("ctx.shadowBlur=(9+sharedGlow*5)/camera.zoom"),"gold halo must track common pulse");
+   assert.ok(painting.includes("ctx.shadowBlur=(13+sharedGlow*8)/camera.zoom"),"gold halo must track common pulse");
  assert.match(painting,/ctx\.drawImage\(caritasTarotBack/);
 });
 test("one real world actor uses approved atlas and preserves foot position",()=>{
