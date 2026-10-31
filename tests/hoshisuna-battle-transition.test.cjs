@@ -119,7 +119,7 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.ok(!/html2canvas|canvas\.toDataURL|canvas\.toBlob/.test(css+fs.readFileSync(path.join(root,'hoshisuna-battle-transition.js'),'utf8')));
   assert.match(css,/prefers-reduced-motion/);
   assert.match(css,/#160e25/);
-  assert.match(css,/-webkit-backdrop-filter:blur\\(4px\\)/);
+  assert.match(css,/-webkit-backdrop-filter:blur\(4px\)/);
   assert.match(css,/abyss-map-corruption/);
   assert.match(css,/abyss-late-blackout/);
   assert.ok(!css.includes('abyss-ink-expand'),'old fullscreen expanding fog must be removed');
