@@ -740,7 +740,12 @@ async function sendAiReading(){
   aiPanelOpen=false;ui.aiResult.textContent="";
   committing=true;
   // No reward, first-use receipt or API allowance is consumed until words are delivered.
-  saySequence([["シオン",data.shion],["カリタス",data.caritas]],()=>{
+  // Three-person AI dialogue after Shiopon has transformed. Older deployed
+  // preview endpoints return two lines, so preserve a safe compatibility path.
+  const aiLines=[["シオン",data.shion]];
+  if(typeof data.shioriel==="string"&&data.shioriel.trim())aiLines.push(["シオリエル",data.shioriel.trim()]);
+  aiLines.push(["カリタス",data.caritas]);
+  saySequence(aiLines,()=>{
    if(story!=="battle"||battle!==before){committing=false;render();return;}
    battle=C.applyWrittenReading(before,Array.isArray(data.understandingIds)?data.understandingIds:[],!firstWrittenDelivered);
    if(battle===before){committing=false;render();return;}
