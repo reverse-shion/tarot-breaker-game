@@ -9,7 +9,7 @@ global.fetch=async(_url,options)=>{
  const prompt=body.contents[0].parts[0].text;
  const turn=prompt.includes('カリタスの視線が揺れ')?2:prompt.includes('カリタスは強く身をこわばらせ')?1:0;
  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({
-  evidence:'弱さ',understandingIds:['fear_of_weakness'],shion:'弱さを見つめることも勇気だ。',caritas:'……なぜそう思う？',nextCue:Math.min(turn+1,2)
+  evidence:'弱さ',understandingIds:['fear_of_weakness'],shion:'弱さを見つめることも勇気だ。',shioriel:'シオン。恐れの奥にも、光がある。',caritas:'……なぜそう思う？',nextCue:Math.min(turn+1,2)
  })}]}}]})};
 };
 const handler=require('../api/caritas-interpret.js');
@@ -31,6 +31,7 @@ const server=http.createServer((req,res)=>{
   assert.equal(res.headers.get('cache-control'),'no-store, max-age=0');
   const data=await res.json();
   assert.equal(typeof data.shion,'string');
+   assert.equal(typeof data.shioriel,'string');
   assert.equal(typeof data.caritas,'string');
   assert.deepEqual(data.understandingIds,['fear_of_weakness']);
   console.log('LOCAL HTTP integration turn '+turn+': PASS');
