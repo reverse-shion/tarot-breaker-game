@@ -239,7 +239,7 @@ async function enter(f){
 }
 
 function choose(f,root,words){
- if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
+ if(!f.state().readingOpen||root.dataset.writingOpen==='true')f.button(root,'リーディングを始める').click();
  const buttons=root.flatten().filter(e=>e.className==='cb-card-button');
  assert.equal(buttons.length,3);
  words.forEach((word,i)=>{
@@ -254,7 +254,7 @@ function choose(f,root,words){
  });
 }
 function read(f,root,words){
- if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
+ if(!f.state().readingOpen||root.dataset.writingOpen==='true')f.button(root,'リーディングを始める').click();
  if(words)choose(f,root,words);
  const button=f.button(root,'この言葉を届ける');assert.ok(button);button.click();
  assert.equal(f.state().dialogueBusy,true);
