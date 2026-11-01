@@ -299,7 +299,7 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
- assert.match(event,/const transformationReplay=params\.getAll\("preview"\)\.length===1&&params\.get\("preview"\)==="manifestation"/);
+ assert.match(event,/const transformationReplay=params\.getAll\("preview"\)\.length===1&&\["manifestation","encounter"\]\.includes\(params\.get\("preview"\)\)/);
  assert.match(event,/const checkpointStore=transformationReplay\?replayStore:localStorage/);
  assert.match(event,/const result=S\.write\(checkpointStore,SAVE_KEY,expectedRaw,next\)/);
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
@@ -309,7 +309,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
- assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
+ assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && \["manifestation", "encounter"\]\.includes\(params\.get\("preview"\)\)/);
  assert.match(game,/spawnRef = \{x:108,y:488\};/);
  assert.match(game,/if\(transformationReplay\)spawnRef = \{x:1088,y:331\};/);
  const shape=JSON.parse(fs.readFileSync(path.join(root,"assets/events/hoshisuna/map/starroad-collision.json"),"utf8"));
