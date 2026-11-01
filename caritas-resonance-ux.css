@@ -1,0 +1,221 @@
+/* TAROT BREAKER — Caritas 心象共鳴 UX v1.
+ * All selectors isolated to this battle. Visual-only tuneables; game rules live
+ * exclusively in caritas-battle-core.js / the existing event transaction. */
+#caritas-event {
+  --cb-ux-navy:#10192f;
+  --cb-ux-deep:#0b1125;
+  --cb-ux-violet:#372446;
+  --cb-ux-gold:#dfbd79;
+  --cb-ux-gold-text:#251b16;
+  --cb-ux-text:#f2e5cb;
+  --cb-ux-muted:#c9c5d9;
+  --cb-ux-resonance:#74d4e8;
+  --cb-ux-danger:#e39abf;
+  --cb-ux-outline:1px solid #b79b6e;
+  --cb-ux-pulse-duration:1.3s;
+  --cb-ux-breathe-duration:1.8s;
+  color:var(--cb-ux-text);
+}
+/* 1 & 2: all three choices are large, fully readable and sequential. */
+#caritas-event .cb-reading-slots {
+  display:grid;grid-template-columns:minmax(0,1fr) 12px minmax(0,1fr) 12px minmax(0,1fr);
+  align-items:stretch;gap:3px;min-height:51px;width:100%;flex:0 0 auto;
+}
+#caritas-event .cb-reading-slots[hidden]{display:none!important}
+#caritas-event .cb-reading-slot {
+  display:flex;flex-direction:column;justify-content:center;min-width:0;gap:3px;
+  padding:5px 4px;border:1px solid #786a79;border-radius:8px;
+  background:#151d35;color:var(--cb-ux-muted);text-align:center;
+}
+#caritas-event .cb-reading-slot[data-complete="true"] {
+  border-color:var(--cb-ux-gold);background:linear-gradient(150deg,#243951,#362c4b);
+  box-shadow:inset 0 0 10px #d4af6433;
+}
+#caritas-event .cb-slot-role {font-size:10px;letter-spacing:.04em;color:#d5c9a3}
+#caritas-event .cb-slot-value {
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  line-height:1.25;font-size:clamp(10px,2.8vw,12px);
+}
+#caritas-event .cb-slot-arrow {align-self:center;text-align:center;color:var(--cb-ux-gold);font-size:15px}
+#caritas-event .cb-cards{align-items:stretch}
+#caritas-event .cb-card {border-color:#7b6c83}
+#caritas-event .cb-role{min-height:23px;line-height:1.2;text-align:center;white-space:normal;letter-spacing:0;font-size:10px}
+#caritas-event .cb-card-button{min-height:44px}
+#caritas-event .cb-card-button .cb-card-art {padding:0;border-radius:5px;overflow:hidden}
+#caritas-event .cb-card-image{width:100%;height:100%;max-height:100%;object-fit:contain;display:block}
+#caritas-event .cb-card[data-card-state="unread"] .cb-chosen{color:#c9c5d9}
+#caritas-event .cb-card[data-card-state="read"]{border-color:#98a6bd}
+#caritas-event .cb-card[data-card-state="selected"]{border-color:var(--cb-ux-gold);box-shadow:0 0 0 1px #bd9c5b66}
+#caritas-event .cb-card[data-card-state="selected"] .cb-chosen{color:#ebd29f}
+#caritas-event .cb-chosen{font-size:clamp(10px,2.5vw,12px);line-height:1.3;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#caritas-event .cb-card-button:focus-visible,
+#caritas-event .cb-way:focus-visible,
+#caritas-event .cb-actions button:focus-visible,
+#caritas-event .cb-ai-send:focus-visible{outline:3px solid #efc87c;outline-offset:2px}
+
+/* 1: method choice cards have equal visual weight; one expands the editor. */
+#caritas-event .cb-delivery-methods {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;flex:none;
+}
+#caritas-event .cb-way {
+  display:flex!important;flex-direction:column;align-items:center;justify-content:space-between;
+  gap:6px;min-width:0;min-height:75px;height:auto;
+  padding:10px 6px!important;border:1px solid #b39a73!important;border-radius:10px!important;
+  background:linear-gradient(145deg,#1c2a46,#29223d)!important;
+  color:var(--cb-ux-text)!important;text-align:center!important;
+  font-weight:650;touch-action:manipulation;
+}
+#caritas-event .cb-way-title{font-size:clamp(12px,3.25vw,14px);line-height:1.3;overflow-wrap:anywhere}
+#caritas-event .cb-gain-badge {
+  display:inline-flex;align-items:center;justify-content:center;min-height:23px;
+  padding:3px 10px;border-radius:15px;border:1px solid #f4d79b;
+  background:linear-gradient(115deg,#edcf90,#c89b54);
+  color:var(--cb-ux-gold-text);font-size:12px;font-weight:800;letter-spacing:.02em;
+}
+#caritas-event .cb-way[aria-pressed="true"]{border:2px solid #f0d494!important;box-shadow:0 0 13px #ddb6794f}
+#caritas-event .cb-way:disabled {
+  opacity:1!important;color:#d8d0c3!important;border-color:#817384!important;
+  background:#23283b!important;
+}
+#caritas-event .cb-way:disabled .cb-gain-badge {
+  background:#aa986f;border-color:#d5be93;color:#241c1b;
+}
+#caritas-event .cb-way-hint{margin:0;color:#d6d0dc;font-size:12px;line-height:1.45;text-align:center;flex:none}
+#caritas-event .cb-way-hint[hidden]{display:none!important}
+#caritas-event[data-cards-ready="false"] .cb-cards {box-shadow:0 0 0 1px #bd9d5e33}
+#caritas-event[data-cards-ready="true"] .cb-delivery-methods .cb-way:not(:disabled) {
+  box-shadow:0 0 12px #c5a46a24;
+}
+
+/* 3: the existing shared dialogue already types characters and lets taps skip.
+ * Do not override it: only this optional waiting status is additive. */
+#caritas-event .cb-ai-panel {width:100%;margin:0!important;flex:0 0 auto}
+#caritas-event .cb-ai-body{background:#11182f;border:1px solid #9f8968}
+#caritas-event .cb-ai-body[hidden],#caritas-event .cb-ai-panel[hidden],
+#caritas-event .cb-ai-wait[hidden]{display:none!important}
+#caritas-event .cb-ai-wait {
+  display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 10px;
+  border-radius:9px;border:1px solid #b39b6e;background:#1a203c;
+  color:#e7d4aa;font-size:13px;
+}
+#caritas-event .cb-ai-wait::before {
+  content:"";display:block;flex:0 0 15px;height:15px;border-radius:50%;
+  background:#e1bb76;box-shadow:0 0 0 5px #d6af6033;
+  animation:cb-ux-breathe var(--cb-ux-breathe-duration) ease-in-out infinite;
+}
+#caritas-event .cb-ai-input {
+  background:#151d33!important;color:#efe5d0!important;border:1px solid #c1a778!important;
+  min-height:88px;font-size:16px;caret-color:#f2d69a;
+}
+#caritas-event .cb-ai-input::placeholder{color:#cfbfaa;opacity:1}
+#caritas-event .cb-ai-send {min-height:44px;background:#d6b376;color:#1f1a1e;border-color:#f0d59a}
+#caritas-event .cb-ai-send:disabled{opacity:1;background:#968769;color:#261e21}
+#caritas-event .cb-writing-hint{margin:0;color:#d7d1df}
+#caritas-event .cb-writing-reward{margin:6px 0;color:#e3cf9b;font-size:11px}
+#caritas-event .cb-ai-result{color:#e9d9c2;line-height:1.5}
+
+/* 4: enemy warning vs. positive resonance, separate compact HUD cards. */
+#caritas-event .cb-hud{display:flex;flex-direction:column;justify-content:center;gap:2px}
+#caritas-event .cb-hud-name{font-size:clamp(11px,3vw,14px);font-weight:700;color:#e7d6b9}
+#caritas-event .cb-mood{font-size:11px}
+#caritas-event .cb-hud.enemy .cb-bar.dark>i{background:linear-gradient(90deg,#a5448a,#dc80b0)}
+#caritas-event .cb-hud.enemy .cb-hud-row{color:#eab6cd}
+#caritas-event .cb-hud.hero .cb-bar.resonance>i{
+  background:linear-gradient(90deg,#5ec7dc,#eccb80);
+  transition:width 300ms ease;
+}
+#caritas-event .cb-res-mood{font-size:10px;color:#a7e0e9;line-height:1.2}
+#caritas-event .cb-gain-float{
+  position:absolute;right:4px;bottom:-13px;opacity:0;pointer-events:none;
+  color:#f4d48d;font-weight:750;font-size:15px;text-shadow:0 1px 6px #15152b;
+}
+#caritas-event[data-gain-pulse="true"] .cb-gain-float{animation:cb-ux-gain var(--cb-ux-pulse-duration) ease-out both}
+#caritas-event[data-gain-pulse="true"] .cb-bar.resonance{box-shadow:0 0 13px #6ed3dc96}
+
+/* 5: the finisher is an achievement, never a visually inviting disabled CTA. */
+#caritas-event .cb-actions{
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;
+  gap:3px;height:auto;min-height:60px;flex:0 0 auto;
+}
+#caritas-event .cb-actions button.cb-skill {
+  min-height:44px;width:100%;color:#d8cbd9;
+  background:#303149;border:1px solid #9b87a6;border-radius:9px;
+}
+#caritas-event .cb-actions button.cb-skill:disabled {
+  opacity:1;color:#cfc5d3;background:#27283c;border-color:#8f8098;box-shadow:none;
+}
+#caritas-event .cb-actions button.cb-skill.cb-skill-ready:enabled{
+  background:linear-gradient(115deg,#a17737,#e2c67b,#8f6338);
+  color:#21182c;border-color:#f2d596;
+  animation:cb-ux-breathe var(--cb-ux-breathe-duration) ease-in-out infinite;
+}
+#caritas-event .cb-actions button.cb-skill:active:enabled{transform:scale(.985)}
+#caritas-event .cb-skill-hint{min-height:18px;color:#cfc2cb;font-size:11px;text-align:center}
+
+/* 6: smaller permanently visible battlefield, scrolling choices below it.
+ * The battle art, positions, Abyss and cave background are NOT modified. */
+#caritas-event[data-reading-open="true"] .cb-frame{
+  grid-template-rows:minmax(0,33dvh) minmax(56px,auto) minmax(0,1fr);
+  max-height:100dvh;overflow:hidden;
+}
+#caritas-event[data-reading-open="true"] .cb-arena{position:relative;top:auto;min-height:0;z-index:3}
+#caritas-event[data-reading-open="true"][data-phase="battle"] .cb-controls {
+  position:relative;inset:auto;z-index:2;max-width:100%;width:100%;height:auto;min-height:0;
+  padding:8px 9px max(12px,env(safe-area-inset-bottom,0px));
+  align-items:stretch;justify-content:flex-start;
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(#0c132b,#101730);backdrop-filter:none;-webkit-backdrop-filter:none;
+  gap:7px;touch-action:pan-y;
+}
+#caritas-event[data-reading-open="true"] .cb-cards{
+  width:100%;height:clamp(165px,24dvh,235px);min-height:165px;flex:0 0 auto;
+  align-self:stretch;gap:5px;
+}
+#caritas-event[data-reading-open="true"] .cb-card{
+  grid-template-rows:minmax(23px,auto) minmax(0,1fr) 33px;
+  gap:2px;padding:4px;min-height:0;
+}
+#caritas-event[data-reading-open="true"] .cb-role{font-size:clamp(9px,2.6vw,11px);letter-spacing:0}
+#caritas-event[data-reading-open="true"] .cb-readline{
+  min-height:40px;height:auto;width:100%;align-self:stretch;
+}
+#caritas-event[data-reading-open="true"] .cb-actions,
+#caritas-event[data-reading-open="true"] .cb-ai-panel{width:100%;align-self:stretch}
+#caritas-event .cb-narration {
+  padding:7px 12px 6px;gap:2px;justify-content:center;
+  background:#0c1930e8;border-block:1px solid #ac905f;overflow:hidden;
+}
+#caritas-event .cb-narr-speaker {
+  align-self:flex-start;padding:1px 8px;border-radius:4px;
+  background:#44324a;border:1px solid #c49f62;color:#efce8b;
+  font-size:10px;line-height:1.25;
+}
+#caritas-event .cb-narration strong{color:#eee0c6;font-size:clamp(12px,3.3vw,15px)}
+#caritas-event .cb-narration small{color:#c2bbce;font-size:10px;opacity:.88}
+#caritas-event .cb-title{
+  top:1%;left:31%;right:31%;min-height:23px;z-index:12;
+  font-size:clamp(11px,2.9vw,14px);white-space:nowrap;
+}
+#caritas-event .cb-hud.enemy{top:13%;left:2%;width:43%}
+#caritas-event .cb-hud.hero{top:13%;right:2%;width:43%}
+#caritas-event .cb-hud{min-height:78px;box-sizing:border-box;align-items:stretch}
+#caritas-event .cb-hud-row{font-size:11px}
+#caritas-event .cb-preview{max-width:45%;flex:0 0 45%}
+#caritas-event .cb-tactic{max-width:55%;flex:1}
+#caritas-event .cb-way[hidden],#caritas-event .cb-ai-toggle[hidden]{display:none!important}
+#caritas-event .cb-reading-slots[hidden]{display:none!important}
+@media(max-height:700px){
+ #caritas-event[data-reading-open="true"] .cb-frame{grid-template-rows:minmax(0,31dvh) minmax(49px,auto) minmax(0,1fr)}
+ #caritas-event[data-reading-open="true"] .cb-cards{height:174px;min-height:174px}
+ #caritas-event .cb-hud{min-height:69px}
+ #caritas-event .cb-res-mood{font-size:9px}
+}
+@keyframes cb-ux-breathe {0%,100%{opacity:.75;filter:brightness(.89)}50%{opacity:1;filter:brightness(1.18)}}
+@keyframes cb-ux-gain {0%{opacity:0;transform:translateY(5px)}25%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(-15px)}}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event .cb-ai-wait::before,
+ #caritas-event .cb-actions button.cb-skill.cb-skill-ready:enabled,
+ #caritas-event[data-gain-pulse="true"] .cb-gain-float{animation:none!important}
+ #caritas-event[data-gain-pulse="true"] .cb-gain-float{opacity:1;transform:none}
+ #caritas-event .cb-hud.hero .cb-bar.resonance>i{transition:none}
+}
