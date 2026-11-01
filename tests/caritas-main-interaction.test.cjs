@@ -270,14 +270,49 @@ function read(f,root,words){
  f.pointer.advance();
  if(f.state().story==='enemy-turn')f.advanceTime(1050);
 }
-test('map notices Caritas first, uses main prompt, leaving does not re-trigger',()=>{
+test('leaving the Caritas choice requires stepping away before it can reappear',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
  assert.equal(f.state().story,'notice');
  advanceNotice(f);
- f.button(f.shell,'離れる').click();
+ const choice=f.shell.querySelector('#star-gate-interaction-choice');
+ f.button(choice,'離れる').click();
  assert.equal(f.state().story,'idle');assert.equal(f.state().armed,false);
+ assert.equal(choice.hidden,true);
+ f.tick();
+ assert.equal(f.state().story,'idle','remaining beside Caritas must not immediately reopen the choice');
+ f.pointer.actor={x:1013,y:368}; // just 96 units from the encounter footprint: still below the new 100-unit reset
+ f.tick();
+ assert.equal(f.state().armed,false,'a tiny step away must not instantly trigger a repeat');
+ f.pointer.actor={x:1013,y:374}; // 102 away: below the old 145 requirement
+ f.tick();
+ assert.equal(f.state().armed,true,'a modest retreat allows a new approach');
+ assert.equal(f.state().story,'idle');
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice','the original inspect/leave choice reappears');
+ assert.equal(choice.hidden,false);
+ assert.equal(f.lines.length,3,'the already-seen initial dialogue must not replay');
+ assert.ok(f.button(choice,'調べる'));
+ assert.ok(f.button(choice,'離れる'));
+ f.button(choice,'離れる').click();
+ assert.equal(f.state().story,'idle');
+ f.tick();
+ assert.equal(f.state().story,'idle','leaving twice must also stay dismissed while near');
  f.pointer.actor={x:90,y:100};f.tick();
- assert.equal(f.state().armed,true);
+ assert.equal(f.state().armed,true,'a long retreat still allows a new approach');
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice');
+});
+test('Caritas leave-reapproach keeps the normal inspect path available',()=>{
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();advanceNotice(f);
+ const choice=f.shell.querySelector('#star-gate-interaction-choice');
+ f.button(choice,'離れる').click();
+ f.pointer.actor={x:1013,y:374};f.tick();
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice');
+ f.button(choice,'調べる').click();
+ assert.equal(f.state().story,'intro');
+ assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(choice.hidden,true);
 });
 test('first Shion speech uses shared main dialogue; choices use main official panel',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
