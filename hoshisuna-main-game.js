@@ -78,7 +78,7 @@
   // routing, and Shiopon follow algorithms below remain identical to main.
   const hoshisunaIsolated = location.pathname.endsWith("/hoshisuna-main.html") && params.get("dev") === "hoshisuna";
   const transformationReplay = hoshisunaIsolated &&
-    params.getAll("preview").length === 1 && params.get("preview") === "manifestation";
+    params.getAll("preview").length === 1 && ["manifestation", "encounter"].includes(params.get("preview"));
   const stage3Dev = ["star-gate-full", "star-gate-from-lumiere"].includes(params.get("dev")) && window.__TAROT_DEV_STAGE3__ === true;
   const stage3Runtime = stage3Dev || window.__TAROT_PUBLIC_STAR_GATE__ === true;
   const enteringFromLanding = params.get("from") === "landing";
