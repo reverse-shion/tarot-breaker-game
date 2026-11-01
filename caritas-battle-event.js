@@ -313,7 +313,7 @@ function playSpecialSequence(){
   // Shared dialogue is hidden before any art frame becomes visible.
   root.dataset.artReady='loading';ui.artPlayback.hidden=false;ui.artImage.hidden=true;ui.artBackdrop.hidden=true;
   specialVisibleWait(1200,ready=>{
-   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の必殺技イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage);}
+   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の共鳴解放イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage);}
    root.dataset.artReady=String(ready);
    runSpecialEffect(ui.artImage,short?600:2600,()=>transitionSpecial('PURIFICATION',{imageDisplayed:ready&&ui.artImage.naturalWidth>0}),'art');
   });
@@ -619,18 +619,18 @@ function render(){
   setText(ui.aiToggleLabel,"自分の言葉で届ける");
   ui.aiPanel.hidden=!(reading&&readingOpen&&deliveryMethod==="write");
  }
- setText(ui.readLabel,finisher?"対話で解放":deliveryMethod==="select"&&chosenCount===3?"解釈を届ける":"選んで届ける");
+ setText(ui.readLabel,deliveryMethod==="select"&&chosenCount===3?"解釈を届ける":"選んで届ける");
  ui.read.setAttribute("aria-pressed",String(deliveryMethod==="select"));
  ui.wayHint.hidden=true;ui.slots.hidden=true;
  ui.selectionReason.hidden=finisher||deliveryMethod!=="select"||chosenCount===3;
- ui.methods.hidden=!(reading||finisher);ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
+ ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
- setText(ui.skillHint,finisher?"必殺技が解放されました":"共鳴が満ちると解放");
+ setText(ui.skillHint,finisher?"共鳴解放の準備が整いました":"共鳴が満ちると解放");
  if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
- ui.read.disabled=!((reading&&(deliveryMethod!=="select"||!!p))||finisher);
+ ui.read.disabled=!(reading&&(deliveryMethod!=="select"||!!p));
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
- if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　対話か必殺技で解放！");
+ if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　共鳴解放が可能になりました");
  // Show a single short toast instead of an overlay that obscures the card row.
  ui.guide.hidden=true;
  ui.finale.hidden=true;
@@ -744,7 +744,7 @@ async function sendAiReading(){
    stage("written-light",1400,()=>{
     visualBattle=null;committing=false;story="battle";root.dataset.phase="battle";
     setText(ui.writtenQuote,"");render();
-    toast("言葉が届いた　共鳴＋"+gain+(relief>0?"　闇−"+relief:"")+(battle.phase==="finisher"?"　必殺技が使えます":""));
+    toast("言葉が届いた　共鳴＋"+gain+(relief>0?"　闇−"+relief:"")+(battle.phase==="finisher"?"　共鳴解放が使えます":""));
    });
    };
    persist({...record,battle:pendingBattle,firstWrittenDelivered:true,aiCalls:aiCalls+1,aiConfirmedCalls:aiCalls+1},completeDelivery);
@@ -761,13 +761,8 @@ async function sendAiReading(){
 function perform(kind){
  if(specialLocked())return;
  if(story!=="battle"||dialogueBusy||aiBusy||committing||suspended()||modalIndex>=0)return;
- if(battle.phase==="finisher"&&["skill","dialogue"].includes(kind)){
-  if(kind==="skill"){openSpecialSelection();return;}
-  const next=C.finish(battle,kind);if(next===battle)return;
-  committing=true;
-  persist({...record,battle:next},()=>{battle=record.battle;
-  saySequence([["シオン",C.preview({...battle,words:battle.lastReading||battle.words})+"\nこの言葉を、君に届けたい。"]],()=>{committing=false;beginEnding();});
-  });return;
+ if(battle.phase==="finisher"&&kind==="skill"){
+  openSpecialSelection();return;
  }
  if(kind!=="read"||battle.phase!=="read"||!readingOpen)return;
  const previous=battle,p=C.predict(previous);
@@ -904,10 +899,9 @@ function init(){
  ui.read=newEl("button","cb-read cb-way");ui.read.type="button";
  ui.readLabel=newEl("span","cb-way-title","解釈をそのまま届ける");ui.readBadge=newEl("span","cb-gain-badge","選択後");
  ui.read.append(ui.readLabel,ui.readBadge);
- ui.skill=newEl("button","cb-skill","必殺技");ui.skill.type="button";
+ ui.skill=newEl("button","cb-skill","共鳴解放");ui.skill.type="button";
  ui.skillHint=newEl("span","cb-skill-hint","共鳴が満ちると解放");
  ui.read.addEventListener("click",()=>{
-  if(battle.phase==="finisher"){perform("dialogue");return;}
   if(deliveryMethod!=="select"){selectDeliveryMethod("select");return;}
   perform("read");
  });
@@ -976,7 +970,7 @@ function init(){
  panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
  panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
  document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){if(deliveryMethod==="write"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}}});
- const cutin=newEl("div","cb-cutin");ui.cutin=cutin;cutin.setAttribute("aria-label","シオンとシオリエルの必殺技");
+ const cutin=newEl("div","cb-cutin");ui.cutin=cutin;cutin.setAttribute("aria-label","シオンとシオリエルの共鳴解放");
  for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
    const panel=newEl("div","cb-cut-panel cb-cut-"+actor);
    const face=newEl("img","cb-cut-face");face.src=CUTINS[actor];face.alt=name;face.draggable=false;
@@ -984,13 +978,13 @@ function init(){
    face.addEventListener("error",()=>{face.hidden=true;});
    panel.append(face);cutin.append(panel);
  }
- cutin.append(newEl("div","cb-cut-title","必殺技"));
+ cutin.append(newEl("div","cb-cut-title","共鳴解放"));
  const technique=newEl("div","cb-technique");technique.setAttribute("aria-hidden","true");
  technique.append(newEl("div","cb-technique-ray"),newEl("div","cb-technique-ring"));
  ui.selection=newEl("div","cb-special-selection");ui.selection.hidden=true;ui.selection.setAttribute("role","dialog");ui.selection.setAttribute("aria-modal","true");ui.selection.setAttribute("aria-label","どのカードの言葉を届けますか？");
  ui.artPlayback=newEl("div","cb-special-art");ui.artPlayback.hidden=true;
  ui.artBackdrop=newEl("img","cb-special-backdrop");ui.artBackdrop.alt="";
- ui.artImage=newEl("img","cb-special-foreground");ui.artImage.alt="必殺技イラスト";
+ ui.artImage=newEl("img","cb-special-foreground");ui.artImage.alt="共鳴解放の技イラスト";
  ui.artPlayback.append(ui.artBackdrop,ui.artImage);
  const written=newEl("div","cb-written-light");written.setAttribute("aria-live","polite");
  ui.writtenQuote=newEl("p","cb-written-quote");ui.writtenGain=newEl("p","cb-written-gain");
