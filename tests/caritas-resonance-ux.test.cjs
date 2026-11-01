@@ -22,7 +22,7 @@ test('both delivery paths have equal top-level button cards but use unchanged co
 test('rendered rewards are derived from actual game state and never change calculations',()=>{
  const event=load('caritas-battle-event.js');
  const core=load('caritas-battle-core.js');
- assert.match(event,/setText\(ui\.readBadge,p\?\("\+"\+p\.resonance\):"選択後"\)/);
+ assert.match(event,/setText\(ui\.readBadge,chosenCount===3&&p\?"✓ 送信可能 \+"\+p\.resonance:"あと"\+\(3-chosenCount\)\+"枚"\)/);
  assert.match(event,/Math\.min\(firstWrittenDelivered\?RESONANCE_UI\.writtenLater:RESONANCE_UI\.writtenFirst,Math\.max\(0,100-s\.resonance\)\)/);
  assert.match(event,/const RESONANCE_UI=Object\.freeze\(\{writtenFirst:50,writtenLater:25,gainPulseMs:1300\}\)/);
  assert.match(core,/const requestedBonus=firstDelivery===true\?50:25;/);
@@ -59,7 +59,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains visible battle arena <=35vh and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-tarot-matte-v5/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-tarot-ux-v6/);
  assert.match(css,/minmax\(0,33dvh\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/min-height:75px/);
@@ -70,4 +70,40 @@ test('isolated CSS retains visible battle arena <=35vh and accessible buttons',(
  assert.ok(!css.includes('.cb-beast{')&&!css.includes('.cb-abyss{'),'artist/presentation visual selectors must not be changed');
  const h=load('caritas-battle-event.css');
  assert.ok(h.includes('cb-beast'));
+});
+
+test('semantic tarot states and first-time hint preserve the existing card-reading contract',()=>{
+ const event=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ assert.match(event,/const chosenCount=s\.words\.filter\(Boolean\)\.length;/);
+ assert.match(event,/viewedReadingCards\.has\(i\)\?"確認済み・未選択"/);
+ assert.match(event,/s\.words\[i\]\?"✓ 選択済み："/);
+ assert.match(event,/section\.dataset\.status=!reading\?"unavailable"/);
+ assert.match(event,/ui\.read\.dataset\.status=!reading\?"unavailable"/);
+ assert.match(event,/ui\.firstHint\.hidden=hintDismissed/);
+ assert.match(event,/localStorage\.setItem\(HINT_KEY,"1"\)/);
+ assert.match(css,/\.cb-way\[data-status="ready"\]/);
+ assert.match(css,/\.cb-card\[data-status="complete"\]/);
+});
+test('the final call to action is a single glowing button with accessible reduced motion',()=>{
+ const event=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ assert.match(event,/ui\.skillHint\.hidden=true/);
+ assert.match(event,/ui\.finisher\.hidden=true/);
+ assert.match(css,/@keyframes cb-liberation-glow/);
+ assert.match(css,/\.cb-skill\.cb-skill-ready:enabled/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ assert.match(event,/ui\.selection\.append\(confirm,back\)/);
+ assert.match(event,/newEl\('h3','cb-technique-heading',tech\.title\)/);
+});
+test('HUD HP feedback and card modal never cover actors or require battle scrolling',()=>{
+ const event=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ assert.match(event,/lastPresentedHp!==null&&visible\.hp<lastPresentedHp/);
+ assert.match(event,/setText\(ui\.hpFloat,"HP −"\+/);
+ assert.match(event,/root\.dataset\.hpPulse="true"/);
+ assert.match(css,/\.cb-hp-float/);
+ assert.match(css,/\.cb-modal-close\{\s*position:sticky;top:0/);
+ assert.match(css,/\.cb-card-panel\{[\s\S]*?max-height:calc\(100dvh/);
+ assert.match(css,/\.cb-frame>\.cb-hud\{\s*visibility:hidden!important/);
 });
