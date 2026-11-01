@@ -455,5 +455,15 @@
   max-height:170px;
 }
 #caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-cards{
-  display:none!important; /* prioritize the field and submit on compact keyboards */
+  display:grid!important;max-height:78px;min-height:48px!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-card{
+  grid-template-rows:minmax(0,1fr);padding:1px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-role,
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-chosen{
+  display:none!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-ai-input{
+  height:54px;min-height:54px;
 }
