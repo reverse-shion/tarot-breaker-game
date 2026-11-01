@@ -581,7 +581,7 @@ function render(){
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
-  section.append(newEl("div","cb-role",card.role+" · "+({COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
+  section.append(newEl("div","cb-role",({COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
   const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading||!readingOpen;
   btn.setAttribute("aria-label",card.name+(deliveryMethod==="write"?"を拡大して見る":"を開いて意味を選ぶ"));
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
@@ -922,6 +922,26 @@ function init(){
  ui.aiSend=newEl("button","cb-ai-send","自分の言葉を届ける");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
  ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=specialLocked()||deliveryMethod!=="write"||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
+ // Keep the text composer and its submit action visible when the software
+ // keyboard reduces the iPhone visual viewport. Never change battle numbers.
+ const syncComposerViewport=()=>{
+  if(root.dataset.composing!=="true")return;
+  const viewport=window.visualViewport;
+  const availableHeight=viewport?.height||window.innerHeight;
+  root.style.setProperty("--cb-visible-height",Math.max(180,Math.round(availableHeight))+"px");
+  root.style.setProperty("--cb-visible-top",Math.round(viewport?.offsetTop||0)+"px");
+  root.dataset.keyboardTight=String(availableHeight<350);
+ };
+ ui.aiInput.addEventListener("focus",()=>{
+  root.dataset.composing="true";syncComposerViewport();
+ });
+ ui.aiInput.addEventListener("blur",()=>{
+  root.dataset.composing="false";root.dataset.keyboardTight="false";
+  root.style.removeProperty("--cb-visible-height");
+  root.style.removeProperty("--cb-visible-top");
+ });
+ window.visualViewport?.addEventListener("resize",syncComposerViewport);
+ window.visualViewport?.addEventListener("scroll",syncComposerViewport);
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
  ui.aiToggle=newEl("button","cb-ai-toggle cb-way");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
  ui.aiToggleLabel=newEl("span","cb-way-title","言葉を添えて届ける");
