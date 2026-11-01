@@ -5,7 +5,9 @@ const params=new URLSearchParams(location.search);
 if(!location.pathname.endsWith("/hoshisuna-main.html")||params.get("dev")!=="hoshisuna")return;
 // Explicit preview URL only. The ordinary ?dev=hoshisuna encounter keeps all
 // previously saved battle resume semantics; replay never reads or writes them.
-const transformationReplay=params.getAll("preview").length===1&&params.get("preview")==="manifestation";
+const previewMode=params.getAll("preview").length===1?params.get("preview"):null;
+const encounterPreview=previewMode==="encounter";
+const transformationReplay=previewMode==="manifestation"||encounterPreview;
 const C=window.CaritasBattleCore, S=window.CaritasSpecialState;
 const CARD_IMAGES=Object.freeze({月:"./assets/tarot/major/18-the-moon.webp",力:"./assets/tarot/major/08-strength.webp",星:"./assets/tarot/major/17-the-star.webp"});
 if(!C){console.error("[Caritas] Battle core missing");return;}
@@ -449,6 +451,9 @@ function offerAgain(){
 function tick(){
  if(story!=="idle"||done||!sceneReady())return;
  const distance=distanceToCaritas();
+ // Direct encounter preview opens near the star-beast. Trigger without requiring
+ // extra movement, but only while the player is actually in the encounter area.
+ if(encounterPreview&&!noticed&&armed&&distance<=REARM_RADIUS){notice();return;}
  if(distance>=REARM_RADIUS){armed=true;return;}
  if(distance<=APPROACH_RADIUS&&armed){
    if(noticed)offerAgain();
@@ -991,5 +996,5 @@ function init(){
  tick();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
-window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,transformationReplay,dialogueBusy,readingOpen,committing,cinematicPending:!!cinematicCallback,special:{...record.special},saveBlocked,recovery,revision:record.revision,battle:{...battle,words:[...battle.words]}})});
+window.CaritasEncounterDebug=Object.freeze({getState:()=>({story,done,armed,noticed,owned,transformationReplay,encounterPreview,sceneReady:sceneReady(),distanceToCaritas:distanceToCaritas(),dialogueBusy,readingOpen,committing,cinematicPending:!!cinematicCallback,special:{...record.special},saveBlocked,recovery,revision:record.revision,battle:{...battle,words:[...battle.words]}})});
 })();
