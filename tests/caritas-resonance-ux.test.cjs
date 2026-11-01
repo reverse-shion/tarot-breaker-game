@@ -8,11 +8,13 @@ const load=p=>fs.readFileSync(path.join(root,p),'utf8');
 
 test('both delivery paths have equal top-level button cards but use unchanged core calls',()=>{
  const event=load('caritas-battle-event.js');
- assert.match(event,/methods\.append\(ui\.aiToggle,ui\.read\)/);
+ assert.match(event,/methods\.append\(ui\.read,ui\.aiToggle\)/);
  assert.match(event,/ui\.aiToggle=newEl\("button","cb-ai-toggle cb-way"\)/);
  assert.match(event,/ui\.read=newEl\("button","cb-read cb-way"\)/);
  assert.match(event,/ui\.aiSend\.addEventListener\("click",sendAiReading\)/);
- assert.match(event,/ui\.read\.addEventListener\("click",\(\)=>perform\(battle\.phase==="finisher"\?"dialogue":"read"\)\)/);
+ assert.match(event,/ui\.read\.addEventListener\("click",\(\)=>\{/);
+ assert.match(event,/if\(deliveryMethod!=="select"\)\{selectDeliveryMethod\("select"\);return;\}/);
+ assert.match(event,/perform\("read"\)/);
  assert.match(event,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
  assert.match(event,/const next=C\.read\(previous\)/);
 });
@@ -34,8 +36,9 @@ test('cards have three labeled slots, role translations, and visible disabled re
  assert.match(event,/COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"/);
  assert.match(event,/viewedReadingCards\.add\(i\)/);
  assert.match(event,/ui\.selectionReason=newEl\("p","cb-selection-reason"\)/);
- assert.match(event,/あと"\+\(3-chosenCount\)\+"枚選ぶと、解釈を届けられます。"/);
+ assert.match(event,/あと"\+\(3-chosenCount\)\+"枚の解釈を選んでください。"/);
  assert.match(event,/ui\.aiInput\.placeholder="カリタスに何を伝えたい？"/);
+ assert.match(event,/ui\.slots\.hidden=true/);
 });
 
 test('existing shared typewriter/dialogue, API request, and persisted save sequence remain intact',()=>{
@@ -53,7 +56,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains visible battle arena <=35vh and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-a/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-tarot-matte-v5/);
  assert.match(css,/minmax\(0,33dvh\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/min-height:75px/);
