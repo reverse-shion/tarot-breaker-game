@@ -206,6 +206,9 @@ const AFTER_FAREWELL=[
  ["しおぽん","……シオンさん、あの子……。"],
  ["シオン","ああ。何かを知っているようだったな。"]
 ];
+// The final words belong to Shion, after the companions' conversation has ended.
+const FAREWELL_CLOSE=[["シオン","タロットクローズ"]];
+const FAREWELL_CLOSE_PAUSE_MS=1100;
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
  if(!cinematicCallback||suspended())return;
@@ -390,14 +393,24 @@ function playMapFarewell(next){
   });
  });
 }
+function playFarewellClose(next){
+ if(done||recovery||saveBlocked)return;
+ // After the dialogue window closes, hold on the quiet map for a brief beat.
+ // stage() pauses the wait while the tab is hidden, like other cinematics.
+ stage("closing-pause",FAREWELL_CLOSE_PAUSE_MS,()=>{
+  if(done||recovery||saveBlocked)return;
+  saySequence(FAREWELL_CLOSE,next);
+ });
+}
 function fadeMapFarewell(next){
  showFarewellOnMap();
  const outro=window.TarotHoshisunaCaritasOutro;
- if(!outro){saySequence(AFTER_FAREWELL,next);return;}
+ const afterFade=()=>saySequence(AFTER_FAREWELL,()=>playFarewellClose(next));
+ if(!outro){afterFade();return;}
  // RETURNING can be resumed directly from a durable save checkpoint.
  Promise.resolve(outro.fade()).catch(()=>false).then(()=>{
   if(done||recovery||saveBlocked)return;
-  saySequence(AFTER_FAREWELL,next);
+  afterFade();
  });
 }
 function beginEnding(){
