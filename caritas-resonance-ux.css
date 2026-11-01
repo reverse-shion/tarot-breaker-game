@@ -592,3 +592,192 @@
   border-color:#f3d798;
   box-shadow:0 0 0 1px #e5bf7b7a,0 0 12px #e5bf7b77;
 }
+
+
+/* v6 — semantic controls and a readable liberation peak. No art or combat changes. */
+#caritas-event[data-phase="battle"] .cb-frame,
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-frame{
+  grid-template-rows:minmax(43px,auto) minmax(0,31dvh) minmax(56px,auto) minmax(0,1fr)!important;
+}
+#caritas-event[data-phase="battle"] .cb-controls{
+  justify-content:flex-end;
+  background:linear-gradient(180deg,#615667 0%,#443c4a 55%,#322d39 100%);
+}
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-controls{
+  justify-content:flex-start;
+}
+#caritas-event[data-phase="battle"] .cb-way:not(:disabled){
+  opacity:1!important;
+  color:#fff5e6!important;
+  background:linear-gradient(145deg,#534958,#3d3546)!important;
+  border-color:#ddc79e!important;
+}
+#caritas-event[data-phase="battle"] .cb-way:disabled{
+  opacity:.53!important;
+  filter:grayscale(.28);
+}
+#caritas-event[data-phase="battle"] .cb-way[data-status="ready"]{
+  border-color:#f8dc9b!important;
+  box-shadow:inset 0 0 0 1px #f8dc9b80,0 0 12px #e5c87a45!important;
+}
+#caritas-event[data-phase="battle"] .cb-way[data-status="complete"] .cb-gain-badge{
+  background:#e0c889;border-color:#ffe4ad;color:#32231c;
+}
+#caritas-event[data-phase="battle"] .cb-way[data-status="unavailable"]{
+  opacity:.5!important;
+}
+#caritas-event[data-phase="battle"] .cb-card[data-status="available"] .cb-chosen{
+  color:#f8e9d1;
+}
+#caritas-event[data-phase="battle"] .cb-card[data-status="complete"]{
+  border-color:#d8bc84;
+  box-shadow:0 0 0 1px #e9ce9670;
+}
+#caritas-event[data-phase="battle"] .cb-card[data-status="complete"] .cb-chosen{
+  color:#ffe6ab;font-weight:700;
+}
+#caritas-event[data-phase="battle"] .cb-card[data-status="unavailable"]{
+  opacity:.53;
+}
+#caritas-event .cb-chosen{
+  min-width:0;max-width:100%;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+}
+#caritas-event[data-phase="battle"] .cb-card-image{
+  box-shadow:0 3px 11px #110d1890,0 0 0 1px #e5ce9545;
+}
+/* A single, unmistakable action replaces duplicated MAX notices. */
+#caritas-event[data-phase="battle"] .cb-actions button.cb-skill.cb-skill-ready:enabled{
+  min-height:64px;
+  border:2px solid #fff0bd;
+  border-radius:11px;
+  font-size:clamp(19px,5.2vw,24px);
+  font-weight:800;
+  letter-spacing:.09em;
+  color:#302016;
+  background:linear-gradient(115deg,#c49b51 0%,#fff0b8 46%,#efc777 78%,#d7aa57 100%);
+  box-shadow:inset 0 2px 0 #fff6d3bd,0 0 0 1px #c29c65,0 0 22px #f0cc779c;
+  animation:cb-liberation-glow 2.8s ease-in-out infinite;
+}
+#caritas-event[data-phase="battle"] .cb-skill-hint[hidden],
+#caritas-event[data-phase="battle"] .cb-finisher[hidden]{display:none!important}
+@keyframes cb-liberation-glow{
+  0%,100%{box-shadow:inset 0 2px 0 #fff6d3bd,0 0 0 1px #c29c65,0 0 12px #dfb96380}
+  50%{box-shadow:inset 0 2px 0 #fff6d3bd,0 0 0 1px #ffeab3,0 0 27px #f3d68acc}
+}
+/* Keep one-line teaching content, only while the writing panel is visible. */
+#caritas-event[data-phase="battle"][data-writing-open="true"] .cb-writing-reward{
+  display:block!important;
+  margin:2px 0 0;
+  color:#f4d9ad;font-size:10px;line-height:1.25;
+  text-align:center;
+}
+#caritas-event[data-phase="battle"] .cb-first-hint{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:39px;padding:6px 9px;
+  border:1px solid #ceb480;border-radius:8px;
+  background:#282330;color:#f9e3b8;
+  font-size:clamp(10px,2.8vw,12px);line-height:1.35;
+}
+#caritas-event .cb-first-hint[hidden]{display:none!important}
+#caritas-event .cb-first-hint-close{
+  flex:0 0 30px;min-width:30px;min-height:30px;padding:0;
+  border:1px solid #ddcaab;border-radius:6px;
+  background:#463c4a;color:#fff2d8;font-size:18px;
+}
+/* HUD lives in separate rows: both feedback labels stay away from actors. */
+#caritas-event .cb-frame>.cb-hud.hero{position:relative!important}
+#caritas-event .cb-hp-float,
+#caritas-event .cb-hp-reason{
+  position:absolute;z-index:4;left:10px;top:26px;
+  opacity:0;pointer-events:none;
+  color:#ffe2e1;font-size:12px;font-weight:800;
+  text-shadow:0 1px 5px #211019;
+}
+#caritas-event .cb-hp-reason{
+  left:auto;right:8px;top:43px;
+  font-size:10px;color:#f9d0cf;font-weight:600;
+}
+#caritas-event[data-hp-pulse="true"] .cb-hp-float,
+#caritas-event[data-hp-pulse="true"] .cb-hp-reason{
+  animation:cb-hp-feedback 1.3s ease-out both;
+}
+@keyframes cb-hp-feedback{
+  0%{opacity:0;transform:translateY(4px)}
+  20%,70%{opacity:1}
+  100%{opacity:0;transform:translateY(-10px)}
+}
+/* Modal: scroll the content, not the battle; keep its dismissal visible. */
+#caritas-event .cb-card-overlay{
+  padding:max(12px,env(safe-area-inset-top,0px)) 10px max(12px,env(safe-area-inset-bottom,0px));
+  min-height:0;
+}
+#caritas-event .cb-card-panel{
+  width:min(94vw,390px);
+  box-sizing:border-box;
+  max-height:calc(100dvh - max(12px,env(safe-area-inset-top,0px)) - max(12px,env(safe-area-inset-bottom,0px)));
+  min-height:0;
+  overflow-y:auto;overflow-x:hidden;
+  justify-content:flex-start;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+#caritas-event .cb-modal-close{
+  position:sticky;top:0;z-index:3;align-self:flex-end;flex:0 0 44px;
+  background:#342e40f5;backdrop-filter:blur(6px);color:#ffecbd;
+}
+#caritas-event .cb-modal-title{
+  flex:0 0 auto;width:100%;text-align:center;line-height:1.4;
+  overflow-wrap:anywhere;
+}
+#caritas-event .cb-modal-image{
+  flex:0 0 auto;max-height:min(30dvh,240px);
+  height:clamp(125px,29dvh,240px);
+}
+#caritas-event .cb-modal-words{
+  flex:0 0 auto;width:100%;padding-bottom:8px;
+}
+#caritas-event .cb-modal-word{white-space:normal;overflow-wrap:anywhere}
+/* Modal selection is a new flow, not a second battlefield CTA. */
+#caritas-event .cb-special-selection{
+  justify-content:safe center;
+  gap:clamp(6px,1dvh,12px);
+}
+#caritas-event .cb-special-meaning{min-height:0;margin:0;line-height:1.35}
+#caritas-event .cb-technique-heading{
+  font-size:clamp(16px,4.2vw,21px);
+  line-height:1.35;text-align:center;
+  color:#ffe9b7;margin:0;word-break:keep-all;overflow-wrap:normal;
+}
+#caritas-event .cb-technique-reading{
+  margin:0;text-align:center;line-height:1.35;
+  font-size:clamp(12px,3.4vw,15px);
+  color:#f2d5ab;word-break:keep-all;overflow-wrap:normal;
+}
+#caritas-event .cb-special-selection>.cb-special-confirm{
+  width:min(100%,400px);min-height:52px;font-weight:800;
+  background:linear-gradient(110deg,#c69d55,#f3d798,#ba8d4c);
+  color:#322217;border-color:#ffe3a8;
+}
+#caritas-event .cb-special-selection>.cb-special-back{
+  min-height:44px;background:transparent;color:#e8d6b9;border-color:#9c907f;
+}
+#caritas-event[data-phase="special"] .cb-frame>.cb-hud{
+  visibility:hidden!important; /* never place a cut-in over the old HUD name */
+}
+@media(max-height:700px){
+  #caritas-event[data-phase="battle"] .cb-frame,
+  #caritas-event[data-phase="battle"][data-reading-open="true"] .cb-frame{
+    grid-template-rows:minmax(43px,auto) minmax(0,24dvh) minmax(54px,auto) minmax(0,1fr)!important;
+  }
+  #caritas-event .cb-modal-image{height:clamp(105px,22dvh,170px)}
+}
+@media(prefers-reduced-motion:reduce){
+  #caritas-event[data-phase="battle"] .cb-actions button.cb-skill.cb-skill-ready:enabled,
+  #caritas-event[data-hp-pulse="true"] .cb-hp-float,
+  #caritas-event[data-hp-pulse="true"] .cb-hp-reason{
+    animation:none!important;
+  }
+  #caritas-event[data-hp-pulse="true"] .cb-hp-float,
+  #caritas-event[data-hp-pulse="true"] .cb-hp-reason{opacity:1}
+}
