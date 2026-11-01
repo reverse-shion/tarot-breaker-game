@@ -88,6 +88,10 @@ let firstWrittenDelivered=false;
 const viewedReadingCards=new Set();
 // Display-only values. The fixed bonus itself is owned by the battle core.
 const RESONANCE_UI=Object.freeze({writtenFirst:50,writtenLater:25,gainPulseMs:1300});
+const LABELS=Object.freeze({battle:"心象共鳴",dark:"闇侵蝕",resonance:"共鳴",starVoice:"星響",reading:"解釈",deliver:"届ける"});
+const FEEDBACK=Object.freeze({hpHit:"カリタスの反撃"});
+const HINT_KEY="tb:dev:caritas:resonance-hint-dismissed-v1";
+let hintDismissed=false,lastPresentedHp=null,hpPulseTimer=0;
 let lastPresentedResonance=null,gainPulseTimer=0,aiRetryVisible=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
 // In-memory revision-aware storage for author preview. The real dev battle
@@ -289,14 +293,19 @@ function renderSpecialSelection(){
   btn.addEventListener('click',()=>{if(specialLocked()||story!=='selecting'||suspended())return;selectedCard=id;shortPlayback=false;renderSpecialSelection();});row.append(btn);
  }
  ui.selection.append(row);
- const tech=TECHNIQUES[selectedCard];ui.selection.append(newEl('p','cb-special-meaning',tech?tech.meaning+'／'+tech.title+'（'+tech.reading+'）':'カードを選んでください'));
+ const tech=TECHNIQUES[selectedCard];
+ ui.selection.append(newEl('p','cb-special-meaning',tech?tech.meaning:'カードを選んでください'));
+ if(tech){
+  ui.selection.append(newEl('h3','cb-technique-heading',tech.title));
+  ui.selection.append(newEl('p','cb-technique-reading','（'+tech.reading+'）'));
+ }
  if(tech&&record.seenTechniques[selectedCard]===true){
   const label=newEl('label','cb-special-short'),input=newEl('input');input.type='checkbox';input.checked=shortPlayback;
   input.addEventListener('change',()=>{if(!specialLocked()&&story==='selecting')shortPlayback=input.checked;});label.append(input,newEl('span','','演出を短縮'));ui.selection.append(label);
  }
- const back=newEl('button','','戻る');back.type='button';back.addEventListener('click',()=>{if(specialLocked()||story!=='selecting')return;story='battle';root.dataset.phase=story;ui.selection.hidden=true;render();});
- const confirm=newEl('button','','このカードの言葉を届ける');confirm.type='button';confirm.disabled=!tech;
- confirm.addEventListener('click',()=>{if(!selectedCard||specialLocked()||story!=='selecting')return;commitSpecialSelection(selectedCard,shortPlayback?'short':'normal');});ui.selection.append(back,confirm);
+ const back=newEl('button','cb-special-back','戻る');back.type='button';back.addEventListener('click',()=>{if(specialLocked()||story!=='selecting')return;story='battle';root.dataset.phase=story;ui.selection.hidden=true;render();});
+ const confirm=newEl('button','cb-special-confirm','このカードの言葉を届ける');confirm.type='button';confirm.disabled=!tech;
+ confirm.addEventListener('click',()=>{if(!selectedCard||specialLocked()||story!=='selecting')return;commitSpecialSelection(selectedCard,shortPlayback?'short':'normal');});ui.selection.append(confirm,back);
 }
 function playSpecialSequence(){
  cancelSpecialEffect();dialogue?.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
@@ -566,6 +575,14 @@ function render(){
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
  const displayedDark=visible.dark;
  setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"%");setText(ui.hp,visible.hp+"/100");
+ if(lastPresentedHp!==null&&visible.hp<lastPresentedHp){
+  setText(ui.hpFloat,"HP −"+(lastPresentedHp-visible.hp));
+  setText(ui.hpReason,FEEDBACK.hpHit);
+  root.dataset.hpPulse="true";
+  clearTimeout(hpPulseTimer);
+  hpPulseTimer=setTimeout(()=>{root.dataset.hpPulse="false";},RESONANCE_UI.gainPulseMs);
+ }
+ lastPresentedHp=visible.hp;
  if(lastPresentedResonance!==null&&visible.resonance>lastPresentedResonance){
   setText(ui.gainFloat,"+"+(visible.resonance-lastPresentedResonance));root.dataset.gainPulse="true";
   clearTimeout(gainPulseTimer);gainPulseTimer=setTimeout(()=>{root.dataset.gainPulse="false";},RESONANCE_UI.gainPulseMs);
@@ -600,11 +617,12 @@ function render(){
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
   const cardState=s.words[i]?"selected":viewedReadingCards.has(i)?"read":"unread";
   section.dataset.cardState=cardState;btn.dataset.cardState=cardState;
+  section.dataset.status=!reading?"unavailable":s.words[i]?"complete":"available";
   const art=newEl("div","cb-card-art"),image=newEl("img","cb-card-image");
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
   btn.addEventListener("click",()=>openCard(i));
-  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"選択済み："+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"既読 · もう一度選ぶ":"タップして意味を選ぶ"));
+  section.append(btn,newEl("div","cb-chosen",!reading?"操作できません":deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ 選択済み："+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"確認済み・未選択":"意味を選ぶ"));
   cardBox.append(section);
  }
  if(p){
@@ -624,8 +642,10 @@ function render(){
   root.dataset.writingOpen=String(deliveryMethod==="write"&&readingOpen&&reading);
   ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードから次の一歩へ。":"ひと言でも大丈夫。長さや上手さで特典は変わりません。";
   ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"基本の共鳴報酬（上限100）。AIの理解による効果は別途反映されます。";
-  setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("基本 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
-  setText(ui.readBadge,p?("+"+p.resonance):"選択後");
+  setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"✓ 受取済み":("基本 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
+  setText(ui.readBadge,chosenCount===3&&p?"✓ 送信可能 +"+p.resonance:"あと"+(3-chosenCount)+"枚");
+  ui.read.dataset.status=!reading?"unavailable":chosenCount===3?"ready":"available";
+  ui.aiToggle.dataset.status=!reading||aiCalls>=AI_CALL_LIMIT?"unavailable":s.aiInsightTurn===s.turn?"complete":"available";
   ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
   ui.aiToggle.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||aiCalls>=AI_CALL_LIMIT;
   ui.aiToggle.hidden=finisher;ui.aiToggle.setAttribute("aria-pressed",String(deliveryMethod==="write"));
@@ -638,12 +658,12 @@ function render(){
  ui.selectionReason.hidden=finisher||deliveryMethod!=="select"||chosenCount===3;
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
- setText(ui.skillHint,finisher?"共鳴解放の準備が整いました":"共鳴が満ちると解放");
+ ui.skillHint.hidden=true; // One focus: resonance meter + the liberation button.
  if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
  ui.read.disabled=!(reading&&(deliveryMethod!=="select"||!!p));
  ui.skill.disabled=!finisher||!C.canSkill(s);
- ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
- if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　共鳴解放が可能になりました");
+ ui.finisher.hidden=true; // Avoid triple MAX / available / ready announcements.
+ ui.firstHint.hidden=hintDismissed||story!=="battle"||s.phase!=="read"||readingOpen;
  // Show a single short toast instead of an overlay that obscures the card row.
  ui.guide.hidden=true;
  ui.finale.hidden=true;
@@ -809,7 +829,7 @@ function applyOutcome(previous,next,p){
  saySequence([["カリタス",C.reaction(previous,p)]],()=>{
    if(p.hasCounter&&p.damage>0){
      root.dataset.counter="normal";root.dataset.ward="false";
-     setText(ui.enemyCall,"カリタスの反撃！");
+     setText(ui.enemyCall,FEEDBACK.hpHit+"！");
      setText(ui.enemyDamage,"シオリエル HP −"+p.damage);
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
@@ -867,6 +887,7 @@ function init(){
  if(!shell||!document.getElementById("hoshisuna-caritas"))return;
  if(!window.TarotDialogueUI?.bind){console.error("[Caritas] Shared main dialogue unavailable");return;}
  try{once=sessionStorage.getItem(onceKey)==="1";}catch(_){once=false;}
+ try{hintDismissed=localStorage.getItem(HINT_KEY)==="1";}catch(_){hintDismissed=false;}
  prompt=newEl("aside");prompt.id="star-gate-interaction-choice";prompt.hidden=true;prompt.setAttribute("aria-label","獣の異変");
  const promptText=newEl("div","",INSPECT_CHOICE);promptText.id="star-gate-interaction-text";
  const options=newEl("div","star-gate-interaction-actions");
@@ -895,7 +916,9 @@ function init(){
  ui.resBar=newEl("i");const rb=newEl("div","cb-bar resonance");rb.appendChild(ui.resBar);
  ui.resMood=newEl("div","cb-res-mood","星響：声を待っている");
  ui.gainFloat=newEl("span","cb-gain-float");ui.gainFloat.setAttribute("aria-live","polite");
- hero.append(hr,hb,rr,rb,ui.resMood,ui.gainFloat);
+ ui.hpFloat=newEl("span","cb-hp-float");ui.hpFloat.setAttribute("aria-live","polite");
+ ui.hpReason=newEl("span","cb-hp-reason");
+ hero.append(hr,hb,rr,rb,ui.resMood,ui.gainFloat,ui.hpFloat,ui.hpReason);
  const shion=newEl("div","cb-shion-sprite");shion.setAttribute("role","img");shion.setAttribute("aria-label","シオン");
  const counter=newEl("div","cb-enemy-turn");
  ui.enemyCall=newEl("strong","cb-enemy-call");ui.enemyDamage=newEl("span","cb-enemy-damage");
@@ -904,6 +927,11 @@ function init(){
  const narr=newEl("div","cb-narration");narr.append(newEl("span","cb-narr-speaker","星の声"));
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
+ ui.firstHint=newEl("div","cb-first-hint");
+ ui.firstHint.append(newEl("span","","共鳴を100まで満たすと、カリタスに声が届く。"));
+ const hintClose=newEl("button","cb-first-hint-close","×");hintClose.type="button";hintClose.setAttribute("aria-label","説明を閉じる");
+ hintClose.addEventListener("click",()=>{hintDismissed=true;ui.firstHint.hidden=true;try{localStorage.setItem(HINT_KEY,"1");}catch(_){}});
+ ui.firstHint.append(hintClose);
  ui.readingIntro=newEl("div","cb-reading-start");
  const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
  const introHint=newEl("p","cb-reading-start-hint","届け方を選んでください。");
@@ -966,7 +994,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(methods,cardBox,ui.slots,ui.selectionReason,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
+ ctr.append(ui.firstHint,methods,cardBox,ui.slots,ui.selectionReason,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
  frame.append(enemy,arena,hero,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
