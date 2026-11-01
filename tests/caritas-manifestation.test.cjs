@@ -195,8 +195,13 @@ test("visible world-anchored starlight has colour, scale and non-strobing echoes
   "no full-screen white frame/flash");
 });
 test("returning fade resets Shiopon BEFORE the battle overlay is hidden",()=>{
- const ending=event.slice(event.indexOf("function beginEnding()"),event.indexOf("const newEl="));
- assert.match(ending,/TarotHoshisunaManifestation\?\.clear\?\.\(\);\s*stage\("returning",900,finish\)/);
+  const mapFarewell=event.slice(event.indexOf("function showFarewellOnMap()"),event.indexOf("function playMapFarewell("));
+  assert.ok(mapFarewell.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0, "reset Shiopon for the map farewell");
+  assert.ok(mapFarewell.indexOf("TarotHoshisunaManifestation?.clear?.()")<mapFarewell.indexOf("root.hidden=true"), "reset before exposing the map scene");
+  const returning=event.slice(event.indexOf("function fadeMapFarewell("),event.indexOf("function beginEnding()"));
+  assert.ok(returning.includes("outro.fade()"), "the creature fades on the real map");
+  assert.ok(returning.includes("saySequence(AFTER_FAREWELL,()=>playFarewellClose(next))"), "farewell leads to a single closing line");
+  assert.ok(event.includes('const FAREWELL_CLOSE=[["シオン","タロットクローズ"]]'), "close as Shion after the companion's dialogue");
  const finish=event.slice(event.indexOf("function finish(){"),event.indexOf("function init(){"));
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0);
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")<finish.indexOf("root.hidden=true"),
@@ -221,7 +226,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
  assert.match(html,/caritas-battle-core\.js\?v=tarot-fresh-selection-v1-20261102/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-fresh-selection-v3/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-close-v2/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
