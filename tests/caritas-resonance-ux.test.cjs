@@ -46,7 +46,10 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
  const shared=load('shared-dialogue.js');
  assert.match(shared,/function typeLine\(/);
  assert.match(shared,/function revealAll\(/);
- assert.match(event,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
+ assert.match(event,/aiLines=\[\["シオン",data\.shion\]\]/);
+ assert.match(event,/aiLines\.push\(\["シオリエル",data\.shioriel\.trim\(\)\]\)/);
+ assert.match(event,/aiLines\.push\(\["カリタス",data\.caritas\]\)/);
+ assert.match(event,/saySequence\(aiLines,\(\)=>\{/);
  assert.match(event,/const response=await fetch\(endpoint,\{method:"POST",signal:controller\.signal,/);
  assert.match(event,/persist\(\{\.\.\.record,battle:pendingBattle,firstWrittenDelivered:true,aiCalls:aiCalls\+1,aiConfirmedCalls:aiCalls\+1\},completeDelivery\)/);
  assert.match(event,/aiRetryVisible=true;/);
