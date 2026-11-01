@@ -79,7 +79,7 @@ let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialog
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let pendingRegroupNext=null;
-let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
+let modalIndex=-1,readingOpen=false,deliveryMethod=null,committing=false,visualBattle=null,attempts=0;
 let firstWrittenDelivered=false;
 // Presentation-only; no save state and no influence on battle arithmetic.
 const viewedReadingCards=new Set();
@@ -533,13 +533,18 @@ function start(){
  });
 }
 function setText(el,value){el.textContent=String(value);}
+function selectDeliveryMethod(method){
+ if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
+ deliveryMethod=method;readingOpen=true;aiPanelOpen=method==="write";modalIndex=-1;render();
+}
 function render(){
  renderCaritas();
  const s=battle,visible=getBattleView(),reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing&&!specialLocked();
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
- ui.readingIntro.hidden=!(story==="battle"&&s.phase==="read"&&!readingOpen&&!dialogueBusy&&!committing);
- ui.controls.hidden=story==="battle"&&s.phase==="read"&&!readingOpen;
+ ui.readingIntro.hidden=true; // Entry stays in the lower controls, never over the actors.
+ ui.controls.hidden=false;
+ cardBox.hidden=!(readingOpen&&reading)&&!finisher;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
  const displayedDark=visible.dark;
  setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"%");setText(ui.hp,visible.hp+"/100");
@@ -565,15 +570,15 @@ function render(){
   ui.slots.append(slot);
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
  }
- setText(ui.wayHint,"書けなくても大丈夫。解釈だけでも届けられます。");
- setText(ui.selectionReason,finisher?"":chosenCount<3?"あと"+(3-chosenCount)+"枚選ぶと、解釈を届けられます。":"");
+ setText(ui.wayHint,"書けなくても大丈夫。どちらの方法でも届けられます。");
+ setText(ui.selectionReason,!finisher&&deliveryMethod==="select"&&chosenCount<3?"あと"+(3-chosenCount)+"枚の解釈を選んでください。":"");
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
   section.append(newEl("div","cb-role",card.role+" · "+({COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
   const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading||!readingOpen;
-  btn.setAttribute("aria-label",card.name+"を開いて意味を選ぶ");
+  btn.setAttribute("aria-label",card.name+(deliveryMethod==="write"?"を拡大して見る":"を開いて意味を選ぶ"));
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
   const cardState=s.words[i]?"selected":viewedReadingCards.has(i)?"read":"unread";
   section.dataset.cardState=cardState;btn.dataset.cardState=cardState;
@@ -581,7 +586,7 @@ function render(){
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
   btn.addEventListener("click",()=>openCard(i));
-  section.append(btn,newEl("div","cb-chosen",s.words[i]?"選択済み："+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"既読 · もう一度選ぶ":"未読 · タップして読む"));
+  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"選択済み："+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"既読 · もう一度選ぶ":"タップして意味を選ぶ"));
   cardBox.append(section);
  }
  if(p){
@@ -594,26 +599,30 @@ function render(){
  }
  if(ui.aiInput){
   ui.aiInput.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn;
-  ui.aiSend.disabled=!reading||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||s.aiInsightTurn===s.turn||!(ui.aiInput.value||"").trim();
+  ui.aiSend.disabled=!reading||deliveryMethod!=="write"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||s.aiInsightTurn===s.turn||!(ui.aiInput.value||"").trim();
   ui.aiSend.textContent=s.aiInsightTurn===s.turn?"このリーディングでは届け済み":aiBusy?"想いを言葉に変えています…":aiCalls>=AI_CALL_LIMIT?"この戦闘では届け済み（3回）":Date.now()<aiRetryAt?"再接続まで少しお待ちください":aiRetryVisible?"もう一度届ける":"この言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
   ui.aiWait.hidden=!aiBusy;
-  ui.aiBody.hidden=!aiPanelOpen;
-  root.dataset.writingOpen=String(aiPanelOpen&&readingOpen&&reading);
+  ui.aiBody.hidden=deliveryMethod!=="write";
+  root.dataset.writingOpen=String(deliveryMethod==="write"&&readingOpen&&reading);
   ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードから次の一歩へ。":"ひと言でも大丈夫。長さや上手さで特典は変わりません。";
   ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"基本の共鳴報酬（上限100）。AIの理解による効果は別途反映されます。";
   setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("基本 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
   setText(ui.readBadge,p?("+"+p.resonance):"選択後");
-  ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
+  ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
   ui.aiToggle.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||aiCalls>=AI_CALL_LIMIT;
-  ui.aiToggle.hidden=finisher;ui.aiToggle.setAttribute("aria-pressed",String(aiPanelOpen));
-  setText(ui.aiToggleLabel,aiPanelOpen?"言葉を添える欄を閉じる":"言葉を添えて届ける");
-  ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read"&&readingOpen);
+  ui.aiToggle.hidden=finisher;ui.aiToggle.setAttribute("aria-pressed",String(deliveryMethod==="write"));
+  setText(ui.aiToggleLabel,"自分の言葉で届ける");
+  ui.aiPanel.hidden=!(reading&&readingOpen&&deliveryMethod==="write");
  }
- setText(ui.readLabel,finisher?"対話で解放":"解釈をそのまま届ける");
- ui.wayHint.hidden=finisher;ui.slots.hidden=finisher;ui.selectionReason.hidden=finisher||chosenCount===3;
+ setText(ui.readLabel,finisher?"対話で解放":deliveryMethod==="select"&&chosenCount===3?"解釈を届ける":"選んで届ける");
+ ui.read.setAttribute("aria-pressed",String(deliveryMethod==="select"));
+ ui.wayHint.hidden=true;ui.slots.hidden=true;
+ ui.selectionReason.hidden=finisher||deliveryMethod!=="select"||chosenCount===3;
+ ui.methods.hidden=!(reading||finisher);ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
+ ui.actions.hidden=!finisher;
  setText(ui.skillHint,finisher?"必殺技が解放されました":"共鳴が満ちると解放");
  if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
- ui.read.disabled=!((reading&&readingOpen&&!!p)||finisher);
+ ui.read.disabled=!((reading&&(deliveryMethod!=="select"||!!p))||finisher);
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
  if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　対話か必殺技で解放！");
@@ -628,6 +637,9 @@ function render(){
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
+  ui.modalWords.hidden=deliveryMethod==="write";
+  ui.modalPrev.hidden=deliveryMethod!=="write";ui.modalNext.hidden=deliveryMethod!=="write";
+  if(deliveryMethod==="write")return;
   for(const word of card.words){
    const option=C.READING_OPTIONS[word];
    const btn=newEl("button","cb-modal-word");btn.type="button";
@@ -643,10 +655,14 @@ function openCard(i){
  if(specialLocked())return;
  if(story!=="battle"||battle.phase!=="read"||!readingOpen||dialogueBusy||aiBusy||committing||suspended())return;
  once=true;viewedReadingCards.add(i);ui.guide.hidden=true;modalIndex=i;render();
- ui.modalWords.querySelector(".cb-modal-word")?.focus?.({preventScroll:true});
+ (deliveryMethod==="write"?ui.modalClose:ui.modalWords.querySelector(".cb-modal-word"))?.focus?.({preventScroll:true});
 }
 function closeCard(){
  if(specialLocked())return;if(modalIndex<0)return;modalIndex=-1;render();}
+function moveViewedCard(step){
+ if(deliveryMethod!=="write"||modalIndex<0)return;
+ modalIndex=(modalIndex+step+battle.cards.length)%battle.cards.length;viewedReadingCards.add(modalIndex);render();
+}
 function choose(index,word){
  if(specialLocked())return;
  if(modalIndex!==index||story!=="battle"||dialogueBusy||committing||suspended()||battle.phase!=="read")return;
@@ -659,7 +675,7 @@ function toast(message){
 }
 async function sendAiReading(){
  if(specialLocked())return;
- if(suspended()||!readingOpen||aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
+ if(suspended()||!readingOpen||deliveryMethod!=="write"||aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
  if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
  const reading=(ui.aiInput.value||"").trim();
  if(!reading||reading.length>700){toast("ひと言から700文字までで入力してね");return;}
@@ -785,7 +801,7 @@ function finalizeTurn(){
  visualBattle=null;story="battle";root.dataset.phase="battle";
  if(battle.phase==="defeat"){beginRetreat();return;}
  if(battle.phase==="ending"){beginEnding();return;}
- committing=false;readingOpen=false;checkpoint();render();
+ committing=false;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;checkpoint();render();
 }
 function beginRetreat(){
  if(story==="retreat"||story==="returning")return;
@@ -866,13 +882,13 @@ function init(){
  const counter=newEl("div","cb-enemy-turn");
  ui.enemyCall=newEl("strong","cb-enemy-call");ui.enemyDamage=newEl("span","cb-enemy-damage");
  counter.append(ui.enemyCall,ui.enemyDamage);
- arena.append(enemy,beast,veil,release,shion,angel,hero,counter);
+ arena.append(beast,veil,release,shion,angel,counter);
  const narr=newEl("div","cb-narration");narr.append(newEl("span","cb-narr-speaker","星の声"));
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.readingIntro=newEl("div","cb-reading-start");
  const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
- const introHint=newEl("p","cb-reading-start-hint","三枚の解釈を選んで届けよう。自分の言葉を添えると、共鳴がさらに満ちます。");
+ const introHint=newEl("p","cb-reading-start-hint","届け方を選んでください。");
  const introButton=newEl("button","cb-reading-start-button","リーディングを始める");introButton.type="button";
  introButton.addEventListener("click",()=>{if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy)return;readingOpen=true;render();});
  ui.readingIntro.append(introTitle,introHint,introButton);
@@ -885,7 +901,11 @@ function init(){
  ui.read.append(ui.readLabel,ui.readBadge);
  ui.skill=newEl("button","cb-skill","必殺技");ui.skill.type="button";
  ui.skillHint=newEl("span","cb-skill-hint","共鳴が満ちると解放");
- ui.read.addEventListener("click",()=>perform(battle.phase==="finisher"?"dialogue":"read"));
+ ui.read.addEventListener("click",()=>{
+  if(battle.phase==="finisher"){perform("dialogue");return;}
+  if(deliveryMethod!=="select"){selectDeliveryMethod("select");return;}
+  perform("read");
+ });
  ui.skill.addEventListener("click",()=>perform("skill"));
  ui.aiPanel=newEl("div","cb-ai-panel");
  const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
@@ -896,26 +916,21 @@ function init(){
  ui.writingReward=newEl("p","cb-writing-reward");ui.writingReward.id="cb-writing-reward";
  ui.aiSend=newEl("button","cb-ai-send","自分の言葉を届ける");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=specialLocked()||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
+ ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=specialLocked()||deliveryMethod!=="write"||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
  ui.aiToggle=newEl("button","cb-ai-toggle cb-way");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
  ui.aiToggleLabel=newEl("span","cb-way-title","言葉を添えて届ける");
  ui.writtenBadge=newEl("span","cb-gain-badge","基本 +50");ui.aiToggle.append(ui.aiToggleLabel,ui.writtenBadge);
  ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
- ui.aiToggle.addEventListener("click",()=>{
-  if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
-  aiPanelOpen=!aiPanelOpen;ui.aiBody.hidden=!aiPanelOpen;
-  ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
-  setText(ui.aiToggleLabel,aiPanelOpen?"言葉を添える欄を閉じる":"言葉を添えて届ける");
-  render();
-  if(aiPanelOpen)ui.aiPanel.scrollIntoView({block:"nearest",behavior:"smooth"});
- });
+ ui.aiToggle.addEventListener("click",()=>selectDeliveryMethod("write"));
  ui.aiWait=newEl("div","cb-ai-wait","想いを言葉に変えています…");ui.aiWait.setAttribute("role","status");ui.aiWait.hidden=true;
  ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.writingReward,ui.aiWait,ui.aiBody);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
- const methods=newEl("div","cb-delivery-methods");methods.append(ui.aiToggle,ui.read);
- actions.append(ui.skill,ui.skillHint);ctr.append(cardBox,ui.slots,methods,ui.selectionReason,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
+ const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
+ actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
+ ctr.append(methods,cardBox,ui.slots,ui.selectionReason,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
+ frame.append(enemy,arena,hero,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
@@ -924,10 +939,18 @@ function init(){
  const shade=newEl("button","cb-card-shade");shade.type="button";shade.setAttribute("aria-label","カードを閉じる");
  shade.addEventListener("click",closeCard);
  const panel=newEl("div","cb-card-panel");
- const close=newEl("button","cb-modal-close","× 閉じる");close.type="button";close.addEventListener("click",closeCard);
+ const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
  ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
- panel.append(close,ui.modalTitle,ui.modalImage,ui.modalWords);ui.modal.append(shade,panel);
- document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modalIndex>=0){e.preventDefault();closeCard();}});
+ const modalNav=newEl("div","cb-modal-navigation");
+ ui.modalPrev=newEl("button","cb-modal-prev","‹ 前のカード");ui.modalNext=newEl("button","cb-modal-next","次のカード ›");
+ ui.modalPrev.type=ui.modalNext.type="button";
+ ui.modalPrev.addEventListener("click",()=>moveViewedCard(-1));ui.modalNext.addEventListener("click",()=>moveViewedCard(1));
+ modalNav.append(ui.modalPrev,ui.modalNext);
+ panel.append(close,ui.modalTitle,ui.modalImage,modalNav,ui.modalWords);ui.modal.append(shade,panel);
+ let swipeX=null;
+ panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
+ panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
+ document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){if(deliveryMethod==="write"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}}});
  const cutin=newEl("div","cb-cutin");ui.cutin=cutin;cutin.setAttribute("aria-label","シオンとシオリエルの必殺技");
  for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
    const panel=newEl("div","cb-cut-panel cb-cut-"+actor);
