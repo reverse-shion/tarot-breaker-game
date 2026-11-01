@@ -612,7 +612,7 @@ function render(){
  setText(ui.readLabel,finisher?"対話で解放":"解釈をそのまま届ける");
  ui.wayHint.hidden=finisher;ui.slots.hidden=finisher;ui.selectionReason.hidden=finisher||chosenCount===3;
  setText(ui.skillHint,finisher?"必殺技が解放されました":"共鳴が満ちると解放");
- ui.skill.classList.toggle("cb-skill-ready",finisher);
+ if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
  ui.read.disabled=!((reading&&readingOpen&&!!p)||finisher);
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
