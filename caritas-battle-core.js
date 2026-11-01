@@ -133,6 +133,10 @@ function read(s){
  const next={...s,turn:s.turn+1,step:Math.min(2,s.step+1),words:[...s.words],lastReading:[...s.words],lastEffect:p,
   dark:clamp(s.dark-p.dark,0,100),resonance:clamp(s.resonance+p.resonance,0,100),hp:clamp(s.hp-p.damage,0,100)};
  next.phase=next.dark===0?"ending":next.resonance===100?"finisher":next.hp===0?"defeat":"read";
+ // Completing a reading starts a new turn with fresh tarot choices. Keep the
+ // delivered combination in lastReading for story/history, not as selections.
+ // All damage, resonance and counterattack calculations above stay unchanged.
+ if(next.phase==="read")next.words=[null,null,null];
  return next;
 }
 // AI adds a limited one-time, grounded understanding bonus. Cards remain the
