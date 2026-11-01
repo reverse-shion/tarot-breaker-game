@@ -256,7 +256,8 @@ function choose(f,root,words){
 }
 function read(f,root,words){
  if(!f.state().readingOpen||root.dataset.writingOpen==='true')f.button(root,'リーディングを始める').click();
- if(words)choose(f,root,words);
+ // Every new turn must select three meanings again; never rely on stale cards.
+ choose(f,root,words||f.state().battle.lastReading||['不安','忍耐','癒し']);
  const button=f.button(root,'この言葉を届ける');assert.ok(button);button.click();
  assert.equal(f.state().dialogueBusy,true);
  const turnBefore=f.state().battle.turn;
@@ -873,4 +874,55 @@ test('iPhone keyboard viewport changes retain visible composer size and never co
  assert.equal(root.style['--cb-visible-height'],undefined);
  assert.equal(root.style['--cb-visible-top'],undefined);
  assert.equal(f.state().battle.resonance,0);
+});
+
+test('each new turn starts with three unselected meanings, not prior round badges',async()=>{
+ const f=fixture(),root=await enter(f);
+ assert.equal(root.querySelector('.cb-read').children[0].textContent,'選んで届ける');
+ read(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.turn,1);
+ assert.equal(f.state().battle.phase,'read');
+ assert.deepEqual(Array.from(f.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(f.state().battle.lastReading),['不安','忍耐','癒し']);
+ f.button(root,'選んで届ける').click();
+ assert.equal(root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent.startsWith('✓ 選択済み')).length,0);
+ assert.equal(root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent==='意味を選ぶ').length,3);
+ assert.equal(root.querySelector('.cb-read').children[1].textContent,'あと3枚');
+ assert.equal(root.querySelector('.cb-read').children[0].textContent,'選んで届ける');
+ choose(f,root,['秘密','自制','願い']);
+ assert.deepEqual(Array.from(f.state().battle.words),['秘密','自制','願い']);
+ assert.equal(root.querySelector('.cb-read').children[0].textContent,'選んで届ける');
+ const selected=root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent.startsWith('✓ 選択済み'));
+ assert.equal(selected.length,3);
+ read(f,root,['秘密','自制','願い']);
+ assert.equal(f.state().battle.turn,2);
+ assert.equal(f.state().battle.phase,'read');
+ assert.deepEqual(Array.from(f.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(f.state().battle.lastReading),['秘密','自制','願い']);
+});
+test('turn reload retains completed reading history but no previous selections',async()=>{
+ const persistentStore=new Map();
+ const f=fixture({persistentStore}),root=await enter(f);
+ read(f,root,['不安','忍耐','癒し']);
+ const again=fixture({persistentStore});
+ assert.equal(again.state().battle.turn,1);
+ assert.deepEqual(Array.from(again.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(again.state().battle.lastReading),['不安','忍耐','癒し']);
+ again.button(again.shell.querySelector('#caritas-event'),'選んで届ける').click();
+ assert.equal(again.shell.querySelector('.cb-selection-reason').textContent,'あと3枚の解釈を選んでください。');
+});
+test('legacy checkpoint clears exact old delivered combination but preserves distinct partial current choices',()=>{
+ const old=Core.newGame();
+ const b={...old,turn:1,words:['不安','忍耐','癒し'],lastReading:['不安','忍耐','癒し'],dark:80,resonance:27,hp:91};
+ const store=new Map([[CHECKPOINT_KEY,JSON.stringify(S.create(b,'legacy-run'))]]);
+ const before=store.get(CHECKPOINT_KEY),f=fixture({persistentStore:store});
+ assert.deepEqual(Array.from(f.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(f.state().battle.lastReading),['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.resonance,27);
+ assert.equal(f.state().battle.hp,91);
+ assert.equal(store.get(CHECKPOINT_KEY),before,'do not rewrite original checkpoint before next confirmed action');
+ const partial={...b,words:['秘密',null,null]};
+ const store2=new Map([[CHECKPOINT_KEY,JSON.stringify(S.create(partial,'legacy-partial'))]]);
+ const f2=fixture({persistentStore:store2});
+ assert.deepEqual(Array.from(f2.state().battle.words),['秘密',null,null]);
 });
