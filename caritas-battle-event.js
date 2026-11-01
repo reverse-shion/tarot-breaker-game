@@ -666,7 +666,7 @@ async function sendAiReading(){
  if(Date.now()<aiRetryAt){toast("AIの再接続には少し時間をあけてください");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+aiSessionId;aiPendingText=reading;}
  const requestTurn=battle.turn;
- aiBusy=true;aiRetryVisible=false;render();
+ aiRetryVisible=false;aiBusy=true;render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
   const configured=window.TAROBRE_CARITAS_API_URL;
