@@ -13,7 +13,7 @@ const CARD_IMAGES=Object.freeze({月:"./assets/tarot/major/18-the-moon.webp",力
 if(!C){console.error("[Caritas] Battle core missing");return;}
 const onceKey="tb:dev:caritas:word-guide-once";
 const OWNER="hoshisuna_caritas_prompt";
-const APPROACH_RADIUS=88,REARM_RADIUS=145;
+const APPROACH_RADIUS=88,REARM_RADIUS=145,CHOICE_REARM_RADIUS=APPROACH_RADIUS+12;
 const CARITAS_GAZE=Object.freeze({x:1013,y:210});
 const faceCaritas=()=>window.TarotStage?.perform?.({type:"face",actor:"shion",target:CARITAS_GAZE});
 // Turn Shion sideways toward the actual companion, without moving either actor.
@@ -78,6 +78,7 @@ function renderCaritas(){
 const AI_CALL_LIMIT=3;
 let aiCalls=0,aiPanelOpen=false,aiRetryAt=0;
 let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialogueBusy=false;
+let waitingForReturn=false;
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let pendingRegroupNext=null;
@@ -458,6 +459,11 @@ function offerAgain(){
 function tick(){
  if(story!=="idle"||done||!sceneReady())return;
  const distance=distanceToCaritas();
+ // A player who selected "Leave" can re-enter after visibly stepping away.
+ // Preserve the larger reset distance for unrelated failed regroup attempts.
+ if(waitingForReturn&&distance>=CHOICE_REARM_RADIUS){
+  waitingForReturn=false;armed=true;
+ }
  // Direct encounter preview opens near the star-beast. Trigger without requiring
  // extra movement, but only while the player is actually in the encounter area.
  if(encounterPreview&&!noticed&&armed&&distance<=REARM_RADIUS){notice();return;}
@@ -469,7 +475,7 @@ function tick(){
 }
 function leave(){
  if(story!=="choice")return;
- hidePrompt();armed=false;busy=false;story="idle";unlock();
+ hidePrompt();armed=false;waitingForReturn=true;busy=false;story="idle";unlock();
 }
 function start(){
  if(story!=="choice"||!owned||done||suspended())return;
