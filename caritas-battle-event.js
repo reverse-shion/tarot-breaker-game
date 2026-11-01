@@ -430,11 +430,18 @@ function beginRegroup(next){
    if(suspended())pendingRegroupNext=show;
    else show();
  };
+ const abort=reason=>{
+   console.warn("[Caritas] companion could not walk into position:",reason);
+   if(story!=="regroup"||!owned||done)return;
+   // Never open dialogue if Shiopon could not reach Shion's left safely.
+   // Let the player change their approach and trigger the event again.
+   pendingRegroupNext=null;story="idle";busy=false;armed=false;unlock();
+ };
  if(typeof regroup!=="function"){finish();return;}
  Promise.resolve().then(()=>regroup()).then(out=>{
-   if(out?.completed===false)console.warn("[Caritas] safe regroup unavailable:",out.reason);
+   if(out?.completed===false){abort(out.reason);return;}
    finish();
- }).catch(error=>{console.warn("[Caritas] regroup fallback:",error);finish();});
+ }).catch(error=>abort(error));
 }
 function notice(){
  if(story!=="idle"||!armed||!sceneReady()||busy)return;
