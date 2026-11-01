@@ -641,7 +641,7 @@ function render(){
   ui.aiBody.hidden=deliveryMethod!=="write";
   root.dataset.writingOpen=String(deliveryMethod==="write"&&readingOpen&&reading);
   ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードから次の一歩へ。":"ひと言でも大丈夫。長さや上手さで特典は変わりません。";
-  ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"基本の共鳴報酬（上限100）。AIの理解による効果は別途反映されます。";
+  ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"言葉は初回+50・2回目以降+25。1戦3回まで（残り"+(AI_CALL_LIMIT-aiCalls)+"回）。";
   setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"✓ 受取済み":("基本 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
   setText(ui.readBadge,chosenCount===3&&p?"✓ 送信可能 +"+p.resonance:"あと"+(3-chosenCount)+"枚");
   ui.read.dataset.status=!reading?"unavailable":chosenCount===3?"ready":"available";
