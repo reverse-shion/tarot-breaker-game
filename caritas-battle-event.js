@@ -148,7 +148,17 @@ function restoreCheckpoint(){
   const data=JSON.parse(savedRaw);record=S.migrate(data,runId());
   firstWrittenDelivered=record.firstWrittenDelivered;aiCalls=record.aiCalls;
   if(!record.battle)return false;
-  battle=record.battle;visualBattle=null;readingOpen=false;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
+  battle=record.battle;
+  // Previously saved turns kept the previous reading selected. Migrate only
+  // the exact already-delivered combination; retain any partial new choices.
+  if(battle.phase==="read"&&battle.turn>0&&Array.isArray(battle.lastReading)&&
+     Array.isArray(battle.words)&&battle.words.length===3&&
+     battle.words.every((word,i)=>word===battle.lastReading[i])){
+   battle={...battle,words:[null,null,null]};
+   record={...record,battle};
+  }
+  viewedReadingCards.clear();
+  visualBattle=null;readingOpen=false;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-start"));
   if(record.special.committed){playSpecialSequence();return true;}
   if(battle.phase==="ending"){render();beginEnding();}
@@ -652,7 +662,7 @@ function render(){
   setText(ui.aiToggleLabel,"自分の言葉で届ける");
   ui.aiPanel.hidden=!(reading&&readingOpen&&deliveryMethod==="write");
  }
- setText(ui.readLabel,deliveryMethod==="select"&&chosenCount===3?"解釈を届ける":"選んで届ける");
+ setText(ui.readLabel,"選んで届ける");
  ui.read.setAttribute("aria-pressed",String(deliveryMethod==="select"));
  ui.wayHint.hidden=true;ui.slots.hidden=true;
  ui.selectionReason.hidden=finisher||deliveryMethod!=="select"||chosenCount===3;
@@ -839,7 +849,9 @@ function finalizeTurn(){
  visualBattle=null;story="battle";root.dataset.phase="battle";
  if(battle.phase==="defeat"){beginRetreat();return;}
  if(battle.phase==="ending"){beginEnding();return;}
- committing=false;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;checkpoint();render();
+ committing=false;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;
+ viewedReadingCards.clear(); // Card browsing is also per turn, never stale "既読".
+ checkpoint();render();
 }
 function beginRetreat(){
  if(story==="retreat"||story==="returning")return;
@@ -943,7 +955,7 @@ function init(){
  ui.finisher=newEl("div","cb-finisher");ui.finisher.hidden=true;
  const actions=newEl("div","cb-actions");
  ui.read=newEl("button","cb-read cb-way");ui.read.type="button";
- ui.readLabel=newEl("span","cb-way-title","解釈をそのまま届ける");ui.readBadge=newEl("span","cb-gain-badge","選択後");
+ ui.readLabel=newEl("span","cb-way-title","選んで届ける");ui.readBadge=newEl("span","cb-gain-badge","あと3枚");
  ui.read.append(ui.readLabel,ui.readBadge);
  ui.skill=newEl("button","cb-skill","共鳴解放");ui.skill.type="button";
  ui.skillHint=newEl("span","cb-skill-hint","共鳴が満ちると解放");
