@@ -50,7 +50,8 @@ test("chant-only synced light uses one warm-white clock and separate 5500ms tran
   assert.match(chant,/const nodes=/);
   assert.match(chant,/const connections=/);
   assert.match(cards,/getCaritasTarotLuminousMask\(\)/);
-  assert.match(game,/paintCaritasChantWorld\(\);paintCaritasRegroupStars\(\)/);
+  assert.match(game,/paintCaritasChantWorld\(\)/);
+   assert.doesNotMatch(game,/paintCaritasRegroupStars\(\)/,"companion must walk into position; no old star-step effect");
  assert.match(chant,/\.\.\.cards\.map\(/);
   assert.match(chant,/ctx\.drawImage\(atlas/);
  assert.doesNotMatch(chant,/getImageData|\.getContext\("2d",\{willReadFrequently:true\}\)/,
@@ -194,8 +195,13 @@ test("visible world-anchored starlight has colour, scale and non-strobing echoes
   "no full-screen white frame/flash");
 });
 test("returning fade resets Shiopon BEFORE the battle overlay is hidden",()=>{
- const ending=event.slice(event.indexOf("function beginEnding()"),event.indexOf("const newEl="));
- assert.match(ending,/TarotHoshisunaManifestation\?\.clear\?\.\(\);\s*stage\("returning",900,finish\)/);
+  const mapFarewell=event.slice(event.indexOf("function showFarewellOnMap()"),event.indexOf("function playMapFarewell("));
+  assert.ok(mapFarewell.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0, "reset Shiopon for the map farewell");
+  assert.ok(mapFarewell.indexOf("TarotHoshisunaManifestation?.clear?.()")<mapFarewell.indexOf("root.hidden=true"), "reset before exposing the map scene");
+  const returning=event.slice(event.indexOf("function fadeMapFarewell("),event.indexOf("function beginEnding()"));
+  assert.ok(returning.includes("outro.fade()"), "the creature fades on the real map");
+  assert.ok(returning.includes("saySequence(AFTER_FAREWELL,()=>playFarewellClose(next))"), "farewell leads to a single closing line");
+  assert.ok(event.includes('const FAREWELL_CLOSE=[["シオン","タロットクローズ"]]'), "close as Shion after the companion's dialogue");
  const finish=event.slice(event.indexOf("function finish(){"),event.indexOf("function init(){"));
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0);
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")<finish.indexOf("root.hidden=true"),
@@ -218,9 +224,9 @@ test("isolated main dialogue, combat and device cache retained",()=>{
   assert.doesNotMatch(event,/dialogue\.elements\.button\.focus\(/);
  assert.match(event,/if\(!location\.pathname\.endsWith\("\/hoshisuna-main\.html"\)\|\|params\.get\("dev"\)!=="hoshisuna"\)return;/);
  assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-stage-and-luminous-trinity-v3/);
- assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-stage-and-luminous-trinity-v3/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
+ assert.match(html,/caritas-battle-core\.js\?v=tarot-fresh-selection-v1-20261102/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-close-v2/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
 });
@@ -246,7 +252,7 @@ test("manifestation is isolated, pauseable and cleans sprite particle resources 
  assert.match(api,/caritasInvocation\.fx=null/);
  assert.match(api,/pixelFragments:caritasInvocation\.fx\?\.fragments\.length/);
  assert.match(api,/caritasInvocation\.paused=document\.hidden/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-stage-and-luminous-trinity-v3/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
 });
 
 test("light cocoon and pixel wings maintain in-map continuity, character art intact",()=>{
@@ -280,7 +286,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.match(game,/caritasOwnerTransformationAtlas=image/);
  assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
  assert.match(game,/\[Caritas\] owner transformation unavailable/);
- assert.match(html,/caritas-stage-and-luminous-trinity-v3/);
+ assert.match(html,/caritas-tarot-close-v2/);
 });
 
 test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
@@ -294,21 +300,23 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
  assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
  assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
  assert.doesNotMatch(section,/const height=112,width=112/);
- assert.match(html,/caritas-stage-and-luminous-trinity-v3/);
+ assert.match(html,/caritas-tarot-close-v2/);
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
- assert.match(event,/const transformationReplay=params\.getAll\("preview"\)\.length===1&&params\.get\("preview"\)==="manifestation"/);
+ assert.match(event,/const previewMode=params\.getAll\("preview"\)\.length===1\?params\.get\("preview"\):null/);
+ assert.match(event,/const encounterPreview=previewMode==="encounter"/);
+ assert.match(event,/const transformationReplay=previewMode==="manifestation"\|\|encounterPreview/);
  assert.match(event,/const checkpointStore=transformationReplay\?replayStore:localStorage/);
  assert.match(event,/const result=S\.write\(checkpointStore,SAVE_KEY,expectedRaw,next\)/);
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-stage-and-luminous-trinity-v3/);
- assert.match(html,/hoshisuna-main-game\.js\?v=caritas-stage-and-luminous-trinity-v3/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-close-v2/);
+ assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
- assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && params\.get\("preview"\) === "manifestation"/);
+ assert.match(game,/const transformationReplay = hoshisunaIsolated &&\s*params\.getAll\("preview"\)\.length === 1 && \["manifestation", "encounter"\]\.includes\(params\.get\("preview"\)\)/);
  assert.match(game,/spawnRef = \{x:108,y:488\};/);
  assert.match(game,/if\(transformationReplay\)spawnRef = \{x:1088,y:331\};/);
  const shape=JSON.parse(fs.readFileSync(path.join(root,"assets/events/hoshisuna/map/starroad-collision.json"),"utf8"));

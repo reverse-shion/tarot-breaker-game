@@ -6,7 +6,7 @@ const vm=require('node:vm');
 const path=require('node:path');
 const Core=require('../caritas-battle-core.js');
 class El{
- constructor(t){this.naturalWidth=100;this.tagName=t;this.children=[];this.hidden=false;this.dataset={};this.style={};this.listeners={};this.attributes={};this.textContent='';this.className='';this.id='';const values=new Set();this.classList={add:k=>values.add(k),remove:k=>values.delete(k),contains:k=>values.has(k)}}
+ constructor(t){this.naturalWidth=100;this.tagName=t;this.children=[];this.hidden=false;this.dataset={};this.style={setProperty(k,v){this[k]=v},removeProperty(k){delete this[k]}};this.listeners={};this.attributes={};this.textContent='';this.className='';this.id='';const values=new Set();this.classList={add:k=>values.add(k),remove:k=>values.delete(k),contains:k=>values.has(k)}}
  append(...v){for(const c of v)c.parentElement=this;this.children.push(...v)}
  appendChild(x){x.parentElement=this;this.children.push(x);return x}
  replaceChildren(...v){for(const c of v)c.parentElement=this;this.children=v}
@@ -39,6 +39,7 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
    moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
   TarotDialogueUI:{bind:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:o.layer,button:o.button}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
+ window.visualViewport={height:844,offsetTop:0,listeners:{},addEventListener(n,fn){this.listeners[n]=fn}};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map(),requests=[];
  class ClockDate extends Date{static now(){return now;}}
@@ -59,11 +60,12 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>{
    if(e.tagName!=='button')return false;
+   // Legacy test terminology maps to the same real action in the two-method UI.
+   // Do not stub, bypass, or change gameplay; click the real choice/delivery button.
+   if(text==='リーディングを始める'||text==='この言葉を届ける')
+    return e.className?.split(' ').includes('cb-read');
    if(e.textContent===text)return true;
-   // The redesign adds a visible reward badge inside each old action button.
-   // Resolve by its rendered label; all original gameplay assertions remain.
-   const display=text==='この言葉を届ける'?'解釈をそのまま届ける':text;
-   return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===display);
+   return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===text);
   })};
 }
 function assertShionSideFacing(f,side=-1){
@@ -238,7 +240,7 @@ async function enter(f){
 }
 
 function choose(f,root,words){
- if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
+ if(!f.state().readingOpen||root.dataset.writingOpen==='true')f.button(root,'リーディングを始める').click();
  const buttons=root.flatten().filter(e=>e.className==='cb-card-button');
  assert.equal(buttons.length,3);
  words.forEach((word,i)=>{
@@ -253,8 +255,9 @@ function choose(f,root,words){
  });
 }
 function read(f,root,words){
- if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
- if(words)choose(f,root,words);
+ if(!f.state().readingOpen||root.dataset.writingOpen==='true')f.button(root,'リーディングを始める').click();
+ // Every new turn must select three meanings again; never rely on stale cards.
+ choose(f,root,words||f.state().battle.lastReading||['不安','忍耐','癒し']);
  const button=f.button(root,'この言葉を届ける');assert.ok(button);button.click();
  assert.equal(f.state().dialogueBusy,true);
  const turnBefore=f.state().battle.turn;
@@ -269,14 +272,49 @@ function read(f,root,words){
  f.pointer.advance();
  if(f.state().story==='enemy-turn')f.advanceTime(1050);
 }
-test('map notices Caritas first, uses main prompt, leaving does not re-trigger',()=>{
+test('leaving the Caritas choice requires stepping away before it can reappear',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
  assert.equal(f.state().story,'notice');
  advanceNotice(f);
- f.button(f.shell,'離れる').click();
+ const choice=f.shell.querySelector('#star-gate-interaction-choice');
+ f.button(choice,'離れる').click();
  assert.equal(f.state().story,'idle');assert.equal(f.state().armed,false);
+ assert.equal(choice.hidden,true);
+ f.tick();
+ assert.equal(f.state().story,'idle','remaining beside Caritas must not immediately reopen the choice');
+ f.pointer.actor={x:1013,y:368}; // just 96 units from the encounter footprint: still below the new 100-unit reset
+ f.tick();
+ assert.equal(f.state().armed,false,'a tiny step away must not instantly trigger a repeat');
+ f.pointer.actor={x:1013,y:374}; // 102 away: below the old 145 requirement
+ f.tick();
+ assert.equal(f.state().armed,true,'a modest retreat allows a new approach');
+ assert.equal(f.state().story,'idle');
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice','the original inspect/leave choice reappears');
+ assert.equal(choice.hidden,false);
+ assert.equal(f.lines.length,3,'the already-seen initial dialogue must not replay');
+ assert.ok(f.button(choice,'調べる'));
+ assert.ok(f.button(choice,'離れる'));
+ f.button(choice,'離れる').click();
+ assert.equal(f.state().story,'idle');
+ f.tick();
+ assert.equal(f.state().story,'idle','leaving twice must also stay dismissed while near');
  f.pointer.actor={x:90,y:100};f.tick();
- assert.equal(f.state().armed,true);
+ assert.equal(f.state().armed,true,'a long retreat still allows a new approach');
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice');
+});
+test('Caritas leave-reapproach keeps the normal inspect path available',()=>{
+ const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();advanceNotice(f);
+ const choice=f.shell.querySelector('#star-gate-interaction-choice');
+ f.button(choice,'離れる').click();
+ f.pointer.actor={x:1013,y:374};f.tick();
+ f.pointer.actor={x:1013,y:305};f.tick();
+ assert.equal(f.state().story,'choice');
+ f.button(choice,'調べる').click();
+ assert.equal(f.state().story,'intro');
+ assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(choice.hidden,true);
 });
 test('first Shion speech uses shared main dialogue; choices use main official panel',()=>{
  const f=fixture();f.pointer.actor={x:1013,y:305};f.tick();
@@ -320,6 +358,19 @@ test('real shared dialogue remains hidden during native main choice activation',
   assert.equal(choice.hidden,true);
  }
 });
+test('battle UI keeps three real tarot cards and send controls visible without a scroll panel',async()=>{
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-resonance-ux.css'),'utf8');
+ const f=fixture(),root=await enter(f);
+ assert.match(css,/#caritas-event\[data-phase="battle"\] \.cb-controls\s*\{[\s\S]*?overflow-y:hidden!important/);
+ assert.match(css,/#caritas-event\[data-phase="battle"\] \.cb-narration\{display:none!important\}/);
+ f.button(root,'リーディングを始める').click();
+ assert.equal(root.querySelector('.cb-cards').hidden,false);
+ assert.equal(root.flatten().filter(e=>e.className==='cb-card-button').length,3);
+ assert.equal(root.querySelector('.cb-hud').className,'cb-hud enemy');
+ f.button(root,'自分の言葉で届ける').click();
+ assert.equal(root.querySelector('.cb-ai-panel').hidden,false);
+ assert.equal(root.querySelector('.cb-ai-send').disabled,true);
+});
 test('manifestation remains on the real map before entering battle',async()=>{
  const f=fixture();const root=await enter(f);
  assert.equal(f.pointer.mapPhase,'revealed');
@@ -330,7 +381,7 @@ test('manifestation remains on the real map before entering battle',async()=>{
  assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
  assert.equal(root.querySelector('.cb-hud').className,'cb-hud enemy');
  assert.ok(root.querySelector('.cb-mood'));
- assert.equal(f.button(root,'必殺技').disabled,true);
+ assert.equal(f.button(root,'共鳴解放').disabled,true);
 });
 test('read chooses foreground meanings, accepts input once, then shows calculated counterattack',async()=>{
  const f=fixture(),root=await enter(f);
@@ -366,17 +417,38 @@ test('read chooses foreground meanings, accepts input once, then shows calculate
  assert.equal(hpText(),'91/100','HP loss appears only after Caritas actually strikes');
 });
 function commitSpecial(f,root,name='月'){
- f.button(root,'必殺技').click();assert.equal(f.state().story,'selecting');
+ f.button(root,'共鳴解放').click();assert.equal(f.state().story,'selecting');
  const selector=root.querySelector('.cb-special-selection');
  const btn=selector.flatten().find(e=>e.className==='cb-special-card'&&e.children.at(-1).textContent===name);assert.ok(btn);btn.click();
  f.button(root,'このカードの言葉を届ける').click();assert.equal(f.state().special.phase,'SHION_LINE');
 }
-function finishSpecial(f){
+async function finishSpecial(f){
  f.pointer.advance();f.pointer.advance();f.pointer.advance();
  assert.equal(f.state().special.phase,'ART_PLAYBACK');f.advanceTime(2601);
  assert.equal(f.state().special.phase,'PURIFICATION');f.advanceTime(1100);
- assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();f.pointer.advance();
- assert.equal(f.state().special.phase,'RETURNING');f.advanceTime(900);
+ assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();
+ assert.equal(f.state().special.phase,'FAREWELL');
+ await Promise.resolve();await Promise.resolve();
+ // A two-line opening precedes the 12-line prophecy after the sprite rises.
+ f.pointer.advance();f.pointer.advance();
+ await Promise.resolve();await Promise.resolve();
+ for(let line=0;line<12;line++)f.pointer.advance();
+ assert.equal(f.state().special.phase,'RETURNING');
+ // The fade resolves before the final two lines; a quiet pause follows them.
+ await Promise.resolve();await Promise.resolve();
+ f.pointer.advance();f.pointer.advance();
+ assert.equal(f.state().special.phase,'RETURNING');
+ assert.equal(f.state().dialogueBusy,false,'the companion dialogue closes before the pause');
+ f.advanceTime(1099);
+ assert.notEqual(f.lines.at(-1).text,'タロットクローズ');
+ assert.equal(f.state().special.phase,'RETURNING');
+ f.advanceTime(1);
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.equal(f.lines.at(-1).actor,'shion');
+ assert.equal(f.lines.at(-1).text,'タロットクローズ');
+ assert.equal(f.state().special.phase,'RETURNING','DONE waits for the closing line to be dismissed');
+ f.pointer.advance();
+ assert.equal(f.state().special.phase,'DONE');
 }
 test('ordinary tarot MAX opens all three choices, commits A, resolves B and retains DONE',async()=>{
  const f=fixture(),root=await enter(f);
@@ -386,10 +458,10 @@ test('ordinary tarot MAX opens all three choices, commits A, resolves B and reta
  commitSpecial(f,root);assert.equal(f.state().battle.dark,before);assert.equal(f.state().battle.used,false);
  assert.equal(f.lines.at(-1).speaker,'シオン');
  root.querySelector('.cb-read').click();assert.equal(f.state().battle.dark,before);
- finishSpecial(f);
+ await finishSpecial(f);
  assert.equal(f.state().battle.phase,'complete');assert.equal(f.state().special.phase,'DONE');
  assert.equal(root.hidden,true);assert.equal(f.pointer.colliding,false);assert.equal(f.creature.hidden,true);
- assert.equal(f.lines.filter(l=>l.text==='……世話になった。').length,1);
+ assert.equal(f.lines.filter(l=>l.text.includes('闇の中でも、お前たちの声は届いていた。')&&l.text.includes('心から感謝する。')).length,1);
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
  const resumed=fixture({persistentStore:f.persistentStore});assert.equal(resumed.state().done,true);assert.equal(resumed.creature.hidden,true);assert.equal(resumed.pointer.colliding,false);assert.equal(resumed.pointer.mapPhase,'idle');
 });
@@ -479,7 +551,10 @@ const CHECKPOINT_KEY='tb:dev:hoshisuna:caritas-full-reading-v1';
 const aiReply=(ids=[])=>({ok:true,json:async()=>({shion:'俺も、ここにいる。',caritas:'……その言葉は、聞こえた。',understandingIds:ids,previewOnly:true})});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function openWritten(f,root,text='大丈夫'){
- if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
+ if(root.dataset.writingOpen!=='true'){
+  const method=f.button(root,'自分の言葉で届ける');assert.ok(method);
+  method.click(); // Choose the real writing method, without card-reading prerequisites.
+ }
  const input=root.querySelector('.cb-ai-input');input.value=text;input.listeners.input?.();
  return root.querySelector('.cb-ai-send');
 }
@@ -538,7 +613,7 @@ test('reward animation pauses in background and final +25 caps at finisher witho
  assert.equal(f.state().story,'written-light');assert.equal(meter(root),'90/100');
  f.visibility(false);f.advanceTime(1000);
  assert.equal(f.state().story,'battle');assert.equal(meter(root),'100/100');
- assert.equal(f.state().battle.hp,hp);assert.equal(f.button(root,'必殺技').disabled,false);
+ assert.equal(f.state().battle.hp,hp);assert.equal(f.button(root,'共鳴解放').disabled,false);
 });
 
 test('failed response keeps draft, allowance and first reward; successful retry grants once',async()=>{
@@ -574,7 +649,7 @@ test('completed special retains first-delivery receipt and prevents a new encoun
  const f=fixture({fetchReply:()=>aiReply([])}),root=await enter(f);
  await openWritten(f,root).click();completeWritten(f);f.advanceTime(1400);
  for(let i=0;i<12&&f.state().battle.phase==='read';i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
- commitSpecial(f,root);finishSpecial(f);
+ commitSpecial(f,root);await finishSpecial(f);
  assert.equal(saved(f).special.completed,true);assert.equal(saved(f).firstWrittenDelivered,true);
  const again=fixture({persistentStore:f.persistentStore});assert.equal(again.state().done,true);assert.equal(again.state().story,'complete');
 });
@@ -603,21 +678,30 @@ function savedFixture(phase='NONE',options={}){
  const persistentStore=new Map([[CHECKPOINT_KEY,JSON.stringify(r)]]);
  return fixture({persistentStore,...options});
 }
-test('every committed phase restores same page, B boundary and locked map',()=>{
+test('every committed phase restores same page, B boundary and locked map',async()=>{
  for(const phase of S.PHASES){
   const f=savedFixture(phase);assert.equal(f.state().special.phase,phase);
   assert.equal(f.state().battle.dark,S.PHASES.indexOf(phase)<5?42:0);
   assert.equal(f.state().owned,phase!=='DONE');assert.equal(f.state().done,phase==='DONE');
   if(phase==='DUAL_INCANTATION'){assert.equal(f.lines.at(-1).actor,'shion-shioriel');assert.equal(f.lines.at(-1).speaker,'シオン＆シオリエル');}
   if(phase==='PURIFICATION'){f.advanceTime(1099);assert.equal(f.state().battle.dark,42);f.advanceTime(1);assert.equal(f.state().battle.dark,0);}
-  if(phase==='RETURNING'){f.advanceTime(900);assert.equal(saved(f).special.phase,'DONE');assert.equal(saved(f).revision,1);f.page('pageshow');assert.equal(saved(f).revision,1);}
+  if(phase==='RETURNING'){
+   await Promise.resolve();await Promise.resolve();
+   f.pointer.advance();f.pointer.advance();
+   f.advanceTime(1100);
+   assert.equal(f.lines.at(-1).text,'タロットクローズ');
+   assert.equal(saved(f).special.phase,'RETURNING');
+   f.pointer.advance();
+   assert.equal(saved(f).special.phase,'DONE');assert.equal(saved(f).revision,1);
+   f.page('pageshow');assert.equal(saved(f).revision,1);
+  }
  }
 });
 test('selection cancel has no writes or consumption; selection reload returns to finisher',()=>{
  const f=savedFixture(),root=f.shell.querySelector('#caritas-event'),raw=f.persistentStore.get(CHECKPOINT_KEY);
- f.button(root,'必殺技').click();assert.equal(root.querySelector('.cb-special-selection').children[1].children.length,3);
+ f.button(root,'共鳴解放').click();assert.equal(root.querySelector('.cb-special-selection').children[1].children.length,3);
  f.button(root,'戻る').click();assert.equal(f.persistentStore.get(CHECKPOINT_KEY),raw);assert.equal(f.state().battle.dark,42);
- f.button(root,'必殺技').click();const g=fixture({persistentStore:f.persistentStore});assert.equal(g.state().story,'battle');assert.equal(g.state().special.committed,false);
+ f.button(root,'共鳴解放').click();const g=fixture({persistentStore:f.persistentStore});assert.equal(g.state().story,'battle');assert.equal(g.state().special.committed,false);
 });
 test('all cards use exact solo dialogue and one dual page before art, then distinct Caritas reply',()=>{
  const chants=['星幻迷宮──アストラル・ミラージュ！！','星獣咆哮──アストラル・ブレイヴ！！','星望祈願──アストラル・グリモワール！！'];
@@ -625,7 +709,7 @@ test('all cards use exact solo dialogue and one dual page before art, then disti
   const f=savedFixture(),root=f.shell.querySelector('#caritas-event');commitSpecial(f,root,c.name);
   assert.equal(f.lines.at(-1).actor,'shion');assert.doesNotMatch(f.lines.at(-1).text,/アストラル/);
   f.pointer.advance();assert.equal(f.lines.at(-1).actor,'shioriel');f.pointer.advance();assert.equal(f.lines.at(-1).text,chants[i]);assert.equal(f.lines.at(-1).actor,'shion-shioriel');
-  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……世話になった。');
+  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……闇の中でも、お前たちの声は届いていた。……感謝する。');
  }
 });
 test('purification save failure stays at A, retry commits B once without replaying AI or consumption',()=>{
@@ -656,7 +740,7 @@ test('art success (including reduced motion) alone marks seen; all failure modes
 test('only seen card admits short mode; durations remain 120/600/450 and dialogue is never skipped',()=>{
  const f=savedFixture();let r=saved(f);r.seenTechniques['18-the-moon']=true;f.persistentStore.set(CHECKPOINT_KEY,JSON.stringify(r));
  const g=fixture({persistentStore:f.persistentStore}),root=g.shell.querySelector('#caritas-event');
- g.button(root,'必殺技').click();root.querySelector('.cb-special-cards').children[0].click();
+ g.button(root,'共鳴解放').click();root.querySelector('.cb-special-cards').children[0].click();
  const input=root.querySelector('.cb-special-short').children[0];input.checked=true;input.listeners.change();
  g.button(root,'このカードの言葉を届ける').click();assert.equal(saved(g).special.playbackMode,'short');
  g.advanceTime(120);assert.equal(g.state().special.phase,'SHION_LINE');g.pointer.advance();g.pointer.advance();g.pointer.advance();
@@ -664,14 +748,19 @@ test('only seen card admits short mode; durations remain 120/600/450 and dialogu
  g.advanceTime(449);assert.equal(g.state().special.phase,'PURIFICATION');g.advanceTime(1);assert.equal(g.state().special.phase,'CARITAS_REPLY');
 });
 
-test('ordinary read and dialogue release do not advance on failed storage',async()=>{
+test('ordinary reading and special selection do not advance on failed storage',async()=>{
  const f=fixture(),root=await enter(f);choose(f,root,['不安','忍耐','癒し']);
  const set=f.persistentStore.set.bind(f.persistentStore);let fail=true;f.persistentStore.set=(k,v)=>{if(fail)throw Error('quota');return set(k,v);};
  f.button(root,'この言葉を届ける').click();f.pointer.advance();f.pointer.advance();f.pointer.advance();
  assert.equal(f.state().battle.turn,0);assert.equal(f.state().story,'battle');assert.equal(f.state().saveBlocked,true);
  fail=false;f.button(root,'再試行').click();assert.equal(f.state().battle.turn,1);assert.equal(f.state().story,'word-strike');
- const g=savedFixture(),r=g.shell.querySelector('#caritas-event');g.persistentStore.set=()=>{throw Error('quota');};
- g.button(r,'対話で解放').click();assert.equal(g.state().battle.phase,'finisher');assert.equal(g.state().battle.dark,42);assert.equal(g.state().dialogueBusy,false);assert.equal(g.state().saveBlocked,true);
+ const g=savedFixture(),r=g.shell.querySelector('#caritas-event');
+ g.button(r,'共鳴解放').click();r.querySelector('.cb-special-cards').children[0].click();
+ g.persistentStore.set=()=>{throw Error('quota');};
+ g.button(r,'このカードの言葉を届ける').click();
+ assert.equal(g.state().battle.phase,'finisher');assert.equal(g.state().battle.dark,42);
+ assert.equal(g.state().dialogueBusy,false);assert.equal(g.state().saveBlocked,true);
+ assert.equal(g.state().special.committed,false);
 });
 
 test('WAAPI missing finished event uses visible watchdog and rejects stale generation callbacks',async()=>{
@@ -684,14 +773,17 @@ test('WAAPI missing finished event uses visible watchdog and rejects stale gener
  f.advanceTime(1260);assert.equal(f.state().special.phase,'CARITAS_REPLY');assert.equal(f.state().battle.dark,0);
 });
 
-test('dialogue-only release keeps legacy farewell, with visible retry before exposing map',()=>{
+test('resonance MAX offers only 共鳴解放 and never exposes obsolete dialogue choices',()=>{
  const f=savedFixture(),root=f.shell.querySelector('#caritas-event');
- f.button(root,'対話で解放').click();assert.equal(f.state().special.committed,false);assert.equal(f.state().battle.dark,0);
- f.pointer.advance();f.advanceTime(2600+1100);assert.equal(f.lines.at(-1).text,'……世話になった。');
- f.pointer.advance();const set=f.persistentStore.set.bind(f.persistentStore);let fail=true;f.persistentStore.set=(k,v)=>{if(fail)throw Error('quota');return set(k,v);};
- f.advanceTime(900);assert.equal(root.hidden,false);assert.equal(f.state().done,false);assert.equal(f.state().owned,true);assert.equal(f.pointer.colliding,true);assert.equal(root.dataset.saveError,'true');
- fail=false;f.button(root,'再試行').click();assert.equal(f.state().done,true);assert.equal(root.hidden,true);assert.equal(f.pointer.colliding,false);
- assert.equal(f.lines.filter(l=>l.actor==='caritas').length,1,'special card replies never leak into dialogue route');
+ assert.equal(root.querySelector('.cb-delivery-methods').hidden,true);
+ assert.equal(root.querySelector('.cb-actions').hidden,false);
+ assert.equal(f.button(root,'対話で解放'),undefined);
+ assert.equal(f.button(root,'必殺技'),undefined);
+ assert.equal(f.button(root,'共鳴解放').disabled,false);
+ assert.equal(root.querySelector('.cb-finisher').hidden,true);
+ assert.equal(root.querySelector('.cb-skill-hint').hidden,true);
+ f.button(root,'共鳴解放').click();assert.equal(f.state().story,'selecting');
+ assert.equal(root.querySelector('.cb-special-cards').children.length,3);
 });
 
 test('tarot deployment finishes before the separate buddy call and pauses across background/BFCache',async()=>{
@@ -713,4 +805,154 @@ test('unavailable card deployment recovers the prompt without advancing to chant
  await advanceScoutToTarot(f);
  assert.equal(f.state().story,'choice');assert.equal(f.pointer.cards,false);assert.equal(f.pointer.walks,undefined);
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
+});
+
+test('new Gemini response speaks as Shion, transformed Shioriel, then Abyss-torn Caritas before reward',async()=>{
+ const response={shion:'俺は、お前の言葉を聞く。',
+  shioriel:'シオン。星の声は、まだ消えていない。',
+  caritas:'……私に構うな。ぐっ……いや、まだ、私は……！',
+  understandingIds:[],previewOnly:true};
+ const f=fixture({fetchReply:()=>({ok:true,json:async()=>response})}),root=await enter(f);
+ await openWritten(f,root,'今の声を聞きたい').click();
+ assert.equal(f.state().battle.resonance,0,'words are not committed before all three voices finish');
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'シオリエル');
+ assert.equal(f.lines.at(-1).actor,'shioriel');
+ assert.equal(f.state().battle.resonance,0);
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(f.state().battle.resonance,0);
+ f.pointer.advance();
+ assert.equal(f.state().story,'written-light');
+ assert.equal(f.state().battle.resonance,50);
+ f.advanceTime(1400);
+ assert.equal(meter(root),'50/100');
+});
+
+test('card browsing is not interpretation completion; all three choices alone unlock delivery',async()=>{
+ const f=fixture(),root=await enter(f);
+ f.button(root,'リーディングを始める').click();
+ const cardButtons=root.flatten().filter(e=>e.className==='cb-card-button');
+ assert.equal(cardButtons.length,3);
+ cardButtons.forEach(button=>{
+  button.click();
+  root.querySelector('.cb-modal-close').click();
+ });
+ assert.equal(f.state().battle.words.filter(Boolean).length,0);
+ assert.match(root.querySelector('.cb-selection-reason').textContent,/あと3枚/);
+ const captions=root.flatten().filter(e=>e.className==='cb-chosen');
+ assert.equal(captions.filter(x=>x.textContent==='確認済み・未選択').length,3);
+ choose(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.words.filter(Boolean).length,3);
+ assert.equal(root.querySelector('.cb-selection-reason').hidden,true);
+ assert.equal(root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent.startsWith('✓ 選択済み')).length,3);
+});
+test('resonance lesson can be dismissed once without consuming save or API allowance',async()=>{
+ const f=fixture(),root=await enter(f);
+ const hint=root.querySelector('.cb-first-hint');
+ assert.equal(hint.hidden,false);
+ const before=f.state().battle.resonance;
+ root.querySelector('.cb-first-hint-close').click();
+ assert.equal(hint.hidden,true);
+ assert.equal(f.state().battle.resonance,before);
+ const f2=fixture({persistentStore:f.persistentStore});
+ assert.equal(f2.shell.querySelector('.cb-first-hint').hidden,true);
+});
+test('HP loss presents its actual amount and reason at the HUD, not on top of art',async()=>{
+ const f=fixture(),root=await enter(f);
+ read(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.hp,91);
+ assert.equal(root.dataset.hpPulse,'true');
+ assert.equal(root.querySelector('.cb-hp-float').textContent,'HP −9');
+ assert.equal(root.querySelector('.cb-hp-reason').textContent,'カリタスの反撃');
+});
+test('selected liberation card has separated technique heading and primary-before-secondary actions',()=>{
+ const f=savedFixture(),root=f.shell.querySelector('#caritas-event');
+ f.button(root,'共鳴解放').click();
+ root.querySelector('.cb-special-cards').children[1].click();
+ const modal=root.querySelector('.cb-special-selection');
+ assert.equal(root.querySelector('.cb-technique-heading').textContent,'星獣咆哮');
+ assert.match(root.querySelector('.cb-technique-reading').textContent,/アストラル・ブレイヴ/);
+ assert.equal(modal.children.at(-2).textContent,'このカードの言葉を届ける');
+ assert.equal(modal.children.at(-1).textContent,'戻る');
+});
+
+test('iPhone keyboard viewport changes retain visible composer size and never consume a reading',async()=>{
+ const f=fixture(),root=await enter(f);
+ f.button(root,'自分の言葉で届ける').click();
+ const field=root.querySelector('.cb-ai-input');
+ const send=root.querySelector('.cb-ai-send');
+ assert.ok(send,'send control exists before keyboard opens');
+ field.listeners.focus();
+ assert.equal(root.dataset.composing,'true');
+ assert.equal(root.style['--cb-visible-height'],'844px');
+ f.window.visualViewport.height=302;
+ f.window.visualViewport.offsetTop=18;
+ f.window.visualViewport.listeners.resize();
+ assert.equal(root.dataset.keyboardTight,'true');
+ assert.equal(root.style['--cb-visible-height'],'302px');
+ assert.equal(root.style['--cb-visible-top'],'18px');
+ assert.equal(root.querySelector('.cb-cards').hidden,false,'card previews remain in DOM and are hidden with CSS during typing');
+ assert.equal(f.state().battle.resonance,0);
+ assert.equal(f.requests.length,0);
+ f.window.visualViewport.height=640;
+ f.window.visualViewport.offsetTop=0;
+ f.window.visualViewport.listeners.scroll();
+ assert.equal(root.dataset.keyboardTight,'false');
+ assert.equal(root.style['--cb-visible-height'],'640px');
+ field.listeners.blur();
+ assert.equal(root.dataset.composing,'false');
+ assert.equal(root.style['--cb-visible-height'],undefined);
+ assert.equal(root.style['--cb-visible-top'],undefined);
+ assert.equal(f.state().battle.resonance,0);
+});
+
+test('each new turn starts with three unselected meanings, not prior round badges',async()=>{
+ const f=fixture(),root=await enter(f);
+ assert.equal(root.querySelector('.cb-read').children[0].textContent,'選んで届ける');
+ read(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.turn,1);
+ assert.equal(f.state().battle.phase,'read');
+ assert.deepEqual(Array.from(f.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(f.state().battle.lastReading),['不安','忍耐','癒し']);
+ f.button(root,'選んで届ける').click();
+ assert.equal(root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent.startsWith('✓ 選択済み')).length,0);
+ assert.equal(root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent==='意味を選ぶ').length,3);
+ assert.equal(root.querySelector('.cb-read').children[1].textContent,'あと3枚');
+ assert.equal(root.querySelector('.cb-read').children[0].textContent,'選んで届ける');
+ choose(f,root,['秘密','自制','願い']);
+ assert.deepEqual(Array.from(f.state().battle.words),['秘密','自制','願い']);
+ assert.equal(root.querySelector('.cb-read').children[0].textContent,'選んで届ける');
+ const selected=root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent.startsWith('✓ 選択済み'));
+ assert.equal(selected.length,3);
+ read(f,root,['秘密','自制','願い']);
+ assert.equal(f.state().battle.turn,2);
+ assert.equal(f.state().battle.phase,'read');
+ assert.deepEqual(Array.from(f.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(f.state().battle.lastReading),['秘密','自制','願い']);
+});
+test('turn reload retains completed reading history but no previous selections',async()=>{
+ const persistentStore=new Map();
+ const f=fixture({persistentStore}),root=await enter(f);
+ read(f,root,['不安','忍耐','癒し']);
+ const again=fixture({persistentStore});
+ assert.equal(again.state().battle.turn,1);
+ assert.deepEqual(Array.from(again.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(again.state().battle.lastReading),['不安','忍耐','癒し']);
+ again.button(again.shell.querySelector('#caritas-event'),'選んで届ける').click();
+ assert.equal(again.shell.querySelector('.cb-selection-reason').textContent,'あと3枚の解釈を選んでください。');
+});
+test('legacy checkpoint clears exact old delivered combination but preserves distinct partial current choices',()=>{
+ const old=Core.newGame();
+ const b={...old,turn:1,words:['不安','忍耐','癒し'],lastReading:['不安','忍耐','癒し'],dark:80,resonance:27,hp:91};
+ const store=new Map([[CHECKPOINT_KEY,JSON.stringify(S.create(b,'legacy-run'))]]);
+ const before=store.get(CHECKPOINT_KEY),f=fixture({persistentStore:store});
+ assert.deepEqual(Array.from(f.state().battle.words),[null,null,null]);
+ assert.deepEqual(Array.from(f.state().battle.lastReading),['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.resonance,27);
+ assert.equal(f.state().battle.hp,91);
+ assert.equal(store.get(CHECKPOINT_KEY),before,'do not rewrite original checkpoint before next confirmed action');
+ const partial={...b,words:['秘密',null,null]};
+ const store2=new Map([[CHECKPOINT_KEY,JSON.stringify(S.create(partial,'legacy-partial'))]]);
+ const f2=fixture({persistentStore:store2});
+ assert.deepEqual(Array.from(f2.state().battle.words),['秘密',null,null]);
 });
