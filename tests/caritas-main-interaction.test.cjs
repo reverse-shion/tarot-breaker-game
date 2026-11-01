@@ -57,7 +57,14 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   page:n=>windowListeners[n]?.({persisted:true}),
   storage:raw=>windowListeners.storage?.({key:CHECKPOINT_KEY,newValue:raw}),
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
-  button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
+  button:(root,text)=>root.flatten().find(e=>{
+   if(e.tagName!=='button')return false;
+   if(e.textContent===text)return true;
+   // The redesign adds a visible reward badge inside each old action button.
+   // Resolve by its rendered label; all original gameplay assertions remain.
+   const display=text==='この言葉を届ける'?'解釈をそのまま届ける':text;
+   return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===display);
+  })};
 }
 function assertShionSideFacing(f,side=-1){
  const last=f.pointer.stageCommands.at(-1);
@@ -347,9 +354,9 @@ test('read chooses foreground meanings, accepts input once, then shows calculate
  const darknessText=()=>enemy.children[1].children[1].textContent;
  assert.equal(hpText(),'100/100','HP is not lost before the counterattack');
  assert.equal(resonanceText(),'0/100','meters wait for the attack impact');
- assert.equal(darknessText(),'100/100');
+ assert.equal(darknessText(),'100%');
  f.advanceTime(1050);assert.equal(f.lines.at(-1).speaker,'カリタス');
- assert.equal(darknessText(),'80/100');
+ assert.equal(darknessText(),'80%');
  assert.equal(resonanceText(),'27/100');
  assert.equal(hpText(),'100/100');
  assert.match(f.lines.at(-1).text,/怖いのか/);
