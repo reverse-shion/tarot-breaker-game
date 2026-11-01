@@ -183,7 +183,29 @@ function applySpecialResolution(){
 // Source art stays intact. CSS frames only the faces; technique art can be added
 // later through this isolated encounter's optional same-origin image slot.
 const CUTINS={shion:"./assets/battle/cutins/shion-cutin.webp",shioriel:"./assets/battle/cutins/shioriel-cutin.webp"};
-const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……闇の中でも、お前たちの声は届いていた。……感謝する。")];
+// The elder beast knows more than he says: no exposition about future time.
+const FAREWELL_OPEN=[
+ ["カリタス","……終わった、のか。"],
+ ["シオン","ああ。もう闇は消えた。"]
+];
+const FAREWELL=[
+ ["カリタス","……この私が、救われる側になるとはな。"],
+ ["カリタス","闇の中でも、お前たちの声は届いていた。……心から感謝する。"],
+ ["シオン","無事でよかった。"],
+ ["カリタス","……シオリエル。いや……しおぽん、と呼ぶべきか。"],
+ ["しおぽん","……えっ？"],
+ ["カリタス","ずいぶんと遠い時を越えてきたものだな。"],
+ ["シオン","……お前、しおぽんのことを知っているのか？"],
+ ["カリタス","……今は、語る時ではない。"],
+ ["カリタス","シオン。お前たちとは、必ずまた会う。"],
+ ["シオン","必ず……？　どういう意味だ？"],
+ ["カリタス","……その時が来れば、分かる。"],
+ ["カリタス","……さらばだ。お前たちの旅路に、星の導きがあらんことを。"]
+];
+const AFTER_FAREWELL=[
+ ["しおぽん","……シオンさん、あの子……。"],
+ ["シオン","ああ。何かを知っているようだったな。"]
+];
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
  if(!cinematicCallback||suspended())return;
@@ -324,11 +346,13 @@ function playSpecialSequence(){
  document.body.classList.add('caritas-special-active');committing=true;visualBattle=null;
  if(p==='DONE'){returnToMap();return;}
  story='special';root.dataset.phase='special';render();
- const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL'],FAREWELL:['カリタス','……闇の中でも、お前たちの声は届いていた。……感謝する。','RETURNING']};
+ const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL']};
  if(linePhases[p]){
   const [speaker,text,next]=linePhases[p];
   saySequence([[speaker,text]],()=>transitionSpecial(next));
   if(['SHION_LINE','SHIORIEL_LINE','DUAL_INCANTATION'].includes(p))runSpecialEffect(ui.cutin,short?120:600,()=>{},'entry');
+ }else if(p==='FAREWELL'){
+  playMapFarewell(()=>transitionSpecial('RETURNING'));
  }else if(p==='ART_PLAYBACK'){
   // Shared dialogue is hidden before any art frame becomes visible.
   root.dataset.artReady='loading';ui.artPlayback.hidden=false;ui.artImage.hidden=true;ui.artBackdrop.hidden=true;
@@ -338,7 +362,7 @@ function playSpecialSequence(){
    runSpecialEffect(ui.artImage,short?600:2600,()=>transitionSpecial('PURIFICATION',{imageDisplayed:ready&&ui.artImage.naturalWidth>0}),'art');
   });
  }else if(p==='PURIFICATION'){playPurification(short);}
- else if(p==='RETURNING'){runSpecialEffect(null,900,()=>transitionSpecial('DONE'));}
+ else if(p==='RETURNING'){fadeMapFarewell(()=>transitionSpecial('DONE'));}
 }
 function playPurification(short){root.style.setProperty?.('--cb-purification',short?'450ms':'1100ms');runSpecialEffect(ui.release,short?450:1100,applySpecialResolution,'purify');}
 function returnToMap(){
@@ -346,19 +370,44 @@ function returnToMap(){
  document.body.classList.remove('caritas-special-active');finish();
 }
 
+function showFarewellOnMap(){
+ // Show the actual Starroad creature and canonical main dialogue, not a clone.
+ window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
+ window.TarotHoshisunaManifestation?.clear?.();
+ window.TarotHoshisunaAbyss?.setPhase?.("cleared");
+ document.body.classList.remove('caritas-special-active');
+ root.hidden=true;
+ faceCaritas();
+}
+function playMapFarewell(next){
+ showFarewellOnMap();
+ const rising=window.TarotHoshisunaCaritasOutro?.rise?.()||Promise.resolve(false);
+ // Let the beast speak while rising, but wait for all 16 frames before its reveal.
+ saySequence(FAREWELL_OPEN,()=>{
+  Promise.resolve(rising).catch(()=>false).then(()=>{
+   if(done||recovery||saveBlocked)return;
+   saySequence(FAREWELL,next);
+  });
+ });
+}
+function fadeMapFarewell(next){
+ showFarewellOnMap();
+ const outro=window.TarotHoshisunaCaritasOutro;
+ if(!outro){saySequence(AFTER_FAREWELL,next);return;}
+ // RETURNING can be resumed directly from a durable save checkpoint.
+ Promise.resolve(outro.fade()).catch(()=>false).then(()=>{
+  if(done||recovery||saveBlocked)return;
+  saySequence(AFTER_FAREWELL,next);
+ });
+}
 function beginEnding(){
  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
  clearTimeout(toastTimer);ui.toast.hidden=true;
  stage("purifying",2600,()=>{
-   stage("purified",1100,()=>{
-     story="farewell";root.dataset.phase="farewell";
-     saySequence(FAREWELL,()=>{
-       // Restore the real Shiopon sprite while the battle screen still covers the map.
-       // The reveal cannot leave a one-frame afterimage during the return fade.
-       window.TarotHoshisunaManifestation?.clear?.();
-       stage("returning",900,finish);
-     });
-   });
+  stage("purified",1100,()=>{
+   story="farewell";root.dataset.phase="farewell";
+   playMapFarewell(()=>fadeMapFarewell(finish));
+  });
  });
 }
 const newEl=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
