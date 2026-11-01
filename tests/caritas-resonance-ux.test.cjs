@@ -59,7 +59,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains visible battle arena <=35vh and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-tarot-ux-v6/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-midnight-navy-v7/);
  assert.match(css,/minmax\(0,33dvh\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/min-height:75px/);
@@ -106,4 +106,35 @@ test('HUD HP feedback and card modal never cover actors or require battle scroll
  assert.match(css,/\.cb-modal-close\{\s*position:sticky;top:0/);
  assert.match(css,/\.cb-card-panel\{[\s\S]*?max-height:calc\(100dvh/);
  assert.match(css,/\.cb-frame>\.cb-hud\{\s*visibility:hidden!important/);
+});
+
+test('all Caritas surfaces use shared navy tokens, not previous plum/bright-blue UI overrides',()=>{
+ const css=load('caritas-resonance-ux.css');
+ const html=load('hoshisuna-main.html');
+ assert.match(css,/--cb-bg-base:#0a1024/);
+ assert.match(css,/--cb-bg-panel:#131b38/);
+ assert.match(css,/--cb-bg-panel-strong:#1a2548/);
+ assert.match(css,/--cb-bg-modal:rgba\(10,16,36,\.96\)/);
+ assert.match(css,/--cb-bg-input:#0f1730/);
+ assert.match(css,/#caritas-event\{\s*--cb-bg-base:/);
+ assert.match(css,/#caritas-event \.cb-frame\{\s*background:var\(--cb-bg-base\)!important/);
+ assert.match(css,/#caritas-event\[data-phase\] \.cb-controls,[\s\S]*?background:var\(--cb-bg-panel\)!important/);
+ assert.match(css,/#caritas-event \.cb-frame>\.cb-hud\{\s*background:var\(--cb-bg-panel\)!important/);
+ assert.match(css,/#caritas-event \.cb-card-panel,[\s\S]*?background:var\(--cb-bg-modal\)!important/);
+ assert.match(css,/body:has\(#caritas-event:not\(\[hidden\]\)\)/);
+ assert.match(css,/#caritas-event \.cb-card-shade\{\s*background:var\(--cb-overlay-dim\)!important/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261101-midnight-navy-v7/);
+ // Do not recolor illustrated actors, darkness, art or transformation effects.
+ const late=css.slice(css.indexOf('v7 — shared midnight-navy'));
+ assert.doesNotMatch(late,/\.cb-(?:beast|abyss|release|cutin|cut-panel|special-art)\s*\{/);
+});
+test('iPhone keyboard state reserves send control and hides optional previews',()=>{
+ const css=load('caritas-resonance-ux.css');
+ assert.match(css,/\[data-composing="true"\] \.cb-frame\{[\s\S]*?top:var\(--cb-visible-top,0px\)!important/);
+ assert.match(css,/\[data-composing="true"\] \.cb-frame\{[\s\S]*?height:var\(--cb-visible-height,100dvh\)!important/);
+ assert.match(css,/\[data-composing="true"\] \.cb-cards,[\s\S]*?display:none!important/);
+ assert.match(css,/\[data-composing="true"\] \.cb-ai-send\{[\s\S]*?flex:0 0 48px!important/);
+ assert.match(css,/\[data-composing="true"\] \.cb-ai-send\{[\s\S]*?min-height:48px!important/);
+ assert.match(css,/\[data-composing="true"\] \.cb-ai-body\{[\s\S]*?max-height:100%!important/);
+ assert.match(css,/\[data-composing="true"\] \.cb-controls\{[\s\S]*?justify-content:flex-end!important/);
 });
