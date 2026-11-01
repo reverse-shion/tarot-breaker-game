@@ -748,7 +748,8 @@ test('resonance MAX offers only 共鳴解放 and never exposes obsolete dialogue
  assert.equal(f.button(root,'対話で解放'),undefined);
  assert.equal(f.button(root,'必殺技'),undefined);
  assert.equal(f.button(root,'共鳴解放').disabled,false);
- assert.match(root.querySelector('.cb-finisher').textContent,/共鳴解放/);
+ assert.equal(root.querySelector('.cb-finisher').hidden,true);
+ assert.equal(root.querySelector('.cb-skill-hint').hidden,true);
  f.button(root,'共鳴解放').click();assert.equal(f.state().story,'selecting');
  assert.equal(root.querySelector('.cb-special-cards').children.length,3);
 });
@@ -793,4 +794,52 @@ test('new Gemini response speaks as Shion, transformed Shioriel, then Abyss-torn
  assert.equal(f.state().battle.resonance,50);
  f.advanceTime(1400);
  assert.equal(meter(root),'50/100');
+});
+
+test('card browsing is not interpretation completion; all three choices alone unlock delivery',async()=>{
+ const f=fixture(),root=await enter(f);
+ f.button(root,'リーディングを始める').click();
+ const cardButtons=root.flatten().filter(e=>e.className==='cb-card-button');
+ assert.equal(cardButtons.length,3);
+ cardButtons.forEach(button=>{
+  button.click();
+  root.querySelector('.cb-modal-close').click();
+ });
+ assert.equal(f.state().battle.words.filter(Boolean).length,0);
+ assert.match(root.querySelector('.cb-selection-reason').textContent,/あと3枚/);
+ const captions=root.flatten().filter(e=>e.className==='cb-chosen');
+ assert.equal(captions.filter(x=>x.textContent==='確認済み・未選択').length,3);
+ choose(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.words.filter(Boolean).length,3);
+ assert.equal(root.querySelector('.cb-selection-reason').hidden,true);
+ assert.equal(root.flatten().filter(e=>e.className==='cb-chosen'&&e.textContent.startsWith('✓ 選択済み')).length,3);
+});
+test('resonance lesson can be dismissed once without consuming save or API allowance',async()=>{
+ const f=fixture(),root=await enter(f);
+ const hint=root.querySelector('.cb-first-hint');
+ assert.equal(hint.hidden,false);
+ const before=f.state().battle.resonance;
+ root.querySelector('.cb-first-hint-close').click();
+ assert.equal(hint.hidden,true);
+ assert.equal(f.state().battle.resonance,before);
+ const f2=fixture({persistentStore:f.persistentStore});
+ assert.equal(f2.shell.querySelector('.cb-first-hint').hidden,true);
+});
+test('HP loss presents its actual amount and reason at the HUD, not on top of art',async()=>{
+ const f=fixture(),root=await enter(f);
+ read(f,root,['不安','忍耐','癒し']);
+ assert.equal(f.state().battle.hp,91);
+ assert.equal(root.dataset.hpPulse,'true');
+ assert.equal(root.querySelector('.cb-hp-float').textContent,'HP −9');
+ assert.equal(root.querySelector('.cb-hp-reason').textContent,'カリタスの反撃');
+});
+test('selected liberation card has separated technique heading and primary-before-secondary actions',()=>{
+ const f=savedFixture(),root=f.shell.querySelector('#caritas-event');
+ f.button(root,'共鳴解放').click();
+ root.querySelector('.cb-special-cards').children[1].click();
+ const modal=root.querySelector('.cb-special-selection');
+ assert.equal(root.querySelector('.cb-technique-heading').textContent,'星獣咆哮');
+ assert.match(root.querySelector('.cb-technique-reading').textContent,/アストラル・ブレイヴ/);
+ assert.equal(modal.children.at(-2).textContent,'このカードの言葉を届ける');
+ assert.equal(modal.children.at(-1).textContent,'戻る');
 });
