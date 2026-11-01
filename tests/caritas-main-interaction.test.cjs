@@ -6,7 +6,7 @@ const vm=require('node:vm');
 const path=require('node:path');
 const Core=require('../caritas-battle-core.js');
 class El{
- constructor(t){this.naturalWidth=100;this.tagName=t;this.children=[];this.hidden=false;this.dataset={};this.style={};this.listeners={};this.attributes={};this.textContent='';this.className='';this.id='';const values=new Set();this.classList={add:k=>values.add(k),remove:k=>values.delete(k),contains:k=>values.has(k)}}
+ constructor(t){this.naturalWidth=100;this.tagName=t;this.children=[];this.hidden=false;this.dataset={};this.style={setProperty(k,v){this[k]=v},removeProperty(k){delete this[k]}};this.listeners={};this.attributes={};this.textContent='';this.className='';this.id='';const values=new Set();this.classList={add:k=>values.add(k),remove:k=>values.delete(k),contains:k=>values.has(k)}}
  append(...v){for(const c of v)c.parentElement=this;this.children.push(...v)}
  appendChild(x){x.parentElement=this;this.children.push(x);return x}
  replaceChildren(...v){for(const c of v)c.parentElement=this;this.children=v}
@@ -39,6 +39,7 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
    moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
   TarotDialogueUI:{bind:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:o.layer,button:o.button}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
+ window.visualViewport={height:844,offsetTop:0,listeners:{},addEventListener(n,fn){this.listeners[n]=fn}};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map(),requests=[];
  class ClockDate extends Date{static now(){return now;}}
@@ -842,4 +843,34 @@ test('selected liberation card has separated technique heading and primary-befor
  assert.match(root.querySelector('.cb-technique-reading').textContent,/アストラル・ブレイヴ/);
  assert.equal(modal.children.at(-2).textContent,'このカードの言葉を届ける');
  assert.equal(modal.children.at(-1).textContent,'戻る');
+});
+
+test('iPhone keyboard viewport changes retain visible composer size and never consume a reading',async()=>{
+ const f=fixture(),root=await enter(f);
+ f.button(root,'自分の言葉で届ける').click();
+ const field=root.querySelector('.cb-ai-input');
+ const send=root.querySelector('.cb-ai-send');
+ assert.ok(send,'send control exists before keyboard opens');
+ field.listeners.focus();
+ assert.equal(root.dataset.composing,'true');
+ assert.equal(root.style['--cb-visible-height'],'844px');
+ f.window.visualViewport.height=302;
+ f.window.visualViewport.offsetTop=18;
+ f.window.visualViewport.listeners.resize();
+ assert.equal(root.dataset.keyboardTight,'true');
+ assert.equal(root.style['--cb-visible-height'],'302px');
+ assert.equal(root.style['--cb-visible-top'],'18px');
+ assert.equal(root.querySelector('.cb-cards').hidden,false,'card previews remain in DOM and are hidden with CSS during typing');
+ assert.equal(f.state().battle.resonance,0);
+ assert.equal(f.requests.length,0);
+ f.window.visualViewport.height=640;
+ f.window.visualViewport.offsetTop=0;
+ f.window.visualViewport.listeners.scroll();
+ assert.equal(root.dataset.keyboardTight,'false');
+ assert.equal(root.style['--cb-visible-height'],'640px');
+ field.listeners.blur();
+ assert.equal(root.dataset.composing,'false');
+ assert.equal(root.style['--cb-visible-height'],undefined);
+ assert.equal(root.style['--cb-visible-top'],undefined);
+ assert.equal(f.state().battle.resonance,0);
 });
