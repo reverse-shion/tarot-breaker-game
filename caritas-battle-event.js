@@ -81,6 +81,9 @@ let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=fal
 let pendingRegroupNext=null;
 let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=0;
 let firstWrittenDelivered=false;
+// Presentation-only; no save state and no influence on battle arithmetic.
+const viewedReadingCards=new Set();
+let lastPresentedResonance=null,gainPulseTimer=0,aiRetryVisible=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
 // In-memory revision-aware storage for author preview. The real dev battle
 // checkpoint is untouched, including when preview reaches combat.
@@ -809,8 +812,8 @@ function init(){
  root.setAttribute("aria-label","カリタス 心象共鳴");
  const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");
  arena.append(newEl("div","cb-title","心象共鳴"));
- const enemy=newEl("div","cb-hud enemy");enemy.append(newEl("div","","カリタス"));
- const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇侵食"),ui.dark=newEl("span","","100/100"));
+ const enemy=newEl("div","cb-hud enemy");enemy.append(newEl("div","cb-hud-name","カリタス"));
+ const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇侵蝕"),ui.dark=newEl("span","","100%"));
  ui.darkBar=newEl("i");const drb=newEl("div","cb-bar dark");drb.appendChild(ui.darkBar);
  ui.mood=newEl("div","cb-mood","心象：閉ざす");enemy.append(dr,drb,ui.mood);
  const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="カリタス";
@@ -819,18 +822,21 @@ function init(){
  caritasView=window.CaritasBattlePresentation?.createView({root,beast,veil})||null;
  const release=newEl("div","cb-release");ui.release=release;release.setAttribute("aria-hidden","true");
  const angel=newEl("div","cb-angel");
- const hero=newEl("div","cb-hud hero");hero.append(newEl("div","","シオリエル"));
+ const hero=newEl("div","cb-hud hero");hero.append(newEl("div","cb-hud-name","シオリエル"));
  const hr=newEl("div","cb-hud-row");hr.append(newEl("span","","HP"),ui.hp=newEl("span","","100/100"));
  ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);
  const rr=newEl("div","cb-hud-row");rr.append(newEl("span","","共鳴"),ui.res=newEl("span","","0/100"));
  ui.resBar=newEl("i");const rb=newEl("div","cb-bar resonance");rb.appendChild(ui.resBar);
- hero.append(hr,hb,rr,rb);
+ ui.resMood=newEl("div","cb-res-mood","星響：声を待っている");
+ ui.gainFloat=newEl("span","cb-gain-float");ui.gainFloat.setAttribute("aria-live","polite");
+ hero.append(hr,hb,rr,rb,ui.resMood,ui.gainFloat);
  const shion=newEl("div","cb-shion-sprite");shion.setAttribute("role","img");shion.setAttribute("aria-label","シオン");
  const counter=newEl("div","cb-enemy-turn");
  ui.enemyCall=newEl("strong","cb-enemy-call");ui.enemyDamage=newEl("span","cb-enemy-damage");
  counter.append(ui.enemyCall,ui.enemyDamage);
  arena.append(enemy,beast,veil,release,shion,angel,hero,counter);
- const narr=newEl("div","cb-narration");ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
+ const narr=newEl("div","cb-narration");narr.append(newEl("span","cb-narr-speaker","星の声"));
+ ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.readingIntro=newEl("div","cb-reading-start");
  const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
@@ -838,16 +844,21 @@ function init(){
  const introButton=newEl("button","cb-reading-start-button","リーディングを始める");introButton.type="button";
  introButton.addEventListener("click",()=>{if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy)return;readingOpen=true;render();});
  ui.readingIntro.append(introTitle,introHint,introButton);
+ ui.slots=newEl("div","cb-reading-slots");ui.slots.setAttribute("aria-label","カードの読み順：現在地、行動、届け方");
  const line=newEl("div","cb-readline");ui.preview=newEl("div","cb-preview");ui.tactic=newEl("div","cb-tactic");line.append(ui.preview,ui.tactic);
  ui.finisher=newEl("div","cb-finisher");ui.finisher.hidden=true;
  const actions=newEl("div","cb-actions");
- ui.read=newEl("button","cb-read","この言葉を届ける");ui.skill=newEl("button","cb-skill","必殺技");
+ ui.read=newEl("button","cb-read cb-way");ui.read.type="button";
+ ui.readLabel=newEl("span","cb-way-title","解釈をそのまま届ける");ui.readBadge=newEl("span","cb-gain-badge","選択後");
+ ui.read.append(ui.readLabel,ui.readBadge);
+ ui.skill=newEl("button","cb-skill","必殺技");ui.skill.type="button";
+ ui.skillHint=newEl("span","cb-skill-hint","共鳴が満ちると解放");
  ui.read.addEventListener("click",()=>perform(battle.phase==="finisher"?"dialogue":"read"));
  ui.skill.addEventListener("click",()=>perform("skill"));
  ui.aiPanel=newEl("div","cb-ai-panel");
  const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
  ui.aiInput=newEl("textarea","cb-ai-input");ui.aiInput.rows=3;ui.aiInput.maxLength=700;
- ui.aiInput.placeholder="ひと言でも大丈夫。カリタスに何を伝えたい？";
+ ui.aiInput.placeholder="カリタスに何を伝えたい？";
  ui.aiInput.setAttribute("aria-describedby","cb-writing-hint cb-writing-reward");label.append(ui.aiInput);
  ui.writingHint=newEl("p","cb-writing-hint");ui.writingHint.id="cb-writing-hint";
  ui.writingReward=newEl("p","cb-writing-reward");ui.writingReward.id="cb-writing-reward";
@@ -855,7 +866,9 @@ function init(){
  ui.aiSend.addEventListener("click",sendAiReading);
  ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=specialLocked()||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
  ui.aiResult=newEl("div","cb-ai-result");ui.aiResult.setAttribute("aria-live","polite");
- ui.aiToggle=newEl("button","cb-ai-toggle","自分の言葉で届ける ▼");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
+ ui.aiToggle=newEl("button","cb-ai-toggle cb-way");ui.aiToggle.type="button";ui.aiToggle.setAttribute("aria-expanded","false");
+ ui.aiToggleLabel=newEl("span","cb-way-title","言葉を添えて届ける");
+ ui.writtenBadge=newEl("span","cb-gain-badge","基本 +50");ui.aiToggle.append(ui.aiToggleLabel,ui.writtenBadge);
  ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
  ui.aiToggle.addEventListener("click",()=>{
   if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
@@ -865,8 +878,11 @@ function init(){
   render();
   if(aiPanelOpen)ui.aiPanel.scrollIntoView({block:"nearest",behavior:"smooth"});
  });
- ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.aiToggle,ui.writingReward,ui.aiBody);
- actions.append(ui.read,ui.skill);ctr.append(cardBox,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
+ ui.aiWait=newEl("div","cb-ai-wait","想いを言葉に変えています…");ui.aiWait.setAttribute("role","status");ui.aiWait.hidden=true;
+ ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.writingReward,ui.aiWait,ui.aiBody);
+ ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
+ const methods=newEl("div","cb-delivery-methods");methods.append(ui.aiToggle,ui.read);
+ actions.append(ui.skill,ui.skillHint);ctr.append(cardBox,ui.slots,methods,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
