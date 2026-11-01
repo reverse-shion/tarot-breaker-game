@@ -434,9 +434,20 @@ async function finishSpecial(f){
  await Promise.resolve();await Promise.resolve();
  for(let line=0;line<12;line++)f.pointer.advance();
  assert.equal(f.state().special.phase,'RETURNING');
- // The fade resolves before the final two lines and the DONE receipt.
+ // The fade resolves before the final two lines; a quiet pause follows them.
  await Promise.resolve();await Promise.resolve();
  f.pointer.advance();f.pointer.advance();
+ assert.equal(f.state().special.phase,'RETURNING');
+ assert.equal(f.state().dialogueBusy,false,'the companion dialogue closes before the pause');
+ f.advanceTime(1099);
+ assert.notEqual(f.lines.at(-1).text,'タロットクローズ');
+ assert.equal(f.state().special.phase,'RETURNING');
+ f.advanceTime(1);
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.equal(f.lines.at(-1).actor,'shion');
+ assert.equal(f.lines.at(-1).text,'タロットクローズ');
+ assert.equal(f.state().special.phase,'RETURNING','DONE waits for the closing line to be dismissed');
+ f.pointer.advance();
  assert.equal(f.state().special.phase,'DONE');
 }
 test('ordinary tarot MAX opens all three choices, commits A, resolves B and retains DONE',async()=>{
@@ -677,6 +688,10 @@ test('every committed phase restores same page, B boundary and locked map',async
   if(phase==='RETURNING'){
    await Promise.resolve();await Promise.resolve();
    f.pointer.advance();f.pointer.advance();
+   f.advanceTime(1100);
+   assert.equal(f.lines.at(-1).text,'タロットクローズ');
+   assert.equal(saved(f).special.phase,'RETURNING');
+   f.pointer.advance();
    assert.equal(saved(f).special.phase,'DONE');assert.equal(saved(f).revision,1);
    f.page('pageshow');assert.equal(saved(f).revision,1);
   }
