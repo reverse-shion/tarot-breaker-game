@@ -83,6 +83,8 @@ let modalIndex=-1,readingOpen=false,committing=false,visualBattle=null,attempts=
 let firstWrittenDelivered=false;
 // Presentation-only; no save state and no influence on battle arithmetic.
 const viewedReadingCards=new Set();
+// Display-only values. The fixed bonus itself is owned by the battle core.
+const RESONANCE_UI=Object.freeze({writtenFirst:50,writtenLater:25,gainPulseMs:1300});
 let lastPresentedResonance=null,gainPulseTimer=0,aiRetryVisible=false;
 const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
 // In-memory revision-aware storage for author preview. The real dev battle
@@ -543,7 +545,7 @@ function render(){
  setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"%");setText(ui.hp,visible.hp+"/100");
  if(lastPresentedResonance!==null&&visible.resonance>lastPresentedResonance){
   setText(ui.gainFloat,"+"+(visible.resonance-lastPresentedResonance));root.dataset.gainPulse="true";
-  clearTimeout(gainPulseTimer);gainPulseTimer=setTimeout(()=>{root.dataset.gainPulse="false";},1300);
+  clearTimeout(gainPulseTimer);gainPulseTimer=setTimeout(()=>{root.dataset.gainPulse="false";},RESONANCE_UI.gainPulseMs);
  }
  lastPresentedResonance=visible.resonance;
  setText(ui.resMood,visible.resonance===100?"星響：満ちた":visible.resonance>=70?"星響：共鳴が深まる":visible.resonance>=30?"星響：光が届き始めた":"星響：声を待っている");
@@ -553,6 +555,7 @@ function render(){
  const p=C.predict(s),idx=C.stateFor(s.dark)==="closed"?0:C.stateFor(s.dark)==="storm"?1:2;
  const chosenCount=s.words.filter(Boolean).length;
  root.dataset.cardsReady=String(chosenCount===3);
+ root.dataset.finisher=String(finisher);
  ui.slots.replaceChildren();
  for(let i=0;i<3;i++){
   const card=s.cards[i],slot=newEl("div","cb-reading-slot");
@@ -562,7 +565,7 @@ function render(){
   ui.slots.append(slot);
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
  }
- setText(ui.wayHint,chosenCount===3?"どちらの届け方も、自分で選べます。":"書けなくても大丈夫。解釈だけでも届けられます。");
+ setText(ui.wayHint,"書けなくても大丈夫。解釈だけでも届けられます。");
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
@@ -597,7 +600,7 @@ function render(){
   root.dataset.writingOpen=String(aiPanelOpen&&readingOpen&&reading);
   ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードから次の一歩へ。":"ひと言でも大丈夫。長さや上手さで特典は変わりません。";
   ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"基本の共鳴報酬（上限100）。AIの理解による効果は別途反映されます。";
-  setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("基本 +"+Math.min(firstWrittenDelivered?25:50,Math.max(0,100-s.resonance))));
+  setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("基本 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
   setText(ui.readBadge,p?("+"+p.resonance):"選択後");
   ui.aiToggle.setAttribute("aria-expanded",String(aiPanelOpen));
   ui.aiToggle.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||aiCalls>=AI_CALL_LIMIT;
