@@ -781,3 +781,164 @@
   #caritas-event[data-hp-pulse="true"] .cb-hp-float,
   #caritas-event[data-hp-pulse="true"] .cb-hp-reason{opacity:1}
 }
+
+
+/* v7 — shared midnight-navy surface across EVERY Caritas UI phase.
+   Earlier plum/bright-blue declarations remain for historical reference but
+   are overridden here. Do not touch the illustrated arena or cut-in effects. */
+#caritas-event{
+  --cb-bg-base:#0a1024;
+  --cb-bg-panel:#131b38;
+  --cb-bg-panel-strong:#1a2548;
+  --cb-bg-card:#253354;
+  --cb-bg-modal:rgba(10,16,36,.96);
+  --cb-bg-input:#0f1730;
+  --cb-overlay-dim:rgba(5,8,20,.55);
+  background:var(--cb-bg-base)!important;
+}
+html:has(#caritas-event:not([hidden])),
+body:has(#caritas-event:not([hidden])),
+body:has(#caritas-event:not([hidden])) #game-shell{
+  background-color:#0a1024;
+}
+#caritas-event .cb-frame{
+  background:var(--cb-bg-base)!important;
+}
+#caritas-event[data-phase] .cb-controls,
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-controls,
+#caritas-event[data-phase="battle"][data-writing-open="true"] .cb-controls{
+  background:var(--cb-bg-panel)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+#caritas-event .cb-frame>.cb-hud{
+  background:var(--cb-bg-panel)!important;
+}
+#caritas-event .cb-reading-slot,
+#caritas-event .cb-readline,
+#caritas-event .cb-ai-wait,
+#caritas-event .cb-ai-body,
+#caritas-event .cb-first-hint{
+  background:var(--cb-bg-panel-strong)!important;
+}
+#caritas-event[data-phase="battle"] .cb-card,
+#caritas-event .cb-special-card{
+  background:linear-gradient(180deg,#2b3a5d,var(--cb-bg-card))!important;
+}
+#caritas-event .cb-card-panel,
+#caritas-event .cb-special-selection,
+#caritas-event .cb-save-problem{
+  background:var(--cb-bg-modal)!important;
+}
+#caritas-event .cb-card-shade{
+  background:var(--cb-overlay-dim)!important;
+}
+#caritas-event[data-phase="battle"] .cb-way,
+#caritas-event[data-phase="battle"] .cb-way:not(:disabled),
+#caritas-event .cb-modal-word,
+#caritas-event .cb-modal-navigation button,
+#caritas-event .cb-special-back{
+  background:var(--cb-bg-panel-strong)!important;
+  filter:none!important;
+}
+#caritas-event[data-phase="battle"] .cb-way:disabled,
+#caritas-event[data-phase="battle"] .cb-ai-send:disabled{
+  opacity:.45!important;
+  filter:none!important;
+}
+#caritas-event[data-phase="battle"] .cb-way:disabled .cb-gain-badge{
+  background:linear-gradient(115deg,#edcf90,#c89b54)!important;
+  border-color:#f4d79b!important;
+  color:#251b16!important;
+}
+#caritas-event[data-phase="battle"] .cb-ai-input{
+  background:var(--cb-bg-input)!important;
+}
+#caritas-event .cb-modal-close{
+  background:var(--cb-bg-panel-strong)!important;
+}
+#caritas-event[data-phase="battle"] .cb-card-image,
+#caritas-event .cb-special-card img,
+#caritas-event .cb-modal-image{
+  background:var(--cb-bg-input)!important;
+}
+/* Non-narrative overlay/backdrop layers must only darken the base surface.
+   Artistic light/Abyss/cut-in layers retain their original treatment. */
+
+/* Keyboard composition: temporarily dedicate the visible viewport to writing,
+   removing optional card previews and reserving a complete submit button.
+   All gameplay and send callbacks are unchanged. */
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame{
+  position:absolute!important;
+  top:var(--cb-visible-top,0px)!important;
+  height:var(--cb-visible-height,100dvh)!important;
+  max-height:var(--cb-visible-height,100dvh)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  background:var(--cb-bg-base)!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-controls{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  align-items:stretch!important;
+  min-height:0!important;
+  max-height:100%!important;
+  height:100%!important;
+  padding:6px 10px max(10px,env(safe-area-inset-bottom,0px))!important;
+  gap:4px!important;
+  overflow:hidden!important;
+  background:var(--cb-bg-panel)!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-cards,
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-selection-reason,
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-first-hint,
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-writing-reward{
+  display:none!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-panel{
+  display:block!important;
+  flex:0 0 auto!important;
+  width:100%;max-height:100%!important;min-height:0!important;
+  overflow:hidden!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-body{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  padding:6px 7px!important;
+  gap:5px!important;
+  background:var(--cb-bg-panel-strong)!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-label{
+  min-height:0!important;flex:0 1 auto!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-input{
+  box-sizing:border-box;
+  height:clamp(48px,12dvh,76px)!important;
+  min-height:48px!important;
+  max-height:76px!important;
+  flex:0 1 auto!important;
+  width:100%;
+  background:var(--cb-bg-input)!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-send{
+  display:block!important;
+  position:relative!important;
+  flex:0 0 48px!important;
+  width:100%;
+  min-height:48px!important;
+  z-index:2;
+  margin:0!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-result{
+  max-height:2.5em!important;overflow:hidden;
+}
+@media(max-height:600px){
+  #caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-label{font-size:10px}
+  #caritas-event[data-phase="battle"][data-composing="true"] .cb-ai-input{
+    height:48px!important;
+  }
+}
