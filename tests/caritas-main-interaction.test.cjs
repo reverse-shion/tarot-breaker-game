@@ -773,3 +773,24 @@ test('unavailable card deployment recovers the prompt without advancing to chant
  assert.equal(f.state().story,'choice');assert.equal(f.pointer.cards,false);assert.equal(f.pointer.walks,undefined);
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
 });
+
+test('new Gemini response speaks as Shion, transformed Shioriel, then Abyss-torn Caritas before reward',async()=>{
+ const response={shion:'俺は、お前の言葉を聞く。',
+  shioriel:'シオン。星の声は、まだ消えていない。',
+  caritas:'……私に構うな。ぐっ……いや、まだ、私は……！',
+  understandingIds:[],previewOnly:true};
+ const f=fixture({fetchReply:()=>({ok:true,json:async()=>response})}),root=await enter(f);
+ await openWritten(f,root,'今の声を聞きたい').click();
+ assert.equal(f.state().battle.resonance,0,'words are not committed before all three voices finish');
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'シオリエル');
+ assert.equal(f.lines.at(-1).actor,'shioriel');
+ assert.equal(f.state().battle.resonance,0);
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(f.state().battle.resonance,0);
+ f.pointer.advance();
+ assert.equal(f.state().story,'written-light');
+ assert.equal(f.state().battle.resonance,50);
+ f.advanceTime(1400);
+ assert.equal(meter(root),'50/100');
+});
