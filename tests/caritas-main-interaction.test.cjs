@@ -403,7 +403,7 @@ test('ordinary tarot MAX opens all three choices, commits A, resolves B and reta
  finishSpecial(f);
  assert.equal(f.state().battle.phase,'complete');assert.equal(f.state().special.phase,'DONE');
  assert.equal(root.hidden,true);assert.equal(f.pointer.colliding,false);assert.equal(f.creature.hidden,true);
- assert.equal(f.lines.filter(l=>l.text==='……世話になった。').length,1);
+ assert.equal(f.lines.filter(l=>l.text==='……闇の中でも、お前たちの声は届いていた。……感謝する。').length,1);
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
  const resumed=fixture({persistentStore:f.persistentStore});assert.equal(resumed.state().done,true);assert.equal(resumed.creature.hidden,true);assert.equal(resumed.pointer.colliding,false);assert.equal(resumed.pointer.mapPhase,'idle');
 });
@@ -642,7 +642,7 @@ test('all cards use exact solo dialogue and one dual page before art, then disti
   const f=savedFixture(),root=f.shell.querySelector('#caritas-event');commitSpecial(f,root,c.name);
   assert.equal(f.lines.at(-1).actor,'shion');assert.doesNotMatch(f.lines.at(-1).text,/アストラル/);
   f.pointer.advance();assert.equal(f.lines.at(-1).actor,'shioriel');f.pointer.advance();assert.equal(f.lines.at(-1).text,chants[i]);assert.equal(f.lines.at(-1).actor,'shion-shioriel');
-  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……世話になった。');
+  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……闇の中でも、お前たちの声は届いていた。……感謝する。');
  }
 });
 test('purification save failure stays at A, retry commits B once without replaying AI or consumption',()=>{
