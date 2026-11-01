@@ -57,7 +57,14 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   page:n=>windowListeners[n]?.({persisted:true}),
   storage:raw=>windowListeners.storage?.({key:CHECKPOINT_KEY,newValue:raw}),
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
-  button:(root,text)=>root.flatten().find(e=>e.tagName==='button'&&e.textContent===text)};
+  button:(root,text)=>root.flatten().find(e=>{
+   if(e.tagName!=='button')return false;
+   if(e.textContent===text)return true;
+   // The redesign adds a visible reward badge inside each old action button.
+   // Resolve by its rendered label; all original gameplay assertions remain.
+   const display=text==='この言葉を届ける'?'解釈をそのまま届ける':text;
+   return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===display);
+  })};
 }
 function assertShionSideFacing(f,side=-1){
  const last=f.pointer.stageCommands.at(-1);
