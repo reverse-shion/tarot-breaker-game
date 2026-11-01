@@ -168,7 +168,7 @@ function applySpecialResolution(){
 // Source art stays intact. CSS frames only the faces; technique art can be added
 // later through this isolated encounter's optional same-origin image slot.
 const CUTINS={shion:"./assets/battle/cutins/shion-cutin.webp",shioriel:"./assets/battle/cutins/shioriel-cutin.webp"};
-const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……世話になった。")];
+const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……闇の中でも、お前たちの声は届いていた。……感謝する。")];
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
  if(!cinematicCallback||suspended())return;
@@ -304,7 +304,7 @@ function playSpecialSequence(){
  document.body.classList.add('caritas-special-active');committing=true;visualBattle=null;
  if(p==='DONE'){returnToMap();return;}
  story='special';root.dataset.phase='special';render();
- const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL'],FAREWELL:['カリタス','……世話になった。','RETURNING']};
+ const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL'],FAREWELL:['カリタス','……闇の中でも、お前たちの声は届いていた。……感謝する。','RETURNING']};
  if(linePhases[p]){
   const [speaker,text,next]=linePhases[p];
   saySequence([[speaker,text]],()=>transitionSpecial(next));
