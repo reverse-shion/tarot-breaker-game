@@ -299,7 +299,9 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
- assert.match(event,/const transformationReplay=params\.getAll\("preview"\)\.length===1&&\["manifestation","encounter"\]\.includes\(params\.get\("preview"\)\)/);
+ assert.match(event,/const previewMode=params\.getAll\("preview"\)\.length===1\?params\.get\("preview"\):null/);
+ assert.match(event,/const encounterPreview=previewMode==="encounter"/);
+ assert.match(event,/const transformationReplay=previewMode==="manifestation"\|\|encounterPreview/);
  assert.match(event,/const checkpointStore=transformationReplay\?replayStore:localStorage/);
  assert.match(event,/const result=S\.write\(checkpointStore,SAVE_KEY,expectedRaw,next\)/);
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
