@@ -134,7 +134,7 @@ test('game limits AI attempts to three and resets on a new encounter',()=>{
  assert.match(source,/battle=C\.newGame\(\);visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;deliveryMethod=null;aiPendingRequest=null;aiPendingText="";/);
  assert.match(source,/record=S\.migrate\(data,runId\(\)\)/);
  assert.match(source,/aiCalls=record\.aiCalls/);
- assert.match(source,/ui\.aiSend\.disabled=!reading\|\|aiBusy\|\|aiCalls>=AI_CALL_LIMIT/);
+ assert.match(source,/ui\.aiSend\.disabled=!reading\|\|deliveryMethod!=="write"\|\|aiBusy\|\|aiCalls>=AI_CALL_LIMIT/);
 });
 
 test('Gemini receives a distinct visible cue for each battle turn',async()=>{
