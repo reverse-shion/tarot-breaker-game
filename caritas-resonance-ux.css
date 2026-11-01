@@ -232,3 +232,94 @@
  #caritas-event .cb-hud.hero .cb-bar.resonance>i{transition:none}
  #caritas-event[data-gain-pulse="true"] .cb-bar.resonance::after{animation:none;opacity:1;transform:none}
 }
+
+
+/* Clean battlefield v2: status panels take their own rows, NEVER covering
+   Caritas, Shion, Shioriel, their silhouettes or Abyss effect. */
+#caritas-event .cb-frame{
+  grid-template-rows:minmax(43px,auto) minmax(0,46fr) minmax(56px,auto)
+    minmax(44px,9fr) minmax(0,45fr);
+}
+#caritas-event[data-reading-open="true"] .cb-frame{
+  grid-template-rows:minmax(43px,auto) minmax(0,31dvh) minmax(56px,auto)
+    minmax(44px,auto) minmax(0,1fr);
+}
+#caritas-event .cb-frame>.cb-hud{
+  position:relative!important;left:auto!important;right:auto!important;top:auto!important;
+  bottom:auto!important;width:100%!important;max-width:100%;
+  min-height:0;height:auto;z-index:2;box-shadow:none;
+  border-radius:0;border-left:0;border-right:0;
+  background:#101a30ef;padding:5px 10px;gap:1px;
+}
+#caritas-event .cb-frame>.cb-hud.enemy{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-rows:auto 7px auto;gap:2px 8px;
+  border-top:0;border-bottom:1px solid #997a57;
+  padding-top:max(7px,env(safe-area-inset-top,0px));
+}
+#caritas-event .cb-frame>.cb-hud.enemy .cb-hud-name{grid-column:1;grid-row:1}
+#caritas-event .cb-frame>.cb-hud.enemy .cb-hud-row{grid-column:2;grid-row:1}
+#caritas-event .cb-frame>.cb-hud.enemy .cb-bar{grid-column:1/-1;grid-row:2}
+#caritas-event .cb-frame>.cb-hud.enemy .cb-mood{grid-column:1/-1;grid-row:3}
+#caritas-event .cb-frame>.cb-hud.hero{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-rows:auto auto 7px auto;column-gap:12px;row-gap:1px;
+  border-top:1px solid #997a57;border-bottom:1px solid #997a57;
+  padding:5px 10px;
+}
+#caritas-event .cb-frame>.cb-hud.hero .cb-hud-name{grid-row:1;grid-column:1/-1}
+#caritas-event .cb-frame>.cb-hud.hero .cb-hud-row:nth-child(2){grid-row:2;grid-column:1}
+#caritas-event .cb-frame>.cb-hud.hero .cb-bar.hp{grid-row:3;grid-column:1}
+#caritas-event .cb-frame>.cb-hud.hero .cb-hud-row:nth-child(4){grid-row:2;grid-column:2}
+#caritas-event .cb-frame>.cb-hud.hero .cb-bar.resonance{grid-row:3;grid-column:2}
+#caritas-event .cb-frame>.cb-hud.hero .cb-res-mood{grid-row:4;grid-column:1/-1}
+#caritas-event .cb-frame>.cb-hud.hero .cb-gain-float{right:10px;bottom:2px}
+#caritas-event .cb-frame>.cb-hud .cb-hud-row{margin:0;font-size:11px}
+#caritas-event .cb-frame>.cb-hud .cb-bar{height:7px;margin:0;min-height:0}
+#caritas-event .cb-frame>.cb-hud .cb-mood,
+#caritas-event .cb-frame>.cb-hud .cb-res-mood{font-size:10px;line-height:1.15}
+#caritas-event .cb-arena{min-height:0;overflow:hidden}
+/* Method choice is FIRST in the lower controls. Cards appear only after it.
+   The B path needs no forced three-card read; cards are optional previews. */
+#caritas-event[data-phase="battle"] .cb-controls{
+  min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;scrollbar-gutter:stable;
+}
+#caritas-event .cb-delivery-methods{
+  position:relative;order:0;flex:none;gap:7px;
+}
+#caritas-event .cb-way{min-height:60px;padding:8px 5px!important;justify-content:center}
+#caritas-event .cb-way-title{line-height:1.2}
+#caritas-event .cb-gain-badge{min-height:20px;padding:2px 8px;font-size:11px}
+#caritas-event .cb-cards[hidden],#caritas-event .cb-actions[hidden],
+#caritas-event .cb-readline[hidden],#caritas-event .cb-modal-navigation[hidden]{display:none!important}
+#caritas-event .cb-cards{width:100%}
+#caritas-event[data-reading-open="true"] .cb-cards{
+  width:100%;height:clamp(145px,22dvh,225px);min-height:145px;
+}
+#caritas-event[data-writing-open="true"] .cb-cards{
+  height:clamp(134px,19dvh,200px);min-height:134px;
+}
+#caritas-event .cb-ai-panel{width:100%;min-height:0}
+#caritas-event .cb-ai-body{padding-bottom:10px}
+#caritas-event .cb-modal-navigation{
+  width:100%;display:flex;justify-content:space-between;gap:10px;
+}
+#caritas-event .cb-modal-navigation button{
+  flex:1;min-width:0;min-height:44px;border:1px solid #d6b779;
+  border-radius:9px;background:#25375d;color:#f7e7c7;padding:8px;
+}
+#caritas-event .cb-modal-navigation button:focus-visible{
+  outline:3px solid #f5d38a;outline-offset:2px;
+}
+@media(max-height:700px){
+  #caritas-event .cb-frame{
+    grid-template-rows:minmax(43px,auto) minmax(0,43fr) minmax(54px,auto)
+      minmax(40px,9fr) minmax(0,48fr);
+  }
+  #caritas-event[data-reading-open="true"] .cb-frame{
+    grid-template-rows:minmax(43px,auto) minmax(0,28dvh) minmax(54px,auto)
+      minmax(40px,auto) minmax(0,1fr);
+  }
+  #caritas-event[data-writing-open="true"] .cb-cards{height:136px;min-height:136px}
+}
