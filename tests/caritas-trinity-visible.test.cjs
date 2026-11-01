@@ -63,7 +63,7 @@ test("linked constellation paints the Shion/cards/Shiopon relationship above opa
  const motes=f.draws.filter(d=>d.kind==="image");
  assert.ok(motes.length>=100,"there must be clear connections AND glowing source nodes");
  assert.ok(motes.every(d=>d.args[0]?.tag==="starAtlas"),"reuse the prepared warm-white / pearl-gold star atlas");
- assert.match(game,/paintCaritasChantWorld\(\);paintCaritasRegroupStars\(\)/,
+ assert.match(game,/if\(hoshisunaIsolated\)\{paintCaritasChantWorld\(\);\}/,
    "render foreground links after the actor drawing loop");
  assert.ok(game.indexOf('if(hoshisunaIsolated){paintCaritasChantWorld();')>
    game.indexOf('function drawActors()'),"foreground pass belongs inside actor compositor");
