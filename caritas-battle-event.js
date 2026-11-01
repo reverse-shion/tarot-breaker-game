@@ -566,6 +566,7 @@ function render(){
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
  }
  setText(ui.wayHint,"書けなくても大丈夫。解釈だけでも届けられます。");
+ setText(ui.selectionReason,finisher?"":chosenCount<3?"あと"+(3-chosenCount)+"枚選ぶと、解釈を届けられます。":"");
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
@@ -609,7 +610,7 @@ function render(){
   ui.aiPanel.hidden=!(story==="battle"&&s.phase==="read"&&readingOpen);
  }
  setText(ui.readLabel,finisher?"対話で解放":"解釈をそのまま届ける");
- ui.wayHint.hidden=finisher;ui.slots.hidden=finisher;
+ ui.wayHint.hidden=finisher;ui.slots.hidden=finisher;ui.selectionReason.hidden=finisher||chosenCount===3;
  setText(ui.skillHint,finisher?"必殺技が解放されました":"共鳴が満ちると解放");
  ui.skill.classList.toggle("cb-skill-ready",finisher);
  ui.read.disabled=!((reading&&readingOpen&&!!p)||finisher);
@@ -912,8 +913,9 @@ function init(){
  ui.aiWait=newEl("div","cb-ai-wait","想いを言葉に変えています…");ui.aiWait.setAttribute("role","status");ui.aiWait.hidden=true;
  ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.writingReward,ui.aiWait,ui.aiBody);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
+ ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");methods.append(ui.aiToggle,ui.read);
- actions.append(ui.skill,ui.skillHint);ctr.append(cardBox,ui.slots,methods,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
+ actions.append(ui.skill,ui.skillHint);ctr.append(cardBox,ui.slots,methods,ui.selectionReason,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);frame.append(arena,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
