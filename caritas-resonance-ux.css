@@ -295,10 +295,26 @@
 #caritas-event .cb-readline[hidden],#caritas-event .cb-modal-navigation[hidden]{display:none!important}
 #caritas-event .cb-cards{width:100%}
 #caritas-event[data-reading-open="true"] .cb-cards{
-  width:100%;height:clamp(145px,22dvh,225px);min-height:145px;
+  width:100%;height:clamp(215px,27dvh,255px);min-height:215px;
 }
 #caritas-event[data-writing-open="true"] .cb-cards{
-  height:clamp(134px,19dvh,200px);min-height:134px;
+  height:clamp(195px,25dvh,245px);min-height:195px;
+}
+/* Larger cards: preserve the three-column spread while giving the art more
+   vertical space instead of spending it on labels and card chrome. */
+#caritas-event[data-reading-open="true"] .cb-card{
+  grid-template-rows:minmax(17px,auto) minmax(0,1fr) minmax(20px,auto);
+  gap:2px;padding:3px;
+}
+#caritas-event[data-reading-open="true"] .cb-role{
+  min-height:17px;line-height:1.15;font-size:clamp(9px,2.45vw,11px);
+}
+#caritas-event[data-reading-open="true"] .cb-chosen{
+  min-height:20px;line-height:1.2;
+}
+#caritas-event .cb-modal-image{
+  height:clamp(210px,42dvh,390px);
+  max-width:min(82vw,300px);
 }
 #caritas-event .cb-ai-panel{width:100%;min-height:0}
 #caritas-event .cb-ai-body{padding-bottom:10px}
@@ -321,5 +337,6 @@
     grid-template-rows:minmax(43px,auto) minmax(0,28dvh) minmax(54px,auto)
       minmax(40px,auto) minmax(0,1fr);
   }
-  #caritas-event[data-writing-open="true"] .cb-cards{height:136px;min-height:136px}
+  #caritas-event[data-reading-open="true"] .cb-cards{height:205px;min-height:205px}
+  #caritas-event[data-writing-open="true"] .cb-cards{height:190px;min-height:190px}
 }
