@@ -169,16 +169,7 @@
     <script>window.TAROBRE_CARITAS_API_URL="https://tarot-breaker-api-git-feature-caritas-bat-f9ed73-re-verse-shion.vercel.app/api/caritas-interpret";</script>
     <script src="./caritas-special-state.js?v=15" defer></script>
     <script src="./caritas-battle-presentation.js?v=reactions-1" defer></script>
-    <script src="./caritas-battle-event.js?v=caritas-fresh-selection-v3" defer></script>
-    <script defer>
-    // Caritas has only idle blink animation here; no dialogue or movement.
-    document.addEventListener("DOMContentLoaded",()=>{
-      const img=document.getElementById("hoshisuna-caritas");
-      if(!img)return;
-      setInterval(()=>{if(document.hidden)return; const phase=performance.now()%5200;
-        img.src=phase>4250&&phase<4510?"./assets/events/hoshisuna/caritas/sg_rise_02.webp":"./assets/events/hoshisuna/caritas/sg_rise_01.webp";
-      },180);
-    });
-    </script>
+    <script src="./hoshisuna-caritas-outro.js?v=map-rise-fade-v1" defer></script>
+    <script src="./caritas-battle-event.js?v=caritas-outro-v1" defer></script>
   </body>
 </html>
