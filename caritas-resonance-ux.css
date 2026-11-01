@@ -133,7 +133,15 @@
   color:#f4d48d;font-weight:750;font-size:15px;text-shadow:0 1px 6px #15152b;
 }
 #caritas-event[data-gain-pulse="true"] .cb-gain-float{animation:cb-ux-gain var(--cb-ux-pulse-duration) ease-out both}
+#caritas-event .cb-bar.resonance{position:relative}
+#caritas-event .cb-bar.resonance::after{
+ content:"";position:absolute;inset:0;opacity:0;pointer-events:none;
+ border:1px solid #a9e2e9;border-radius:inherit;transform:scaleX(.65);
+}
 #caritas-event[data-gain-pulse="true"] .cb-bar.resonance{box-shadow:0 0 13px #6ed3dc96}
+#caritas-event[data-gain-pulse="true"] .cb-bar.resonance::after{
+ animation:cb-ux-ripple var(--cb-ux-pulse-duration) ease-out both;
+}
 
 /* 5: the finisher is an achievement, never a visually inviting disabled CTA. */
 #caritas-event .cb-actions{
@@ -214,6 +222,7 @@
  #caritas-event .cb-res-mood{font-size:9px}
 }
 @keyframes cb-ux-breathe {0%,100%{opacity:.75;transform:scale(.985)}50%{opacity:1;transform:scale(1)}}
+@keyframes cb-ux-ripple{0%{opacity:0;transform:scaleX(.65)}35%{opacity:.9}100%{opacity:0;transform:scaleX(1.12)}}
 @keyframes cb-ux-gain {0%{opacity:0;transform:translateY(5px)}25%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(-15px)}}
 @media(prefers-reduced-motion:reduce){
  #caritas-event .cb-ai-wait::before,
@@ -221,4 +230,5 @@
  #caritas-event[data-gain-pulse="true"] .cb-gain-float{animation:none!important}
  #caritas-event[data-gain-pulse="true"] .cb-gain-float{opacity:1;transform:none}
  #caritas-event .cb-hud.hero .cb-bar.resonance>i{transition:none}
+ #caritas-event[data-gain-pulse="true"] .cb-bar.resonance::after{animation:none;opacity:1;transform:none}
 }
