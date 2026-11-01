@@ -21,7 +21,7 @@ test('empty or whitespace-only reading is rejected',async()=>{
 });
 test('one-character and brief readings are accepted without a minimum-length penalty',async()=>{
  const original=global.fetch;
- global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'この言葉を届けたい。',caritas:'……聞いておる。',nextCue:0})}]}}]})});
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'この言葉を届けたい。',shioriel:'シオン。届く可能性を、ともに見届けよう。',caritas:'……聞いておる。',nextCue:0})}]}}]})});
  try{
   for(const value of ['光','大丈夫',' 一緒に ']){
    const r=await call('POST',value);assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,[]);
@@ -30,12 +30,12 @@ test('one-character and brief readings are accepted without a minimum-length pen
 });
 test('valid Gemini JSON is sanitized and returned',async()=>{
  const original=global.fetch;
- global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'弱さを恐れている',understandingIds:['fear_of_weakness'],shion:'弱さを恐れているのかもしれない',caritas:'……',nextCue:1})}]}}]})});
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'弱さを恐れている',understandingIds:['fear_of_weakness'],shion:'弱さを恐れているのかもしれない',shioriel:'シオン。届く可能性を、ともに見届けよう。',caritas:'……',nextCue:1})}]}}]})});
  try{const r=await call('POST','カリタスは弱さを恐れているように見える');assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,['fear_of_weakness']);assert.equal(r.body.previewOnly,true);}finally{global.fetch=original;}
 });
 test('unsupported Gemini evidence cannot earn resonance but preserves dialogue',async()=>{
  const original=global.fetch;
- global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'見えない言葉',understandingIds:['self_blame'],shion:'読み',caritas:'……',nextCue:1})}]}}]})});
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'見えない言葉',understandingIds:['self_blame'],shion:'読み',shioriel:'シオン。届く可能性を、ともに見届けよう。',caritas:'……',nextCue:1})}]}}]})});
  try{const r=await call('POST','月と星を重ねて解釈してみたい');assert.equal(r.statusCode,200);assert.deepEqual(r.body.understandingIds,[]);assert.equal(r.body.evidence,'');}finally{global.fetch=original;}
 });
 
@@ -143,7 +143,7 @@ test('Gemini receives a distinct visible cue for each battle turn',async()=>{
  global.fetch=async(_url,opts)=>{
   const prompt=JSON.parse(opts.body).contents[0].parts[0].text;
   seen.push(prompt);
-  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'言葉を受け止めた',caritas:'……',nextCue:0})}]}}]})};
+  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'言葉を受け止めた',shioriel:'シオン。届く可能性を、ともに見届けよう。',caritas:'……',nextCue:0})}]}}]})};
  };
  try{
   for(const turn of [0,1,2]){
@@ -171,7 +171,7 @@ test('Gemini 3.5 Flash-Lite uses minimal thinking so token cap leaves room for s
   const config=JSON.parse(opts.body).generationConfig;
   assert.equal(config.thinkingConfig.thinkingLevel,'minimal');
   assert.equal(config.maxOutputTokens,900);
-  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'届いた',caritas:'……',nextCue:0})}]}}]})};
+  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({evidence:'',understandingIds:[],shion:'届いた',shioriel:'シオン。届く可能性を、ともに見届けよう。',caritas:'……',nextCue:0})}]}}]})};
  };
  try{const res=await call('POST','月と力と星の意味を考えて言葉にしてみます');assert.equal(res.statusCode,200);}finally{global.fetch=original;}
 });
@@ -196,7 +196,7 @@ test('brief help is a grounded reading that can earn resonance',async()=>{
   assert.match(prompt,/SPEAKING CHARACTERS/);
   return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({
    evidence:'助ける',understandingIds:['offer_support','acknowledge_pain'],
-   shion:'つらいなら、俺たちが力を貸す。',caritas:'……私に、手を差し伸べるというのか。',nextCue:1
+   shion:'つらいなら、俺たちが力を貸す。',shioriel:'シオン。届く可能性を、ともに見届けよう。',caritas:'……私に、手を差し伸べるというのか。',nextCue:1
   })}]}}]})};
  };
  try{
@@ -212,9 +212,53 @@ test('brief help is a grounded reading that can earn resonance',async()=>{
 test('AI character lines use the exact main shared dialogue player and update meter HUD',()=>{
  const fs=require('node:fs');
  const js=fs.readFileSync(require('node:path').join(__dirname,'../caritas-battle-event.js'),'utf8');
- assert.match(js,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
+ assert.match(js,/aiLines=\[\["シオン",data\.shion\]\]/);
+  assert.match(js,/aiLines\.push\(\["シオリエル",data\.shioriel\.trim\(\)\]\)/);
+  assert.match(js,/aiLines\.push\(\["カリタス",data\.caritas\]\)/);
+  assert.match(js,/saySequence\(aiLines,\(\)=>\{/);
  assert.match(js,/dialogue\.show\(\{speaker,text,actor:/);
  assert.match(js,/ui\.aiInput\.blur\(\)/);
  assert.match(js,/const gain=battle\.resonance-before\.resonance,relief=before\.dark-battle\.dark/);
  assert.doesNotMatch(js,/ui\.aiResult\.textContent=\["シオン："/);
+});
+
+test('Notion-aligned three-character Gemini dialogue is required and keeps turn-dependent Caritas tension',async()=>{
+ const original=global.fetch;
+ let prompt='',required=[];
+ global.fetch=async(_url,opts)=>{
+  const payload=JSON.parse(opts.body);prompt=payload.contents[0].parts[0].text;
+  required=payload.generationConfig.responseSchema.required;
+  return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({
+   evidence:'声を聞かせて',understandingIds:['respect_choice'],
+   shion:'俺は、お前の声を聞きたい。',shioriel:'シオン。まだ小さな声が、ここにある。',
+   caritas:'私の声を……くっ、まだ、奪わせはせぬ。',nextCue:2
+  })}]}}]})};
+ };
+ try{
+  const headers={origin:'https://reverse-shion.github.io','x-forwarded-for':'voice-'+(++serial)};
+  const res={statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;return this;},status(n){this.statusCode=n;return this;},end(body){this.body=body?JSON.parse(body):null;return this;}};
+  await handler({method:'POST',headers,body:{reading:'声を聞かせて',turn:2}},res);
+  assert.equal(res.statusCode,200);
+  assert.ok(required.includes('shioriel'),'structured output must include Shioriel');
+  assert.match(prompt,/Shion, Shioriel and Caritas/);
+  assert.match(prompt,/AFTER Shiopon has transformed/);
+  assert.match(prompt,/シオンさん or シオンさま/);
+  assert.match(prompt,/Abyss侵蝕/);
+  assert.match(prompt,/Stage 2:/);
+  assert.match(prompt,/Do not force grunts on every turn/);
+  assert.equal(res.body.shioriel,'シオン。まだ小さな声が、ここにある。');
+  assert.equal(res.body.caritas,'私の声を……くっ、まだ、奪わせはせぬ。');
+  assert.deepEqual(res.body.understandingIds,['respect_choice']);
+ }finally{global.fetch=original;}
+});
+test('missing third character line does not silently pass the new Gemini contract',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({
+  evidence:'',understandingIds:[],shion:'俺は聞く。',caritas:'……聞こえた。',nextCue:0
+ })}]}}]})});
+ try{
+  const r=await call('POST','聞いてほしい');
+  assert.equal(r.statusCode,502);
+  assert.equal(r.body.error,'ai_invalid_response');
+ }finally{global.fetch=original;}
 });
