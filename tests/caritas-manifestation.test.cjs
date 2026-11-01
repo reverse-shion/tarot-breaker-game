@@ -286,7 +286,7 @@ test("owner-supplied 12-frame WebP replaces the old manifestation, remains world
  assert.match(game,/caritasOwnerTransformationAtlas=image/);
  assert.match(game,/ownerAnimationReady:!!caritasOwnerTransformationAtlas/);
  assert.match(game,/\[Caritas\] owner transformation unavailable/);
- assert.match(html,/caritas-fresh-selection-v3/);
+ assert.match(html,/caritas-tarot-close-v2/);
 });
 
 test("owner transformation keeps native Shiopon body height and finishes at Shion body height",()=>{
@@ -300,7 +300,7 @@ test("owner transformation keeps native Shiopon body height and finishes at Shio
  assert.match(section,/const height=CARITAS_OWNER_TILE\*bodyHeight\/sourceBodyHeight/);
  assert.match(section,/feetY-145\*height\/CARITAS_OWNER_TILE/);
  assert.doesNotMatch(section,/const height=112,width=112/);
- assert.match(html,/caritas-fresh-selection-v3/);
+ assert.match(html,/caritas-tarot-close-v2/);
 });
 
 test("opt-in transformation preview starts before battle without reading or rewriting saved dev checkpoint",()=>{
@@ -312,7 +312,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-fresh-selection-v3/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-close-v2/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
