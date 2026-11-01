@@ -59,11 +59,12 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   tick:()=>intervals.at(-1)(),state:()=>window.CaritasEncounterDebug.getState(),
   button:(root,text)=>root.flatten().find(e=>{
    if(e.tagName!=='button')return false;
+   // Legacy test terminology maps to the same real action in the two-method UI.
+   // Do not stub, bypass, or change gameplay; click the real choice/delivery button.
+   if(text==='リーディングを始める'||text==='この言葉を届ける')
+    return e.className?.split(' ').includes('cb-read');
    if(e.textContent===text)return true;
-   // The redesign adds a visible reward badge inside each old action button.
-   // Resolve by its rendered label; all original gameplay assertions remain.
-   const display=text==='この言葉を届ける'?'解釈をそのまま届ける':text;
-   return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===display);
+   return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===text);
   })};
 }
 function assertShionSideFacing(f,side=-1){
@@ -320,6 +321,19 @@ test('real shared dialogue remains hidden during native main choice activation',
   assert.equal(choice.hidden,true);
  }
 });
+test('battle UI keeps three real tarot cards and send controls visible without a scroll panel',async()=>{
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-resonance-ux.css'),'utf8');
+ const f=fixture(),root=await enter(f);
+ assert.match(css,/#caritas-event\[data-phase="battle"\] \.cb-controls\s*\{[\s\S]*?overflow-y:hidden!important/);
+ assert.match(css,/#caritas-event\[data-phase="battle"\] \.cb-narration\{display:none!important\}/);
+ f.button(root,'リーディングを始める').click();
+ assert.equal(root.querySelector('.cb-cards').hidden,false);
+ assert.equal(root.flatten().filter(e=>e.className==='cb-card-button').length,3);
+ assert.equal(root.querySelector('.cb-hud').className,'cb-hud enemy');
+ f.button(root,'自分の言葉で届ける').click();
+ assert.equal(root.querySelector('.cb-ai-panel').hidden,false);
+ assert.equal(root.querySelector('.cb-ai-send').disabled,true);
+});
 test('manifestation remains on the real map before entering battle',async()=>{
  const f=fixture();const root=await enter(f);
  assert.equal(f.pointer.mapPhase,'revealed');
@@ -479,7 +493,10 @@ const CHECKPOINT_KEY='tb:dev:hoshisuna:caritas-full-reading-v1';
 const aiReply=(ids=[])=>({ok:true,json:async()=>({shion:'俺も、ここにいる。',caritas:'……その言葉は、聞こえた。',understandingIds:ids,previewOnly:true})});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function openWritten(f,root,text='大丈夫'){
- if(!f.state().readingOpen)f.button(root,'リーディングを始める').click();
+ if(root.dataset.writingOpen!=='true'){
+  const method=f.button(root,'自分の言葉で届ける');assert.ok(method);
+  method.click(); // Choose the real writing method, without card-reading prerequisites.
+ }
  const input=root.querySelector('.cb-ai-input');input.value=text;input.listeners.input?.();
  return root.querySelector('.cb-ai-send');
 }
