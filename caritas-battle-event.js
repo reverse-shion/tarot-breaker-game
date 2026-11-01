@@ -495,7 +495,7 @@ function start(){
                if(!manifestation.reveal()){recover("reveal interrupted");return;}
                story="manifested";root.dataset.phase="manifested";render();
                saySequence(REVEAL,()=>{
-                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;
+                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;deliveryMethod=null;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;
                   window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-transition-start",{detail:{source:OWNER}}));
                   stage("engulfing",2600,beginBattle);
                });
@@ -637,7 +637,7 @@ function render(){
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
-  ui.modalWords.hidden=deliveryMethod==="write";
+  ui.modalWords.hidden=deliveryMethod==="write";ui.modalNav.hidden=deliveryMethod!=="write";
   ui.modalPrev.hidden=deliveryMethod!=="write";ui.modalNext.hidden=deliveryMethod!=="write";
   if(deliveryMethod==="write")return;
   for(const word of card.words){
@@ -819,7 +819,7 @@ function finishRetreat(){
  window.TarotHoshisunaManifestation?.clear?.();
  window.TarotHoshisunaAbyss?.setPhase?.("edge");
  dialogue?.hide();root.hidden=true;ui.modal.hidden=true;
- battle=C.newGame();visualBattle=null;modalIndex=-1;committing=false;
+ battle=C.newGame();visualBattle=null;modalIndex=-1;committing=false;deliveryMethod=null;aiPanelOpen=false;
  story="idle";busy=false;armed=false;noticed=true;unlock();
  // Re-offer the *inspection choice* shortly after withdrawal, never auto-restart battle.
  setTimeout(()=>{if(story==="idle"&&!done){armed=true;tick();}},1300);
@@ -941,7 +941,7 @@ function init(){
  const panel=newEl("div","cb-card-panel");
  const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
  ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
- const modalNav=newEl("div","cb-modal-navigation");
+ const modalNav=newEl("div","cb-modal-navigation");ui.modalNav=modalNav;
  ui.modalPrev=newEl("button","cb-modal-prev","‹ 前のカード");ui.modalNext=newEl("button","cb-modal-next","次のカード ›");
  ui.modalPrev.type=ui.modalNext.type="button";
  ui.modalPrev.addEventListener("click",()=>moveViewedCard(-1));ui.modalNext.addEventListener("click",()=>moveViewedCard(1));
