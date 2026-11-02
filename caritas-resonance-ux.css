@@ -1562,3 +1562,92 @@
 #caritas-event[data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions{
  margin:auto 0;
 }
+
+/* v16 / P2 — visual identity for each approved special illustration.
+   Artwork is not redrawn; image always fits, with its own blurred edge fill.
+   Dynamic motion is driven by TECHNIQUE_MOTION, never new gameplay phases. */
+#caritas-event .cb-special-art{
+ background:#101429!important;isolation:isolate;
+}
+#caritas-event .cb-special-art .cb-special-foreground{
+ display:block;object-fit:contain!important;object-position:center center!important;
+ max-width:600px;width:100%;height:100%;
+ margin:0 auto;transform-origin:center center;
+}
+#caritas-event .cb-special-art .cb-special-backdrop{
+ object-fit:cover;filter:blur(25px) brightness(.31) saturate(.86);
+}
+#caritas-event .cb-special-art::after{
+ content:"";pointer-events:none;position:absolute;inset:0;z-index:2;
+ opacity:.75;animation:cb-technique-veil var(--cb-special-visual-duration,2600ms) ease-in-out both;
+}
+#caritas-event[data-card="18-the-moon"] .cb-special-art::after{
+ background:linear-gradient(105deg,#17122f93 0%,transparent 56%,#463a7a45 100%);
+}
+#caritas-event[data-card="08-strength"] .cb-special-art::after{
+ background:radial-gradient(ellipse 57% 48% at 56% 34%,#f8dc982b,transparent 79%);
+}
+#caritas-event[data-card="17-the-star"] .cb-special-art::after{
+ background:radial-gradient(ellipse 68% 54% at 50% 10%,#c9eaff38,transparent 75%),
+  linear-gradient(165deg,#203c6844,transparent 69%);
+}
+#caritas-event .cb-special-caption{
+ position:absolute;z-index:3;
+ left:8%;right:8%;bottom:calc(env(safe-area-inset-bottom,0px) + 6dvh);
+ display:flex;flex-direction:column;gap:4px;align-items:center;
+ padding:14px 12px;pointer-events:none;
+ background:linear-gradient(90deg,transparent,#101525db 16%,#101525db 84%,transparent);
+ color:#fff5e4;text-align:center;
+ animation:cb-technique-caption var(--cb-special-visual-duration,2600ms) ease-in-out both;
+}
+#caritas-event .cb-special-art-title{
+ font-size:clamp(21px,6vw,31px);font-weight:750;letter-spacing:.1em;
+ white-space:nowrap;line-height:1.25;text-shadow:0 2px 4px #0b102f;
+}
+#caritas-event .cb-special-art-reading{
+ font-size:clamp(13px,3.7vw,17px);letter-spacing:.02em;
+ white-space:nowrap;word-break:keep-all;line-height:1.35;
+ color:#e6dce7;text-shadow:0 1px 3px #0b102f;
+}
+#caritas-event[data-card="18-the-moon"] .cb-special-caption{
+ border-block:1px solid #d5c8f055;
+}
+#caritas-event[data-card="08-strength"] .cb-special-caption{
+ border-block:1px solid #f6d99a80;
+}
+#caritas-event[data-card="17-the-star"] .cb-special-caption{
+ border-block:1px solid #dceaff70;
+}
+#caritas-event[data-art-ready="loading"] .cb-special-caption,
+#caritas-event[data-art-ready="false"] .cb-special-caption{display:none!important}
+@keyframes cb-technique-veil{
+ 0%{opacity:.15}40%{opacity:.7}100%{opacity:.36}
+}
+@keyframes cb-technique-caption{
+ 0%,13%{opacity:0;transform:translateY(9px)}
+ 27%,75%{opacity:1;transform:translateY(0)}
+ 100%{opacity:0;transform:translateY(-3px)}
+}
+#caritas-event[data-card="18-the-moon"][data-special="PURIFICATION"] .cb-release{
+ background:radial-gradient(ellipse at center,#e9e4ff78 0%,#afa0e966 28%,#4e428067 48%,transparent 73%);
+}
+#caritas-event[data-card="08-strength"][data-special="PURIFICATION"] .cb-release{
+ background:radial-gradient(ellipse at center,#fff3cbcc 0%,#f7d68a99 28%,#c08c4a65 48%,transparent 76%);
+}
+#caritas-event[data-card="17-the-star"][data-special="PURIFICATION"] .cb-release{
+ background:radial-gradient(ellipse at center,#ecfcffac 0%,#9bc7e98c 25%,#718fc66b 47%,transparent 76%);
+}
+@media(max-height:670px){
+ #caritas-event .cb-special-caption{
+  bottom:calc(env(safe-area-inset-bottom,0px) + 3dvh);
+  padding:9px 10px;gap:2px;
+ }
+ #caritas-event .cb-special-art-title{font-size:clamp(18px,5vw,24px)}
+ #caritas-event .cb-special-art-reading{font-size:clamp(11px,3.3vw,14px)}
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event .cb-special-art::after,
+ #caritas-event .cb-special-caption{animation:none!important}
+ #caritas-event .cb-special-art::after{opacity:.36!important}
+ #caritas-event[data-art-ready="true"] .cb-special-caption{opacity:1!important;transform:none!important}
+}
