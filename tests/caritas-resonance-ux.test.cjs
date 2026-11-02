@@ -12,7 +12,7 @@ test('both delivery paths have equal top-level button cards but use unchanged co
  assert.match(event,/ui\.aiToggle=newEl\("button","cb-ai-toggle cb-way"\)/);
  assert.match(event,/ui\.read=newEl\("button","cb-read cb-way"\)/);
  assert.match(event,/ui\.aiSend\.addEventListener\("click",sendAiReading\)/);
- assert.match(event,/ui\.read\.addEventListener\("click",\(\)=>\{/);
+ assert.match(event,/ui\.read\.addEventListener\("click",\(\)=>selectDeliveryMethod\("select"\)\)/);
  assert.match(event,/ui\.read\.addEventListener\("click",\(\)=>selectDeliveryMethod\("select"\)\)/);
  assert.match(event,/ui\.selectSend\.addEventListener\("click",\(\)=>perform\("read"\)\)/);
  assert.match(event,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
@@ -53,13 +53,13 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
  assert.match(event,/ui\.aiWait\.hidden=!aiBusy;/);
 });
 
-test('isolated CSS retains visible battle arena <=35vh and accessible buttons',()=>{
+test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
  assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261102-stable-dock-v6/);
- assert.match(css,/minmax\(0,33dvh\)/);
+ assert.match(css,/minmax\(145px,1fr\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
- assert.match(css,/min-height:75px/);
+ assert.match(css,/max-height:59dvh/);
  assert.match(css,/min-height:44px/);
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(css,/\.cb-gain-float/);
