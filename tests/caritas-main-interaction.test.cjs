@@ -763,19 +763,19 @@ test('unavailable card deployment recovers the prompt without advancing to chant
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
 });
 
-test('real combat dialogue keeps original actor rects and calculates a shared safe stage shift',async()=>{
+test('stage 1 mounts an unchanging battlefield, visible status band, and command swap',async()=>{
  const f=fixture(),root=await enter(f);
- // Browser-independent geometry captures the full-size original actor boxes.
- // The dialogue itself is the untouched canonical main/Alenon button.
- const beast=root.querySelector('.cb-beast'),angel=root.querySelector('.cb-angel'),shion=root.querySelector('.cb-shion-sprite');
- beast.rect={top:176,bottom:398,height:222};
- angel.rect={top:253,bottom:423,height:170};
- shion.rect={top:276,bottom:440,height:164};
- const windowBox=f.shell.querySelector('#dialogue-advance');
- windowBox.rect={top:600,bottom:780,height:180};
- root.style.setProperty=(name,value)=>{root.style[name]=value};
- root.style.getPropertyValue=name=>root.style[name]||'';
- root.style.removeProperty=name=>{delete root.style[name]};
+ const frame=root.querySelector('.cb-frame');
+ const arena=root.querySelector('.cb-arena');
+ const band=root.querySelector('.cb-status-band');
+ const controls=root.querySelector('.cb-controls');
+ assert.ok(frame&&arena&&band&&controls);
+ assert.equal(frame.children[0],arena,'arena is the first fixed screen region');
+ assert.equal(frame.children[1],band,'HP and resonance are a separate fixed region');
+ assert.equal(frame.children[2],controls,'commands are the final screen region');
+ assert.ok(arena.querySelector('.cb-hud.enemy'),'enemy status remains on the battlefield');
+ assert.ok(band.querySelector('.cb-hud.hero'),'player HP and resonance stay on the separator');
+ assert.equal(root.dataset.dialogueBusy,'false');
  f.button(root,'リーディングを始める').click();
  const send=f.button(root,'この言葉を届ける');
  assert.equal(send.disabled,true);
@@ -786,13 +786,15 @@ test('real combat dialogue keeps original actor rects and calculates a shared sa
  send.click();
  assert.equal(f.state().dialogueBusy,true);
  assert.equal(root.dataset.dialogueBusy,'true');
- assert.equal(root.style['--cb-dialogue-stage-shift'],'146px',
-   'the whole unchanged-size arena moves just above shared dialogue (600 - 440 - 14)');
+ assert.equal(frame.children[0],arena,'dialogue never moves or replaces the battlefield');
+ assert.equal(frame.children[1],band,'status remains in place during spoken reading');
+ for(const move of ['--cb-dialogue-stage-shift','--cb-dialogue-stage-height'])
+  assert.equal(root.style[move],undefined,'dialogue does not write any positioning variable');
  f.pointer.advance();
- assert.equal(root.style['--cb-dialogue-stage-shift'],'146px','following lines must not cause downwards jumps');
+ assert.equal(frame.children[0],arena,'next page never changes the stage');
  f.pointer.advance();f.pointer.advance();
  assert.equal(root.dataset.dialogueBusy,'false');
- assert.equal(root.style['--cb-dialogue-stage-shift'],undefined,'only the battle UI shift clears when dialogue finishes');
+ assert.equal(frame.children[2],controls,'command region is reused when dialogue ends');
 });
 
 test('tabs never submit; three selected meanings unlock independent send, dialogue hides progress',async()=>{
