@@ -10,6 +10,11 @@ const encounterPreview=previewMode==="encounter";
 const transformationReplay=previewMode==="manifestation"||encounterPreview;
 const C=window.CaritasBattleCore, S=window.CaritasSpecialState;
 const CARD_IMAGES=Object.freeze({月:"./assets/tarot/major/18-the-moon.webp",力:"./assets/tarot/major/08-strength.webp",星:"./assets/tarot/major/17-the-star.webp"});
+const SHORT_READING_TITLES=Object.freeze({
+ "不安":"恐れの正体","秘密":"知らない自分","無意識":"答えのない場所",
+ "忍耐":"怒りを意志へ","自制":"恐れと踏み出す","勇気":"衝動を形に",
+ "希望":"願いを目印に","癒し":"心を開いて","願い":"応えられる場所"
+});
 if(!C){console.error("[Caritas] Battle core missing");return;}
 const onceKey="tb:dev:caritas:word-guide-once";
 const OWNER="hoshisuna_caritas_prompt";
@@ -168,7 +173,8 @@ function applySpecialResolution(){
 // Source art stays intact. CSS frames only the faces; technique art can be added
 // later through this isolated encounter's optional same-origin image slot.
 const CUTINS={shion:"./assets/battle/cutins/shion-cutin.webp",shioriel:"./assets/battle/cutins/shioriel-cutin.webp"};
-const FAREWELL=[C.ENDING.find(line=>line[0]==="カリタス"&&line[1]==="……闇の中でも、お前たちの声は届いていた。……感謝する。")];
+// Preserve the complete canonical post-battle exchange.
+const FAREWELL=C.ENDING;
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
  if(!cinematicCallback||suspended())return;
@@ -298,16 +304,16 @@ function renderSpecialSelection(){
  confirm.addEventListener('click',()=>{if(!selectedCard||specialLocked()||story!=='selecting')return;commitSpecialSelection(selectedCard,shortPlayback?'short':'normal');});ui.selection.append(back,confirm);
 }
 function playSpecialSequence(){
- cancelSpecialEffect();dialogue?.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;
+ cancelSpecialEffect();dialogue?.hide();dialogueBusy=false;dialogueLines=[];afterDialogue=null;root.dataset.dialogueBusy="false";
  const p=record.special.phase,t=TECHNIQUES[record.special.cardId],short=record.special.playbackMode==='short';
  ui.selection.hidden=true;ui.artPlayback.hidden=true;root.dataset.special=p;root.dataset.card=record.special.cardId;
  document.body.classList.add('caritas-special-active');committing=true;visualBattle=null;
  if(p==='DONE'){returnToMap();return;}
  story='special';root.dataset.phase='special';render();
- const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL'],FAREWELL:['カリタス','……闇の中でも、お前たちの声は届いていた。……感謝する。','RETURNING']};
+ const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL'],FAREWELL:[null,null,'RETURNING']};
  if(linePhases[p]){
   const [speaker,text,next]=linePhases[p];
-  saySequence([[speaker,text]],()=>transitionSpecial(next));
+  saySequence(p==="FAREWELL"?FAREWELL:[[speaker,text]],()=>transitionSpecial(next));
   if(['SHION_LINE','SHIORIEL_LINE','DUAL_INCANTATION'].includes(p))runSpecialEffect(ui.cutin,short?120:600,()=>{},'entry');
  }else if(p==='ART_PLAYBACK'){
   // Shared dialogue is hidden before any art frame becomes visible.
@@ -396,6 +402,7 @@ function currentLine(){
 function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
  dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
+ root.dataset.dialogueBusy="true";
  currentLine();
 }
 function advanceDialogue(){
@@ -403,6 +410,7 @@ function advanceDialogue(){
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
+ root.dataset.dialogueBusy="false";
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
@@ -598,7 +606,7 @@ function render(){
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
   btn.addEventListener("click",()=>openCard(i));
-  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
+  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+SHORT_READING_TITLES[s.words[i]]:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
   cardBox.append(section);
  }
  if(p){
@@ -630,8 +638,8 @@ function render(){
  ui.read.setAttribute("aria-pressed",String(deliveryMethod==="select"));
  ui.wayHint.hidden=true;ui.slots.hidden=true;
  ui.selectionReason.hidden=!(reading&&readingOpen&&deliveryMethod==="select");
-  ui.selectSend.hidden=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3);
-  ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&!!p)||aiBusy||dialogueBusy||committing;
+  ui.selectSend.hidden=!(reading&&readingOpen&&deliveryMethod==="select");
+  ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3&&!!p)||aiBusy||dialogueBusy||committing;
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,finisher?"共鳴解放の準備が整いました":"共鳴が満ちると解放");
