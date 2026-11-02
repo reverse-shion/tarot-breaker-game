@@ -104,3 +104,27 @@ test('stage 2 is a real full-viewport tarot-only reading and never changes the m
  assert.match(js,/const next=C\.read\(previous\)/);
  assert.doesNotMatch(stage2,/\.cb-beast\s*\{|\.cb-angel\s*\{|\.cb-shion-sprite\s*\{|\.cb-arena\s*\{/);
 });
+
+test('stage 3 keyboard-safe writer is isolated from the permanent battlefield and API contracts',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const sheet=css.slice(css.indexOf('/* v12 — STAGE 3'));
+ assert.match(sheet,/\.cb-writing-overlay\[hidden\]\{display:none!important\}/);
+ assert.match(sheet,/height:100dvh;max-height:100dvh;min-height:0/);
+ assert.match(sheet,/\.cb-writing-footer\{/);
+ assert.match(sheet,/flex:0 0 auto/);
+ assert.match(sheet,/--cb-visible-height,100dvh/);
+ assert.match(sheet,/--cb-visible-top,0px/);
+ assert.match(sheet,/\.cb-frame>\.cb-arena\{\s*display:block!important;/);
+ assert.match(sheet,/\.cb-frame>\.cb-status-band\{\s*display:block!important;/);
+ assert.match(sheet,/env\(safe-area-inset-bottom,0px\)/);
+ assert.match(js,/ui\.writingOverlay=newEl\("section","cb-writing-overlay"\)/);
+ assert.match(js,/ui\.writingOverlay\.hidden=!writingScreen/);
+ assert.match(js,/writingFooter\.append\(ui\.writingCount,ui\.aiSend\)/);
+ assert.match(js,/writingPanel\.append\(writingReference,ui\.aiPanel\)/);
+ assert.match(js,/window\.visualViewport\?\.addEventListener\("resize",syncComposerViewport\)/);
+ assert.match(js,/ui\.aiSend\.addEventListener\("click",sendAiReading\)/);
+ assert.match(js,/const response=await fetch\(endpoint,\{method:"POST",signal:controller\.signal,/);
+ assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
+ assert.doesNotMatch(sheet,/\.cb-beast\{|\.cb-abyss\{|\.cb-shion-sprite\{|\.cb-angel\{/);
+});
