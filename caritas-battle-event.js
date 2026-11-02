@@ -625,6 +625,8 @@ function render(){
  const s=battle,visible=getBattleView(),reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing&&!specialLocked();
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
+ // Display-only state: mode controls a full-viewport tarot surface, not the battle engine.
+ root.dataset.readingMode=readingOpen&&reading&&deliveryMethod==="select"?"select":"none";
  ui.readingIntro.hidden=true; // Entry stays in the lower controls, never over the actors.
  ui.controls.hidden=false;
  cardBox.hidden=!(readingOpen&&reading)&&!finisher;
@@ -642,6 +644,10 @@ function render(){
  root.dataset.mood=C.stateFor(s.dark);
  const p=C.predict(s),idx=C.stateFor(s.dark)==="closed"?0:C.stateFor(s.dark)==="storm"?1:2;
  const chosenCount=s.words.filter(Boolean).length;
+ const selectingTarot=reading&&readingOpen&&deliveryMethod==="select";
+ ui.tarotHeader.hidden=!selectingTarot;
+ setText(ui.tarotMood,"現在の心象："+C.STATES[C.stateFor(s.dark)]);
+ setText(ui.tarotProgress,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードをタップして意味を選ぶ"));
  root.dataset.cardsReady=String(chosenCount===3);
  root.dataset.finisher=String(finisher);
  ui.slots.replaceChildren();
@@ -725,8 +731,11 @@ function render(){
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
-  ui.modalWords.hidden=deliveryMethod==="write";ui.modalNav.hidden=deliveryMethod!=="write";
-  ui.modalPrev.hidden=deliveryMethod!=="write";ui.modalNext.hidden=deliveryMethod!=="write";
+  ui.modalWords.hidden=deliveryMethod==="write";
+  ui.modalNav.hidden=false;
+  ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
+  setText(ui.modalMood,"カリタスの心象："+C.STATES[C.stateFor(s.dark)]);
+  setText(ui.modalPage,(modalIndex+1)+" / "+s.cards.length);
   if(deliveryMethod==="write")return;
   for(const word of card.words){
    const option=C.READING_OPTIONS[word];
@@ -748,7 +757,7 @@ function openCard(i){
 function closeCard(){
  if(specialLocked())return;if(modalIndex<0)return;modalIndex=-1;render();}
 function moveViewedCard(step){
- if(deliveryMethod!=="write"||modalIndex<0)return;
+ if(modalIndex<0||story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||specialLocked())return;
  modalIndex=(modalIndex+step+battle.cards.length)%battle.cards.length;viewedReadingCards.add(modalIndex);render();
 }
 function choose(index,word){
@@ -969,6 +978,20 @@ function init(){
  const narr=newEl("div","cb-narration");narr.append(newEl("span","cb-narr-speaker","星の声"));
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
+ // Stage 2: select-mode tarot reading is an independent full-viewport surface.
+ // It retains the exact three existing cards, choices and C.select/C.read.
+ const tarotHeader=newEl("header","cb-tarot-header");ui.tarotHeader=tarotHeader;tarotHeader.hidden=true;
+ const tarotHeading=newEl("div","cb-tarot-heading");
+ tarotHeading.append(newEl("strong","cb-tarot-title","心象を読み解く"));
+ ui.tarotMood=newEl("span","cb-tarot-mood","現在の心象：閉ざす");
+ ui.tarotProgress=newEl("span","cb-tarot-progress","解釈 0/3");
+ tarotHeading.append(ui.tarotMood,ui.tarotProgress);
+ const tarotBack=newEl("button","cb-tarot-back","‹ 戦闘へ戻る");tarotBack.type="button";
+ tarotBack.addEventListener("click",()=>{
+  if(story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||aiBusy||specialLocked())return;
+  modalIndex=-1;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;render();
+ });
+ tarotHeader.append(tarotBack,tarotHeading);
  ui.readingIntro=newEl("div","cb-reading-start");
  const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
  const introHint=newEl("p","cb-reading-start-hint","届け方を選んでください。");
@@ -1031,7 +1054,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
+ ctr.append(tarotHeader,methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
@@ -1049,17 +1072,19 @@ function init(){
  shade.addEventListener("click",closeCard);
  const panel=newEl("div","cb-card-panel");
  const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
+ ui.modalMood=newEl("div","cb-modal-mood","カリタスの心象：閉ざす");
+ ui.modalPage=newEl("span","cb-modal-page","1 / 3");
  ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
  const modalNav=newEl("div","cb-modal-navigation");ui.modalNav=modalNav;
  ui.modalPrev=newEl("button","cb-modal-prev","‹ 前のカード");ui.modalNext=newEl("button","cb-modal-next","次のカード ›");
  ui.modalPrev.type=ui.modalNext.type="button";
  ui.modalPrev.addEventListener("click",()=>moveViewedCard(-1));ui.modalNext.addEventListener("click",()=>moveViewedCard(1));
  modalNav.append(ui.modalPrev,ui.modalNext);
- panel.append(close,ui.modalTitle,ui.modalImage,modalNav,ui.modalWords);ui.modal.append(shade,panel);
+ panel.append(close,ui.modalMood,ui.modalTitle,ui.modalPage,ui.modalImage,modalNav,ui.modalWords);ui.modal.append(shade,panel);
  let swipeX=null;
  panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
  panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
- document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){if(deliveryMethod==="write"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}}});
+ document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}});
  const cutin=newEl("div","cb-cutin");ui.cutin=cutin;cutin.setAttribute("aria-label","シオンとシオリエルの共鳴解放");
  for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
    const panel=newEl("div","cb-cut-panel cb-cut-"+actor);
