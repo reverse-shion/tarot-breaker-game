@@ -89,7 +89,7 @@ test('v6 explicit delivery, progress and selected tabs',()=>{
 test('stage 2 is a real full-viewport tarot-only reading and never changes the map or reading arithmetic',()=>{
  const js=load('caritas-battle-event.js');
  const css=load('caritas-resonance-ux.css');
- const stage2=css.slice(css.indexOf('/* v11 — STAGE 2'));
+ const stage2=css.slice(css.indexOf('/* v11 — STAGE 2'),css.indexOf('/* v12 — STAGE 3'));
  assert.match(stage2,/\[data-reading-mode="select"\] \.cb-frame>\.cb-controls\{/);
  assert.match(stage2,/height:100dvh!important;max-height:100dvh!important/);
  assert.match(stage2,/env\(safe-area-inset-top,0px\)/);
