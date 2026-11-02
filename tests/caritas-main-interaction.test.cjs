@@ -844,6 +844,35 @@ test('art success (including reduced motion) alone marks seen; all failure modes
   const root=f.shell.querySelector('#caritas-event');assert.equal(root.querySelector('.cb-special-foreground').hidden,imageMode!=='ready');
  }
 });
+test('P2: Moon, Strength and Star own three distinct art and purification camera tracks without changing the state machine',async()=>{
+ const ids=Core.CARDS.map(c=>c.id),motions=[];
+ for(const id of ids){
+  const b={...Core.newGame(),phase:'finisher',resonance:100,dark:42};
+  const S=require('../caritas-special-state.js');
+  let record=S.commit(S.create(b,'qa-run'),id);
+  while(record.special.phase!=='ART_PLAYBACK')record=S.transition(record,S.PHASES[S.PHASES.indexOf(record.special.phase)+1]);
+  const store=new Map([[CHECKPOINT_KEY,JSON.stringify(record)]]);
+  const f=fixture({persistentStore:store,waapi:true,imageMode:'ready'}),root=f.shell.querySelector('#caritas-event');
+  await flush();f.advanceTime(1);
+  assert.equal(root.dataset.card,id);
+  assert.equal(f.state().special.phase,'ART_PLAYBACK');
+  assert.equal(root.querySelector('.cb-special-art-title').textContent,
+   {'18-the-moon':'星幻迷宮','08-strength':'星獣咆哮','17-the-star':'星望祈願'}[id]);
+  assert.equal(root.querySelector('.cb-special-art-reading').textContent,
+   {'18-the-moon':'アストラル・ミラージュ','08-strength':'アストラル・ブレイヴ','17-the-star':'アストラル・グリモワール'}[id]);
+  const art=f.animations.at(-1);
+  assert.equal(art.options.duration,2600);
+  const camera=JSON.stringify(art.frames);
+  f.advanceTime(2761);
+  assert.equal(f.state().special.phase,'PURIFICATION');
+  assert.equal(f.state().battle.dark,42,'new visuals must never resolve the rescue early');
+  const purify=f.animations.at(-1);
+  assert.equal(purify.options.duration,1100);
+  motions.push({camera,purify:JSON.stringify(purify.frames)});
+ }
+ assert.equal(new Set(motions.map(m=>m.camera)).size,3,'each technique uses a unique camera arc');
+ assert.equal(new Set(motions.map(m=>m.purify)).size,3,'each technique uses a unique release movement');
+});
 test('only seen card admits short mode; durations remain 120/600/450 and dialogue is never skipped',()=>{
  const f=savedFixture();let r=saved(f);r.seenTechniques['18-the-moon']=true;f.persistentStore.set(CHECKPOINT_KEY,JSON.stringify(r));
  const g=fixture({persistentStore:f.persistentStore}),root=g.shell.querySelector('#caritas-event');
