@@ -25,7 +25,7 @@ test('only the battle UI receives the raised composition, not the map camera',()
 test('stage 1 retains a fixed battle, status strip and command grid throughout dialogue',()=>{
  assert.match(event,/const statusBand=newEl\("div","cb-status-band"\)/);
  assert.match(event,/statusBand\.append\(hero\)/);
- assert.match(event,/arena\.prepend\(enemy\)/);
+ assert.match(event,/arena\.append\(enemy\)/);
  assert.match(event,/frame\.append\(arena,statusBand,ctr\)/);
  assert.match(css,/v10 — STAGE 1 \/ FIXED COMBAT \+ HUD BAND \+ COMMAND FIELD/);
  const stage1=css.slice(css.indexOf('/* v10 — STAGE 1'));
