@@ -385,12 +385,27 @@ function commitSpecial(f,root,name='月'){
  const btn=selector.flatten().find(e=>e.className==='cb-special-card'&&e.children.at(-1).textContent===name);assert.ok(btn);btn.click();
  f.button(root,'このカードの言葉を届ける').click();assert.equal(f.state().special.phase,'SHION_LINE');
 }
-function finishSpecial(f){
+async function finishSpecial(f){
  f.pointer.advance();f.pointer.advance();f.pointer.advance();
  assert.equal(f.state().special.phase,'ART_PLAYBACK');f.advanceTime(2601);
  assert.equal(f.state().special.phase,'PURIFICATION');f.advanceTime(1100);
- assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();f.pointer.advance();
- assert.equal(f.state().special.phase,'RETURNING');f.advanceTime(900);
+ assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();
+ assert.equal(f.state().special.phase,'FAREWELL');
+ assert.equal(f.shell.querySelector('#caritas-event').hidden,true,'real Starroad visible before the farewell');
+ assert.equal(f.lines.at(-1).text,'……終わった、のか。');
+ f.pointer.advance();f.pointer.advance(); // Map: Shion and Caritas opening.
+ await Promise.resolve();await Promise.resolve();
+ assert.match(f.lines.at(-1).text,/救われる側/);
+ for(let i=0;i<12;i++)f.pointer.advance();
+ assert.equal(f.state().special.phase,'RETURNING');
+ await Promise.resolve();await Promise.resolve();
+ assert.match(f.lines.at(-1).text,/あの子/,'Shiopon reacts only after Caritas leaves the map');
+ f.pointer.advance();f.pointer.advance();
+ assert.equal(f.state().special.phase,'RETURNING','closing dialogue not skipped');
+ f.advanceTime(1100);
+ assert.equal(f.lines.at(-1).text,'タロットクローズ');
+ f.pointer.advance();
+ assert.equal(f.state().special.phase,'DONE');
 }
 test('ordinary tarot MAX opens all three choices, commits A, resolves B and retains DONE',async()=>{
  const f=fixture(),root=await enter(f);
@@ -400,10 +415,11 @@ test('ordinary tarot MAX opens all three choices, commits A, resolves B and reta
  commitSpecial(f,root);assert.equal(f.state().battle.dark,before);assert.equal(f.state().battle.used,false);
  assert.equal(f.lines.at(-1).speaker,'シオン');
  root.querySelector('.cb-read').click();assert.equal(f.state().battle.dark,before);
- finishSpecial(f);
+ await finishSpecial(f);
  assert.equal(f.state().battle.phase,'complete');assert.equal(f.state().special.phase,'DONE');
  assert.equal(root.hidden,true);assert.equal(f.pointer.colliding,false);assert.equal(f.creature.hidden,true);
- assert.equal(f.lines.filter(l=>l.text==='……闇の中でも、お前たちの声は届いていた。……感謝する。').length,1);
+ assert.equal(f.lines.filter(l=>l.text.includes('……シオリエル。いや……しおぽん')).length,1);
+ assert.equal(f.lines.filter(l=>l.text==='タロットクローズ').length,1);
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
  const resumed=fixture({persistentStore:f.persistentStore});assert.equal(resumed.state().done,true);assert.equal(resumed.creature.hidden,true);assert.equal(resumed.pointer.colliding,false);assert.equal(resumed.pointer.mapPhase,'idle');
 });
@@ -591,7 +607,7 @@ test('completed special retains first-delivery receipt and prevents a new encoun
  const f=fixture({fetchReply:()=>aiReply([])}),root=await enter(f);
  await openWritten(f,root).click();completeWritten(f);f.advanceTime(1400);
  for(let i=0;i<12&&f.state().battle.phase==='read';i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
- commitSpecial(f,root);finishSpecial(f);
+ commitSpecial(f,root);await finishSpecial(f);
  assert.equal(saved(f).special.completed,true);assert.equal(saved(f).firstWrittenDelivered,true);
  const again=fixture({persistentStore:f.persistentStore});assert.equal(again.state().done,true);assert.equal(again.state().story,'complete');
 });
@@ -620,14 +636,22 @@ function savedFixture(phase='NONE',options={}){
  const persistentStore=new Map([[CHECKPOINT_KEY,JSON.stringify(r)]]);
  return fixture({persistentStore,...options});
 }
-test('every committed phase restores same page, B boundary and locked map',()=>{
+test('every committed phase restores same page, B boundary and locked map',async()=>{
  for(const phase of S.PHASES){
   const f=savedFixture(phase);assert.equal(f.state().special.phase,phase);
   assert.equal(f.state().battle.dark,S.PHASES.indexOf(phase)<5?42:0);
   assert.equal(f.state().owned,phase!=='DONE');assert.equal(f.state().done,phase==='DONE');
   if(phase==='DUAL_INCANTATION'){assert.equal(f.lines.at(-1).actor,'shion-shioriel');assert.equal(f.lines.at(-1).speaker,'シオン＆シオリエル');}
   if(phase==='PURIFICATION'){f.advanceTime(1099);assert.equal(f.state().battle.dark,42);f.advanceTime(1);assert.equal(f.state().battle.dark,0);}
-  if(phase==='RETURNING'){f.advanceTime(900);assert.equal(saved(f).special.phase,'DONE');assert.equal(saved(f).revision,1);f.page('pageshow');assert.equal(saved(f).revision,1);}
+  if(phase==='RETURNING'){
+    await Promise.resolve();await Promise.resolve();
+    f.pointer.advance();f.pointer.advance();
+    f.advanceTime(1100);
+    assert.equal(f.lines.at(-1).text,'タロットクローズ');
+    assert.equal(saved(f).special.phase,'RETURNING');
+    f.pointer.advance();assert.equal(saved(f).special.phase,'DONE');
+    assert.equal(saved(f).revision,1);f.page('pageshow');assert.equal(saved(f).revision,1);
+   }
  }
 });
 test('selection cancel has no writes or consumption; selection reload returns to finisher',()=>{
@@ -743,7 +767,7 @@ test('tabs never submit; three selected meanings unlock independent send, dialog
  const f=fixture(),root=await enter(f),tab=f.button(root,'リーディングを始める');
  const send=f.button(root,'この言葉を届ける');
  assert.ok(tab&&send);assert.equal(send.hidden,true);
- tab.click();assert.equal(send.disabled,true);assert.equal(send.hidden,true);
+ tab.click();assert.equal(send.disabled,true);assert.equal(send.hidden,false);
  assert.match(root.querySelector('.cb-selection-reason').textContent,/0\/3/);
  tab.click();assert.equal(f.state().dialogueBusy,false,'tab does not submit');
  choose(f,root,['不安','忍耐','癒し']);
