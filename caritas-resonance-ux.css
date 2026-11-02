@@ -676,3 +676,46 @@
  #caritas-event[data-phase="battle"][data-writing-open="true"] .cb-cards{height:clamp(76px,12dvh,112px)!important;max-height:clamp(76px,12dvh,112px)!important}
  #caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way{min-height:48px!important}
 }
+
+/* v7: dialogue reserves a viewport strip without moving or restyling the
+   shared main dialogue layer. Hide battle HUD only while that dialogue plays. */
+#caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]) {
+  --cb-dialogue-space:clamp(180px,31dvh,280px);
+}
+#caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]) .cb-frame{
+  display:flex;flex-direction:column;overflow:hidden;
+  height:calc(100dvh - var(--cb-dialogue-space));
+  max-height:calc(100dvh - var(--cb-dialogue-space));
+  padding-bottom:0;
+}
+#caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]) .cb-arena{
+  position:relative;flex:1 1 auto;min-height:0;width:100%;top:auto;
+}
+#caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-hud,
+#caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-narration,
+#caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-controls{
+  display:none!important;
+}
+/* The send action is the sole gold-filled primary control. Method tabs only
+   communicate selection using their outline and a neutral surface. */
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way[aria-pressed="true"]{
+  background:linear-gradient(145deg,#454351,#353343)!important;
+  color:#f9efd9!important;
+  border:2px solid #ebd4a4!important;
+  box-shadow:inset 0 0 0 1px #ebd4a433!important;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way[aria-pressed="true"] .cb-way-title{
+  color:#f9efd9;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-gain-badge,
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way[aria-pressed="true"] .cb-gain-badge{
+  background:#292d42!important;color:#f0e5d5!important;border-color:#8d8390!important;
+}
+#caritas-event[data-phase="battle"] .cb-select-submit:disabled{
+  opacity:1!important;
+  background:#343141!important;color:#d4cad5!important;
+  border:1px solid #746c7b!important;box-shadow:none!important;
+}
+@media(max-height:520px){
+  #caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]){--cb-dialogue-space:min(46dvh,180px);}
+}
