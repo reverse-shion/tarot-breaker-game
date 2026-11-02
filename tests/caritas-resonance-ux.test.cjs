@@ -64,7 +64,12 @@ test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(css,/\.cb-gain-float/);
  assert.match(css,/\.cb-ai-wait/);
- assert.ok(!css.includes('.cb-beast{')&&!css.includes('.cb-abyss{'),'artist/presentation visual selectors must not be changed');
+ const battleLayout=css.slice(css.indexOf('/* v8: battle-only upper composition'));
+ assert.ok(battleLayout.startsWith('/* v8:'),'battle layout adjustment is isolated and explicitly scoped');
+ assert.match(battleLayout,/#caritas-event \.cb-angel\{bottom:18%;\}/);
+ assert.match(battleLayout,/#caritas-event \.cb-shion-sprite\{bottom:18\.2%;\}/);
+ assert.doesNotMatch(battleLayout,/\b(?:width|height|background|background-image|filter|object-fit|mask-image)\s*:/,
+  'battle-only positioning must preserve original character artwork and sizes');
  const h=load('caritas-battle-event.css');
  assert.ok(h.includes('cb-beast'));
 });
