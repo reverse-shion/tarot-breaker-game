@@ -167,20 +167,26 @@ test('P0/P1: card interpretations scroll fully, special selection hides HUD and 
  assert.match(js,/ui\.commandPrompt=newEl\("p","cb-command-prompt"/);
  assert.match(js,/C\.READING_OPTIONS\[s\.words\[i\]\]\.title:viewedReadingCards/);
 });
-test('P2: distinct techniques keep full portrait, separate caption and three different release palettes',()=>{
+test('v18: special illustration always fills viewport with separate smoke/light and no repeated title',()=>{
  const js=load('caritas-battle-event.js');
  const css=load('caritas-resonance-ux.css');
- const visual=css.slice(css.indexOf('/* v16 / P2'));
+ const visual=css.slice(css.indexOf('/* v18 — cinematic full-bleed'));
  assert.match(js,/const TECHNIQUE_MOTION=Object\.freeze/);
  for(const id of ['18-the-moon','08-strength','17-the-star']){
-  assert.ok(js.includes("'"+id+"':{"),id+' needs its own camera/release frames');
-  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::after'),id+' needs distinct light');
-  assert.ok(visual.includes('[data-card="'+id+'"][data-special="PURIFICATION"] .cb-release'),id+' needs distinct release');
+  assert.ok(js.includes("'"+id+"':{"),id+' needs its own purification frames');
+  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::before'),id+' needs unique smoke');
+  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::after'),id+' needs unique light');
+  assert.ok(visual.includes('[data-card="'+id+'"][data-special="PURIFICATION"] .cb-release'),id+' needs unique release');
  }
- assert.match(visual,/object-fit:contain!important/);
- assert.match(visual,/\.cb-special-caption\{/);
+ assert.match(visual,/min-width:108%!important;min-height:108%!important/);
+ assert.match(visual,/object-fit:cover!important/);
+ assert.match(visual,/\.cb-special-caption\{display:none!important\}/);
+ assert.match(visual,/cb-special-smoke/);
  assert.match(visual,/prefers-reduced-motion:reduce/);
- assert.match(js,/ui\.artPlayback\.replaceChildren\(ui\.artBackdrop,ui\.artImage,ui\.artCaption\)/);
+ assert.match(visual,/data-special="DUAL_INCANTATION"/);
+ assert.match(js,/kind!=='hold'&&kind!=='art'/);
+ assert.match(js,/ui\.artPlayback\.replaceChildren\(ui\.artImage\)/);
+ assert.doesNotMatch(js,/setText\(ui\.artTitle,t\.title\)/);
  assert.match(js,/short\?'600ms':'2600ms'/);
  assert.match(js,/transitionSpecial\('PURIFICATION',\{imageDisplayed:ready&&ui\.artImage\.naturalWidth>0\}\)/);
 });
