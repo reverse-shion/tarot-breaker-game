@@ -80,7 +80,7 @@ test('v6 explicit delivery, progress and selected tabs',()=>{
  assert.match(event,/ui\.selectSend\.hidden=/);
  assert.match(event,/ui\.selectionReason\.hidden=true;/);
  assert.match(event,/解釈 "\+chosenCount\+"\/3/);
- assert.match(event,/あと"\+\(3-chosenCount\)\+"枚で届けられます"/);
+ assert.match(event,/あと"\+\(3-chosenCount\)\+"つ、解釈を選ぶ"/);
  assert.match(css,/\.cb-select-submit\[hidden\]\{display:none!important/);
  assert.match(css,/\.cb-delivery-methods\{\s*order:4/);
  assert.match(css,/\.cb-delivery-methods \.cb-way\[aria-pressed="true"\]/);
@@ -147,4 +147,40 @@ test('stage 4 shows only actual reading choices and keeps notice away from the b
  assert.match(js,/setText\(ui\.gainFloat,"共鳴 ＋"\+\(visible\.resonance-lastPresentedResonance\)\)/);
  assert.match(js,/const next=C\.read\(previous\)/);
  assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
+});
+
+test('P0/P1: card interpretations scroll fully, special selection hides HUD and no invalid UI badges repeat',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const repair=css.slice(css.indexOf('/* v14 / P0'),css.indexOf('/* v16 / P2'));
+ assert.match(repair,/\.cb-modal-header\{/);
+ assert.match(repair,/\.cb-modal-words\{[\s\S]*?overflow-y:auto!important/);
+ assert.match(repair,/\.cb-modal-navigation\{[\s\S]*?order:2/);
+ assert.match(repair,/\.cb-special-selection\{\s*background:#0d1328!important/);
+ assert.match(repair,/\.cb-special-reading\{[\s\S]*?white-space:nowrap/);
+ assert.match(repair,/\.cb-command-prompt/);
+ assert.match(repair,/\.cb-modal-reference/);
+ assert.match(js,/modalHeader\.append\(ui\.modalTitle,close\)/);
+ assert.match(js,/ui\.finisher\.hidden=true/);
+ assert.match(js,/ui\.skillHint\.hidden=finisher/);
+ assert.match(js,/ui\.modalWords\.hidden=false/);
+ assert.match(js,/ui\.commandPrompt=newEl\("p","cb-command-prompt"/);
+ assert.match(js,/C\.READING_OPTIONS\[s\.words\[i\]\]\.title:viewedReadingCards/);
+});
+test('P2: distinct techniques keep full portrait, separate caption and three different release palettes',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const visual=css.slice(css.indexOf('/* v16 / P2'));
+ assert.match(js,/const TECHNIQUE_MOTION=Object\.freeze/);
+ for(const id of ['18-the-moon','08-strength','17-the-star']){
+  assert.ok(js.includes("'"+id+"':{"),id+' needs its own camera/release frames');
+  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::after'),id+' needs distinct light');
+  assert.ok(visual.includes('[data-card="'+id+'"][data-special="PURIFICATION"] .cb-release'),id+' needs distinct release');
+ }
+ assert.match(visual,/object-fit:contain!important/);
+ assert.match(visual,/\.cb-special-caption\{/);
+ assert.match(visual,/prefers-reduced-motion:reduce/);
+ assert.match(js,/ui\.artPlayback\.replaceChildren\(ui\.artBackdrop,ui\.artImage,ui\.artCaption\)/);
+ assert.match(js,/short\?'600ms':'2600ms'/);
+ assert.match(js,/transitionSpecial\('PURIFICATION',\{imageDisplayed:ready&&ui\.artImage\.naturalWidth>0\}\)/);
 });
