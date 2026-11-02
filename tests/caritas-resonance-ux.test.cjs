@@ -205,3 +205,29 @@ test('v17 iPhone keyboard never exposes cards, and writing aftermath never repea
  assert.match(js,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
  assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
 });
+
+test('dual-incantation uses two large, nonwrapping lines inside the canonical shared window, for all three moves',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const shared=load('shared-dialogue.css');
+ const html=load('hoshisuna-main.html');
+ const dual=css.slice(css.indexOf('/* Dual technique chant ONLY:'),css.indexOf('[data-card="18-the-moon"][data-special="PURIFICATION"]'));
+ assert.match(dual,/#game-shell:has\(#caritas-event:not\(\[hidden\]\)\[data-special="DUAL_INCANTATION"\]\) #dialogue-layer \.tb-dialogue-text/);
+ assert.match(dual,/white-space:pre!important/,'explicit newline remains, no extra wraps');
+ assert.match(dual,/overflow-wrap:normal!important;word-break:keep-all!important/);
+ assert.match(dual,/text-wrap:nowrap/);
+ assert.match(dual,/font-size:clamp\(17px,5\.6vw,26px\)!important/);
+ assert.match(dual,/font-weight:750/);
+ assert.match(shared,/font-size:clamp\(18px,4\.6vw,21px\)/,'other dialogue still uses original main style');
+ assert.match(html,/ux-20261103-dual-chant-v19/,'Safari must get the updated scoped stylesheet');
+ for(const [title,reading] of [
+  ['星幻迷宮','アストラル・ミラージュ！！'],
+  ['星獣咆哮','アストラル・ブレイヴ！！'],
+  ['星望祈願','アストラル・グリモワール！！']
+ ]){
+  assert.ok(js.includes("chant:'"+title+"\\n"+reading+"'"),'each chant has exactly one intentional line break');
+  assert.ok([...reading].length<=14,'longest reading must fit at 5.6vw on a 320px screen');
+ }
+ const baseWidth=320,dialogueTextWidth=baseWidth*.92-36;
+ assert.ok(14*(baseWidth*.056)*.975<=dialogueTextWidth,'longest katakana line fits 320px iPhone dialogue');
+});
