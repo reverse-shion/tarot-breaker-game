@@ -56,7 +56,7 @@ const C=require('../caritas-battle-core.js'),S=require('../caritas-special-state
   assert.equal(await page.locator('#dialogue-layer').getAttribute('data-actor'),'shion-shioriel');
   assert.equal(await page.locator('.cb-cut-shion').isVisible(),true);assert.equal(await page.locator('.cb-cut-shioriel').isVisible(),true);
   await assertEdgeToEdgeCutin();
-  const chants=['星幻迷宮\\nアストラル・ミラージュ！！','星獣咆哮\\nアストラル・ブレイヴ！！','星望祈願\\nアストラル・グリモワール！！'];
+  const chants=['星幻迷宮\nアストラル・ミラージュ！！','星獣咆哮\nアストラル・ブレイヴ！！','星望祈願\nアストラル・グリモワール！！'];
   await page.waitForFunction(()=>/星幻迷宮|星獣咆哮|星望祈願/.test(document.querySelector('#dialogue-text').textContent));
   assert.equal(await page.locator('#dialogue-text').textContent(),chants[i],'incantation has a fixed kanji/katakana break');
   assert.equal(await page.locator('#dialogue-text').evaluate(el=>getComputedStyle(el).whiteSpace),'pre-wrap');
