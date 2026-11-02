@@ -864,8 +864,8 @@ test('v18: full-bleed special art is stationary, duplicate titles vanish and dis
   await flush();f.advanceTime(1);
   assert.equal(root.dataset.card,id);
   assert.equal(f.state().special.phase,'ART_PLAYBACK');
-  assert.equal(root.querySelector('.cb-special-art-title').textContent,'');
-  assert.equal(root.querySelector('.cb-special-art-reading').textContent,'');
+  assert.equal(root.querySelector('.cb-special-art-title'),null,'name is not mounted on the artwork');
+  assert.equal(root.querySelector('.cb-special-art-reading'),null,'reading is not mounted on the artwork');
   assert.equal(root.querySelector('.cb-special-art').children.length,1,'only the foreground art is mounted');
   assert.equal(f.animations.length,0,'art uses atmospheric CSS, not pan/zoom WAAPI');
   f.advanceTime(2761);
@@ -903,13 +903,15 @@ test('ordinary reading and special selection do not advance on failed storage',a
  assert.equal(g.state().special.committed,false);
 });
 
-test('WAAPI missing finished event uses visible watchdog and rejects stale generation callbacks',async()=>{
+test('stationary art uses visible watchdog and stale cutin WAAPI cannot advance purification',async()=>{
  const f=savedFixture('SHION_LINE',{waapi:true}),root=f.shell.querySelector('#caritas-event');const old=f.animations.at(-1);
  f.pointer.advance();assert.equal(f.state().special.phase,'SHIORIEL_LINE');old.finish();await flush();assert.equal(f.state().special.phase,'SHIORIEL_LINE');
- f.pointer.advance();f.pointer.advance();f.advanceTime(1);const art=f.animations.at(-1);assert.equal(art.options.duration,2600);
- f.advanceTime(500);f.visibility(true);f.page('pagehide');f.advanceTime(15000);assert.equal(f.state().special.phase,'ART_PLAYBACK');assert.equal(art.paused,true);
+ f.pointer.advance();f.pointer.advance();f.advanceTime(1);
+ assert.equal(f.state().special.phase,'ART_PLAYBACK');
+ assert.equal(f.animations.at(-1).options.duration,600,'art itself starts no additional WAAPI');
+ f.advanceTime(500);f.visibility(true);f.page('pagehide');f.advanceTime(15000);assert.equal(f.state().special.phase,'ART_PLAYBACK');
  f.visibility(false);f.page('pageshow');f.advanceTime(2260);assert.equal(f.state().special.phase,'PURIFICATION');
- art.finish();await flush();assert.equal(f.state().special.phase,'PURIFICATION');assert.equal(f.state().battle.dark,42);
+ old.finish();await flush();assert.equal(f.state().special.phase,'PURIFICATION');assert.equal(f.state().battle.dark,42);
  f.advanceTime(1260);assert.equal(f.state().special.phase,'CARITAS_REPLY');assert.equal(f.state().battle.dark,0);
 });
 
