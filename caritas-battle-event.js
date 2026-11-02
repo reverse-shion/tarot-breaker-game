@@ -467,25 +467,27 @@ function currentLine(){
 let dialogueStageShift=null;
 function frameCaritasDialogue(){
  if(root.hidden||!dialogueBusy||!ui.arena||!dialogue?.elements?.button)return;
- const windowRect=dialogue.elements.button.getBoundingClientRect();
+ const windowRect=dialogue.elements.button.getBoundingClientRect?.();
+ if(!windowRect)return;
  const viewportHeight=window.visualViewport?.height||window.innerHeight;
  if(!Number.isFinite(windowRect.top)||windowRect.top<=0||!Number.isFinite(viewportHeight))return;
- const already=Number.parseFloat(root.style.getPropertyValue("--cb-dialogue-stage-shift"))||0;
+ const already=Number.parseFloat(root.style?.getPropertyValue?.("--cb-dialogue-stage-shift"))||0;
  const figures=[".cb-beast",".cb-shion-sprite",".cb-angel"]
   .map(selector=>ui.arena.querySelector(selector))
   .filter(node=>node&&node.getBoundingClientRect().height>0);
  if(!figures.length)return;
- const bottom=Math.max(...figures.map(node=>node.getBoundingClientRect().bottom-already));
+ const bottom=Math.max(...figures.map(node=>{const box=node.getBoundingClientRect();return (Number.isFinite(box.bottom)?box.bottom:box.top+box.height)-already;}));
+ if(!Number.isFinite(bottom))return;
  // A longer later dialogue line may require more headroom. Never move the
  // figures down again until the whole dialogue sequence has ended.
  const wanted=Math.floor(windowRect.top-bottom-14);
  dialogueStageShift=dialogueStageShift===null?wanted:Math.min(dialogueStageShift,wanted);
- root.style.setProperty("--cb-dialogue-stage-shift",dialogueStageShift+"px");
+ root.style?.setProperty?.("--cb-dialogue-stage-shift",dialogueStageShift+"px");
 }
 function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
  dialogueStageShift=null;
- root.style.removeProperty("--cb-dialogue-stage-shift");
+ root.style?.removeProperty?.("--cb-dialogue-stage-shift");
  dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
  root.dataset.dialogueBusy="true";
  currentLine();
@@ -497,7 +499,7 @@ function advanceDialogue(){
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
  root.dataset.dialogueBusy="false";
  dialogueStageShift=null;
- root.style.removeProperty("--cb-dialogue-stage-shift");
+ root.style?.removeProperty?.("--cb-dialogue-stage-shift");
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
