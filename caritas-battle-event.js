@@ -583,14 +583,14 @@ function render(){
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
  }
  setText(ui.wayHint,"書けなくても大丈夫。どちらの方法でも届けられます。");
- setText(ui.selectionReason,!finisher&&deliveryMethod==="select"&&chosenCount<3?"あと"+(3-chosenCount)+"枚の解釈を選んでください。":"");
+ setText(ui.selectionReason,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードを開いて意味を選ぼう"));
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
   section.append(newEl("div","cb-role",({COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
   const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading||!readingOpen;
-  btn.setAttribute("aria-label",card.name+(deliveryMethod==="write"?"を拡大して見る":"を開いて意味を選ぶ"));
+  btn.setAttribute("aria-label",card.name+(deliveryMethod==="write"?"を拡大して見る":s.words[i]?"・"+C.READING_OPTIONS[s.words[i]].title+"を選択済み。変更する":"を開いて意味を選ぶ"));
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
   const cardState=s.words[i]?"selected":viewedReadingCards.has(i)?"read":"unread";
   section.dataset.cardState=cardState;btn.dataset.cardState=cardState;
@@ -598,7 +598,7 @@ function render(){
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
   btn.addEventListener("click",()=>openCard(i));
-  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"選択済み："+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"既読 · もう一度選ぶ":"タップして意味を選ぶ"));
+  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
   cardBox.append(section);
  }
  if(p){
@@ -618,23 +618,25 @@ function render(){
   root.dataset.writingOpen=String(deliveryMethod==="write"&&readingOpen&&reading);
   ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードから次の一歩へ。":"ひと言でも大丈夫。長さや上手さで特典は変わりません。";
   ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"基本の共鳴報酬（上限100）。AIの理解による効果は別途反映されます。";
-  setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("基本 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
-  setText(ui.readBadge,p?("+"+p.resonance):"選択後");
+  setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("共鳴 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
+  setText(ui.readBadge,p?("共鳴 +"+p.resonance):"3枚選択");
   ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
-  ui.aiToggle.disabled=!reading||aiBusy||s.aiInsightTurn===s.turn||aiCalls>=AI_CALL_LIMIT;
+  ui.aiToggle.disabled=!reading||aiBusy||committing;
   ui.aiToggle.hidden=finisher;ui.aiToggle.setAttribute("aria-pressed",String(deliveryMethod==="write"));
   setText(ui.aiToggleLabel,"自分の言葉で届ける");
   ui.aiPanel.hidden=!(reading&&readingOpen&&deliveryMethod==="write");
  }
- setText(ui.readLabel,deliveryMethod==="select"&&chosenCount===3?"解釈を届ける":"選んで届ける");
+ setText(ui.readLabel,"選んで届ける");
  ui.read.setAttribute("aria-pressed",String(deliveryMethod==="select"));
  ui.wayHint.hidden=true;ui.slots.hidden=true;
- ui.selectionReason.hidden=finisher||deliveryMethod!=="select"||chosenCount===3;
+ ui.selectionReason.hidden=!(reading&&readingOpen&&deliveryMethod==="select");
+  ui.selectSend.hidden=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3);
+  ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&!!p)||aiBusy||dialogueBusy||committing;
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,finisher?"共鳴解放の準備が整いました":"共鳴が満ちると解放");
  if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
- ui.read.disabled=!(reading&&(deliveryMethod!=="select"||!!p));
+ ui.read.disabled=!reading||aiBusy||committing;
  ui.skill.disabled=!finisher||!C.canSkill(s);
  ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
  if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　共鳴解放が可能になりました");
@@ -904,14 +906,14 @@ function init(){
  ui.finisher=newEl("div","cb-finisher");ui.finisher.hidden=true;
  const actions=newEl("div","cb-actions");
  ui.read=newEl("button","cb-read cb-way");ui.read.type="button";
- ui.readLabel=newEl("span","cb-way-title","解釈をそのまま届ける");ui.readBadge=newEl("span","cb-gain-badge","選択後");
+ ui.readLabel=newEl("span","cb-way-title","選んで届ける");ui.readBadge=newEl("span","cb-gain-badge","3枚選択");
  ui.read.append(ui.readLabel,ui.readBadge);
  ui.skill=newEl("button","cb-skill","共鳴解放");ui.skill.type="button";
  ui.skillHint=newEl("span","cb-skill-hint","共鳴が満ちると解放");
- ui.read.addEventListener("click",()=>{
-  if(deliveryMethod!=="select"){selectDeliveryMethod("select");return;}
-  perform("read");
- });
+ // A method tab only switches modes; the explicit CTA alone sends a reading.
+ ui.read.addEventListener("click",()=>selectDeliveryMethod("select"));
+ ui.selectSend=newEl("button","cb-select-submit","この言葉を届ける");ui.selectSend.type="button";
+ ui.selectSend.addEventListener("click",()=>perform("read"));
  ui.skill.addEventListener("click",()=>perform("skill"));
  ui.aiPanel=newEl("div","cb-ai-panel");
  const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
@@ -955,7 +957,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(methods,cardBox,ui.slots,ui.selectionReason,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
+ ctr.append(methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
  frame.append(enemy,arena,hero,narr,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;

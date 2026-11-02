@@ -61,8 +61,8 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
    if(e.tagName!=='button')return false;
    // Legacy test terminology maps to the same real action in the two-method UI.
    // Do not stub, bypass, or change gameplay; click the real choice/delivery button.
-   if(text==='リーディングを始める'||text==='この言葉を届ける')
-    return e.className?.split(' ').includes('cb-read');
+   if(text==='リーディングを始める')return e.className?.split(' ').includes('cb-read');
+   if(text==='この言葉を届ける')return e.className?.split(' ').includes('cb-select-submit');
    if(e.textContent===text)return true;
    return e.children.some(child=>child.className?.split(' ').includes('cb-way-title')&&child.textContent===text);
   })};
@@ -737,4 +737,20 @@ test('unavailable card deployment recovers the prompt without advancing to chant
  await advanceScoutToTarot(f);
  assert.equal(f.state().story,'choice');assert.equal(f.pointer.cards,false);assert.equal(f.pointer.walks,undefined);
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
+});
+
+test('tabs never submit; three selected meanings unlock independent send, dialogue hides progress',async()=>{
+ const f=fixture(),root=await enter(f),tab=f.button(root,'リーディングを始める');
+ const send=f.button(root,'この言葉を届ける');
+ assert.ok(tab&&send);assert.equal(send.hidden,true);
+ tab.click();assert.equal(send.disabled,true);assert.equal(send.hidden,true);
+ assert.match(root.querySelector('.cb-selection-reason').textContent,/0\/3/);
+ tab.click();assert.equal(f.state().dialogueBusy,false,'tab does not submit');
+ choose(f,root,['不安','忍耐','癒し']);
+ assert.match(root.querySelector('.cb-selection-reason').textContent,/3\/3/);
+ assert.equal(send.hidden,false);assert.equal(send.disabled,false);
+ f.button(root,'自分の言葉で届ける').click();assert.equal(send.hidden,true);
+ tab.click();assert.equal(send.hidden,false);
+ send.click();assert.equal(f.state().dialogueBusy,true);
+ assert.equal(root.querySelector('.cb-selection-reason').hidden,true);
 });

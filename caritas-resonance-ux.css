@@ -592,3 +592,87 @@
   border-color:#f3d798;
   box-shadow:0 0 0 1px #e5bf7b7a,0 0 12px #e5bf7b77;
 }
+
+/* v6: stable bottom method dock, elastic upper battlefield, deliberate send.
+   Scoped exclusively to Caritas controls; actor, Abyss and main dialogue untouched. */
+#caritas-event[data-phase="battle"] .cb-frame,
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-frame{
+ grid-template-rows:minmax(43px,auto) minmax(145px,1fr) minmax(56px,auto) auto;
+}
+#caritas-event[data-phase="battle"] .cb-controls,
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-controls{
+ height:auto;min-height:0;max-height:59dvh;overflow:hidden!important;
+ display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;
+ gap:5px;padding:6px 8px max(9px,env(safe-area-inset-bottom,0px));
+}
+#caritas-event[data-phase="battle"] .cb-cards,
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-cards{
+ order:0;flex:0 1 auto!important;height:clamp(146px,24dvh,225px)!important;
+ min-height:112px!important;max-height:clamp(146px,24dvh,225px)!important;overflow:hidden;
+}
+#caritas-event[data-phase="battle"][data-writing-open="true"] .cb-cards{
+ height:clamp(90px,15dvh,147px)!important;max-height:clamp(90px,15dvh,147px)!important;
+}
+#caritas-event[data-phase="battle"] .cb-selection-reason{
+ order:1;min-height:27px;padding:5px 8px;border:1px solid #948375;
+ border-radius:7px;background:#3d3542;color:#f8e4b9;
+ font-size:12px;font-variant-numeric:tabular-nums;
+}
+#caritas-event[data-phase="battle"] .cb-ai-panel{order:2;}
+#caritas-event[data-phase="battle"] .cb-select-submit{
+ order:3;flex:0 0 auto;display:block;width:100%;min-height:50px;
+ border:2px solid #ffe6b0;border-radius:10px;
+ background:linear-gradient(112deg,#96734a,#debc82,#a77e51);
+ color:#231c2b;font-weight:700;font-size:clamp(14px,3.7vw,17px);
+ box-shadow:0 3px 12px #15101a80;
+}
+#caritas-event[data-phase="battle"] .cb-select-submit[hidden]{display:none!important}
+#caritas-event[data-phase="battle"] .cb-select-submit:focus-visible{
+ outline:3px solid #fff2cc;outline-offset:2px;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods{
+ order:4;position:relative;flex:0 0 auto;margin-top:auto;
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way{
+ min-height:54px!important;height:auto!important;display:flex!important;
+ flex-direction:column;align-items:center;justify-content:center;
+ gap:4px;padding:5px 6px!important;background:linear-gradient(145deg,#4a4350,#37313f)!important;
+ color:#f0e8ed!important;border:1px solid #a99c91!important;box-shadow:none!important;opacity:.92;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way[aria-pressed="true"]{
+ background:linear-gradient(140deg,#f1dbac,#bc9968)!important;color:#241e2b!important;
+ border:2px solid #fff0bf!important;box-shadow:inset 0 1px 0 #fff6e09c!important;opacity:1;
+}
+#caritas-event[data-phase="battle"] .cb-way[aria-pressed="true"] .cb-way-title{color:#241e2b}
+#caritas-event[data-phase="battle"] .cb-way[aria-pressed="true"] .cb-gain-badge{
+ background:#453549;color:#fff1d3;border-color:#695472;
+}
+#caritas-event[data-phase="battle"] .cb-gain-badge{
+ min-height:19px;padding:1px 6px;white-space:nowrap;
+ font-size:clamp(9px,2.5vw,11px);font-variant-numeric:tabular-nums;
+}
+#caritas-event[data-phase="battle"] .cb-chosen{
+ display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ -webkit-line-clamp:unset;min-height:17px;font-size:clamp(10px,2.5vw,12px);
+}
+#caritas-event[data-phase="battle"] .cb-writing-hint{
+ display:block!important;margin:0;color:#ece0d2;font-size:11px;line-height:1.3;
+}
+#caritas-event[data-phase="battle"] .cb-ai-body{padding:6px 8px;gap:5px}
+#caritas-event[data-phase="battle"] .cb-ai-input{
+ min-height:58px;height:clamp(58px,8dvh,78px);max-height:78px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-controls{
+ height:100%!important;max-height:100%;justify-content:flex-end;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-cards{
+ height:auto!important;max-height:120px!important;min-height:48px!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-delivery-methods{display:none!important}
+@media(max-height:700px){
+ #caritas-event[data-phase="battle"] .cb-controls{max-height:64dvh;gap:4px;padding:4px 6px max(5px,env(safe-area-inset-bottom,0px))}
+ #caritas-event[data-phase="battle"][data-reading-open="true"] .cb-cards{height:clamp(112px,20dvh,174px)!important;max-height:clamp(112px,20dvh,174px)!important}
+ #caritas-event[data-phase="battle"][data-writing-open="true"] .cb-cards{height:clamp(76px,12dvh,112px)!important;max-height:clamp(76px,12dvh,112px)!important}
+ #caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way{min-height:48px!important}
+}
