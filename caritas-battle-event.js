@@ -454,21 +454,38 @@ function currentLine(){
  }
  dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  renderCaritas();
+ frameCaritasDialogue();
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
   dialogue.elements.layer.classList.add('visible');dialogue.elements.button.classList.add('visible');
  }
 }
+// Visual-only combat camera framing: the stage keeps its original dimensions.
+// Move the complete actor/FX layer towards the shared dialogue window instead
+// of resizing characters, cutting the arena short, or touching the field map.
+let dialogueStageShift=null;
+function frameCaritasDialogue(){
+ if(root.hidden||!dialogueBusy||!ui.arena||!dialogue?.elements?.button)return;
+ const windowRect=dialogue.elements.button.getBoundingClientRect();
+ const viewportHeight=window.visualViewport?.height||window.innerHeight;
+ if(!Number.isFinite(windowRect.top)||windowRect.top<=0||!Number.isFinite(viewportHeight))return;
+ const already=Number.parseFloat(root.style.getPropertyValue("--cb-dialogue-stage-shift"))||0;
+ const figures=[".cb-beast",".cb-shion-sprite",".cb-angel"]
+  .map(selector=>ui.arena.querySelector(selector))
+  .filter(node=>node&&node.getBoundingClientRect().height>0);
+ if(!figures.length)return;
+ const bottom=Math.max(...figures.map(node=>node.getBoundingClientRect().bottom-already));
+ // A longer later dialogue line may require more headroom. Never move the
+ // figures down again until the whole dialogue sequence has ended.
+ const wanted=Math.floor(windowRect.top-bottom-14);
+ dialogueStageShift=dialogueStageShift===null?wanted:Math.min(dialogueStageShift,wanted);
+ root.style.setProperty("--cb-dialogue-stage-shift",dialogueStageShift+"px");
+}
 function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
- // Preserve the measured battlefield size before the main dialogue appears.
- // The dialogue frame is reserved space, not a smaller character viewport.
- if(!root.hidden && ui.arena && !dialogueBusy) {
-  const stageHeight=ui.arena.getBoundingClientRect?.().height;
-  if(Number.isFinite(stageHeight) && stageHeight>80)
-   root.style?.setProperty?.("--cb-dialogue-stage-height",Math.round(stageHeight)+"px");
- }
+ dialogueStageShift=null;
+ root.style.removeProperty("--cb-dialogue-stage-shift");
  dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
  root.dataset.dialogueBusy="true";
  currentLine();
@@ -479,6 +496,8 @@ function advanceDialogue(){
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
  root.dataset.dialogueBusy="false";
+ dialogueStageShift=null;
+ root.style.removeProperty("--cb-dialogue-stage-shift");
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
@@ -659,7 +678,7 @@ function render(){
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
  }
  setText(ui.wayHint,"書けなくても大丈夫。どちらの方法でも届けられます。");
- setText(ui.selectionReason,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードを開いて意味を選ぼう"));
+ setText(ui.selectionReason,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードをタップして意味を選ぶ"));
  setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
@@ -705,9 +724,12 @@ function render(){
  setText(ui.readLabel,"選んで届ける");
  ui.read.setAttribute("aria-pressed",String(deliveryMethod==="select"));
  ui.wayHint.hidden=true;ui.slots.hidden=true;
- ui.selectionReason.hidden=!(reading&&readingOpen&&deliveryMethod==="select");
+ ui.selectionReason.hidden=true;
   ui.selectSend.hidden=!(reading&&readingOpen&&deliveryMethod==="select");
   ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3&&!!p)||aiBusy||dialogueBusy||committing;
+  // Keep the primary button in one fixed place. Its own label communicates
+  // progress; the separate gold progress banner is no longer needed.
+  setText(ui.selectSend,chosenCount===3?"この言葉を届ける":"あと"+(3-chosenCount)+"枚で届けられます");
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,finisher?"共鳴解放の準備が整いました":"共鳴が満ちると解放");
