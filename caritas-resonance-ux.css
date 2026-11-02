@@ -762,6 +762,11 @@
  transform:translate3d(0,var(--cb-dialogue-stage-shift,0px),0);
  overflow:visible;
 }
+/* During a reading dialogue, freeze the previously visible tarot-stage row;
+   the unused control row absorbs the remaining screen height offstage. */
+#caritas-event[data-phase="battle"][data-dialogue-busy="true"] .cb-frame{
+ grid-template-rows:minmax(43px,auto) minmax(0,var(--cb-dialogue-stage-height,34dvh)) minmax(56px,auto) minmax(0,1fr)!important;
+}
 #caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-hud{
  display:grid!important;visibility:hidden!important;pointer-events:none!important;
 }
