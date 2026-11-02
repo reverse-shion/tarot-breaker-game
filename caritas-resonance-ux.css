@@ -974,5 +974,19 @@
  }
  #caritas-event .cb-controls>.cb-narration{display:none!important}
 }
+/* Preserve the existing focus/keyboard behavior until stage 3 replaces
+   its composer. The fixed battle layout must not trap the submit control. */
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame{
+ position:absolute!important;top:var(--cb-visible-top,0px)!important;left:50%!important;
+ transform:translateX(-50%);
+ height:var(--cb-visible-height,100dvh)!important;max-height:var(--cb-visible-height,100dvh)!important;
+ grid-template-areas:"command"!important;grid-template-rows:minmax(0,1fr)!important;
+ padding-bottom:0!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame>.cb-status-band,
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame>.cb-arena{display:none!important}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame>.cb-controls{
+ grid-area:command;max-height:100%!important;
+}
 /* Reading actions are still the original stage-1 buttons; stage 2 adds the
    full-screen tarot UI, and stage 3 moves the keyboard composer. */
