@@ -30,7 +30,7 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  next.id='dialogue-next';next.className='tb-dialogue-next';
  advance.append(speaker,speechText,next);layer.append(advance);shell.append(layer);
  const documentListeners={},windowListeners={},animations=[];
- const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
+ const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={frames,options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},companion:{x:950,y:305},advance:null,colliding:true,dialogueOptions:null};
  const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},
@@ -407,6 +407,41 @@ async function finishSpecial(f){
  f.pointer.advance();
  assert.equal(f.state().special.phase,'DONE');
 }
+test('P0/P1 fixed detail header, and writing reference contains three complete meanings without selecting',async()=>{
+ const f=fixture(),root=await enter(f);
+ assert.equal(root.querySelector('.cb-command-prompt').hidden,false);
+ f.button(root,'リーディングを始める').click();
+ assert.equal(root.querySelector('.cb-command-prompt').hidden,true);
+ root.flatten().filter(e=>e.className==='cb-card-button')[0].click();
+ const header=root.querySelector('.cb-modal-header');
+ assert.equal(header.children[0],root.querySelector('.cb-modal-title'));
+ assert.equal(header.children[1],root.querySelector('.cb-modal-close'));
+ assert.equal(root.querySelector('.cb-card-panel').children.at(-1),root.querySelector('.cb-modal-navigation'));
+ root.querySelector('.cb-modal-close').click();
+ f.button(root,'自分の言葉で届ける').click();
+ const input=root.querySelector('.cb-ai-input');input.value='待っているよ';input.listeners.input();
+ root.querySelector('.cb-writing-reference-card').click();
+ const meanings=root.querySelector('.cb-modal-words');
+ assert.equal(meanings.hidden,false);assert.equal(meanings.children.length,3);
+ assert.ok(meanings.children.every(e=>e.className==='cb-modal-reference'));
+ assert.ok(meanings.children.every(e=>e.children[1].textContent.length>25));
+ root.querySelector('.cb-modal-close').click();
+ assert.equal(input.value,'待っているよ');
+ assert.equal(f.requests.length,0);assert.equal(f.state().battle.turn,0);
+});
+test('P0 special selection displays title and reading separately without an early commit',()=>{
+ const f=savedFixture(),root=f.shell.querySelector('#caritas-event'),before=f.persistentStore.get(CHECKPOINT_KEY);
+ f.button(root,'共鳴解放').click();
+ const selection=root.querySelector('.cb-special-selection');
+ assert.equal(selection.children[1].children.length,3);
+ selection.children[1].children[2].click();
+ const detail=root.querySelector('.cb-special-meaning');
+ assert.equal(detail.children[0].textContent,'星望祈願');
+ assert.equal(detail.children[1].textContent,'アストラル・グリモワール');
+ assert.equal(detail.children[2].className,'cb-special-description');
+ assert.equal(f.persistentStore.get(CHECKPOINT_KEY),before);
+ f.button(root,'戻る').click();assert.equal(f.state().special.committed,false);
+});
 test('ordinary tarot MAX opens all three choices, commits A, resolves B and retains DONE',async()=>{
  const f=fixture(),root=await enter(f);
  for(let i=0;i<12&&f.state().battle.phase==='read';i++)read(f,root,i===0?['不安','忍耐','癒し']:null);
@@ -587,7 +622,9 @@ test('stage 3 writing surface reuses original editor and send, preserves drafts,
  // Tarot cards can be looked at without selecting meanings or submitting.
  root.querySelector('.cb-writing-reference-card').click();
  assert.equal(root.querySelector('.cb-card-overlay').hidden,false);
- assert.equal(root.querySelector('.cb-modal-words').hidden,true);
+ assert.equal(root.querySelector('.cb-modal-words').hidden,false);
+ assert.equal(root.querySelector('.cb-modal-words').children.length,3,'reference displays complete meanings');
+ assert.ok(root.querySelector('.cb-modal-words').children[0].children[1].textContent.length>25);
  assert.equal(f.state().battle.turn,beforeTurn);
  root.querySelector('.cb-modal-close').click();
  assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
@@ -936,7 +973,7 @@ test('stage 1 mounts an unchanging battlefield, visible status band, and command
  f.button(root,'リーディングを始める').click();
  const send=f.button(root,'この言葉を届ける');
  assert.equal(send.disabled,true);
- assert.equal(send.textContent,'あと3枚で届けられます');
+ assert.equal(send.textContent,'あと3つ、解釈を選ぶ');
  choose(f,root,['不安','忍耐','希望']);
  assert.equal(send.disabled,false);
  assert.equal(send.textContent,'この言葉を届ける');
