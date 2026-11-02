@@ -819,7 +819,7 @@ test('selection cancel has no writes or consumption; selection reload returns to
  f.button(root,'共鳴解放').click();const g=fixture({persistentStore:f.persistentStore});assert.equal(g.state().story,'battle');assert.equal(g.state().special.committed,false);
 });
 test('all cards use exact solo dialogue and one dual page before art, then distinct Caritas reply',()=>{
- const chants=['星幻迷宮──アストラル・ミラージュ！！','星獣咆哮──アストラル・ブレイヴ！！','星望祈願──アストラル・グリモワール！！'];
+ const chants=['星幻迷宮\nアストラル・ミラージュ！！','星獣咆哮\nアストラル・ブレイヴ！！','星望祈願\nアストラル・グリモワール！！'];
  for(const [i,c] of Core.CARDS.entries()){
   const f=savedFixture(),root=f.shell.querySelector('#caritas-event');commitSpecial(f,root,c.name);
   assert.equal(f.lines.at(-1).actor,'shion');assert.doesNotMatch(f.lines.at(-1).text,/アストラル/);
@@ -852,7 +852,7 @@ test('art success (including reduced motion) alone marks seen; all failure modes
   const root=f.shell.querySelector('#caritas-event');assert.equal(root.querySelector('.cb-special-foreground').hidden,imageMode!=='ready');
  }
 });
-test('P2: Moon, Strength and Star own three distinct art and purification camera tracks without changing the state machine',async()=>{
+test('v18: full-bleed special art is stationary, duplicate titles vanish and distinct purifications preserve the state machine',async()=>{
  const ids=Core.CARDS.map(c=>c.id),motions=[];
  for(const id of ids){
   const b={...Core.newGame(),phase:'finisher',resonance:100,dark:42};
@@ -864,21 +864,17 @@ test('P2: Moon, Strength and Star own three distinct art and purification camera
   await flush();f.advanceTime(1);
   assert.equal(root.dataset.card,id);
   assert.equal(f.state().special.phase,'ART_PLAYBACK');
-  assert.equal(root.querySelector('.cb-special-art-title').textContent,
-   {'18-the-moon':'星幻迷宮','08-strength':'星獣咆哮','17-the-star':'星望祈願'}[id]);
-  assert.equal(root.querySelector('.cb-special-art-reading').textContent,
-   {'18-the-moon':'アストラル・ミラージュ','08-strength':'アストラル・ブレイヴ','17-the-star':'アストラル・グリモワール'}[id]);
-  const art=f.animations.at(-1);
-  assert.equal(art.options.duration,2600);
-  const camera=JSON.stringify(art.frames);
+  assert.equal(root.querySelector('.cb-special-art-title').textContent,'');
+  assert.equal(root.querySelector('.cb-special-art-reading').textContent,'');
+  assert.equal(root.querySelector('.cb-special-art').children.length,1,'only the foreground art is mounted');
+  assert.equal(f.animations.length,0,'art uses atmospheric CSS, not pan/zoom WAAPI');
   f.advanceTime(2761);
   assert.equal(f.state().special.phase,'PURIFICATION');
   assert.equal(f.state().battle.dark,42,'new visuals must never resolve the rescue early');
   const purify=f.animations.at(-1);
   assert.equal(purify.options.duration,1100);
-  motions.push({camera,purify:JSON.stringify(purify.frames)});
+  motions.push({purify:JSON.stringify(purify.frames)});
  }
- assert.equal(new Set(motions.map(m=>m.camera)).size,3,'each technique uses a unique camera arc');
  assert.equal(new Set(motions.map(m=>m.purify)).size,3,'each technique uses a unique release movement');
 });
 test('only seen card admits short mode; durations remain 120/600/450 and dialogue is never skipped',()=>{
