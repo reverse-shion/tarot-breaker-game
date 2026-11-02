@@ -22,22 +22,22 @@ test('only the battle UI receives the raised composition, not the map camera',()
  assert.match(scene,/const SHIOPON_DRAW_HEIGHT = 76/);
 });
 
-test('dialogue leaves combat grid and original figure dimensions intact',()=>{
- assert.match(event,/function frameCaritasDialogue\(\)/);
- assert.match(event,/dialogue\.elements\.button\.getBoundingClientRect/);
- assert.match(event,/const figures=\["\.cb-beast","\.cb-shion-sprite","\.cb-angel"\]/);
- assert.match(event,/--cb-dialogue-stage-shift/);
- assert.match(event,/lastReadingStageHeight/);
- assert.match(event,/--cb-dialogue-stage-height/);
- assert.match(css,/grid-template-rows:minmax\(43px,auto\) minmax\(0,var\(--cb-dialogue-stage-height,34dvh\)\)/);
- assert.match(css,/v9 — Dialogue belongs OVER the unscaled combat stage/);
- assert.match(css,/transform:translate3d\(0,var\(--cb-dialogue-stage-shift,0px\),0\)/);
- assert.match(css,/display:grid!important;\s*height:100dvh;max-height:100dvh;/);
- assert.match(css,/#caritas-event\[data-dialogue-busy="true"\] \.cb-frame>\.cb-hud\{\s*display:grid!important;visibility:hidden!important/);
+test('stage 1 retains a fixed battle, status strip and command grid throughout dialogue',()=>{
+ assert.match(event,/const statusBand=newEl\("div","cb-status-band"\)/);
+ assert.match(event,/statusBand\.append\(hero\)/);
+ assert.match(event,/arena\.prepend\(enemy\)/);
+ assert.match(event,/frame\.append\(arena,statusBand,ctr\)/);
+ assert.match(css,/v10 — STAGE 1 \/ FIXED COMBAT \+ HUD BAND \+ COMMAND FIELD/);
+ const stage1=css.slice(css.indexOf('/* v10 — STAGE 1'));
+ assert.match(stage1,/grid-template-areas:"battle" "status" "command"!important/);
+ assert.match(stage1,/grid-template-rows:minmax\(0,1fr\) clamp\(60px,8dvh,70px\) clamp\(225px,40dvh,350px\)!important/);
+ assert.match(stage1,/transform:none!important;transition:none!important/);
+ assert.match(stage1,/\.cb-status-band/);
+ assert.match(stage1,/background:url\('\.\/assets\/events\/hoshisuna\/battle\/cave-bg\.webp'\) center 56% \/ cover no-repeat!important/);
+ assert.match(stage1,/#game-shell:has\(#caritas-event:not\(\[hidden\]\)\[data-phase="battle"\]\[data-dialogue-busy="true"\]\) #dialogue-layer/);
+ assert.match(stage1,/\[data-composing="true"\] \.cb-frame/);
+ assert.doesNotMatch(event,/frameCaritasDialogue|dialogueStageShift|lastReadingStageHeight|--cb-dialogue-stage-shift|--cb-dialogue-stage-height/);
  assert.match(shared,/\.tb-dialogue-layer \{/);
  assert.match(event,/layer:document\.getElementById\("dialogue-layer"\)/);
- // No battle art dimensions, backgrounds, shared dialogue CSS, or map moved.
- const talk=css.slice(css.indexOf('/* v9 — Dialogue'));
- assert.doesNotMatch(talk,/transform:scale\(|\bzoom\s*:/);
  assert.doesNotMatch(scene,/caritasConversationCamera|updateCaritasConversationCamera/);
 });
