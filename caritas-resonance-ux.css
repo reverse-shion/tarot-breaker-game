@@ -1651,3 +1651,35 @@
  #caritas-event .cb-special-art::after{opacity:.36!important}
  #caritas-event[data-art-ready="true"] .cb-special-caption{opacity:1!important;transform:none!important}
 }
+
+/* v17 — iPhone Safari: a focused composer may occupy only VisualViewport.
+   The battle/card sheet beneath must NEVER show through the remainder of the
+   layout viewport, including the accessory-bar gap above the OS keyboard. */
+#caritas-event[data-phase="battle"][data-writing-screen="true"]{
+ background:#171d34!important;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"] .cb-frame{
+ visibility:hidden!important;pointer-events:none!important;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"]::before{
+ content:"";position:fixed;inset:0;z-index:61;
+ pointer-events:none;background:#171d34;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"] .cb-writing-overlay{
+ z-index:65!important;
+ background:linear-gradient(165deg,#2e2b41,#1e253d 53%,#171d34)!important;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-overlay{
+ /* The sheet follows the visual viewport, while the opaque background above
+    shields the fixed 100dvh battle from the rest of the layout viewport. */
+ isolation:isolate;
+}
+#caritas-event[data-phase="written-light"] .cb-written-light{
+ /* Post-dialogue feedback is visual-only: do not place another quote panel
+    across the combatants or HP band. */
+ background:radial-gradient(ellipse at 63% 28%,#f5cf7022,transparent 58%);
+}
+#caritas-event .cb-written-quote,
+#caritas-event .cb-written-gain{
+ display:none!important;
+}
