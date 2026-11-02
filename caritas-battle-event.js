@@ -241,6 +241,22 @@ const TECHNIQUES=Object.freeze({
  '17-the-star':{name:'星',meaning:'未来を決めつけず希望を探す',title:'星望祈願',chant:'星望祈願──アストラル・グリモワール！！',reading:'アストラル・グリモワール',art:'./assets/battle/special/shioriel-17-astral-grimoire.webp',shion:'お前の明日を、俺が決めるつもりはない。もし望むなら、次の一歩を共に探そう！',shioriel:'シオン。その願いを、星の光に託そう。',reply:'……この先がどうなるかは、まだ分からぬ。……それでも、次の一歩は私が選ぼう。'}
 });
 let selectedCard=null,shortPlayback=false,effectGeneration=0,activeEffect=null;
+// Pure presentation: Moon explores, Strength approaches, Star opens the view.
+// No state, bonuses, durations, or completion order are changed.
+const TECHNIQUE_MOTION=Object.freeze({
+ '18-the-moon':{
+  art:[{opacity:.88,transform:'translate3d(2%,0,0) scale(1.06)'},{opacity:1,transform:'translate3d(-1%,0,0) scale(1.01)'}],
+  purify:[{opacity:0,transform:'scale(.85)'},{opacity:.86,transform:'scale(1.1)'},{opacity:0,transform:'scale(1.28)'}]
+ },
+ '08-strength':{
+  art:[{opacity:1,transform:'scale(1)'},{opacity:1,transform:'scale(1.075)'}],
+  purify:[{opacity:0,transform:'scale(.65)'},{opacity:1,transform:'scale(1.23)'},{opacity:0,transform:'scale(1.42)'}]
+ },
+ '17-the-star':{
+  art:[{opacity:.92,transform:'translate3d(0,1%,0) scale(1.08)'},{opacity:1,transform:'translate3d(0,-1%,0) scale(1.01)'}],
+  purify:[{opacity:0,transform:'translate3d(0,7%,0) scale(.78)'},{opacity:.9,transform:'translate3d(0,0,0) scale(1.06)'},{opacity:0,transform:'translate3d(0,-5%,0) scale(1.24)'}]
+ }
+});
 const preloaded=new Map();
 function preloadSpecialArt(){
  for(const [id,tech] of Object.entries(TECHNIQUES)){
@@ -267,7 +283,10 @@ function runSpecialEffect(el,duration,callback,kind='hold'){
  function complete(){if(!valid()||suspended())return;cancelSpecialEffect();callback();}
  if(el?.animate&&!reduced&&kind!=='hold'){
   // Begin at full viewport coverage, then slowly push in; the same lifecycle handles pause/reload.
-  const frames=kind==='art'?[{transform:'scale(1)'},{transform:'scale(1.08)'}]:kind==='purify'?[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}]:[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
+  const motion=TECHNIQUE_MOTION[record.special.cardId];
+  const frames=kind==='art'?(motion?.art||[{transform:'scale(1)'},{transform:'scale(1.08)'}])
+   :kind==='purify'?(motion?.purify||[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}])
+   :[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
   job.animation=el.animate(frames,{duration,fill:'forwards',easing:'ease-in-out'});
   job.animation.finished.then(complete,()=>{});
   if(suspended())job.animation.pause();
@@ -351,9 +370,11 @@ function playSpecialSequence(){
   playMapFarewell(()=>transitionSpecial('RETURNING'));
  }else if(p==='ART_PLAYBACK'){
   // Shared dialogue is hidden before any art frame becomes visible.
+  root.style.setProperty?.('--cb-special-visual-duration',short?'600ms':'2600ms');
+  setText(ui.artTitle,t.title);setText(ui.artReading,t.reading);
   root.dataset.artReady='loading';ui.artPlayback.hidden=false;ui.artImage.hidden=true;ui.artBackdrop.hidden=true;
   specialVisibleWait(1200,ready=>{
-   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の共鳴解放イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage);}
+   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の共鳴解放イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage,ui.artCaption);}
    root.dataset.artReady=String(ready);
    runSpecialEffect(ui.artImage,short?600:2600,()=>transitionSpecial('PURIFICATION',{imageDisplayed:ready&&ui.artImage.naturalWidth>0}),'art');
   });
@@ -1187,7 +1208,11 @@ function init(){
  ui.artPlayback=newEl("div","cb-special-art");ui.artPlayback.hidden=true;
  ui.artBackdrop=newEl("img","cb-special-backdrop");ui.artBackdrop.alt="";
  ui.artImage=newEl("img","cb-special-foreground");ui.artImage.alt="共鳴解放の技イラスト";
- ui.artPlayback.append(ui.artBackdrop,ui.artImage);
+ ui.artCaption=newEl("div","cb-special-caption");
+ ui.artTitle=newEl("strong","cb-special-art-title");
+ ui.artReading=newEl("span","cb-special-art-reading");
+ ui.artCaption.append(ui.artTitle,ui.artReading);
+ ui.artPlayback.append(ui.artBackdrop,ui.artImage,ui.artCaption);
  const written=newEl("div","cb-written-light");written.setAttribute("aria-live","polite");
  ui.writtenQuote=newEl("p","cb-written-quote");ui.writtenGain=newEl("p","cb-written-gain");
  written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
