@@ -689,7 +689,10 @@
   padding-bottom:0;
 }
 #caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]) .cb-arena{
-  position:relative;flex:1 1 auto;min-height:0;width:100%;top:auto;
+  /* Keep the measured actor-stage height to avoid changing any sprite size. */
+  position:relative;flex:0 0 min(var(--cb-dialogue-stage-height,34dvh),calc(100dvh - var(--cb-dialogue-space)));
+  height:min(var(--cb-dialogue-stage-height,34dvh),calc(100dvh - var(--cb-dialogue-space)));
+  min-height:0;width:100%;top:auto;
 }
 #caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-hud,
 #caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-narration,
