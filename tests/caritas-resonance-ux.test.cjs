@@ -184,3 +184,18 @@ test('P2: distinct techniques keep full portrait, separate caption and three dif
  assert.match(js,/short\?'600ms':'2600ms'/);
  assert.match(js,/transitionSpecial\('PURIFICATION',\{imageDisplayed:ready&&ui\.artImage\.naturalWidth>0\}\)/);
 });
+
+test('v17 iPhone keyboard never exposes cards, and writing aftermath never repeats raw submitted text',()=>{
+ const css=load('caritas-resonance-ux.css');
+ const js=load('caritas-battle-event.js');
+ const fix=css.slice(css.indexOf('/* v17 — iPhone Safari'));
+ assert.match(fix,/\[data-writing-screen="true"\] \.cb-frame\{\s*visibility:hidden!important;pointer-events:none!important;/);
+ assert.match(fix,/\[data-writing-screen="true"\]::before\{\s*content:"";position:fixed;inset:0;z-index:61;/);
+ assert.match(fix,/\[data-writing-screen="true"\] \.cb-writing-overlay\{\s*z-index:65!important;/);
+ assert.match(fix,/\[data-writing-screen="true"\]\[data-composing="true"\] \.cb-writing-overlay/);
+ assert.match(fix,/\.cb-written-quote,\s*#caritas-event \.cb-written-gain\{\s*display:none!important;/);
+ assert.doesNotMatch(js,/ui\.writtenQuote|ui\.writtenGain/);
+ assert.match(js,/stage\("written-light",1400,/);
+ assert.match(js,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
+ assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
+});
