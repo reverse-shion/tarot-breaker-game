@@ -267,6 +267,8 @@
     y: DEFAULT_SPAWN.y - CAMERA_BASE_OFFSET_Y,
     zoom: 1,
   };
+  // Isolated Caritas conversation framing only. World/sprite scale is unchanged.
+  let caritasConversationCamera = false;
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
   // Page-local Aftermath ownership; absent from ordinary gameplay.
@@ -1383,8 +1385,19 @@
       halfW,
       Math.max(halfW, world.w - halfW),
     );
+    // During the Starroad encounter, frame the real trio in the upper portion
+    // of the screen so the canonical fixed dialogue cannot cover their faces.
+    // Retain zoom, draw heights, world positions and the ordinary follow camera.
+    let followY = player.y - cameraOffsetY();
+    if (hoshisunaIsolated && caritasConversationCamera) {
+      const headroom = Math.min(96, viewH * 0.13);
+      const caritasTop = 166.6 * scale.y;
+      const safeOrigin = Math.max(0, caritasTop - headroom);
+      const preferredOrigin = Math.max(0, player.y - viewH * 0.29);
+      followY = halfH + Math.min(safeOrigin, preferredOrigin);
+    }
     const targetY = clamp(
-      player.y - cameraOffsetY(),
+      followY,
       halfH,
       Math.max(halfH, world.h - halfH),
     );
@@ -3902,12 +3915,14 @@
   });
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
+    if (hoshisunaIsolated) caritasConversationCamera = true;
     outsideInteraction = true;
     controls?.suspend();
     npcSuspended = true;
     syncStick();
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
+    if (hoshisunaIsolated) caritasConversationCamera = false;
     outsideInteraction = false;
     cancelAllStageMotions(true);
     if (!sceneLockOwner) { controls?.resume(); npcSuspended = false; }
