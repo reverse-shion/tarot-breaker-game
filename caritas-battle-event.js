@@ -627,6 +627,9 @@ function render(){
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
  // Display-only state: mode controls a full-viewport tarot surface, not the battle engine.
  root.dataset.readingMode=readingOpen&&reading&&deliveryMethod==="select"?"select":"none";
+ const writingScreen=readingOpen&&reading&&deliveryMethod==="write";
+ root.dataset.writingScreen=String(writingScreen);
+ ui.writingOverlay.hidden=!writingScreen;
  ui.readingIntro.hidden=true; // Entry stays in the lower controls, never over the actors.
  ui.controls.hidden=false;
  cardBox.hidden=!(readingOpen&&reading)&&!finisher;
@@ -696,6 +699,9 @@ function render(){
   ui.writingHint.textContent=s.aiInsightTurn===s.turn?"言葉は届いています。カードから次の一歩へ。":"ひと言でも大丈夫。長さや上手さで特典は変わりません。";
   ui.writingReward.textContent=s.aiInsightTurn===s.turn?"この読みの特典は受け取り済み":"基本の共鳴報酬（上限100）。AIの理解による効果は別途反映されます。";
   setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"受取済":("共鳴 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
+  setText(ui.writingBonus,ui.writtenBadge.textContent);
+  setText(ui.writingMood,"カリタスの心象："+C.STATES[C.stateFor(s.dark)]);
+  setText(ui.writingCount,(ui.aiInput.value||"").length+" / 700文字");
   setText(ui.readBadge,p?("共鳴 +"+p.resonance):"3枚選択");
   ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
   ui.aiToggle.disabled=!reading||aiBusy||committing;
@@ -1021,7 +1027,10 @@ function init(){
  ui.writingReward=newEl("p","cb-writing-reward");ui.writingReward.id="cb-writing-reward";
  ui.aiSend=newEl("button","cb-ai-send","自分の言葉を届ける");ui.aiSend.type="button";
  ui.aiSend.addEventListener("click",sendAiReading);
- ui.aiInput.addEventListener("input",()=>{ui.aiSend.disabled=specialLocked()||deliveryMethod!=="write"||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();});
+ ui.aiInput.addEventListener("input",()=>{
+  ui.aiSend.disabled=specialLocked()||deliveryMethod!=="write"||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();
+  setText(ui.writingCount,(ui.aiInput.value||"").length+" / 700文字");
+ });
  // Keep the text composer and its submit action visible when the software
  // keyboard reduces the iPhone visual viewport. Never change battle numbers.
  const syncComposerViewport=()=>{
@@ -1031,6 +1040,8 @@ function init(){
   root.style.setProperty("--cb-visible-height",Math.max(180,Math.round(availableHeight))+"px");
   root.style.setProperty("--cb-visible-top",Math.round(viewport?.offsetTop||0)+"px");
   root.dataset.keyboardTight=String(availableHeight<350);
+  // Only the separate writing surface follows Safari's visual viewport.
+  // The battlefield and permanent HP/星響 strip never move or resize.
  };
  ui.aiInput.addEventListener("focus",()=>{
   root.dataset.composing="true";syncComposerViewport();
@@ -1049,12 +1060,44 @@ function init(){
  ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
  ui.aiToggle.addEventListener("click",()=>selectDeliveryMethod("write"));
  ui.aiWait=newEl("div","cb-ai-wait","想いを言葉に変えています…");ui.aiWait.setAttribute("role","status");ui.aiWait.hidden=true;
- ui.aiBody.append(ui.writingHint,label,ui.aiSend,ui.aiResult);ui.aiPanel.append(ui.writingReward,ui.aiWait,ui.aiBody);
+ ui.aiBody.append(ui.writingHint,label,ui.aiResult);ui.aiPanel.append(ui.writingReward,ui.aiWait,ui.aiBody);
+ // Keep the original textarea, request button and retry message instances.
+ // Only their presentation container changes; the API transaction stays intact.
+ ui.writingOverlay=newEl("section","cb-writing-overlay");
+ ui.writingOverlay.hidden=true;ui.writingOverlay.setAttribute("role","dialog");
+ ui.writingOverlay.setAttribute("aria-modal","true");
+ ui.writingOverlay.setAttribute("aria-label","自分の言葉で届ける");
+ const writingHeader=newEl("header","cb-writing-header");
+ const writingBack=newEl("button","cb-writing-back","‹ 戦闘へ戻る");writingBack.type="button";
+ writingBack.addEventListener("click",()=>{
+  if(story!=="battle"||battle.phase!=="read"||aiBusy||dialogueBusy||committing||specialLocked())return;
+  ui.aiInput.blur();
+  modalIndex=-1;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;render();
+ });
+ const writingTitle=newEl("strong","cb-writing-title","自分の言葉で届ける");
+ writingHeader.append(writingBack,writingTitle);
+ const writingContext=newEl("div","cb-writing-context");
+ ui.writingMood=newEl("span","cb-writing-mood","カリタスの心象：閉ざす");
+ ui.writingBonus=newEl("strong","cb-writing-bonus","共鳴 +50");
+ writingContext.append(ui.writingMood,ui.writingBonus);
+ const writingReference=newEl("div","cb-writing-reference");
+ writingReference.append(newEl("span","cb-writing-reference-label","カードを参考にする（任意）"));
+ for(let i=0;i<3;i++){
+  const cardReference=newEl("button","cb-writing-reference-card",["月","力","星"][i]);
+  cardReference.type="button";cardReference.addEventListener("click",()=>openCard(i));
+  writingReference.append(cardReference);
+ }
+ const writingPanel=newEl("div","cb-writing-panel");
+ writingPanel.append(writingReference,ui.aiPanel);
+ const writingFooter=newEl("div","cb-writing-footer");
+ ui.writingCount=newEl("span","cb-writing-count","0 / 700文字");
+ writingFooter.append(ui.writingCount,ui.aiSend);
+ ui.writingOverlay.append(writingHeader,writingContext,writingPanel,writingFooter);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(tarotHeader,methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
+ ctr.append(tarotHeader,methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
@@ -1105,7 +1148,7 @@ function init(){
  ui.writtenQuote=newEl("p","cb-written-quote");ui.writtenGain=newEl("p","cb-written-gain");
  written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
  ui.saveProblem=newEl("div","cb-save-problem");ui.saveProblem.hidden=true;
- root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.modal);shell.appendChild(root);
+ root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.writingOverlay,ui.modal);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.bind({
    // Bind original main/Alenon DOM, never create an encounter-specific frame.
    layer:document.getElementById("dialogue-layer"),
