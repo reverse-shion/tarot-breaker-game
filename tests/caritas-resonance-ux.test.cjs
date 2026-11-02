@@ -56,7 +56,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261102-map-farewell-v7/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261102-combat-frame-v9/);
  assert.match(css,/minmax\(145px,1fr\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/max-height:59dvh/);
@@ -64,7 +64,7 @@ test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(css,/\.cb-gain-float/);
  assert.match(css,/\.cb-ai-wait/);
- const battleLayout=css.slice(css.indexOf('/* v8: battle-only upper composition'));
+ const battleLayout=css.slice(css.indexOf('/* v8: battle-only upper composition'),css.indexOf('/* v9 — Dialogue'));
  assert.ok(battleLayout.startsWith('/* v8:'),'battle layout adjustment is isolated and explicitly scoped');
  assert.match(battleLayout,/#caritas-event \.cb-angel\{bottom:18%;\}/);
  assert.match(battleLayout,/#caritas-event \.cb-shion-sprite\{bottom:18\.2%;\}/);
@@ -78,8 +78,9 @@ test('v6 explicit delivery, progress and selected tabs',()=>{
  const event=load('caritas-battle-event.js'),css=load('caritas-resonance-ux.css');
  assert.match(event,/ui\.selectSend=newEl\("button","cb-select-submit","この言葉を届ける"\)/);
  assert.match(event,/ui\.selectSend\.hidden=/);
- assert.match(event,/ui\.selectionReason\.hidden=!\(reading&&readingOpen&&deliveryMethod==="select"\)/);
+ assert.match(event,/ui\.selectionReason\.hidden=true;/);
  assert.match(event,/解釈 "\+chosenCount\+"\/3/);
+ assert.match(event,/あと"\+\(3-chosenCount\)\+"枚で届けられます"/);
  assert.match(css,/\.cb-select-submit\[hidden\]\{display:none!important/);
  assert.match(css,/\.cb-delivery-methods\{\s*order:4/);
  assert.match(css,/\.cb-delivery-methods \.cb-way\[aria-pressed="true"\]/);
