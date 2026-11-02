@@ -20,7 +20,7 @@ class El{
  flatten(){return [this,...this.children.flatMap(c=>c.flatten())]}
  querySelector(q){return this.flatten().find(e=>q[0]==='#'?e.id===q.slice(1):e.className?.split(' ').includes(q.slice(1)))||null}
 }
-function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false,realDialogue=false}={}){
+function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false,realDialogue=false,visualViewport}={}){
  const shell=new El('main'),creature=new El('div'),body=new El('body');body.classList.add('scene-ready');
  const layer=new El('section'),advance=new El('button'),speaker=new El('span'),speechText=new El('span'),next=new El('span');
  layer.id='dialogue-layer';layer.className='tb-dialogue-layer';layer.hidden=true;
@@ -33,7 +33,7 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},companion:{x:950,y:305},advance:null,colliding:true,dialogueOptions:null};
- const window={innerHeight:844,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},
+ const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},
    startChant(){pointer.chant="rising";(pointer.chantHistory??=[]).push("rising");return true},
    sealChant(){pointer.chant="sealed";(pointer.chantHistory??=[]).push("sealed");return true},
    moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
@@ -519,6 +519,71 @@ function openWritten(f,root,text='大丈夫'){
 function completeWritten(f){f.pointer.advance();f.pointer.advance();}
 function saved(f){return JSON.parse(f.persistentStore.get(CHECKPOINT_KEY));}
 function meter(root){return root.flatten().find(e=>e.className==='cb-hud hero').children[3].children[1].textContent;}
+
+test('stage 3 writing surface reuses original editor and send, preserves drafts, and never consumes reward on exit',async()=>{
+ const f=fixture(),root=await enter(f),beforeTurn=f.state().battle.turn;
+ assert.equal(root.querySelector('.cb-writing-overlay').hidden,true);
+ const send=openWritten(f,root,'  ゆっくりでいいよ  ');
+ const overlay=root.querySelector('.cb-writing-overlay');
+ const panel=root.querySelector('.cb-writing-panel');
+ const footer=root.querySelector('.cb-writing-footer');
+ assert.equal(overlay.hidden,false);
+ assert.equal(overlay.attributes.role,'dialog');
+ assert.equal(root.dataset.writingScreen,'true');
+ assert.equal(root.querySelector('.cb-ai-panel').parentElement,panel,'one existing AI panel moved into the overlay');
+ assert.equal(send.parentElement,footer,'the real send button stays in the pinned footer');
+ assert.equal(root.flatten().filter(el=>el.className==='cb-ai-send').length,1);
+ assert.match(root.querySelector('.cb-writing-mood').textContent,/カリタスの心象：/);
+ assert.match(root.querySelector('.cb-writing-bonus').textContent,/共鳴 \+50/);
+ assert.equal(root.querySelector('.cb-writing-count').textContent,'12 / 700文字');
+ // Tarot cards can be looked at without selecting meanings or submitting.
+ root.querySelector('.cb-writing-reference-card').click();
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,false);
+ assert.equal(root.querySelector('.cb-modal-words').hidden,true);
+ assert.equal(f.state().battle.turn,beforeTurn);
+ root.querySelector('.cb-modal-close').click();
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
+ root.querySelector('.cb-writing-back').click();
+ assert.equal(overlay.hidden,true);
+ assert.equal(root.dataset.writingScreen,'false');
+ assert.equal(f.state().readingOpen,false);
+ assert.equal(root.querySelector('.cb-ai-input').value,'  ゆっくりでいいよ  ');
+ assert.equal(f.requests.length,0);
+ assert.equal(f.state().battle.turn,beforeTurn);
+ assert.equal(f.state().battle.resonance,0);
+ f.button(root,'自分の言葉で届ける').click();
+ assert.equal(overlay.hidden,false);
+ assert.equal(root.querySelector('.cb-ai-input').value,'  ゆっくりでいいよ  ');
+ assert.equal(root.querySelector('.cb-ai-send').disabled,false);
+});
+
+test('stage 3 iPhone visual viewport changes only the writing sheet, never the battle stage',async()=>{
+ const viewport={height:844,offsetTop:0,listeners:{},addEventListener(name,fn){this.listeners[name]=fn}};
+ const f=fixture({visualViewport:viewport}),root=await enter(f);
+ const arena=root.querySelector('.cb-arena'),band=root.querySelector('.cb-status-band'),frame=root.querySelector('.cb-frame');
+ root.style.setProperty=(name,value)=>{root.style[name]=value};
+ root.style.removeProperty=name=>{delete root.style[name]};
+ const input=root.querySelector('.cb-ai-input');
+ openWritten(f,root,'一緒に進もう');
+ assert.equal(root.querySelector('.cb-writing-overlay').hidden,false);
+ input.listeners.focus();
+ assert.equal(root.dataset.composing,'true');
+ assert.equal(root.style['--cb-visible-height'],'844px');
+ viewport.height=334;viewport.offsetTop=17;
+ viewport.listeners.resize();
+ assert.equal(root.style['--cb-visible-height'],'334px');
+ assert.equal(root.style['--cb-visible-top'],'17px');
+ assert.equal(root.dataset.keyboardTight,'true');
+ assert.equal(frame.children[0],arena);
+ assert.equal(frame.children[1],band);
+ assert.equal(root.querySelector('.cb-ai-send').parentElement,root.querySelector('.cb-writing-footer'));
+ input.listeners.blur();
+ assert.equal(root.dataset.composing,'false');
+ assert.equal(root.dataset.keyboardTight,'false');
+ assert.equal(root.style['--cb-visible-height'],undefined);
+ assert.equal(root.style['--cb-visible-top'],undefined);
+ assert.equal(root.querySelector('.cb-writing-overlay').hidden,false);
+});
 
 test('written delivery commits once only after both shared dialogue pages, then reveals reward',async()=>{
  let resolveReply;
