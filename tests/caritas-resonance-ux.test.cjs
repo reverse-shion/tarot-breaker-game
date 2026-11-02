@@ -85,3 +85,22 @@ test('v6 explicit delivery, progress and selected tabs',()=>{
  assert.match(css,/\.cb-delivery-methods\{\s*order:4/);
  assert.match(css,/\.cb-delivery-methods \.cb-way\[aria-pressed="true"\]/);
 });
+
+test('stage 2 is a real full-viewport tarot-only reading and never changes the map or reading arithmetic',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const stage2=css.slice(css.indexOf('/* v11 — STAGE 2'));
+ assert.match(stage2,/\[data-reading-mode="select"\] \.cb-frame>\.cb-controls\{/);
+ assert.match(stage2,/height:100dvh!important;max-height:100dvh!important/);
+ assert.match(stage2,/env\(safe-area-inset-top,0px\)/);
+ assert.match(stage2,/\.cb-tarot-mood/);
+ assert.match(stage2,/\.cb-modal-image/);
+ assert.match(stage2,/\.cb-modal-navigation/);
+ assert.match(js,/root\.dataset\.readingMode=readingOpen&&reading&&deliveryMethod==="select"\?"select":"none"/);
+ assert.match(js,/ui\.tarotMood=newEl\("span","cb-tarot-mood","現在の心象：閉ざす"\)/);
+ assert.match(js,/ui\.modalNav\.hidden=false/);
+ assert.match(js,/function moveViewedCard\(step\)/);
+ assert.match(js,/battle=C\.select\(battle,index,word\);modalIndex=-1;render\(\)/);
+ assert.match(js,/const next=C\.read\(previous\)/);
+ assert.doesNotMatch(stage2,/\.cb-beast\s*\{|\.cb-angel\s*\{|\.cb-shion-sprite\s*\{|\.cb-arena\s*\{/);
+});
