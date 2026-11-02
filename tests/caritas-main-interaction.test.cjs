@@ -42,7 +42,9 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map(),requests=[];
  class ClockDate extends Date{static now(){return now;}}
- class TestImage extends El{constructor(){super('img');this.naturalWidth=100;}set src(value){this.url=value;if(imageMode==='timeout')return;if(imageMode==='error')this.onerror?.();else this.onload?.();}decode(){return imageMode==='decode-error'?Promise.reject(Error('decode')):Promise.resolve();}}
+ class TestImage extends El{constructor(){super('img');this.naturalWidth=100;
+ if(waapi)this.animate=(frames,options)=>{let resolve;const a={frames,options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};
+ }set src(value){this.url=value;if(imageMode==='timeout')return;if(imageMode==='error')this.onerror?.();else this.onload?.();}decode(){return imageMode==='decode-error'?Promise.reject(Error('decode')):Promise.resolve();}}
  const sandbox={...(imageMode==='failed'?{}:{Image:TestImage}),window,document:doc,location:{pathname:'/hoshisuna-main.html',search:'?dev=hoshisuna'},CustomEvent:MockEvent,Event:MockEvent,
   Date:ClockDate,AbortController,fetch:async(url,options)=>{requests.push({url,...options});if(!fetchReply)throw Error('unexpected fetch');return fetchReply(url,options);},
   sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
@@ -916,7 +918,9 @@ test('resonance MAX offers only 共鳴解放 and never exposes obsolete dialogue
  assert.equal(f.button(root,'対話で解放'),undefined);
  assert.equal(f.button(root,'必殺技'),undefined);
  assert.equal(f.button(root,'共鳴解放').disabled,false);
- assert.match(root.querySelector('.cb-finisher').textContent,/共鳴解放/);
+ assert.equal(root.querySelector('.cb-finisher').hidden,true,'no duplicate MAX banner');
+ assert.equal(root.querySelector('.cb-skill-hint').hidden,true,'no redundant ready label');
+ assert.equal(root.querySelector('.cb-res-mood').textContent,'星響：満ちた','MAX remains in the one permanent meter');
  f.button(root,'共鳴解放').click();assert.equal(f.state().story,'selecting');
  assert.equal(root.querySelector('.cb-special-cards').children.length,3);
 });
