@@ -465,6 +465,7 @@ function currentLine(){
 // Move the complete actor/FX layer towards the shared dialogue window instead
 // of resizing characters, cutting the arena short, or touching the field map.
 let dialogueStageShift=null;
+let lastReadingStageHeight=null;
 function frameCaritasDialogue(){
  if(root.hidden||!dialogueBusy||!ui.arena||!dialogue?.elements?.button)return;
  const windowRect=dialogue.elements.button.getBoundingClientRect?.();
@@ -488,6 +489,11 @@ function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
  dialogueStageShift=null;
  root.style?.removeProperty?.("--cb-dialogue-stage-shift");
+ if(!root.hidden && story==="battle"){
+  const height=lastReadingStageHeight||ui.arena?.getBoundingClientRect?.().height;
+  if(Number.isFinite(height)&&height>100)
+   root.style?.setProperty?.("--cb-dialogue-stage-height",Math.round(height)+"px");
+ }
  dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
  root.dataset.dialogueBusy="true";
  currentLine();
@@ -500,6 +506,7 @@ function advanceDialogue(){
  root.dataset.dialogueBusy="false";
  dialogueStageShift=null;
  root.style?.removeProperty?.("--cb-dialogue-stage-shift");
+ root.style?.removeProperty?.("--cb-dialogue-stage-height");
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
@@ -745,6 +752,12 @@ function render(){
  ui.finale.hidden=true;
  const show=modalIndex>=0&&reading&&readingOpen;
  ui.modal.hidden=!show;
+ // Cache the visible three-card stage BEFORE a delivery hides its controls.
+ // Otherwise grid reflow would enlarge character art during the dialogue.
+ if(reading&&readingOpen&&root.dataset.composing!=="true"){
+  const height=ui.arena?.getBoundingClientRect?.().height;
+  if(Number.isFinite(height)&&height>100)lastReadingStageHeight=height;
+ }
  if(show){
   const card=s.cards[modalIndex];
   ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
