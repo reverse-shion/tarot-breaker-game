@@ -56,7 +56,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261102-combat-frame-v9/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261102-fixed-fields-stage1-v10/);
  assert.match(css,/minmax\(145px,1fr\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/max-height:59dvh/);
