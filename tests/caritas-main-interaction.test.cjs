@@ -773,8 +773,8 @@ test('stage 1 mounts an unchanging battlefield, visible status band, and command
  assert.equal(frame.children[0],arena,'arena is the first fixed screen region');
  assert.equal(frame.children[1],band,'HP and resonance are a separate fixed region');
  assert.equal(frame.children[2],controls,'commands are the final screen region');
- assert.ok(arena.querySelector('.cb-hud.enemy'),'enemy status remains on the battlefield');
- assert.ok(band.querySelector('.cb-hud.hero'),'player HP and resonance stay on the separator');
+ assert.ok(arena.flatten().some(el=>el.className==='cb-hud enemy'),'enemy status remains on the battlefield');
+ assert.ok(band.flatten().some(el=>el.className==='cb-hud hero'),'player HP and resonance stay on the separator');
  assert.equal(root.dataset.dialogueBusy,'false');
  f.button(root,'リーディングを始める').click();
  const send=f.button(root,'この言葉を届ける');
