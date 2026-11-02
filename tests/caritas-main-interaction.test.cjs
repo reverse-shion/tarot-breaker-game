@@ -520,6 +520,54 @@ function completeWritten(f){f.pointer.advance();f.pointer.advance();}
 function saved(f){return JSON.parse(f.persistentStore.get(CHECKPOINT_KEY));}
 function meter(root){return root.flatten().find(e=>e.className==='cb-hud hero').children[3].children[1].textContent;}
 
+test('stage 4 shows the three linked meanings without awarding or submitting a reading',async()=>{
+ const f=fixture(),root=await enter(f),initial=f.state().battle;
+ assert.equal(root.querySelector('.cb-tarot-review').hidden,true);
+ f.button(root,'リーディングを始める').click();
+ const cards=root.flatten().filter(el=>el.className==='cb-card-button');
+ cards[0].click();
+ const title=Core.READING_OPTIONS['不安'].title;
+ const option=root.flatten().find(el=>el.tagName==='button'&&el.attributes['aria-label']===title);
+ assert.ok(option);
+ option.click();
+ const review=root.querySelector('.cb-tarot-review');
+ assert.equal(review.hidden,false);
+ assert.equal(review.children.length,3);
+ assert.equal(review.children[0].dataset.complete,'true');
+ assert.equal(review.children[0].children[1].textContent,title);
+ assert.equal(review.children[1].dataset.complete,'false');
+ assert.equal(review.children[1].children[1].textContent,'未選択');
+ assert.equal(root.querySelector('.cb-tarot-progress').attributes.role,'status');
+ assert.equal(root.querySelector('.cb-tarot-progress').attributes['aria-live'],'polite');
+ assert.match(root.querySelector('.cb-tarot-progress').textContent,/1\/3/);
+ assert.equal(f.state().battle.resonance,initial.resonance);
+ assert.equal(f.state().battle.turn,initial.turn,'tapping an interpretation never attacks');
+ // Reopening a selected card announces its current meaning; changeable, not locked.
+ root.flatten().filter(el=>el.className==='cb-card-button')[0].click();
+ assert.equal(root.querySelector('.cb-modal-selected').textContent,'選択中：'+title);
+ root.querySelector('.cb-modal-close').click();
+ assert.equal(review.hidden,false);
+ f.button(root,'自分の言葉で届ける').click();
+ assert.equal(review.hidden,true,'recap never overlays the free-writing route');
+ assert.equal(f.state().battle.turn,initial.turn);
+});
+
+test('stage 4 resonance feedback appears only after confirmed written-light presentation',async()=>{
+ const f=fixture({fetchReply:()=>aiReply([])}),root=await enter(f);
+ await openWritten(f,root,'大丈夫').click();
+ assert.equal(root.querySelector('.cb-gain-float').textContent,'');
+ assert.equal(f.state().battle.resonance,0);
+ completeWritten(f);
+ assert.equal(f.state().battle.resonance,50,'reward only commits after the two dialogue pages');
+ assert.equal(root.querySelector('.cb-gain-float').textContent,'','no gain while the light is still travelling');
+ f.advanceTime(1400);
+ assert.equal(root.querySelector('.cb-gain-float').textContent,'共鳴 ＋50');
+ assert.equal(root.dataset.gainPulse,'true');
+ assert.equal(root.flatten().filter(el=>el.className==='cb-gain-float').length,1);
+ f.advanceTime(1300);
+ assert.equal(root.dataset.gainPulse,'false');
+});
+
 test('stage 3 writing surface reuses original editor and send, preserves drafts, and never consumes reward on exit',async()=>{
  const f=fixture(),root=await enter(f),beforeTurn=f.state().battle.turn;
  assert.equal(root.querySelector('.cb-writing-overlay').hidden,true);
