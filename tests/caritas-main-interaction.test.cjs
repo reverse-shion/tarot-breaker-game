@@ -763,6 +763,38 @@ test('unavailable card deployment recovers the prompt without advancing to chant
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
 });
 
+test('real combat dialogue keeps original actor rects and calculates a shared safe stage shift',async()=>{
+ const f=fixture(),root=await enter(f);
+ // Browser-independent geometry captures the full-size original actor boxes.
+ // The dialogue itself is the untouched canonical main/Alenon button.
+ const beast=root.querySelector('.cb-beast'),angel=root.querySelector('.cb-angel'),shion=root.querySelector('.cb-shion-sprite');
+ beast.rect={top:176,bottom:398,height:222};
+ angel.rect={top:253,bottom:423,height:170};
+ shion.rect={top:276,bottom:440,height:164};
+ const windowBox=f.shell.querySelector('#dialogue-advance');
+ windowBox.rect={top:600,bottom:780,height:180};
+ root.style.setProperty=(name,value)=>{root.style[name]=value};
+ root.style.getPropertyValue=name=>root.style[name]||'';
+ root.style.removeProperty=name=>{delete root.style[name]};
+ f.button(root,'リーディングを始める').click();
+ const send=f.button(root,'この言葉を届ける');
+ assert.equal(send.disabled,true);
+ assert.equal(send.textContent,'あと3枚で届けられます');
+ choose(f,root,['不安','忍耐','希望']);
+ assert.equal(send.disabled,false);
+ assert.equal(send.textContent,'この言葉を届ける');
+ send.click();
+ assert.equal(f.state().dialogueBusy,true);
+ assert.equal(root.dataset.dialogueBusy,'true');
+ assert.equal(root.style['--cb-dialogue-stage-shift'],'146px',
+   'the whole unchanged-size arena moves just above shared dialogue (600 - 440 - 14)');
+ f.pointer.advance();
+ assert.equal(root.style['--cb-dialogue-stage-shift'],'146px','following lines must not cause downwards jumps');
+ f.pointer.advance();f.pointer.advance();
+ assert.equal(root.dataset.dialogueBusy,'false');
+ assert.equal(root.style['--cb-dialogue-stage-shift'],undefined,'only the battle UI shift clears when dialogue finishes');
+});
+
 test('tabs never submit; three selected meanings unlock independent send, dialogue hides progress',async()=>{
  const f=fixture(),root=await enter(f),tab=f.button(root,'リーディングを始める');
  const send=f.button(root,'この言葉を届ける');
