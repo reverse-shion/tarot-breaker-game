@@ -763,6 +763,50 @@ test('unavailable card deployment recovers the prompt without advancing to chant
  assert.equal(f.lines.some(l=>l.text.includes('来臨せよ')),false);
 });
 
+test('stage 2 tarot takes the viewport, keeps live heart state, supports next/previous/swipe and exits safely',async()=>{
+ const f=fixture(),root=await enter(f),tab=f.button(root,'リーディングを始める');
+ const originalTurn=f.state().battle.turn;
+ tab.click();
+ assert.equal(root.dataset.readingMode,'select');
+ assert.equal(root.querySelector('.cb-tarot-header').hidden,false);
+ assert.match(root.querySelector('.cb-tarot-mood').textContent,/現在の心象：/);
+ assert.match(root.querySelector('.cb-tarot-progress').textContent,/0\/3/);
+ const cards=root.flatten().filter(el=>el.className==='cb-card-button');
+ assert.equal(cards.length,3);
+ cards[0].click();
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,false);
+ assert.equal(root.querySelector('.cb-modal-page').textContent,'1 / 3');
+ assert.match(root.querySelector('.cb-modal-mood').textContent,/カリタスの心象：/);
+ assert.equal(root.querySelector('.cb-modal-next').hidden,false);
+ root.querySelector('.cb-modal-next').click();
+ assert.equal(root.querySelector('.cb-modal-page').textContent,'2 / 3');
+ root.querySelector('.cb-modal-prev').click();
+ assert.equal(root.querySelector('.cb-modal-page').textContent,'1 / 3');
+ // A single horizontal gesture can compare cards without closing and reopening.
+ const panel=root.querySelector('.cb-card-panel');
+ panel.listeners.touchstart({touches:[{clientX:255}]});
+ panel.listeners.touchend({changedTouches:[{clientX:90}]});
+ assert.equal(root.querySelector('.cb-modal-page').textContent,'2 / 3');
+ const selectedTitle=Core.READING_OPTIONS['忍耐'].title;
+ const option=root.flatten().find(el=>el.tagName==='button'&&el.attributes['aria-label']===selectedTitle);
+ assert.ok(option,'a complete interpretation is offered on the swiped-to Strength card');
+ option.click();
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
+ assert.match(root.querySelector('.cb-tarot-progress').textContent,/1\/3/);
+ assert.equal(f.state().battle.turn,originalTurn,'opening and selecting tarot cards never performs an attack');
+ root.querySelector('.cb-tarot-back').click();
+ assert.equal(root.dataset.readingMode,'none');
+ assert.equal(root.querySelector('.cb-tarot-header').hidden,true);
+ assert.equal(f.state().readingOpen,false);
+ tab.click();
+ assert.equal(root.dataset.readingMode,'select');
+ assert.match(root.querySelector('.cb-tarot-progress').textContent,/1\/3/,'chosen meaning remains if the player returns');
+ f.button(root,'自分の言葉で届ける').click();
+ assert.equal(root.dataset.readingMode,'none','free-writing mode is not stolen by the tarot overlay');
+ assert.equal(root.querySelector('.cb-ai-panel').hidden,false);
+ assert.equal(f.state().battle.turn,originalTurn);
+});
+
 test('stage 1 mounts an unchanging battlefield, visible status band, and command swap',async()=>{
  const f=fixture(),root=await enter(f);
  const frame=root.querySelector('.cb-frame');
