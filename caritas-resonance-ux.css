@@ -1142,3 +1142,166 @@
   animation:none!important;transition:none!important;
  }
 }
+
+/* v12 — STAGE 3 / own one-screen writer. The original textarea and AI send
+   action are physically hosted here, NOT duplicated. Only this local surface
+   responds to iOS Safari VisualViewport; the fixed battlefield never moves. */
+#caritas-event .cb-writing-overlay[hidden]{display:none!important}
+#caritas-event[data-phase="battle"][data-writing-screen="true"] .cb-writing-overlay{
+ position:fixed;inset:0;z-index:65;width:min(100%,460px);margin:0 auto;
+ height:100dvh;max-height:100dvh;min-height:0;
+ display:flex;flex-direction:column;gap:0;overflow:hidden;
+ padding:calc(env(safe-area-inset-top,0px) + 8px) 12px
+  max(10px,env(safe-area-inset-bottom,0px));
+ background:linear-gradient(165deg,#2e2b41,#1e253d 53%,#171d34);
+ color:#f7e9d8;overscroll-behavior:contain;
+}
+#caritas-event .cb-writing-header{
+ flex:0 0 auto;min-height:0;display:flex;flex-direction:column;gap:8px;
+ padding:0 0 10px;border-bottom:1px solid #847d8c;
+}
+#caritas-event .cb-writing-back{
+ align-self:flex-start;min-height:44px;min-width:128px;
+ border:1px solid #ac9b96;border-radius:9px;padding:8px 12px;
+ background:#403b4c;color:#f8e8d4;font-size:14px;
+}
+#caritas-event .cb-writing-title{
+ font-size:clamp(19px,5vw,23px);color:#f4dbaf;line-height:1.25;
+}
+#caritas-event .cb-writing-context{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ flex:0 0 auto;padding:11px 0 8px;min-width:0;
+}
+#caritas-event .cb-writing-mood{
+ font-size:clamp(12px,3.4vw,14px);line-height:1.45;color:#e3d5e6;
+ min-width:0;
+}
+#caritas-event .cb-writing-bonus{
+ white-space:nowrap;font-size:clamp(12px,3.3vw,14px);
+ color:#f6dfae;font-variant-numeric:tabular-nums;
+}
+#caritas-event .cb-writing-panel{
+ min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;
+ -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+ display:flex;flex-direction:column;gap:12px;
+ padding:5px 2px 14px;scrollbar-width:thin;
+}
+#caritas-event .cb-writing-reference{
+ display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;
+ flex:0 0 auto;padding:7px 0;
+}
+#caritas-event .cb-writing-reference-label{
+ flex:1 0 100%;font-size:12px;color:#e6d4bb;
+}
+#caritas-event .cb-writing-reference-card{
+ flex:1;min-width:0;min-height:40px;max-width:110px;
+ border:1px solid #95879b;border-radius:8px;
+ background:#3a394d;color:#fff0d2;font-size:13px;
+}
+#caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-panel{
+ display:block;width:100%;min-width:0;flex:0 0 auto;
+ padding:0!important;margin:0!important;
+}
+#caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-body{
+ display:flex;flex-direction:column;gap:12px;
+ width:100%;min-width:0;padding:12px;
+ border:1px solid #9a8b8f;border-radius:12px;background:#34313f;
+}
+#caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-label{
+ width:100%;min-width:0;display:flex;flex-direction:column;gap:8px;
+ font-size:clamp(13px,3.45vw,15px);color:#f0dfc4;
+}
+#caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-input{
+ box-sizing:border-box;width:100%;min-height:130px;
+ height:clamp(130px,24dvh,220px);max-height:220px;
+ padding:12px 13px;border-radius:9px;resize:none;
+ background:#1f2236!important;border:1px solid #b1a291!important;
+ color:#fff7eb!important;font-size:16px!important;line-height:1.55;
+ overflow-y:auto;touch-action:auto;scroll-margin:14px;
+ -webkit-user-select:text;user-select:text;
+}
+#caritas-event .cb-writing-footer{
+ position:relative;z-index:2;display:flex;flex-direction:column;gap:6px;
+ flex:0 0 auto;width:100%;min-width:0;
+ padding:8px 0 1px;border-top:1px solid #80788b;
+ background:linear-gradient(180deg,#23273d,#1a2136);
+}
+#caritas-event .cb-writing-count{
+ align-self:flex-end;font-size:11px;color:#d6c8d8;
+ font-variant-numeric:tabular-nums;
+}
+#caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-send{
+ display:block;width:100%;min-height:52px;height:auto;flex:0 0 auto;
+ padding:9px 12px;border-radius:10px;border:2px solid #fae1ac;
+ font-size:clamp(14px,3.6vw,17px);font-weight:700;
+ background:linear-gradient(115deg,#a47e4d,#ddba7d,#a68052);
+ color:#28212a!important;line-height:1.3;
+}
+#caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-send:disabled{
+ background:#45414c!important;border:1px solid #80778a!important;
+ color:#e2d9dd!important;opacity:1!important;
+}
+/* Disable the old stage-1 keyboard frame rearrangement. A focused editor
+   may shrink its own sheet, but must never hide/move the battle stage or HUD. */
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame{
+ position:relative!important;left:auto!important;top:auto!important;
+ transform:none!important;
+ width:min(100%,460px)!important;
+ height:100dvh!important;max-height:100dvh!important;
+ grid-template-areas:"battle" "status" "command"!important;
+ grid-template-rows:minmax(0,1fr) clamp(60px,8dvh,70px) clamp(225px,40dvh,350px)!important;
+ padding:0 0 env(safe-area-inset-bottom,0px)!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame>.cb-arena{
+ display:block!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-frame>.cb-status-band{
+ display:block!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-writing-screen="true"] .cb-writing-overlay{
+ top:var(--cb-visible-top,0px);bottom:auto;
+ height:var(--cb-visible-height,100dvh);max-height:var(--cb-visible-height,100dvh);
+ padding-top:max(7px,env(safe-area-inset-top,0px));
+ padding-bottom:6px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-writing-overlay .cb-writing-panel{
+ padding:0 2px 5px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-writing-reference{
+ display:none!important;
+}
+#caritas-event[data-phase="battle"][data-composing="true"] .cb-writing-overlay .cb-ai-input{
+ height:clamp(90px,18dvh,128px);min-height:90px;max-height:128px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-writing-title{
+ display:none;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-writing-header{
+ padding-bottom:5px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-writing-context{
+ padding:5px 0;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-writing-overlay .cb-ai-body{
+ padding:7px;gap:6px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-writing-overlay .cb-ai-input{
+ min-height:76px;height:76px;max-height:76px;
+}
+#caritas-event[data-phase="battle"][data-composing="true"][data-keyboard-tight="true"] .cb-writing-overlay .cb-writing-hint{
+ display:none!important;
+}
+@media(max-height:650px){
+ #caritas-event[data-phase="battle"] .cb-writing-overlay{
+  padding-top:calc(env(safe-area-inset-top,0px) + 5px);
+ }
+ #caritas-event[data-phase="battle"] .cb-writing-overlay .cb-ai-input{
+  min-height:115px;height:clamp(115px,20dvh,170px);max-height:170px;
+ }
+ #caritas-event[data-phase="battle"][data-composing="true"] .cb-writing-overlay .cb-ai-input{
+  min-height:76px;height:90px;max-height:100px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event .cb-writing-overlay *{transition:none!important;animation:none!important}
+}
