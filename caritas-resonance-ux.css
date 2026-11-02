@@ -722,3 +722,21 @@
 @media(max-height:520px){
   #caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]){--cb-dialogue-space:min(46dvh,180px);}
 }
+
+/* v8: battle-only upper composition. Position changes preserve the artwork's
+   original width and height; map actors, camera and hit/abyss rules are untouched. */
+#caritas-event:is([data-phase="battle"],[data-phase="special"],[data-phase="enemy-turn"],
+ [data-phase="word-strike"],[data-phase="purifying"],[data-phase="purified"]) .cb-beast{
+ top:16%;
+}
+#caritas-event .cb-abyss,
+#caritas-event[data-dark-cleared] .cb-abyss{
+ top:16%;
+}
+#caritas-event .cb-release{top:12%;}
+#caritas-event .cb-shion-sprite{bottom:18.2%;}
+#caritas-event .cb-angel{bottom:18%;}
+#caritas-event .cb-hero-name,
+#caritas-event .cb-shioriel-name{bottom:15%;}
+/* Do not resize figures while the common dialogue overlays the battle.
+   Actual dialogue viewport height is handled separately above. */
