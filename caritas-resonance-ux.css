@@ -1506,3 +1506,59 @@
  #caritas-event .cb-card-panel .cb-modal-word{min-height:55px;padding:7px 9px}
  #caritas-event .cb-special-meaning{min-height:75px;padding:6px 9px}
 }
+
+/* v15 / P1 — one meaningful prompt, clear available actions, consistent
+   tarot wording, accessible read-only card explanations. */
+#caritas-event .cb-command-prompt[hidden]{display:none!important}
+#caritas-event[data-phase="battle"][data-reading-open="false"][data-finisher="false"] .cb-frame>.cb-controls{
+ justify-content:center!important;gap:14px!important;
+}
+#caritas-event[data-phase="battle"][data-reading-open="false"][data-finisher="false"] .cb-command-prompt{
+ display:block;flex:0 0 auto;margin:0 auto;
+ padding:0 12px;max-width:370px;text-align:center;
+ color:#f1dfbb;font-size:clamp(15px,4vw,19px);line-height:1.65;
+}
+#caritas-event[data-phase="battle"][data-reading-open="false"][data-finisher="false"] .cb-delivery-methods{
+ margin:0!important;width:100%;align-self:stretch;
+}
+#caritas-event[data-phase="battle"][data-reading-open="false"] .cb-delivery-methods .cb-way:not(:disabled){
+ min-height:72px!important;
+ background:linear-gradient(145deg,#46425e,#303b5d)!important;
+ border:2px solid #b6a2a7!important;
+ color:#fff2df!important;opacity:1!important;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way:not(:disabled){
+ background:linear-gradient(145deg,#454258,#313b5c)!important;
+ border:2px solid #ab9aad!important;color:#fef0db!important;
+ opacity:1!important;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way[aria-pressed="true"]:not(:disabled){
+ border-color:#f6dca5!important;background:#413c52!important;
+ box-shadow:inset 0 0 0 1px #ebd3a64d!important;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods .cb-way:disabled{
+ background:#2b2b3b!important;border:1px solid #666372!important;
+ color:#aeadbb!important;opacity:.72!important;box-shadow:none!important;
+}
+#caritas-event .cb-modal-reference{
+ display:flex;flex-direction:column;gap:5px;
+ background:#282b3e;border:1px solid #817a90;border-radius:10px;
+ padding:10px 12px;line-height:1.45;
+ color:#f4e7d9;
+}
+#caritas-event .cb-modal-reference .cb-modal-word-title{
+ color:#f6dfab;font-size:clamp(13px,3.6vw,16px);
+}
+#caritas-event .cb-modal-reference .cb-modal-word-desc{
+ color:#e9e1e9;font-size:clamp(12px,3.3vw,14px);
+}
+#caritas-event[data-finisher="true"] .cb-finisher,
+#caritas-event[data-finisher="true"] .cb-skill-hint{
+ display:none!important;
+}
+#caritas-event[data-phase="battle"][data-finisher="true"] .cb-frame>.cb-controls{
+ justify-content:center!important;
+}
+#caritas-event[data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions{
+ margin:auto 0;
+}
