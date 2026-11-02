@@ -27,6 +27,9 @@ test('dialogue leaves combat grid and original figure dimensions intact',()=>{
  assert.match(event,/dialogue\.elements\.button\.getBoundingClientRect/);
  assert.match(event,/const figures=\["\.cb-beast","\.cb-shion-sprite","\.cb-angel"\]/);
  assert.match(event,/--cb-dialogue-stage-shift/);
+ assert.match(event,/lastReadingStageHeight/);
+ assert.match(event,/--cb-dialogue-stage-height/);
+ assert.match(css,/grid-template-rows:minmax\(43px,auto\) minmax\(0,var\(--cb-dialogue-stage-height,34dvh\)\)/);
  assert.match(css,/v9 — Dialogue belongs OVER the unscaled combat stage/);
  assert.match(css,/transform:translate3d\(0,var\(--cb-dialogue-stage-shift,0px\),0\)/);
  assert.match(css,/display:grid!important;\s*height:100dvh;max-height:100dvh;/);
