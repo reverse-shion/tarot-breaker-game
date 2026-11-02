@@ -267,8 +267,6 @@
     y: DEFAULT_SPAWN.y - CAMERA_BASE_OFFSET_Y,
     zoom: 1,
   };
-  // Isolated Caritas conversation framing only. World/sprite scale is unchanged.
-  let caritasConversationCamera = false;
   const stageMotions = { shion: null, shiopon: null, lumiere: null };
   let stageCommandId = 0;
   // Page-local Aftermath ownership; absent from ordinary gameplay.
@@ -295,21 +293,6 @@
     duration: 0,
     resolve: null,
   };
-  // Isolated Caritas camera override. Original main updateCamera stays byte-identical.
-  function updateCaritasConversationCamera(dt){
-    if(!hoshisunaIsolated||!caritasConversationCamera)return;
-    const viewW=cssWidth/camera.zoom,viewH=cssHeight/camera.zoom;
-    const halfW=viewW/2,halfH=viewH/2;
-    const headroom=Math.min(96,viewH*0.13);
-    const caritasTop=166.6*scale.y;
-    const safeOrigin=Math.max(0,caritasTop-headroom);
-    const preferredOrigin=Math.max(0,player.y-viewH*0.29);
-    const targetY=clamp(halfH+Math.min(safeOrigin,preferredOrigin),halfH,Math.max(halfH,world.h-halfH));
-    const targetX=clamp(player.x,halfW,Math.max(halfW,world.w-halfW));
-    const ease=1-Math.exp(-6.5*dt);
-    camera.x+=(targetX-camera.x)*ease;
-    camera.y+=(targetY-camera.y)*ease;
-  }
   const actorVisibility = { shion: 1, shiopon: 1, lumiere: 1 };
   const VISION_REGISTRATION = Object.freeze({
     // Static cinematic plate registration. Coverage safety is validated
@@ -2973,7 +2956,6 @@
     updateShiopon(dt);
     if (!hoshisunaIsolated) updateLumiere(dt);
     updateCamera(dt);
-    if(hoshisunaIsolated && caritasConversationCamera)updateCaritasConversationCamera(dt);
     draw();
     requestAnimationFrame(loop);
   }
@@ -3920,20 +3902,12 @@
   });
 
   window.addEventListener("tarot-breaker:interaction-start", () => {
-    if (hoshisunaIsolated && !cinematicCamera.owned && !cinematicCamera.active){
-      caritasConversationCamera=true;
-      cinematicCamera.owned=true;
-    }
     outsideInteraction = true;
     controls?.suspend();
     npcSuspended = true;
     syncStick();
   });
   window.addEventListener("tarot-breaker:interaction-end", () => {
-    if (hoshisunaIsolated && caritasConversationCamera){
-      caritasConversationCamera=false;
-      cinematicCamera.owned=false;
-    }
     outsideInteraction = false;
     cancelAllStageMotions(true);
     if (!sceneLockOwner) { controls?.resume(); npcSuspended = false; }
