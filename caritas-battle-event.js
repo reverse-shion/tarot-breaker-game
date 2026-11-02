@@ -891,13 +891,13 @@ async function sendAiReading(){
    const gain=battle.resonance-before.resonance,relief=before.dark-battle.dark;
    aiLastState=null;aiPendingRequest=null;aiPendingText="";aiRetryVisible=false;
    ui.aiInput.value="";
-   // Display original player words safely and briefly; never store the reading text.
-   setText(ui.writtenQuote,reading.length>84?reading.slice(0,84)+"…":reading);
-   setText(ui.writtenGain,"あなたの言葉が、星の力に変わった");
+   // Shion has already delivered the player's thought through dialogue.
+   // Do not echo the raw text afterward; the encounter light and confirmed
+   // resonance delta are the only feedback. Keep all commit/timing semantics.
    visualBattle=before;readingOpen=false;
    stage("written-light",1400,()=>{
     visualBattle=null;committing=false;story="battle";root.dataset.phase="battle";
-    setText(ui.writtenQuote,"");render();
+    render();
     toast("言葉が届いた　共鳴＋"+gain+(relief>0?"　闇−"+relief:"")+(battle.phase==="finisher"?"　共鳴解放が使えます":""));
    });
    };
@@ -1213,9 +1213,10 @@ function init(){
  ui.artReading=newEl("span","cb-special-art-reading");
  ui.artCaption.append(ui.artTitle,ui.artReading);
  ui.artPlayback.append(ui.artBackdrop,ui.artImage,ui.artCaption);
- const written=newEl("div","cb-written-light");written.setAttribute("aria-live","polite");
- ui.writtenQuote=newEl("p","cb-written-quote");ui.writtenGain=newEl("p","cb-written-gain");
- written.append(newEl("div","cb-written-ring"),ui.writtenQuote,ui.writtenGain);
+ // Light-only aftermath. Never duplicate the user's submitted words or
+ // add a second speech window after Shion and Caritas have finished speaking.
+ const written=newEl("div","cb-written-light");written.setAttribute("aria-hidden","true");
+ written.append(newEl("div","cb-written-ring"));
  ui.saveProblem=newEl("div","cb-save-problem");ui.saveProblem.hidden=true;
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.writingOverlay,ui.modal);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.bind({
