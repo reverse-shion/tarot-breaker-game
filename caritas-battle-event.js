@@ -318,7 +318,15 @@ function renderSpecialSelection(){
   btn.addEventListener('click',()=>{if(specialLocked()||story!=='selecting'||suspended())return;selectedCard=id;shortPlayback=false;renderSpecialSelection();});row.append(btn);
  }
  ui.selection.append(row);
- const tech=TECHNIQUES[selectedCard];ui.selection.append(newEl('p','cb-special-meaning',tech?tech.meaning+'／'+tech.title+'（'+tech.reading+'）':'カードを選んでください'));
+ const tech=TECHNIQUES[selectedCard],detail=newEl('div','cb-special-meaning');
+ if(tech){
+  detail.append(newEl('strong','cb-special-title',tech.title),
+   newEl('span','cb-special-reading',tech.reading),
+   newEl('p','cb-special-description',tech.meaning));
+ }else{
+  detail.append(newEl('p','cb-special-description','月・力・星から届けたい言葉を選ぶ'));
+ }
+ ui.selection.append(detail);
  if(tech&&record.seenTechniques[selectedCard]===true){
   const label=newEl('label','cb-special-short'),input=newEl('input');input.type='checkbox';input.checked=shortPlayback;
   input.addEventListener('change',()=>{if(!specialLocked()&&story==='selecting')shortPlayback=input.checked;});label.append(input,newEl('span','','演出を短縮'));ui.selection.append(label);
@@ -1135,6 +1143,7 @@ function init(){
  const shade=newEl("button","cb-card-shade");shade.type="button";shade.setAttribute("aria-label","カードを閉じる");
  shade.addEventListener("click",closeCard);
  const panel=newEl("div","cb-card-panel");
+ const modalHeader=newEl("div","cb-modal-header");
  const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
  ui.modalMood=newEl("div","cb-modal-mood","カリタスの心象：閉ざす");
  ui.modalSelected=newEl("div","cb-modal-selected","3つの解釈から選んでください");
@@ -1145,7 +1154,8 @@ function init(){
  ui.modalPrev.type=ui.modalNext.type="button";
  ui.modalPrev.addEventListener("click",()=>moveViewedCard(-1));ui.modalNext.addEventListener("click",()=>moveViewedCard(1));
  modalNav.append(ui.modalPrev,ui.modalNext);
- panel.append(close,ui.modalMood,ui.modalTitle,ui.modalPage,ui.modalImage,ui.modalSelected,modalNav,ui.modalWords);ui.modal.append(shade,panel);
+ modalHeader.append(ui.modalTitle,close);
+ panel.append(modalHeader,ui.modalMood,ui.modalPage,ui.modalImage,ui.modalSelected,ui.modalWords,modalNav);ui.modal.append(shade,panel);
  let swipeX=null;
  panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
  panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
