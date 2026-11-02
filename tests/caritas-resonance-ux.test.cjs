@@ -128,3 +128,23 @@ test('stage 3 keyboard-safe writer is isolated from the permanent battlefield an
  assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
  assert.doesNotMatch(sheet,/\.cb-beast\{|\.cb-abyss\{|\.cb-shion-sprite\{|\.cb-angel\{/);
 });
+
+test('stage 4 shows only actual reading choices and keeps notice away from the battlefield',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const visual=css.slice(css.indexOf('/* v13 — STAGE 4'));
+ assert.match(visual,/#caritas-event \.cb-tarot-review\[hidden\]\{display:none!important\}/);
+ assert.match(visual,/\.cb-tarot-review-item\[data-complete="true"\]/);
+ assert.match(visual,/\.cb-select-submit\{\s*order:2;position:sticky/);
+ assert.match(visual,/\.cb-modal-word\[aria-pressed="true"\]/);
+ assert.match(visual,/\.cb-toast\{\s*top:auto!important;bottom:clamp/);
+ assert.match(visual,/\.cb-status-band \.cb-gain-float\{/);
+ assert.match(visual,/prefers-reduced-motion:reduce/);
+ assert.doesNotMatch(visual,/\.cb-beast\s*\{|\.cb-angel\s*\{|\.cb-shion-sprite\s*\{|\.cb-abyss\s*\{/);
+ assert.match(js,/ui\.tarotReview\.hidden=!selectingTarot\|\|chosenCount===0/);
+ assert.match(js,/s\.words\[i\]\?C\.READING_OPTIONS\[s\.words\[i\]\]\.title:"未選択"/);
+ assert.match(js,/ui\.tarotProgress\.setAttribute\("aria-live","polite"\)/);
+ assert.match(js,/setText\(ui\.gainFloat,"共鳴 ＋"\+\(visible\.resonance-lastPresentedResonance\)\)/);
+ assert.match(js,/const next=C\.read\(previous\)/);
+ assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
+});
