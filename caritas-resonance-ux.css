@@ -1629,11 +1629,15 @@
 @keyframes cb-special-radiance{
  0%{opacity:0}38%{opacity:.48}70%{opacity:.85}100%{opacity:.2}
 }
-/* Deliberate line break, kanji above katakana, in the existing shared UI. */
+/* Dual technique chant ONLY: two deliberate lines, no incidental wrapping.
+   Longest reading is 14 full-width characters (Star). The viewport-based
+   font scales to the available canonical dialogue width on iPhone, while
+   growing well beyond the previous 14–19px. No shared main CSS is changed. */
 #game-shell:has(#caritas-event:not([hidden])[data-special="DUAL_INCANTATION"]) #dialogue-layer .tb-dialogue-text{
- white-space:pre-wrap;overflow-wrap:normal;word-break:keep-all;
- text-align:center;font-size:clamp(14px,4vw,19px);
- line-height:1.5;letter-spacing:0;
+ white-space:pre!important;overflow-wrap:normal!important;word-break:keep-all!important;
+ text-wrap:nowrap;
+ text-align:center;font-size:clamp(17px,5.6vw,26px)!important;
+ font-weight:750;line-height:1.38;letter-spacing:-.025em;
 }
 #caritas-event[data-card="18-the-moon"][data-special="PURIFICATION"] .cb-release{
  background:radial-gradient(ellipse at center,#e9e4ff78 0%,#afa0e966 28%,#4e428067 48%,transparent 73%);
