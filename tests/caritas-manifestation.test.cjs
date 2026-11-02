@@ -224,7 +224,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-encounter-preview-fix-v1/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-map-farewell-restore-v2/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-special-fullbleed-chant-v18/);
  assert.match(html,/hoshisuna-caritas-outro\.js\?v=map-rise-fade-v1/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
