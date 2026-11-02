@@ -462,6 +462,13 @@ function currentLine(){
 }
 function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
+ // Preserve the measured battlefield size before the main dialogue appears.
+ // The dialogue frame is reserved space, not a smaller character viewport.
+ if(!root.hidden && ui.arena && !dialogueBusy) {
+  const stageHeight=ui.arena.getBoundingClientRect?.().height;
+  if(Number.isFinite(stageHeight) && stageHeight>80)
+   root.style?.setProperty?.("--cb-dialogue-stage-height",Math.round(stageHeight)+"px");
+ }
  dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
  root.dataset.dialogueBusy="true";
  currentLine();
@@ -936,7 +943,7 @@ function init(){
  options.append(inspect,leaveBtn);prompt.append(promptText,options);shell.appendChild(prompt);
  root=newEl("section");root.id="caritas-event";root.hidden=true;root.dataset.phase="battle";
  root.setAttribute("aria-label","カリタス 心象共鳴");
- const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");
+ const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");ui.arena=arena;
  arena.append(newEl("div","cb-title","心象共鳴"));
  const enemy=newEl("div","cb-hud enemy");enemy.append(newEl("div","cb-hud-name","カリタス"));
  const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇侵蝕"),ui.dark=newEl("span","","100%"));
