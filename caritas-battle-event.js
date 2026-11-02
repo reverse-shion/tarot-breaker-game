@@ -454,46 +454,16 @@ function currentLine(){
  }
  dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  renderCaritas();
- frameCaritasDialogue();
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
   dialogue.elements.layer.classList.add('visible');dialogue.elements.button.classList.add('visible');
  }
 }
-// Visual-only combat camera framing: the stage keeps its original dimensions.
-// Move the complete actor/FX layer towards the shared dialogue window instead
-// of resizing characters, cutting the arena short, or touching the field map.
-let dialogueStageShift=null;
-let lastReadingStageHeight=null;
-function frameCaritasDialogue(){
- if(root.hidden||!dialogueBusy||!ui.arena||!dialogue?.elements?.button)return;
- const windowRect=dialogue.elements.button.getBoundingClientRect?.();
- if(!windowRect)return;
- const viewportHeight=window.visualViewport?.height||window.innerHeight;
- if(!Number.isFinite(windowRect.top)||windowRect.top<=0||!Number.isFinite(viewportHeight))return;
- const already=Number.parseFloat(root.style?.getPropertyValue?.("--cb-dialogue-stage-shift"))||0;
- const figures=[".cb-beast",".cb-shion-sprite",".cb-angel"]
-  .map(selector=>ui.arena.querySelector(selector))
-  .filter(node=>node&&node.getBoundingClientRect().height>0);
- if(!figures.length)return;
- const bottom=Math.max(...figures.map(node=>{const box=node.getBoundingClientRect();return (Number.isFinite(box.bottom)?box.bottom:box.top+box.height)-already;}));
- if(!Number.isFinite(bottom))return;
- // A longer later dialogue line may require more headroom. Never move the
- // figures down again until the whole dialogue sequence has ended.
- const wanted=Math.floor(windowRect.top-bottom-14);
- dialogueStageShift=dialogueStageShift===null?wanted:Math.min(dialogueStageShift,wanted);
- root.style?.setProperty?.("--cb-dialogue-stage-shift",dialogueStageShift+"px");
-}
+// Stage 1: the combat camera is permanent. Dialogue only changes the
+// command field; no reading-page measurements, sprite shifts, or map changes.
 function saySequence(lines,callback,response=""){
  if(!dialogue||!lines?.length)throw new Error("Caritas dialogue not ready");
- dialogueStageShift=null;
- root.style?.removeProperty?.("--cb-dialogue-stage-shift");
- if(!root.hidden && story==="battle"){
-  const height=lastReadingStageHeight||ui.arena?.getBoundingClientRect?.().height;
-  if(Number.isFinite(height)&&height>100)
-   root.style?.setProperty?.("--cb-dialogue-stage-height",Math.round(height)+"px");
- }
  dialogueLines=lines;dialogueIndex=0;afterDialogue=callback;dialogueBusy=true;caritasResponse=response;
  root.dataset.dialogueBusy="true";
  currentLine();
@@ -504,9 +474,6 @@ function advanceDialogue(){
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
  root.dataset.dialogueBusy="false";
- dialogueStageShift=null;
- root.style?.removeProperty?.("--cb-dialogue-stage-shift");
- root.style?.removeProperty?.("--cb-dialogue-stage-height");
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
@@ -752,12 +719,6 @@ function render(){
  ui.finale.hidden=true;
  const show=modalIndex>=0&&reading&&readingOpen;
  ui.modal.hidden=!show;
- // Cache the visible three-card stage BEFORE a delivery hides its controls.
- // Otherwise grid reflow would enlarge character art during the dialogue.
- if(reading&&readingOpen&&root.dataset.composing!=="true"){
-  const height=ui.arena?.getBoundingClientRect?.().height;
-  if(Number.isFinite(height)&&height>100)lastReadingStageHeight=height;
- }
  if(show){
   const card=s.cards[modalIndex];
   ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
@@ -1071,7 +1032,14 @@ function init(){
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
  ctr.append(methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,ui.aiPanel,line,ui.finisher,actions);
- frame.append(enemy,arena,hero,narr,ctr);
+ // Structural split: the arena never reflows when reading/dialogue toggles.
+ // The existing HUD elements and shared dialogue/controller stay canonical.
+ const statusBand=newEl("div","cb-status-band");
+ statusBand.setAttribute("aria-label","シオリエルのHPと星響");
+ statusBand.append(hero);
+ arena.prepend(enemy);
+ ctr.prepend(narr);
+ frame.append(arena,statusBand,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
  ui.finale=newEl("div","cb-finale");ui.finale.hidden=true;
