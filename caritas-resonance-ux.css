@@ -740,3 +740,110 @@
 #caritas-event .cb-shioriel-name{bottom:15%;}
 /* Do not resize figures while the common dialogue overlays the battle.
    Actual dialogue viewport height is handled separately above. */
+
+/* v9 — Dialogue belongs OVER the unscaled combat stage, not IN its grid.
+   Keep all normal battle grid tracks alive so neither artwork nor its effects
+   can resize. The complete arena moves as one layer, based on the measured
+   shared Alenon dialogue window (see frameCaritasDialogue). */
+#caritas-event .cb-arena{
+ transition:transform .28s ease-out;
+}
+#caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]) .cb-frame{
+ display:grid!important;
+ height:100dvh;max-height:100dvh;overflow:hidden;
+ padding-bottom:env(safe-area-inset-bottom,0px);
+ background:linear-gradient(180deg,rgba(12,19,43,.15) 0%,rgba(9,16,35,.04) 55%,rgba(10,17,37,.58) 100%),
+  url('./assets/events/hoshisuna/battle/cave-bg.webp') center 45% / cover no-repeat;
+}
+#caritas-event[data-dialogue-busy="true"]:not([data-phase="intro"]) .cb-arena{
+ position:relative;flex:initial;
+ top:auto!important;left:auto;width:100%;height:auto!important;min-height:0;
+ background:transparent!important;
+ transform:translate3d(0,var(--cb-dialogue-stage-shift,0px),0);
+ overflow:visible;
+}
+#caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-hud{
+ display:grid!important;visibility:hidden!important;pointer-events:none!important;
+}
+#caritas-event[data-dialogue-busy="true"] .cb-frame>.cb-controls{
+ display:flex!important;visibility:hidden!important;pointer-events:none!important;
+}
+#caritas-event[data-dialogue-busy="true"]:not([data-phase="battle"]) .cb-frame>.cb-narration{
+ display:flex!important;visibility:hidden!important;pointer-events:none!important;
+}
+#caritas-event[data-dialogue-busy="true"] .cb-arena :is(.cb-title,.cb-enemy-turn){
+ visibility:hidden!important;
+}
+
+/* Tarot-led controls: use actual card art as the focal point, not repeated
+   gold pills. Both delivery methods remain equally available. */
+#caritas-event[data-phase="battle"]:not([data-composing="true"]) .cb-controls{
+ justify-content:flex-start;overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+}
+#caritas-event[data-phase="battle"] .cb-delivery-methods{
+ position:sticky;bottom:0;z-index:4;
+ padding-top:3px;background:linear-gradient(180deg,#393542e8,#302c3af5);
+}
+#caritas-event[data-phase="battle"][data-reading-open="true"] .cb-cards{
+ flex:0 0 auto!important;height:clamp(150px,27dvh,232px)!important;
+ min-height:150px!important;max-height:232px!important;
+}
+#caritas-event[data-phase="battle"][data-writing-open="true"] .cb-cards{
+ height:clamp(82px,13dvh,120px)!important;
+ min-height:82px!important;max-height:120px!important;
+}
+#caritas-event[data-phase="battle"] .cb-card{
+ border-color:#998f98;
+ background:linear-gradient(160deg,#514c5b,#373343);
+}
+#caritas-event[data-phase="battle"] .cb-card[data-card-state="selected"]{
+ border:2px solid #e3ca91;box-shadow:inset 0 0 0 1px #d2b17c55;
+}
+#caritas-event[data-phase="battle"] .cb-chosen{
+ display:flex;align-items:center;justify-content:center;
+ min-height:28px;line-height:1.18;
+ font-size:clamp(11px,2.8vw,12px);font-weight:600;text-align:center;
+ white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;
+ -webkit-line-clamp:unset;
+}
+#caritas-event[data-phase="battle"] .cb-card-button{
+ min-height:44px;touch-action:manipulation;
+}
+#caritas-event[data-phase="battle"] .cb-modal-image{
+ height:clamp(165px,31dvh,255px);max-height:255px;
+ max-width:min(78vw,290px);width:auto;object-fit:contain;
+}
+#caritas-event .cb-modal-close{
+ position:sticky;top:0;z-index:3;align-self:flex-end;
+ background:#29253a;
+}
+#caritas-event[data-phase="battle"] .cb-select-submit:enabled{
+ background:linear-gradient(112deg,#96734a,#debc82,#a77e51);
+ color:#231c2b;
+}
+#caritas-event[data-phase="battle"] .cb-select-submit:disabled{
+ background:#343141!important;
+ border:1px solid #756c7e!important;color:#ded6e0!important;
+ box-shadow:none!important;
+}
+#caritas-event[data-phase="battle"] .cb-ai-send{
+ min-height:48px;font-size:14px;font-weight:700;
+}
+#caritas-event[data-phase="battle"] .cb-ai-input{
+ font-size:16px!important;
+}
+@media(max-height:700px){
+ #caritas-event[data-phase="battle"][data-reading-open="true"] .cb-cards{
+  height:clamp(130px,24dvh,170px)!important;
+  min-height:130px!important;max-height:170px!important;
+ }
+ #caritas-event[data-phase="battle"][data-writing-open="true"] .cb-cards{
+  height:clamp(76px,12dvh,105px)!important;
+  min-height:76px!important;max-height:105px!important;
+ }
+ #caritas-event[data-phase="battle"] .cb-modal-image{height:clamp(150px,28dvh,205px);}
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event .cb-arena{transition:none!important}
+}
