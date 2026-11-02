@@ -637,7 +637,7 @@ function render(){
  const displayedDark=visible.dark;
  setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"%");setText(ui.hp,visible.hp+"/100");
  if(lastPresentedResonance!==null&&visible.resonance>lastPresentedResonance){
-  setText(ui.gainFloat,"+"+(visible.resonance-lastPresentedResonance));root.dataset.gainPulse="true";
+  setText(ui.gainFloat,"共鳴 ＋"+(visible.resonance-lastPresentedResonance));root.dataset.gainPulse="true";
   clearTimeout(gainPulseTimer);gainPulseTimer=setTimeout(()=>{root.dataset.gainPulse="false";},RESONANCE_UI.gainPulseMs);
  }
  lastPresentedResonance=visible.resonance;
@@ -649,6 +649,19 @@ function render(){
  const chosenCount=s.words.filter(Boolean).length;
  const selectingTarot=reading&&readingOpen&&deliveryMethod==="select";
  ui.tarotHeader.hidden=!selectingTarot;
+ // A compact, read-only assembled interpretation prevents repeated card
+ // reopenings just to remember the player's own choices. Nothing is saved.
+ ui.tarotReview.hidden=!selectingTarot||chosenCount===0;
+ ui.tarotReview.replaceChildren();
+ if(selectingTarot&&chosenCount>0){
+  for(let i=0;i<3;i++){
+   const item=newEl("div","cb-tarot-review-item");
+   item.dataset.complete=String(!!s.words[i]);
+   item.append(newEl("span","cb-tarot-review-role",["現在地","行動","届け方"][i]),
+    newEl("strong","cb-tarot-review-word",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));
+   ui.tarotReview.append(item);
+  }
+ }
  setText(ui.tarotMood,"現在の心象："+C.STATES[C.stateFor(s.dark)]);
  setText(ui.tarotProgress,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードをタップして意味を選ぶ"));
  root.dataset.cardsReady=String(chosenCount===3);
@@ -738,6 +751,9 @@ function render(){
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
   ui.modalWords.hidden=deliveryMethod==="write";
+  setText(ui.modalSelected,s.words[modalIndex]
+   ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
+   :deliveryMethod==="write"?"カードの意味を参考にできます":"3つの解釈から選んでください");
   ui.modalNav.hidden=false;
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
   setText(ui.modalMood,"カリタスの心象："+C.STATES[C.stateFor(s.dark)]);
@@ -991,7 +1007,12 @@ function init(){
  tarotHeading.append(newEl("strong","cb-tarot-title","心象を読み解く"));
  ui.tarotMood=newEl("span","cb-tarot-mood","現在の心象：閉ざす");
  ui.tarotProgress=newEl("span","cb-tarot-progress","解釈 0/3");
+ ui.tarotProgress.setAttribute("role","status");
+ ui.tarotProgress.setAttribute("aria-live","polite");
  tarotHeading.append(ui.tarotMood,ui.tarotProgress);
+ ui.tarotReview=newEl("div","cb-tarot-review");
+ ui.tarotReview.hidden=true;
+ ui.tarotReview.setAttribute("aria-label","選んだ言葉の流れ");
  const tarotBack=newEl("button","cb-tarot-back","‹ 戦闘へ戻る");tarotBack.type="button";
  tarotBack.addEventListener("click",()=>{
   if(story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||aiBusy||specialLocked())return;
@@ -1097,7 +1118,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(tarotHeader,methods,cardBox,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
+ ctr.append(tarotHeader,methods,cardBox,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
@@ -1116,6 +1137,7 @@ function init(){
  const panel=newEl("div","cb-card-panel");
  const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
  ui.modalMood=newEl("div","cb-modal-mood","カリタスの心象：閉ざす");
+ ui.modalSelected=newEl("div","cb-modal-selected","3つの解釈から選んでください");
  ui.modalPage=newEl("span","cb-modal-page","1 / 3");
  ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
  const modalNav=newEl("div","cb-modal-navigation");ui.modalNav=modalNav;
@@ -1123,7 +1145,7 @@ function init(){
  ui.modalPrev.type=ui.modalNext.type="button";
  ui.modalPrev.addEventListener("click",()=>moveViewedCard(-1));ui.modalNext.addEventListener("click",()=>moveViewedCard(1));
  modalNav.append(ui.modalPrev,ui.modalNext);
- panel.append(close,ui.modalMood,ui.modalTitle,ui.modalPage,ui.modalImage,modalNav,ui.modalWords);ui.modal.append(shade,panel);
+ panel.append(close,ui.modalMood,ui.modalTitle,ui.modalPage,ui.modalImage,ui.modalSelected,modalNav,ui.modalWords);ui.modal.append(shade,panel);
  let swipeX=null;
  panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
  panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
