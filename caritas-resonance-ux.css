@@ -1563,70 +1563,81 @@
  margin:auto 0;
 }
 
-/* v16 / P2 — visual identity for each approved special illustration.
-   Artwork is not redrawn; image always fits, with its own blurred edge fill.
-   Dynamic motion is driven by TECHNIQUE_MOTION, never new gameplay phases. */
+/* v18 — cinematic full-bleed special illustration.
+   Never shrink or pan the artwork. Keep the actual image larger than the
+   visual viewport and animate smoke/light layers instead. The incantation
+   already announces the technique; repeat titles are omitted on art. */
 #caritas-event .cb-special-art{
- background:#101429!important;isolation:isolate;
+ background:#0a0d1e!important;isolation:isolate;overflow:hidden!important;
 }
 #caritas-event .cb-special-art .cb-special-foreground{
- display:block;object-fit:contain!important;object-position:center center!important;
- max-width:600px;width:100%;height:100%;
- margin:0 auto;transform-origin:center center;
+ position:absolute!important;inset:-4%!important;
+ width:108%!important;height:108%!important;
+ min-width:108%!important;min-height:108%!important;
+ max-width:none!important;max-height:none!important;
+ display:block;object-fit:cover!important;object-position:center center!important;
+ margin:0!important;transform:none!important;
+ transform-origin:center center;animation:none!important;
 }
-#caritas-event .cb-special-art .cb-special-backdrop{
- object-fit:cover;filter:blur(25px) brightness(.31) saturate(.86);
+#caritas-event .cb-special-art .cb-special-foreground[hidden]{display:none!important}
+#caritas-event .cb-special-art .cb-special-backdrop,
+#caritas-event .cb-special-art .cb-special-caption{display:none!important}
+#caritas-event .cb-special-art::before,
+#caritas-event .cb-special-art::after{
+ content:"";position:absolute;pointer-events:none;inset:-10%;z-index:2;
+ opacity:0;will-change:opacity,transform;
+}
+#caritas-event .cb-special-art::before{
+ animation:cb-special-smoke var(--cb-special-visual-duration,2600ms) ease-in-out both;
 }
 #caritas-event .cb-special-art::after{
- content:"";pointer-events:none;position:absolute;inset:0;z-index:2;
- opacity:.75;animation:cb-technique-veil var(--cb-special-visual-duration,2600ms) ease-in-out both;
+ inset:0;z-index:3;
+ animation:cb-special-radiance var(--cb-special-visual-duration,2600ms) ease-in-out both;
+}
+/* Moon: a violet/silver mist passes over the edges, never over the face. */
+#caritas-event[data-card="18-the-moon"] .cb-special-art::before{
+ background:radial-gradient(ellipse 68% 60% at 2% 75%,#4f327ba8,transparent 72%),
+ radial-gradient(ellipse 55% 50% at 104% 33%,#291a5e96,transparent 78%);
 }
 #caritas-event[data-card="18-the-moon"] .cb-special-art::after{
- background:linear-gradient(105deg,#17122f93 0%,transparent 56%,#463a7a45 100%);
+ background:linear-gradient(110deg,#10112d59,transparent 48%,#25204a3d),
+ radial-gradient(ellipse 48% 36% at 53% 9%,#c9ccff46,transparent 83%);
+}
+/* Strength: the lion's warm gold blooms, then falls toward the offered hand. */
+#caritas-event[data-card="08-strength"] .cb-special-art::before{
+ background:radial-gradient(ellipse 66% 46% at 10% 100%,#aa621da1,transparent 76%),
+ radial-gradient(ellipse 63% 46% at 99% 86%,#df993f7a,transparent 76%);
 }
 #caritas-event[data-card="08-strength"] .cb-special-art::after{
- background:radial-gradient(ellipse 57% 48% at 56% 34%,#f8dc982b,transparent 79%);
+ background:radial-gradient(ellipse 64% 47% at 53% 34%,#ffdb7c66,transparent 79%),
+ linear-gradient(180deg,#fff3bf1c,transparent 48%,#b56b201a);
+}
+/* Star: blue-white star light opens from above through fine atmosphere. */
+#caritas-event[data-card="17-the-star"] .cb-special-art::before{
+ background:radial-gradient(ellipse 70% 52% at 15% 100%,#4279af84,transparent 78%),
+ radial-gradient(ellipse 60% 46% at 97% 89%,#5b8ec480,transparent 77%);
 }
 #caritas-event[data-card="17-the-star"] .cb-special-art::after{
- background:radial-gradient(ellipse 68% 54% at 50% 10%,#c9eaff38,transparent 75%),
-  linear-gradient(165deg,#203c6844,transparent 69%);
+ background:radial-gradient(ellipse 61% 52% at 50% 1%,#e5faff8c,transparent 74%),
+ linear-gradient(177deg,#aed6ff38,transparent 63%);
 }
-#caritas-event .cb-special-caption{
- position:absolute;z-index:3;
- left:8%;right:8%;bottom:calc(env(safe-area-inset-bottom,0px) + 6dvh);
- display:flex;flex-direction:column;gap:4px;align-items:center;
- padding:14px 12px;pointer-events:none;
- background:linear-gradient(90deg,transparent,#101525db 16%,#101525db 84%,transparent);
- color:#fff5e4;text-align:center;
- animation:cb-technique-caption var(--cb-special-visual-duration,2600ms) ease-in-out both;
+@keyframes cb-special-smoke{
+ 0%{opacity:0;transform:translate3d(-1.5%,2%,0) scale(1)}
+ 36%{opacity:.68}72%{opacity:.83}
+ 100%{opacity:.18;transform:translate3d(1%,-2%,0) scale(1.055)}
 }
-#caritas-event .cb-special-art-title{
- font-size:clamp(21px,6vw,31px);font-weight:750;letter-spacing:.1em;
- white-space:nowrap;line-height:1.25;text-shadow:0 2px 4px #0b102f;
+@keyframes cb-special-radiance{
+ 0%{opacity:0}38%{opacity:.48}70%{opacity:.85}100%{opacity:.2}
 }
-#caritas-event .cb-special-art-reading{
- font-size:clamp(13px,3.7vw,17px);letter-spacing:.02em;
- white-space:nowrap;word-break:keep-all;line-height:1.35;
- color:#e6dce7;text-shadow:0 1px 3px #0b102f;
-}
-#caritas-event[data-card="18-the-moon"] .cb-special-caption{
- border-block:1px solid #d5c8f055;
-}
-#caritas-event[data-card="08-strength"] .cb-special-caption{
- border-block:1px solid #f6d99a80;
-}
-#caritas-event[data-card="17-the-star"] .cb-special-caption{
- border-block:1px solid #dceaff70;
-}
-#caritas-event[data-art-ready="loading"] .cb-special-caption,
-#caritas-event[data-art-ready="false"] .cb-special-caption{display:none!important}
-@keyframes cb-technique-veil{
- 0%{opacity:.15}40%{opacity:.7}100%{opacity:.36}
-}
-@keyframes cb-technique-caption{
- 0%,13%{opacity:0;transform:translateY(9px)}
- 27%,75%{opacity:1;transform:translateY(0)}
- 100%{opacity:0;transform:translateY(-3px)}
+/* Dual technique chant ONLY: two deliberate lines, no incidental wrapping.
+   Longest reading is 14 full-width characters (Star). The viewport-based
+   font scales to the available canonical dialogue width on iPhone, while
+   growing well beyond the previous 14–19px. No shared main CSS is changed. */
+#game-shell:has(#caritas-event:not([hidden])[data-special="DUAL_INCANTATION"]) #dialogue-layer .tb-dialogue-text{
+ white-space:pre!important;overflow-wrap:normal!important;word-break:keep-all!important;
+ text-wrap:nowrap;
+ text-align:center;font-size:clamp(17px,5.6vw,26px)!important;
+ font-weight:750;line-height:1.38;letter-spacing:-.025em;
 }
 #caritas-event[data-card="18-the-moon"][data-special="PURIFICATION"] .cb-release{
  background:radial-gradient(ellipse at center,#e9e4ff78 0%,#afa0e966 28%,#4e428067 48%,transparent 73%);
@@ -1637,19 +1648,10 @@
 #caritas-event[data-card="17-the-star"][data-special="PURIFICATION"] .cb-release{
  background:radial-gradient(ellipse at center,#ecfcffac 0%,#9bc7e98c 25%,#718fc66b 47%,transparent 76%);
 }
-@media(max-height:670px){
- #caritas-event .cb-special-caption{
-  bottom:calc(env(safe-area-inset-bottom,0px) + 3dvh);
-  padding:9px 10px;gap:2px;
- }
- #caritas-event .cb-special-art-title{font-size:clamp(18px,5vw,24px)}
- #caritas-event .cb-special-art-reading{font-size:clamp(11px,3.3vw,14px)}
-}
+
 @media(prefers-reduced-motion:reduce){
- #caritas-event .cb-special-art::after,
- #caritas-event .cb-special-caption{animation:none!important}
- #caritas-event .cb-special-art::after{opacity:.36!important}
- #caritas-event[data-art-ready="true"] .cb-special-caption{opacity:1!important;transform:none!important}
+ #caritas-event .cb-special-art::before,
+ #caritas-event .cb-special-art::after{animation:none!important;opacity:.38!important;transform:none!important}
 }
 
 /* v17 — iPhone Safari: a focused composer may occupy only VisualViewport.

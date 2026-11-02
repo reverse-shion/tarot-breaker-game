@@ -56,7 +56,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261103-writing-viewport-v17/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261103-dual-chant-v19/);
  assert.match(css,/minmax\(145px,1fr\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/max-height:59dvh/);
@@ -167,20 +167,26 @@ test('P0/P1: card interpretations scroll fully, special selection hides HUD and 
  assert.match(js,/ui\.commandPrompt=newEl\("p","cb-command-prompt"/);
  assert.match(js,/C\.READING_OPTIONS\[s\.words\[i\]\]\.title:viewedReadingCards/);
 });
-test('P2: distinct techniques keep full portrait, separate caption and three different release palettes',()=>{
+test('v18: special illustration always fills viewport with separate smoke/light and no repeated title',()=>{
  const js=load('caritas-battle-event.js');
  const css=load('caritas-resonance-ux.css');
- const visual=css.slice(css.indexOf('/* v16 / P2'));
+ const visual=css.slice(css.indexOf('/* v18 — cinematic full-bleed'));
  assert.match(js,/const TECHNIQUE_MOTION=Object\.freeze/);
  for(const id of ['18-the-moon','08-strength','17-the-star']){
-  assert.ok(js.includes("'"+id+"':{"),id+' needs its own camera/release frames');
-  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::after'),id+' needs distinct light');
-  assert.ok(visual.includes('[data-card="'+id+'"][data-special="PURIFICATION"] .cb-release'),id+' needs distinct release');
+  assert.ok(js.includes("'"+id+"':{"),id+' needs its own purification frames');
+  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::before'),id+' needs unique smoke');
+  assert.ok(visual.includes('[data-card="'+id+'"] .cb-special-art::after'),id+' needs unique light');
+  assert.ok(visual.includes('[data-card="'+id+'"][data-special="PURIFICATION"] .cb-release'),id+' needs unique release');
  }
- assert.match(visual,/object-fit:contain!important/);
- assert.match(visual,/\.cb-special-caption\{/);
+ assert.match(visual,/min-width:108%!important;min-height:108%!important/);
+ assert.match(visual,/object-fit:cover!important/);
+ assert.match(visual,/\.cb-special-caption\{display:none!important\}/);
+ assert.match(visual,/cb-special-smoke/);
  assert.match(visual,/prefers-reduced-motion:reduce/);
- assert.match(js,/ui\.artPlayback\.replaceChildren\(ui\.artBackdrop,ui\.artImage,ui\.artCaption\)/);
+ assert.match(visual,/data-special="DUAL_INCANTATION"/);
+ assert.match(js,/kind!=='hold'&&kind!=='art'/);
+ assert.match(js,/ui\.artPlayback\.replaceChildren\(ui\.artImage\)/);
+ assert.doesNotMatch(js,/setText\(ui\.artTitle,t\.title\)/);
  assert.match(js,/short\?'600ms':'2600ms'/);
  assert.match(js,/transitionSpecial\('PURIFICATION',\{imageDisplayed:ready&&ui\.artImage\.naturalWidth>0\}\)/);
 });
@@ -198,4 +204,30 @@ test('v17 iPhone keyboard never exposes cards, and writing aftermath never repea
  assert.match(js,/stage\("written-light",1400,/);
  assert.match(js,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
  assert.match(js,/battle=C\.applyWrittenReading\(before,Array\.isArray\(data\.understandingIds\)\?data\.understandingIds:\[\],!firstWrittenDelivered\)/);
+});
+
+test('dual-incantation uses two large, nonwrapping lines inside the canonical shared window, for all three moves',()=>{
+ const js=load('caritas-battle-event.js');
+ const css=load('caritas-resonance-ux.css');
+ const shared=load('shared-dialogue.css');
+ const html=load('hoshisuna-main.html');
+ const dual=css.slice(css.indexOf('/* Dual technique chant ONLY:'),css.indexOf('[data-card="18-the-moon"][data-special="PURIFICATION"]'));
+ assert.match(dual,/#game-shell:has\(#caritas-event:not\(\[hidden\]\)\[data-special="DUAL_INCANTATION"\]\) #dialogue-layer \.tb-dialogue-text/);
+ assert.match(dual,/white-space:pre!important/,'explicit newline remains, no extra wraps');
+ assert.match(dual,/overflow-wrap:normal!important;word-break:keep-all!important/);
+ assert.match(dual,/text-wrap:nowrap/);
+ assert.match(dual,/font-size:clamp\(17px,5\.6vw,26px\)!important/);
+ assert.match(dual,/font-weight:750/);
+ assert.match(shared,/font-size:\s*clamp\(18px,\s*4\.6vw,\s*21px\)/,'other dialogue still uses original main style');
+ assert.match(html,/ux-20261103-dual-chant-v19/,'Safari must get the updated scoped stylesheet');
+ for(const [title,reading] of [
+  ['星幻迷宮','アストラル・ミラージュ！！'],
+  ['星獣咆哮','アストラル・ブレイヴ！！'],
+  ['星望祈願','アストラル・グリモワール！！']
+ ]){
+  assert.ok(js.includes("chant:'"+title+"\\n"+reading+"'"),'each chant has exactly one intentional line break');
+  assert.ok([...reading].length<=14,'longest reading must fit at 5.6vw on a 320px screen');
+ }
+ const baseWidth=320,dialogueTextWidth=baseWidth*.92-36;
+ assert.ok(14*(baseWidth*.056)*.975<=dialogueTextWidth,'longest katakana line fits 320px iPhone dialogue');
 });
