@@ -236,24 +236,22 @@ function beginBattle(){
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}toast("月・力・星のカードをタップして意味を選ぼう");}
 }
 const TECHNIQUES=Object.freeze({
- '18-the-moon':{name:'月',meaning:'分からない想いと向き合う',title:'星幻迷宮',chant:'星幻迷宮──アストラル・ミラージュ！！',reading:'アストラル・ミラージュ',art:'./assets/battle/special/shioriel-18-astral-mirage.webp',shion:'俺には、まだ分からないことがある。だからこそ、お前の言葉を聞きたい。',shioriel:'シオン。見えない想いにも、光は届く。',reply:'……まだ言葉にできぬものがある。だが……隠すしかないと決めなくてもよいのかもしれぬ。'},
- '08-strength':{name:'力',meaning:'弱さを責めず向き合い方を選ぶ',title:'星獣咆哮',chant:'星獣咆哮──アストラル・ブレイヴ！！',reading:'アストラル・ブレイヴ',art:'./assets/battle/special/shioriel-08-astral-brave.webp',shion:'俺は、誰かを責めるためにここへ来たわけじゃない。どう向き合うか、一緒に考えたい！',shioriel:'シオン。その意志に、星の力を重ねよう。',reply:'……強さとは、耐えることだけだと思っていた。……今は、別の向き合い方も探してみたい。'},
- '17-the-star':{name:'星',meaning:'未来を決めつけず希望を探す',title:'星望祈願',chant:'星望祈願──アストラル・グリモワール！！',reading:'アストラル・グリモワール',art:'./assets/battle/special/shioriel-17-astral-grimoire.webp',shion:'お前の明日を、俺が決めるつもりはない。もし望むなら、次の一歩を共に探そう！',shioriel:'シオン。その願いを、星の光に託そう。',reply:'……この先がどうなるかは、まだ分からぬ。……それでも、次の一歩は私が選ぼう。'}
+ '18-the-moon':{name:'月',meaning:'分からない想いと向き合う',title:'星幻迷宮',chant:'星幻迷宮\nアストラル・ミラージュ！！',reading:'アストラル・ミラージュ',art:'./assets/battle/special/shioriel-18-astral-mirage.webp',shion:'俺には、まだ分からないことがある。だからこそ、お前の言葉を聞きたい。',shioriel:'シオン。見えない想いにも、光は届く。',reply:'……まだ言葉にできぬものがある。だが……隠すしかないと決めなくてもよいのかもしれぬ。'},
+ '08-strength':{name:'力',meaning:'弱さを責めず向き合い方を選ぶ',title:'星獣咆哮',chant:'星獣咆哮\nアストラル・ブレイヴ！！',reading:'アストラル・ブレイヴ',art:'./assets/battle/special/shioriel-08-astral-brave.webp',shion:'俺は、誰かを責めるためにここへ来たわけじゃない。どう向き合うか、一緒に考えたい！',shioriel:'シオン。その意志に、星の力を重ねよう。',reply:'……強さとは、耐えることだけだと思っていた。……今は、別の向き合い方も探してみたい。'},
+ '17-the-star':{name:'星',meaning:'未来を決めつけず希望を探す',title:'星望祈願',chant:'星望祈願\nアストラル・グリモワール！！',reading:'アストラル・グリモワール',art:'./assets/battle/special/shioriel-17-astral-grimoire.webp',shion:'お前の明日を、俺が決めるつもりはない。もし望むなら、次の一歩を共に探そう！',shioriel:'シオン。その願いを、星の光に託そう。',reply:'……この先がどうなるかは、まだ分からぬ。……それでも、次の一歩は私が選ぼう。'}
 });
 let selectedCard=null,shortPlayback=false,effectGeneration=0,activeEffect=null;
-// Pure presentation: Moon explores, Strength approaches, Star opens the view.
+// Card-specific purification remains. Fullscreen technique art is stationary;
+// atmospheric light and smoke in CSS carry the motion without exposing image edges.
 // No state, bonuses, durations, or completion order are changed.
 const TECHNIQUE_MOTION=Object.freeze({
  '18-the-moon':{
-  art:[{opacity:.88,transform:'translate3d(2%,0,0) scale(1.06)'},{opacity:1,transform:'translate3d(-1%,0,0) scale(1.01)'}],
   purify:[{opacity:0,transform:'scale(.85)'},{opacity:.86,transform:'scale(1.1)'},{opacity:0,transform:'scale(1.28)'}]
  },
  '08-strength':{
-  art:[{opacity:1,transform:'scale(1)'},{opacity:1,transform:'scale(1.075)'}],
   purify:[{opacity:0,transform:'scale(.65)'},{opacity:1,transform:'scale(1.23)'},{opacity:0,transform:'scale(1.42)'}]
  },
  '17-the-star':{
-  art:[{opacity:.92,transform:'translate3d(0,1%,0) scale(1.08)'},{opacity:1,transform:'translate3d(0,-1%,0) scale(1.01)'}],
   purify:[{opacity:0,transform:'translate3d(0,7%,0) scale(.78)'},{opacity:.9,transform:'translate3d(0,0,0) scale(1.06)'},{opacity:0,transform:'translate3d(0,-5%,0) scale(1.24)'}]
  }
 });
@@ -281,11 +279,10 @@ function runSpecialEffect(el,duration,callback,kind='hold'){
  const job={generation,phase,elapsed:0,last:performance.now(),timer:0,animation:null};activeEffect=job;
  const valid=()=>activeEffect===job&&effectGeneration===generation&&record.special.phase===phase&&!saveBlocked&&!recovery;
  function complete(){if(!valid()||suspended())return;cancelSpecialEffect();callback();}
- if(el?.animate&&!reduced&&kind!=='hold'){
-  // Begin at full viewport coverage, then slowly push in; the same lifecycle handles pause/reload.
+ if(el?.animate&&!reduced&&kind!=='hold'&&kind!=='art'){
+  // The artwork itself never pans, shrinks or zooms; only purification/cut-in effects animate.
   const motion=TECHNIQUE_MOTION[record.special.cardId];
-  const frames=kind==='art'?(motion?.art||[{transform:'scale(1)'},{transform:'scale(1.08)'}])
-   :kind==='purify'?(motion?.purify||[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}])
+  const frames=kind==='purify'?(motion?.purify||[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.1)'}])
    :[{opacity:0,transform:'translateX(-1.5vw)'},{opacity:1,transform:'translateX(0)'}];
   job.animation=el.animate(frames,{duration,fill:'forwards',easing:'ease-in-out'});
   job.animation.finished.then(complete,()=>{});
@@ -371,10 +368,10 @@ function playSpecialSequence(){
  }else if(p==='ART_PLAYBACK'){
   // Shared dialogue is hidden before any art frame becomes visible.
   root.style.setProperty?.('--cb-special-visual-duration',short?'600ms':'2600ms');
-  setText(ui.artTitle,t.title);setText(ui.artReading,t.reading);
+  // The two-line incantation already names the skill; give its full-screen art a clean stage.
   root.dataset.artReady='loading';ui.artPlayback.hidden=false;ui.artImage.hidden=true;ui.artBackdrop.hidden=true;
   specialVisibleWait(1200,ready=>{
-   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の共鳴解放イラスト';ui.artImage.hidden=false;ui.artBackdrop.src=t.art;ui.artBackdrop.hidden=false;ui.artPlayback.replaceChildren(ui.artBackdrop,ui.artImage,ui.artCaption);}
+   if(ready){ui.artImage=preloaded.get(record.special.cardId).image;ui.artImage.className='cb-special-foreground';ui.artImage.alt=t.title+'の共鳴解放イラスト';ui.artImage.hidden=false;ui.artPlayback.replaceChildren(ui.artImage);}
    root.dataset.artReady=String(ready);
    runSpecialEffect(ui.artImage,short?600:2600,()=>transitionSpecial('PURIFICATION',{imageDisplayed:ready&&ui.artImage.naturalWidth>0}),'art');
   });
