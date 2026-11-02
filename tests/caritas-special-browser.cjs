@@ -56,7 +56,10 @@ const C=require('../caritas-battle-core.js'),S=require('../caritas-special-state
   assert.equal(await page.locator('#dialogue-layer').getAttribute('data-actor'),'shion-shioriel');
   assert.equal(await page.locator('.cb-cut-shion').isVisible(),true);assert.equal(await page.locator('.cb-cut-shioriel').isVisible(),true);
   await assertEdgeToEdgeCutin();
+  const chants=['星幻迷宮\\nアストラル・ミラージュ！！','星獣咆哮\\nアストラル・ブレイヴ！！','星望祈願\\nアストラル・グリモワール！！'];
   await page.waitForFunction(()=>/星幻迷宮|星獣咆哮|星望祈願/.test(document.querySelector('#dialogue-text').textContent));
+  assert.equal(await page.locator('#dialogue-text').textContent(),chants[i],'incantation has a fixed kanji/katakana break');
+  assert.equal(await page.locator('#dialogue-text').evaluate(el=>getComputedStyle(el).whiteSpace),'pre-wrap');
   await page.waitForTimeout(650);await page.screenshot({path:path.join(output,'dual-'+label+'.png')});await advance();
   await page.waitForFunction(()=>document.querySelector('#caritas-event').dataset.artReady==='true');
   assert.equal(await page.locator('#dialogue-layer').isVisible(),false);
@@ -68,17 +71,14 @@ const C=require('../caritas-battle-core.js'),S=require('../caritas-special-state
   await page.screenshot({path:path.join(output,'art-'+label+'.png')});await page.waitForTimeout(350);
   const frames=await page.evaluate(()=>window.artFrames);assert.ok(frames.length>2);
   const first=frames[0];
-  assert.ok(first.width>=viewport.width-.5&&first.width<viewport.width*1.025,'art initially covers full screen width');
-  assert.ok(first.height>=viewport.height-.5&&first.height<viewport.height*1.025,'art initially covers full screen height');
   for(const f of frames){
    assert.equal(f.fit,'cover');
-   assert.ok(f.width>=viewport.width-.5&&f.height>=viewport.height-.5,'art always covers the viewport');
-  }
-  if(i===2){
-   assert.ok(frames.every(f=>f.transform==='none'),'reduced-motion keeps art stationary');
-  }else{
-   assert.ok(frames.some(f=>f.width>first.width+viewport.width*.004),'art slowly grows beyond its already-fullscreen initial size');
-   assert.ok(frames.every(f=>f.width<=viewport.width*1.081),'art zoom remains subtle');
+   assert.ok(f.width>=f.area.width*1.07,'image always wider than visual viewport');
+   assert.ok(f.height>=f.area.height*1.07,'image always taller than visual viewport');
+   assert.ok(Math.abs(f.width-first.width)<1,'image width never changes');
+   assert.ok(Math.abs(f.height-first.height)<1,'image height never changes');
+   assert.ok(Math.abs(f.x-first.x)<1&&Math.abs(f.y-first.y)<1,'image never pans');
+   assert.equal(f.transform,'none','image stays stationary on all motion settings');
   }
   await page.waitForFunction(()=>window.CaritasEncounterDebug.getState().special.phase==='CARITAS_REPLY');
   await advance();await advance();await page.waitForFunction(()=>window.CaritasEncounterDebug.getState().done);
