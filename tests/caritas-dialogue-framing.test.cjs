@@ -22,11 +22,19 @@ test('only the battle UI receives the raised composition, not the map camera',()
  assert.match(scene,/const SHIOPON_DRAW_HEIGHT = 76/);
 });
 
-test('battle dialogue uses original-size battlefield and shared dialogue rather than scaling characters',()=>{
- assert.match(event,/const stageHeight=ui\.arena\.getBoundingClientRect\?\.\(\)\.height/);
- assert.match(event,/--cb-dialogue-stage-height/);
- assert.match(css,/flex:0 0 min\(var\(--cb-dialogue-stage-height,34dvh\),calc\(100dvh - var\(--cb-dialogue-space\)\)\)/);
+test('dialogue leaves combat grid and original figure dimensions intact',()=>{
+ assert.match(event,/function frameCaritasDialogue\(\)/);
+ assert.match(event,/dialogue\.elements\.button\.getBoundingClientRect/);
+ assert.match(event,/const figures=\["\.cb-beast","\.cb-shion-sprite","\.cb-angel"\]/);
+ assert.match(event,/--cb-dialogue-stage-shift/);
+ assert.match(css,/v9 — Dialogue belongs OVER the unscaled combat stage/);
+ assert.match(css,/transform:translate3d\(0,var\(--cb-dialogue-stage-shift,0px\),0\)/);
+ assert.match(css,/display:grid!important;\s*height:100dvh;max-height:100dvh;/);
+ assert.match(css,/#caritas-event\[data-dialogue-busy="true"\] \.cb-frame>\.cb-hud\{\s*display:grid!important;visibility:hidden!important/);
  assert.match(shared,/\.tb-dialogue-layer \{/);
  assert.match(event,/layer:document\.getElementById\("dialogue-layer"\)/);
- assert.doesNotMatch(css,/v8:[^]*?(?:transform:scale\(|zoom:)/);
+ // No battle art dimensions, backgrounds, shared dialogue CSS, or map moved.
+ const talk=css.slice(css.indexOf('/* v9 — Dialogue'));
+ assert.doesNotMatch(talk,/transform:scale\(|\bzoom\s*:/);
+ assert.doesNotMatch(scene,/caritasConversationCamera|updateCaritasConversationCamera/);
 });
