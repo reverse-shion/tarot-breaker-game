@@ -1412,3 +1412,97 @@
  }
  #caritas-event[data-gain-pulse="true"] .cb-gain-float{opacity:1}
 }
+
+/* v14 / P0 — Repair visible overlaps before adding further combat effects.
+   Do not move either actor, the camera, the common dialogue or the HP strip. */
+#caritas-event .cb-arena>.cb-title{
+ left:auto!important;right:4%!important;top:8px!important;
+ width:auto!important;min-width:128px;max-width:44%;
+ z-index:16!important;padding:6px 10px;
+ white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
+}
+/* The original title and the left enemy panel now occupy separate columns. */
+#caritas-event[data-phase="battle"] .cb-arena>.cb-hud.enemy{
+ z-index:14!important;
+}
+#caritas-event .cb-card-overlay .cb-card-panel{
+ display:flex;flex-direction:column;align-items:stretch;
+ width:min(calc(100vw - 18px),420px);
+ max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 18px)!important;
+ min-height:0;overflow:hidden!important;gap:5px;padding:9px 11px 10px;
+}
+#caritas-event .cb-modal-header{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+ gap:8px;flex:0 0 auto;width:100%;min-width:0;
+}
+#caritas-event .cb-modal-header .cb-modal-title{
+ min-width:0;font-size:clamp(13px,3.5vw,17px);line-height:1.25;
+ overflow-wrap:anywhere;white-space:normal;display:block;
+}
+#caritas-event .cb-modal-header .cb-modal-close{
+ align-self:center;min-width:62px;min-height:44px;
+ white-space:nowrap;padding:7px;
+}
+#caritas-event .cb-card-panel .cb-modal-mood,
+#caritas-event .cb-card-panel .cb-modal-page,
+#caritas-event .cb-card-panel .cb-modal-selected{flex:0 0 auto}
+#caritas-event[data-phase="battle"] .cb-card-overlay .cb-modal-image{
+ align-self:center;flex:0 1 auto!important;min-height:0;
+ height:clamp(96px,17dvh,148px)!important;
+ max-height:148px!important;max-width:54vw!important;object-fit:contain;
+}
+#caritas-event .cb-card-panel .cb-modal-words{
+ order:1;display:grid;gap:7px;width:100%;
+ min-height:0;flex:1 1 auto;overflow-y:auto!important;
+ overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+ padding:2px 3px 8px;
+}
+#caritas-event .cb-card-panel .cb-modal-word{
+ min-height:65px;flex:0 0 auto;
+ display:flex;flex-direction:column;justify-content:center;
+ gap:4px;padding:9px 11px;line-height:1.36;
+}
+#caritas-event .cb-card-panel .cb-modal-navigation{
+ order:2;flex:0 0 auto;margin-top:2px;padding-top:3px;
+ border-top:1px solid #635e78;
+}
+#caritas-event .cb-card-panel .cb-modal-navigation button{min-height:44px}
+#caritas-event .cb-card-panel .cb-modal-words[hidden]{
+ display:none!important;
+}
+#caritas-event .cb-special-selection{
+ background:#0d1328!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ isolation:isolate;
+}
+#caritas-event .cb-special-meaning{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:6px;width:min(100%,460px);min-height:86px;
+ padding:9px 12px;border:1px solid #897b87;border-radius:10px;
+ background:#22253a!important;color:#f6e8d8;
+}
+#caritas-event .cb-special-title{
+ display:block;width:100%;text-align:center;
+ font-size:clamp(19px,5vw,24px);font-weight:750;color:#f3d8a7;
+ line-height:1.25;white-space:nowrap;
+}
+#caritas-event .cb-special-reading{
+ display:block;width:100%;text-align:center;
+ font-size:clamp(13px,3.45vw,16px);line-height:1.4;
+ white-space:nowrap;word-break:keep-all;
+ color:#d8cdec;letter-spacing:0;
+}
+#caritas-event .cb-special-description{
+ margin:0;font-size:clamp(12px,3.25vw,14px);
+ line-height:1.5;text-align:center;color:#ede1d4;
+}
+@media(max-height:670px){
+ #caritas-event .cb-card-overlay .cb-card-panel{
+  gap:3px;padding:7px 9px;
+ }
+ #caritas-event[data-phase="battle"] .cb-card-overlay .cb-modal-image{
+  height:clamp(75px,14dvh,110px)!important;max-height:110px!important;
+ }
+ #caritas-event .cb-card-panel .cb-modal-word{min-height:55px;padding:7px 9px}
+ #caritas-event .cb-special-meaning{min-height:75px;padding:6px 9px}
+}
