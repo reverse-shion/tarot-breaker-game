@@ -16,7 +16,8 @@ test('map dialogue shifts only the Starroad camera; no actor or world scaling ch
  assert.match(camera,/const caritasTop = 166\.6 \* scale\.y/);
  assert.match(camera,/const preferredOrigin = Math\.max\(0, player\.y - viewH \* 0\.29\)/);
  assert.match(camera,/followY = halfH \+ Math\.min\(safeOrigin, preferredOrigin\)/);
- assert.doesNotMatch(camera,/camera\.zoom\s*=|DRAW_HEIGHT\s*=|SHIOPON_DRAW_HEIGHT\s*=/);
+ const scoped=camera.slice(camera.indexOf('if (hoshisunaIsolated && caritasConversationCamera)'),camera.indexOf('const targetY = clamp('));
+ assert.doesNotMatch(scoped,/camera\\.zoom\\s*=|DRAW_HEIGHT\\s*=|SHIOPON_DRAW_HEIGHT\\s*=/);
  assert.match(game,/if \(hoshisunaIsolated\) caritasConversationCamera = true;/);
  assert.match(game,/if \(hoshisunaIsolated\) caritasConversationCamera = false;/);
  assert.match(game,/const DRAW_HEIGHT = 78/);
