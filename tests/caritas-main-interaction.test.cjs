@@ -661,6 +661,8 @@ test('stage 3 iPhone visual viewport changes only the writing sheet, never the b
  assert.equal(root.style['--cb-visible-height'],'334px');
  assert.equal(root.style['--cb-visible-top'],'17px');
  assert.equal(root.dataset.keyboardTight,'true');
+ assert.equal(root.dataset.writingScreen,'true','overlay stays active during keyboard resize');
+ assert.equal(root.querySelector('.cb-writing-overlay').hidden,false);
  assert.equal(frame.children[0],arena);
  assert.equal(frame.children[1],band);
  assert.equal(root.querySelector('.cb-ai-send').parentElement,root.querySelector('.cb-writing-footer'));
@@ -687,6 +689,10 @@ test('written delivery commits once only after both shared dialogue pages, then 
  f.pointer.advance();
  assert.equal(f.state().story,'written-light');
  assert.equal(f.state().battle.resonance,50);
+ const aftermath=root.querySelector('.cb-written-light');
+ assert.equal(aftermath.attributes['aria-hidden'],'true','after-dialogue visual needs no second spoken content');
+ assert.equal(aftermath.children.length,1,'after-dialogue screen contains only a light, not another quote panel');
+ assert.ok(aftermath.flatten().every(el=>!el.textContent.includes('大丈夫')),'submitted writing is never shown again after Shion speaks');
  assert.equal(saved(f).firstWrittenDelivered,true);
  assert.equal(saved(f).aiConfirmedCalls,1);
  assert.equal(meter(root),'0/100','meter waits for the light reaching its destination');
