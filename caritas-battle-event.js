@@ -1037,8 +1037,8 @@ function init(){
  const statusBand=newEl("div","cb-status-band");
  statusBand.setAttribute("aria-label","シオリエルのHPと星響");
  statusBand.append(hero);
- arena.prepend(enemy);
- ctr.prepend(narr);
+ arena.append(enemy);
+ ctr.append(narr);
  frame.append(arena,statusBand,ctr);
  ui.toast=newEl("div","cb-toast");ui.toast.hidden=true;
  ui.guide=newEl("div","cb-tutorial");ui.guide.hidden=true;
