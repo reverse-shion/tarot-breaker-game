@@ -639,6 +639,7 @@ function render(){
  root.dataset.writingScreen=String(writingScreen);
  ui.writingOverlay.hidden=!writingScreen;
  ui.readingIntro.hidden=true; // Entry stays in the lower controls, never over the actors.
+ ui.commandPrompt.hidden=!(reading&&!readingOpen);
  ui.controls.hidden=false;
  cardBox.hidden=!(readingOpen&&reading)&&!finisher;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
@@ -699,7 +700,7 @@ function render(){
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
   btn.addEventListener("click",()=>openCard(i));
-  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+SHORT_READING_TITLES[s.words[i]]:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
+  section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
   cardBox.append(section);
  }
  if(p){
@@ -738,14 +739,15 @@ function render(){
   ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3&&!!p)||aiBusy||dialogueBusy||committing;
   // Keep the primary button in one fixed place. Its own label communicates
   // progress; the separate gold progress banner is no longer needed.
-  setText(ui.selectSend,chosenCount===3?"この言葉を届ける":"あと"+(3-chosenCount)+"枚で届けられます");
+  setText(ui.selectSend,chosenCount===3?"この言葉を届ける":"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
- setText(ui.skillHint,finisher?"共鳴解放の準備が整いました":"共鳴が満ちると解放");
+ setText(ui.skillHint,"共鳴が満ちると解放");
+ ui.skillHint.hidden=finisher;
  if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
  ui.read.disabled=!reading||aiBusy||committing;
  ui.skill.disabled=!finisher||!C.canSkill(s);
- ui.finisher.hidden=!(story==="battle"&&s.phase==="finisher");
+ ui.finisher.hidden=true; // MAX is already in the fixed meter and the enabled skill button.
  if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　共鳴解放が可能になりました");
  // Show a single short toast instead of an overlay that obscures the card row.
  ui.guide.hidden=true;
@@ -758,7 +760,7 @@ function render(){
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
-  ui.modalWords.hidden=deliveryMethod==="write";
+  ui.modalWords.hidden=false;
   setText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
    :deliveryMethod==="write"?"カードの意味を参考にできます":"3つの解釈から選んでください");
@@ -766,7 +768,16 @@ function render(){
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
   setText(ui.modalMood,"カリタスの心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.modalPage,(modalIndex+1)+" / "+s.cards.length);
-  if(deliveryMethod==="write")return;
+  if(deliveryMethod==="write"){
+   for(const word of card.words){
+    const option=C.READING_OPTIONS[word];
+    const reference=newEl("div","cb-modal-reference");
+    reference.append(newEl("strong","cb-modal-word-title",option.title),
+     newEl("span","cb-modal-word-desc",option.text));
+    ui.modalWords.append(reference);
+   }
+   return;
+  }
   for(const word of card.words){
    const option=C.READING_OPTIONS[word];
    const btn=newEl("button","cb-modal-word");btn.type="button";
@@ -1008,6 +1019,7 @@ function init(){
  const narr=newEl("div","cb-narration");narr.append(newEl("span","cb-narr-speaker","星の声"));
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
+ ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
  // Stage 2: select-mode tarot reading is an independent full-viewport surface.
  // It retains the exact three existing cards, choices and C.select/C.read.
  const tarotHeader=newEl("header","cb-tarot-header");ui.tarotHeader=tarotHeader;tarotHeader.hidden=true;
@@ -1126,7 +1138,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(tarotHeader,methods,cardBox,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
+ ctr.append(ui.commandPrompt,tarotHeader,methods,cardBox,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
