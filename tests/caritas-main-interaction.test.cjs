@@ -454,7 +454,8 @@ async function finishSpecial(f){
  assert.equal(regroup.length,1,'Shiopon approaches exactly once before input returns');
  assert.equal(regroup[0].type,'move');
  assert.equal(regroup[0].caritasSafe,true,'the staged route must respect the map and avoid Shion');
- assert.deepEqual(regroup[0].target,{x:f.pointer.actor.x,y:f.pointer.actor.y+56});
+ assert.equal(regroup[0].target.x,f.pointer.actor.x);
+ assert.equal(regroup[0].target.y,f.pointer.actor.y+56);
  assert.equal(f.pointer.companion.x,f.pointer.actor.x);
  assert.equal(f.pointer.companion.y,f.pointer.actor.y+56,'normal follow should already be satisfied on unlock');
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
