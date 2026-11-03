@@ -7,6 +7,8 @@
  const FRAMES=Array.from({length:16},(_,i)=>BASE+'sg_rise_'+String(i+1).padStart(2,'0')+'.webp');
  const FRAME_ENDS=[320,510,700,890,1070,1250,1430,1600,1770,1950,2130,2310,2500,2690,2900,3200];
  const RISE_MS=FRAME_ENDS[FRAME_ENDS.length-1];
+ // Existing approved 16-frame sprite is divided at frame 6: head lift, then rising.
+ const HEAD_MS=FRAME_ENDS[5],STAND_MS=RISE_MS-HEAD_MS;
  const FADE_MS=1800;
  let img=null,playing=false,clock=0,token=0,ready=false,preloaded=[];
  const reduce=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
@@ -48,6 +50,29 @@
    if(index!==current){current=index;el.src=FRAMES[index];}
   }).then(ok=>{if(ok)el.src=FRAMES[15];return ok;});
  }
+ function liftHead(){
+  const el=target();if(!el)return Promise.resolve(false);
+  playing=true;preload();el.style.opacity='1';el.src=FRAMES[0];
+  if(reduce()){el.src=FRAMES[5];return Promise.resolve(true);}
+  let frame=-1;
+  return animate(HEAD_MS,p=>{
+   const at=Math.min(HEAD_MS-1,p*HEAD_MS);
+   const index=Math.min(5,Math.max(0,FRAME_ENDS.findIndex(end=>at<end)));
+   if(index!==frame){frame=index;el.src=FRAMES[index];}
+  }).then(ok=>{if(ok)el.src=FRAMES[5];return ok;});
+ }
+ function standUp(){
+  const el=target();if(!el)return Promise.resolve(false);
+  playing=true;preload();el.style.opacity='1';el.src=FRAMES[5];
+  if(reduce()){el.src=FRAMES[15];return Promise.resolve(true);}
+  let frame=5;
+  return animate(STAND_MS,p=>{
+   const at=HEAD_MS+p*STAND_MS;
+   let index=FRAME_ENDS.findIndex(end=>at<end);
+   if(index<0)index=15;
+   if(index!==frame){frame=index;el.src=FRAMES[index];}
+  }).then(ok=>{if(ok)el.src=FRAMES[15];return ok;});
+ }
  function stand(){
   const el=target();if(!el)return false;
   ++token;playing=true;el.style.opacity='1';el.src=FRAMES[15];return true;
@@ -75,6 +100,6 @@
    if(img.src.split('/').pop()!==src.split('/').pop())img.src=src;
   },180);
  }
- window.TarotHoshisunaCaritasOutro=Object.freeze({preload,rise,stand,fade,reset,frames:FRAMES});
+ window.TarotHoshisunaCaritasOutro=Object.freeze({preload,rise,liftHead,standUp,stand,fade,reset,frames:FRAMES});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
