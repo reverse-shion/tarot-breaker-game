@@ -33,11 +33,16 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={frames,options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},companion:{x:950,y:305},advance:null,colliding:true,dialogueOptions:null};
- const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},
+ const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},dismissCards(){pointer.cardsDismissed=(pointer.cardsDismissed||0)+1;pointer.cards=false;return true},
    startChant(){pointer.chant="rising";(pointer.chantHistory??=[]).push("rising");return true},
    sealChant(){pointer.chant="sealed";(pointer.chantHistory??=[]).push("sealed");return true},
    moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
+  TarotHoshisunaCaritasOutro:{
+    liftHead(){(pointer.outro??=[]).push("liftHead");return Promise.resolve(true)},
+    standUp(){(pointer.outro??=[]).push("standUp");return Promise.resolve(true)},
+    fade(){(pointer.outro??=[]).push("fade");return Promise.resolve(true)}
+  },
   TarotDialogueUI:{bind:o=>{pointer.advance=o.onAdvance;pointer.dialogueOptions=o;return{show:p=>lines.push(p),hide(){},elements:{layer:o.layer,button:o.button}}}},dispatchEvent:e=>events.push(e.type),addEventListener:(n,f)=>windowListeners[n]=f,matchMedia:()=>({matches:reduced})};
  class MockEvent{constructor(type){this.type=type}}
  let now=0,id=0;const tasks=new Map(),requests=[];
@@ -394,33 +399,59 @@ async function finishSpecial(f){
  assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();
  assert.equal(f.state().special.phase,'FAREWELL');
  assert.equal(f.shell.querySelector('#caritas-event').hidden,true,'real Starroad visible before the farewell');
- assert.equal(f.lines.at(-1).text,'……終わった、のか。');
- f.pointer.advance();f.pointer.advance(); // Map: Shion and Caritas opening.
- await Promise.resolve();await Promise.resolve();
- assert.match(f.lines.at(-1).text,/救われる側/);
- // 15 farewell lines: the name is not displayed until the self-introduction finishes.
- for(let i=0;i<15;i++){
-  const last=f.lines.at(-1);
-  if(i===0)assert.equal(last.speaker,'星獣');
-  if(i===12){assert.equal(last.speaker,'星獣');assert.equal(last.text,'私はカリタス。慈愛のカリタス。');}
-  if(i===13){assert.equal(last.speaker,'カリタス');assert.match(last.text,/さらばだ/);}
-  if(i===14){assert.equal(last.speaker,'カリタス');assert.equal(last.text,'……また会おう。');}
-  f.pointer.advance();
- }
+ const opening=[
+  ['星獣','迷惑をかけたな。'],
+  ['シオン','もう大丈夫なのか？ 一体、何が起きたんだ。'],
+  ['星獣','分からぬ。アビスに呑まれるなど思いもせず、ただ己の弱さを恥じていた。']
+ ];
+ for(const [speaker,text] of opening){assert.equal(f.lines.at(-1).speaker,speaker);assert.equal(f.lines.at(-1).text,text);f.pointer.advance();}
+ await flush();
+ assert.deepEqual(f.pointer.outro,['liftHead'],'head lifts only after Shion asks what happened');
+ assert.equal(f.lines.at(-1).text,'それでも、闇の底で二人の言葉が聞こえた。礼を言う。');
+ f.pointer.advance();assert.equal(f.lines.at(-1).text,'無事でよかった。');f.pointer.advance();
+ f.advanceTime(319);assert.equal(f.lines.at(-1).text,'無事でよかった。');
+ f.advanceTime(1);
+ const secret=[
+  ['星獣','長き旅路の果てに、こうしてお目にかかれるとは。しおぽんさ――'],
+  ['星獣','いや。忘れてくれ。'],
+  ['シオン','今、何を言いかけた。'],
+  ['星獣','それは、私の口から語ることではない。'],
+  ['シオン','そうか。']
+ ];
+ for(const [speaker,text] of secret){assert.equal(f.lines.at(-1).speaker,speaker);assert.equal(f.lines.at(-1).text,text);f.pointer.advance();}
+ await flush();
+ assert.deepEqual(f.pointer.outro,['liftHead','standUp'],'standing begins after Shion respects the silence');
+ const nameAndFarewell=[
+  ['星獣','シオン。この先は、決して優しい道ではない。'],
+  ['シオン','ああ。それでも進む。'],
+  ['星獣','今の言葉を忘れぬようにな。'],
+  ['星獣','私はカリタス。慈愛のカリタス。'],
+  ['カリタス','お前たちの旅路に、星の導きがあらんことを。'],
+  ['カリタス','また会おう。']
+ ];
+ for(const [speaker,text] of nameAndFarewell){assert.equal(f.lines.at(-1).speaker,speaker);assert.equal(f.lines.at(-1).text,text);f.pointer.advance();}
  assert.equal(f.state().special.phase,'RETURNING');
- await Promise.resolve();await Promise.resolve();
- assert.match(f.lines.at(-1).text,/あの子/,'Shiopon reacts only after Caritas leaves the map');
- f.pointer.advance();
- assert.equal(f.lines.at(-1).text,'ああ。何かを知っているようだったな。');
- f.pointer.advance();
- assert.equal(f.lines.at(-1).text,'……慈愛のカリタス、か。');
+ await flush();
+ assert.deepEqual(f.pointer.outro,['liftHead','standUp','fade']);
+ assert.equal(f.lines.at(-1).speaker,'シオン');
+ assert.equal(f.lines.at(-1).text,'慈愛のカリタス、か。','name remains readable even if RETURNING resumes without reveal flag');
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'しおぽん');assert.equal(f.lines.at(-1).text,'シオンさん。');
  f.pointer.advance();
  assert.equal(f.state().special.phase,'RETURNING','closing dialogue not skipped');
+ assert.equal(f.pointer.cards,true,'original tarot card backs return for the quiet glance');
  f.advanceTime(1100);
- assert.equal(f.lines.at(-1).text,'タロットクローズ');
+ assert.equal(f.lines.at(-1).text,'タロットクローズ。');
  f.pointer.advance();
+ assert.equal(f.pointer.cardsDismissed,1,'the card glow closes only after the spoken command');
+ f.advanceTime(850);
+ assert.equal(f.lines.at(-1).text,'さあ、星砂を探しに行こう。');
+ f.pointer.advance();assert.equal(f.lines.at(-1).text,'はいなの〜！');
+ f.pointer.advance();await flush();
  assert.equal(f.state().special.phase,'DONE');
+ assert.ok(f.pointer.stageCommands.some(c=>c.type==='step'&&c.actor==='shion'));
+ assert.ok(f.pointer.stageCommands.some(c=>c.type==='step'&&c.actor==='shiopon'));
 }
+
 test('P0/P1 fixed detail header, and writing reference contains three complete meanings without selecting',async()=>{
  const f=fixture(),root=await enter(f);
  assert.equal(root.querySelector('.cb-command-prompt').hidden,false);
@@ -467,8 +498,8 @@ test('ordinary tarot MAX opens all three choices, commits A, resolves B and reta
  await finishSpecial(f);
  assert.equal(f.state().battle.phase,'complete');assert.equal(f.state().special.phase,'DONE');
  assert.equal(root.hidden,true);assert.equal(f.pointer.colliding,false);assert.equal(f.creature.hidden,true);
- assert.equal(f.lines.filter(l=>l.text.includes('……シオリエル。いや……しおぽん')).length,1);
- assert.equal(f.lines.filter(l=>l.text==='タロットクローズ').length,1);
+ assert.equal(f.lines.filter(l=>l.text.includes('しおぽんさ――')).length,1);
+ assert.equal(f.lines.filter(l=>l.text==='タロットクローズ。').length,1);
  assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
  const resumed=fixture({persistentStore:f.persistentStore});assert.equal(resumed.state().done,true);assert.equal(resumed.creature.hidden,true);assert.equal(resumed.pointer.colliding,false);assert.equal(resumed.pointer.mapPhase,'idle');
 });
@@ -815,14 +846,17 @@ test('every committed phase restores same page, B boundary and locked map',async
   if(phase==='DUAL_INCANTATION'){assert.equal(f.lines.at(-1).actor,'shion-shioriel');assert.equal(f.lines.at(-1).speaker,'シオン＆シオリエル');}
   if(phase==='PURIFICATION'){f.advanceTime(1099);assert.equal(f.state().battle.dark,42);f.advanceTime(1);assert.equal(f.state().battle.dark,0);}
   if(phase==='RETURNING'){
-    await Promise.resolve();await Promise.resolve();
-    f.pointer.advance();f.pointer.advance();
-    assert.equal(f.lines.at(-1).text,'……慈愛のカリタス、か。');
-    f.pointer.advance();
+    await flush();
+    assert.equal(f.lines.at(-1).text,'慈愛のカリタス、か。');
+    f.pointer.advance();assert.equal(f.lines.at(-1).text,'シオンさん。');f.pointer.advance();
     f.advanceTime(1100);
-    assert.equal(f.lines.at(-1).text,'タロットクローズ');
+    assert.equal(f.lines.at(-1).text,'タロットクローズ。');
     assert.equal(saved(f).special.phase,'RETURNING');
-    f.pointer.advance();assert.equal(saved(f).special.phase,'DONE');
+    f.pointer.advance();f.advanceTime(850);
+    assert.equal(f.lines.at(-1).text,'さあ、星砂を探しに行こう。');
+    f.pointer.advance();assert.equal(f.lines.at(-1).text,'はいなの〜！');
+    f.pointer.advance();await flush();
+    assert.equal(saved(f).special.phase,'DONE');
     assert.equal(saved(f).revision,1);f.page('pageshow');assert.equal(saved(f).revision,1);
    }
  }
