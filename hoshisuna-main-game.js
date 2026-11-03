@@ -1874,16 +1874,15 @@
   }
   function paintCaritasTarotSpread(){
     if(!hoshisunaIsolated||!caritasTarotSpread.active||!caritasTarotBack)return;
-    const phase=caritasInvocation.phase;
-    if(phase==="revealed")return;
+    // Tarot backs persist through manifestation, battle and map farewell.
+    // Shioriel returning to Shiopon is NOT a Tarot Close.
     const elapsed=caritasTarotElapsed();
     // Farewell: reuse the original tarot backs and gently close their light.
     const closeFade=caritasTarotSpread.closeAt===null?1:
       1-caritasOwnerSmooth((elapsed-caritasTarotSpread.closeAt)/850);
     if(closeFade<=0){caritasTarotSpread.active=false;return;}
     const entrance=caritasOwnerSmooth(elapsed/450);
-    const fade=phase==="charging"?1-caritasOwnerSmooth((caritasInvocationProgress()*CARITAS_MANIFESTATION_DURATION_MS-4100)/600):1;
-    if(entrance*fade*closeFade<=0)return;
+    if(entrance*closeFade<=0)return;
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const lift=reduced?0:(1-entrance)*8;
     const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
@@ -1891,7 +1890,7 @@
     const calm=reduced?1:.94+.06*Math.cos(elapsed*Math.PI/1050);
     const envelope=Math.min(1.35,.20+sharedGlow*.42)*calm;
     const mask=getCaritasTarotLuminousMask();
-    ctx.save();ctx.globalAlpha*=entrance*fade*closeFade;
+    ctx.save();ctx.globalAlpha*=entrance*closeFade;
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
     for(const card of cards){
       const y=card.y+lift,left=card.x-card.width/2,top=y-card.height/2;
@@ -3712,9 +3711,9 @@
       caritasChant.phase="sealed";
       return true;
     },
-    deployCards(){
+    deployCards({instant=false}={}){
       if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
-      caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;caritasTarotSpread.closeAt=null;
+      caritasTarotSpread.active=true;caritasTarotSpread.elapsed=instant?450:0;caritasTarotSpread.closeAt=null;
       caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=document.hidden;
       draw();return true;
     },
@@ -3815,17 +3814,19 @@
       caritasInvocation.since=performance.now();caritasInvocation.paused=false;
       window.TarotCaritasManifestationAudio?.resume?.();
     },
-    clear(){
+    clear({keepCards=false}={}){
       window.TarotCaritasManifestationAudio?.clear?.();
       // An interrupted/retried event must not leave the fox's scripted
       // collision route running invisibly after returning to the world.
       if(stageMotions.shiopon?.caritasSafe)
         settleStageMotion("shiopon",stageMotions.shiopon,{skipped:true});
-      caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;caritasTarotSpread.closeAt=null;
+      // Keep the exact three deployed cards during post-battle dialogue.
+      // The only successful ending that removes them is dismissCards() at Close.
+      if(!keepCards){caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;caritasTarotSpread.closeAt=null;}
       caritasChant.phase="idle";caritasChant.elapsed=0;
       caritasChant.sealedAt=0;caritasChant.paused=false;
       caritasSafeNavigator=null;caritasSafeNavigatorKey="";
-      caritasTarotSpread.since=0;caritasTarotSpread.paused=false;
+      if(!keepCards){caritasTarotSpread.since=0;caritasTarotSpread.paused=false;}
       // Reset the actual canvas sprite BEFORE the battle overlay goes away.
       // Idempotent: also safe during the returning phase and on final finish.
       caritasInvocation.phase="idle";caritasInvocation.locked=false;

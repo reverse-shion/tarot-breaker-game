@@ -92,7 +92,10 @@ test('author-approved three-act outro preserves all lines, reveal order and clos
  const ending=event.slice(event.indexOf('function playMapFarewell(next){'),event.indexOf('function beginEnding(){'));
  assert.match(ending,/outro\?\.liftHead\?\.\(\)/);
  assert.match(ending,/outro\?\.standUp\?\.\(\)/);
- assert.match(ending,/TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/);
+ assert.doesNotMatch(ending,/window\.TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/,"no second deployment before closing");
+ const mapReturn=event.slice(event.indexOf('function showFarewellOnMap(){'),event.indexOf('function playMapFarewell(next){'));
+ assert.match(mapReturn,/manifestation\?\.clear\?\.\(\{keepCards:true\}\)/,"restoring Shiopon retains the deployed three-card spread");
+ assert.match(mapReturn,/manifestation\?\.deployCards\?\.\(\{instant:true\}\)/,"only late reload can recover a missing spread");
  assert.match(ending,/TarotHoshisunaManifestation\?\.dismissCards\?\.\(\)/);
  assert.match(ending,/saySequence\(FAREWELL_DEPART,\(\)=>/);
  assert.match(ending,/type:"move",actor:"shiopon",target:destination,duration,caritasSafe:true/);
@@ -109,5 +112,5 @@ test('星獣 is the only pre-reveal display spelling, with the original first Sh
  assert.match(event,/\["シオン","……しおぽん、待て。星獣がいる。"\]/);
  assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"星獣"/);
  assert.match(event,/const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。"/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-farewell-three-acts-v23/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-persistent-v24/);
 });

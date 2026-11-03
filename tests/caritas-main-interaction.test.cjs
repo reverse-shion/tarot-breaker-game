@@ -33,10 +33,10 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={frames,options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},companion:{x:950,y:305},advance:null,colliding:true,dialogueOptions:null};
- const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);if(command.type==="move"&&command.actor==="shiopon")pointer.companion={...command.target};return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},dismissCards(){pointer.cardsDismissed=(pointer.cardsDismissed||0)+1;pointer.cards=false;return true},
+ const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);if(command.type==="move"&&command.actor==="shiopon")pointer.companion={...command.target};return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards({instant=false}={}){if(pointer.cards)return false;pointer.cards=true;pointer.cardDeployments=(pointer.cardDeployments||0)+1;pointer.instantDeploy=instant;return true},getState(){return {cardsActive:!!pointer.cards}},dismissCards(){pointer.cardsDismissed=(pointer.cardsDismissed||0)+1;pointer.cards=false;return true},
    startChant(){pointer.chant="rising";(pointer.chantHistory??=[]).push("rising");return true},
    sealChant(){pointer.chant="sealed";(pointer.chantHistory??=[]).push("sealed");return true},
-   moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
+   moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear({keepCards=false}={}){if(!keepCards)pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
   TarotHoshisunaAbyss:{setPhase:p=>{(pointer.abyssPhases??=[]).push(p);pointer.abyss=p;return true}},
   TarotHoshisunaCaritasOutro:{
     liftHead(){(pointer.outro??=[]).push("liftHead");return Promise.resolve(true)},
@@ -399,6 +399,8 @@ async function finishSpecial(f){
  assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();
  assert.equal(f.state().special.phase,'FAREWELL');
  assert.equal(f.shell.querySelector('#caritas-event').hidden,true,'real Starroad visible before the farewell');
+ assert.equal(f.pointer.cards,true,'three original Tarot backs still deployed when Shiopon returns');
+ assert.equal(f.pointer.cardDeployments,1,'no second card deployment at the map farewell');
  const opening=[
   ['星獣','迷惑をかけたな。'],
   ['シオン','もう大丈夫なのか？ 一体、何が起きたんだ。'],
@@ -441,8 +443,11 @@ async function finishSpecial(f){
  assert.equal(f.pointer.cards,true,'original tarot card backs return for the quiet glance');
  f.advanceTime(1100);
  assert.equal(f.lines.at(-1).text,'タロットクローズ。');
+ assert.equal(f.pointer.cards,true,'cards remain while the Tarot Close line is displayed');
+ assert.equal(f.pointer.cardDeployments,1,'tarot is never deployed again during the farewell');
  f.pointer.advance();
  assert.equal(f.pointer.cardsDismissed,1,'the card glow closes only after the spoken command');
+ assert.equal(f.pointer.cards,false,'the original spread was dismissed at Tarot Close');
  f.advanceTime(850);
  assert.equal(f.lines.at(-1).text,'さあ、星砂を探しに行こう。');
  f.pointer.advance();assert.equal(f.lines.at(-1).text,'はいなの〜！');
@@ -860,6 +865,8 @@ test('every committed phase restores same page, B boundary and locked map',async
     f.pointer.advance();assert.equal(f.lines.at(-1).text,'シオンさん。');f.pointer.advance();
     f.advanceTime(1100);
     assert.equal(f.lines.at(-1).text,'タロットクローズ。');
+    assert.equal(f.pointer.cards,true,'restored RETURNING keeps cards displayed until the Close');
+    assert.equal(f.pointer.cardDeployments,1);
     assert.equal(saved(f).special.phase,'RETURNING');
     f.pointer.advance();f.advanceTime(850);
     assert.equal(f.lines.at(-1).text,'さあ、星砂を探しに行こう。');
