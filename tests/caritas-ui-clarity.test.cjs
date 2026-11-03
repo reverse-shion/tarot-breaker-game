@@ -50,7 +50,7 @@ test('one primary action per screen; writer references explain the role and keyb
  assert.match(css,/\[data-reading-mode="select"\] \.cb-delivery-methods,/);
  assert.match(css,/\[data-reading-mode="select"\] \.cb-card \.cb-chosen/);
  assert.match(event,/\["月｜現在地","力｜行動","星｜届け方"\]/);
- assert.match(event,/聖獣の返答を待っています…/);
+ assert.match(event,/星獣の返答を待っています…/);
  assert.match(event,/aiBusy\?"送信中"/);
  assert.match(event,/このターンは送信済（残り/);
  assert.match(css,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?max-height:none!important/);
@@ -77,13 +77,24 @@ test('the beast reveals its name only at farewell, then Shion reflects before Ta
  assert.ok(farewell.indexOf('["カリタス",CARITAS_REVEAL_LINE]')<farewell.indexOf('["カリタス","……また会おう。"]'));
  assert.match(event,/dialogueIndex>CARITAS_REVEAL_INDEX\)caritasNamed=true/);
  assert.match(event,/speaker:speaker==="カリタス"\?caritasDisplayName\(\):speaker/);
- assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"聖獣"/);
+ assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"星獣"/);
  assert.match(event,/text:text===CARITAS_REVEAL_LINE\|\|text==="……慈愛のカリタス、か。"\?text:caritasDisplayText\(text\)/);
- assert.match(event,/ui\.enemyName=newEl\("div","cb-hud-name","聖獣"\)/);
- assert.match(event,/beast\.alt="聖獣";ui\.beast=beast/);
+ assert.match(event,/ui\.enemyName=newEl\("div","cb-hud-name","星獣"\)/);
+ assert.match(event,/beast\.alt="星獣";ui\.beast=beast/);
  assert.match(event,/setText\(ui\.clue,caritasDisplayText\(C\.STAGES\[idx\]\.clue\)\)/);
  const after=event.slice(event.indexOf('const AFTER_FAREWELL=['),event.indexOf('const FAREWELL_CLOSE='));
  assert.ok(after.indexOf('ああ。何かを知っているようだったな。')<after.indexOf('……慈愛のカリタス、か。'));
  assert.match(event,/const FAREWELL_CLOSE=\[\["シオン","タロットクローズ"\]\]/);
  assert.match(event,/const FAREWELL_CLOSE_PAUSE_MS=1100/);
+});
+
+// Display name must remain 星獣 from Shion's first sighting until Caritas introduces himself.
+test('星獣 is the only pre-reveal display spelling, with the original first Shion line intact',()=>{
+ const html=read('hoshisuna-main.html');
+ assert.equal(event.includes('聖獣'),false,'wrong character must never appear in the battle dialogue or HUD');
+ assert.equal(html.includes('聖獣'),false,'wrong character must not appear in the encounter page');
+ assert.match(event,/\["シオン","……しおぽん、待て。星獣がいる。"\]/);
+ assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"星獣"/);
+ assert.match(event,/const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。"/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-name-reveal-v22/);
 });
