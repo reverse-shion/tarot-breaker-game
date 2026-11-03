@@ -220,7 +220,7 @@ test('dual-incantation uses two large, nonwrapping lines inside the canonical sh
  assert.match(dual,/font-size:clamp\(17px,5\.6vw,26px\)!important/);
  assert.match(dual,/font-weight:750/);
  assert.match(shared,/font-size:\s*clamp\(18px,\s*4\.6vw,\s*21px\)/,'other dialogue still uses original main style');
- assert.match(html,/ux-20261103-dual-chant-v19/,'Safari must get the updated scoped stylesheet');
+ assert.match(html,/ux-20261103-reading-clarity-v20/,'Safari must get the updated scoped stylesheet while retaining the dual chant');
  for(const [title,reading] of [
   ['星幻迷宮','アストラル・ミラージュ！！'],
   ['星獣咆哮','アストラル・ブレイヴ！！'],
