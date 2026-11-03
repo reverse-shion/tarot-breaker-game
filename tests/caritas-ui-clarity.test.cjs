@@ -78,7 +78,7 @@ test('the beast reveals its name only at farewell, then Shion reflects before Ta
  assert.match(event,/dialogueIndex>CARITAS_REVEAL_INDEX\)caritasNamed=true/);
  assert.match(event,/speaker:speaker==="カリタス"\?caritasDisplayName\(\):speaker/);
  assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"聖獣"/);
- assert.match(event,/text:text===CARITAS_REVEAL_LINE\?text:caritasDisplayText\(text\)/);
+ assert.match(event,/text:text===CARITAS_REVEAL_LINE\|\|text==="……慈愛のカリタス、か。"\?text:caritasDisplayText\(text\)/);
  assert.match(event,/ui\.enemyName=newEl\("div","cb-hud-name","聖獣"\)/);
  assert.match(event,/beast\.alt="聖獣";ui\.beast=beast/);
  assert.match(event,/setText\(ui\.clue,caritasDisplayText\(C\.STAGES\[idx\]\.clue\)\)/);
