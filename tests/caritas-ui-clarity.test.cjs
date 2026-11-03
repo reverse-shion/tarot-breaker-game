@@ -93,8 +93,9 @@ test('author-approved three-act outro preserves all lines, reveal order and clos
  assert.match(ending,/outro\?\.liftHead\?\.\(\)/);
  assert.match(ending,/outro\?\.standUp\?\.\(\)/);
  assert.doesNotMatch(ending,/window\.TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/,"no second deployment before closing");
- assert.match(ending,/manifestation\?\.clear\?\.\(\{keepCards:true\}\)/);
- assert.match(ending,/manifestation\?\.deployCards\?\.\(\{instant:true\}\)/,"only late reload can recover a missing spread");
+ const mapReturn=event.slice(event.indexOf('function showFarewellOnMap(){'),event.indexOf('function playMapFarewell(next){'));
+ assert.match(mapReturn,/manifestation\?\.clear\?\.\(\{keepCards:true\}\)/,"restoring Shiopon retains the deployed three-card spread");
+ assert.match(mapReturn,/manifestation\?\.deployCards\?\.\(\{instant:true\}\)/,"only late reload can recover a missing spread");
  assert.match(ending,/TarotHoshisunaManifestation\?\.dismissCards\?\.\(\)/);
  assert.match(ending,/saySequence\(FAREWELL_DEPART,\(\)=>/);
  assert.match(ending,/type:"move",actor:"shiopon",target:destination,duration,caritasSafe:true/);
