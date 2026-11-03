@@ -38,7 +38,7 @@ test('cards have three labeled slots, role translations, and visible disabled re
  assert.match(event,/viewedReadingCards\.add\(i\)/);
  assert.match(event,/ui\.selectionReason=newEl\("p","cb-selection-reason"\)/);
  assert.match(event,/chosenCount\+"\/3/);
- assert.match(event,/ui\.aiInput\.placeholder="聖獣に何を伝えたい？"/);
+ assert.match(event,/ui\.aiInput\.placeholder="星獣に何を伝えたい？"/);
  assert.match(event,/ui\.slots\.hidden=true/);
 });
 
