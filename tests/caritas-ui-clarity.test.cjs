@@ -50,7 +50,7 @@ test('one primary action per screen; writer references explain the role and keyb
  assert.match(css,/\[data-reading-mode="select"\] \.cb-delivery-methods,/);
  assert.match(css,/\[data-reading-mode="select"\] \.cb-card \.cb-chosen/);
  assert.match(event,/\["月｜現在地","力｜行動","星｜届け方"\]/);
- assert.match(event,/カリタスの返答を待っています…/);
+ assert.match(event,/聖獣の返答を待っています…/);
  assert.match(event,/aiBusy\?"送信中"/);
  assert.match(event,/このターンは送信済（残り/);
  assert.match(css,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?max-height:none!important/);
@@ -68,4 +68,22 @@ test('event preflight admits only the isolated NOT TESTED Caritas target',()=>{
  assert.equal(result.status,'NOT TESTED');
  assert.equal(result.changeAuthorized,true);
  assert.equal(result.productionEnabled,false);
+});
+
+test('the beast reveals its name only at farewell, then Shion reflects before Tarot Close',()=>{
+ const farewell=event.slice(event.indexOf('const FAREWELL=['),event.indexOf('const AFTER_FAREWELL=['));
+ assert.match(event,/const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。"/);
+ assert.match(farewell,/\["カリタス",CARITAS_REVEAL_LINE\]/);
+ assert.ok(farewell.indexOf('["カリタス",CARITAS_REVEAL_LINE]')<farewell.indexOf('["カリタス","……また会おう。"]'));
+ assert.match(event,/dialogueIndex>CARITAS_REVEAL_INDEX\)caritasNamed=true/);
+ assert.match(event,/speaker:speaker==="カリタス"\?caritasDisplayName\(\):speaker/);
+ assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"聖獣"/);
+ assert.match(event,/text:text===CARITAS_REVEAL_LINE\?text:caritasDisplayText\(text\)/);
+ assert.match(event,/ui\.enemyName=newEl\("div","cb-hud-name","聖獣"\)/);
+ assert.match(event,/beast\.alt="聖獣";ui\.beast=beast/);
+ assert.match(event,/setText\(ui\.clue,caritasDisplayText\(C\.STAGES\[idx\]\.clue\)\)/);
+ const after=event.slice(event.indexOf('const AFTER_FAREWELL=['),event.indexOf('const FAREWELL_CLOSE='));
+ assert.ok(after.indexOf('ああ。何かを知っているようだったな。')<after.indexOf('……慈愛のカリタス、か。'));
+ assert.match(event,/const FAREWELL_CLOSE=\[\["シオン","タロットクローズ"\]\]/);
+ assert.match(event,/const FAREWELL_CLOSE_PAUSE_MS=1100/);
 });
