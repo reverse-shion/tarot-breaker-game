@@ -377,6 +377,13 @@ function playSpecialSequence(){
  document.body.classList.add('caritas-special-active');committing=true;visualBattle=null;
  if(p==='DONE'){returnToMap();return;}
  story='special';root.dataset.phase='special';render();
+ // Once purification is complete, the beast's final battle reply begins.
+ // Start the Starroad BGM before removing the battle screen. Combat music
+ // must stop first; the field session already owns an iOS-safe native transport.
+ if(p==='CARITAS_REPLY'){
+  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
+  window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-field-return-cue",{detail:{source:OWNER}}));
+ }
  const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL']};
  if(linePhases[p]){
   const [speaker,text,next]=linePhases[p];
