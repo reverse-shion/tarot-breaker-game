@@ -26,7 +26,8 @@ test('rendered rewards are derived from actual game state and never change calcu
  assert.match(event,/Math\.min\(firstWrittenDelivered\?RESONANCE_UI\.writtenLater:RESONANCE_UI\.writtenFirst,Math\.max\(0,100-s\.resonance\)\)/);
  assert.match(event,/const RESONANCE_UI=Object\.freeze\(\{writtenFirst:50,writtenLater:25,gainPulseMs:1300\}\)/);
  assert.match(core,/const requestedBonus=firstDelivery===true\?50:25;/);
- assert.match(event,/s\.aiInsightTurn===s\.turn\?"この読みの特典は受け取り済み"/);
+ assert.match(event,/setText\(ui\.writtenBadge,s\.aiInsightTurn===s\.turn\?"このターン受取済"/);
+ assert.match(event,/s\.aiInsightTurn===s\.turn\?"このターンは送信済（残り"/);
 });
 
 test('cards have three labeled slots, role translations, and visible disabled reasons',()=>{
@@ -37,7 +38,7 @@ test('cards have three labeled slots, role translations, and visible disabled re
  assert.match(event,/viewedReadingCards\.add\(i\)/);
  assert.match(event,/ui\.selectionReason=newEl\("p","cb-selection-reason"\)/);
  assert.match(event,/chosenCount\+"\/3/);
- assert.match(event,/ui\.aiInput\.placeholder="カリタスに何を伝えたい？"/);
+ assert.match(event,/ui\.aiInput\.placeholder="星獣に何を伝えたい？"/);
  assert.match(event,/ui\.slots\.hidden=true/);
 });
 
@@ -56,7 +57,7 @@ test('existing shared typewriter/dialogue, API request, and persisted save seque
 test('isolated CSS retains a flexible battlefield and accessible buttons',()=>{
  const css=load('caritas-resonance-ux.css');
  const html=load('hoshisuna-main.html');
- assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261103-dual-chant-v19/);
+ assert.match(html,/caritas-resonance-ux\.css\?v=ux-20261103-reading-clarity-v20/);
  assert.match(css,/minmax\(145px,1fr\)/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/max-height:59dvh/);
@@ -219,7 +220,7 @@ test('dual-incantation uses two large, nonwrapping lines inside the canonical sh
  assert.match(dual,/font-size:clamp\(17px,5\.6vw,26px\)!important/);
  assert.match(dual,/font-weight:750/);
  assert.match(shared,/font-size:\s*clamp\(18px,\s*4\.6vw,\s*21px\)/,'other dialogue still uses original main style');
- assert.match(html,/ux-20261103-dual-chant-v19/,'Safari must get the updated scoped stylesheet');
+ assert.match(html,/ux-20261103-reading-clarity-v20/,'Safari must get the updated scoped stylesheet while retaining the dual chant');
  for(const [title,reading] of [
   ['星幻迷宮','アストラル・ミラージュ！！'],
   ['星獣咆哮','アストラル・ブレイヴ！！'],
