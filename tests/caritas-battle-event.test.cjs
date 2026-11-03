@@ -97,5 +97,5 @@ test('Caritas still collides until purified, without edits to shared navigation'
  assert.match(html,/caritas-battle-event\.js/);
  assert.match(event,/params\.get\("dev"\)!=="hoshisuna"/);
  assert.doesNotMatch(event,/王族|正体は/);
- assert.match(event,/const caritasDisplayName=\(\)=>caritasNamed\?\"カリタス\":\"聖獣\"/);
+ assert.match(event,/const caritasDisplayName=\(\)=>caritasNamed\?\"カリタス\":\"星獣\"/);
 });
