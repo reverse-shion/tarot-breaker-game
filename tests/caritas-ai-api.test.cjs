@@ -213,7 +213,7 @@ test('AI character lines use the exact main shared dialogue player and update me
  const fs=require('node:fs');
  const js=fs.readFileSync(require('node:path').join(__dirname,'../caritas-battle-event.js'),'utf8');
  assert.match(js,/saySequence\(\[\["シオン",data\.shion\],\["カリタス",data\.caritas\]\]/);
- assert.match(js,/dialogue\.show\(\{speaker,text,actor:/);
+ assert.match(js,/dialogue\.show\(\{speaker:speaker==="カリタス"\?caritasDisplayName\(\):speaker,/);
  assert.match(js,/ui\.aiInput\.blur\(\)/);
  assert.match(js,/const gain=battle\.resonance-before\.resonance,relief=before\.dark-battle\.dark/);
  assert.doesNotMatch(js,/ui\.aiResult\.textContent=\["シオン："/);
