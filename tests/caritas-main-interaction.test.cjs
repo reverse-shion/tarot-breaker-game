@@ -549,7 +549,8 @@ test('shared main dialogue IDs, nonproduction isolation and styling are unchange
   assert.match(html,/star-gate-interaction\.css\?v=main-official-choice/,'official main choice stylesheet');
  assert.ok(css.includes("#caritas-event{position:fixed;inset:0;z-index:2200"));
  assert.doesNotMatch(js,/dialogue\.elements\.button\.focus\(|prompt\.querySelector\("#caritas-interaction-inspect"\)\?\.focus\(/,'no programmatic focus ring on dialogue or choice');
- assert.doesNotMatch(js+Core.ENDING.join(''),/聖獣|正体は/);
+ assert.doesNotMatch(js+Core.ENDING.join(''),/正体は/);
+ assert.match(js,/const CARITAS_REVEAL_LINE=\"私はカリタス。慈愛のカリタス。\"/);
 });
 
 
