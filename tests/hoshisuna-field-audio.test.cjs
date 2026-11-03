@@ -72,6 +72,50 @@ test('irrelevant events cannot mute map, duplicate transition cannot steal sessi
   assert.equal(f.sessions[0].releases,1);
 });
 
+test('post-purification cue restores the existing field BGM before map reveal, once only',()=>{
+  const f=fixture();
+  f.emit('tarot-breaker:interaction-start',OWNER);
+  f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
+  f.emit('tarot-breaker:hoshisuna-battle-start');
+  assert.equal(f.muted,true);
+  assert.equal(f.sessions[0].releases,0);
+  f.emit('tarot-breaker:hoshisuna-field-return-cue','another_event');
+  assert.equal(f.muted,true,'another event may not unmute the battle');
+  f.emit('tarot-breaker:hoshisuna-field-return-cue',OWNER);
+  assert.equal(f.muted,false,'field BGM returns while encounter is still active');
+  assert.equal(f.sessions[0].releases,1);
+  f.emit('tarot-breaker:hoshisuna-field-return-cue',OWNER);
+  f.emit('tarot-breaker:hoshisuna-battle-start');
+  f.emit('tarot-breaker:hoshisuna-transition-start',OWNER);
+  assert.equal(f.sessions.length,1,'no second audio session after early return');
+  assert.equal(f.sessions[0].releases,1);
+  assert.equal(f.muted,false,'late battle events cannot mute the map BGM again');
+  f.emit('tarot-breaker:interaction-end',OWNER);
+  assert.equal(f.sessions[0].releases,1,'free-roam release does not restart music');
+  assert.equal(f.muted,false);
+  f.emit('tarot-breaker:interaction-start',OWNER);
+  f.emit('tarot-breaker:hoshisuna-battle-start');
+  assert.equal(f.sessions.length,2,'new encounter can own a fresh session');
+  assert.equal(f.muted,true);
+  f.emit('tarot-breaker:interaction-end',OWNER);
+  assert.equal(f.sessions[1].releases,1);
+});
+
+test('actual battle final reply stops combat BGM before owned field cue, while overlay remains',()=>{
+  const event=fs.readFileSync(path.join(base,'caritas-battle-event.js'),'utf8');
+  const sequence=event.slice(event.indexOf('function playSpecialSequence(){'),
+    event.indexOf('function playPurification('));
+  const stop='new Event("tarot-breaker:hoshisuna-battle-stop")';
+  const cue='new CustomEvent("tarot-breaker:hoshisuna-field-return-cue"';
+  assert.match(sequence,/if\(p==='CARITAS_REPLY'\)/);
+  assert.ok(sequence.indexOf(stop)>=0&&sequence.indexOf(stop)<sequence.indexOf(cue),
+    'fight track must stop before unmuting Starroad music');
+  assert.ok(sequence.indexOf(cue)<sequence.indexOf('saySequence([[speaker,text]]'),
+    'field BGM starts during the final reply before the map cut');
+  const html=fs.readFileSync(path.join(base,'hoshisuna-main.html'),'utf8');
+  assert.match(html,/hoshisuna-field-audio\.js\?v=2/);
+});
+
 test('saved combat restores silence without replaying the ink transition',()=>{
   const f=fixture();
   f.emit('tarot-breaker:interaction-start',OWNER);
