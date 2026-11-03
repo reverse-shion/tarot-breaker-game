@@ -94,7 +94,11 @@ test('author-approved three-act outro preserves all lines, reveal order and clos
  assert.match(ending,/outro\?\.standUp\?\.\(\)/);
  assert.match(ending,/TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/);
  assert.match(ending,/TarotHoshisunaManifestation\?\.dismissCards\?\.\(\)/);
- assert.match(ending,/Promise\.allSettled\(walks\)/);
+ assert.match(ending,/saySequence\(FAREWELL_DEPART,\(\)=>/);
+ assert.match(ending,/type:"move",actor:"shiopon",target:destination,duration,caritasSafe:true/);
+ assert.match(ending,/const destination=\{x:shion\.x,y:shion\.y\+56\}/);
+ assert.doesNotMatch(ending,/type:"step",actor/,'farewell never stages a separate Shion walk');
+ assert.match(ending,/Promise\.resolve\(regroup\?\.promise\)/);
 });
 
 // Display name must remain 星獣 from Shion's first sighting until Caritas introduces himself.
