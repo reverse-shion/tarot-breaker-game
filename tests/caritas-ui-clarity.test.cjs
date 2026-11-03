@@ -56,3 +56,16 @@ test('one primary action per screen; writer references explain the role and keyb
  assert.match(css,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?max-height:none!important/);
  assert.match(css,/\.cb-writing-overlay \.cb-ai-body\{[\s\S]*?border:0!important/);
 });
+
+test('event preflight admits only the isolated NOT TESTED Caritas target',()=>{
+ const {spawnSync}=require('node:child_process');
+ const run=spawnSync(process.execPath,['scripts/event-preflight.cjs','--target','caritas-heart-resonance'],{
+  cwd:root,encoding:'utf8',timeout:15000
+ });
+ assert.equal(run.status,0,(run.stderr||'')+'\n'+(run.stdout||''));
+ const result=JSON.parse(run.stdout);
+ assert.equal(result.event,'hoshisuna-caritas');
+ assert.equal(result.status,'NOT TESTED');
+ assert.equal(result.changeAuthorized,true);
+ assert.equal(result.productionEnabled,false);
+});
