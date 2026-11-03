@@ -7,7 +7,7 @@ function fixture(){
        clearRect(){},drawImage(){},fillRect(){},globalCompositeOperation:"source-over"
      })})},window:{},ready:true,running:true,
     caritasTarotBack:{naturalWidth:1024,naturalHeight:1536},caritasTarotLuminousMask:null,
-    caritasRegroup:{phase:"idle",elapsed:0,resolve:null},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false},
+    caritasRegroup:{phase:"idle",elapsed:0,resolve:null},caritasTarotSpread:{active:false,elapsed:0,since:0,paused:false,closeAt:null},
      caritasChant:{phase:"idle",elapsed:0,since:0,paused:false,sealedAt:0},
     caritasTarotShionBounds:null,images:{idle:{}},
     measureCaritasVisibleMapActor:(_img,h)=>({topOffset:-h*.8,leftOffset:-h*.22,rightOffset:h*.22}),
@@ -60,14 +60,35 @@ test("deployment uses exactly the provided back three times, retains aspect/alph
   assert.equal(f.official().length,3);assert.ok(f.official().every(d=>d.alpha===.8));
   assert.equal(s.ctx.globalAlpha,.8);assert.equal(s.ctx.shadowBlur,0);
 });
-test("cards stay through the chant, fade before quiet hold, and disappear on reveal/recovery/map return",()=>{
-  const f=fixture(),s=f.s;f.api.deployCards();f.at(10000);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
-  s.caritasInvocation.phase="charging";s.progress=4400/5500;f.at(10100);s.paintCaritasTarotSpread();assert.ok(f.official().every(d=>Math.abs(d.alpha-.4)<1e-9));
-  s.progress=4700/5500;f.at(10200);s.paintCaritasTarotSpread();assert.equal(f.draws.length,0);
-  s.caritasInvocation.phase="revealed";f.at(10300);s.paintCaritasTarotSpread();assert.equal(f.draws.length,0);
-  f.api.clear();assert.equal(s.caritasTarotSpread.active,false);assert.equal(s.caritasTarotSpread.elapsed,0);
-  assert.equal(s.caritasTarotSpread.paused,false);s.paintCaritasTarotSpread();assert.equal(f.draws.length,0);
-  assert.equal(f.api.deployCards(),true,"clear permits a clean retry");
+test("three original cards persist through transformation and farewell; only Tarot Close dismisses them",()=>{
+  const f=fixture(),s=f.s;assert.equal(f.api.deployCards(),true);
+  f.at(10000);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  s.caritasInvocation.phase="charging";s.progress=4400/5500;
+  f.at(10100);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  assert.ok(f.official().every(d=>d.alpha>.7),"the cards do not fade before Shioriel materializes");
+  s.progress=4700/5500;
+  f.at(10200);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  s.caritasInvocation.phase="revealed";
+  f.at(10300);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  f.api.clear({keepCards:true});assert.equal(s.caritasInvocation.phase,"idle");
+  assert.equal(s.caritasTarotSpread.active,true,"Shiopon returns without closing Shion's tarot");
+  assert.equal(f.api.deployCards(),false,"the farewell must not create a second set of cards");
+  f.at(12000);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  assert.equal(f.api.dismissCards(),true,"only the spoken Tarot Close starts dismissal");
+  f.at(12425);s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+  assert.ok(f.official().every(d=>d.alpha>0&&d.alpha<.8));
+  f.at(12851);s.paintCaritasTarotSpread();assert.equal(f.official().length,0);
+  assert.equal(s.caritasTarotSpread.active,false);
+  f.api.clear();assert.equal(s.caritasTarotSpread.active,false);
+  assert.equal(s.caritasTarotSpread.paused,false);
+  assert.equal(f.api.deployCards(),true,"an interrupted encounter can retry cleanly");
+});
+test("reload reconstructs already-deployed cards at full opacity, without a second opening animation",()=>{
+ const f=fixture();assert.equal(f.api.deployCards({instant:true}),true);
+ f.s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
+ assert.ok(f.official().every(d=>d.alpha===.8));
+ assert.equal(f.api.deployCards({instant:true}),false,"restoring an existing map spread is idempotent");
+ f.api.clear({keepCards:true});f.at(9000);f.s.paintCaritasTarotSpread();assert.equal(f.official().length,3);
 });
 test("reduced motion keeps card positions fixed and guards prevent missing-art or normal-map effects",()=>{
   const f=fixture(),s=f.s;s.window.matchMedia=()=>({matches:true});f.api.deployCards();
