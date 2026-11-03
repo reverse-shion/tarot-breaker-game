@@ -396,7 +396,12 @@ async function finishSpecial(f){
  f.pointer.advance();f.pointer.advance();f.pointer.advance();
  assert.equal(f.state().special.phase,'ART_PLAYBACK');f.advanceTime(2601);
  assert.equal(f.state().special.phase,'PURIFICATION');f.advanceTime(1100);
- assert.equal(f.state().special.phase,'CARITAS_REPLY');f.pointer.advance();
+ assert.equal(f.state().special.phase,'CARITAS_REPLY');
+ const fieldCueIndex=f.events.lastIndexOf('tarot-breaker:hoshisuna-field-return-cue');
+ assert.ok(fieldCueIndex>0,'field music is cued after purification, before map return');
+ assert.equal(f.events[fieldCueIndex-1],'tarot-breaker:hoshisuna-battle-stop','combat must stop before map BGM resumes');
+ assert.equal(f.shell.querySelector('#caritas-event').hidden,false,'field BGM begins while final battle reply is still visible');
+ f.pointer.advance();
  assert.equal(f.state().special.phase,'FAREWELL');
  assert.equal(f.shell.querySelector('#caritas-event').hidden,true,'real Starroad visible before the farewell');
  assert.equal(f.pointer.cards,true,'three original Tarot backs still deployed when Shiopon returns');
