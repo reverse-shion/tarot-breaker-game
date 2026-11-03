@@ -111,5 +111,5 @@ test('星獣 is the only pre-reveal display spelling, with the original first Sh
  assert.match(event,/\["シオン","……しおぽん、待て。星獣がいる。"\]/);
  assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"星獣"/);
  assert.match(event,/const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。"/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-farewell-three-acts-v23/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-persistent-v24/);
 });
