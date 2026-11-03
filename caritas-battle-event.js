@@ -176,36 +176,44 @@ function applySpecialResolution(){
 // later through this isolated encounter's optional same-origin image slot.
 const CUTINS={shion:"./assets/battle/cutins/shion-cutin.webp",shioriel:"./assets/battle/cutins/shioriel-cutin.webp"};
 // The elder beast knows more than he says: no exposition about future time.
+// The user-authored three-act farewell uses the existing shared main dialogue.
+// Speaker ID stays "カリタス"; before his self-introduction the player sees 星獣.
 const FAREWELL_OPEN=[
- ["カリタス","……終わった、のか。"],
- ["シオン","ああ。もう闇は消えた。"]
+ ["カリタス","迷惑をかけたな。"],
+ ["シオン","もう大丈夫なのか？ 一体、何が起きたんだ。"],
+ ["カリタス","分からぬ。アビスに呑まれるなど思いもせず、ただ己の弱さを恥じていた。"]
+];
+// The creature lifts its head using the first six approved map frames.
+const FAREWELL_MEMORY=[
+ ["カリタス","それでも、闇の底で二人の言葉が聞こえた。礼を言う。"],
+ ["シオン","無事でよかった。"]
+];
+const FAREWELL_SECRET=[
+ ["カリタス","長き旅路の果てに、こうしてお目にかかれるとは。しおぽんさ――"],
+ ["カリタス","いや。忘れてくれ。"],
+ ["シオン","今、何を言いかけた。"],
+ ["カリタス","それは、私の口から語ることではない。"],
+ ["シオン","そうか。"]
 ];
 const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。";
 const FAREWELL=[
- ["カリタス","……この私が、救われる側になるとはな。"],
- ["カリタス","闇の中でも、お前たちの声は届いていた。……心から感謝する。"],
- ["シオン","無事でよかった。"],
- ["カリタス","……シオリエル。いや……しおぽん、と呼ぶべきか。"],
- ["しおぽん","……えっ？"],
- ["カリタス","ずいぶんと遠い時を越えてきたものだな。"],
- ["シオン","……お前、しおぽんのことを知っているのか？"],
- ["カリタス","……今は、語る時ではない。"],
- ["カリタス","シオン。お前たちとは、必ずまた会う。"],
- ["シオン","必ず……？　どういう意味だ？"],
- ["カリタス","……その時が来れば、分かる。"],
- ["カリタス","……去る前に、名だけは伝えておこう。"],
+ ["カリタス","シオン。この先は、決して優しい道ではない。"],
+ ["シオン","ああ。それでも進む。"],
+ ["カリタス","今の言葉を忘れぬようにな。"],
  ["カリタス",CARITAS_REVEAL_LINE],
- ["カリタス","……さらばだ。お前たちの旅路に、星の導きがあらんことを。"],
- ["カリタス","……また会おう。"]
+ ["カリタス","お前たちの旅路に、星の導きがあらんことを。"],
+ ["カリタス","また会おう。"]
 ];
 const CARITAS_REVEAL_INDEX=FAREWELL.findIndex(line=>line[1]===CARITAS_REVEAL_LINE);
 const AFTER_FAREWELL=[
- ["しおぽん","……シオンさん、あの子……。"],
- ["シオン","ああ。何かを知っているようだったな。"],
- ["シオン","……慈愛のカリタス、か。"]
+ ["シオン","慈愛のカリタス、か。"],
+ ["しおぽん","シオンさん。"]
 ];
-// The final words belong to Shion, after the companions' conversation has ended.
-const FAREWELL_CLOSE=[["シオン","タロットクローズ"]];
+const FAREWELL_CLOSE=[["シオン","タロットクローズ。"]];
+const FAREWELL_DEPART=[
+ ["シオン","さあ、星砂を探しに行こう。"],
+ ["しおぽん","はいなの〜！"]
+];
 const FAREWELL_CLOSE_PAUSE_MS=1100;
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
@@ -392,6 +400,19 @@ function returnToMap(){
  document.body.classList.remove('caritas-special-active');finish();
 }
 
+function faceShionToCards(){
+ const shion=window.TarotStage?.getState?.().actors?.shion;
+ if(!Number.isFinite(shion?.x)||!Number.isFinite(shion?.y))return;
+ window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:shion.x,y:shion.y+60}});
+}
+function faceShionAhead(){
+ const shion=window.TarotStage?.getState?.().actors?.shion;
+ if(!Number.isFinite(shion?.x)||!Number.isFinite(shion?.y))return;
+ window.TarotStage?.perform?.({type:"face",actor:"shion",target:{x:shion.x,y:shion.y-60}});
+}
+function faceShioponAway(){
+ window.TarotStage?.perform?.({type:"face",actor:"shiopon",target:CARITAS_GAZE});
+}
 function showFarewellOnMap(){
  // Show the actual Starroad creature and canonical main dialogue, not a clone.
  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
@@ -403,22 +424,52 @@ function showFarewellOnMap(){
 }
 function playMapFarewell(next){
  showFarewellOnMap();
- const rising=window.TarotHoshisunaCaritasOutro?.rise?.()||Promise.resolve(false);
- // Let the beast speak while rising, but wait for all 16 frames before its reveal.
+ const outro=window.TarotHoshisunaCaritasOutro;
  saySequence(FAREWELL_OPEN,()=>{
-  Promise.resolve(rising).catch(()=>false).then(()=>{
+  // Face-up and stand-up are separate beats, reusing the same 16 authentic WebPs.
+  Promise.resolve(outro?.liftHead?.()??outro?.rise?.()??false).catch(()=>false).then(()=>{
    if(done||recovery||saveBlocked)return;
-   saySequence(FAREWELL,next);
+   saySequence(FAREWELL_MEMORY,()=>{
+    // Recognition belongs to the beast's gaze, without a new portrait or HUD.
+    faceShioponAway();
+    stage("farewell-memory",320,()=>{
+     if(done||recovery||saveBlocked)return;
+     saySequence(FAREWELL_SECRET,()=>{
+      Promise.resolve(outro?.standUp?.()??false).catch(()=>false).then(()=>{
+       if(done||recovery||saveBlocked)return;
+       faceCaritas();
+       saySequence(FAREWELL,next);
+      });
+     });
+    });
+   });
   });
  });
 }
 function playFarewellClose(next){
  if(done||recovery||saveBlocked)return;
- // After the dialogue window closes, hold on the quiet map for a brief beat.
- // stage() pauses the wait while the tab is hidden, like other cinematics.
+ // The approved tarot backs return as a soft, world-anchored afterglow.
+ // Shion looks down before closing; no cut-in or new illustration is required.
+ faceShionToCards();
+ window.TarotHoshisunaManifestation?.deployCards?.();
  stage("closing-pause",FAREWELL_CLOSE_PAUSE_MS,()=>{
   if(done||recovery||saveBlocked)return;
-  saySequence(FAREWELL_CLOSE,next);
+  saySequence(FAREWELL_CLOSE,()=>{
+   window.TarotHoshisunaManifestation?.dismissCards?.();
+   stage("closing-light",850,()=>{
+    if(done||recovery||saveBlocked)return;
+    faceShionAhead();
+    // An immediate companion reply is authored as the next normal shared line.
+    saySequence(FAREWELL_DEPART,()=>{
+     // Both take one collision-checked map step; ordinary player/follower control
+     // resumes after the saved DONE transition. Failed steps never block exit.
+     const walks=["shion","shiopon"].map(actor=>
+      window.TarotStage?.perform?.({type:"step",actor,direction:"up",distance:12,duration:420})?.promise
+     ).filter(Boolean);
+     Promise.allSettled(walks).then(()=>{if(!done&&!recovery&&!saveBlocked)next();});
+    });
+   });
+  });
  });
 }
 function fadeMapFarewell(next){
@@ -482,6 +533,13 @@ function currentLine(){
  }else if(dialogueLines===SCOUT_REPORT||dialogueLines===TAROT_DECLARATION||
           dialogueLines===INVOCATION||dialogueLines===REVEAL){
    faceCaritas();
+ }else if(dialogueLines===FAREWELL_SECRET){
+   if(dialogueIndex===4){faceShioponSide();faceShioponAway();}
+   else faceCaritas();
+ }else if(dialogueLines===FAREWELL||dialogueLines===FAREWELL_OPEN||dialogueLines===FAREWELL_MEMORY){
+   faceCaritas();
+ }else if(dialogueLines===AFTER_FAREWELL){
+   if(dialogueIndex===1)faceShioponSide();else faceCaritas();
  }
  // Pre-transformation resonance: shared particles and shared luminosity.
  // The last invocation text line seals the resonance before transformation.
@@ -490,7 +548,7 @@ function currentLine(){
    else if(dialogueIndex===1)window.TarotHoshisunaManifestation?.sealChant?.();
  }
  dialogue.show({speaker:speaker==="カリタス"?caritasDisplayName():speaker,
-  text:text===CARITAS_REVEAL_LINE||text==="……慈愛のカリタス、か。"?text:caritasDisplayText(text),
+  text:text===CARITAS_REVEAL_LINE||dialogueLines===AFTER_FAREWELL?text:caritasDisplayText(text),
   actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  renderCaritas();
  // The shared controller's instant reveal invalidates its own RAF token in
