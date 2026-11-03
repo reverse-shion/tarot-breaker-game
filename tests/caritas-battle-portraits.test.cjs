@@ -22,7 +22,7 @@ test('Caritas battle stage uses the approved Shion and Shioriel transparent WebP
     assert.equal(image.toString('ascii', 0, 4), 'RIFF', filename + ' RIFF header');
     assert.equal(image.toString('ascii', 8, 12), 'WEBP', filename + ' WebP header');
   }
-  assert.match(html, /caritas-battle-event\\.css\\?v=main-dialogue-choice-v18/);
-  assert.match(css, /right: 2%;\\s*bottom: 6\\.2%;\\s*width: 19%;\\s*height: 26%;/);
-  assert.match(css, /right: 17%;\\s*bottom: 6%;\\s*width: 25%;\\s*height: 35%;/);
+  assert.match(html, /caritas-battle-event\.css\?v=main-dialogue-choice-v18/);
+  assert.match(css, /right: 2%;\s*bottom: 6\.2%;\s*width: 19%;\s*height: 26%;/);
+  assert.match(css, /right: 17%;\s*bottom: 6%;\s*width: 25%;\s*height: 35%;/);
 });
