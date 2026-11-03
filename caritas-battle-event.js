@@ -72,7 +72,9 @@ const INVOCATION=[
 ];
 const REVEAL=[["シオリエル","シオン。星獣が完全に喰べられる前に、闇から解き放つ。"]];
 let root,prompt,dialogue,cardBox,ui={},story="idle",battle=C.newGame();
-let caritasView=null,caritasResponse="";
+let caritasView=null,caritasResponse="",caritasNamed=false;
+const caritasDisplayName=()=>caritasNamed?"カリタス":"聖獣";
+const caritasDisplayText=value=>caritasNamed?String(value):String(value).replaceAll("カリタス","聖獣");
 function renderCaritas(){
  const visible=getBattleView();
  caritasView?.update({dark:visible.dark,phase:story,special:record.special.phase,
@@ -178,6 +180,7 @@ const FAREWELL_OPEN=[
  ["カリタス","……終わった、のか。"],
  ["シオン","ああ。もう闇は消えた。"]
 ];
+const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。";
 const FAREWELL=[
  ["カリタス","……この私が、救われる側になるとはな。"],
  ["カリタス","闇の中でも、お前たちの声は届いていた。……心から感謝する。"],
@@ -190,11 +193,16 @@ const FAREWELL=[
  ["カリタス","シオン。お前たちとは、必ずまた会う。"],
  ["シオン","必ず……？　どういう意味だ？"],
  ["カリタス","……その時が来れば、分かる。"],
- ["カリタス","……さらばだ。お前たちの旅路に、星の導きがあらんことを。"]
+ ["カリタス","……去る前に、名だけは伝えておこう。"],
+ ["カリタス",CARITAS_REVEAL_LINE],
+ ["カリタス","……さらばだ。お前たちの旅路に、星の導きがあらんことを。"],
+ ["カリタス","……また会おう。"]
 ];
+const CARITAS_REVEAL_INDEX=FAREWELL.findIndex(line=>line[1]===CARITAS_REVEAL_LINE);
 const AFTER_FAREWELL=[
  ["しおぽん","……シオンさん、あの子……。"],
- ["シオン","ああ。何かを知っているようだったな。"]
+ ["シオン","ああ。何かを知っているようだったな。"],
+ ["シオン","……慈愛のカリタス、か。"]
 ];
 // The final words belong to Shion, after the companions' conversation has ended.
 const FAREWELL_CLOSE=[["シオン","タロットクローズ"]];
@@ -457,6 +465,9 @@ function unlock(){
 function currentLine(){
  if(!dialogueBusy)return;
  const [speaker,text]=dialogueLines[dialogueIndex]||["",""];
+ // The name is revealed only after the farewell self-introduction line.
+ // Keep the underlying actor ID and dialogue array intact for animation.
+ if(dialogueLines===FAREWELL&&dialogueIndex>CARITAS_REVEAL_INDEX)caritasNamed=true;
  // Physical facing is scoped to the seven prebattle scenes only:
  // Shion acknowledges Shiopon sideways during their exchanges, then
  // watches Caritas during its warnings, the crisis and the entire chant.
@@ -478,7 +489,9 @@ function currentLine(){
    if(dialogueIndex===0)window.TarotHoshisunaManifestation?.startChant?.();
    else if(dialogueIndex===1)window.TarotHoshisunaManifestation?.sealChant?.();
  }
- dialogue.show({speaker,text,actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
+ dialogue.show({speaker:speaker==="カリタス"?caritasDisplayName():speaker,
+  text:text===CARITAS_REVEAL_LINE?text:caritasDisplayText(text),
+  actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  renderCaritas();
  // The shared controller's instant reveal invalidates its own RAF token in
  // reduced-motion mode. Repair visibility only for this encounter instance.
@@ -689,6 +702,8 @@ function render(){
  cardBox.hidden=!(readingOpen&&reading)&&!finisher;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
  const displayedDark=visible.dark;
+ setText(ui.enemyName,caritasDisplayName());ui.beast.alt=caritasDisplayName();
+ root.setAttribute("aria-label",caritasDisplayName()+" 心象共鳴");
  setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"%");setText(ui.hp,visible.hp+"/100");
  if(lastPresentedResonance!==null&&visible.resonance>lastPresentedResonance){
   setText(ui.gainFloat,"共鳴 ＋"+(visible.resonance-lastPresentedResonance));root.dataset.gainPulse="true";
@@ -734,7 +749,7 @@ function render(){
  }
  setText(ui.wayHint,"書けなくても大丈夫。どちらの方法でも届けられます。");
  setText(ui.selectionReason,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードをタップして意味を選ぶ"));
- setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,C.STAGES[idx].clue);
+ setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,caritasDisplayText(C.STAGES[idx].clue));
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
@@ -770,7 +785,7 @@ function render(){
   ui.writingReward.textContent=s.aiInsightTurn===s.turn?"次のターンでは、残りの送信回数を使えます。":"心の理解による追加共鳴は最大＋12（上限100）。";
   setText(ui.writtenBadge,s.aiInsightTurn===s.turn?"このターン受取済":("共鳴 +"+Math.min(firstWrittenDelivered?RESONANCE_UI.writtenLater:RESONANCE_UI.writtenFirst,Math.max(0,100-s.resonance))));
   setText(ui.writingBonus,ui.writtenBadge.textContent);
-  setText(ui.writingMood,"カリタスの心象："+C.STATES[C.stateFor(s.dark)]);
+  setText(ui.writingMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.writingCount,(ui.aiInput.value||"").length+" / 700文字");
   setText(ui.readBadge,p?("共鳴 +"+p.resonance):"3枚選択");
   ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
@@ -814,7 +829,7 @@ function render(){
    :deliveryMethod==="write"?"カードの意味を参考にできます":"3つの解釈から選んでください");
   ui.modalNav.hidden=false;
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
-  setText(ui.modalMood,"カリタスの心象："+C.STATES[C.stateFor(s.dark)]);
+  setText(ui.modalMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.modalPage,(modalIndex+1)+" / "+s.cards.length);
   if(deliveryMethod==="write"){
    for(const word of card.words){
@@ -973,7 +988,7 @@ function applyOutcome(previous,next,p){
  saySequence([["カリタス",C.reaction(previous,p)]],()=>{
    if(p.hasCounter&&p.damage>0){
      root.dataset.counter="normal";root.dataset.ward="false";
-     setText(ui.enemyCall,"カリタスの反撃！");
+     setText(ui.enemyCall,caritasDisplayName()+"の反撃！");
      setText(ui.enemyDamage,"シオリエル HP −"+p.damage);
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
@@ -1039,14 +1054,14 @@ function init(){
  inspect.addEventListener("click",start);leaveBtn.addEventListener("click",leave);
  options.append(inspect,leaveBtn);prompt.append(promptText,options);shell.appendChild(prompt);
  root=newEl("section");root.id="caritas-event";root.hidden=true;root.dataset.phase="battle";
- root.setAttribute("aria-label","カリタス 心象共鳴");
+ root.setAttribute("aria-label","聖獣 心象共鳴");
  const frame=newEl("section","cb-frame");const arena=newEl("div","cb-arena");ui.arena=arena;
  arena.append(newEl("div","cb-title","心象共鳴"));
- const enemy=newEl("div","cb-hud enemy");enemy.append(newEl("div","cb-hud-name","カリタス"));
+ const enemy=newEl("div","cb-hud enemy");ui.enemyName=newEl("div","cb-hud-name","聖獣");enemy.append(ui.enemyName);
  const dr=newEl("div","cb-hud-row");dr.append(newEl("span","","闇侵蝕"),ui.dark=newEl("span","","100%"));
  ui.darkBar=newEl("i");const drb=newEl("div","cb-bar dark");drb.appendChild(ui.darkBar);
  ui.mood=newEl("div","cb-mood","心象：閉ざす");enemy.append(dr,drb,ui.mood);
- const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="カリタス";
+ const beast=newEl("img","cb-beast");beast.src="./assets/events/hoshisuna/battle/caritas-battle.webp";beast.alt="聖獣";ui.beast=beast;
  const veil=newEl("div","cb-abyss");veil.setAttribute("aria-hidden","true");
  for(let i=0;i<5;i++)veil.append(newEl("i"));
  caritasView=window.CaritasBattlePresentation?.createView({root,beast,veil})||null;
@@ -1089,7 +1104,7 @@ function init(){
  });
  tarotHeader.append(tarotBack,tarotHeading);
  ui.readingIntro=newEl("div","cb-reading-start");
- const introTitle=newEl("strong","cb-reading-start-title","カリタスの心象を読み解く");
+ const introTitle=newEl("strong","cb-reading-start-title","聖獣の心象を読み解く");
  const introHint=newEl("p","cb-reading-start-hint","届け方を選んでください。");
  const introButton=newEl("button","cb-reading-start-button","リーディングを始める");introButton.type="button";
  introButton.addEventListener("click",()=>{if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy)return;readingOpen=true;render();});
@@ -1111,7 +1126,7 @@ function init(){
  ui.aiPanel=newEl("div","cb-ai-panel");
  const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
  ui.aiInput=newEl("textarea","cb-ai-input");ui.aiInput.rows=3;ui.aiInput.maxLength=700;
- ui.aiInput.placeholder="カリタスに何を伝えたい？";
+ ui.aiInput.placeholder="聖獣に何を伝えたい？";
  ui.aiInput.setAttribute("aria-describedby","cb-writing-hint cb-writing-reward");label.append(ui.aiInput);
  ui.writingHint=newEl("p","cb-writing-hint");ui.writingHint.id="cb-writing-hint";
  ui.writingReward=newEl("p","cb-writing-reward");ui.writingReward.id="cb-writing-reward";
@@ -1149,7 +1164,7 @@ function init(){
  ui.writtenBadge=newEl("span","cb-gain-badge","基本 +50");ui.aiToggle.append(ui.aiToggleLabel,ui.writtenBadge);
  ui.aiBody=newEl("div","cb-ai-body");ui.aiBody.hidden=true;
  ui.aiToggle.addEventListener("click",()=>selectDeliveryMethod("write"));
- ui.aiWait=newEl("div","cb-ai-wait","カリタスの返答を待っています…");ui.aiWait.setAttribute("role","status");ui.aiWait.hidden=true;
+ ui.aiWait=newEl("div","cb-ai-wait","聖獣の返答を待っています…");ui.aiWait.setAttribute("role","status");ui.aiWait.hidden=true;
  ui.aiBody.append(ui.writingHint,label,ui.aiResult);ui.aiPanel.append(ui.writingReward,ui.aiWait,ui.aiBody);
  // Keep the original textarea, request button and retry message instances.
  // Only their presentation container changes; the API transaction stays intact.
@@ -1167,7 +1182,7 @@ function init(){
  const writingTitle=newEl("strong","cb-writing-title","自分の言葉で届ける");
  writingHeader.append(writingBack,writingTitle);
  const writingContext=newEl("div","cb-writing-context");
- ui.writingMood=newEl("span","cb-writing-mood","カリタスの心象：閉ざす");
+ ui.writingMood=newEl("span","cb-writing-mood","聖獣の心象：閉ざす");
  ui.writingBonus=newEl("strong","cb-writing-bonus","共鳴 +50");
  writingContext.append(ui.writingMood,ui.writingBonus);
  const writingReference=newEl("div","cb-writing-reference");
@@ -1206,7 +1221,7 @@ function init(){
  const panel=newEl("div","cb-card-panel");
  const modalHeader=newEl("div","cb-modal-header");
  const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
- ui.modalMood=newEl("div","cb-modal-mood","カリタスの心象：閉ざす");
+ ui.modalMood=newEl("div","cb-modal-mood","聖獣の心象：閉ざす");
  ui.modalSelected=newEl("div","cb-modal-selected","3つの解釈から選んでください");
  ui.modalPage=newEl("span","cb-modal-page","1 / 3");
  ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
