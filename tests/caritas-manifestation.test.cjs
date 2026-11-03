@@ -196,12 +196,13 @@ test("visible world-anchored starlight has colour, scale and non-strobing echoes
 });
 test("map farewell restores Shiopon BEFORE the battle overlay is hidden",()=>{
  const ending=event.slice(event.indexOf("function showFarewellOnMap()"),event.indexOf("const newEl="));
- assert.match(ending,/TarotHoshisunaManifestation\?\.clear\?\.\(\);[\s\S]*root\.hidden=true;/);
- assert.ok(ending.indexOf("TarotHoshisunaManifestation?.clear?.()")<ending.indexOf("root.hidden=true"),"clear Shioriel before revealing the map farewell");
+ assert.match(ending,/manifestation\?\.clear\?\.\(\{keepCards:true\}\);[\s\S]*root\.hidden=true;/);
+ assert.ok(ending.indexOf("manifestation?.clear?.({keepCards:true})")<ending.indexOf("root.hidden=true"),"restore Shiopon before revealing map without clearing tarot");
  assert.match(ending,/saySequence\(AFTER_FAREWELL,\(\)=>playFarewellClose\(next\)\)/);
  assert.match(ending,/saySequence\(FAREWELL_CLOSE,\(\)=>/);
  assert.match(ending,/saySequence\(FAREWELL_DEPART,\(\)=>/);
- assert.match(ending,/TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/);
+ assert.doesNotMatch(ending,/window\.TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/,"no unconditional card redeployment during the farewell");
+ assert.match(ending,/manifestation\?\.deployCards\?\.\(\{instant:true\}\)/,"late-reload recovery uses a non-animated fallback");
  assert.match(ending,/TarotHoshisunaManifestation\?\.dismissCards\?\.\(\)/);
  const finish=event.slice(event.indexOf("function finish(){"),event.indexOf("function init(){"));
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0);
