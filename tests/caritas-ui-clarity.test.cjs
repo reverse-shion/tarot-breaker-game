@@ -92,7 +92,9 @@ test('author-approved three-act outro preserves all lines, reveal order and clos
  const ending=event.slice(event.indexOf('function playMapFarewell(next){'),event.indexOf('function beginEnding(){'));
  assert.match(ending,/outro\?\.liftHead\?\.\(\)/);
  assert.match(ending,/outro\?\.standUp\?\.\(\)/);
- assert.match(ending,/TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/);
+ assert.doesNotMatch(ending,/window\.TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/,"no second deployment before closing");
+ assert.match(ending,/manifestation\?\.clear\?\.\(\{keepCards:true\}\)/);
+ assert.match(ending,/manifestation\?\.deployCards\?\.\(\{instant:true\}\)/,"only late reload can recover a missing spread");
  assert.match(ending,/TarotHoshisunaManifestation\?\.dismissCards\?\.\(\)/);
  assert.match(ending,/saySequence\(FAREWELL_DEPART,\(\)=>/);
  assert.match(ending,/type:"move",actor:"shiopon",target:destination,duration,caritasSafe:true/);
