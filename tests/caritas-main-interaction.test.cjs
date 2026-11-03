@@ -33,7 +33,7 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
  const create=t=>{const el=new El(t);if(waapi)el.animate=(frames,options)=>{let resolve;const a={frames,options,finished:new Promise(r=>{resolve=r}),finish:()=>resolve(),pause(){this.paused=true},play(){this.paused=false},cancel(){this.cancelled=true}};animations.push(a);return a;};return el;};
  const doc={createDocumentFragment:()=>new El('fragment'),readyState:'complete',hidden:false,body,createElement:create,getElementById:k=>k==='game-shell'?shell:k==='hoshisuna-caritas'?new El('img'):shell.querySelector('#'+k),querySelector:k=>k==='.hoshi-caritas'?creature:null,addEventListener:(n,f)=>documentListeners[n]=f};
  const lines=[],events=[],intervals=[],saved=new Map(),pointer={actor:{x:100,y:500},companion:{x:950,y:305},advance:null,colliding:true,dialogueOptions:null};
- const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},dismissCards(){pointer.cardsDismissed=(pointer.cardsDismissed||0)+1;pointer.cards=false;return true},
+ const window={innerHeight:844,visualViewport,TAROBRE_CARITAS_API_URL:'https://test.example/api/caritas-interpret',CaritasBattleCore:Core,CaritasSpecialState:require('../caritas-special-state.js'),TarotStage:{getState:()=>({actors:{shion:pointer.actor,shiopon:pointer.companion}}),perform:command=>{(pointer.stageCommands??=[]).push(command);if(command.type==="move"&&command.actor==="shiopon")pointer.companion={...command.target};return {promise:Promise.resolve({completed:true})}}},TarotHoshisunaManifestation:{prepareLeft(){pointer.leftPrepared=(pointer.leftPrepared||0)+1;return Promise.resolve({completed:true})},deployCards(){pointer.cards=true;return true},dismissCards(){pointer.cardsDismissed=(pointer.cardsDismissed||0)+1;pointer.cards=false;return true},
    startChant(){pointer.chant="rising";(pointer.chantHistory??=[]).push("rising");return true},
    sealChant(){pointer.chant="sealed";(pointer.chantHistory??=[]).push("sealed");return true},
    moveForward(){pointer.walks=(pointer.walks||0)+1;return Promise.resolve({completed:true})},faceFront(){pointer.front=true;return true},begin(){pointer.mapPhase="charging";pointer.chant="idle";return true},reveal(){pointer.mapPhase="revealed";return true},clear(){pointer.cards=false;pointer.mapPhase="idle";pointer.chant="idle";pointer.clears=(pointer.clears||0)+1;return true},pause(){pointer.paused=true},resume(){pointer.paused=false}},TarotHoshisunaCollision:{setActive:v=>{pointer.colliding=v}},
@@ -448,8 +448,16 @@ async function finishSpecial(f){
  f.pointer.advance();assert.equal(f.lines.at(-1).text,'はいなの〜！');
  f.pointer.advance();await flush();
  assert.equal(f.state().special.phase,'DONE');
- assert.ok(f.pointer.stageCommands.some(c=>c.type==='step'&&c.actor==='shion'));
- assert.ok(f.pointer.stageCommands.some(c=>c.type==='step'&&c.actor==='shiopon'));
+ const commands=f.pointer.stageCommands.filter(c=>c.type==='move'||c.type==='step');
+ assert.equal(commands.filter(c=>c.actor==='shion').length,0,'Shion must stay still at the farewell');
+ const regroup=commands.filter(c=>c.actor==='shiopon');
+ assert.equal(regroup.length,1,'Shiopon approaches exactly once before input returns');
+ assert.equal(regroup[0].type,'move');
+ assert.equal(regroup[0].caritasSafe,true,'the staged route must respect the map and avoid Shion');
+ assert.deepEqual(regroup[0].target,{x:f.pointer.actor.x,y:f.pointer.actor.y+56});
+ assert.equal(f.pointer.companion.x,f.pointer.actor.x);
+ assert.equal(f.pointer.companion.y,f.pointer.actor.y+56,'normal follow should already be satisfied on unlock');
+ assert.equal(f.events.filter(x=>x==='tarot-breaker:interaction-end').length,1);
 }
 
 test('P0/P1 fixed detail header, and writing reference contains three complete meanings without selecting',async()=>{
