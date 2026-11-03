@@ -208,7 +208,7 @@ test("map farewell restores Shiopon BEFORE the battle overlay is hidden",()=>{
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")>=0);
  assert.ok(finish.indexOf("TarotHoshisunaManifestation?.clear?.()")<finish.indexOf("root.hidden=true"),
   "must restore actor before revealing the original map canvas");
- const clear=game.slice(game.indexOf('    clear(){'),game.indexOf('    getState:()=>({phase:caritasInvocation.phase'));
+ const clear=game.slice(game.indexOf('    clear({keepCards=false}={}){'),game.indexOf('    getState:()=>({phase:caritasInvocation.phase'));
  for(const reset of [
   'caritasInvocation.phase="idle"',
   'caritasInvocation.locked=false',
