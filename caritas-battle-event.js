@@ -459,14 +459,25 @@ function playFarewellClose(next){
    stage("closing-light",850,()=>{
     if(done||recovery||saveBlocked)return;
     faceShionAhead();
-    // An immediate companion reply is authored as the next normal shared line.
+    // Shion stays still. Before releasing input, Shiopon walks into the exact
+    // normal follower position for Shion facing north (56 map pixels behind).
+    // Otherwise normal follow begins AFTER unlock and visibly corrects the
+    // two separate forward steps. Reuse the map's collision-safe stage route.
     saySequence(FAREWELL_DEPART,()=>{
-     // Both take one collision-checked map step; ordinary player/follower control
-     // resumes after the saved DONE transition. Failed steps never block exit.
-     const walks=["shion","shiopon"].map(actor=>
-      window.TarotStage?.perform?.({type:"step",actor,direction:"up",distance:12,duration:420})?.promise
-     ).filter(Boolean);
-     Promise.allSettled(walks).then(()=>{if(!done&&!recovery&&!saveBlocked)next();});
+     const actors=window.TarotStage?.getState?.().actors;
+     const shion=actors?.shion,shiopon=actors?.shiopon;
+     const valid=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y);
+     if(!valid(shion)||!valid(shiopon)){next();return;}
+     const destination={x:shion.x,y:shion.y+56};
+     const distance=Math.hypot(destination.x-shiopon.x,destination.y-shiopon.y);
+     if(distance<=5){next();return;}
+     const duration=Math.max(420,Math.min(1600,distance*7));
+     const regroup=window.TarotStage?.perform?.({
+      type:"move",actor:"shiopon",target:destination,duration,caritasSafe:true
+     });
+     Promise.resolve(regroup?.promise).catch(()=>null).then(()=>{
+      if(!done&&!recovery&&!saveBlocked)next();
+     });
     });
    });
   });
