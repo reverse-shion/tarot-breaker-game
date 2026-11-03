@@ -149,13 +149,13 @@ function advanceNotice(f){
 }
 async function advanceScoutToTarot(f){
  const introduction=[
-  ['カリタス','く、苦しい……アビスが体を侵蝕するなぞとは……'],
+  ['聖獣','く、苦しい……アビスが体を侵蝕するなぞとは……'],
   ['シオン','あの星獣、言葉が話せるぞ、しおぽん。'],
   ['しおぽん','ほんとなの！？'],
-  ['カリタス','アビス……どうしてだ……この世の理が崩れたとでもいうのか。'],
-  ['カリタス','まさか……'],
-  ['カリタス','二人とも近づくでない。'],
-  ['カリタス','今の私は何をするか分からんぞ！']
+  ['聖獣','アビス……どうしてだ……この世の理が崩れたとでもいうのか。'],
+  ['聖獣','まさか……'],
+  ['聖獣','二人とも近づくでない。'],
+  ['聖獣','今の私は何をするか分からんぞ！']
  ];
  const decision=[
   ['しおぽん','アビスが喰べてる？ そんな事って……'],
@@ -268,7 +268,7 @@ function read(f,root,words){
  }
  assert.equal(f.state().story,'word-strike');
  f.advanceTime(1050); // Effects and meter updates, then Caritas response.
- assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(f.lines.at(-1).speaker,'聖獣');
  f.pointer.advance();
  if(f.state().story==='enemy-turn')f.advanceTime(1050);
 }
@@ -305,7 +305,7 @@ test('first Shion speech uses shared main dialogue; choices use main official pa
  assert.equal(f.state().story,'choice');
  assert.match(choice.querySelector('#star-gate-interaction-text').textContent,/調べてみるか/);
  f.button(choice,'調べる').click();
- assert.equal(choice.hidden,true);assert.equal(f.lines.at(-1).speaker,'カリタス');
+ assert.equal(choice.hidden,true);assert.equal(f.lines.at(-1).speaker,'聖獣');
  assert.equal(f.shell.querySelector('#dialogue-advance').focusCalls||0,0,'subsequent lines do not force focus either');
 });
 test('real shared dialogue remains hidden during native main choice activation',()=>{
@@ -371,7 +371,7 @@ test('read chooses foreground meanings, accepts input once, then shows calculate
  assert.equal(hpText(),'100/100','HP is not lost before the counterattack');
  assert.equal(resonanceText(),'0/100','meters wait for the attack impact');
  assert.equal(darknessText(),'100%');
- f.advanceTime(1050);assert.equal(f.lines.at(-1).speaker,'カリタス');
+ f.advanceTime(1050);assert.equal(f.lines.at(-1).speaker,'聖獣');
  assert.equal(darknessText(),'80%');
  assert.equal(resonanceText(),'27/100');
  assert.equal(hpText(),'100/100');
@@ -398,11 +398,23 @@ async function finishSpecial(f){
  f.pointer.advance();f.pointer.advance(); // Map: Shion and Caritas opening.
  await Promise.resolve();await Promise.resolve();
  assert.match(f.lines.at(-1).text,/救われる側/);
- for(let i=0;i<12;i++)f.pointer.advance();
+ // 15 farewell lines: the name is not displayed until the self-introduction finishes.
+ for(let i=0;i<15;i++){
+  const last=f.lines.at(-1);
+  if(i===0)assert.equal(last.speaker,'聖獣');
+  if(i===12){assert.equal(last.speaker,'聖獣');assert.equal(last.text,'私はカリタス。慈愛のカリタス。');}
+  if(i===13){assert.equal(last.speaker,'カリタス');assert.match(last.text,/さらばだ/);}
+  if(i===14){assert.equal(last.speaker,'カリタス');assert.equal(last.text,'……また会おう。');}
+  f.pointer.advance();
+ }
  assert.equal(f.state().special.phase,'RETURNING');
  await Promise.resolve();await Promise.resolve();
  assert.match(f.lines.at(-1).text,/あの子/,'Shiopon reacts only after Caritas leaves the map');
- f.pointer.advance();f.pointer.advance();
+ f.pointer.advance();
+ assert.equal(f.lines.at(-1).text,'ああ。何かを知っているようだったな。');
+ f.pointer.advance();
+ assert.equal(f.lines.at(-1).text,'……慈愛のカリタス、か。');
+ f.pointer.advance();
  assert.equal(f.state().special.phase,'RETURNING','closing dialogue not skipped');
  f.advanceTime(1100);
  assert.equal(f.lines.at(-1).text,'タロットクローズ');
@@ -618,7 +630,7 @@ test('stage 3 writing surface reuses original editor and send, preserves drafts,
  assert.equal(root.querySelector('.cb-ai-panel').parentElement,panel,'one existing AI panel moved into the overlay');
  assert.equal(send.parentElement,footer,'the real send button stays in the pinned footer');
  assert.equal(root.flatten().filter(el=>el.className==='cb-ai-send').length,1);
- assert.match(root.querySelector('.cb-writing-mood').textContent,/カリタスの心象：/);
+ assert.match(root.querySelector('.cb-writing-mood').textContent,/聖獣の心象：/);
  assert.match(root.querySelector('.cb-writing-bonus').textContent,/共鳴 \+50/);
  assert.equal(root.querySelector('.cb-writing-count').textContent,'12 / 700文字');
  // Tarot cards can be looked at without selecting meanings or submitting.
@@ -684,7 +696,7 @@ test('written delivery commits once only after both shared dialogue pages, then 
  resolveReply(aiReply([]));await pending;
  assert.equal(f.state().battle.resonance,0,'usable reply alone is not a delivered reading');
  assert.equal(f.lines.at(-1).speaker,'シオン');
- f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'カリタス');
+ f.pointer.advance();assert.equal(f.lines.at(-1).speaker,'聖獣');
  assert.equal(f.state().battle.resonance,0);
  f.pointer.advance();
  assert.equal(f.state().story,'written-light');
@@ -804,6 +816,8 @@ test('every committed phase restores same page, B boundary and locked map',async
   if(phase==='RETURNING'){
     await Promise.resolve();await Promise.resolve();
     f.pointer.advance();f.pointer.advance();
+    assert.equal(f.lines.at(-1).text,'……慈愛のカリタス、か。');
+    f.pointer.advance();
     f.advanceTime(1100);
     assert.equal(f.lines.at(-1).text,'タロットクローズ');
     assert.equal(saved(f).special.phase,'RETURNING');
@@ -963,7 +977,7 @@ test('stage 2 tarot takes the viewport, keeps live heart state, supports next/pr
  cards[0].click();
  assert.equal(root.querySelector('.cb-card-overlay').hidden,false);
  assert.equal(root.querySelector('.cb-modal-page').textContent,'1 / 3');
- assert.match(root.querySelector('.cb-modal-mood').textContent,/カリタスの心象：/);
+ assert.match(root.querySelector('.cb-modal-mood').textContent,/聖獣の心象：/);
  assert.equal(root.querySelector('.cb-modal-next').hidden,false);
  root.querySelector('.cb-modal-next').click();
  assert.equal(root.querySelector('.cb-modal-page').textContent,'2 / 3');
