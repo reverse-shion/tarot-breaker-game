@@ -1685,3 +1685,42 @@
 #caritas-event .cb-written-gain{
  display:none!important;
 }
+
+/* v20 — Clarity pass. No battle arithmetic, authored scene, main dialogue,
+   sprite, HUD geometry, or shared component styles are changed. */
+
+/* Selecting a delivery mode happens on the battle screen. Once inside the
+   tarot surface, its own Back control changes modes and there is one CTA. */
+#caritas-event[data-phase="battle"][data-reading-mode="select"] .cb-delivery-methods,
+#caritas-event[data-phase="battle"][data-reading-mode="select"] .cb-card .cb-chosen{
+ display:none!important;
+}
+
+/* A single field border is enough: the textarea is the active composing area. */
+#caritas-event[data-phase="battle"][data-writing-screen="true"] .cb-writing-overlay .cb-ai-body{
+ background:transparent!important;border:0!important;border-radius:0;
+ padding:0!important;gap:8px;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"] .cb-writing-reference-card{
+ font-size:clamp(11px,3.1vw,13px);padding:5px 3px;
+ overflow-wrap:anywhere;
+}
+
+/* On Safari's reduced visual viewport, reserve the composer and send button.
+   Hide only nonessential explanatory copy while the keyboard is open. */
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-context,
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-reference,
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-reward,
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-hint{
+ display:none!important;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-panel,
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-overlay .cb-ai-panel,
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-overlay .cb-ai-body,
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-overlay .cb-ai-label{
+ display:flex;flex-direction:column;flex:1 1 auto;min-height:0;
+}
+#caritas-event[data-phase="battle"][data-writing-screen="true"][data-composing="true"] .cb-writing-overlay .cb-ai-input{
+ flex:1 1 auto!important;height:auto!important;min-height:76px!important;max-height:none!important;
+ overflow-y:auto;
+}
