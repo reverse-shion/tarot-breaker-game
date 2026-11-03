@@ -228,7 +228,7 @@ test("isolated main dialogue, combat and device cache retained",()=>{
  assert.match(html,/caritas-battle-event\.css\?v=main-dialogue-choice-v17/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-persistent-v3/);
  assert.match(html,/caritas-battle-core\.js\?v=written-reward-v1-20261029/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-persistent-v24/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-field-bgm-early-v25/);
  assert.match(html,/hoshisuna-caritas-outro\.js\?v=map-farewell-three-acts-v2/);
  const contract=JSON.parse(fs.readFileSync(path.join(root,"event-contracts.json"),"utf8"));
  assert.equal(contract.events["hoshisuna-caritas"].segments["caritas-heart-resonance"],"NOT TESTED");
@@ -315,7 +315,7 @@ test("opt-in transformation preview starts before battle without reading or rewr
  assert.match(event,/if\(transformationReplay\)return false;\s*try\{\s*savedRaw=checkpointStore\.getItem\(SAVE_KEY\)/);
  assert.match(event,/if\(!transformationReplay\)window\.addEventListener\("storage"/);
  assert.doesNotMatch(event,/S\.write\(localStorage,SAVE_KEY/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-tarot-persistent-v24/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-field-bgm-early-v25/);
  assert.match(html,/hoshisuna-main-game\.js\?v=caritas-tarot-persistent-v3/);
 });
 test("transformation replay dev spawn stays walkable and keeps main Starroad entry unchanged",()=>{
