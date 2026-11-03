@@ -152,7 +152,10 @@ function restoreCheckpoint(){
   if(!record.battle)return false;
   battle=record.battle;visualBattle=null;readingOpen=false;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-start"));
-  if(record.special.committed){playSpecialSequence();return true;}
+  if(record.special.committed){
+   if(record.special.phase!=="DONE")window.TarotHoshisunaManifestation?.deployCards?.({instant:true});
+   playSpecialSequence();return true;
+  }
   if(battle.phase==="ending"){render();beginEnding();}
   else if(battle.phase==="defeat"){render();beginRetreat();}
   else render();return true;
@@ -416,7 +419,11 @@ function faceShioponAway(){
 function showFarewellOnMap(){
  // Show the actual Starroad creature and canonical main dialogue, not a clone.
  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
- window.TarotHoshisunaManifestation?.clear?.();
+ // Restore the fox, but the three original Tarot cards stay until the Close.
+ const manifestation=window.TarotHoshisunaManifestation;
+ manifestation?.clear?.({keepCards:true});
+ // Reloaded late checkpoints have no in-memory spread; reconstruct it silently.
+ if(!manifestation?.getState?.().cardsActive)manifestation?.deployCards?.({instant:true});
  window.TarotHoshisunaAbyss?.setPhase?.("cleared");
  document.body.classList.remove('caritas-special-active');
  root.hidden=true;
@@ -448,10 +455,9 @@ function playMapFarewell(next){
 }
 function playFarewellClose(next){
  if(done||recovery||saveBlocked)return;
- // The approved tarot backs return as a soft, world-anchored afterglow.
- // Shion looks down before closing; no cut-in or new illustration is required.
+ // The three original cards never vanished; Shion simply looks toward them.
+ // No second deployment, cut-in, or new illustration.
  faceShionToCards();
- window.TarotHoshisunaManifestation?.deployCards?.();
  stage("closing-pause",FAREWELL_CLOSE_PAUSE_MS,()=>{
   if(done||recovery||saveBlocked)return;
   saySequence(FAREWELL_CLOSE,()=>{
