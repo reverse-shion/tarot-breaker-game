@@ -245,7 +245,7 @@ body.caritas-departed .hoshi-caritas{display:none!important}
   height: 26%;
   aspect-ratio: auto;
   z-index: 7;
-  background: url('./assets/events/hoshisuna/battle/shion-battle.webp') center bottom / contain no-repeat;
+  background: url('./assets/battle/character/shion.webp') center bottom / contain no-repeat;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 3px rgba(24, 32, 61, .48));
 }
@@ -258,7 +258,7 @@ body.caritas-departed .hoshi-caritas{display:none!important}
   border: 0;
   border-radius: 0;
   clip-path: none;
-  background: url('./assets/events/hoshisuna/battle/shioriel-battle.webp') center bottom / contain no-repeat;
+  background: url('./assets/battle/character/shioriel.webp') center bottom / contain no-repeat;
   -webkit-mask-image: none;
   mask-image: none;
   image-rendering: pixelated;
