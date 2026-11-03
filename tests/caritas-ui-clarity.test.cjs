@@ -70,22 +70,35 @@ test('event preflight admits only the isolated NOT TESTED Caritas target',()=>{
  assert.equal(result.productionEnabled,false);
 });
 
-test('the beast reveals its name only at farewell, then Shion reflects before Tarot Close',()=>{
+test('author-approved three-act outro preserves all lines, reveal order and closing beat',()=>{
  const farewell=event.slice(event.indexOf('const FAREWELL=['),event.indexOf('const AFTER_FAREWELL=['));
  assert.match(event,/const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。"/);
  assert.match(farewell,/\["カリタス",CARITAS_REVEAL_LINE\]/);
- assert.ok(farewell.indexOf('["カリタス",CARITAS_REVEAL_LINE]')<farewell.indexOf('["カリタス","……また会おう。"]'));
+ assert.ok(farewell.indexOf('["カリタス",CARITAS_REVEAL_LINE]')<farewell.indexOf('["カリタス","また会おう。"]'));
  assert.match(event,/dialogueIndex>CARITAS_REVEAL_INDEX\)caritasNamed=true/);
  assert.match(event,/speaker:speaker==="カリタス"\?caritasDisplayName\(\):speaker/);
  assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"星獣"/);
- assert.match(event,/text:text===CARITAS_REVEAL_LINE\|\|text==="……慈愛のカリタス、か。"\?text:caritasDisplayText\(text\)/);
+ assert.match(event,/text:text===CARITAS_REVEAL_LINE\|\|dialogueLines===AFTER_FAREWELL\?text:caritasDisplayText\(text\)/);
  assert.match(event,/ui\.enemyName=newEl\("div","cb-hud-name","星獣"\)/);
  assert.match(event,/beast\.alt="星獣";ui\.beast=beast/);
- assert.match(event,/setText\(ui\.clue,caritasDisplayText\(C\.STAGES\[idx\]\.clue\)\)/);
+ const firstAct=event.slice(event.indexOf('const FAREWELL_OPEN=['),event.indexOf('const FAREWELL=['));
+ for(const line of ['迷惑をかけたな。','分からぬ。アビスに呑まれるなど思いもせず、ただ己の弱さを恥じていた。','それでも、闇の底で二人の言葉が聞こえた。礼を言う。','長き旅路の果てに、こうしてお目にかかれるとは。しおぽんさ――','それは、私の口から語ることではない。'])assert.ok(firstAct.includes(line),line);
  const after=event.slice(event.indexOf('const AFTER_FAREWELL=['),event.indexOf('const FAREWELL_CLOSE='));
- assert.ok(after.indexOf('ああ。何かを知っているようだったな。')<after.indexOf('……慈愛のカリタス、か。'));
- assert.match(event,/const FAREWELL_CLOSE=\[\["シオン","タロットクローズ"\]\]/);
+ assert.ok(after.indexOf('慈愛のカリタス、か。')<after.indexOf('シオンさん。'));
+ assert.match(event,/const FAREWELL_CLOSE=\[\["シオン","タロットクローズ。"\]\]/);
+ assert.match(event,/\["シオン","さあ、星砂を探しに行こう。"\]/);
+ assert.match(event,/\["しおぽん","はいなの〜！"\]/);
  assert.match(event,/const FAREWELL_CLOSE_PAUSE_MS=1100/);
+ const ending=event.slice(event.indexOf('function playMapFarewell(next){'),event.indexOf('function beginEnding(){'));
+ assert.match(ending,/outro\?\.liftHead\?\.\(\)/);
+ assert.match(ending,/outro\?\.standUp\?\.\(\)/);
+ assert.match(ending,/TarotHoshisunaManifestation\?\.deployCards\?\.\(\)/);
+ assert.match(ending,/TarotHoshisunaManifestation\?\.dismissCards\?\.\(\)/);
+ assert.match(ending,/saySequence\(FAREWELL_DEPART,\(\)=>/);
+ assert.match(ending,/type:"move",actor:"shiopon",target:destination,duration,caritasSafe:true/);
+ assert.match(ending,/const destination=\{x:shion\.x,y:shion\.y\+56\}/);
+ assert.doesNotMatch(ending,/type:"step",actor/,'farewell never stages a separate Shion walk');
+ assert.match(ending,/Promise\.resolve\(regroup\?\.promise\)/);
 });
 
 // Display name must remain 星獣 from Shion's first sighting until Caritas introduces himself.
@@ -96,5 +109,5 @@ test('星獣 is the only pre-reveal display spelling, with the original first Sh
  assert.match(event,/\["シオン","……しおぽん、待て。星獣がいる。"\]/);
  assert.match(event,/caritasDisplayName=\(\)=>caritasNamed\?"カリタス":"星獣"/);
  assert.match(event,/const CARITAS_REVEAL_LINE="私はカリタス。慈愛のカリタス。"/);
- assert.match(html,/caritas-battle-event\.js\?v=caritas-name-reveal-v22/);
+ assert.match(html,/caritas-battle-event\.js\?v=caritas-farewell-three-acts-v23/);
 });

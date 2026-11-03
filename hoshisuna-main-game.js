@@ -184,7 +184,7 @@
   let caritasOwnerStarAtlas = null;
   let caritasResonanceSprites = null;
   let caritasTarotBack = null;
-  const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false};
+  const caritasTarotSpread={active:false,elapsed:0,since:0,paused:false,closeAt:null};
   let caritasTarotLuminousMask=null;
   // Before the Caritas dialogue, Shiopon walks beside Shion along a collision-safe route.
   // Pre-transformation only. A single shared clock governs all five lights:
@@ -1876,18 +1876,22 @@
     if(!hoshisunaIsolated||!caritasTarotSpread.active||!caritasTarotBack)return;
     const phase=caritasInvocation.phase;
     if(phase==="revealed")return;
-    const entrance=caritasOwnerSmooth(caritasTarotElapsed()/450);
+    const elapsed=caritasTarotElapsed();
+    // Farewell: reuse the original tarot backs and gently close their light.
+    const closeFade=caritasTarotSpread.closeAt===null?1:
+      1-caritasOwnerSmooth((elapsed-caritasTarotSpread.closeAt)/850);
+    if(closeFade<=0){caritasTarotSpread.active=false;return;}
+    const entrance=caritasOwnerSmooth(elapsed/450);
     const fade=phase==="charging"?1-caritasOwnerSmooth((caritasInvocationProgress()*CARITAS_MANIFESTATION_DURATION_MS-4100)/600):1;
-    if(entrance*fade<=0)return;
+    if(entrance*fade*closeFade<=0)return;
     const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const lift=reduced?0:(1-entrance)*8;
     const cards=caritasTarotLayout(player,DRAW_HEIGHT,caritasTarotBack.naturalWidth/caritasTarotBack.naturalHeight);
     const sharedGlow=caritasChantStrength();
-    const elapsed=caritasTarotElapsed();
     const calm=reduced?1:.94+.06*Math.cos(elapsed*Math.PI/1050);
     const envelope=Math.min(1.35,.20+sharedGlow*.42)*calm;
     const mask=getCaritasTarotLuminousMask();
-    ctx.save();ctx.globalAlpha*=entrance*fade;
+    ctx.save();ctx.globalAlpha*=entrance*fade*closeFade;
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
     for(const card of cards){
       const y=card.y+lift,left=card.x-card.width/2,top=y-card.height/2;
@@ -3710,9 +3714,15 @@
     },
     deployCards(){
       if(!ready||!running||!caritasTarotBack||caritasTarotSpread.active||caritasInvocation.phase!=="idle")return false;
-      caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;
+      caritasTarotSpread.active=true;caritasTarotSpread.elapsed=0;caritasTarotSpread.closeAt=null;
       caritasTarotSpread.since=performance.now();caritasTarotSpread.paused=document.hidden;
       draw();return true;
+    },
+    dismissCards(){
+      if(!caritasTarotSpread.active)return false;
+      caritasTarotSpread.closeAt=caritasTarotElapsed();
+      if(ready&&running)draw();
+      return true;
     },
     moveForward(){
       if(!ready||!running||!caritasShiorielAtlas||caritasInvocation.locked)
@@ -3811,7 +3821,7 @@
       // collision route running invisibly after returning to the world.
       if(stageMotions.shiopon?.caritasSafe)
         settleStageMotion("shiopon",stageMotions.shiopon,{skipped:true});
-      caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;
+      caritasTarotSpread.active=false;caritasTarotSpread.elapsed=0;caritasTarotSpread.closeAt=null;
       caritasChant.phase="idle";caritasChant.elapsed=0;
       caritasChant.sealedAt=0;caritasChant.paused=false;
       caritasSafeNavigator=null;caritasSafeNavigatorKey="";
