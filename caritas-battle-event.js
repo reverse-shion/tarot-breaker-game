@@ -490,7 +490,7 @@ function currentLine(){
    else if(dialogueIndex===1)window.TarotHoshisunaManifestation?.sealChant?.();
  }
  dialogue.show({speaker:speaker==="カリタス"?caritasDisplayName():speaker,
-  text:text===CARITAS_REVEAL_LINE?text:caritasDisplayText(text),
+  text:text===CARITAS_REVEAL_LINE||text==="……慈愛のカリタス、か。"?text:caritasDisplayText(text),
   actor:speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="しおぽん"?"shiopon":speaker==="シオン＆シオリエル"?"shion-shioriel":"caritas"});
  renderCaritas();
  // The shared controller's instant reveal invalidates its own RAF token in
