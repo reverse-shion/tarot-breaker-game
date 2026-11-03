@@ -26,7 +26,8 @@ test('rendered rewards are derived from actual game state and never change calcu
  assert.match(event,/Math\.min\(firstWrittenDelivered\?RESONANCE_UI\.writtenLater:RESONANCE_UI\.writtenFirst,Math\.max\(0,100-s\.resonance\)\)/);
  assert.match(event,/const RESONANCE_UI=Object\.freeze\(\{writtenFirst:50,writtenLater:25,gainPulseMs:1300\}\)/);
  assert.match(core,/const requestedBonus=firstDelivery===true\?50:25;/);
- assert.match(event,/s\.aiInsightTurn===s\.turn\?"この読みの特典は受け取り済み"/);
+ assert.match(event,/setText\(ui\.writtenBadge,s\.aiInsightTurn===s\.turn\?"このターン受取済"/);
+ assert.match(event,/s\.aiInsightTurn===s\.turn\?"このターンは送信済（残り"/);
 });
 
 test('cards have three labeled slots, role translations, and visible disabled reasons',()=>{
