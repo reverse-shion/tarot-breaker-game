@@ -28,8 +28,9 @@
 }
 #caritas-event[data-rules="tactical-v1"] .cb-writing-context{flex-wrap:wrap}
 #caritas-event[data-rules="tactical-v1"] .cb-writing-context>.cb-tactical-observation{flex-basis:100%}
-#caritas-event[data-rules="tactical-v1"] .cb-tarot-header{flex-wrap:wrap}
-#caritas-event[data-rules="tactical-v1"] .cb-tarot-header>.cb-tactical-observation{width:100%;flex-basis:100%}
+#caritas-event[data-rules="tactical-v1"] .cb-tarot-header{flex-wrap:nowrap;min-width:0}
+#caritas-event[data-rules="tactical-v1"] .cb-tarot-header>.cb-tactical-observation{width:100%;flex:0 0 auto;min-width:0}
+#caritas-event[data-rules="tactical-v1"][data-reading-mode="select"] .cb-tarot-review{display:none}
 #caritas-event[data-rules="tactical-v1"][data-reading-open="false"][data-phase="battle"] .cb-frame>.cb-controls{gap:10px!important}
 #caritas-event[data-rules="tactical-v1"] .cb-modal-word-desc{font-family:system-ui,sans-serif;font-size:14px;line-height:1.55}
 #caritas-event[data-rules="tactical-v1"] .cb-bar.hp>i{background:linear-gradient(90deg,#86cbd2,#c8e0a1)}
