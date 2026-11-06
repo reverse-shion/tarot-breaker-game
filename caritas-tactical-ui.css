@@ -91,5 +91,13 @@
 #caritas-event .cb-completion-send:disabled{opacity:.5}
 #caritas-event .cb-completion-edit{display:block;margin:0 auto;min-height:44px;padding:8px 24px;background:transparent;border:0;border-bottom:1px solid #9c855d;border-radius:0;color:#f1dfb6;font:16px Georgia,'Yu Mincho',serif;box-shadow:none;cursor:pointer}
 #caritas-event .cb-completion button:focus-visible{outline:2px solid #b7e8ff;outline-offset:2px}
+/* Narrow phones: separate the lower tarot pair from the upper card and
+   keep choice captions out of the following reading panel. The decorative
+   ring retains its original aspect ratio; only the card offsets change. */
+@media (max-width:360px){
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{margin-bottom:42px}
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(2),
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(3){top:56%}
+}
 @keyframes cb-reading-connect{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#caritas-event .cb-completion-cards::before{animation:none}}
