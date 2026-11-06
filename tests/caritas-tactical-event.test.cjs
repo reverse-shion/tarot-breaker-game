@@ -79,3 +79,12 @@ test('corrupt tactical finisher receipt fails closed instead of trapping disable
  const persistentStore=new Map([[KEY,JSON.stringify(r)]]),before=persistentStore.get(KEY);
  const {f}=setup({persistentStore});assert.equal(f.state().recovery,true);assert.equal(persistentStore.get(KEY),before);
 });
+test('each card explains its role and actual choice count; Strength intentionally has two',()=>{
+ const {f,root}=setup();f.button(root,'選んで届ける').click();
+ for(let i=0;i<3;i++){
+  root.flatten().filter(e=>e.className==='cb-card-button')[i].click();
+  assert.match(root.querySelector('.cb-modal-title').textContent,i===1?/トリガー.*2択/:i===0?/コンパス.*3択/:/ルート.*3択/);
+  assert.equal(root.querySelector('.cb-modal-words').children.length,i===1?2:3);
+  root.querySelector('.cb-modal-close').click();
+ }
+});

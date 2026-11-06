@@ -858,7 +858,7 @@ function render(){
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
-  section.append(newEl("div","cb-role",({COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
+  section.append(newEl("div","cb-role",(tactical?{COMPASS:"観察・3択",TRIGGER:"働きかけ・2択",ROUTE:"届け方・3択"}:{COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
   const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading||!readingOpen;
   btn.setAttribute("aria-label",card.name+(deliveryMethod==="write"?"を拡大して見る":s.words[i]?"・"+C.READING_OPTIONS[s.words[i]].title+"を選択済み。変更する":"を開いて意味を選ぶ"));
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
@@ -935,6 +935,7 @@ function render(){
   const card=s.cards[modalIndex];
   const visibleWords=tactical?C.optionsFor(card):card.words;
   ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
+  if(tactical)ui.modalTitle.textContent=card.name+" — "+({COMPASS:"コンパス：観察・3択",TRIGGER:"トリガー：働きかけ・2択",ROUTE:"ルート：届け方・3択"})[card.role];
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
