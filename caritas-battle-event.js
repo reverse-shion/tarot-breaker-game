@@ -1341,7 +1341,8 @@ function init(){
  writingPanel.append(writingReference,ui.aiPanel);
  const writingFooter=newEl("div","cb-writing-footer");
  ui.writingCount=newEl("span","cb-writing-count","0 / 700文字");
- writingFooter.append(ui.writingIntent,ui.writingCount,ui.aiSend);
+ if(tactical)writingFooter.append(ui.writingIntent);
+ writingFooter.append(ui.writingCount,ui.aiSend);
  ui.writingOverlay.append(writingHeader,writingContext,writingPanel,writingFooter);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
