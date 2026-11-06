@@ -1,0 +1,39 @@
+/* Only the opt-in tactical candidate; no shared dialogue or legacy rules. */
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-observation {
+ margin:0;padding:10px 12px;border-left:3px solid #8bd7e7;
+ background:#152538;color:#f2f2ee;font-family:system-ui,sans-serif;
+ font-size:14px;line-height:1.6;text-align:left;overflow-wrap:anywhere;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-observation[hidden],
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-triangle[hidden]{display:none}
+#caritas-event[data-rules="tactical-v1"][data-reading-open="true"] .cb-controls>.cb-tactical-observation,
+#caritas-event[data-rules="tactical-v1"]:not([data-reading-mode="select"]) .cb-tactical-triangle,
+#caritas-event[data-rules="tactical-v1"]:not([data-reading-mode="select"]) .cb-controls>.cb-tactical-forecast{display:none}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-triangle{
+ position:relative;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;
+ font:12px/1.4 system-ui,sans-serif;color:#e5d7ae;margin:0;padding:8px;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-triangle::before{
+ content:"";position:absolute;inset:22px 20% 22px;pointer-events:none;opacity:.6;
+ background:linear-gradient(60deg,transparent 49%,#a4cfdb 50%,transparent 51%),linear-gradient(-60deg,transparent 49%,#a4cfdb 50%,transparent 51%);
+ border-bottom:1px solid #a4cfdb;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-node{
+ position:relative;display:flex;flex-direction:column;gap:3px;align-items:center;
+ background:#17283b;border:1px solid #8a9fb0;border-radius:6px;padding:7px;text-align:center;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-node:first-child{grid-column:1/-1;justify-self:center;min-width:55%}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-forecast{
+ flex:none;margin:0;font:13px/1.55 system-ui,sans-serif;color:#d7f0f3;padding:8px;background:#162535;border-radius:5px;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-writing-context{flex-wrap:wrap}
+#caritas-event[data-rules="tactical-v1"] .cb-writing-context>.cb-tactical-observation{flex-basis:100%}
+#caritas-event[data-rules="tactical-v1"] .cb-tarot-header{flex-wrap:wrap}
+#caritas-event[data-rules="tactical-v1"] .cb-tarot-header>.cb-tactical-observation{width:100%;flex-basis:100%}
+#caritas-event[data-rules="tactical-v1"][data-reading-open="false"][data-phase="battle"] .cb-frame>.cb-controls{gap:10px!important}
+#caritas-event[data-rules="tactical-v1"] .cb-modal-word-desc{font-family:system-ui,sans-serif;font-size:14px;line-height:1.55}
+#caritas-event[data-rules="tactical-v1"] .cb-bar.hp>i{background:linear-gradient(90deg,#86cbd2,#c8e0a1)}
+#caritas-event[data-rules="tactical-v1"] .cb-writing-footer{flex-wrap:wrap}
+#caritas-event[data-rules="tactical-v1"] .cb-writing-footer>.cb-tactical-forecast{flex-basis:100%}
+#caritas-event[data-rules="tactical-v1"][data-reading-mode="select"] .cb-select-submit{position:sticky;bottom:0;z-index:3}
+#caritas-event[data-rules="tactical-v1"][data-composing="true"] .cb-writing-context>.cb-tactical-observation{display:none}

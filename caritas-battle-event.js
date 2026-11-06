@@ -9,6 +9,7 @@ const previewMode=params.getAll("preview").length===1?params.get("preview"):null
 const encounterPreview=previewMode==="encounter";
 const transformationReplay=previewMode==="manifestation"||encounterPreview;
 const C=window.CaritasBattleCore, S=window.CaritasSpecialState;
+const tactical=C?.RULES==='tactical-v1';
 const CARD_IMAGES=Object.freeze({月:"./assets/tarot/major/18-the-moon.webp",力:"./assets/tarot/major/08-strength.webp",星:"./assets/tarot/major/17-the-star.webp"});
 const SHORT_READING_TITLES=Object.freeze({
  "不安":"恐れの正体","秘密":"知らない自分","無意識":"答えのない場所",
@@ -95,7 +96,7 @@ const viewedReadingCards=new Set();
 // Display-only values. The fixed bonus itself is owned by the battle core.
 const RESONANCE_UI=Object.freeze({writtenFirst:50,writtenLater:25,gainPulseMs:1300});
 let lastPresentedResonance=null,gainPulseTimer=0,aiRetryVisible=false;
-const SAVE_KEY="tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
+const SAVE_KEY=tactical?"tb:dev:hoshisuna:caritas-tactical-v1":"tb:dev:hoshisuna:caritas-full-reading-v1",SAVE_VERSION=15;
 // In-memory revision-aware storage for author preview. The real dev battle
 // checkpoint is untouched, including when preview reaches combat.
 let replaySavedRaw=null;
@@ -150,6 +151,8 @@ function restoreCheckpoint(){
   const data=JSON.parse(savedRaw);record=S.migrate(data,runId());
   firstWrittenDelivered=record.firstWrittenDelivered;aiCalls=record.aiCalls;
   if(!record.battle)return false;
+  if(tactical&&record.battle.rules!==C.RULES)throw Error("tactical-save-mismatch");
+  if(tactical&&record.battle.phase==="finisher"&&!C.canSkill(record.battle))throw Error("tactical-finisher-mismatch");
   battle=record.battle;visualBattle=null;readingOpen=false;attempts=1;noticed=true;busy=true;lock();root.hidden=false;story="battle";root.dataset.phase="battle";
   window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-start"));
   if(record.special.committed){
@@ -764,6 +767,15 @@ function start(){
  });
 }
 function setText(el,value){el.textContent=String(value);}
+function tacticalForecast(p){
+ if(!p)return "三枚を選ぶと、今回の働きかけと消耗が分かります。";
+ return (p.approach==="reach"?"踏み込む":"支える")+"：侵蝕 −"+p.dark+"／共鳴 ＋"+p.resonance+"／維持力 −"+p.damage+(p.damage>=battle.hp?"　この行動で撤退":"")+(p.blocked?"　今の闇は解けません":"");
+}
+function renderWritingIntent(){
+ if(!tactical)return;
+ const text=(ui.aiInput.value||"").trim();
+ setText(ui.writingIntent,text?tacticalForecast(C.predict(C.fromText(battle,text))):"送信前に、文章から受け取った働きかけと消耗をここに表示します。");
+}
 function selectDeliveryMethod(method){
  if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
  deliveryMethod=method;readingOpen=true;aiPanelOpen=method==="write";modalIndex=-1;render();
@@ -772,6 +784,7 @@ function render(){
  renderCaritas();
  const s=battle,visible=getBattleView(),reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing&&!specialLocked();
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
+ root.dataset.rules=tactical?C.RULES:"legacy";
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
  // Display-only state: mode controls a full-viewport tarot surface, not the battle engine.
  root.dataset.readingMode=readingOpen&&reading&&deliveryMethod==="select"?"select":"none";
@@ -797,9 +810,19 @@ function render(){
   ?"星響：＋"+(writtenReward.bonus+writtenReward.insight)+"（言葉"+writtenReward.bonus+"／理解"+writtenReward.insight+"）"
   :visible.resonance===100?"星響：満ちた":visible.resonance>=70?"星響：共鳴が深まる":visible.resonance>=30?"星響：光が届き始めた":"星響：声を待っている");
  setText(ui.mood,"心象："+C.STATES[C.stateFor(s.dark)]);
+ if(tactical){
+  const obs=C.observation(visible);
+  setText(ui.observation,obs.clue);setText(ui.tarotObservation,obs.clue);setText(ui.writingObservation,obs.clue);
+  setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴は満ちた。侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
+  setText(ui.commandPrompt,"維持力が尽きる前に、闇を解こう。");
+  ui.triangle.replaceChildren();
+  for(let i=0;i<3;i++){const node=newEl("span","cb-tactical-node");node.append(newEl("small","",["月・コンパス","力・トリガー","星・ルート"][i]),newEl("strong","",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));ui.triangle.append(node);}
+  renderWritingIntent();
+ }
  ui.resBar.style.width=visible.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=visible.hp+"%";
  root.dataset.mood=C.stateFor(s.dark);
  const p=C.predict(s),idx=C.stateFor(s.dark)==="closed"?0:C.stateFor(s.dark)==="storm"?1:2;
+ if(tactical)setText(ui.tacticalPreview,tacticalForecast(p));
  const chosenCount=s.words.filter(Boolean).length;
  const selectingTarot=reading&&readingOpen&&deliveryMethod==="select";
  ui.tarotHeader.hidden=!selectingTarot;
@@ -870,6 +893,15 @@ function render(){
   setText(ui.writingMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.writingCount,(ui.aiInput.value||"").length+" / 700文字");
   setText(ui.readBadge,p?("共鳴 +"+p.resonance):"3枚選択");
+  if(tactical){
+   ui.aiInput.disabled=!reading||aiBusy;
+   ui.aiSend.disabled=!reading||deliveryMethod!=="write"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||!(ui.aiInput.value||"").trim();
+   ui.aiSend.textContent=aiBusy?"返答を待っています…":aiCalls>=AI_CALL_LIMIT?"この戦闘では3回送信済み":"この言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
+   setText(ui.writingHint,"文章だけで一手進みます。曖昧な言葉は「支える」として扱います。");
+   setText(ui.writingReward,"例：声が届くなら、一緒に一歩踏み出そう。固定の共鳴ボーナスはありません。");
+   setText(ui.writtenBadge,"文章で一手");setText(ui.writingBonus,"選択式と同じ行動・消耗");
+   setText(ui.readBadge,"観察・働きかけ・言葉");
+  }
   ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
   ui.aiToggle.disabled=!reading||aiBusy||committing;
   ui.aiToggle.hidden=finisher;ui.aiToggle.setAttribute("aria-pressed",String(deliveryMethod==="write"));
@@ -901,6 +933,7 @@ function render(){
  ui.modal.hidden=!show;
  if(show){
   const card=s.cards[modalIndex];
+  const visibleWords=tactical?C.optionsFor(card):card.words;
   ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
@@ -908,13 +941,13 @@ function render(){
   ui.modalWords.hidden=false;
   setText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
-   :deliveryMethod==="write"?"カードの意味を参考にできます":"3つの解釈から選んでください");
+   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
   ui.modalNav.hidden=false;
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
   setText(ui.modalMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.modalPage,(modalIndex+1)+" / "+s.cards.length);
   if(deliveryMethod==="write"){
-   for(const word of card.words){
+   for(const word of visibleWords){
     const option=C.READING_OPTIONS[word];
     const reference=newEl("div","cb-modal-reference");
     reference.append(newEl("strong","cb-modal-word-title",option.title),
@@ -923,7 +956,7 @@ function render(){
    }
    return;
   }
-  for(const word of card.words){
+  for(const word of visibleWords){
    const option=C.READING_OPTIONS[word];
    const btn=newEl("button","cb-modal-word");btn.type="button";
    btn.append(newEl("strong","cb-modal-word-title",option.title),newEl("span","cb-modal-word-desc",option.text));
@@ -973,7 +1006,7 @@ async function sendAiReading(){
   const endpoint=configured;
   const response=await fetch(endpoint,{method:"POST",signal:controller.signal,
    headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({reading,turn:Math.min(2,Math.max(0,battle.turn)),sessionId:aiSessionId,requestId:aiPendingRequest})});
+   body:JSON.stringify({reading,turn:tactical?["closed","storm","wavering"].indexOf(C.stateFor(battle.dark)):Math.min(2,Math.max(0,battle.turn)),sessionId:aiSessionId,requestId:aiPendingRequest})});
   if(!response.ok){
    const detail=await response.json().catch(()=>({}));
    const code=typeof detail.error==="string"?detail.error:"";
@@ -1001,6 +1034,7 @@ async function sendAiReading(){
   // Only the same unresolved battle turn is allowed to receive the dialogue/bonus.
   if(specialLocked()||story!=="battle"||battle.phase!=="read"||battle.turn!==requestTurn)return;
   const before=battle;
+  if(tactical){deliverTacticalWritten(before,reading,data);return;}
   ui.aiInput.blur(); // Dismiss the keyboard before the unchanged shared dialogue.
   aiPanelOpen=false;ui.aiResult.textContent="";
   committing=true;
@@ -1037,6 +1071,25 @@ async function sendAiReading(){
  }
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
+function deliverTacticalWritten(before,reading,data){
+ const selected=C.fromText(before,reading),p=C.predict(selected);
+ if(!p)return;
+ ui.aiInput.blur();aiPanelOpen=false;ui.aiResult.textContent="";
+ committing=true;readingOpen=false;
+ saySequence([["シオン",data.shion]],()=>{
+  if(story!=="battle"||battle!==before){committing=false;render();return;}
+  const next=C.read(selected);
+  persist({...record,battle:next,firstWrittenDelivered:true,aiCalls:aiCalls+1,aiConfirmedCalls:aiCalls+1},()=>{
+   battle=record.battle;aiCalls=record.aiCalls;firstWrittenDelivered=true;
+   ui.aiInput.value="";aiPendingRequest=null;aiPendingText="";aiRetryVisible=false;
+   visualBattle=before;
+   // The deployed legacy API does not know tactical observations. Use its
+   // Shion paraphrase, but keep the beast's state/response authored and consistent.
+   stage("word-strike",1050,()=>applyOutcome(selected,next,p));
+  });
+ },"written");
+ render();
+}
 function perform(kind){
  if(specialLocked())return;
  if(story!=="battle"||dialogueBusy||aiBusy||committing||suspended()||modalIndex>=0)return;
@@ -1067,14 +1120,17 @@ function applyOutcome(previous,next,p){
  render();
  const values=["闇−"+p.dark,"共鳴＋"+p.resonance];
  if(values.length)toast(values.join("　"));
- saySequence([["カリタス",C.reaction(previous,p)]],()=>{
+ const reply=C.reaction(previous,p);
+ const replyLines=[["カリタス",reply]];
+ if(tactical)toast(p.explanation+"　闇−"+p.dark+"／共鳴＋"+p.resonance);
+ saySequence(replyLines,()=>{
    if(p.hasCounter&&p.damage>0){
      root.dataset.counter="normal";root.dataset.ward="false";
-     setText(ui.enemyCall,caritasDisplayName()+"の反撃！");
-     setText(ui.enemyDamage,"シオリエル HP −"+p.damage);
+     setText(ui.enemyCall,tactical?"アビスの圧力！":caritasDisplayName()+"の反撃！");
+     setText(ui.enemyDamage,tactical?"共鳴維持力 −"+p.damage:"シオリエル HP −"+p.damage);
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
- },previous.words[2]);
+ },tactical&&(p.misread||p.blocked)?"":previous.words[2]);
 }
 function finalizeTurn(){
  visualBattle=null;story="battle";root.dataset.phase="battle";
@@ -1150,7 +1206,7 @@ function init(){
  const release=newEl("div","cb-release");ui.release=release;release.setAttribute("aria-hidden","true");
  const angel=newEl("div","cb-angel");
  const hero=newEl("div","cb-hud hero");hero.append(newEl("div","cb-hud-name","シオリエル"));
- const hr=newEl("div","cb-hud-row");hr.append(newEl("span","","HP"),ui.hp=newEl("span","","100/100"));
+ const hr=newEl("div","cb-hud-row");hr.append(newEl("span","",tactical?"維持力":"HP"),ui.hp=newEl("span","","100/100"));
  ui.hpBar=newEl("i");const hb=newEl("div","cb-bar hp");hb.appendChild(ui.hpBar);
  const rr=newEl("div","cb-hud-row");rr.append(newEl("span","","共鳴"),ui.res=newEl("span","","0/100"));
  ui.resBar=newEl("i");const rb=newEl("div","cb-bar resonance");rb.appendChild(ui.resBar);
@@ -1166,6 +1222,12 @@ function init(){
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
+ ui.observation=newEl("p","cb-tactical-observation");ui.observation.hidden=!tactical;
+ ui.tarotObservation=newEl("p","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
+ ui.writingObservation=newEl("p","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
+ ui.triangle=newEl("div","cb-tactical-triangle");ui.triangle.hidden=!tactical;ui.triangle.setAttribute("aria-label","月・力・星の働きかけの三角形");
+ ui.tacticalPreview=newEl("p","cb-tactical-forecast");ui.tacticalPreview.hidden=!tactical;
+ ui.writingIntent=newEl("p","cb-tactical-forecast");ui.writingIntent.hidden=!tactical;ui.writingIntent.setAttribute("role","status");
  // Stage 2: select-mode tarot reading is an independent full-viewport surface.
  // It retains the exact three existing cards, choices and C.select/C.read.
  const tarotHeader=newEl("header","cb-tarot-header");ui.tarotHeader=tarotHeader;tarotHeader.hidden=true;
@@ -1184,7 +1246,7 @@ function init(){
   if(story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||aiBusy||specialLocked())return;
   modalIndex=-1;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;render();
  });
- tarotHeader.append(tarotBack,tarotHeading);
+ tarotHeader.append(tarotBack,tarotHeading,ui.tarotObservation);
  ui.readingIntro=newEl("div","cb-reading-start");
  const introTitle=newEl("strong","cb-reading-start-title","星獣の心象を読み解く");
  const introHint=newEl("p","cb-reading-start-hint","届け方を選んでください。");
@@ -1217,6 +1279,7 @@ function init(){
  ui.aiInput.addEventListener("input",()=>{
   ui.aiSend.disabled=specialLocked()||deliveryMethod!=="write"||story!=="battle"||battle.phase!=="read"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||battle.aiInsightTurn===battle.turn||!(ui.aiInput.value||"").trim();
   setText(ui.writingCount,(ui.aiInput.value||"").length+" / 700文字");
+  renderWritingIntent();
  });
  // Keep the text composer and its submit action visible when the software
  // keyboard reduces the iPhone visual viewport. Never change battle numbers.
@@ -1266,7 +1329,7 @@ function init(){
  const writingContext=newEl("div","cb-writing-context");
  ui.writingMood=newEl("span","cb-writing-mood","星獣の心象：閉ざす");
  ui.writingBonus=newEl("strong","cb-writing-bonus","共鳴 +50");
- writingContext.append(ui.writingMood,ui.writingBonus);
+ writingContext.append(ui.writingMood,ui.writingBonus,ui.writingObservation);
  const writingReference=newEl("div","cb-writing-reference");
  writingReference.append(newEl("span","cb-writing-reference-label","カードを参考にする（任意）"));
  for(let i=0;i<3;i++){
@@ -1278,17 +1341,17 @@ function init(){
  writingPanel.append(writingReference,ui.aiPanel);
  const writingFooter=newEl("div","cb-writing-footer");
  ui.writingCount=newEl("span","cb-writing-count","0 / 700文字");
- writingFooter.append(ui.writingCount,ui.aiSend);
+ writingFooter.append(ui.writingIntent,ui.writingCount,ui.aiSend);
  ui.writingOverlay.append(writingHeader,writingContext,writingPanel,writingFooter);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(ui.commandPrompt,tarotHeader,methods,cardBox,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
+ ctr.append(ui.commandPrompt,ui.observation,tarotHeader,methods,cardBox,ui.triangle,ui.tacticalPreview,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
- statusBand.setAttribute("aria-label","シオリエルのHPと星響");
+ statusBand.setAttribute("aria-label",tactical?"共鳴維持力と星響":"シオリエルのHPと星響");
  statusBand.append(hero);
  arena.append(enemy);
  ctr.append(narr);
