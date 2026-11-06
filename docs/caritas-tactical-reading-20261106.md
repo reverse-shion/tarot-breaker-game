@@ -33,3 +33,7 @@ The third selected interpretation opens a full-height scrollable composition: ex
 Generated assets: assets/battle/reading/celestial-ring.webp and deliver-button.webp, alpha-preserving WebP. Stars, celestial arcs and lavender crystals replace botanical decoration. Existing cave background is reused under a navy veil.
 
 Acceptance: fewer than three choices never opens confirmation; third selection spends no action; edit retains choices; final selection updates actual reading; double send spends only once after existing dialogue. Width 320–430, portrait scroll, long text, edit/return and send require target iPhone Safari confirmation. Device gate remains PENDING; main merge unauthorized.
+
+## Narrow-viewport geometry follow-up
+
+Audited completion composition CSS against a minimal Chromium layout fixture at widths 320, 360, 375, 390 and 430px with the longest Route label. The original 320px composition could overlap the next text panel; at 375px the upper and lower card clusters nearly touched. Added tactical-only breakpoints at 390px / 360px adjusting the lower tarot row and reserving space after the fixed-aspect celestial ring. No rule/game logic, save, sounds, shared dialogue, or legacy CSS changed. Local geometric simulation is **not** proof of actual iPhone Safari rendering; enlarged-text accessibility and device scroll/focus still need human verification.
