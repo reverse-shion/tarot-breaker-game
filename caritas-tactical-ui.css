@@ -94,8 +94,13 @@
 /* Narrow phones: separate the lower tarot pair from the upper card and
    keep choice captions out of the following reading panel. The decorative
    ring retains its original aspect ratio; only the card offsets change. */
+@media (max-width:390px){
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{margin-bottom:24px}
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(2),
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(3){top:53%}
+}
 @media (max-width:360px){
- #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{margin-bottom:42px}
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{margin-bottom:64px}
  #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(2),
  #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(3){top:56%}
 }
