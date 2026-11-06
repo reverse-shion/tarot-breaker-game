@@ -91,6 +91,7 @@ let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=fal
 let pendingRegroupNext=null;
 let modalIndex=-1,readingOpen=false,deliveryMethod=null,committing=false,visualBattle=null,attempts=0;
 let firstWrittenDelivered=false;
+let summaryEditing=false; // Presentation only; never persisted or used for scoring.
 // Presentation-only; no save state and no influence on battle arithmetic.
 const viewedReadingCards=new Set();
 // Display-only values. The fixed bonus itself is owned by the battle core.
@@ -780,9 +781,29 @@ function selectDeliveryMethod(method){
  if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
  deliveryMethod=method;readingOpen=true;aiPanelOpen=method==="write";modalIndex=-1;render();
 }
+function renderCompletion(reading){
+ const ready=tactical&&reading&&readingOpen&&deliveryMethod==="select"&&battle.words.every(Boolean)&&!summaryEditing&&modalIndex<0;
+ if(ready&&ui.completion.hidden)ui.completion.scrollTop=0;
+ ui.completion.hidden=!ready;root.dataset.readingComplete=String(ready);
+ if(!readingOpen)summaryEditing=false;
+ if(!ready)return;
+ ui.completionCards.replaceChildren();
+ const questions=["何に目を向ける？","どう働きかける？","どう届ける？"];
+ for(let i=0;i<3;i++){
+  const card=battle.cards[i],item=newEl("section","cb-completion-card");
+  const image=newEl("img");image.src=CARD_IMAGES[card.name];image.alt=card.name+"のタロットカード";
+  item.append(newEl("strong","cb-completion-question",questions[i]),newEl("small","cb-completion-role",["コンパス","トリガー","ルート"][i]),image,newEl("span","cb-completion-choice",C.READING_OPTIONS[battle.words[i]].title));
+  ui.completionCards.append(item);
+ }
+ ui.completionWords.replaceChildren();
+ for(const line of C.readingPages(battle))ui.completionWords.append(newEl("p","",line));
+ setText(ui.completionForecast,tacticalForecast(C.predict(battle)));
+ ui.completionSend.disabled=aiBusy||dialogueBusy||committing;
+}
 function render(){
  renderCaritas();
  const s=battle,visible=getBattleView(),reading=story==="battle"&&s.phase==="read"&&!dialogueBusy&&!committing&&!specialLocked();
+ renderCompletion(reading);
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
  root.dataset.rules=tactical?C.RULES:"legacy";
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
@@ -916,7 +937,7 @@ function render(){
   ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3&&!!p)||aiBusy||dialogueBusy||committing;
   // Keep the primary button in one fixed place. Its own label communicates
   // progress; the separate gold progress banner is no longer needed.
-  setText(ui.selectSend,chosenCount===3?"この言葉を届ける":"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
+  setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,"共鳴が満ちると解放");
@@ -984,7 +1005,9 @@ function choose(index,word){
  if(specialLocked())return;
  if(modalIndex!==index||story!=="battle"||dialogueBusy||committing||suspended()||battle.phase!=="read")return;
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}}
+ summaryEditing=false;
  battle=C.select(battle,index,word);modalIndex=-1;render();
+ if(tactical&&!ui.completion.hidden)ui.completionTitle.focus?.({preventScroll:true});
 }
 function toast(message){
  clearTimeout(toastTimer);ui.toast.textContent=message;ui.toast.hidden=false;
@@ -1266,7 +1289,8 @@ function init(){
  // A method tab only switches modes; the explicit CTA alone sends a reading.
  ui.read.addEventListener("click",()=>selectDeliveryMethod("select"));
  ui.selectSend=newEl("button","cb-select-submit","この言葉を届ける");ui.selectSend.type="button";
- ui.selectSend.addEventListener("click",()=>perform("read"));
+ if(tactical)ui.selectSend.addEventListener("click",()=>{summaryEditing=false;render();if(!ui.completion.hidden)ui.completionTitle.focus?.({preventScroll:true});});
+ else ui.selectSend.addEventListener("click",()=>perform("read"));
  ui.skill.addEventListener("click",()=>perform("skill"));
  ui.aiPanel=newEl("div","cb-ai-panel");
  const label=newEl("label","cb-ai-label","月・力・星から感じたことを、自分の言葉で");
@@ -1408,6 +1432,21 @@ function init(){
  const written=newEl("div","cb-written-light");written.setAttribute("aria-hidden","true");
  written.append(newEl("div","cb-written-ring"));
  ui.saveProblem=newEl("div","cb-save-problem");ui.saveProblem.hidden=true;
+ ui.completion=newEl("section","cb-completion");ui.completion.hidden=true;
+ ui.completion.setAttribute("aria-label","三枚のリーディングを確認");
+ const completionBody=newEl("div","cb-completion-body");
+ ui.completionTitle=newEl("h2","cb-completion-title","心象リーディング");ui.completionTitle.tabIndex=-1;
+ ui.completionCards=newEl("div","cb-completion-cards");
+ const wordsBox=newEl("section","cb-completion-message");
+ ui.completionWords=newEl("div","cb-completion-words");
+ wordsBox.append(newEl("h3","","紡いだ言葉"),ui.completionWords);
+ ui.completionForecast=newEl("p","cb-completion-forecast");
+ ui.completionSend=newEl("button","cb-completion-send","この言葉を届ける");ui.completionSend.type="button";
+ ui.completionSend.addEventListener("click",()=>{if(!ui.completion.hidden&&deliveryMethod==="select")perform("read");});
+ const editReading=newEl("button","cb-completion-edit","選び直す");editReading.type="button";
+ editReading.addEventListener("click",()=>{summaryEditing=true;render();cardBox.querySelector(".cb-card-button")?.focus?.({preventScroll:true});});
+ completionBody.append(ui.completionTitle,newEl("p","cb-completion-subtitle","三枚の意味が、ひとつの言葉になる"),ui.completionCards,wordsBox,ui.completionForecast,ui.completionSend,editReading);
+ ui.completion.append(completionBody);root.append(ui.completion);
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.writingOverlay,ui.modal);shell.appendChild(root);
  dialogue=window.TarotDialogueUI.bind({
    // Bind original main/Alenon DOM, never create an encounter-specific frame.

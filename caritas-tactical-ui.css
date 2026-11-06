@@ -52,3 +52,44 @@
 }
 #caritas-event[data-rules="tactical-v1"][data-reading-mode="select"] .cb-select-submit{position:sticky;bottom:0;z-index:3}
 #caritas-event[data-rules="tactical-v1"][data-composing="true"] .cb-writing-context>.cb-tactical-observation{display:none}
+/* Third interpretation: assembled reading, explicit send, no automatic action. */
+#caritas-event .cb-completion[hidden]{display:none!important}
+#caritas-event[data-rules="tactical-v1"] .cb-tactical-triangle{display:none}
+#caritas-event[data-reading-complete="true"]>.cb-frame{display:none!important}
+#caritas-event .cb-completion{
+ position:absolute;inset:0;z-index:25;overflow-y:auto;overscroll-behavior:contain;
+ box-sizing:border-box;color:#f6e6bd;background:linear-gradient(#080e23db,#080e23ed),url('./assets/events/hoshisuna/battle/cave-bg.webp') center/cover;
+ padding:calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+ -webkit-overflow-scrolling:touch;font-family:Georgia,'Yu Mincho',serif;
+}
+#caritas-event .cb-completion-body{width:100%;max-width:540px;margin:auto;text-align:center;box-sizing:border-box}
+#caritas-event .cb-completion-title{font-size:clamp(24px,6vw,32px);margin:0 0 6px;font-weight:500;letter-spacing:.12em}
+#caritas-event .cb-completion-subtitle{font-size:12px;margin:0 0 8px;letter-spacing:.06em}
+#caritas-event .cb-completion-cards{
+ position:relative;width:100%;aspect-ratio:1/1.23;
+ background:url('./assets/battle/reading/celestial-ring.webp') center/100% 100% no-repeat;
+}
+#caritas-event .cb-completion-cards::before{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 123'%3E%3Cpolygon points='50,29 23,85 77,85' fill='none' stroke='%23f5d98d' stroke-width='.55'/%3E%3Cpolygon points='50,27 21,87 79,87' fill='none' stroke='%23b99a5d' stroke-width='.16'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+ filter:drop-shadow(0 0 4px #e6b94f);animation:cb-reading-connect .7s ease-out both;
+}
+#caritas-event .cb-completion-card{position:absolute;box-sizing:border-box;width:34%;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+#caritas-event .cb-completion-card:nth-child(1){top:1%;left:33%}
+#caritas-event .cb-completion-card:nth-child(2){top:49%;left:5%}
+#caritas-event .cb-completion-card:nth-child(3){top:49%;right:5%}
+#caritas-event .cb-completion-question{font-size:clamp(11px,2.8vw,15px);white-space:nowrap;font-weight:500;text-shadow:0 2px 4px #000}
+#caritas-event .cb-completion-role{font-size:10px;letter-spacing:.12em}
+#caritas-event .cb-completion-card img{display:block;width:82%;height:auto;aspect-ratio:2/3;object-fit:contain;filter:drop-shadow(0 0 5px #dbb66177)}
+#caritas-event .cb-completion-choice{width:100%;min-height:2.7em;box-sizing:border-box;padding:4px 3px;color:#fff3ce;background:#10162ddd;border-block:1px solid #ae905b;font-size:clamp(11px,2.8vw,14px);line-height:1.35;overflow-wrap:anywhere}
+#caritas-event .cb-completion-message{border:1px solid #a98b59;border-radius:7px;background:#0b1225d9;padding:10px 12px;margin:4px 0 8px}
+#caritas-event .cb-completion-message h3{margin:0 0 8px;font-weight:500;font-size:20px;letter-spacing:.16em}
+#caritas-event .cb-completion-words p{font-size:14px;line-height:1.7;margin:0 0 7px;text-align:left;color:#f3eee0;overflow-wrap:anywhere}
+#caritas-event .cb-completion-words p:last-child{margin-bottom:0}
+#caritas-event .cb-completion-forecast{font:12px/1.55 system-ui,sans-serif;color:#c9e3ea;background:#0b1526d9;border-radius:5px;padding:8px;margin:0 0 5px;overflow-wrap:anywhere}
+#caritas-event .cb-completion-send{display:block;width:100%;min-width:0;min-height:82px;aspect-ratio:3/1;border:0;border-radius:0;box-shadow:none;background:url('./assets/battle/reading/deliver-button.webp') center/100% 100% no-repeat;color:#fff0ca;font:500 clamp(18px,5vw,25px)/1.4 Georgia,'Yu Mincho',serif;padding:25px 35px;cursor:pointer;text-shadow:0 2px 4px #000;box-sizing:border-box}
+#caritas-event .cb-completion-send:disabled{opacity:.5}
+#caritas-event .cb-completion-edit{display:block;margin:0 auto;min-height:44px;padding:8px 24px;background:transparent;border:0;border-bottom:1px solid #9c855d;border-radius:0;color:#f1dfb6;font:16px Georgia,'Yu Mincho',serif;box-shadow:none;cursor:pointer}
+#caritas-event .cb-completion button:focus-visible{outline:2px solid #b7e8ff;outline-offset:2px}
+@keyframes cb-reading-connect{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#caritas-event .cb-completion-cards::before{animation:none}}

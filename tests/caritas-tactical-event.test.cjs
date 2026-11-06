@@ -88,3 +88,26 @@ test('each card explains its role and actual choice count; Strength intentionall
   root.querySelector('.cb-modal-close').click();
  }
 });
+test('third selection opens assembled reading without spending a turn; edit and explicit send are safe',()=>{
+ const {f,root}=setup();f.button(root,'選んで届ける').click();
+ const select=(index,choice)=>{root.flatten().filter(e=>e.className==='cb-card-button')[index].click();root.querySelector('.cb-modal-words').children[choice].click();};
+ select(0,0);select(1,0);
+ assert.equal(root.querySelector('.cb-completion').hidden,true);
+ select(2,0);
+ assert.equal(root.querySelector('.cb-completion').hidden,false);
+ assert.equal(f.state().battle.turn,0);assert.equal(f.state().battle.hp,100);
+ assert.equal(root.querySelector('.cb-completion-words').children.length,3);
+ assert.equal(root.querySelector('.cb-completion-cards').children.length,3);
+ root.querySelector('.cb-completion-edit').click();
+ assert.equal(root.querySelector('.cb-completion').hidden,true);
+ assert.equal(f.state().battle.words.filter(Boolean).length,3);
+ select(2,1);
+ assert.equal(root.querySelector('.cb-completion').hidden,false);
+ assert.match(root.querySelector('.cb-completion-words').children[2].textContent,/受け取るか/);
+ const send=root.querySelector('.cb-completion-send');send.click();send.click();
+ assert.equal(f.state().battle.turn,0,'must wait for shared dialogue');
+ assert.equal(root.querySelector('.cb-completion').hidden,true);
+ while(f.state().dialogueBusy)f.pointer.advance();
+ f.advanceTime(1050);
+ assert.equal(f.state().battle.turn,1,'only one committed reading');
+});
