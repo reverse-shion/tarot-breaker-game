@@ -106,3 +106,85 @@
 }
 @keyframes cb-reading-connect{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#caritas-event .cb-completion-cards::before{animation:none}}
+
+/* A v0.4: card recap is a fluid triangle, never overlapping absolute cards.
+   The ring is decorative; headings, card art and selected words remain in flow. */
+#caritas-event[data-rules="tactical-v1"] .cb-completion-body{
+ max-width:460px!important;min-width:0!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-cards{
+ box-sizing:border-box!important;
+ position:relative!important;display:grid!important;
+ grid-template-columns:minmax(0,1fr) minmax(0,.16fr) minmax(0,1fr)!important;
+ grid-template-rows:auto auto!important;
+ column-gap:4px!important;row-gap:18px!important;
+ width:100%!important;height:auto!important;aspect-ratio:auto!important;
+ min-height:0!important;max-height:none!important;
+ padding:16px 4px 22px!important;margin:0 0 12px!important;
+ background-position:center!important;background-size:contain!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-cards::before{
+ background-size:100% 100%!important;opacity:.8!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card,
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(1),
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(2),
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(3){
+ position:relative!important;top:auto!important;bottom:auto!important;
+ left:auto!important;right:auto!important;
+ width:100%!important;height:auto!important;min-width:0!important;
+ margin:0!important;transform:none!important;
+ display:flex!important;flex-direction:column!important;
+ justify-content:flex-start!important;align-items:center!important;
+ gap:4px!important;padding:0!important;
+ z-index:1!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(1){
+ grid-column:1 / 4!important;grid-row:1!important;
+ width:min(46%,172px)!important;justify-self:center!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(2){
+ grid-column:1!important;grid-row:2!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(3){
+ grid-column:3!important;grid-row:2!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-question{
+ box-sizing:border-box!important;
+ display:block!important;width:100%!important;min-height:0!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+ font-size:clamp(12px,3.2vw,15px)!important;line-height:1.4!important;
+ text-align:center!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-role{
+ display:block!important;font-size:11px!important;line-height:1.35!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-card img{
+ box-sizing:border-box!important;display:block!important;
+ width:min(80%,132px)!important;height:auto!important;
+ max-width:100%!important;aspect-ratio:2/3!important;
+ object-fit:contain!important;flex:none!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-choice{
+ box-sizing:border-box!important;display:block!important;
+ position:relative!important;left:auto!important;bottom:auto!important;
+ width:100%!important;height:auto!important;min-height:3em!important;
+ padding:6px 4px!important;
+ line-height:1.5!important;font-size:clamp(12px,3.2vw,15px)!important;
+ text-align:center!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;
+ background:#0b1429ee!important;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-completion-message{
+ position:relative!important;clear:both!important;
+}
+@media(max-width:390px){
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{
+  margin-bottom:12px!important;row-gap:18px!important;
+ }
+}
+@media(max-width:360px){
+ #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{
+  margin-bottom:12px!important;row-gap:16px!important;
+ }
+}
