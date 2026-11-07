@@ -185,31 +185,31 @@
  }
 }
 
-/* A v0.4: only the opt-in camera layout. Camera world uses 2.2 viewport widths;
+/* A v0.5: return to original battle cave field, closer matched-height actors. Camera world uses 2.2 viewport widths;
    actors must remain within the central 1.0 viewport after READING pan (-.8w).
    Use world-relative centers to preserve both actors in frame. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-frame>.cb-arena{
- background-image:url('./assets/events/hoshisuna/map/starroad.webp'),url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
- background-position:center 55%,center!important;
- background-size:cover,cover!important;
+ background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
+ background-position:center 56%!important;
+ background-size:cover!important;
  background-repeat:no-repeat!important;
  background-color:#243556!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-world-background{
  position:absolute!important;inset:0!important;z-index:0!important;
- background-image:url('./assets/events/hoshisuna/map/starroad.webp'),url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
- background-position:center 55%,center!important;
- background-size:cover,cover!important;
+ background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
+ background-position:center 56%!important;
+ background-size:cover!important;
  background-repeat:no-repeat!important;
  background-color:#243556!important;
  pointer-events:none!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-angel{
  box-sizing:border-box!important;
- left:calc(var(--cb-camera-unit)*1.24 - var(--cb-world-height)*.12)!important;
+ left:calc(var(--cb-camera-unit)*1.30 - var(--cb-world-height)*.12)!important;
  right:auto!important;top:auto!important;bottom:13%!important;
  width:calc(var(--cb-world-height)*.24)!important;
- height:38%!important;min-width:0!important;min-height:0!important;
+ height:40%!important;min-width:0!important;min-height:0!important;
  background-image:url('./assets/battle/camera/shioriel.webp')!important;
  background-position:center bottom!important;
  background-size:contain!important;background-repeat:no-repeat!important;
@@ -219,7 +219,7 @@
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
  box-sizing:border-box!important;
- left:calc(var(--cb-camera-unit)*1.60 - var(--cb-world-height)*.10)!important;
+ left:calc(var(--cb-camera-unit)*1.57 - var(--cb-world-height)*.10)!important;
  right:auto!important;top:auto!important;bottom:13%!important;
  width:calc(var(--cb-world-height)*.20)!important;
  height:37%!important;min-width:0!important;min-height:0!important;
