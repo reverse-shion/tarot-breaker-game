@@ -6,7 +6,7 @@
  if(qs.get('editor')!=='actors'||qs.get('camera')!=='a02'||qs.get('dev')!=='hoshisuna')return;
  const NEW_SHIORIEL='https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/a107c393f74d06017b201e8f89fd2f8c836d5fbd/assets/battle/character/shioriel.webp';
  const KEY='tb.caritas.actor-editor.a02.v1';
- const defaults={shioriel:{x:1.30,y:13,h:40,w:24},shion:{x:1.57,y:13,h:37,w:20}};
+ const defaults={shioriel:{x:1.35,y:7,h:61.5,w:41.5},shion:{x:1.57,y:8.5,h:51.5,w:28}};
  const clone=o=>JSON.parse(JSON.stringify(o));
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  let settings=clone(defaults),selected='shioriel',enabled=true,drag=null,showNew=true;
@@ -63,7 +63,7 @@
     actor.dataset.actorEditorSelect=name===selected?'true':'false';
    }
    if(showNew)actors.shioriel.style.setProperty('background-image','url("'+NEW_SHIORIEL+'")','important');
-   else actors.shioriel.style.removeProperty('background-image');
+   else actors.shioriel.style.setProperty('background-image',"url('./assets/battle/camera/shioriel.webp')",'important');
   }
   function save(){try{localStorage.setItem(KEY,JSON.stringify({version:1,...settings,showNew}));}catch(_){}}
   function updateFields(){
