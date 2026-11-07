@@ -284,3 +284,62 @@
   transition:none!important;
  }
 }
+
+/* A v0.9: feet stay planted; shadows move with the same actor/world layer. */
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-angel,.cb-shion-sprite){
+ transform-origin:50% 100%;
+ filter:drop-shadow(0 2px 2px rgba(20,24,48,.42));
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-angel,.cb-shion-sprite)::before{
+ content:"";position:absolute;pointer-events:none;
+ left:18%;bottom:-1%;width:70%;height:5%;border-radius:50%;
+ background:radial-gradient(ellipse,rgba(20,17,40,.60) 0 24%,rgba(29,22,48,.30) 47%,transparent 73%);
+ mix-blend-mode:multiply;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase="battle"] .cb-battle-world>.cb-angel{
+ animation:cb-party-breathe 4.6s ease-in-out infinite;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase="battle"] .cb-battle-world>.cb-shion-sprite{
+ animation:cb-party-breathe 4s ease-in-out -1.4s infinite;
+}
+#game-shell #caritas-event[data-camera-layout="a02"]:is([data-phase="word-strike"],[data-phase="written-light"]) .cb-battle-world>.cb-angel{
+ animation:cb-party-deliver 1.05s ease-in-out both;
+}
+#game-shell #caritas-event[data-camera-layout="a02"]:is([data-phase="word-strike"],[data-phase="written-light"]) .cb-battle-world>.cb-shion-sprite{
+ animation:cb-shion-invoke 1.05s ease-in-out both;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase="enemy-turn"] .cb-battle-world>.cb-angel{
+ animation:cb-party-recoil 1.05s ease-out both;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase="enemy-turn"][data-ward="true"] .cb-battle-world>.cb-angel{
+ animation:cb-party-brace 1.05s ease-out both;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase="enemy-turn"] .cb-battle-world>.cb-shion-sprite{
+ animation:cb-party-brace 1.05s ease-out both;
+}
+@keyframes cb-party-breathe{
+ 0%,100%{transform:scale(1,1)}50%{transform:scale(1.004,1.008)}
+}
+@keyframes cb-party-deliver{
+ 0%,100%{transform:translateX(0) rotate(0)}
+ 32%,60%{transform:translateX(-9px) rotate(-1.5deg)}
+}
+@keyframes cb-shion-invoke{
+ 0%,100%{transform:rotate(0)}30%,65%{transform:rotate(-2.5deg)}
+}
+@keyframes cb-party-recoil{
+ 0%,42%,100%{transform:translateX(0) rotate(0);filter:drop-shadow(0 2px 2px #1418306b)}
+ 48%{transform:translateX(12px) rotate(3deg);filter:brightness(1.18) drop-shadow(0 1px 5px #f4dcff)}
+ 60%{transform:translateX(6px) rotate(1.5deg)}
+ 76%{transform:translateX(2px) rotate(.5deg)}
+}
+@keyframes cb-party-brace{
+ 0%,42%,100%{transform:translateX(0) rotate(0)}
+ 50%,64%{transform:translateX(4px) rotate(1.5deg)}
+ 80%{transform:translateX(1px) rotate(.5deg)}
+}
+@media(prefers-reduced-motion:reduce){
+ #game-shell #caritas-event[data-camera-layout="a02"][data-phase] .cb-battle-world>:is(.cb-angel,.cb-shion-sprite){animation:none!important;transform:none!important}
+ #game-shell #caritas-event[data-camera-layout="a02"][data-phase="enemy-turn"] .cb-battle-world>.cb-angel{filter:brightness(.82) drop-shadow(0 0 6px #d2b7eb)}
+ #game-shell #caritas-event[data-camera-layout="a02"][data-phase="enemy-turn"][data-ward="true"] .cb-battle-world>.cb-angel{filter:drop-shadow(0 0 6px #93e2e3)}
+}

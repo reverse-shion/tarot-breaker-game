@@ -8,12 +8,13 @@
  const SPECIAL=new Set(['selecting','special','purifying','purified']);
  function stateFor({phase='battle',special='',waiting=false,speaker=null}={}){
   if(SPECIAL.has(phase)||['FACE_CUTIN','DUAL_INCANTATION','TECHNIQUE_ART','PURIFICATION','CARITAS_REPLY'].includes(special))return 'SPECIAL';
-  if(waiting||['word-strike','written-light','enemy-turn'].includes(phase)||speaker==='カリタス'||speaker==='星獣')return 'REACTION';
+  if(phase==='enemy-turn')return 'DEFENSE';
+  if(waiting||['word-strike','written-light'].includes(phase)||speaker==='カリタス'||speaker==='星獣')return 'REACTION';
   return 'READING';
  }
  function framing(mode,width,height){
   const scale=mode==='SPECIAL'?1/1.85:1;
-  return {x:mode==='READING'?-.80*width:mode==='REACTION'?-.03*width:0,
+  return {x:mode==='READING'||mode==='DEFENSE'?-.80*width:mode==='REACTION'?-.03*width:0,
    y:mode==='SPECIAL'?height*(1-scale)*.75:0,scale};
  }
  function createController({paint,measure,freeze=()=>null}){
@@ -33,7 +34,7 @@
     if(locked)return;
     const next=measure();
     if(next.width>0&&next.height>0&&
-       (Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
+       (!shown||Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
    },
    focus(){if(locked)return;frozen=freeze();locked=true;paint({mode:'INPUT_LOCK',...size,frozen,instant:true});},
    blur(){if(!locked)return;locked=false;frozen=null;apply(true);},
@@ -56,7 +57,9 @@
    paint:view=>{
     root.dataset.camera=view.mode;
     // A single travelling camera; smooth the pan rather than cutting scenes.
-    world.style.transitionDuration=view.instant?'0s':'1.25s';
+    // Return to the receiving party before impact at 48% of the existing
+    // 1050ms enemy turn. Do not extend or delay the actual battle action.
+    world.style.transitionDuration=view.instant?'0s':view.mode==='DEFENSE'?'.24s':'1.25s';
     if(view.mode==='INPUT_LOCK'){
      // Snapshot even an in-flight pan; no actor-coordinate or camera changes
      // are allowed during IME/keyboard viewport scrolling.

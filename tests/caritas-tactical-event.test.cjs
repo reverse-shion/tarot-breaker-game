@@ -111,3 +111,26 @@ test('third selection opens assembled reading without spending a turn; edit and 
  f.advanceTime(1050);
  assert.equal(f.state().battle.turn,1,'only one committed reading');
 });
+
+test('observation panels separate visible signs from advice and update only after delivered effects',async()=>{
+ const {f,root}=setup();
+ const panel=root.querySelector('.cb-tactical-observation');
+ assert.equal(panel.dataset.situation,'closed');
+ assert.match(panel.querySelector('.cb-observation-state').textContent,/拒んで/);
+ assert.match(panel.querySelector('.cb-observation-sign').textContent,/爪/);
+ assert.match(panel.querySelector('.cb-observation-advice').children[1].textContent,/維持力/);
+ await write(f,root,'怖ければ、ここで待つよ').click();
+ assert.equal(panel.dataset.situation,'closed','no premature outcome during delivery dialogue');
+ settle(f);
+ assert.equal(panel.dataset.situation,'storm');
+ assert.match(panel.querySelector('.cb-observation-state').textContent,/声が遮られ/);
+ assert.match(panel.querySelector('.cb-observation-advice').children[1].textContent,/一歩踏み込む/);
+ await write(f,root,'声が聞こえる。一緒に進もう').click();settle(f);
+ assert.equal(panel.dataset.situation,'wavering');
+ assert.match(panel.querySelector('.cb-observation-advice').children[1].textContent,/どちらも届く/);
+ await write(f,root,'声が聞こえる。一緒に進もう').click();settle(f);
+ assert.equal(f.state().battle.phase,'finisher');
+ assert.equal(panel.dataset.situation,'ready');
+ assert.match(panel.querySelector('.cb-observation-state').textContent,/共鳴解放できる/);
+ assert.match(panel.querySelector('.cb-observation-advice').children[1].textContent,/下の「共鳴解放」/);
+});
