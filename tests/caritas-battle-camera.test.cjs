@@ -93,3 +93,20 @@ test('short special playback requests an immediate wide camera without adding a 
  const {controller,painted}=fixture();controller.update({phase:'special',short:true});
  assert.equal(painted.at(-1).mode,'SPECIAL');assert.equal(painted.at(-1).instant,true);
 });
+
+test('repeated same-size ResizeObserver callbacks do not snap a travelling camera',()=>{
+ const {controller,painted,resize}=fixture();
+ controller.update({waiting:true});
+ const len=painted.length;
+ resize({width:390,height:330});resize({width:390,height:330});
+ assert.equal(painted.length,len);
+ assert.equal(painted.at(-1).instant,false);
+ controller.update({});
+ assert.equal(painted.at(-1).instant,false);
+});
+test('a real arena resize remains immediate and updates the camera viewport',()=>{
+ const {painted,resize}=fixture();
+ resize({width:430,height:330});
+ assert.equal(painted.at(-1).width,430);
+ assert.equal(painted.at(-1).instant,true);
+});
