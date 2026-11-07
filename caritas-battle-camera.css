@@ -10,7 +10,7 @@
  visibility:visible!important;pointer-events:auto!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-frame>.cb-arena{
- display:block!important;background:url('./assets/events/hoshisuna/battle/cave-bg.webp') center / cover no-repeat!important;visibility:visible!important;
+ display:block!important;background:url('./assets/battle/map/hoshisuna.webp') center / cover no-repeat!important;visibility:visible!important;
  transform:none!important;overflow:hidden!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world{
@@ -19,7 +19,7 @@
  will-change:transform;pointer-events:none;isolation:isolate;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-world-background{
- position:absolute;inset:0;background:url('./assets/events/hoshisuna/battle/cave-bg.webp') center / cover no-repeat;
+ position:absolute;inset:0;background:url('./assets/battle/map/hoshisuna.webp') center / cover no-repeat;
 }
 /* Positions use the actual art's face/body/foot anchors. Camera never edits them.
    Shioriel face ≈51% of source width; Shion ≈49%; feet share the 6% ground line. */
@@ -189,7 +189,7 @@
    actors must remain within the central 1.0 viewport after READING pan (-.8w).
    Use world-relative centers to preserve both actors in frame. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-frame>.cb-arena{
- background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
+ background-image:url('./assets/battle/map/hoshisuna.webp')!important;
  background-position:center 56%!important;
  background-size:cover!important;
  background-repeat:no-repeat!important;
@@ -197,7 +197,7 @@
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-world-background{
  position:absolute!important;inset:0!important;z-index:0!important;
- background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
+ background-image:url('./assets/battle/map/hoshisuna.webp')!important;
  background-position:center 56%!important;
  background-size:cover!important;
  background-repeat:no-repeat!important;
@@ -272,7 +272,7 @@
  backface-visibility:hidden;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-world-background{
- background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
+ background-image:url('./assets/battle/map/hoshisuna.webp')!important;
  background-position:center 56%!important;
  background-size:cover!important;
  background-repeat:no-repeat!important;
