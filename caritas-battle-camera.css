@@ -274,7 +274,7 @@
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-world-background{
  background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
  background-position:center 56%!important;
- background-size:100% 100%!important;
+ background-size:cover!important;
  background-repeat:no-repeat!important;
  background-color:#243556!important;
  opacity:1!important;visibility:visible!important;
