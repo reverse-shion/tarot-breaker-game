@@ -77,6 +77,8 @@ let caritasView=null,caritasResponse="",caritasNamed=false;
 const caritasDisplayName=()=>caritasNamed?"カリタス":"星獣";
 const caritasDisplayText=value=>caritasNamed?String(value):String(value).replaceAll("カリタス","星獣");
 function renderCaritas(){
+ ui.camera?.update({phase:story,special:record.special.phase,waiting:aiBusy,short:record.special.playbackMode==='short',
+  speaker:dialogueBusy?dialogueLines[dialogueIndex]?.[0]:null});
  const visible=getBattleView();
  caritasView?.update({dark:visible.dark,phase:story,special:record.special.phase,
   finisher:visible.phase==="finisher",speaking:dialogueBusy&&dialogueLines[dialogueIndex]?.[0]==="カリタス",response:caritasResponse});
@@ -1022,6 +1024,7 @@ async function sendAiReading(){
  if(Date.now()<aiRetryAt){toast("AIの再接続には少し時間をあけてください");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+aiSessionId;aiPendingText=reading;}
  const requestTurn=battle.turn;
+ if(ui.camera)ui.aiInput.blur(); // Close the keyboard before the one reaction pan.
  aiRetryVisible=false;aiBusy=true;render();
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
  try{
@@ -1448,6 +1451,8 @@ function init(){
  completionBody.append(ui.completionTitle,newEl("p","cb-completion-subtitle","三枚の意味が、ひとつの言葉になる"),ui.completionCards,wordsBox,ui.completionForecast,ui.completionSend,editReading);
  ui.completion.append(completionBody);root.append(ui.completion);
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.writingOverlay,ui.modal);shell.appendChild(root);
+ ui.camera=window.CaritasBattleCamera?.mount({root,arena,input:ui.aiInput,
+  actors:[beast,veil,release,shion,angel],frame,statusBand})||null;
  dialogue=window.TarotDialogueUI.bind({
    // Bind original main/Alenon DOM, never create an encounter-specific frame.
    layer:document.getElementById("dialogue-layer"),
