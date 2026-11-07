@@ -1,0 +1,19 @@
+/* Only enabled on ?dev=hoshisuna&camera=a02&editor=actors */
+.cb-aeditor-bar{position:fixed;inset:auto 8px 8px 8px;z-index:99999;display:flex;flex-direction:column;align-items:flex-end;pointer-events:none;font:14px/1.35 system-ui,sans-serif}
+.cb-aeditor-bar button,.cb-aeditor-bar input,.cb-aeditor-bar label{touch-action:manipulation}
+.cb-aeditor-toggle{display:block;pointer-events:auto;min-height:42px;padding:8px 14px;border:1px solid #e8cf8a;border-radius:12px;background:#17284b;color:#fff0ca;box-shadow:0 3px 15px #0009}
+.cb-aeditor-panel{box-sizing:border-box;pointer-events:auto;width:min(100%,420px);max-height:min(51dvh,430px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:12px;border:1px solid #dbbf8d;border-radius:12px;background:#111d36f5;color:#f4ead4;box-shadow:0 5px 25px #000b}
+.cb-aeditor-panel[hidden]{display:none!important}
+.cb-aeditor-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.cb-aeditor-head button,.cb-aeditor-tabs button,.cb-aeditor-actions button{min-height:38px;border:1px solid #ac9975;border-radius:8px;padding:6px 10px;color:#fff0cb;background:#293b59}
+.cb-aeditor-tabs,.cb-aeditor-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0}
+.cb-aeditor-tabs button[aria-pressed="true"]{border-color:#ffe5a7;background:#66507b}
+.cb-aeditor-art{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px}
+.cb-aeditor-field{display:grid;grid-template-columns:1fr auto;gap:3px 8px;align-items:center;margin:6px 0}
+.cb-aeditor-field input{grid-column:1/-1;width:100%;height:27px;accent-color:#b5dafa}
+.cb-aeditor-value{font-variant-numeric:tabular-nums}
+.cb-aeditor-message{font-size:12px;line-height:1.5;color:#b8d7ec;margin-top:8px}
+.cb-aeditor-panel textarea{box-sizing:border-box;width:100%;height:120px;background:#090f24;color:#fff}
+#caritas-event[data-actor-editor="true"] .cb-battle-world>.cb-angel,
+#caritas-event[data-actor-editor="true"] .cb-battle-world>.cb-shion-sprite{outline:1px dashed #ffdf87;outline-offset:1px;cursor:grab}
+#caritas-event[data-actor-editor="true"] .cb-battle-world>[data-actor-editor-select="true"]{outline:2px solid #85e2ed;outline-offset:2px}
