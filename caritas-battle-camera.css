@@ -233,6 +233,21 @@
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-beast,.cb-abyss,.cb-release){
  bottom:12%!important;height:58%!important;
 }
+/* A v0.6: approved positions sampled from the iPhone on-screen editor.
+   Values use precisely the same x/y/h/w convention as the dev editor. */
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-angel{
+ left:calc(var(--cb-camera-unit)*1.35 - var(--cb-world-height)*.2075)!important;
+ bottom:7%!important;
+ width:calc(var(--cb-world-height)*.415)!important;
+ height:61.5%!important;
+ background-image:url('https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/a107c393f74d06017b201e8f89fd2f8c836d5fbd/assets/battle/character/shioriel.webp')!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
+ left:calc(var(--cb-camera-unit)*1.57 - var(--cb-world-height)*.14)!important;
+ bottom:8.5%!important;
+ width:calc(var(--cb-world-height)*.28)!important;
+ height:51.5%!important;
+}
 /* Completion is a full-screen scrolling reading, not the cropped command drawer. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-completion:not([hidden]){
  position:absolute!important;inset:0!important;top:0!important;left:0!important;
