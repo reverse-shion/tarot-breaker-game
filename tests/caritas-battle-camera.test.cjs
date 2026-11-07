@@ -9,7 +9,8 @@ function fixture(){
 }
 test('camera routes reading, delivery/wait, opponent response and special without gameplay state',()=>{
  assert.equal(stateFor(), 'READING');
- for(const phase of ['word-strike','written-light','enemy-turn'])assert.equal(stateFor({phase}),'REACTION');
+ for(const phase of ['word-strike','written-light'])assert.equal(stateFor({phase}),'REACTION');
+ assert.equal(stateFor({phase:'enemy-turn',speaker:'カリタス'}),'DEFENSE');
  assert.equal(stateFor({waiting:true}),'REACTION');
  assert.equal(stateFor({speaker:'カリタス'}),'REACTION');
  assert.equal(stateFor({speaker:'シオン'}),'READING');
@@ -109,4 +110,26 @@ test('a real arena resize remains immediate and updates the camera viewport',()=
  resize({width:430,height:330});
  assert.equal(painted.at(-1).width,430);
  assert.equal(painted.at(-1).instant,true);
+});
+
+test('counter frames the receiving party before impact and returns without accumulating offsets',()=>{
+ const f=mounted(),world=f.arena.children[0];
+ f.controller.update({speaker:'カリタス'});
+ assert.equal(f.root.dataset.camera,'REACTION');
+ f.controller.update({phase:'enemy-turn',speaker:'カリタス'});
+ assert.equal(f.root.dataset.camera,'DEFENSE');
+ assert.equal(world.style.transform,'translate3d(-312px,0px,0) scale(1)');
+ assert.equal(world.style.transitionDuration,'.24s');
+ assert.ok(240<1050*.48,'pan settles before existing counter impact');
+ f.controller.update({phase:'battle'});
+ assert.equal(world.style.transform,'translate3d(-312px,0px,0) scale(1)');
+});
+test('first mount paints even at the default viewport size, later same-size events stay inert',()=>{
+ const {painted,resize}=fixture();
+ assert.equal(painted.length,1);assert.equal(painted[0].mode,'READING');
+ assert.equal(painted[0].instant,true);
+ resize({width:390,height:330});assert.equal(painted.length,1);
+ const f=mounted();
+ assert.equal(f.root.style['--cb-world-width'],'858.0000000000001px');
+ assert.equal(f.root.style['--cb-world-height'],'330px');
 });

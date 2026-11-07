@@ -770,6 +770,18 @@ function start(){
  });
 }
 function setText(el,value){el.textContent=String(value);}
+function renderObservation(el,obs,visible){
+ const ready=visible.phase==="finisher";
+ el.dataset.situation=ready?"ready":C.stateFor(visible.dark);
+ const heading=newEl("div","cb-observation-heading");
+ heading.append(newEl("span","cb-observation-label","星獣のようす"),
+  newEl("strong","cb-observation-state",ready?"共鳴解放できる":obs.title));
+ const sign=newEl("p","cb-observation-sign",obs.sign);
+ const advice=newEl("p","cb-observation-advice");
+ advice.append(newEl("span","cb-observation-key","ヒント"),
+  newEl("span","",ready?"共鳴が満ちた。下の「共鳴解放」で、残る闇を解こう。":obs.advice));
+ el.replaceChildren(heading,sign,advice);
+}
 function tacticalForecast(p){
  if(!p)return "三枚を選ぶと、今回の働きかけと消耗が分かります。";
  return (p.approach==="reach"?"踏み込む":"支える")+"：侵蝕 −"+p.dark+"／共鳴 ＋"+p.resonance+"／維持力 −"+p.damage+(p.damage>=battle.hp?"　この行動で撤退":"")+(p.blocked?"　今の闇は解けません":"");
@@ -835,7 +847,7 @@ function render(){
  setText(ui.mood,"心象："+C.STATES[C.stateFor(s.dark)]);
  if(tactical){
   const obs=C.observation(visible);
-  setText(ui.observation,obs.clue);setText(ui.tarotObservation,obs.clue);setText(ui.writingObservation,obs.clue);
+  for(const panel of [ui.observation,ui.tarotObservation,ui.writingObservation])renderObservation(panel,obs,visible);
   setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴は満ちた。侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
   setText(ui.commandPrompt,"維持力が尽きる前に、闇を解こう。");
   ui.triangle.replaceChildren();
@@ -1249,9 +1261,9 @@ function init(){
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
- ui.observation=newEl("p","cb-tactical-observation");ui.observation.hidden=!tactical;
- ui.tarotObservation=newEl("p","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
- ui.writingObservation=newEl("p","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
+ ui.observation=newEl("section","cb-tactical-observation");ui.observation.hidden=!tactical;
+ ui.tarotObservation=newEl("section","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
+ ui.writingObservation=newEl("section","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
  ui.triangle=newEl("div","cb-tactical-triangle");ui.triangle.hidden=!tactical;ui.triangle.setAttribute("aria-label","月・力・星の働きかけの三角形");
  ui.tacticalPreview=newEl("p","cb-tactical-forecast");ui.tacticalPreview.hidden=!tactical;
  ui.writingIntent=newEl("p","cb-tactical-forecast");ui.writingIntent.hidden=!tactical;ui.writingIntent.setAttribute("role","status");
