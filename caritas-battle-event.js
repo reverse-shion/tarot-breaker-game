@@ -77,7 +77,7 @@ let caritasView=null,caritasResponse="",caritasNamed=false;
 const caritasDisplayName=()=>caritasNamed?"カリタス":"星獣";
 const caritasDisplayText=value=>caritasNamed?String(value):String(value).replaceAll("カリタス","星獣");
 function renderCaritas(){
- ui.camera?.update({phase:story,special:record.special.phase,waiting:aiBusy,
+ ui.camera?.update({phase:story,special:record.special.phase,waiting:aiBusy,short:record.special.playbackMode==='short',
   speaker:dialogueBusy?dialogueLines[dialogueIndex]?.[0]:null});
  const visible=getBattleView();
  caritasView?.update({dark:visible.dark,phase:story,special:record.special.phase,

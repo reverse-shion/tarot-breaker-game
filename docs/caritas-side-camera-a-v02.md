@@ -24,3 +24,14 @@ Acceptance: observe beast's face/darkness in A; no allied-face overlap; input/se
 Automated baselines before edits: main536/536 PASS; development779/779 PASS. Existing tests/validators/baseline are unchanged. Required final checks: camera state/lock tests, existing full regression, asset/background/audio checks, syntax, diff, independent read-only review.
 
 Device status: PENDING. iPhone Safari seven owner acceptance checks, keyboard/IME and actual optical framing require human confirmation at final SHA. Browser evidence must not be labeled device PASS. Keep draft, no production/integration activation, no main merge.
+
+## Candidate verification
+
+- Final transport-fenced full regression: **789/789 PASS**, failures/skips 0. Camera controller + mount lifecycle **10/10 PASS**. JavaScript syntax, asset/background/audio validators and diff whitespace PASS.
+- The inherited API cache-header test has an unstubbed POST (its key is a test-only literal). Final local suite uses a scratch-only preload which disables real fetch and HTTP(S) transport before request data is read. Existing tests and production API are not modified; no live Gemini call is needed for this camera validation.
+- Independent read-only review found the below350px/hardware-keyboard compact-flag return bug. Implementation moved close completion ahead of compact calculation; mount-level tests cover it, delayed viewport close, offset restoration and rapid refocus.
+- Short special playback selects immediate camera framing. A static existing cave background fills the viewport behind the scaled world.
+- No optical render evidence: local Chromium cannot launch because AF_UNIX sockets are denied; shared browser inspection could not access the preview under its URL authority policy. Do not infer character overlap, face visibility, scroll usability, IME, performance or sound acceptance from these unit/DOM tests.
+- All seven owner iPhone acceptance items remain PENDING. Existing registered `preview=encounter` real runtime is reused; no new checkpoint, production state or route is introduced. Open the fixed-SHA hoshisuna-main.html with `dev=hoshisuna&battle=tactical&preview=encounter&camera=a02` for the camera candidate; omit camera=a02 for the unchanged fixed-mode comparison.
+
+REGRESSION LOCK RESULT: no new automated failures; scoped code review clear, device validation PENDING. Integration/main merge remains STOP pending human device and separate integration gates.

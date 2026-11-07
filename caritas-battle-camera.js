@@ -26,7 +26,7 @@
    shown=requested;
   }
   return Object.freeze({
-   update(value){const next=stateFor(value);if(next!==requested){requested=next;apply();}},
+   update(value){const next=stateFor(value);if(next!==requested){requested=next;apply(value?.short===true);}},
    resize(){apply(true);},
    focus(){if(locked)return;frozen=freeze();locked=true;paint({mode:'INPUT_LOCK',...size,frozen,instant:true});},
    blur(){if(!locked)return;locked=false;frozen=null;apply(true);},
@@ -64,9 +64,9 @@
    const height=viewport?.height||window.innerHeight,top=viewport?.offsetTop||0;
    if(!focused&&!closing)fullHeight=height;
    set('--cb-camera-visible-height',height+'px');set('--cb-camera-visible-top',top+'px');
+   if(closing&&height>=fullHeight*.88)finishClosing();
    root.dataset.cameraCompact=String((focused||closing)&&height<350);
    set('--cb-camera-crop',(height<350?0:Math.min(96,height*.22))+'px');
-   if(closing&&height>=fullHeight*.88)finishClosing();
    // Layout, including viewport offset, settles before these measurements.
    const band=statusBand.getBoundingClientRect(),bounds=frame.getBoundingClientRect();
    set('--cb-camera-command-top',Math.max(0,band.bottom-bounds.top)+'px');
