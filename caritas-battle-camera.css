@@ -1,0 +1,107 @@
+/* Existing HUD, controls, art and shared dialogue; opt-in A v0.2 framing only. */
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-frame,
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase] .cb-frame{
+ position:absolute!important;left:50%!important;top:var(--cb-camera-visible-top,0px)!important;
+ transform:translateX(-50%)!important;inset-inline-end:auto!important;
+ width:min(100%,460px)!important;margin:0!important;
+ height:var(--cb-camera-visible-height,100dvh)!important;max-height:none!important;
+ grid-template-areas:"battle" "status" "command"!important;
+ grid-template-rows:minmax(0,1fr) 64px minmax(0,42%)!important;
+ visibility:visible!important;pointer-events:auto!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-frame>.cb-arena{
+ display:block!important;background:none!important;visibility:visible!important;
+ transform:none!important;overflow:hidden!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world{
+ position:absolute;left:0;top:0;width:var(--cb-world-width);height:var(--cb-world-height);
+ transform-origin:0 0;transition:transform .5s cubic-bezier(.25,.65,.25,1);
+ will-change:transform;pointer-events:none;isolation:isolate;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-world-background{
+ position:absolute;inset:0;background:url('./assets/events/hoshisuna/battle/cave-bg.webp') center / cover no-repeat;
+}
+/* Positions use the actual art's face/body/foot anchors. Camera never edits them.
+   Shioriel face ≈51% of source width; Shion ≈49%; feet share the 6% ground line. */
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-angel{
+ left:calc(var(--cb-camera-unit)*1.28 - var(--cb-world-height)*.309)!important;
+ right:auto!important;top:auto!important;bottom:6%!important;
+ width:calc(var(--cb-world-height)*.618)!important;height:84%!important;
+ background:url('./assets/battle/camera/shioriel.webp') center bottom / contain no-repeat;
+ image-rendering:auto;z-index:8;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
+ left:calc(var(--cb-camera-unit)*1.60 - var(--cb-world-height)*.223)!important;
+ right:auto!important;top:auto!important;bottom:6%!important;
+ width:calc(var(--cb-world-height)*.446)!important;height:82%!important;
+ background:url('./assets/battle/camera/shion.webp') center bottom / contain no-repeat;
+ image-rendering:auto;z-index:9;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-beast,.cb-abyss,.cb-release){
+ left:calc(var(--cb-camera-unit)*-.04)!important;right:auto!important;
+ top:auto!important;bottom:6%!important;width:calc(var(--cb-camera-unit)*1.18)!important;
+ height:86%!important;object-fit:contain;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-arena>.cb-hud.enemy{
+ top:calc(env(safe-area-inset-top,0px) + 5px)!important;left:8px!important;
+ width:37%;font-size:10px;padding:5px 7px;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-arena>.cb-title{
+ top:calc(env(safe-area-inset-top,0px) + 5px)!important;
+}
+/* Keep the existing selection UI in the command field instead of covering A.
+   Scrolling and card-detail access remain in that field, not across the stage. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-phase] .cb-frame>.cb-controls{
+ position:relative!important;inset:auto!important;transform:none!important;grid-area:command!important;
+ display:flex!important;width:100%!important;max-width:none!important;
+ height:100%!important;max-height:100%!important;min-height:0!important;
+ overflow-y:auto!important;overflow-x:hidden!important;padding:8px 10px!important;gap:8px!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-reading-complete="true"]>.cb-frame{
+ display:grid!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"]:is([data-reading-complete="true"],[data-writing-screen="true"]) .cb-frame>.cb-controls{
+ visibility:hidden!important;pointer-events:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-writing-screen="true"]::before{display:none!important}
+#game-shell #caritas-event[data-camera-layout="a02"]:is([data-phase="battle"],[data-phase="selecting"]) :is(.cb-writing-overlay,.cb-completion,.cb-card-overlay){
+ position:absolute!important;left:50%!important;right:auto!important;bottom:auto!important;
+ top:calc(var(--cb-camera-visible-top,0px) + var(--cb-camera-command-top,50dvh))!important;
+ transform:translateX(-50%)!important;margin:0!important;width:min(100%,460px)!important;
+ height:calc(var(--cb-camera-visible-height,100dvh) - var(--cb-camera-command-top,50dvh))!important;
+ max-height:calc(var(--cb-camera-visible-height,100dvh) - var(--cb-camera-command-top,50dvh))!important;
+ padding:6px 10px max(6px,env(safe-area-inset-bottom,0px))!important;min-height:0!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-card-overlay .cb-card-panel{
+ max-height:100%!important;width:100%;padding:5px 8px;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-card-overlay .cb-modal-image{
+ height:85px!important;max-height:85px!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-cards{max-width:240px;margin:auto}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-title{font-size:20px}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-header{gap:4px;padding-bottom:5px}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-title{font-size:17px}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-context{padding:4px 0;gap:5px}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-reference{padding:2px 0}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-panel{padding-bottom:4px;gap:4px}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-overlay .cb-ai-input{min-height:80px;height:100px}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-writing-footer{padding:4px 0;gap:3px}
+/* Crop the frozen world to faces/upper bodies. At very short heights the
+   composer and status band take priority; no attempt to shrink full bodies. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-input="true"] .cb-frame{
+ grid-template-rows:var(--cb-camera-crop,80px) 54px minmax(0,1fr)!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-input="true"] .cb-frame>.cb-status-band{display:block!important}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-input="true"] .cb-battle-world{top:-20px}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-input="true"] .cb-arena>:is(.cb-title,.cb-hud){visibility:hidden!important}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-input="true"] .cb-writing-header{display:none}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-input="true"] .cb-writing-overlay .cb-ai-input{
+ min-height:42px!important;padding:5px 8px!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-compact="true"] .cb-frame{grid-template-rows:0 44px minmax(0,1fr)!important}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-compact="true"] .cb-res-mood{display:none}
+#game-shell #caritas-event[data-camera-layout="a02"][data-camera-compact="true"] .cb-writing-footer>.cb-tactical-forecast{max-height:2.7em;font-size:11px}
+@media(prefers-reduced-motion:reduce){
+ #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world{transition:none!important}
+}
