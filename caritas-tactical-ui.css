@@ -107,7 +107,7 @@
 @keyframes cb-reading-connect{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#caritas-event .cb-completion-cards::before{animation:none}}
 
-/* A v0.4: card recap is a fluid triangle, never overlapping absolute cards.
+/* A v0.5: centered symmetric card recap in a fluid triangle, never overlapping absolute cards.
    The ring is decorative; headings, card art and selected words remain in flow. */
 #caritas-event[data-rules="tactical-v1"] .cb-completion-body{
  max-width:460px!important;min-width:0!important;
@@ -115,7 +115,7 @@
 #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{
  box-sizing:border-box!important;
  position:relative!important;display:grid!important;
- grid-template-columns:minmax(0,1fr) minmax(0,.16fr) minmax(0,1fr)!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
  grid-template-rows:auto auto!important;
  column-gap:4px!important;row-gap:18px!important;
  width:100%!important;height:auto!important;aspect-ratio:auto!important;
@@ -140,14 +140,14 @@
  z-index:1!important;
 }
 #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(1){
- grid-column:1 / 4!important;grid-row:1!important;
+ grid-column:1 / -1!important;grid-row:1!important;
  width:min(46%,172px)!important;justify-self:center!important;
 }
 #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(2){
  grid-column:1!important;grid-row:2!important;
 }
 #caritas-event[data-rules="tactical-v1"] .cb-completion-card:nth-child(3){
- grid-column:3!important;grid-row:2!important;
+ grid-column:2!important;grid-row:2!important;
 }
 #caritas-event[data-rules="tactical-v1"] .cb-completion-question{
  box-sizing:border-box!important;
@@ -187,4 +187,34 @@
  #caritas-event[data-rules="tactical-v1"] .cb-completion-cards{
   margin-bottom:12px!important;row-gap:16px!important;
  }
+}
+
+/* Center the entire reading independently of the previous camera's x offset.
+   Fixed parent sizing + symmetrical cards prevents art/ring drifting left. */
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion:not([hidden]){
+ display:block!important;box-sizing:border-box!important;
+ padding-inline:12px!important;left:0!important;right:0!important;
+ margin:0!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-body{
+ display:block!important;position:relative!important;
+ box-sizing:border-box!important;width:100%!important;
+ max-width:420px!important;margin-inline:auto!important;
+ left:auto!important;right:auto!important;transform:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-cards{
+ box-sizing:border-box!important;display:grid!important;
+ width:100%!important;max-width:100%!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ margin-inline:auto!important;
+ background-position:50% 50%!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-card:nth-child(1){
+ grid-column:1/-1!important;justify-self:center!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-card:nth-child(2){
+ grid-column:1!important;justify-self:center!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-completion-card:nth-child(3){
+ grid-column:2!important;justify-self:center!important;
 }
