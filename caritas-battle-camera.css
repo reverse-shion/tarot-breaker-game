@@ -257,3 +257,30 @@
  z-index:55!important;
  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
 }
+
+/* A v0.7: continuous world-scrolling cinematic.
+   The camera shifts ONE panorama with actors, never crossfades to a second
+   background painted in the fixed screen-sized arena. */
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-frame>.cb-arena{
+ background-image:none!important;
+ background-color:#172846!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world{
+ overflow:visible!important;
+ transition-property:transform!important;
+ transition-timing-function:cubic-bezier(.32,.04,.16,1)!important;
+ backface-visibility:hidden;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-world-background{
+ background-image:url('./assets/events/hoshisuna/battle/cave-bg.webp')!important;
+ background-position:center 56%!important;
+ background-size:100% 100%!important;
+ background-repeat:no-repeat!important;
+ background-color:#243556!important;
+ opacity:1!important;visibility:visible!important;
+}
+@media(prefers-reduced-motion:reduce){
+ #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world{
+  transition:none!important;
+ }
+}
