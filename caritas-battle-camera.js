@@ -27,7 +27,14 @@
   }
   return Object.freeze({
    update(value){const next=stateFor(value);if(next!==requested){requested=next;apply(value?.short===true);}},
-   resize(){apply(true);},
+   resize(){
+    // ResizeObserver may fire during dialogue/control layout transitions without
+    // any battlefield dimension change. Repainting then would snap a live pan.
+    if(locked)return;
+    const next=measure();
+    if(next.width>0&&next.height>0&&
+       (Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
+   },
    focus(){if(locked)return;frozen=freeze();locked=true;paint({mode:'INPUT_LOCK',...size,frozen,instant:true});},
    blur(){if(!locked)return;locked=false;frozen=null;apply(true);},
    getState:()=>({requested,shown,locked,...size})
@@ -48,7 +55,8 @@
    freeze:()=>window.getComputedStyle(world).transform,
    paint:view=>{
     root.dataset.camera=view.mode;
-    world.style.transitionDuration=view.instant?'0s':'.5s';
+    // A single travelling camera; smooth the pan rather than cutting scenes.
+    world.style.transitionDuration=view.instant?'0s':'1.25s';
     if(view.mode==='INPUT_LOCK'){
      // Snapshot even an in-flight pan; no actor-coordinate or camera changes
      // are allowed during IME/keyboard viewport scrolling.
