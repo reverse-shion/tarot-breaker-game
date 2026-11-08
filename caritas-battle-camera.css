@@ -415,3 +415,7 @@
 @media(prefers-reduced-motion:reduce){
  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-first-card-pulse .cb-card-art{animation:none!important}
 }
+
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-ja-unbreakable{
+ display:inline-block;white-space:nowrap;max-width:100%;
+}
