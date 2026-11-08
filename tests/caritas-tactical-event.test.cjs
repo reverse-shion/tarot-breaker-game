@@ -116,8 +116,7 @@ test('first-play tactical UI separates goal from modes and offers impact estimat
  const {f,root}=setup();
  const goal=root.querySelector('.cb-tactical-goal'),detail=root.querySelector('.cb-tactical-goal-detail');
  assert.equal(goal.textContent,'闇を払え');
- assert.match(detail.textContent,/共鳴100/);
- assert.match(detail.textContent,/維持力0で敗北/);
+ assert.equal(detail.textContent,'共鳴をMAXにして、想いを伝えるんだ。');
  assert.equal(root.querySelector('.cb-command-prompt').textContent,'届け方を選ぶ');
  assert.equal(goal.hidden,false);
  f.button(root,'選んで届ける').click();
@@ -140,4 +139,20 @@ test('first-play tactical UI separates goal from modes and offers impact estimat
   root.querySelector('.cb-modal-words').children[1].children.at(-1).textContent,
   'strength options have different benefits and costs'
  );
+});
+
+test('recap uses Compass Trigger Route as the primary card headings and keeps subtitles below',()=>{
+ const {f,root}=setup();f.button(root,'選んで届ける').click();
+ const select=(index,choice)=>{root.flatten().filter(e=>e.className==='cb-card-button')[index].click();root.querySelector('.cb-modal-words').children[choice].click();};
+ select(0,0);select(1,0);select(2,0);
+ const cards=root.querySelector('.cb-completion-cards').children;
+ assert.equal(cards.length,3);
+ for(let i=0;i<3;i++){
+  assert.equal(cards[i].children[0].className,'cb-completion-role');
+  assert.equal(cards[i].children[0].textContent,['コンパス','トリガー','ルート'][i]);
+  assert.equal(cards[i].children[1].className,'cb-completion-question');
+  assert.equal(cards[i].children[1].textContent,['何に目を向ける？','どう働きかける？','どう届ける？'][i]);
+  assert.equal(cards[i].children[3].className,'cb-completion-choice');
+ }
+ assert.equal(f.state().battle.turn,0,'recap presentation must not commit a turn');
 });
