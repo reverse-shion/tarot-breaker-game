@@ -128,7 +128,7 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
  assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a11-goal-and-triangle/,'iPhone must not reuse the cached clipped CSS');
+ assert.match(html,/caritas-battle-camera\.css\?v=a12-interactive-constellation/,'iPhone must not reuse the cached clipped CSS');
 });
 
 test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
@@ -145,7 +145,7 @@ test('A02 tactical modal choices have independent natural heights inside one scr
  assert.match(block,/>\.cb-modal-word>.cb-modal-impact\{[\s\S]*?height:auto!important/);
  assert.match(block,/\.cb-modal-navigation\{[\s\S]*?flex:0 0 auto!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a11-goal-and-triangle/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a12-interactive-constellation/);
 });
 
 test('A02 recap titles dominate subtitles and decorative lines sit behind cards',()=>{
@@ -159,4 +159,20 @@ test('A02 recap titles dominate subtitles and decorative lines sit behind cards'
  assert.match(block,/\.cb-completion-cards>\.cb-completion-card\{[\s\S]*?z-index:1!important/);
  assert.match(block,/\.cb-completion-choice\{[\s\S]*?background:rgba\(5,14,31,\.97\)!important/);
  assert.match(block,/\.cb-tactical-goal-detail\{[\s\S]*?font-size:clamp\(13px,3\.4vw,14px\)!important/);
+});
+
+test('tactical interactive constellation has tappable cards, unset states and bottom sheet',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const block=css.split('A02 tactical card selection v5:')[1];
+ assert.ok(block,'one-screen tactical selector must have its own scoped styling');
+ assert.match(block,/\.cb-completion-card\[data-selected="false"\]>.cb-completion-choice/);
+ assert.match(block,/\.cb-completion-card\[data-selected="true"\]>.cb-completion-choice/);
+ assert.match(block,/\.cb-completion-card:focus-visible/);
+ assert.match(block,/\.cb-card-overlay:not\(\[hidden\]\)\{[\s\S]*?justify-content:flex-end!important/);
+ assert.match(block,/\.cb-card-panel\{[\s\S]*?max-height:min\(72dvh,720px\)!important/);
+ assert.match(block,/\.cb-completion-send\[hidden\]/);
+ const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(js,/item\.addEventListener\("click",\(\)=>openCard\(i\)\)/);
+ assert.match(js,/chosenWord\?C\.READING_OPTIONS\[chosenWord\]\.title:"タップして選ぶ"/);
 });
