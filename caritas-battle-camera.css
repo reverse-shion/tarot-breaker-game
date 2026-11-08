@@ -766,3 +766,117 @@
 @media(prefers-reduced-motion:reduce){
  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card[data-next="true"]>img{animation:none!important}
 }
+
+/* A02 actor reactions v1 — additive, opt-in tactical battle only.
+ * Animate figures INSIDE the panning world without changing world/camera
+ * transforms, artwork bounds, placement, or the shared dialogue layer.
+ * Both character silhouettes are from their current rendered WebP assets. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel{
+  transform-origin:50% 88%;
+  animation:cb-actor-idle-breathe 3.1s ease-in-out infinite!important;
+  will-change:transform;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel{
+  animation-delay:-1.35s!important;
+  --cb-actor-art:url('https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/a107c393f74d06017b201e8f89fd2f8c836d5fbd/assets/battle/character/shioriel.webp');
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite{
+  --cb-actor-art:url('./assets/battle/camera/shion.webp');
+}
+@keyframes cb-actor-idle-breathe{
+  0%,100%{transform:translate3d(0,0,0)}
+  50%{transform:translate3d(0,-2.5px,0)}
+}
+/* Pseudo images retain transparent silhouettes. They are not rectangular
+ * glows and cannot displace the actor or the camera even on iPhone Safari. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite::after,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel::after{
+  content:"";position:absolute;inset:0;
+  display:block;pointer-events:none;
+  background-image:var(--cb-actor-art);
+  background-position:center bottom;background-size:contain;background-repeat:no-repeat;
+  opacity:0;
+}
+/* Shion: luminous blue-white outline, softly alive while his shared dialogue
+ * is visible. The original face/robe remain recognizable underneath. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-phase="battle"],[data-phase="special"],[data-phase="word-strike"],[data-phase="written-light"]) :is(.cb-shion-sprite)[data-actor-editor-select="false"]::after{
+  pointer-events:none;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="shion"] .cb-battle-world>.cb-shion-sprite,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="both"] .cb-battle-world>.cb-shion-sprite{
+  animation:cb-shion-speech-motion 1.3s ease-in-out infinite!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="shion"] .cb-battle-world>.cb-shion-sprite::after,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="both"] .cb-battle-world>.cb-shion-sprite::after{
+  filter:brightness(1.3) drop-shadow(0 0 7px #c7f4ff) drop-shadow(0 0 14px #74caff);
+  animation:cb-shion-speech-glow 1.25s ease-in-out infinite!important;
+}
+@keyframes cb-shion-speech-motion{
+  0%,100%{transform:translate3d(0,0,0) rotate(0deg)}
+  50%{transform:translate3d(0,-3px,0) rotate(-.35deg)}
+}
+@keyframes cb-shion-speech-glow{
+  0%,100%{opacity:.22}
+  50%{opacity:.56}
+}
+/* Shioriel: subdued lavender rim when speaking. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="shioriel"] .cb-battle-world>.cb-angel::after,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="both"] .cb-battle-world>.cb-angel::after{
+  filter:brightness(1.2) drop-shadow(0 0 8px #e5ccff) drop-shadow(0 0 12px #b795f9);
+  animation:cb-shioriel-speech-glow 1.4s ease-in-out infinite!important;
+}
+@keyframes cb-shioriel-speech-glow{
+  0%,100%{opacity:.14}
+  50%{opacity:.39}
+}
+/* A real counterattack starts in enemy-turn only AFTER Shion and Caritas
+ * finish speaking. Recoil and two red silhouette flashes last 1.05s —
+ * exactly the existing counter phase; they never alter HP or turn timing. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-battle-world>.cb-angel{
+  animation:cb-shioriel-red-recoil 1.05s ease-out both!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-battle-world>.cb-angel::after{
+  filter:brightness(0) saturate(100%) invert(32%) sepia(90%) saturate(5000%)
+    hue-rotate(345deg) brightness(110%)
+    drop-shadow(0 0 12px #ff4646);
+  animation:cb-shioriel-red-flash 1.05s steps(1,end) both!important;
+}
+@keyframes cb-shioriel-red-recoil{
+  0%,32%,100%{transform:translate3d(0,0,0) rotate(0)}
+  44%{transform:translate3d(9px,-2px,0) rotate(1deg)}
+  55%{transform:translate3d(2px,0,0) rotate(-.4deg)}
+  66%{transform:translate3d(6px,-1px,0) rotate(.5deg)}
+  78%{transform:translate3d(0,0,0) rotate(0)}
+}
+@keyframes cb-shioriel-red-flash{
+  0%,35%,54%,65%,79%,100%{opacity:0}
+  36%,46%,66%,75%{opacity:.67}
+}
+/* If guarding is later enabled, show blue-green rather than falsely imply
+ * a painful red hit. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"][data-ward="true"] .cb-battle-world>.cb-angel::after{
+  filter:brightness(1.2) drop-shadow(0 0 12px #8ef4e7);
+}
+/* Keep camera debug editor unanimated for precise touch placement. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel){
+  animation:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
+  animation:none!important;opacity:0!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel){
+    animation:none!important;transform:none!important;
+  }
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
+    animation:none!important;
+  }
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="shion"] .cb-shion-sprite::after,
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="both"] .cb-shion-sprite::after{
+    opacity:.4!important;
+  }
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-angel::after{
+    opacity:.52!important;
+  }
+}
