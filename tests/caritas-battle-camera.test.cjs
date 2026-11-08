@@ -130,3 +130,20 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
  assert.match(html,/caritas-battle-camera\.css\?v=a09-writer-viewport/,'iPhone must not reuse the cached clipped CSS');
 });
+
+test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const block=css.split('A02 tactical card detail v3:')[1];
+ assert.ok(block,'tactical options need their own post-impact-height overrides');
+ assert.match(block,/\.cb-modal-words:not\(\[hidden\]\)\{[\s\S]*?display:flex!important/);
+ assert.match(block,/\.cb-modal-words:not\(\[hidden\]\)\{[\s\S]*?flex-direction:column!important/);
+ assert.match(block,/\.cb-modal-words:not\(\[hidden\]\)\{[\s\S]*?overflow-y:auto!important/);
+ assert.match(block,/>\.cb-modal-word\{[\s\S]*?flex:0 0 auto!important/);
+ assert.match(block,/>\.cb-modal-word\{[\s\S]*?height:auto!important/);
+ assert.match(block,/>\.cb-modal-word\{[\s\S]*?min-height:max-content!important/);
+ assert.match(block,/>\.cb-modal-word>.cb-modal-impact\{[\s\S]*?height:auto!important/);
+ assert.match(block,/\.cb-modal-navigation\{[\s\S]*?flex:0 0 auto!important/);
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/caritas-battle-camera\.css\?v=a10-modal-options-flex/);
+});
