@@ -77,8 +77,12 @@ let caritasView=null,caritasResponse="",caritasNamed=false;
 const caritasDisplayName=()=>caritasNamed?"カリタス":"星獣";
 const caritasDisplayText=value=>caritasNamed?String(value):String(value).replaceAll("カリタス","星獣");
 function renderCaritas(){
+ // Presentation-only speaking cue. The battle actor's glow follows the
+ // canonical shared-dialogue speaker; do not mutate art, turns or saves.
+ const speaker=dialogueBusy?dialogueLines[dialogueIndex]?.[0]:null;
+ if(root)root.dataset.actorSpeaking=speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="シオン＆シオリエル"?"both":"none";
  ui.camera?.update({phase:story,special:record.special.phase,waiting:aiBusy,short:record.special.playbackMode==='short',
-  speaker:dialogueBusy?dialogueLines[dialogueIndex]?.[0]:null});
+  speaker});
  const visible=getBattleView();
  caritasView?.update({dark:visible.dark,phase:story,special:record.special.phase,
   finisher:visible.phase==="finisher",speaking:dialogueBusy&&dialogueLines[dialogueIndex]?.[0]==="カリタス",response:caritasResponse});
@@ -628,7 +632,7 @@ function advanceDialogue(){
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
- root.dataset.dialogueBusy="false";
+ root.dataset.dialogueBusy="false";root.dataset.actorSpeaking="none";
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
 }
