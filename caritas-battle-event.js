@@ -82,7 +82,7 @@ function renderCaritas(){
  const speaker=dialogueBusy?dialogueLines[dialogueIndex]?.[0]:null;
  if(root)root.dataset.actorSpeaking=speaker==="シオン"?"shion":speaker==="シオリエル"?"shioriel":speaker==="シオン＆シオリエル"?"both":"none";
  ui.camera?.update({phase:story,special:record.special.phase,waiting:aiBusy,short:record.special.playbackMode==='short',
-  speaker});
+  speaker,tactical});
  const visible=getBattleView();
  caritasView?.update({dark:visible.dark,phase:story,special:record.special.phase,
   finisher:visible.phase==="finisher",speaking:dialogueBusy&&dialogueLines[dialogueIndex]?.[0]==="カリタス",response:caritasResponse});
