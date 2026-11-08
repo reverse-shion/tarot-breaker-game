@@ -127,8 +127,17 @@ test('first-play tactical UI separates goal from modes and offers impact estimat
  const first=root.flatten().filter(e=>e.className==='cb-card-button')[0];
  assert.ok(first.classList.contains('cb-first-card-pulse'),'only the first card invites the initial tap');
  first.click();
- const choice=root.querySelector('.cb-modal-impact');
- assert.ok(choice,'interpretations show risk/benefit guidance');
- assert.match(choice.textContent,/侵蝕をさらに3/);
+ assert.match(root.querySelector('.cb-modal-selected').textContent,/闇侵蝕−3/,'Moon guidance appears once above the choices');
+ assert.equal(root.querySelector('.cb-modal-words').children.length,3);
+ assert.equal(root.querySelector('.cb-modal-impact'),null,'do not repeat the same impact notice inside every Moon choice');
  assert.equal(root.querySelector('.cb-modal-word-desc').textContent,C.READING_OPTIONS['不安'].text,'authored descriptions remain unchanged in textContent');
+ root.querySelector('.cb-modal-close').click();
+ root.flatten().filter(e=>e.className==='cb-card-button')[1].click();
+ assert.ok(root.querySelector('.cb-modal-impact'),'Strength displays distinct risks for each option');
+ assert.equal(root.querySelector('.cb-modal-words').children.length,2);
+ assert.notEqual(
+  root.querySelector('.cb-modal-words').children[0].children.at(-1).textContent,
+  root.querySelector('.cb-modal-words').children[1].children.at(-1).textContent,
+  'strength options have different benefits and costs'
+ );
 });
