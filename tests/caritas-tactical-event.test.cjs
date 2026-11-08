@@ -83,7 +83,7 @@ test('each card explains its role and actual choice count; Strength intentionall
  const {f,root}=setup();f.button(root,'選んで届ける').click();
  for(let i=0;i<3;i++){
   root.querySelector('.cb-completion-cards').children[i].click();
-  assert.match(root.querySelector('.cb-modal-title').textContent,i===1?/力.*働きかけ/:i===0?/月.*観察/:/星.*届け方/);
+  assert.match(root.querySelector('.cb-modal-title').textContent,i===1?/トリガー.*働きかけ/:i===0?/コンパス.*目を向ける/:/ルート.*届ける/);
   assert.equal(root.querySelector('.cb-modal-words').children.length,i===1?2:3);
   root.querySelector('.cb-modal-close').click();
  }
