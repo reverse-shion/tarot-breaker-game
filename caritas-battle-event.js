@@ -221,7 +221,7 @@ const AFTER_FAREWELL=[
 ];
 const FAREWELL_CLOSE=[["シオン","タロットクローズ。"]];
 const FAREWELL_DEPART=[
- ["シオン","さあ、星砂を探しに行こう。"],
+ ["シオン","さあ、星砂に急ごう。"],
  ["しおぽん","はいなの〜！"]
 ];
 const FAREWELL_CLOSE_PAUSE_MS=1100;
