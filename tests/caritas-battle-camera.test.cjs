@@ -128,7 +128,7 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
  assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a10-modal-options-flex/,'iPhone must not reuse the cached clipped CSS');
+ assert.match(html,/caritas-battle-camera\.css\?v=a11-goal-and-triangle/,'iPhone must not reuse the cached clipped CSS');
 });
 
 test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
@@ -145,5 +145,18 @@ test('A02 tactical modal choices have independent natural heights inside one scr
  assert.match(block,/>\.cb-modal-word>.cb-modal-impact\{[\s\S]*?height:auto!important/);
  assert.match(block,/\.cb-modal-navigation\{[\s\S]*?flex:0 0 auto!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a10-modal-options-flex/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a11-goal-and-triangle/);
+});
+
+test('A02 recap titles dominate subtitles and decorative lines sit behind cards',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const block=css.split('A02 tactical clarity v4:')[1];
+ assert.ok(block,'A02 needs a scoped completion hierarchy override');
+ assert.match(block,/\.cb-completion-role\{[\s\S]*?font-size:clamp\(19px,5vw,24px\)!important/);
+ assert.match(block,/\.cb-completion-question\{[\s\S]*?font-size:clamp\(11px,2\.8vw,13px\)!important/);
+ assert.match(block,/\.cb-completion-cards::before\{[\s\S]*?z-index:0!important/);
+ assert.match(block,/\.cb-completion-cards>\.cb-completion-card\{[\s\S]*?z-index:1!important/);
+ assert.match(block,/\.cb-completion-choice\{[\s\S]*?background:rgba\(5,14,31,\.97\)!important/);
+ assert.match(block,/\.cb-tactical-goal-detail\{[\s\S]*?font-size:clamp\(13px,3\.4vw,14px\)!important/);
 });
