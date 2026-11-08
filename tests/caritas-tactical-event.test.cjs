@@ -111,3 +111,24 @@ test('third selection opens assembled reading without spending a turn; edit and 
  f.advanceTime(1050);
  assert.equal(f.state().battle.turn,1,'only one committed reading');
 });
+
+test('first-play tactical UI separates goal from modes and offers impact estimates',()=>{
+ const {f,root}=setup();
+ const goal=root.querySelector('.cb-tactical-goal'),detail=root.querySelector('.cb-tactical-goal-detail');
+ assert.equal(goal.textContent,'闇を払え');
+ assert.match(detail.textContent,/共鳴100/);
+ assert.match(detail.textContent,/維持力0で敗北/);
+ assert.equal(root.querySelector('.cb-command-prompt').textContent,'届け方を選ぶ');
+ assert.equal(goal.hidden,false);
+ f.button(root,'選んで届ける').click();
+ assert.equal(goal.hidden,true,'large goal is not repeated over tarot cards');
+ assert.equal(detail.hidden,true);
+ assert.match(root.querySelector('.cb-tarot-progress').textContent,/まず月のカードをタップ/);
+ const first=root.flatten().filter(e=>e.className==='cb-card-button')[0];
+ assert.ok(first.classList.contains('cb-first-card-pulse'),'only the first card invites the initial tap');
+ first.click();
+ const choice=root.querySelector('.cb-modal-impact');
+ assert.ok(choice,'interpretations show risk/benefit guidance');
+ assert.match(choice.textContent,/侵蝕をさらに3/);
+ assert.equal(root.querySelector('.cb-modal-word-desc').textContent,C.READING_OPTIONS['不安'].text,'authored descriptions remain unchanged in textContent');
+});
