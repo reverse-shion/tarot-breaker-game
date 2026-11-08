@@ -92,6 +92,7 @@ let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let pendingRegroupNext=null;
 let modalIndex=-1,readingOpen=false,deliveryMethod=null,committing=false,visualBattle=null,attempts=0;
+let modalReturnFocus=null; // Shared by card tap and modal keyboard handlers.
 let firstWrittenDelivered=false;
 let summaryEditing=false; // Presentation only; never persisted or used for scoring.
 // Presentation-only; no save state and no influence on battle arithmetic.
@@ -1414,7 +1415,6 @@ function init(){
  let swipeX=null;
  panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
  panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
- let modalReturnFocus=null;
   document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}else if(e.key==="Tab"){const focusables=[...ui.modal.querySelectorAll("button:not([disabled])")].filter(el=>el.getClientRects().length);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(e.shiftKey&&(document.activeElement===first||!ui.modal.contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&(document.activeElement===last||!ui.modal.contains(document.activeElement))){e.preventDefault();first.focus();}}});
  const cutin=newEl("div","cb-cutin");ui.cutin=cutin;cutin.setAttribute("aria-label","シオンとシオリエルの共鳴解放");
  for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
