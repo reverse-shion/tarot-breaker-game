@@ -859,7 +859,7 @@ function render(){
   for(let i=0;i<3;i++){
    const item=newEl("div","cb-tarot-review-item");
    item.dataset.complete=String(!!s.words[i]);
-   item.append(newEl("span","cb-tarot-review-role",["観察","働きかけ","届け方"][i]),
+   item.append(newEl("span","cb-tarot-review-role",(tactical?["観察","働きかけ","届け方"]:["現在地","行動","届け方"])[i]),
     newEl("strong","cb-tarot-review-word",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));
    ui.tarotReview.append(item);
   }
@@ -872,7 +872,7 @@ function render(){
  for(let i=0;i<3;i++){
   const card=s.cards[i],slot=newEl("div","cb-reading-slot");
   slot.dataset.complete=String(!!s.words[i]);
-  slot.append(newEl("span","cb-slot-role",["観察","働きかけ","届け方"][i]),
+  slot.append(newEl("span","cb-slot-role",(tactical?["観察","働きかけ","届け方"]:["現在地","行動","届け方"])[i]),
    newEl("strong","cb-slot-value",s.words[i]?C.READING_OPTIONS[s.words[i]].title:card.name+" を選ぶ"));
   ui.slots.append(slot);
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
