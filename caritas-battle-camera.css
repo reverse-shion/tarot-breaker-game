@@ -347,3 +347,71 @@
 @media(prefers-reduced-motion:reduce){
   #game-shell #caritas-event[data-camera-layout="a02"][data-phase="battle"][data-writing-screen="true"] .cb-writing-overlay{transition:none!important}
 }
+
+/* Tactical visual affordances v2. Non-interactive information looks like
+   information; clickable controls use fill and shadow. A02 only. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-arena>.cb-title{
+ border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
+ text-shadow:0 2px 5px #081528,0 0 9px #091638!important;
+ padding:4px 6px!important;pointer-events:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-tactical-goal{
+ border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
+ padding:4px 8px!important;margin:2px 0 0!important;
+ text-shadow:0 2px 5px #050b23;pointer-events:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-tactical-goal-detail{
+ margin:0 4px 7px;padding:0 8px;flex:0 0 auto;
+ color:#f1deb5;font:600 14px/1.55 system-ui,sans-serif;
+ text-align:center;text-wrap:pretty;pointer-events:none;
+}
+#game-shell #caritas-event .cb-tactical-goal-detail[hidden]{display:none!important}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-command-prompt{
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;margin:0 auto!important;
+ padding:2px 6px!important;color:#fbebc4;font-weight:700;
+ pointer-events:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-card-overlay .cb-modal-selected{
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:#f1dfc3!important;
+ font-size:14px!important;line-height:1.55!important;
+ padding:4px 8px!important;pointer-events:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-modal-word:not(:disabled),
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-delivery-methods .cb-way:not(:disabled){
+ box-shadow:0 3px 10px rgba(2,5,23,.46),inset 0 1px 0 rgba(255,242,202,.12)!important;
+ cursor:pointer;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-modal-word:not(:disabled):active,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-delivery-methods .cb-way:not(:disabled):active{
+ filter:brightness(1.12);
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-modal-impact{
+ display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:6px 8px;
+ border-left:3px solid #dfbc77;background:rgba(10,25,42,.7);
+ border-radius:2px;color:#ffe0a5;font:600 13px/1.55 system-ui,sans-serif;
+ text-align:left;word-break:normal;overflow-wrap:break-word;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-ja-phrase{
+ word-break:keep-all!important;overflow-wrap:break-word!important;
+ white-space:normal;line-break:strict;text-wrap:pretty;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-cards .cb-first-card-pulse .cb-card-art{
+ border:2px solid #fff0af!important;
+ box-shadow:0 0 0 2px #b9a16e88,0 0 15px #ffe2a688!important;
+ animation:cb-first-card-invite 2.5s ease-in-out 3;
+}
+@keyframes cb-first-card-invite{
+ 0%,100%{box-shadow:0 0 0 2px #b9a16e66,0 0 8px #ffe2a655}
+ 50%{box-shadow:0 0 0 3px #dabe8faa,0 0 22px #ffe2a6bb}
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-frame>.cb-controls{
+ padding-bottom:calc(54px + env(safe-area-inset-bottom,0px))!important;
+ scroll-padding-bottom:calc(54px + env(safe-area-inset-bottom,0px));
+}
+@media(prefers-reduced-motion:reduce){
+ #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-first-card-pulse .cb-card-art{animation:none!important}
+}
