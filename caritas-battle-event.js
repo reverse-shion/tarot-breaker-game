@@ -771,6 +771,29 @@ function start(){
  });
 }
 function setText(el,value){el.textContent=String(value);}
+// Browser-only word boundary hints preserve authored text and accessibility.
+function setPhraseText(el,value){
+ setText(el,value);
+ if(!tactical||!("innerHTML" in el)||typeof Intl==="undefined"||typeof Intl.Segmenter!=="function")return;
+ try{
+  const fragment=document.createDocumentFragment();
+  for(const {segment,isWordLike} of new Intl.Segmenter("ja",{granularity:"word"}).segment(String(value))){
+   fragment.appendChild(document.createTextNode(segment));
+   if(isWordLike)fragment.appendChild(document.createElement("wbr"));
+  }
+  el.replaceChildren(fragment);el.classList.add("cb-ja-phrase");
+ }catch(_){setText(el,value);}
+}
+function tacticalChoiceHint(role,word,state){
+ if(role==="COMPASS")return "観察が心象に合えば侵蝕をさらに3解く。外れても追加ペナルティなし。";
+ if(role==="ROUTE")return {希望:"侵蝕を解けた時、さらに5減らす／維持力を5多く使う。",癒し:"通常の維持力消耗を3軽減（拒絶への踏み込みは対象外）。",願い:"闇を解けた時、共鳴をさらに5深める。"}[word]||"";
+ const tips={
+  closed:{忍耐:"闇侵蝕を大きく減らす／維持力の負担は小さい。",勇気:"拒絶を押す危険：侵蝕の減少は小さく、維持力を50失う。"},
+  storm:{忍耐:"維持力を使うが、闇侵蝕は減らせない。",勇気:"闇侵蝕を大きく減らす／維持力の負担は中程度。"},
+  wavering:{忍耐:"闇侵蝕を少しずつ減らす／維持力の負担は小さい。",勇気:"闇侵蝕をより大きく減らす／維持力の負担は高め。"}
+ };
+ return tips[state]?.[word]||"";
+}
 function tacticalForecast(p){
  if(!p)return "三枚を選ぶと、今回の働きかけと消耗が分かります。";
  return (p.approach==="reach"?"踏み込む":"支える")+"：侵蝕 −"+p.dark+"／共鳴 ＋"+p.resonance+"／維持力 −"+p.damage+(p.damage>=battle.hp?"　この行動で撤退":"")+(p.blocked?"　今の闇は解けません":"");
@@ -836,10 +859,11 @@ function render(){
  setText(ui.mood,"心象："+C.STATES[C.stateFor(s.dark)]);
  if(tactical){
   const obs=C.observation(visible);
-  setText(ui.observation,obs.clue);setText(ui.tarotObservation,obs.clue);setText(ui.writingObservation,obs.clue);
+  setPhraseText(ui.observation,obs.clue);setPhraseText(ui.tarotObservation,obs.clue);setPhraseText(ui.writingObservation,obs.clue);
   setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴は満ちた。侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
-  setText(ui.commandPrompt,"カードを選んでリーディング");
+  setText(ui.commandPrompt,"届け方を選ぶ");
    setText(ui.goal,"闇を払え");
+   setText(ui.goalDetail,"目標：共鳴100＋闇侵蝕25％以下で解放。維持力0で敗北。");
   ui.triangle.replaceChildren();
   for(let i=0;i<3;i++){const node=newEl("span","cb-tactical-node");node.append(newEl("small","",["月＝観察","力＝働きかけ","星＝届け方"][i]),newEl("strong","",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));ui.triangle.append(node);}
   renderWritingIntent();
@@ -850,6 +874,9 @@ function render(){
  if(tactical)setText(ui.tacticalPreview,tacticalForecast(p));
  const chosenCount=s.words.filter(Boolean).length;
  const selectingTarot=reading&&readingOpen&&deliveryMethod==="select";
+ ui.goal.hidden=!tactical||!(reading&&!readingOpen);
+ ui.goalDetail.hidden=!tactical||!(reading&&!readingOpen);
+ ui.tacticalPreview.hidden=!tactical||!selectingTarot||chosenCount!==3;
  ui.tarotHeader.hidden=!selectingTarot;
  // A compact, read-only assembled interpretation prevents repeated card
  // reopenings just to remember the player's own choices. Nothing is saved.
@@ -865,7 +892,7 @@ function render(){
   }
  }
  setText(ui.tarotMood,"現在の心象："+C.STATES[C.stateFor(s.dark)]);
- setText(ui.tarotProgress,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードをタップして意味を選ぶ"));
+ setText(ui.tarotProgress,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":tactical&&chosenCount===0?"まず月のカードをタップ":"カードをタップして意味を選ぶ"));
  root.dataset.cardsReady=String(chosenCount===3);
  root.dataset.finisher=String(finisher);
  ui.slots.replaceChildren();
@@ -889,6 +916,7 @@ function render(){
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
   const cardState=s.words[i]?"selected":viewedReadingCards.has(i)?"read":"unread";
   section.dataset.cardState=cardState;btn.dataset.cardState=cardState;
+  if(tactical&&selectingTarot&&chosenCount===0&&i===0&&!viewedReadingCards.has(0))btn.classList.add("cb-first-card-pulse");
   const art=newEl("div","cb-card-art"),image=newEl("img","cb-card-image");
   image.src=CARD_IMAGES[card.name]||"";image.alt=card.name+"のタロットカード";
   image.loading="eager";image.decoding="async";art.append(image);btn.append(art);
@@ -925,7 +953,7 @@ function render(){
    setText(ui.writingHint,"文章だけで一手進みます。曖昧な言葉は「支える」として扱います。");
    setText(ui.writingReward,"例：声が届くなら、一緒に一歩踏み出そう。固定の共鳴ボーナスはありません。");
    setText(ui.writtenBadge,"文章で一手");setText(ui.writingBonus,"選択式と同じ行動・消耗");
-   setText(ui.readBadge,"観察・働きかけ・言葉");
+   setText(ui.readBadge,"カード3枚を選ぶ");
   }
   ui.aiToggle.setAttribute("aria-expanded",String(deliveryMethod==="write"));
   ui.aiToggle.disabled=!reading||aiBusy||committing;
@@ -967,19 +995,19 @@ function render(){
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
   ui.modalWords.hidden=false;
-  setText(ui.modalSelected,s.words[modalIndex]
+  setPhraseText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
    :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
   ui.modalNav.hidden=false;
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
-  setText(ui.modalMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
+  setPhraseText(ui.modalMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.modalPage,(modalIndex+1)+" / "+s.cards.length);
   if(deliveryMethod==="write"){
    for(const word of visibleWords){
     const option=C.READING_OPTIONS[word];
     const reference=newEl("div","cb-modal-reference");
-    reference.append(newEl("strong","cb-modal-word-title",option.title),
-     newEl("span","cb-modal-word-desc",option.text));
+    const description=newEl("span","cb-modal-word-desc");setPhraseText(description,option.text);
+    reference.append(newEl("strong","cb-modal-word-title",option.title),description);
     ui.modalWords.append(reference);
    }
    return;
@@ -987,7 +1015,14 @@ function render(){
   for(const word of visibleWords){
    const option=C.READING_OPTIONS[word];
    const btn=newEl("button","cb-modal-word");btn.type="button";
-   btn.append(newEl("strong","cb-modal-word-title",option.title),newEl("span","cb-modal-word-desc",option.text));
+   const description=newEl("span","cb-modal-word-desc");setPhraseText(description,option.text);
+   btn.append(newEl("strong","cb-modal-word-title",option.title),description);
+   if(tactical){
+    const proposed=[...s.words];proposed[modalIndex]=word;
+    const forecast=proposed.every(Boolean)?C.predict({...s,words:proposed}):null;
+    const impact=forecast?"この組み合わせ：闇侵蝕−"+forecast.dark+"／共鳴＋"+forecast.resonance+"／維持力−"+forecast.damage:tacticalChoiceHint(card.role,word,C.stateFor(s.dark));
+    btn.append(newEl("span","cb-modal-impact",impact));
+   }
    btn.setAttribute("aria-label",option.title);
    btn.setAttribute("aria-pressed",String(s.words[modalIndex]===word));
    btn.addEventListener("click",()=>choose(modalIndex,word));
@@ -1254,6 +1289,7 @@ function init(){
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
   ui.goal=newEl("p","cb-tactical-goal","闇を払え");ui.goal.hidden=!tactical;
+ ui.goalDetail=newEl("p","cb-tactical-goal-detail","目標：共鳴100＋闇侵蝕25％以下で解放。維持力0で敗北。");ui.goalDetail.hidden=!tactical;
  ui.observation=newEl("p","cb-tactical-observation");ui.observation.hidden=!tactical;
  ui.tarotObservation=newEl("p","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
  ui.writingObservation=newEl("p","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
@@ -1381,7 +1417,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(ui.goal,ui.commandPrompt,ui.observation,tarotHeader,methods,cardBox,ui.triangle,ui.tacticalPreview,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
+ ctr.append(ui.goal,ui.goalDetail,ui.commandPrompt,ui.observation,tarotHeader,methods,cardBox,ui.triangle,ui.tacticalPreview,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
