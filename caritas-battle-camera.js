@@ -6,14 +6,16 @@
 })(typeof window!=='undefined'?window:this,function(){
  'use strict';
  const SPECIAL=new Set(['selecting','special','purifying','purified']);
- function stateFor({phase='battle',special='',waiting=false,speaker=null}={}){
+ function stateFor({phase='battle',special='',waiting=false,speaker=null,tactical=false}={}){
   if(SPECIAL.has(phase)||['FACE_CUTIN','DUAL_INCANTATION','TECHNIQUE_ART','PURIFICATION','CARITAS_REPLY'].includes(special))return 'SPECIAL';
+  // Frame the recipient, not Caritas, on tactical counter-hit.
+  if(tactical&&phase==='enemy-turn')return 'COUNTER_HIT';
   if(waiting||['word-strike','written-light','enemy-turn'].includes(phase)||speaker==='カリタス'||speaker==='星獣')return 'REACTION';
   return 'READING';
  }
  function framing(mode,width,height){
   const scale=mode==='SPECIAL'?1/1.85:1;
-  return {x:mode==='READING'?-.80*width:mode==='REACTION'?-.03*width:0,
+  return {x:mode==='READING'||mode==='COUNTER_HIT'?-.80*width:mode==='REACTION'?-.03*width:0,
    y:mode==='SPECIAL'?height*(1-scale)*.75:0,scale};
  }
  function createController({paint,measure,freeze=()=>null}){
@@ -56,7 +58,7 @@
    paint:view=>{
     root.dataset.camera=view.mode;
     // A single travelling camera; smooth the pan rather than cutting scenes.
-    world.style.transitionDuration=view.instant?'0s':'1.25s';
+    world.style.transitionDuration=view.instant?'0s':view.mode==='COUNTER_HIT'?'0.23s':'1.25s';
     if(view.mode==='INPUT_LOCK'){
      // Snapshot even an in-flight pan; no actor-coordinate or camera changes
      // are allowed during IME/keyboard viewport scrolling.
