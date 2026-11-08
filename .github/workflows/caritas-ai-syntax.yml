@@ -6,6 +6,8 @@ on:
       - 'caritas-battle-event.js'
       - 'hoshisuna-victory-audio.js'
       - 'hoshisuna-main.html'
+      - 'caritas-battle-camera.css'
+      - 'tests/caritas-choice-fit.test.cjs'
       - 'tests/hoshisuna-victory-audio.test.cjs'
       - 'tests/hoshisuna-field-audio.test.cjs'
       - 'caritas-battle-core.js'
@@ -34,6 +36,8 @@ jobs:
           node --check caritas-battle-core.js
       - name: Test AI, 27 combinations, and Shion-before-damage battle replay
         run: node --test tests/caritas-ai-insight.test.cjs tests/caritas-ai-api.test.cjs tests/caritas-battle-event.test.cjs tests/caritas-main-interaction.test.cjs
+      - name: Test iPhone tactical choice fit and no-clipping fallback
+        run: node --test tests/caritas-choice-fit.test.cjs
       - name: Test Caritas victory audio, field handoff, and existing combat music
         run: |
           node --check hoshisuna-victory-audio.js
