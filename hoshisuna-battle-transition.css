@@ -43,8 +43,15 @@
   position:absolute;inset:-1px;background:#160e25;opacity:0;
   will-change:opacity;animation:abyss-late-blackout 2600ms linear both;
 }
-#caritas-event[data-phase="engulfing"]{
-  visibility:hidden!important
+/* The A02 side camera forces visibility:visible on .cb-frame and its art.
+ * Hiding only the parent's visibility lets those children override it on iOS.
+ * Hide the entire composited battle layer with parent opacity instead, while
+ * keeping its dimensions measurable for the camera's ResizeObserver. */
+#game-shell #caritas-event[data-phase="engulfing"]{
+  opacity:0!important;
+  visibility:visible!important;
+  pointer-events:none!important;
+  transition:none!important;
 }
 @keyframes abyss-map-corruption{
   0%{transform:translate3d(-50%,-50%,0) scale(.06) scaleY(.7);opacity:0}
