@@ -949,8 +949,8 @@
  animation:none!important;filter:brightness(1.15);transform:scale(.985)!important;
 }
 @keyframes cb-finisher-call{
- 0%,100%{box-shadow:inset 0 1px 0 #fff1c6a8,inset 0 -6px 18px #0b133a90,0 0 0 3px #a88a6188,0 0 16px #e8c4829c,0 8px 22px #07132bba!important}
- 50%{box-shadow:inset 0 1px 0 #fff1c6dd,inset 0 -6px 18px #0b133a90,0 0 0 4px #e2c28caa,0 0 32px #ffe1a8dd,0 8px 22px #07132bba!important}
+ 0%,100%{box-shadow:inset 0 1px 0 #fff1c6a8,inset 0 -6px 18px #0b133a90,0 0 0 3px #a88a6188,0 0 16px #e8c4829c,0 8px 22px #07132bba}
+ 50%{box-shadow:inset 0 1px 0 #fff1c6dd,inset 0 -6px 18px #0b133a90,0 0 0 4px #e2c28caa,0 0 32px #ffe1a8dd,0 8px 22px #07132bba}
 }
 @media(prefers-reduced-motion:reduce){
  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-finisher="true"] .cb-actions>.cb-skill.cb-skill-ready:enabled{
