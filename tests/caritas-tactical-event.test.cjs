@@ -221,3 +221,32 @@ test('Shion speaking state drives battlefield rim light and resets before Shiori
  assert.notEqual(root.dataset.phase,'enemy-turn','red hit ends with the counter phase');
  assert.equal(root.dataset.actorSpeaking,'none');
 });
+
+test('tactical finisher offers only a strong skill action and commits the Star technique once',()=>{
+ const ready={...C.newGame(),phase:'finisher',resonance:100,dark:20,hp:70};
+ const saved=S.create(ready,'tactical-auto-special');
+ const persistentStore=new Map([[KEY,JSON.stringify(saved)],[LEGACY,'unchanged']]);
+ const {f,root}=setup({persistentStore});
+ assert.equal(f.state().battle.phase,'finisher');
+ assert.equal(root.querySelector('.cb-cards').hidden,true,'three regular tarot cards must not appear at MAX');
+ assert.equal(root.querySelector('.cb-actions').hidden,false);
+ assert.equal(root.querySelector('.cb-delivery-methods').hidden,true);
+ assert.equal(root.querySelector('.cb-special-selection').hidden,true);
+ const skill=f.button(root,'共鳴解放');
+ assert.ok(skill&&!skill.disabled);
+ assert.ok(skill.classList.contains('cb-skill-ready'));
+ assert.equal(root.dataset.finisher,'true');
+ skill.click();
+ assert.equal(f.state().story,'special','the only button starts the finisher without asking for another card');
+ assert.equal(f.state().special.phase,'SHION_LINE');
+ assert.equal(f.state().special.cardId,'17-the-star','Caritas uses the authored Star purification scene');
+ assert.equal(root.querySelector('.cb-special-selection').hidden,true,'no second three-card popup');
+ assert.equal(root.querySelector('.cb-special-cards'),null);
+ assert.equal(persistentStore.get(LEGACY),'unchanged');
+ const committed=JSON.parse(persistentStore.get(KEY));
+ assert.equal(committed.special.committed,true);
+ assert.equal(committed.special.cardId,'17-the-star');
+ assert.equal(f.state().battle.dark,20,'purification does not resolve before its visual phase');
+ skill.click();
+ assert.equal(JSON.parse(persistentStore.get(KEY)).revision,committed.revision,'second click cannot duplicate the special receipt');
+});
