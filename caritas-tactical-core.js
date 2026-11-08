@@ -20,6 +20,53 @@
   storm:{speech:'……助け……声が……闇に……！',clue:'こちらへ顔を向けた。助けを求める声をアビスが遮る。支えて待つだけでは闇を解けない。',focus:['逃げる動きは止まった。こちらを見ている。','助けを求める声を、闇が遮っている。','足は止まり、前へ出ようともがいている。']},
   wavering:{speech:'……まだ……歩きたい。だが、怖いのだ。',clue:'星獣は逃げずにこちらを見ている。支えても踏み込んでも届く。残りの維持力を見て選ぼう。',focus:['身を引かず、こちらを見ている。','恐れと願いが、同じ声で聞こえる。','自分の意志で踏みとどまっている。']}
  });
+ // Endgame technique is not a random draw and not an extra card choice.
+ // Every successful delivered reading contributes to three thematic affinities:
+ // observing/supporting -> Moon, actively reaching -> Strength,
+ // leaving hope/agency -> Star. The whole battle matters, not just the last turn.
+ const FINISHER_IDS=Object.freeze(['18-the-moon','08-strength','17-the-star']);
+ const emptyInfluence=()=>({'18-the-moon':0,'08-strength':0,'17-the-star':0});
+ function cleanInfluence(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return null;
+  if(!FINISHER_IDS.every(id=>Number.isSafeInteger(value[id])&&value[id]>=0&&value[id]<=10000))return null;
+  return {...emptyInfluence(),...Object.fromEntries(FINISHER_IDS.map(id=>[id,value[id]]))};
+ }
+ function readingInfluence(words,effect){
+  const scores=emptyInfluence();
+  if(!Array.isArray(words)||words.length!==3||!effect||effect.misread||effect.blocked||
+    !(effect.dark>0||effect.resonance>0))return scores;
+  // Compass is always Moon's observing act, with a modest reward for fit.
+  scores['18-the-moon']+=1+(effect.match===1?2:0);
+  // A safe supporting action stabilizes Moon; a successful risk advances Strength.
+  if(words[1]==='忍耐'){scores['18-the-moon']+=2;scores['17-the-star']+=1;}
+  else if(words[1]==='勇気')scores['08-strength']+=5;
+  // The player's chosen route determines how the meaning reaches the other.
+  if(words[2]==='癒し')scores['18-the-moon']+=2;
+  else if(words[2]==='希望'||words[2]==='願い')scores['17-the-star']+=4;
+  // Real effects matter, but never override the meaning of the three choices.
+  if(effect.dark>=20)scores['08-strength']+=1;
+  if(effect.resonance>=30)scores['17-the-star']+=1;
+  return scores;
+ }
+ function inheritedInfluence(s){
+  // Old v15 checkpoints predate affinity scores: recover what can be proven
+  // from their last completed reading, without inventing earlier turns.
+  return cleanInfluence(s.finisherInfluence)||
+    readingInfluence(s.lastReading,s.lastEffect);
+ }
+ function finisherTechnique(s){
+  const score=inheritedInfluence(s);
+  const last=readingInfluence(s.lastReading,s.lastEffect);
+  // No confirmed reading in a legacy/QA finisher: keep the prior Star default.
+  if(!FINISHER_IDS.some(id=>score[id]>0))
+   return {cardId:'17-the-star',scores:score,reason:'過去の記録を引き継ぐ'};
+  const ids=[...FINISHER_IDS].sort((a,b)=>score[b]-score[a]||
+   last[b]-last[a]||
+   FINISHER_IDS.indexOf(b)-FINISHER_IDS.indexOf(a));
+  const id=ids[0];
+  return {cardId:id,scores:score,reason:id==='18-the-moon'?'観察と支えの積み重ね':
+   id==='08-strength'?'踏み出す意志の積み重ね':'希望を届けた積み重ね'};
+ }
  function optionsFor(card){return card.role==='TRIGGER'?['忍耐','勇気']:card.words;}
  function valid(s){return Base.valid(s)&&s.words[1]!=='自制';}
  function observation(s){return OBSERVATIONS[Base.stateFor(s.dark)]||OBSERVATIONS.wavering;}
@@ -41,7 +88,11 @@
  }
  function read(s){
   const p=predict(s);if(!p)return s;
-  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
+  const influence=inheritedInfluence(s),added=readingInfluence(s.words,p);
+  const cumulative=emptyInfluence();
+  for(const id of FINISHER_IDS)cumulative[id]=Math.min(10000,influence[id]+added[id]);
+  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,
+   finisherInfluence:cumulative,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
   n.phase=n.hp===0?'defeat':n.resonance===100&&n.dark<=25?'finisher':'read';
   return n;
  }
@@ -63,7 +114,7 @@
   return {...s,words:[compass,reach?'勇気':'忍耐',route]};
  }
  function readingPages(s){return valid(s)?s.words.map(w=>OPTIONS[w].shion):[];}
- function newGame(){return {...Base.newGame(),rules:RULES};}
+ function newGame(){return {...Base.newGame(),rules:RULES,finisherInfluence:emptyInfluence()};}
  function canSkill(s){return s.hp>0&&s.dark<=25&&Base.canSkill(s);}
- return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText});
+ return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText,readingInfluence,finisherTechnique});
 });
