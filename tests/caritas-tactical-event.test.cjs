@@ -222,7 +222,7 @@ test('Shion speaking state drives battlefield rim light and resets before Shiori
  assert.equal(root.dataset.actorSpeaking,'none');
 });
 
-test('tactical finisher offers only a strong skill action and commits the Star technique once',()=>{
+test('tactical finisher keeps a deterministic Star fallback when no reading history exists',()=>{
  const ready={...C.newGame(),phase:'finisher',resonance:100,dark:20,hp:70};
  const saved=S.create(ready,'tactical-auto-special');
  const persistentStore=new Map([[KEY,JSON.stringify(saved)],[LEGACY,'unchanged']]);
@@ -249,4 +249,36 @@ test('tactical finisher offers only a strong skill action and commits the Star t
  assert.equal(f.state().battle.dark,20,'purification does not resolve before its visual phase');
  skill.click();
  assert.equal(JSON.parse(persistentStore.get(KEY)).revision,committed.revision,'second click cannot duplicate the special receipt');
+});
+
+test('reading-led single-button finisher commits all three technique arts and preserves the chosen identity',()=>{
+ const examples=[
+  {words:['不安','忍耐','癒し'],dark:100,expected:'18-the-moon',title:'星幻迷宮'},
+  {words:['秘密','勇気','癒し'],dark:70,expected:'08-strength',title:'星獣咆哮'},
+  {words:['不安','忍耐','希望'],dark:100,expected:'17-the-star',title:'星望祈願'}
+ ];
+ for(const example of examples){
+  const source=C.read({...C.newGame(),dark:example.dark,words:example.words});
+  assert.equal(C.finisherTechnique(source).cardId,example.expected);
+  const ready={...source,phase:'finisher',resonance:100,dark:20};
+  const initial=S.create(ready,'tactical-technique-'+example.expected);
+  const persistentStore=new Map([[KEY,JSON.stringify(initial)],[LEGACY,'untouched']]);
+  const {f,root}=setup({persistentStore});
+  const skill=f.button(root,'共鳴解放');
+  assert.equal(root.querySelector('.cb-cards').hidden,true);
+  assert.equal(skill.dataset.techniqueName,example.title);
+  assert.equal(skill.dataset.techniqueCard,example.expected);
+  assert.match(skill.attributes['aria-label'],new RegExp(example.title));
+  assert.equal(root.querySelector('.cb-special-selection').hidden,true);
+  skill.click();
+  assert.equal(f.state().special.cardId,example.expected,'the saved special must be based on the readings');
+  assert.equal(f.state().special.phase,'SHION_LINE');
+  assert.equal(f.state().story,'special','the character immediately begins the authored cut-in sequence');
+  assert.equal(JSON.parse(persistentStore.get(KEY)).special.cardId,example.expected);
+  assert.equal(persistentStore.get(LEGACY),'untouched');
+  assert.equal(root.querySelector('.cb-special-selection').hidden,true);
+  const revision=JSON.parse(persistentStore.get(KEY)).revision;
+  skill.click();
+  assert.equal(JSON.parse(persistentStore.get(KEY)).revision,revision,'never double-commit');
+ }
 });
