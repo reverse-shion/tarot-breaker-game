@@ -113,3 +113,25 @@ test('free text affects the same finisher affinities without storing raw prose',
  assert.equal(C.finisherTechnique(s).cardId,'08-strength');
  assert.equal(JSON.stringify(s).includes('一緒に進もう'),false,'raw written input is never added to the save');
 });
+
+test('equal cumulative scores use the last reading, never random selection',()=>{
+ const last=action({...C.newGame(),dark:70},'勇気','秘密','癒し');
+ const tied={...last,finisherInfluence:{
+  '18-the-moon':12,'08-strength':12,'17-the-star':12
+ }};
+ for(let i=0;i<5;i++)assert.equal(C.finisherTechnique(tied).cardId,'08-strength');
+});
+test('save validator rejects tampered affinity scores but permits older checkpoints',()=>{
+ const good=action(C.newGame(),'忍耐','不安','癒し');
+ const stored=S.create(good,'affinity-validation');
+ assert.doesNotThrow(()=>S.validate(stored));
+ for(const corrupt of [null,[],{'18-the-moon':5},{'18-the-moon':5,'08-strength':4,'17-the-star':-1},{
+  '18-the-moon':5,'08-strength':4,'17-the-star':1,'injected':'words'
+ }]){
+  assert.throws(()=>S.validate(S.create({...good,finisherInfluence:corrupt},'bad-affinity')),/invalid-finisher-influence/);
+ }
+ const older={...good};delete older.finisherInfluence;
+ const oldCheckpoint=S.create(older,'older-v15');
+ assert.doesNotThrow(()=>S.validate(oldCheckpoint));
+ assert.equal(C.finisherTechnique(oldCheckpoint.battle).cardId,'18-the-moon');
+});
