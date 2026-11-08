@@ -808,6 +808,7 @@ function render(){
  renderCompletion(reading);
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
  root.dataset.rules=tactical?C.RULES:"legacy";
+  if(tactical)root.style.setProperty("--cb-stage-dim",String(Math.min(.72,visible.dark/100*.72)));
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
  // Display-only state: mode controls a full-viewport tarot surface, not the battle engine.
  root.dataset.readingMode=readingOpen&&reading&&deliveryMethod==="select"?"select":"none";
@@ -838,8 +839,9 @@ function render(){
   setText(ui.observation,obs.clue);setText(ui.tarotObservation,obs.clue);setText(ui.writingObservation,obs.clue);
   setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴は満ちた。侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
   setText(ui.commandPrompt,"維持力が尽きる前に、闇を解こう。");
+   setText(ui.goal,"勝利：共鳴100＋闇侵蝕25％以下 → 共鳴解放 ／ 維持力0で敗北");
   ui.triangle.replaceChildren();
-  for(let i=0;i<3;i++){const node=newEl("span","cb-tactical-node");node.append(newEl("small","",["月・コンパス","力・トリガー","星・ルート"][i]),newEl("strong","",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));ui.triangle.append(node);}
+  for(let i=0;i<3;i++){const node=newEl("span","cb-tactical-node");node.append(newEl("small","",["月＝観察","力＝働きかけ","星＝届け方"][i]),newEl("strong","",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));ui.triangle.append(node);}
   renderWritingIntent();
  }
  ui.resBar.style.width=visible.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=visible.hp+"%";
@@ -857,7 +859,7 @@ function render(){
   for(let i=0;i<3;i++){
    const item=newEl("div","cb-tarot-review-item");
    item.dataset.complete=String(!!s.words[i]);
-   item.append(newEl("span","cb-tarot-review-role",["現在地","行動","届け方"][i]),
+   item.append(newEl("span","cb-tarot-review-role",["観察","働きかけ","届け方"][i]),
     newEl("strong","cb-tarot-review-word",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));
    ui.tarotReview.append(item);
   }
@@ -870,7 +872,7 @@ function render(){
  for(let i=0;i<3;i++){
   const card=s.cards[i],slot=newEl("div","cb-reading-slot");
   slot.dataset.complete=String(!!s.words[i]);
-  slot.append(newEl("span","cb-slot-role",["現在地","行動","届け方"][i]),
+  slot.append(newEl("span","cb-slot-role",["観察","働きかけ","届け方"][i]),
    newEl("strong","cb-slot-value",s.words[i]?C.READING_OPTIONS[s.words[i]].title:card.name+" を選ぶ"));
   ui.slots.append(slot);
   if(i<2)ui.slots.append(newEl("span","cb-slot-arrow","→"));
@@ -881,7 +883,7 @@ function render(){
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
-  section.append(newEl("div","cb-role",(tactical?{COMPASS:"観察・3択",TRIGGER:"働きかけ・2択",ROUTE:"届け方・3択"}:{COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
+  section.append(newEl("div","cb-role",(tactical?{COMPASS:"月＝観察",TRIGGER:"力＝働きかけ",ROUTE:"星＝届け方"}:{COMPASS:"現在地",TRIGGER:"行動",ROUTE:"届け方"})[card.role]));
   const btn=newEl("button","cb-card-button");btn.type="button";btn.disabled=!reading||!readingOpen;
   btn.setAttribute("aria-label",card.name+(deliveryMethod==="write"?"を拡大して見る":s.words[i]?"・"+C.READING_OPTIONS[s.words[i]].title+"を選択済み。変更する":"を開いて意味を選ぶ"));
   btn.setAttribute("aria-pressed",String(!!s.words[i]));
@@ -939,7 +941,7 @@ function render(){
   ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3&&!!p)||aiBusy||dialogueBusy||committing;
   // Keep the primary button in one fixed place. Its own label communicates
   // progress; the separate gold progress banner is no longer needed.
-  setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
+  setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):"解釈を選択中 "+chosenCount+"/3");
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,"共鳴が満ちると解放");
@@ -958,7 +960,9 @@ function render(){
   const card=s.cards[modalIndex];
   const visibleWords=tactical?C.optionsFor(card):card.words;
   ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
-  if(tactical)ui.modalTitle.textContent=card.name+" — "+({COMPASS:"コンパス：観察・3択",TRIGGER:"トリガー：働きかけ・2択",ROUTE:"ルート：届け方・3択"})[card.role];
+  if(tactical)ui.modalTitle.textContent=card.name+" — "+({COMPASS:"観察：何が起きている？",TRIGGER:"働きかけ：どう向き合う？",ROUTE:"届け方：どんな言葉を届ける？"})[card.role];
+   ui.modalHint.hidden=!tactical||viewedReadingCards.size>1;
+   if(!ui.modalHint.hidden)setText(ui.modalHint,card.role==="TRIGGER"?"ヒント：距離を保って支えるか、踏み込むか。星獣の様子を見て決めよう。":"ヒント：星獣の心象を手がかりに、一手を選ぼう。");
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
   ui.modalImage.alt=card.name+"のタロットカード";
   ui.modalWords.replaceChildren();
@@ -994,11 +998,11 @@ function render(){
 function openCard(i){
  if(specialLocked())return;
  if(story!=="battle"||battle.phase!=="read"||!readingOpen||dialogueBusy||aiBusy||committing||suspended())return;
- once=true;viewedReadingCards.add(i);ui.guide.hidden=true;modalIndex=i;render();
+ modalReturnFocus=document.activeElement;once=true;viewedReadingCards.add(i);ui.guide.hidden=true;modalIndex=i;render();
  (deliveryMethod==="write"?ui.modalClose:ui.modalWords.querySelector(".cb-modal-word"))?.focus?.({preventScroll:true});
 }
 function closeCard(){
- if(specialLocked())return;if(modalIndex<0)return;modalIndex=-1;render();}
+ if(specialLocked())return;if(modalIndex<0)return;modalIndex=-1;render();if(modalReturnFocus?.isConnected)modalReturnFocus.focus({preventScroll:true});modalReturnFocus=null;}
 function moveViewedCard(step){
  if(modalIndex<0||story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||specialLocked())return;
  modalIndex=(modalIndex+step+battle.cards.length)%battle.cards.length;viewedReadingCards.add(modalIndex);render();
@@ -1249,6 +1253,7 @@ function init(){
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
+  ui.goal=newEl("p","cb-tactical-goal","勝利：共鳴100＋闇侵蝕25％以下／維持力0で敗北");ui.goal.hidden=!tactical;
  ui.observation=newEl("p","cb-tactical-observation");ui.observation.hidden=!tactical;
  ui.tarotObservation=newEl("p","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
  ui.writingObservation=newEl("p","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
@@ -1376,7 +1381,7 @@ function init(){
  ui.selectionReason=newEl("p","cb-selection-reason");ui.selectionReason.setAttribute("role","status");
  const methods=newEl("div","cb-delivery-methods");ui.methods=methods;methods.append(ui.read,ui.aiToggle);
  actions.append(ui.skill,ui.skillHint);ui.actions=actions;ui.line=line;
- ctr.append(ui.commandPrompt,ui.observation,tarotHeader,methods,cardBox,ui.triangle,ui.tacticalPreview,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
+ ctr.append(ui.goal,ui.commandPrompt,ui.observation,tarotHeader,methods,cardBox,ui.triangle,ui.tacticalPreview,ui.tarotReview,ui.slots,ui.selectionReason,ui.selectSend,ui.wayHint,line,ui.finisher,actions);
  // Structural split: the arena never reflows when reading/dialogue toggles.
  // The existing HUD elements and shared dialogue/controller stay canonical.
  const statusBand=newEl("div","cb-status-band");
@@ -1397,7 +1402,7 @@ function init(){
  const close=newEl("button","cb-modal-close","× 閉じる");ui.modalClose=close;close.type="button";close.addEventListener("click",closeCard);
  ui.modalMood=newEl("div","cb-modal-mood","星獣の心象：閉ざす");
  ui.modalSelected=newEl("div","cb-modal-selected","3つの解釈から選んでください");
- ui.modalPage=newEl("span","cb-modal-page","1 / 3");
+ ui.modalPage=newEl("span","cb-modal-page","1 / 3");ui.modalHint=newEl("p","cb-modal-hint");ui.modalHint.hidden=true;
  ui.modalTitle=newEl("div","cb-modal-title");ui.modalImage=newEl("img","cb-modal-image");ui.modalWords=newEl("div","cb-modal-words");
  const modalNav=newEl("div","cb-modal-navigation");ui.modalNav=modalNav;
  ui.modalPrev=newEl("button","cb-modal-prev","‹ 前のカード");ui.modalNext=newEl("button","cb-modal-next","次のカード ›");
@@ -1405,11 +1410,12 @@ function init(){
  ui.modalPrev.addEventListener("click",()=>moveViewedCard(-1));ui.modalNext.addEventListener("click",()=>moveViewedCard(1));
  modalNav.append(ui.modalPrev,ui.modalNext);
  modalHeader.append(ui.modalTitle,close);
- panel.append(modalHeader,ui.modalMood,ui.modalPage,ui.modalImage,ui.modalSelected,ui.modalWords,modalNav);ui.modal.append(shade,panel);
+ panel.append(modalHeader,ui.modalMood,ui.modalPage,ui.modalImage,ui.modalHint,ui.modalSelected,ui.modalWords,modalNav);ui.modal.append(shade,panel);
  let swipeX=null;
  panel.addEventListener("touchstart",e=>{swipeX=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
  panel.addEventListener("touchend",e=>{if(swipeX===null||e.changedTouches.length!==1)return;const delta=e.changedTouches[0].clientX-swipeX;swipeX=null;if(Math.abs(delta)>55)moveViewedCard(delta<0?1:-1);},{passive:true});
- document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}});
+ let modalReturnFocus=null;
+  document.addEventListener("keydown",e=>{if(modalIndex<0)return;if(e.key==="Escape"){e.preventDefault();closeCard();}else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();moveViewedCard(e.key==="ArrowRight"?1:-1);}else if(e.key==="Tab"){const focusables=[...ui.modal.querySelectorAll("button:not([disabled])")].filter(el=>el.getClientRects().length);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(e.shiftKey&&(document.activeElement===first||!ui.modal.contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&(document.activeElement===last||!ui.modal.contains(document.activeElement))){e.preventDefault();first.focus();}}});
  const cutin=newEl("div","cb-cutin");ui.cutin=cutin;cutin.setAttribute("aria-label","シオンとシオリエルの共鳴解放");
  for(const [actor,name] of [["shion","シオン"],["shioriel","シオリエル"]]){
    const panel=newEl("div","cb-cut-panel cb-cut-"+actor);
