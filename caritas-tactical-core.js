@@ -39,7 +39,7 @@
   scores['18-the-moon']+=1+(effect.match===1?2:0);
   // A safe supporting action stabilizes Moon; a successful risk advances Strength.
   if(words[1]==='忍耐'){scores['18-the-moon']+=2;scores['17-the-star']+=1;}
-  else if(words[1]==='勇気')scores['08-strength']+=5;
+  else if(words[1]==='勇気')scores['08-strength']+=7;
   // The player's chosen route determines how the meaning reaches the other.
   if(words[2]==='癒し')scores['18-the-moon']+=2;
   else if(words[2]==='希望'||words[2]==='願い')scores['17-the-star']+=4;
