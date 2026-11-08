@@ -128,7 +128,7 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
  assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a14-single-skill-cta/,'iPhone must not reuse the cached clipped CSS');
+ assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/,'iPhone must not reuse the cached clipped CSS');
 });
 
 test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
@@ -145,7 +145,7 @@ test('A02 tactical modal choices have independent natural heights inside one scr
  assert.match(block,/>\.cb-modal-word>.cb-modal-impact\{[\s\S]*?height:auto!important/);
  assert.match(block,/\.cb-modal-navigation\{[\s\S]*?flex:0 0 auto!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a14-single-skill-cta/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
 });
 
 test('A02 recap titles dominate subtitles and decorative lines sit behind cards',()=>{
@@ -216,5 +216,36 @@ test('tactical finisher hides the tarot rail and gives its sole skill a luminous
  assert.match(js,/cardBox\.hidden=\!\(readingOpen&&reading\)\|\|tactical&&finisher/);
  assert.match(js,/if\(tactical\)\{selectedCard='17-the-star';shortPlayback=false;commitSpecialSelection\(selectedCard,'normal'\);return;\}/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a14-single-skill-cta/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
+});
+
+test('tactical enemy counter camera must reveal Shioriel before two red hit flashes',()=>{
+ assert.equal(stateFor({phase:'enemy-turn',tactical:true}),'COUNTER_HIT');
+ assert.equal(stateFor({phase:'enemy-turn',tactical:false}),'REACTION','do not alter legacy counter camera');
+ const width=390,height=330;
+ const shot=framing('COUNTER_HIT',width,height);
+ assert.equal(shot.scale,1);
+ assert.equal(shot.x,-.8*width);
+ // Shioriel anchor is at 1.35 scene widths, so her face should be
+ // comfortably in-frame (55% across) instead of past the right edge.
+ const shiorielScreenFraction=1.35+shot.x/width;
+ assert.ok(shiorielScreenFraction>.25&&shiorielScreenFraction<.85);
+ const {controller,painted}=fixture();
+ controller.update({phase:'enemy-turn',tactical:true});
+ assert.equal(painted.at(-1).mode,'COUNTER_HIT');
+ assert.equal(painted.at(-1).x,-312);
+ controller.update({phase:'battle',tactical:true});
+ assert.equal(painted.at(-1).mode,'READING');
+ const fs=require('node:fs'),path=require('node:path');
+ const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.js'),'utf8');
+ assert.match(js,/view\.mode==='COUNTER_HIT'\?'0\.23s'/,'pan must finish before the first red flash begins');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ assert.match(css,/cb-shioriel-direct-hit-tint/,'real character image must flash red, not only an optional overlay');
+ assert.match(css,/cb-shioriel-red-recoil/);
+ assert.match(css,/sepia\(1\) saturate\(9\)/);
+ const event=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(event,/speaker,tactical\}\)/,'actual battle view must tell the camera to use tactical hit framing');
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/caritas-battle-camera\.js\?v=a08-counter-hit-frame/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
 });
