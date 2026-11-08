@@ -173,7 +173,7 @@ function restoreCheckpoint(){
  }catch(_){recoveryScreen();return true;}
 }
 function commitSpecialSelection(cardId,playbackMode){
- if(specialLocked()||story!=="selecting"||dialogueBusy||aiBusy||committing||suspended())return;
+ if(specialLocked()||(story!=="selecting"&&!(tactical&&story==="battle"))||dialogueBusy||aiBusy||committing||suspended())return;
  const next=S.commit({...record,battle,firstWrittenDelivered,aiCalls,aiConfirmedCalls:aiCalls},cardId,playbackMode);
  return persist(next,()=>{battle=record.battle;playSpecialSequence();});
 }
@@ -353,6 +353,10 @@ function specialVisibleWait(ms,callback){
 }
 function openSpecialSelection(){
  if(specialLocked()||story!=='battle'||battle.phase!=='finisher'||battle.resonance!==100||battle.used||!C.canSkill(battle)||dialogueBusy||aiBusy||committing||suspended())return;
+ // Tactical Caritas has one required finishing act. A second three-card
+ // decision after MAX is redundant: activate the established Star technique
+ // directly, retaining its authored lines, art, save receipt and timings.
+ if(tactical){selectedCard='17-the-star';shortPlayback=false;commitSpecialSelection(selectedCard,'normal');return;}
  story='selecting';root.dataset.phase=story;selectedCard=null;shortPlayback=false;render();renderSpecialSelection();
 }
 function renderSpecialSelection(){
@@ -877,7 +881,7 @@ function render(){
  ui.readingIntro.hidden=true; // Entry stays in the lower controls, never over the actors.
  ui.commandPrompt.hidden=!(reading&&!readingOpen);
  ui.controls.hidden=false;
- cardBox.hidden=!(readingOpen&&reading)&&!finisher;
+ cardBox.hidden=!(readingOpen&&reading)||tactical&&finisher;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
  const displayedDark=visible.dark;
  setText(ui.enemyName,caritasDisplayName());ui.beast.alt=caritasDisplayName();
