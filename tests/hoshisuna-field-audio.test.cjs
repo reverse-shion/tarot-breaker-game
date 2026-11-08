@@ -101,19 +101,25 @@ test('post-purification cue restores the existing field BGM before map reveal, o
   assert.equal(f.sessions[1].releases,1);
 });
 
-test('actual battle final reply stops combat BGM before owned field cue, while overlay remains',()=>{
+test('purification plays victory before the map cut; field music resumes at map reveal',()=>{
   const event=fs.readFileSync(path.join(base,'caritas-battle-event.js'),'utf8');
   const sequence=event.slice(event.indexOf('function playSpecialSequence(){'),
     event.indexOf('function playPurification('));
   const stop='new Event("tarot-breaker:hoshisuna-battle-stop")';
+  const win='new CustomEvent("tarot-breaker:hoshisuna-victory-start"';
   const cue='new CustomEvent("tarot-breaker:hoshisuna-field-return-cue"';
   assert.match(sequence,/if\(p==='CARITAS_REPLY'\)/);
-  assert.ok(sequence.indexOf(stop)>=0&&sequence.indexOf(stop)<sequence.indexOf(cue),
-    'fight track must stop before unmuting Starroad music');
-  assert.ok(sequence.indexOf(cue)<sequence.indexOf('saySequence([[speaker,text]]'),
-    'field BGM starts during the final reply before the map cut');
+  assert.ok(sequence.indexOf(stop)>=0&&sequence.indexOf(stop)<sequence.indexOf(win),
+    'fight track stops before the first victory note');
+  assert.equal(sequence.includes(cue),false,'map track cannot overlap victory');
+  const map=event.slice(event.indexOf('function showFarewellOnMap(){'),
+    event.indexOf('function playMapFarewell('));
+  const victoryStop='new CustomEvent("tarot-breaker:hoshisuna-victory-stop"';
+  assert.ok(map.indexOf(victoryStop)>=0&&map.indexOf(victoryStop)<map.indexOf(cue),
+    'one-shot must stop before Starroad BGM resumes on map return');
   const html=fs.readFileSync(path.join(base,'hoshisuna-main.html'),'utf8');
   assert.match(html,/hoshisuna-field-audio\.js\?v=2/);
+  assert.match(html,/hoshisuna-victory-audio\.js\?v=1/);
 });
 
 test('saved combat restores silence without replaying the ink transition',()=>{
