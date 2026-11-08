@@ -128,7 +128,7 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
  assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a09-writer-viewport/,'iPhone must not reuse the cached clipped CSS');
+ assert.match(html,/caritas-battle-camera\.css\?v=a10-modal-options-flex/,'iPhone must not reuse the cached clipped CSS');
 });
 
 test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
