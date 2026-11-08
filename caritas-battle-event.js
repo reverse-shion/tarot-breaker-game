@@ -819,23 +819,44 @@ function selectDeliveryMethod(method){
  deliveryMethod=method;readingOpen=true;aiPanelOpen=method==="write";modalIndex=-1;render();
 }
 function renderCompletion(reading){
- const ready=tactical&&reading&&readingOpen&&deliveryMethod==="select"&&battle.words.every(Boolean)&&!summaryEditing&&modalIndex<0;
- if(ready&&ui.completion.hidden)ui.completion.scrollTop=0;
- ui.completion.hidden=!ready;root.dataset.readingComplete=String(ready);
+ // The three-card constellation is the tactical SELECT surface. A tapped
+ // card opens a picker; the selection fills its slot without another page.
+ const active=tactical&&reading&&readingOpen&&deliveryMethod==="select";
+ const chosen=battle.words.filter(Boolean).length;
+ const ready=active&&chosen===3;
+ if(active&&ui.completion.hidden)ui.completion.scrollTop=0;
+ ui.completion.hidden=!active;
+ root.dataset.readingComplete=String(active);
+ root.dataset.readingReady=String(ready);
  if(!readingOpen)summaryEditing=false;
- if(!ready)return;
+ if(!active)return;
+ setText(ui.completionSubtitle,ready
+  ?"3枚の読みが揃ったよ。言葉を確認して届けよう。"
+  :"カードをタップして意味を選ぼう　"+chosen+"/3");
  ui.completionCards.replaceChildren();
  const questions=["何に目を向ける？","どう働きかける？","どう届ける？"];
+ const roles=["コンパス","トリガー","ルート"];
+ const firstPending=battle.words.findIndex(word=>!word);
  for(let i=0;i<3;i++){
-  const card=battle.cards[i],item=newEl("section","cb-completion-card");
-  const image=newEl("img");image.src=CARD_IMAGES[card.name];image.alt=card.name+"のタロットカード";
-  item.append(newEl("strong","cb-completion-role",["コンパス","トリガー","ルート"][i]),newEl("span","cb-completion-question",questions[i]),image,newEl("span","cb-completion-choice",C.READING_OPTIONS[battle.words[i]].title));
+  const card=battle.cards[i],chosenWord=battle.words[i];
+  const item=newEl("button","cb-completion-card");item.type="button";
+  item.dataset.selected=String(!!chosenWord);
+  if(i===firstPending)item.dataset.next="true";
+  item.setAttribute("aria-label",roles[i]+"。"+(chosenWord?C.READING_OPTIONS[chosenWord].title+"。タップして変更":"未選択。タップして意味を選ぶ"));
+  const image=newEl("img");image.src=CARD_IMAGES[card.name];image.alt=card.name+"のタロットカード";image.draggable=false;
+  item.append(newEl("strong","cb-completion-role",roles[i]),newEl("span","cb-completion-question",questions[i]),image,newEl("span","cb-completion-choice",chosenWord?C.READING_OPTIONS[chosenWord].title:"タップして選ぶ"));
+  item.addEventListener("click",()=>openCard(i));
   ui.completionCards.append(item);
  }
+ ui.completionMessage.hidden=!ready;
+ ui.completionForecast.hidden=!ready;
+ ui.completionSend.hidden=!ready;
+ ui.completionSend.disabled=!ready||aiBusy||dialogueBusy||committing;
+ ui.completionEdit.hidden=true; // Tap the filled card to edit directly.
+ if(!ready){ui.completionWords.replaceChildren();setText(ui.completionForecast,"");return;}
  ui.completionWords.replaceChildren();
  for(const line of C.readingPages(battle))ui.completionWords.append(newEl("p","",line));
  setText(ui.completionForecast,tacticalForecast(C.predict(battle)));
- ui.completionSend.disabled=aiBusy||dialogueBusy||committing;
 }
 function render(){
  renderCaritas();
@@ -999,7 +1020,7 @@ function render(){
   const card=s.cards[modalIndex];
   const visibleWords=tactical?C.optionsFor(card):card.words;
   ui.modalTitle.textContent=card.name+" — "+({COMPASS:"いま、自分はどこに立っている？",TRIGGER:"そこから、どんな行動を選ぶ？",ROUTE:"相手へ、どう届ける？"})[card.role];
-  if(tactical)ui.modalTitle.textContent=card.name+" — "+({COMPASS:"観察：何が起きている？",TRIGGER:"働きかけ：どう向き合う？",ROUTE:"届け方：どんな言葉を届ける？"})[card.role];
+  if(tactical)ui.modalTitle.textContent=({COMPASS:"コンパス｜何に目を向ける？",TRIGGER:"トリガー｜どう働きかける？",ROUTE:"ルート｜どう届ける？"})[card.role];
    ui.modalHint.hidden=!tactical||viewedReadingCards.size>1;
    if(!ui.modalHint.hidden)setText(ui.modalHint,card.role==="TRIGGER"?"ヒント：距離を保って支えるか、踏み込むか。星獣の様子を見て決めよう。":"ヒント：星獣の心象を手がかりに、一手を選ぼう。");
   ui.modalImage.src=CARD_IMAGES[card.name]||"";
@@ -1009,7 +1030,9 @@ function render(){
   setPhraseText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
    :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="COMPASS"?"観察が心象に合えば闇侵蝕−3。外れても追加ペナルティなし。":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
-  ui.modalNav.hidden=false;
+  ui.modalNav.hidden=tactical&&deliveryMethod==="select";
+  ui.modalImage.hidden=tactical&&deliveryMethod==="select";
+  ui.modalPage.hidden=tactical&&deliveryMethod==="select";
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
   setPhraseText(ui.modalMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
   setText(ui.modalPage,(modalIndex+1)+" / "+s.cards.length);
@@ -1049,7 +1072,9 @@ function openCard(i){
  (deliveryMethod==="write"?ui.modalClose:ui.modalWords.querySelector(".cb-modal-word"))?.focus?.({preventScroll:true});
 }
 function closeCard(){
- if(specialLocked())return;if(modalIndex<0)return;modalIndex=-1;render();if(modalReturnFocus?.isConnected)modalReturnFocus.focus({preventScroll:true});modalReturnFocus=null;}
+ if(specialLocked())return;if(modalIndex<0)return;const previous=modalIndex;modalIndex=-1;render();
+ if(tactical&&deliveryMethod==="select")ui.completionCards.children[previous]?.focus?.({preventScroll:true});
+ else if(modalReturnFocus?.isConnected)modalReturnFocus.focus({preventScroll:true});modalReturnFocus=null;}
 function moveViewedCard(step){
  if(modalIndex<0||story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||specialLocked())return;
  modalIndex=(modalIndex+step+battle.cards.length)%battle.cards.length;viewedReadingCards.add(modalIndex);render();
@@ -1061,7 +1086,7 @@ function choose(index,word){
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}}
  summaryEditing=false;
  battle=C.select(battle,index,word);modalIndex=-1;render();
- if(tactical&&!ui.completion.hidden)ui.completionTitle.focus?.({preventScroll:true});
+ if(tactical&&deliveryMethod==="select"&&!ui.completion.hidden){const next=battle.words.findIndex(value=>!value);ui.completionCards.children[next<0?index:next]?.focus?.({preventScroll:true});}
 }
 function toast(message){
  clearTimeout(toastTimer);ui.toast.textContent=message;ui.toast.hidden=false;
@@ -1494,15 +1519,18 @@ function init(){
  const completionBody=newEl("div","cb-completion-body");
  ui.completionTitle=newEl("h2","cb-completion-title","心象リーディング");ui.completionTitle.tabIndex=-1;
  ui.completionCards=newEl("div","cb-completion-cards");
- const wordsBox=newEl("section","cb-completion-message");
+ const wordsBox=newEl("section","cb-completion-message");ui.completionMessage=wordsBox;
  ui.completionWords=newEl("div","cb-completion-words");
  wordsBox.append(newEl("h3","","紡いだ言葉"),ui.completionWords);
  ui.completionForecast=newEl("p","cb-completion-forecast");
  ui.completionSend=newEl("button","cb-completion-send","この言葉を届ける");ui.completionSend.type="button";
  ui.completionSend.addEventListener("click",()=>{if(!ui.completion.hidden&&deliveryMethod==="select")perform("read");});
- const editReading=newEl("button","cb-completion-edit","選び直す");editReading.type="button";
- editReading.addEventListener("click",()=>{summaryEditing=true;render();cardBox.querySelector(".cb-card-button")?.focus?.({preventScroll:true});});
- completionBody.append(ui.completionTitle,newEl("p","cb-completion-subtitle","三枚の意味が、ひとつの言葉になる"),ui.completionCards,wordsBox,ui.completionForecast,ui.completionSend,editReading);
+ const editReading=newEl("button","cb-completion-edit","選び直す");ui.completionEdit=editReading;editReading.type="button";
+ editReading.addEventListener("click",()=>openCard(0));
+ const completionBack=newEl("button","cb-completion-back","‹ 戦闘へ戻る");completionBack.type="button";
+ completionBack.addEventListener("click",()=>{if(story!=="battle"||battle.phase!=="read"||aiBusy||committing||dialogueBusy)return;modalIndex=-1;readingOpen=false;deliveryMethod=null;summaryEditing=false;render();});
+ ui.completionSubtitle=newEl("p","cb-completion-subtitle","カードをタップして意味を選ぼう");
+ completionBody.append(completionBack,ui.completionTitle,ui.completionSubtitle,ui.completionCards,wordsBox,ui.completionForecast,ui.completionSend,editReading);
  ui.completion.append(completionBody);root.append(ui.completion);
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.writingOverlay,ui.modal);shell.appendChild(root);
  ui.camera=window.CaritasBattleCamera?.mount({root,arena,input:ui.aiInput,
