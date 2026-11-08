@@ -176,3 +176,23 @@ test('tactical interactive constellation has tappable cards, unset states and bo
  assert.match(js,/item\.addEventListener\("click",\(\)=>openCard\(i\)\)/);
  assert.match(js,/chosenWord\?C\.READING_OPTIONS\[chosenWord\]\.title:"タップして選ぶ"/);
 });
+
+test('Shion speaker glow and Shioriel red hit stay inside actors, not camera transforms',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const fx=css.split('A02 actor reactions v1')[1];
+ assert.ok(fx,'new actor animations must be an additive A02-specific layer');
+ assert.match(fx,/data-rules="tactical-v1"/,'legacy battle is untouched');
+ assert.match(fx,/data-actor-speaking="shion"/);
+ assert.match(fx,/data-actor-speaking="both"/);
+ assert.match(fx,/cb-shion-speech-glow/);
+ assert.match(fx,/data-phase="enemy-turn"/);
+ assert.match(fx,/cb-shioriel-red-recoil/);
+ assert.match(fx,/cb-shioriel-red-flash/);
+ assert.match(fx,/drop-shadow\(0 0 12px #ff4646\)/,'red silhouette uses bright damage feedback');
+ assert.match(fx,/prefers-reduced-motion:reduce/,'motion sensitive users get steady feedback');
+ assert.doesNotMatch(fx,/\.cb-battle-world\{[^}]*transform\s*:/,'do not move or resize the world camera');
+ const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(js,/root\.dataset\.actorSpeaking=speaker==="シオン"\?"shion"/);
+ assert.match(js,/root\.dataset\.actorSpeaking="none"/);
+});
