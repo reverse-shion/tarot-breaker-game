@@ -128,7 +128,7 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
  assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/,'iPhone must not reuse the cached clipped CSS');
+ assert.match(html,/caritas-battle-camera\.css\?v=a16-finisher-affinity/,'iPhone must not reuse the cached clipped CSS');
 });
 
 test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
@@ -145,7 +145,7 @@ test('A02 tactical modal choices have independent natural heights inside one scr
  assert.match(block,/>\.cb-modal-word>.cb-modal-impact\{[\s\S]*?height:auto!important/);
  assert.match(block,/\.cb-modal-navigation\{[\s\S]*?flex:0 0 auto!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a16-finisher-affinity/);
 });
 
 test('A02 recap titles dominate subtitles and decorative lines sit behind cards',()=>{
@@ -216,7 +216,7 @@ test('tactical finisher hides the tarot rail and gives its sole skill a luminous
  assert.match(js,/cardBox\.hidden=\!\(readingOpen&&reading\)\|\|tactical&&finisher/);
  assert.match(js,/selectedCard=C\.finisherTechnique\(battle\)\.cardId/,'technique must reflect committed readings, not a fixed Star');
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a16-finisher-affinity/);
 });
 
 test('tactical enemy counter camera must reveal Shioriel before two red hit flashes',()=>{
@@ -247,5 +247,23 @@ test('tactical enemy counter camera must reveal Shioriel before two red hit flas
  assert.match(event,/speaker,tactical\}\)/,'actual battle view must tell the camera to use tactical hit framing');
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
  assert.match(html,/caritas-battle-camera\.js\?v=a08-counter-hit-frame/);
- assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a16-finisher-affinity/);
+});
+
+test('single finisher button names the reading-earned technique and no extra selection returns',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const x=css.split('A02 tactical affinity v1:')[1];
+ assert.ok(x);
+ assert.match(x,/content:"導かれた技： " attr\(data-technique-name\)!important/);
+ for(const card of ['18-the-moon','08-strength','17-the-star'])
+  assert.ok(x.includes('data-technique-card="'+card+'"'));
+ const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(js,/C\.finisherTechnique\(s\)/);
+ assert.match(js,/ui\.skill\.dataset\.techniqueName=/);
+ assert.match(js,/ui\.skill\.setAttribute\("aria-label"/);
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/caritas-tactical-core\.js\?v=2&ux=finisher-affinity-v1/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a16-finisher-affinity/);
+ assert.match(html,/&ux=finisher-affinity-v1/);
 });
