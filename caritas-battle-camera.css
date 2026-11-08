@@ -975,3 +975,26 @@
   animation:none!important;
  }
 }
+
+/* A02 tactical affinity v1: show the earned finisher's identity INSIDE the
+   existing one-button command; no additional tarot picker or wall of text. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill.cb-skill-ready:enabled::after{
+ content:"導かれた技： " attr(data-technique-name)!important;
+ bottom:9px!important;
+ font-size:clamp(11px,3vw,13px)!important;
+ line-height:1.25!important;
+ letter-spacing:.06em!important;
+ white-space:nowrap!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill[data-technique-card="18-the-moon"].cb-skill-ready:enabled{
+ background:radial-gradient(ellipse at 50% 0%,#a4a0ed80,transparent 68%),
+   linear-gradient(115deg,#131f4c,#34376c 52%,#6250a1)!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill[data-technique-card="08-strength"].cb-skill-ready:enabled{
+ background:radial-gradient(ellipse at 50% 0%,#f6c17f80,transparent 70%),
+   linear-gradient(115deg,#38244d,#795080 46%,#92613e)!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill[data-technique-card="17-the-star"].cb-skill-ready:enabled{
+ background:radial-gradient(ellipse at 50% 0%,#98d7ef77,transparent 67%),
+   linear-gradient(115deg,#18294c,#3c4784 45%,#78518c)!important;
+}
