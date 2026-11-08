@@ -829,7 +829,7 @@ function renderCompletion(reading){
  for(let i=0;i<3;i++){
   const card=battle.cards[i],item=newEl("section","cb-completion-card");
   const image=newEl("img");image.src=CARD_IMAGES[card.name];image.alt=card.name+"のタロットカード";
-  item.append(newEl("strong","cb-completion-question",questions[i]),newEl("small","cb-completion-role",["コンパス","トリガー","ルート"][i]),image,newEl("span","cb-completion-choice",C.READING_OPTIONS[battle.words[i]].title));
+  item.append(newEl("strong","cb-completion-role",["コンパス","トリガー","ルート"][i]),newEl("span","cb-completion-question",questions[i]),image,newEl("span","cb-completion-choice",C.READING_OPTIONS[battle.words[i]].title));
   ui.completionCards.append(item);
  }
  ui.completionWords.replaceChildren();
@@ -871,10 +871,10 @@ function render(){
  if(tactical){
   const obs=C.observation(visible);
   setPhraseText(ui.observation,obs.clue);setPhraseText(ui.tarotObservation,obs.clue);setPhraseText(ui.writingObservation,obs.clue);
-  setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴は満ちた。侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
+  setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴MAX！ 闇侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
   setText(ui.commandPrompt,"届け方を選ぶ");
    setText(ui.goal,"闇を払え");
-   setText(ui.goalDetail,"目標：共鳴100＋闇侵蝕25％以下で解放。維持力0で敗北。");
+   setText(ui.goalDetail,"共鳴をMAXにして、想いを伝えるんだ。");
   ui.triangle.replaceChildren();
   for(let i=0;i<3;i++){const node=newEl("span","cb-tactical-node");node.append(newEl("small","",["月＝観察","力＝働きかけ","星＝届け方"][i]),newEl("strong","",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));ui.triangle.append(node);}
   renderWritingIntent();
@@ -1302,7 +1302,7 @@ function init(){
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
   ui.goal=newEl("p","cb-tactical-goal","闇を払え");ui.goal.hidden=!tactical;
- ui.goalDetail=newEl("p","cb-tactical-goal-detail","目標：共鳴100＋闇侵蝕25％以下で解放。維持力0で敗北。");ui.goalDetail.hidden=!tactical;
+ ui.goalDetail=newEl("p","cb-tactical-goal-detail","共鳴をMAXにして、想いを伝えるんだ。");ui.goalDetail.hidden=!tactical;
  ui.observation=newEl("p","cb-tactical-observation");ui.observation.hidden=!tactical;
  ui.tarotObservation=newEl("p","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
  ui.writingObservation=newEl("p","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
