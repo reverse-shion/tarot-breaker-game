@@ -110,3 +110,23 @@ test('a real arena resize remains immediate and updates the camera viewport',()=
  assert.equal(painted.at(-1).width,430);
  assert.equal(painted.at(-1).instant,true);
 });
+
+test('A02 tactical writing editor owns the visual viewport, not the 42% command drawer',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const source=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const writer=source.split('A02 writer correction v1:')[1];
+ assert.ok(writer,'A02 requires a writer-only override after the old drawer rule');
+ assert.match(source,/\[data-phase\] \.cb-frame>\.cb-controls/,'normal tactical commands still use their original stage');
+ assert.match(source,/\[data-writing-screen="true"\] \.cb-writing-overlay:not\(\[hidden\]\)/);
+ assert.match(writer,/position:fixed!important/);
+ assert.match(writer,/top:var\(--cb-visible-top,0px\)!important/);
+ assert.match(writer,/height:var\(--cb-visible-height,100dvh\)!important/);
+ assert.match(writer,/max-height:var\(--cb-visible-height,100dvh\)!important/);
+ assert.match(writer,/z-index:85!important/);
+ assert.match(writer,/\.cb-writing-overlay \.cb-writing-panel\{[\s\S]*?overflow-y:auto!important/);
+ assert.match(writer,/\.cb-writing-overlay \.cb-writing-footer\{[\s\S]*?flex:0 0 auto!important/);
+ assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
+ assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/caritas-battle-camera\.css\?v=a09-writer-viewport/,'iPhone must not reuse the cached clipped CSS');
+});
