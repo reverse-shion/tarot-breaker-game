@@ -1045,6 +1045,7 @@ function openCard(i){
  if(specialLocked())return;
  if(story!=="battle"||battle.phase!=="read"||!readingOpen||dialogueBusy||aiBusy||committing||suspended())return;
  modalReturnFocus=document.activeElement;once=true;viewedReadingCards.add(i);ui.guide.hidden=true;modalIndex=i;render();
+ ui.modalWords.scrollTop=0; // Do not inherit scrolling from the previously opened card.
  (deliveryMethod==="write"?ui.modalClose:ui.modalWords.querySelector(".cb-modal-word"))?.focus?.({preventScroll:true});
 }
 function closeCard(){
@@ -1052,6 +1053,7 @@ function closeCard(){
 function moveViewedCard(step){
  if(modalIndex<0||story!=="battle"||battle.phase!=="read"||dialogueBusy||committing||specialLocked())return;
  modalIndex=(modalIndex+step+battle.cards.length)%battle.cards.length;viewedReadingCards.add(modalIndex);render();
+ ui.modalWords.scrollTop=0;
 }
 function choose(index,word){
  if(specialLocked())return;
