@@ -195,3 +195,29 @@ test('three-card constellation is the only selection screen; results appear afte
  assert.equal(screen.hidden,true,'back returns to battle mode selection');
  assert.equal(f.state().battle.words.filter(Boolean).length,3,'back retains selected card meanings');
 });
+
+test('Shion speaking state drives battlefield rim light and resets before Shioriel counter-hit',()=>{
+ const {f,root}=setup();
+ assert.equal(root.dataset.actorSpeaking,'none','no glow while the player is choosing');
+ f.button(root,'選んで届ける').click();
+ const select=(index,choice)=>{
+  root.querySelector('.cb-completion-cards').children[index].click();
+  root.querySelector('.cb-modal-words').children[choice].click();
+ };
+ select(0,0);select(1,0);select(2,0);
+ const predicted=C.predict(f.state().battle);
+ assert.ok(predicted.hasCounter&&predicted.damage>0,'this opening reading must trigger a real damaging counter');
+ root.querySelector('.cb-completion-send').click();
+ assert.equal(root.dataset.actorSpeaking,'shion','Shion must glow while he delivers a reading');
+ while(f.state().dialogueBusy)f.pointer.advance();
+ assert.equal(root.dataset.actorSpeaking,'none','glow stops with shared dialogue');
+ f.advanceTime(1050);
+ assert.equal(root.dataset.actorSpeaking,'none','Caritas speech must not light Shion');
+ assert.equal(f.state().dialogueBusy,true);
+ f.pointer.advance();
+ assert.equal(root.dataset.actorSpeaking,'none');
+ assert.equal(root.dataset.phase,'enemy-turn','only the actual damaging counter causes the red Shioriel flash');
+ f.advanceTime(1050);
+ assert.notEqual(root.dataset.phase,'enemy-turn','red hit ends with the counter phase');
+ assert.equal(root.dataset.actorSpeaking,'none');
+});
