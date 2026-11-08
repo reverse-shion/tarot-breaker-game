@@ -777,9 +777,20 @@ function setPhraseText(el,value){
  if(!tactical||!("innerHTML" in el)||typeof Intl==="undefined"||typeof Intl.Segmenter!=="function")return;
  try{
   const fragment=document.createDocumentFragment();
-  for(const {segment,isWordLike} of new Intl.Segmenter("ja",{granularity:"word"}).segment(String(value))){
-   fragment.appendChild(document.createTextNode(segment));
-   if(isWordLike)fragment.appendChild(document.createElement("wbr"));
+  // Keep especially fragile conjugations together; segmentation alone may
+  // separate auxiliary verbs such as 言え/ない or 向け/る.
+  for(const chunk of String(value).split(/(向ける|言えない|代わりに)/gu)){
+   if(!chunk)continue;
+   if(/^(向ける|言えない|代わりに)$/u.test(chunk)){
+    const nowrap=document.createElement("span");nowrap.className="cb-ja-unbreakable";
+    nowrap.textContent=chunk;fragment.appendChild(nowrap);
+    fragment.appendChild(document.createElement("wbr"));
+    continue;
+   }
+   for(const {segment,isWordLike} of new Intl.Segmenter("ja",{granularity:"word"}).segment(chunk)){
+    fragment.appendChild(document.createTextNode(segment));
+    if(isWordLike)fragment.appendChild(document.createElement("wbr"));
+   }
   }
   el.replaceChildren(fragment);el.classList.add("cb-ja-phrase");
  }catch(_){setText(el,value);}
