@@ -662,3 +662,59 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-dark-cleared] .cb-abyss i{animation:none!important;transform:none}
  #caritas-event[data-dark-cleared] .cb-abyss{transition:none}
 }
+
+/* Tactical first-player UX v1. Isolated; legacy battle remains unchanged. */
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-tactical-goal{
+  display:block;flex:0 0 auto;width:min(100%,470px);align-self:center;box-sizing:border-box;
+  margin:3px 0;padding:9px 10px;border:1px solid #e7cb8c;border-radius:9px;
+  background:#101c3f;color:#fff3d5;font-size:14px;line-height:1.55;
+  font-weight:700;text-align:center;text-wrap:balance;overflow-wrap:normal;
+}
+#caritas-event .cb-tactical-goal[hidden]{display:none!important}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-select-submit{
+  position:relative!important;inset:auto!important;bottom:auto!important;
+  flex:0 0 auto;align-self:center;width:min(100%,470px);min-height:48px;
+  margin:4px 0 0;z-index:1;box-sizing:border-box;
+}
+#caritas-event[data-rules]:not([data-rules="legacy"])[data-reading-open="true"] .cb-controls{
+  height:100dvh;max-height:100dvh;overflow-y:auto!important;justify-content:flex-start!important;
+  padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))!important;
+  scroll-padding-bottom:calc(54px + env(safe-area-inset-bottom,0px));
+}
+#caritas-event[data-rules]:not([data-rules="legacy"])[data-reading-open="true"] .cb-cards{
+  order:0;flex:0 0 auto;height:clamp(160px,34dvh,300px)!important;min-height:160px;
+}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-hud-row,
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-res-mood,
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-mood{
+  font-size:14px!important;color:#fff1d8!important;line-height:1.35;
+}
+#caritas-event[data-rules]:not([data-rules="legacy"]) :is(.cb-tactical-observation,.cb-tactical-forecast,.cb-command-prompt){
+  font-size:14px;line-height:1.55;overflow-wrap:normal;word-break:normal;text-wrap:pretty;
+}
+#caritas-event[data-rules]:not([data-rules="legacy"]) :is(.cb-modal-word-desc,.cb-modal-selected,.cb-modal-title,.cb-tarot-review-word){
+  overflow-wrap:normal;word-break:normal;line-break:strict;text-wrap:pretty;
+}
+#caritas-event .cb-modal-hint{
+  margin:0;width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;
+  border-left:3px solid #e9ca82;background:#162e50;color:#fff4d7;
+  font-size:14px;line-height:1.55;text-wrap:pretty;
+}
+#caritas-event .cb-modal-hint[hidden]{display:none!important}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-card-overlay{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-card-panel{width:min(94vw,420px)}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-arena::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(5,7,21,var(--cb-stage-dim,.4)),transparent 80%);
+  transition:background .35s ease;
+}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-card-button:focus-visible,
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-modal-word:focus-visible{
+ outline:3px solid #fff2af;outline-offset:2px;
+}
+@media(max-height:670px){
+ #caritas-event[data-rules]:not([data-rules="legacy"])[data-reading-open="true"] .cb-cards{height:clamp(150px,29dvh,220px)!important;min-height:150px}
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-rules]:not([data-rules="legacy"]) .cb-arena::after{transition:none!important}
+}
