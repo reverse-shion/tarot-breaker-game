@@ -353,10 +353,15 @@ function specialVisibleWait(ms,callback){
 }
 function openSpecialSelection(){
  if(specialLocked()||story!=='battle'||battle.phase!=='finisher'||battle.resonance!==100||battle.used||!C.canSkill(battle)||dialogueBusy||aiBusy||committing||suspended())return;
- // Tactical Caritas has one required finishing act. A second three-card
- // decision after MAX is redundant: activate the established Star technique
- // directly, retaining its authored lines, art, save receipt and timings.
- if(tactical){selectedCard='17-the-star';shortPlayback=false;commitSpecialSelection(selectedCard,'normal');return;}
+ // The tactical climax stays single-tap. The accumulated meanings of all
+ // delivered readings (including written readings) decide which of the three
+ // authored techniques to perform; never randomly choose and never ask again.
+ if(tactical){
+  selectedCard=C.finisherTechnique(battle).cardId;
+  shortPlayback=false;
+  commitSpecialSelection(selectedCard,'normal');
+  return;
+ }
  story='selecting';root.dataset.phase=story;selectedCard=null;shortPlayback=false;render();renderSpecialSelection();
 }
 function renderSpecialSelection(){
@@ -1017,6 +1022,14 @@ function render(){
  if(finisher)ui.skill.classList.add("cb-skill-ready");else ui.skill.classList.remove("cb-skill-ready");
  ui.read.disabled=!reading||aiBusy||committing;
  ui.skill.disabled=!finisher||!C.canSkill(s);
+ // Keep the button the only CTA, but identify the technique the player's
+ // readings have called forth inside its own accessible/visual subtitle.
+ const finisherReading=tactical&&finisher?C.finisherTechnique(s):null;
+ const finisherTech=finisherReading?TECHNIQUES[finisherReading.cardId]:null;
+ ui.skill.dataset.techniqueName=finisherTech?finisherTech.title:"";
+ ui.skill.dataset.techniqueCard=finisherReading?.cardId||"";
+ ui.skill.setAttribute("aria-label",finisherTech
+  ?"共鳴解放。"+finisherTech.title+"。"+finisherReading.reason+"。タップして発動。":"共鳴解放");
  ui.finisher.hidden=true; // MAX is already in the fixed meter and the enabled skill button.
  if(!ui.finisher.hidden)setText(ui.finisher,"共鳴MAX　共鳴解放が可能になりました");
  // Show a single short toast instead of an overlay that obscures the card row.
