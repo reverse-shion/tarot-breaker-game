@@ -409,8 +409,8 @@
  50%{box-shadow:0 0 0 3px #dabe8faa,0 0 22px #ffe2a6bb}
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-frame>.cb-controls{
- padding-bottom:calc(54px + env(safe-area-inset-bottom,0px))!important;
- scroll-padding-bottom:calc(54px + env(safe-area-inset-bottom,0px));
+ padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
+ scroll-padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));
 }
 @media(prefers-reduced-motion:reduce){
  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-first-card-pulse .cb-card-art{animation:none!important}
