@@ -941,7 +941,7 @@ function render(){
   ui.selectSend.disabled=!(reading&&readingOpen&&deliveryMethod==="select"&&chosenCount===3&&!!p)||aiBusy||dialogueBusy||committing;
   // Keep the primary button in one fixed place. Its own label communicates
   // progress; the separate gold progress banner is no longer needed.
-  setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):"解釈を選択中 "+chosenCount+"/3");
+  setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):tactical?"解釈を選択中 "+chosenCount+"/3":"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
  ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,"共鳴が満ちると解放");
