@@ -214,7 +214,7 @@ test('tactical finisher hides the tarot rail and gives its sole skill a luminous
  assert.match(block,/prefers-reduced-motion:reduce/);
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
  assert.match(js,/cardBox\.hidden=\!\(readingOpen&&reading\)\|\|tactical&&finisher/);
- assert.match(js,/if\(tactical\)\{selectedCard='17-the-star';shortPlayback=false;commitSpecialSelection\(selectedCard,'normal'\);return;\}/);
+ assert.match(js,/selectedCard=C\.finisherTechnique\(battle\)\.cardId/,'technique must reflect committed readings, not a fixed Star');
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
  assert.match(html,/caritas-battle-camera\.css\?v=a15-shioriel-visible-hit/);
 });
