@@ -59,3 +59,57 @@ test('all three existing special transactions accept tactical saves and resolve 
  let s=action(C.newGame(),'忍耐');s=action(s,'勇気','秘密');s=action(s,'勇気','無意識');
  for(const card of C.CARDS){let r=S.commit(S.create(s,'run'),card.id);for(const phase of S.PHASES.slice(1)){r=S.transition(r,phase,{imageDisplayed:true});S.validate(JSON.parse(JSON.stringify(r)));}assert.equal(r.battle.dark,0);assert.equal(r.special.completed,true);assert.throws(()=>S.transition(r,'CARITAS_REPLY'));}
 });
+
+test('finisher technique follows each reading: Moon, Strength and Star are all attainable',()=>{
+ const moon=action(C.newGame(),'忍耐','不安','癒し');
+ const strength=action({...C.newGame(),dark:70},'勇気','秘密','癒し');
+ const star=action(C.newGame(),'忍耐','不安','希望');
+ assert.equal(C.finisherTechnique(moon).cardId,'18-the-moon');
+ assert.equal(C.finisherTechnique(strength).cardId,'08-strength');
+ assert.equal(C.finisherTechnique(star).cardId,'17-the-star');
+ const scores=[moon,strength,star].map(s=>C.finisherTechnique(s).scores);
+ assert.ok(scores[0]['18-the-moon']>scores[0]['17-the-star']);
+ assert.ok(scores[1]['08-strength']>scores[1]['18-the-moon']);
+ assert.ok(scores[2]['17-the-star']>scores[2]['18-the-moon']);
+});
+test('all successful battle turns contribute, with last committed action breaking ties',()=>{
+ let s=action(C.newGame(),'忍耐','不安','癒し');
+ const first=C.finisherTechnique(s);
+ assert.equal(first.cardId,'18-the-moon');
+ s=action(s,'勇気','秘密','癒し');
+ const second=C.finisherTechnique(s);
+ assert.ok(second.scores['18-the-moon']>=first.scores['18-the-moon'],'previous reading is still counted');
+ s=action(s,'勇気','無意識','願い');
+ assert.equal(s.turn,3);
+ assert.equal(s.phase,'finisher');
+ assert.equal(C.finisherTechnique(s).cardId,'08-strength','reaching twice overcomes an earlier supportive reading');
+ const before={...C.finisherTechnique(s).scores};
+ const restored=S.validate(JSON.parse(JSON.stringify(S.create(s,'finisher-affinity-restore'))));
+ assert.deepEqual(C.finisherTechnique(restored.battle).scores,before);
+ assert.equal(C.finisherTechnique(restored.battle).cardId,'08-strength');
+});
+test('failed approaches cannot farm affinity and old saved readings still determine the technique',()=>{
+ let s=action(C.newGame(),'勇気','不安','希望');
+ assert.equal(s.lastEffect.misread,true);
+ assert.deepEqual(s.finisherInfluence,{'18-the-moon':0,'08-strength':0,'17-the-star':0});
+ assert.equal(C.finisherTechnique(s).cardId,'17-the-star','neutral legacy fallback stays deterministic');
+ const blocked=action({...C.newGame(),dark:70},'忍耐','秘密','希望');
+ assert.equal(blocked.lastEffect.blocked,true);
+ assert.deepEqual(blocked.finisherInfluence,{'18-the-moon':0,'08-strength':0,'17-the-star':0});
+ const good=action(C.newGame(),'忍耐','不安','癒し');
+ const old={...good};delete old.finisherInfluence;
+ assert.equal(C.finisherTechnique(old).cardId,'18-the-moon','old v15 battle can reuse confirmed lastReading');
+ const noHistory={...C.newGame(),phase:'finisher',resonance:100,dark:20};
+ assert.equal(C.finisherTechnique(noHistory).cardId,'17-the-star');
+});
+test('free text affects the same finisher affinities without storing raw prose',()=>{
+ let s=C.read(C.fromText(C.newGame(),'怖いなら、ここで待つよ'));
+ const first=C.finisherTechnique(s).scores;
+ s=C.read(C.fromText(s,'声が聞こえる。一緒に進もう'));
+ const second=C.finisherTechnique(s).scores;
+ assert.ok(second['08-strength']>first['08-strength']);
+ s=C.read(C.fromText(s,'声が聞こえる。一緒に進もう'));
+ assert.equal(s.phase,'finisher');
+ assert.equal(C.finisherTechnique(s).cardId,'08-strength');
+ assert.equal(JSON.stringify(s).includes('一緒に進もう'),false,'raw written input is never added to the save');
+});
