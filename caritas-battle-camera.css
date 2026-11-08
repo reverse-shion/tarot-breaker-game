@@ -880,3 +880,80 @@
     opacity:.52!important;
   }
 }
+
+/* A02 tactical finisher v1: MAX is a committed single-action climax.
+ * Suppress the old card rail and all reading prompts in the lower command
+ * stage; leave the battle, HUD and world camera untouched. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-frame>.cb-controls{
+ display:flex!important;flex-direction:column!important;
+ justify-content:center!important;align-items:center!important;
+ gap:0!important;
+ padding:clamp(10px,2dvh,24px) 14px calc(20px + env(safe-area-inset-bottom,0px))!important;
+ overflow-y:auto!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-finisher="true"] .cb-frame>.cb-controls :is(
+ .cb-cards,.cb-narration,.cb-tactical-observation,.cb-tactical-triangle,.cb-tactical-forecast,
+ .cb-tarot-header,.cb-tarot-review,.cb-readline,.cb-reading-slots,
+ .cb-command-prompt,.cb-tactical-goal,.cb-tactical-goal-detail,.cb-delivery-methods,
+ .cb-selection-reason,.cb-way-hint,.cb-select-submit
+){display:none!important}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions:not([hidden]){
+ display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;justify-content:center!important;
+ box-sizing:border-box!important;
+ flex:0 0 auto!important;
+ width:min(100%,388px)!important;
+ height:auto!important;min-height:0!important;
+ margin:0!important;padding:8px!important;
+ background:transparent!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill.cb-skill-ready:enabled{
+ position:relative!important;isolation:isolate!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;
+ width:100%!important;min-height:clamp(76px,12dvh,102px)!important;
+ padding:14px 38px 25px!important;
+ border:2px solid #ffe5a3!important;border-radius:16px!important;
+ color:#fff6d6!important;
+ font-family:'Yu Mincho',Georgia,serif!important;
+ font-size:clamp(23px,6vw,31px)!important;font-weight:800!important;
+ letter-spacing:.12em!important;line-height:1.1!important;
+ text-shadow:0 2px 5px #0c1430,0 0 15px #f8d89b!important;
+ background:
+   radial-gradient(ellipse at 50% 0%,#7c6fbcaa,transparent 67%),
+   linear-gradient(115deg,#18274e,#43376d 43%,#78518c 74%,#30284e)!important;
+ box-shadow:inset 0 1px 0 #fff1c6a8,inset 0 -6px 18px #0b133a90,
+   0 0 0 3px #a88a6188,0 0 22px #e8c482b0,0 8px 22px #07132bba!important;
+ animation:cb-finisher-call 2.3s ease-in-out infinite!important;
+ cursor:pointer!important;touch-action:manipulation!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill.cb-skill-ready:enabled::before{
+ content:"✦";
+ position:absolute;top:50%;left:12px;transform:translateY(-65%);
+ color:#ffe1a1;font-size:25px;
+ text-shadow:0 0 12px #ffdb84;
+ pointer-events:none;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-controls>.cb-actions>.cb-skill.cb-skill-ready:enabled::after{
+ content:"タップして発動";
+ position:absolute;bottom:10px;left:0;right:0;
+ color:#ffe5ad;font:600 12px/1.2 system-ui,sans-serif;
+ letter-spacing:.14em;text-shadow:0 1px 3px #10182b;
+ pointer-events:none;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-skill.cb-skill-ready:enabled:focus-visible{
+ outline:3px solid #fff8d1!important;outline-offset:5px!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-finisher="true"] .cb-skill.cb-skill-ready:enabled:active{
+ animation:none!important;filter:brightness(1.15);transform:scale(.985)!important;
+}
+@keyframes cb-finisher-call{
+ 0%,100%{box-shadow:inset 0 1px 0 #fff1c6a8,inset 0 -6px 18px #0b133a90,0 0 0 3px #a88a6188,0 0 16px #e8c4829c,0 8px 22px #07132bba!important}
+ 50%{box-shadow:inset 0 1px 0 #fff1c6dd,inset 0 -6px 18px #0b133a90,0 0 0 4px #e2c28caa,0 0 32px #ffe1a8dd,0 8px 22px #07132bba!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-finisher="true"] .cb-actions>.cb-skill.cb-skill-ready:enabled{
+  animation:none!important;
+ }
+}
