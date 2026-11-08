@@ -86,7 +86,7 @@ test('author-approved three-act outro preserves all lines, reveal order and clos
  const after=event.slice(event.indexOf('const AFTER_FAREWELL=['),event.indexOf('const FAREWELL_CLOSE='));
  assert.ok(after.indexOf('慈愛のカリタス、か。')<after.indexOf('シオンさん。'));
  assert.match(event,/const FAREWELL_CLOSE=\[\["シオン","タロットクローズ。"\]\]/);
- assert.match(event,/\["シオン","さあ、星砂を探しに行こう。"\]/);
+ assert.match(event,/\["シオン","さあ、星砂に急ごう。"\]/);
  assert.match(event,/\["しおぽん","はいなの〜！"\]/);
  assert.match(event,/const FAREWELL_CLOSE_PAUSE_MS=1100/);
  const ending=event.slice(event.indexOf('function playMapFarewell(next){'),event.indexOf('function beginEnding(){'));

@@ -4,8 +4,9 @@
   'use strict';
   const OWNER = 'hoshisuna_caritas_prompt';
   const SOURCE = './assets/events/hoshisuna/battle/abyss-encroachment.webp';
-  const DURATION_MS = 1650;
-  const REVEAL_MS = 1240;
+  const HANDOFF_MS = 2600; // Must match the encounter's engulfing stage.
+  const RELEASE_MS = 260;
+  const FAILSAFE_MS = HANDOFF_MS + 1000;
   let active = null;
 
   function clear() {
@@ -69,19 +70,28 @@
     document.body.append(overlay);
 
     const state = active = {overlay,battle,timers:[]};
-    // The 2600ms engulfing stage continues unchanged underneath this overlay.
-    if (!reduced) {
-      battle.dataset.abyssTransition = 'covering';
-      state.timers.push(setTimeout(() => {
-        if (active === state) battle.dataset.abyssTransition = 'revealing';
-      },REVEAL_MS));
-    }
+    // Keep the actual world visible throughout the map-side smoke spread.
+    // The encounter switches to battle only after its 2600ms engulfing stage.
+    battle.dataset.abyssTransition = 'covering';
     state.timers.push(setTimeout(() => {
       if (active === state) clear();
-    },reduced ? 160 : DURATION_MS));
+    },FAILSAFE_MS));
+  }
+
+  function onBattleStart() {
+    if (!active) return;
+    const state = active;
+    // The new battle is already mounted behind an opaque veil: dissolve it here,
+    // not while the map-side smoke is still spreading.
+    state.battle.dataset.abyssTransition = 'revealing';
+    state.overlay.classList.add('abyss-transition--reveal');
+    state.timers.push(setTimeout(() => {
+      if (active === state) clear();
+    },RELEASE_MS + 60));
   }
 
   window.addEventListener('tarot-breaker:hoshisuna-transition-start',start);
+  window.addEventListener('tarot-breaker:hoshisuna-battle-start',onBattleStart);
   window.addEventListener('pagehide',clear);
   window.addEventListener('tarot-breaker:interaction-end',event => {
     if (event.detail?.source === OWNER) clear();

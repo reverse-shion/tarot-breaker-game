@@ -99,7 +99,7 @@ test('stage 2 is a real full-viewport tarot-only reading and never changes the m
  assert.match(stage2,/\.cb-modal-navigation/);
  assert.match(js,/root\.dataset\.readingMode=readingOpen&&reading&&deliveryMethod==="select"\?"select":"none"/);
  assert.match(js,/ui\.tarotMood=newEl\("span","cb-tarot-mood","現在の心象：閉ざす"\)/);
- assert.match(js,/ui\.modalNav\.hidden=false/);
+ assert.match(js,/ui\.modalNav\.hidden=tactical&&deliveryMethod==="select"/);
  assert.match(js,/function moveViewedCard\(step\)/);
  assert.match(js,/battle=C\.select\(battle,index,word\);modalIndex=-1;render\(\)/);
  assert.match(js,/const next=C\.read\(previous\)/);

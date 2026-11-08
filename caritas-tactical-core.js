@@ -6,9 +6,9 @@
  'use strict';
  const RULES='tactical-v1';
  const OPTIONS=Object.freeze({...Base.READING_OPTIONS,
-  '不安':{title:'身を引く動きを見る',text:'近づいたときの距離と、身を守る動きに目を向ける。恐れを決めつけず、いま応じられる距離を探す。',shion:'近づかれるのが、今はつらいんだな。お前が立っていられる距離から、俺は話す。'},
-  '秘密':{title:'途切れる声を聞く',text:'言いかけた言葉と、声を遮る闇に耳を澄ます。言えないのか、言葉を奪われているのかを見つめる。',shion:'言いかけた声が聞こえた。言えないことを迫りたいんじゃない。その声を、闇に消させたくない。'},
-  '無意識':{title:'踏みとどまる足を見る',text:'逃げずに残っている、その動きを見る。答えを代わりに決めず、相手が選ぼうとしている一歩を確かめる。',shion:'お前は、まだここに踏みとどまっている。その一歩をどうするか、俺はお前の言葉を聞きたい。'},
+  '不安':{title:'安心できる間合いを探る',text:'相手が安心していられる距離を探る。怖さを決めつけず、どこまで近づけるかを見極める。',shion:'近づかれるのが、今はつらいんだな。お前が立っていられる距離から、俺は話す。'},
+  '秘密':{title:'消えかけた声に耳を澄ます',text:'言葉を急かさず、声が届かない理由を探る。話したくないのか、闇に遮られているのかを見分ける。',shion:'言いかけた声が聞こえた。言えないことを迫りたいんじゃない。その声を、闇に消させたくない。'},
+  '無意識':{title:'残っている意志を探る',text:'沈黙のなかに残る意志を探る。次の一歩を代わりに決めず、相手の選択を待つ。',shion:'お前は、まだここに踏みとどまっている。その一歩をどうするか、俺はお前の言葉を聞きたい。'},
   '忍耐':{title:'静かに支える',text:'距離を保って声を届ける。拒絶が強い時は安全に闇を解ける。アビスが声を遮っている時は、支えるだけでは闇は解けない。',shion:'急がなくていい。俺はここにいる。今、応じられる言葉からでいい。'},
   '勇気':{title:'一歩踏み込む',text:'声が届く場所へ踏み込む。助けを求める声には大きく応えられる。明確な拒絶を押すと維持力を50失う。',shion:'その声を、確かに聞いた。俺も一歩踏み込む。届くところまで、この言葉を届ける！'},
   '希望':{title:'願いを目印に届ける',text:'侵蝕をさらに5解く。その分、維持力を5多く使う。相手の未来は決めつけない。',shion:'先の道を俺が決めることはしない。それでも、今ここに小さな希望を置こう。'},
@@ -20,6 +20,53 @@
   storm:{speech:'……助け……声が……闇に……！',clue:'こちらへ顔を向けた。助けを求める声をアビスが遮る。支えて待つだけでは闇を解けない。',focus:['逃げる動きは止まった。こちらを見ている。','助けを求める声を、闇が遮っている。','足は止まり、前へ出ようともがいている。']},
   wavering:{speech:'……まだ……歩きたい。だが、怖いのだ。',clue:'星獣は逃げずにこちらを見ている。支えても踏み込んでも届く。残りの維持力を見て選ぼう。',focus:['身を引かず、こちらを見ている。','恐れと願いが、同じ声で聞こえる。','自分の意志で踏みとどまっている。']}
  });
+ // Endgame technique is not a random draw and not an extra card choice.
+ // Every successful delivered reading contributes to three thematic affinities:
+ // observing/supporting -> Moon, actively reaching -> Strength,
+ // leaving hope/agency -> Star. The whole battle matters, not just the last turn.
+ const FINISHER_IDS=Object.freeze(['18-the-moon','08-strength','17-the-star']);
+ const emptyInfluence=()=>({'18-the-moon':0,'08-strength':0,'17-the-star':0});
+ function cleanInfluence(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return null;
+  if(!FINISHER_IDS.every(id=>Number.isSafeInteger(value[id])&&value[id]>=0&&value[id]<=10000))return null;
+  return {...emptyInfluence(),...Object.fromEntries(FINISHER_IDS.map(id=>[id,value[id]]))};
+ }
+ function readingInfluence(words,effect){
+  const scores=emptyInfluence();
+  if(!Array.isArray(words)||words.length!==3||!effect||effect.misread||effect.blocked||
+    !(effect.dark>0||effect.resonance>0))return scores;
+  // Compass is always Moon's observing act, with a modest reward for fit.
+  scores['18-the-moon']+=1+(effect.match===1?2:0);
+  // A safe supporting action stabilizes Moon; a successful risk advances Strength.
+  if(words[1]==='忍耐'){scores['18-the-moon']+=2;scores['17-the-star']+=1;}
+  else if(words[1]==='勇気')scores['08-strength']+=7;
+  // The player's chosen route determines how the meaning reaches the other.
+  if(words[2]==='癒し')scores['18-the-moon']+=2;
+  else if(words[2]==='希望'||words[2]==='願い')scores['17-the-star']+=4;
+  // Real effects matter, but never override the meaning of the three choices.
+  if(effect.dark>=20)scores['08-strength']+=1;
+  if(effect.resonance>=30)scores['17-the-star']+=1;
+  return scores;
+ }
+ function inheritedInfluence(s){
+  // Old v15 checkpoints predate affinity scores: recover what can be proven
+  // from their last completed reading, without inventing earlier turns.
+  return cleanInfluence(s.finisherInfluence)||
+    readingInfluence(s.lastReading,s.lastEffect);
+ }
+ function finisherTechnique(s){
+  const score=inheritedInfluence(s);
+  const last=readingInfluence(s.lastReading,s.lastEffect);
+  // No confirmed reading in a legacy/QA finisher: keep the prior Star default.
+  if(!FINISHER_IDS.some(id=>score[id]>0))
+   return {cardId:'17-the-star',scores:score,reason:'過去の記録を引き継ぐ'};
+  const ids=[...FINISHER_IDS].sort((a,b)=>score[b]-score[a]||
+   last[b]-last[a]||
+   FINISHER_IDS.indexOf(b)-FINISHER_IDS.indexOf(a));
+  const id=ids[0];
+  return {cardId:id,scores:score,reason:id==='18-the-moon'?'観察と支えの積み重ね':
+   id==='08-strength'?'踏み出す意志の積み重ね':'希望を届けた積み重ね'};
+ }
  function optionsFor(card){return card.role==='TRIGGER'?['忍耐','勇気']:card.words;}
  function valid(s){return Base.valid(s)&&s.words[1]!=='自制';}
  function observation(s){return OBSERVATIONS[Base.stateFor(s.dark)]||OBSERVATIONS.wavering;}
@@ -41,7 +88,11 @@
  }
  function read(s){
   const p=predict(s);if(!p)return s;
-  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
+  const influence=inheritedInfluence(s),added=readingInfluence(s.words,p);
+  const cumulative=emptyInfluence();
+  for(const id of FINISHER_IDS)cumulative[id]=Math.min(10000,influence[id]+added[id]);
+  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,
+   finisherInfluence:cumulative,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
   n.phase=n.hp===0?'defeat':n.resonance===100&&n.dark<=25?'finisher':'read';
   return n;
  }
@@ -63,7 +114,7 @@
   return {...s,words:[compass,reach?'勇気':'忍耐',route]};
  }
  function readingPages(s){return valid(s)?s.words.map(w=>OPTIONS[w].shion):[];}
- function newGame(){return {...Base.newGame(),rules:RULES};}
+ function newGame(){return {...Base.newGame(),rules:RULES,finisherInfluence:emptyInfluence()};}
  function canSkill(s){return s.hp>0&&s.dark<=25&&Base.canSkill(s);}
- return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText});
+ return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText,readingInfluence,finisherTechnique});
 });

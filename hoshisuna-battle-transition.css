@@ -41,10 +41,17 @@
  * first, then cover for the scene handoff and melt back into the battle. */
 .abyss-transition__veil{
   position:absolute;inset:-1px;background:#160e25;opacity:0;
-  will-change:opacity;animation:abyss-late-blackout 1650ms linear both;
+  will-change:opacity;animation:abyss-late-blackout 2600ms linear both;
 }
-#caritas-event[data-phase="engulfing"][data-abyss-transition="covering"]{
-  visibility:hidden!important
+/* The A02 side camera forces visibility:visible on .cb-frame and its art.
+ * Hiding only the parent's visibility lets those children override it on iOS.
+ * Hide the entire composited battle layer with parent opacity instead, while
+ * keeping its dimensions measurable for the camera's ResizeObserver. */
+#game-shell #caritas-event[data-phase="engulfing"]{
+  opacity:0!important;
+  visibility:visible!important;
+  pointer-events:none!important;
+  transition:none!important;
 }
 @keyframes abyss-map-corruption{
   0%{transform:translate3d(-50%,-50%,0) scale(.06) scaleY(.7);opacity:0}
@@ -59,9 +66,14 @@
   100%{transform:translate3d(-50%,-50%,0) scale(2.8) scaleY(.85);opacity:.04}
 }
 @keyframes abyss-late-blackout{
-  0%,59%{opacity:0}
-  72%,81%{opacity:1}
-  100%{opacity:0}
+  0%,53%{opacity:0}
+  77%,100%{opacity:1}
+}
+.abyss-transition--reveal :is(.abyss-transition__bleed,.abyss-transition__stain,.abyss-transition__mass){
+  animation:none!important;opacity:0!important;
+}
+.abyss-transition--reveal .abyss-transition__veil{
+  animation:none!important;opacity:0!important;transition:opacity 260ms ease-out;
 }
 @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
   .abyss-transition__bleed{
@@ -72,6 +84,6 @@
   .abyss-transition__bleed,.abyss-transition__stain,.abyss-transition__mass{
     display:none!important;animation:none!important
   }
-  .abyss-transition__veil{animation:abyss-reduced-veil 160ms ease-out both}
-  @keyframes abyss-reduced-veil{0%{opacity:1}100%{opacity:0}}
+  .abyss-transition__veil{animation:none!important;opacity:1}
+  .abyss-transition--reveal .abyss-transition__veil{opacity:0!important;transition:none!important}
 }

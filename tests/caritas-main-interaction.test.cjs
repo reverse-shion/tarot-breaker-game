@@ -454,7 +454,7 @@ async function finishSpecial(f){
  assert.equal(f.pointer.cardsDismissed,1,'the card glow closes only after the spoken command');
  assert.equal(f.pointer.cards,false,'the original spread was dismissed at Tarot Close');
  f.advanceTime(850);
- assert.equal(f.lines.at(-1).text,'さあ、星砂を探しに行こう。');
+ assert.equal(f.lines.at(-1).text,'さあ、星砂に急ごう。');
  f.pointer.advance();assert.equal(f.lines.at(-1).text,'はいなの〜！');
  f.pointer.advance();await flush();
  assert.equal(f.state().special.phase,'DONE');
@@ -874,7 +874,7 @@ test('every committed phase restores same page, B boundary and locked map',async
     assert.equal(f.pointer.cardDeployments,1);
     assert.equal(saved(f).special.phase,'RETURNING');
     f.pointer.advance();f.advanceTime(850);
-    assert.equal(f.lines.at(-1).text,'さあ、星砂を探しに行こう。');
+    assert.equal(f.lines.at(-1).text,'さあ、星砂に急ごう。');
     f.pointer.advance();assert.equal(f.lines.at(-1).text,'はいなの〜！');
     f.pointer.advance();await flush();
     assert.equal(saved(f).special.phase,'DONE');

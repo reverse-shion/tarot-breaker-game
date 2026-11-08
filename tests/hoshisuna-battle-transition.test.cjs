@@ -17,6 +17,7 @@ function fixture({reduced=false,caritas=true}={}) {
   };
   function element(tag) {
     const state = {tag,dataset:{},hidden:false,children:[],style:{props:{},setProperty(k,v){this.props[k]=v;}},events:{},
+      classList:{added:new Set(),add(name){this.added.add(name);},contains(name){return this.added.has(name);}},
       setAttribute(){},
       addEventListener(name,fn){this.events[name]=fn;},
       append(...elems){this.children.push(...elems);},
@@ -72,8 +73,16 @@ test('Caritas encounter blurs the live map from ground origin before later black
   f.emit('tarot-breaker:hoshisuna-transition-start','hoshisuna_caritas_prompt');
   assert.equal(f.nodes.length,1,'duplicate start must be ignored');
   f.time(1240);
-  assert.equal(f.battle.dataset.abyssTransition,'revealing');
+  assert.equal(f.battle.dataset.abyssTransition,'covering','map must still be visible');
   f.time(1650);
+  assert.equal(f.battle.dataset.abyssTransition,'covering','no early reveal before battle begins');
+  assert.equal(f.removed(),0,'overlay remains mounted for the map to battle handoff');
+  f.emit('tarot-breaker:hoshisuna-battle-start');
+  assert.equal(f.battle.dataset.abyssTransition,'revealing');
+  assert.ok(layer.classList.contains('abyss-transition--reveal'));
+  f.time(319);
+  assert.equal(f.removed(),0,'hold veil during fade');
+  f.time(320);
   assert.equal(f.battle.dataset.abyssTransition,undefined);
   assert.equal(f.removed(),1);
   assert.equal(f.timers.size,0);
@@ -97,10 +106,14 @@ test('reduced motion and missing Caritas DOM get safe lightweight fallback',()=>
   const f=fixture({reduced:true,caritas:false});
   f.emit('tarot-breaker:hoshisuna-transition-start','hoshisuna_caritas_prompt');
   assert.equal(f.nodes.length,1);
-  assert.equal(f.battle.dataset.abyssTransition,undefined);
+  assert.equal(f.battle.dataset.abyssTransition,'covering');
   assert.ok(Math.abs(parseFloat(f.nodes[0].style.props['--abyss-x'])-206.7)<0.001);
   assert.equal(f.timers.size,1);
   f.time(160);
+  assert.equal(f.removed(),0,'reduced motion must not reveal the battle early');
+  f.emit('tarot-breaker:hoshisuna-battle-start');
+  assert.ok(f.nodes[0].classList.contains('abyss-transition--reveal'));
+  f.time(320);
   assert.equal(f.removed(),1);
 });
 
@@ -112,8 +125,8 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.match(event,/tarot-breaker:hoshisuna-transition-start/);
   assert.match(event,/stage\("engulfing",2600,beginBattle\)/);
   assert.equal(event.match(/tarot-breaker:hoshisuna-transition-start/g).length,1);
-  assert.match(html,/hoshisuna-battle-transition\.css\?v=abyss-transition-v1/);
-  assert.match(html,/hoshisuna-battle-transition\.js\?v=abyss-transition-v1/);
+  assert.match(html,/hoshisuna-battle-transition\.css\?v=abyss-map-first-v3/);
+  assert.match(html,/hoshisuna-battle-transition\.js\?v=abyss-map-first-v3/);
   assert.match(html,/data-bgm-url="\.\/assets\/audio\/bgm\/hoshisuna-star-memory-time-prayer\.mp3"/);
   assert.match(html,/hoshisuna-battle-audio\.js\?v=3/);
   assert.ok(!/html2canvas|canvas\.toDataURL|canvas\.toBlob/.test(css+fs.readFileSync(path.join(root,'hoshisuna-battle-transition.js'),'utf8')));
@@ -122,6 +135,13 @@ test('transition wiring does not alter battle clock, dialogue, save, map BGM or 
   assert.match(css,/-webkit-backdrop-filter:blur\(4px\)/);
   assert.match(css,/abyss-map-corruption/);
   assert.match(css,/abyss-late-blackout/);
+  assert.match(css,/#game-shell #caritas-event\[data-phase="engulfing"\]\{/);
+  assert.match(css,/opacity:0!important/);
+  assert.doesNotMatch(css,/#caritas-event\[data-phase="engulfing"\]\s*\{\s*visibility:hidden!important/);
+  const camera=fs.readFileSync(path.join(root,'caritas-battle-camera.css'),'utf8');
+  assert.match(camera,/visibility:visible!important/,'camera must exercise the descendant override that caused the regression');
+  assert.match(css, /77%,100%\{opacity:1\}/,'the veil stays opaque until the handoff');
+  assert.match(fs.readFileSync(path.join(root,'hoshisuna-battle-transition.js'),'utf8'),/tarot-breaker:hoshisuna-battle-start/);
   assert.ok(!css.includes('abyss-ink-expand'),'old fullscreen expanding fog must be removed');
   assert.equal(asset.toString('ascii',0,4),'RIFF');
   assert.equal(asset.toString('ascii',8,12),'WEBP');

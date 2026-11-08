@@ -16,6 +16,13 @@
   if(s!==null&&(typeof s!=='object'||Array.isArray(s)))throw Error('invalid-battle-type');
   if(r.aiConfirmedCalls!==r.aiCalls||!Object.entries(r.seenTechniques).every(([id,value])=>ids.includes(id)&&typeof value==='boolean'))throw Error('invalid-receipts');
   if(s&&(!['read','finisher','ending','defeat','complete'].includes(s.phase)||!Number.isInteger(s.step)||s.step<0||s.step>2||!Number.isInteger(s.turn)||s.turn<0||s.turn>1000||!['hp','dark','resonance'].every(k=>Number.isInteger(s[k])&&s[k]>=0&&s[k]<=100)||typeof s.used!=='boolean'||!Array.isArray(s.cards)||s.cards.length!==3||!s.cards.every((c,i)=>c&&c.id===ids[i]&&c.name===C.CARDS[i].name&&c.role===C.CARDS[i].role&&c.major===true&&Array.isArray(c.words)&&c.words.length===3&&c.words.every((w,j)=>w===C.CARDS[i].words[j]))||!Array.isArray(s.words)||s.words.length!==3||!s.words.every((w,i)=>w===null||C.CARDS[i].words.includes(w))))throw Error('invalid-battle');
+  // Optional in old v15 checkpoints. Never trust malformed/injected scores.
+  if(s&&Object.prototype.hasOwnProperty.call(s,'finisherInfluence')){
+   const affinity=s.finisherInfluence;
+   if(!affinity||typeof affinity!=='object'||Array.isArray(affinity)||
+     !ids.every(id=>Number.isSafeInteger(affinity[id])&&affinity[id]>=0&&affinity[id]<=10000)||
+     Object.keys(affinity).length!==ids.length)throw Error('invalid-finisher-influence');
+  }
   if(typeof p.committed!=='boolean'||typeof p.resolutionApplied!=='boolean'||typeof p.completed!=='boolean'||!Number.isInteger(p.dialogueStep)||!['normal','short'].includes(p.playbackMode))throw Error('invalid-special');
   if(!p.committed){if(s&&s.phase==='ending'&&s.dark!==0)throw Error('invalid-legacy-ending');if(s&&(s.phase==='complete'||((s.phase==='read'||s.phase==='finisher'||s.phase==='defeat')&&(s.used||s.dark===0))||(s.phase==='finisher'&&s.resonance!==100)))throw Error('inconsistent-legacy');if(p.dialogueStep!==0||p.phase!=='NONE'||p.resolutionApplied||p.completed||p.cardId!==null||p.commitId!==null||r.mapCompleted||r.completedRunId!==null)throw Error('inconsistent-empty');return r;}
   const i=PHASES.indexOf(p.phase);
