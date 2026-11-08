@@ -41,9 +41,9 @@
  * first, then cover for the scene handoff and melt back into the battle. */
 .abyss-transition__veil{
   position:absolute;inset:-1px;background:#160e25;opacity:0;
-  will-change:opacity;animation:abyss-late-blackout 1650ms linear both;
+  will-change:opacity;animation:abyss-late-blackout 2600ms linear both;
 }
-#caritas-event[data-phase="engulfing"][data-abyss-transition="covering"]{
+#caritas-event[data-phase="engulfing"]{
   visibility:hidden!important
 }
 @keyframes abyss-map-corruption{
@@ -59,9 +59,11 @@
   100%{transform:translate3d(-50%,-50%,0) scale(2.8) scaleY(.85);opacity:.04}
 }
 @keyframes abyss-late-blackout{
-  0%,59%{opacity:0}
-  72%,81%{opacity:1}
-  100%{opacity:0}
+  0%,53%{opacity:0}
+  77%,100%{opacity:1}
+}
+.abyss-transition--reveal .abyss-transition__veil{
+  animation:none!important;opacity:0!important;transition:opacity 260ms ease-out;
 }
 @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
   .abyss-transition__bleed{
@@ -72,6 +74,6 @@
   .abyss-transition__bleed,.abyss-transition__stain,.abyss-transition__mass{
     display:none!important;animation:none!important
   }
-  .abyss-transition__veil{animation:abyss-reduced-veil 160ms ease-out both}
-  @keyframes abyss-reduced-veil{0%{opacity:1}100%{opacity:0}}
+  .abyss-transition__veil{animation:none!important;opacity:1}
+  .abyss-transition--reveal .abyss-transition__veil{opacity:0!important;transition:none!important}
 }
