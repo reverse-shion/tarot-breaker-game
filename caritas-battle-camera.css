@@ -649,3 +649,120 @@
   padding:4px 8px!important;
  }
 }
+
+/* A02 tactical card selection v5: the completed-reading constellation is now
+ * the ONLY SELECT screen from the first tap through final confirmation.
+ * Buttons fill progressively; the picker is a concise bottom sheet.
+ * Never change camera/world positioning or shared legacy screens. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-back{
+  display:block;min-height:44px;min-width:116px;margin:0 0 2px;
+  padding:7px 12px;border:1px solid #b69a69;border-radius:8px;
+  background:#212b48;color:#f5e1b6;font-size:14px;cursor:pointer;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-subtitle{
+  font-size:clamp(13px,3.4vw,15px)!important;line-height:1.5!important;
+  color:#e7d2ad!important;margin:0 0 8px!important;
+  font-family:system-ui,sans-serif!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card:nth-child(1),
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card:nth-child(2),
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card:nth-child(3){
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  border:0!important;border-radius:8px!important;
+  background:transparent!important;
+  color:inherit!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  box-shadow:none!important;
+  text-align:center!important;
+  outline-offset:3px;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card:focus-visible{
+ outline:3px solid #fff2a8!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card:active>img{
+ filter:brightness(1.11) drop-shadow(0 0 10px #f2d38b);
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card[data-selected="false"]>.cb-completion-choice{
+ background:rgba(8,19,38,.91)!important;
+ color:#f5d698!important;
+ border:1px dashed #bda274!important;
+ font-weight:500!important;
+ font-size:clamp(12px,3.2vw,14px)!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card[data-selected="true"]>.cb-completion-choice{
+ background:rgba(16,38,48,.98)!important;
+ border:1px solid #e8c987!important;
+ color:#fff1c8!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card[data-next="true"]>img{
+ animation:cb-tactical-card-invite 2.7s ease-in-out 3;
+}
+@keyframes cb-tactical-card-invite{
+ 0%,100%{filter:drop-shadow(0 0 3px #dbbd7970)}
+ 50%{filter:drop-shadow(0 0 16px #ffdc91cc)}
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] :is(
+ .cb-completion-message[hidden],.cb-completion-forecast[hidden],.cb-completion-send[hidden],.cb-completion-edit[hidden]
+){display:none!important}
+
+/* The existing full-screen card modal used to repeat the big card art and
+ * obscure the triangle. Turn it into an accessible, scrollable choice sheet. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-complete="true"][data-reading-mode="select"] .cb-card-overlay:not([hidden]){
+  position:absolute!important;inset:0!important;top:0!important;
+  left:0!important;right:0!important;bottom:0!important;
+  transform:none!important;
+  width:100%!important;height:100%!important;max-height:100%!important;
+  padding:12px 10px calc(10px + env(safe-area-inset-bottom,0px))!important;
+  display:flex!important;flex-direction:column!important;
+  justify-content:flex-end!important;align-items:center!important;
+  background:rgba(2,7,20,.60)!important;z-index:90!important;
+  overflow:hidden!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-complete="true"][data-reading-mode="select"] .cb-card-overlay:not([hidden]) .cb-card-panel{
+  position:relative!important;box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:stretch!important;
+  width:min(100%,460px)!important;height:auto!important;
+  max-height:min(72dvh,720px)!important;min-height:0!important;
+  padding:12px 12px 14px!important;gap:8px!important;
+  margin:0!important;
+  background:linear-gradient(160deg,#343047,#252c40 70%,#293047)!important;
+  border:1px solid #d4ba87!important;border-radius:16px 16px 12px 12px!important;
+  overflow:hidden!important;
+  box-shadow:0 -10px 36px #060b25a8!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-card-overlay :is(.cb-modal-image[hidden],.cb-modal-page[hidden],.cb-modal-navigation[hidden]){
+  display:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-card-overlay .cb-modal-title{
+  font-size:clamp(17px,4.5vw,20px)!important;
+  line-height:1.4!important;overflow-wrap:break-word!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-card-overlay .cb-modal-words:not([hidden]){
+  display:flex!important;flex-direction:column!important;gap:9px!important;
+  flex:0 1 auto!important;min-height:0!important;max-height:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch;
+  padding:3px 3px 16px!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-card-overlay .cb-modal-word{
+  flex:0 0 auto!important;min-height:60px!important;
+  height:auto!important;max-height:none!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-mode="select"] .cb-card-overlay .cb-modal-hint{
+  flex:0 0 auto!important;font-size:13px!important;
+}
+@media(max-width:390px){
+ #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-cards{
+  row-gap:13px!important;padding-block:8px 18px!important;
+ }
+ #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card img{
+  max-width:100%!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-completion-card[data-next="true"]>img{animation:none!important}
+}
