@@ -128,7 +128,7 @@ test('A02 tactical writing editor owns the visual viewport, not the 42% command 
  assert.match(writer,/\.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:108px!important/);
  assert.match(writer,/\[data-composing="true"\] \.cb-writing-overlay \.cb-ai-input\{[\s\S]*?min-height:76px!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a13-party-reactions/,'iPhone must not reuse the cached clipped CSS');
+ assert.match(html,/caritas-battle-camera\.css\?v=a14-single-skill-cta/,'iPhone must not reuse the cached clipped CSS');
 });
 
 test('A02 tactical modal choices have independent natural heights inside one scroll region',()=>{
@@ -145,7 +145,7 @@ test('A02 tactical modal choices have independent natural heights inside one scr
  assert.match(block,/>\.cb-modal-word>.cb-modal-impact\{[\s\S]*?height:auto!important/);
  assert.match(block,/\.cb-modal-navigation\{[\s\S]*?flex:0 0 auto!important/);
  const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
- assert.match(html,/caritas-battle-camera\.css\?v=a13-party-reactions/);
+ assert.match(html,/caritas-battle-camera\.css\?v=a14-single-skill-cta/);
 });
 
 test('A02 recap titles dominate subtitles and decorative lines sit behind cards',()=>{
@@ -195,4 +195,26 @@ test('Shion speaker glow and Shioriel red hit stay inside actors, not camera tra
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
  assert.match(js,/root\.dataset\.actorSpeaking=speaker==="シオン"\?"shion"/);
  assert.match(js,/root\.dataset\.actorSpeaking="none"/);
+});
+
+test('tactical finisher hides the tarot rail and gives its sole skill a luminous full-width CTA',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../caritas-battle-camera.css'),'utf8');
+ const block=css.split('A02 tactical finisher v1:')[1];
+ assert.ok(block);
+ assert.match(block,/data-rules="tactical-v1"/,'legacy mode must keep its choice screen');
+ assert.match(block,/data-finisher="true"/);
+ assert.match(block,/\.cb-cards/);
+ assert.match(block,/display:none!important/);
+ assert.match(block,/\.cb-controls>\.cb-actions/);
+ assert.match(block,/\.cb-skill\.cb-skill-ready:enabled/);
+ assert.match(block,/min-height:clamp\(76px,12dvh,102px\)!important/);
+ assert.match(block,/border:2px solid #ffe5a3!important/);
+ assert.match(block,/cb-finisher-call/);
+ assert.match(block,/prefers-reduced-motion:reduce/);
+ const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ assert.match(js,/cardBox\.hidden=\!\(readingOpen&&reading\)\|\|tactical&&finisher/);
+ assert.match(js,/if\(tactical\)\{selectedCard='17-the-star';shortPlayback=false;commitSpecialSelection\(selectedCard,'normal'\);return;\}/);
+ const html=fs.readFileSync(path.join(__dirname,'../hoshisuna-main.html'),'utf8');
+ assert.match(html,/caritas-battle-camera\.css\?v=a14-single-skill-cta/);
 });
