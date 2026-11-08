@@ -6,7 +6,7 @@
   const SOURCE = './assets/events/hoshisuna/battle/abyss-encroachment.webp';
   const HANDOFF_MS = 2600; // Must match the encounter's engulfing stage.
   const RELEASE_MS = 260;
-  const FAILSAFE_MS = 3600;
+  const FAILSAFE_MS = HANDOFF_MS + 1000;
   let active = null;
 
   function clear() {
