@@ -1008,7 +1008,7 @@ function render(){
   ui.modalWords.hidden=false;
   setPhraseText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
-   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
+   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="COMPASS"?"観察が心象に合えば闇侵蝕−3。外れても追加ペナルティなし。":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
   ui.modalNav.hidden=false;
   ui.modalPrev.hidden=false;ui.modalNext.hidden=false;
   setPhraseText(ui.modalMood,caritasDisplayName()+"の心象："+C.STATES[C.stateFor(s.dark)]);
@@ -1031,8 +1031,8 @@ function render(){
    if(tactical){
     const proposed=[...s.words];proposed[modalIndex]=word;
     const forecast=proposed.every(Boolean)?C.predict({...s,words:proposed}):null;
-    const impact=forecast?"この組み合わせ：闇侵蝕−"+forecast.dark+"／共鳴＋"+forecast.resonance+"／維持力−"+forecast.damage:tacticalChoiceHint(card.role,word,C.stateFor(s.dark));
-    btn.append(newEl("span","cb-modal-impact",impact));
+    const impact=forecast?"この組み合わせ：闇侵蝕−"+forecast.dark+"／共鳴＋"+forecast.resonance+"／維持力−"+forecast.damage:card.role==="COMPASS"?"":tacticalChoiceHint(card.role,word,C.stateFor(s.dark));
+    if(impact)btn.append(newEl("span","cb-modal-impact",impact));
    }
    btn.setAttribute("aria-label",option.title);
    btn.setAttribute("aria-pressed",String(s.words[modalIndex]===word));
