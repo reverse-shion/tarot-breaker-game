@@ -82,7 +82,7 @@ test('corrupt tactical finisher receipt fails closed instead of trapping disable
 test('each card explains its role and actual choice count; Strength intentionally has two',()=>{
  const {f,root}=setup();f.button(root,'選んで届ける').click();
  for(let i=0;i<3;i++){
-  root.flatten().filter(e=>e.className==='cb-card-button')[i].click();
+  root.querySelector('.cb-completion-cards').children[i].click();
   assert.match(root.querySelector('.cb-modal-title').textContent,i===1?/力.*働きかけ/:i===0?/月.*観察/:/星.*届け方/);
   assert.equal(root.querySelector('.cb-modal-words').children.length,i===1?2:3);
   root.querySelector('.cb-modal-close').click();
@@ -90,16 +90,16 @@ test('each card explains its role and actual choice count; Strength intentionall
 });
 test('third selection opens assembled reading without spending a turn; edit and explicit send are safe',()=>{
  const {f,root}=setup();f.button(root,'選んで届ける').click();
- const select=(index,choice)=>{root.flatten().filter(e=>e.className==='cb-card-button')[index].click();root.querySelector('.cb-modal-words').children[choice].click();};
+ const select=(index,choice)=>{root.querySelector('.cb-completion-cards').children[index].click();root.querySelector('.cb-modal-words').children[choice].click();};
  select(0,0);select(1,0);
- assert.equal(root.querySelector('.cb-completion').hidden,true);
+ assert.equal(root.querySelector('.cb-completion').hidden,false);
+ assert.equal(root.querySelector('.cb-completion-send').hidden,true);
  select(2,0);
  assert.equal(root.querySelector('.cb-completion').hidden,false);
  assert.equal(f.state().battle.turn,0);assert.equal(f.state().battle.hp,100);
  assert.equal(root.querySelector('.cb-completion-words').children.length,3);
  assert.equal(root.querySelector('.cb-completion-cards').children.length,3);
- root.querySelector('.cb-completion-edit').click();
- assert.equal(root.querySelector('.cb-completion').hidden,true);
+ assert.equal(root.querySelector('.cb-completion-edit').hidden,true,'editing is done by tapping a card');
  assert.equal(f.state().battle.words.filter(Boolean).length,3);
  select(2,1);
  assert.equal(root.querySelector('.cb-completion').hidden,false);
@@ -122,9 +122,9 @@ test('first-play tactical UI separates goal from modes and offers impact estimat
  f.button(root,'選んで届ける').click();
  assert.equal(goal.hidden,true,'large goal is not repeated over tarot cards');
  assert.equal(detail.hidden,true);
- assert.match(root.querySelector('.cb-tarot-progress').textContent,/まず月のカードをタップ/);
- const first=root.flatten().filter(e=>e.className==='cb-card-button')[0];
- assert.ok(first.classList.contains('cb-first-card-pulse'),'only the first card invites the initial tap');
+ assert.match(root.querySelector('.cb-completion-subtitle').textContent,/カードをタップして意味を選ぼう/);
+ const first=root.querySelector('.cb-completion-cards').children[0];
+ assert.equal(first.dataset.next,'true','initial first card is visually invited');
  first.click();
  assert.match(root.querySelector('.cb-modal-selected').textContent,/闇侵蝕−3/,'Moon guidance appears once above the choices');
  assert.equal(root.querySelector('.cb-modal-words').children.length,3);
@@ -143,7 +143,7 @@ test('first-play tactical UI separates goal from modes and offers impact estimat
 
 test('recap uses Compass Trigger Route as the primary card headings and keeps subtitles below',()=>{
  const {f,root}=setup();f.button(root,'選んで届ける').click();
- const select=(index,choice)=>{root.flatten().filter(e=>e.className==='cb-card-button')[index].click();root.querySelector('.cb-modal-words').children[choice].click();};
+ const select=(index,choice)=>{root.querySelector('.cb-completion-cards').children[index].click();root.querySelector('.cb-modal-words').children[choice].click();};
  select(0,0);select(1,0);select(2,0);
  const cards=root.querySelector('.cb-completion-cards').children;
  assert.equal(cards.length,3);
@@ -155,4 +155,43 @@ test('recap uses Compass Trigger Route as the primary card headings and keeps su
   assert.equal(cards[i].children[3].className,'cb-completion-choice');
  }
  assert.equal(f.state().battle.turn,0,'recap presentation must not commit a turn');
+});
+
+test('three-card constellation is the only selection screen; results appear after taps',()=>{
+ const {f,root}=setup();f.button(root,'選んで届ける').click();
+ const screen=root.querySelector('.cb-completion'),cards=()=>root.querySelector('.cb-completion-cards').children;
+ assert.equal(screen.hidden,false,'show the constellation before any choice');
+ assert.equal(root.dataset.readingComplete,'true');
+ assert.equal(root.dataset.readingReady,'false');
+ assert.equal(cards().length,3);
+ for(const item of cards()){
+  assert.equal(item.tagName,'button');
+  assert.equal(item.dataset.selected,'false');
+  assert.equal(item.children[3].textContent,'タップして選ぶ');
+ }
+ assert.equal(root.querySelector('.cb-completion-send').hidden,true);
+ assert.equal(root.querySelector('.cb-completion-message').hidden,true);
+ cards()[1].click();
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,false,'one bottom sheet opens above the constellation');
+ assert.equal(screen.hidden,false,'the constellation remains underneath the picker');
+ assert.match(root.querySelector('.cb-modal-title').textContent,/トリガー/);
+ assert.equal(root.querySelector('.cb-modal-navigation').hidden,true);
+ root.querySelector('.cb-modal-words').children[0].click();
+ assert.equal(root.querySelector('.cb-card-overlay').hidden,true);
+ assert.equal(screen.hidden,false);
+ assert.equal(cards()[0].children[3].textContent,'タップして選ぶ');
+ assert.notEqual(cards()[1].children[3].textContent,'タップして選ぶ');
+ assert.equal(cards()[2].children[3].textContent,'タップして選ぶ');
+ assert.equal(root.querySelector('.cb-completion-send').hidden,true);
+ cards()[0].click();root.querySelector('.cb-modal-words').children[0].click();
+ cards()[2].click();root.querySelector('.cb-modal-words').children[0].click();
+ assert.equal(root.dataset.readingReady,'true');
+ assert.equal(root.querySelector('.cb-completion-send').hidden,false);
+ assert.equal(root.querySelector('.cb-completion-message').hidden,false);
+ cards()[0].click();root.querySelector('.cb-modal-words').children[1].click();
+ assert.equal(root.dataset.readingReady,'true','edits do not spend the turn');
+ assert.equal(f.state().battle.turn,0);
+ root.querySelector('.cb-completion-back').click();
+ assert.equal(screen.hidden,true,'back returns to battle mode selection');
+ assert.equal(f.state().battle.words.filter(Boolean).length,3,'back retains selected card meanings');
 });
