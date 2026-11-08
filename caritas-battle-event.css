@@ -703,11 +703,6 @@ body.caritas-departed .hoshi-caritas{display:none!important}
 #caritas-event .cb-modal-hint[hidden]{display:none!important}
 #caritas-event[data-rules]:not([data-rules="legacy"]) .cb-card-overlay{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 #caritas-event[data-rules]:not([data-rules="legacy"]) .cb-card-panel{width:min(94vw,420px)}
-#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-arena::after{
-  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(180deg,rgba(5,7,21,var(--cb-stage-dim,.4)),transparent 80%);
-  transition:background .35s ease;
-}
 #caritas-event[data-rules]:not([data-rules="legacy"]) .cb-card-button:focus-visible,
 #caritas-event[data-rules]:not([data-rules="legacy"]) .cb-modal-word:focus-visible{
  outline:3px solid #fff2af;outline-offset:2px;
@@ -716,5 +711,13 @@ body.caritas-departed .hoshi-caritas{display:none!important}
  #caritas-event[data-rules]:not([data-rules="legacy"])[data-reading-open="true"] .cb-cards{height:clamp(150px,29dvh,220px)!important;min-height:150px}
 }
 @media(prefers-reduced-motion:reduce){
- #caritas-event[data-rules]:not([data-rules="legacy"]) .cb-arena::after{transition:none!important}
+}
+
+/* Entry objective uses a short headline, not a second rules card. */
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-tactical-goal{
+  font-size:clamp(18px,5vw,23px);line-height:1.35;letter-spacing:.06em;
+  padding:8px 12px;background:linear-gradient(110deg,#182d52,#263c62);
+}
+#caritas-event[data-rules]:not([data-rules="legacy"]) .cb-command-prompt{
+  font-size:clamp(15px,4vw,18px);font-weight:700;text-align:center;
 }
