@@ -809,7 +809,6 @@ function render(){
  renderCompletion(reading);
  const finisher=story==="battle"&&s.phase==="finisher"&&!dialogueBusy&&!committing&&!aiBusy&&!specialLocked();
  root.dataset.rules=tactical?C.RULES:"legacy";
-  if(tactical)root.style.setProperty("--cb-stage-dim",String(Math.min(.72,visible.dark/100*.72)));
  root.dataset.readingOpen=String(readingOpen&&reading&&!committing);
  // Display-only state: mode controls a full-viewport tarot surface, not the battle engine.
  root.dataset.readingMode=readingOpen&&reading&&deliveryMethod==="select"?"select":"none";
@@ -839,8 +838,8 @@ function render(){
   const obs=C.observation(visible);
   setText(ui.observation,obs.clue);setText(ui.tarotObservation,obs.clue);setText(ui.writingObservation,obs.clue);
   setText(ui.resMood,visible.resonance===100&&visible.dark>25?"共鳴は満ちた。侵蝕25%以下で解放":visible.phase==="finisher"?"共鳴解放：最後の闇を解く":"月で観察 → 力で働きかけ → 星で届ける");
-  setText(ui.commandPrompt,"維持力が尽きる前に、闇を解こう。");
-   setText(ui.goal,"勝利：共鳴100＋闇侵蝕25％以下 → 共鳴解放 ／ 維持力0で敗北");
+  setText(ui.commandPrompt,"カードを選んでリーディング");
+   setText(ui.goal,"闇を払え");
   ui.triangle.replaceChildren();
   for(let i=0;i<3;i++){const node=newEl("span","cb-tactical-node");node.append(newEl("small","",["月＝観察","力＝働きかけ","星＝届け方"][i]),newEl("strong","",s.words[i]?C.READING_OPTIONS[s.words[i]].title:"未選択"));ui.triangle.append(node);}
   renderWritingIntent();
@@ -1254,7 +1253,7 @@ function init(){
  ui.speech=newEl("strong");ui.clue=newEl("small");narr.append(ui.speech,ui.clue);
  const ctr=newEl("div","cb-controls");ui.controls=ctr;cardBox=newEl("div","cb-cards");
  ui.commandPrompt=newEl("p","cb-command-prompt","どんな言葉なら、あの子の心に届くだろう。");
-  ui.goal=newEl("p","cb-tactical-goal","勝利：共鳴100＋闇侵蝕25％以下／維持力0で敗北");ui.goal.hidden=!tactical;
+  ui.goal=newEl("p","cb-tactical-goal","闇を払え");ui.goal.hidden=!tactical;
  ui.observation=newEl("p","cb-tactical-observation");ui.observation.hidden=!tactical;
  ui.tarotObservation=newEl("p","cb-tactical-observation");ui.tarotObservation.hidden=!tactical;
  ui.writingObservation=newEl("p","cb-tactical-observation");ui.writingObservation.hidden=!tactical;
