@@ -36,7 +36,7 @@
     if(locked)return;
     const next=measure();
     if(next.width>0&&next.height>0&&
-       (Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
+       (!shown||Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
    },
    focus(){if(locked)return;frozen=freeze();locked=true;paint({mode:'INPUT_LOCK',...size,frozen,instant:true});},
    blur(){if(!locked)return;locked=false;frozen=null;apply(true);},
