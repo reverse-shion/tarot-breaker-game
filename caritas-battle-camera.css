@@ -1010,9 +1010,9 @@
  content:"";position:absolute;inset:0;pointer-events:none;
 }
 #caritas-event[data-rules="tactical-v1"] .cb-world-background::before{
- background:radial-gradient(ellipse at 9% 10%,#251233b8,transparent 42%),
-   radial-gradient(ellipse at 90% 100%,#1c103a9e,transparent 49%),
-   linear-gradient(155deg,#12102766,transparent 60%);
+ background:radial-gradient(ellipse at 30% 62%,transparent 4%,#110c269e 62%,#080713f2 100%),
+   radial-gradient(ellipse at 6% 14%,#2c123be6,transparent 53%),
+   linear-gradient(14deg,#0c071ce6,transparent 49%,#100c26bf);
  opacity:var(--cb-field-corruption,0);transition:opacity 900ms ease-out;
 }
 #caritas-event[data-rules="tactical-v1"] .cb-world-background::after{
@@ -1027,6 +1027,44 @@
 @media(prefers-reduced-motion:reduce){
  #caritas-event[data-rules="tactical-v1"] .cb-world-background::before,
  #caritas-event[data-rules="tactical-v1"] .cb-world-background::after{transition:none}
+}
+
+/* The release plane shares the beast's world position and never covers the HUD. */
+#game-shell #caritas-event[data-rules="tactical-v1"][data-special="CARITAS_REPLY"] .cb-release{
+ display:block;opacity:1;background:transparent;border-radius:0;pointer-events:none;
+}
+#caritas-event[data-special="CARITAS_REPLY"] .cb-release::before,
+#caritas-event[data-special="CARITAS_REPLY"] .cb-release::after{
+ content:"";position:absolute;inset:0;
+}
+#caritas-event[data-special="CARITAS_REPLY"] .cb-release::before{
+ background:linear-gradient(154deg,transparent 12%,#fff4b8ba 44%,#fffad5ee 53%,#f8d17a8a 64%,transparent 88%);
+ -webkit-mask:url("./assets/events/hoshisuna/battle/caritas-battle.webp") center bottom / contain no-repeat;
+ mask:url("./assets/events/hoshisuna/battle/caritas-battle.webp") center bottom / contain no-repeat;
+ animation:cb-recovery-halo 6.4s ease-in-out both;
+}
+#caritas-event[data-special="CARITAS_REPLY"] .cb-release::after{
+ background:radial-gradient(circle at 27% 72%,#fff6c8 1.5px,transparent 4px),
+   radial-gradient(circle at 39% 51%,#fffde0 2px,transparent 5px),
+   radial-gradient(circle at 57% 67%,#ffdd90 1px,transparent 4px),
+   radial-gradient(circle at 64% 42%,#fffadd 2px,transparent 5px),
+   radial-gradient(circle at 75% 61%,#ffe7a0 2px,transparent 4px);
+ animation:cb-recovery-motes 3.2s ease-out 2 both;
+}
+@keyframes cb-recovery-halo{
+ 0%{opacity:.12}
+ 36%{opacity:.85}
+ 70%{opacity:.42}
+ 100%{opacity:.12}
+}
+@keyframes cb-recovery-motes{
+ 0%{opacity:0;transform:translateY(8%)}
+ 22%{opacity:1} 70%{opacity:.8}
+ 100%{opacity:0;transform:translateY(-32%)}
+}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-special="CARITAS_REPLY"] .cb-release::before{animation:none;opacity:.55}
+ #caritas-event[data-special="CARITAS_REPLY"] .cb-release::after{animation:none;opacity:.65}
 }
 
 /* A02 tactical 3-choice fit v1 — modal visual correction only.

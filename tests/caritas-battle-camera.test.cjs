@@ -15,6 +15,12 @@ test('camera routes reading, delivery/wait, opponent response and special withou
  assert.equal(stateFor({speaker:'シオン'}),'READING');
  for(const phase of ['selecting','special','purifying','purified'])assert.equal(stateFor({phase,waiting:true}),'SPECIAL');
 });
+test('tactical purification and the silent victory beat keep the recovering beast in frame',()=>{
+ for(const special of ['PURIFICATION','CARITAS_REPLY']){
+  assert.equal(stateFor({phase:'special',special,tactical:true}),'REACTION');
+ }
+ assert.equal(stateFor({phase:'special',special:'ART_PLAYBACK',tactical:true}),'SPECIAL');
+});
 test('long AI waits and multi-page replies do not restart pans',()=>{
  const {controller,painted}=fixture();controller.update({waiting:true});
  const count=painted.length;

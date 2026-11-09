@@ -27,6 +27,53 @@
   let fadeToken = 0;
   let eventSession = null;
 
+  // Normal exploration keeps the native media output. Never route the map BGM
+  // through AudioContext: on iPhone Safari, an inactive context can silence it.
+  // A return-only envelope is applied after the Caritas encounter.
+  const RETURN_SILENCE_MS = 1800;
+  const RETURN_FADE_MS = 3000;
+  let returnFrame = 0;
+  let returnLevel = 1;
+  let ordinaryVolume = 0;
+
+  function prepareReturnOutput() {
+    // Compatibility for encounter callers. Normal field music needs no reroute.
+  }
+
+  function setVolume(value) {
+    ordinaryVolume = Math.max(0, Math.min(1, Number(value) || 0));
+    bgm.volume = Math.max(0, Math.min(1, ordinaryVolume * returnLevel));
+  }
+
+  function cancelReturnFade() {
+    if (returnFrame) cancelAnimationFrame(returnFrame);
+    returnFrame = 0;
+    returnLevel = 1;
+    setVolume(ordinaryVolume);
+  }
+
+  function fadeInOnReturn() {
+    if (returnFrame) cancelAnimationFrame(returnFrame);
+    returnFrame = 0;
+    returnLevel = 0;
+    // The mute gate guarantees the quiet beat even when Safari ignores volume.
+    bgm.muted = true;
+    setVolume(ordinaryVolume);
+    const start = performance.now() + RETURN_SILENCE_MS;
+    const step = now => {
+      if (!transportAvailable()) {
+        cancelReturnFade();
+        return;
+      }
+      const t = Math.max(0, Math.min(1, (now - start) / RETURN_FADE_MS));
+      returnLevel = t * t * (3 - 2 * t);
+      setVolume(ordinaryVolume);
+      if (t > 0) bgm.muted = false;
+      returnFrame = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    returnFrame = requestAnimationFrame(step);
+  }
+
   function readPreference() {
     try {
       return localStorage.getItem(STORAGE_KEY) !== "0";
@@ -65,11 +112,11 @@
   function fadeTo(nextVolume, duration = FADE_MS, onComplete) {
     cancelFade();
     const token = fadeToken;
-    const from = bgm.volume;
+    const from = ordinaryVolume;
     const to = Math.max(0, Math.min(1, nextVolume));
 
     if (duration <= 0 || Math.abs(from - to) < 0.001) {
-      bgm.volume = to;
+      setVolume(to);
       onComplete?.();
       return;
     }
@@ -81,7 +128,7 @@
       // Clamp both interpolation progress and the HTMLMediaElement volume.
       const progress = Math.max(0, Math.min(1, (now - startedAt) / duration));
       const eased = 1 - Math.pow(1 - progress, 3);
-      bgm.volume = Math.max(0, Math.min(1, from + (to - from) * eased));
+      setVolume(Math.max(0, Math.min(1, from + (to - from) * eased)));
       if (progress < 1) {
         fadeFrame = requestAnimationFrame(step);
         return;
@@ -152,7 +199,7 @@
     if (immediate) {
       cancelFade();
       stopTransport();
-      bgm.volume = 0;
+      setVolume(0);
       return;
     }
     invalidatePlay();
@@ -163,6 +210,10 @@
     enabled = Boolean(nextEnabled);
     savePreference();
     renderToggle();
+    if (!enabled) {
+      cancelReturnFade();
+      bgm.muted = false;
+    }
     if (eventSession) {
       eventSession.userChanged();
       return;
@@ -197,11 +248,18 @@
 
   function suspendTransport() {
     if (eventSession) eventSession.suspendTransport();
-    else pauseBgm(true);
+    else {
+      cancelReturnFade();
+      bgm.muted = false;
+      pauseBgm(true);
+    }
   }
   function recoverTransport() {
     if (eventSession) eventSession.recoverTransport();
-    else resumeBgm();
+    else {
+      bgm.muted = false;
+      resumeBgm();
+    }
   }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) suspendTransport();
@@ -230,6 +288,7 @@
   function beginEventSession() {
     if (eventSession) throw new Error("Audio event session already active");
     cancelFade();
+    cancelReturnFade();
     let alive = true;
     let level = 1;
     let silent = false;
@@ -245,7 +304,7 @@
       coefficientFrame = 0;
     };
     const apply = () => {
-      if (alive) bgm.volume = transportAvailable() && !silent && !failed ? targetVolume * level * silenceFactor : 0;
+      if (alive) setVolume(transportAvailable() && !silent && !failed ? targetVolume * level * silenceFactor : 0);
     };
     const tweenCoefficient = (value, duration, isSilence) => {
       if (!alive) return;
@@ -378,7 +437,7 @@
         if (!enabled) { token += 1; stopTransport(); }
         apply();
       },
-      release() {
+      release({ fadeIn = false } = {}) {
         if (!alive) return;
         token += 1;
         if (playAttempt) stopTransport();
@@ -389,8 +448,12 @@
         eventSession = null;
         // Event hard-mute must never leak into normal gameplay after release.
         // Normal gameplay regains its own entered/enabled transport intent.
-        bgm.muted = false;
-        bgm.volume = transportAvailable() && !failed ? targetVolume : 0;
+        if (fadeIn) fadeInOnReturn();
+        else {
+          cancelReturnFade();
+          bgm.muted = false;
+        }
+        setVolume(transportAvailable() && !failed ? targetVolume : 0);
         resumeBgm();
       },
     };
@@ -411,6 +474,7 @@
     setEnabled,
     startFromMovement,
     beginEventSession,
+    prepareReturnOutput,
     setCinematicLevel(value, duration = 0) { eventSession?.tweenCoefficient(value, duration, false); },
     setCinematicSilence(value, duration = 0) { eventSession?.tweenCoefficient(value ? 0 : 1, duration, true); },
   });
