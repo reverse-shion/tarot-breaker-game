@@ -45,17 +45,27 @@
     if (returnFrame) cancelAnimationFrame(returnFrame);
     returnFrame = 0;
     returnLevel = 1;
+    if (!eventSession) bgm.muted = false;
+    setVolume(ordinaryVolume);
   }
   function fadeInOnReturn() {
     if (returnFrame) cancelAnimationFrame(returnFrame);
     returnFrame = 0;
     returnLevel = 0;
+    // iOS Safari can ignore writes to HTMLMediaElement.volume.
+    // Preserve the initial silence using the reliable native mute gate.
+    bgm.muted = true;
     setVolume(ordinaryVolume);
     const start = performance.now() + 1800;
     const step = now => {
+      if (!transportAvailable()) {
+        cancelReturnFade();
+        return;
+      }
       const t = Math.max(0, Math.min(1, (now - start) / 3000));
       returnLevel = t * t * (3 - 2 * t);
       setVolume(ordinaryVolume);
+      if (t > 0) bgm.muted = false;
       returnFrame = t < 1 ? requestAnimationFrame(step) : 0;
     };
     returnFrame = requestAnimationFrame(step);
@@ -197,6 +207,12 @@
     enabled = Boolean(nextEnabled);
     savePreference();
     renderToggle();
+    if (!enabled) {
+      cancelReturnFade();
+      bgm.muted = true;
+    } else if (!eventSession) {
+      bgm.muted = false;
+    }
     if (eventSession) {
       eventSession.userChanged();
       return;
@@ -264,6 +280,7 @@
   function beginEventSession() {
     if (eventSession) throw new Error("Audio event session already active");
     cancelFade();
+    cancelReturnFade();
     let alive = true;
     let level = 1;
     let silent = false;
@@ -426,7 +443,8 @@
         if (fadeIn) fadeInOnReturn();
         else cancelReturnFade();
         setVolume(transportAvailable() && !failed ? targetVolume : 0);
-        bgm.muted = false;
+        // fadeInOnReturn owns the native mute gate until the fade begins.
+        if (!fadeIn) bgm.muted = false;
         resumeBgm();
       },
     };
