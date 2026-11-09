@@ -27,46 +27,51 @@
   let fadeToken = 0;
   let eventSession = null;
 
-  // Only Starroad opts into this output. Keep the media element (and its
-  // playback position) while the independent return envelope survives taps,
-  // dialogue volume changes, and release of the encounter session.
-  let returnContext, returnGain;
-  let returnFrame = 0, returnLevel = 1, ordinaryVolume = 0;
+  // Normal exploration keeps the native media output. Never route the map BGM
+  // through AudioContext: on iPhone Safari, an inactive context can silence it.
+  // A return-only envelope is applied after the Caritas encounter.
+  const RETURN_SILENCE_MS = 1800;
+  const RETURN_FADE_MS = 3000;
+  let returnFrame = 0;
+  let returnLevel = 1;
+  let ordinaryVolume = 0;
+
   function prepareReturnOutput() {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) return;
-    try {
-      returnContext ||= new Context();
-      const connect = () => {
-        if (returnGain || returnContext.state !== "running") return;
-        const gain = returnContext.createGain();
-        gain.gain.value = returnLevel * ordinaryVolume;
-        gain.connect(returnContext.destination);
-        returnContext.createMediaElementSource(bgm).connect(gain);
-        returnGain = gain;
-        bgm.volume = 1;
-      };
-      if (returnContext.state === "running") connect();
-      else returnContext.resume().then(connect).catch(() => {});
-    } catch { /* Native media volume provides the fallback. */ }
+    // Compatibility for encounter callers. Normal field music needs no reroute.
   }
 
   function setVolume(value) {
-    ordinaryVolume = value;
-    if (returnGain) returnGain.gain.value = value * returnLevel;
-    else bgm.volume = value * returnLevel;
+    ordinaryVolume = Math.max(0, Math.min(1, Number(value) || 0));
+    bgm.volume = Math.max(0, Math.min(1, ordinaryVolume * returnLevel));
+  }
+
+  function cancelReturnFade() {
+    if (returnFrame) cancelAnimationFrame(returnFrame);
+    returnFrame = 0;
+    returnLevel = 1;
+    setVolume(ordinaryVolume);
   }
 
   function fadeInOnReturn() {
     if (returnFrame) cancelAnimationFrame(returnFrame);
-    const start = performance.now() + 550;
+    returnFrame = 0;
+    returnLevel = 0;
+    // The mute gate guarantees the quiet beat even when Safari ignores volume.
+    bgm.muted = true;
+    setVolume(ordinaryVolume);
+    const start = performance.now() + RETURN_SILENCE_MS;
     const step = now => {
-      const t = Math.max(0, Math.min(1, (now - start) / 3000));
+      if (!transportAvailable()) {
+        cancelReturnFade();
+        return;
+      }
+      const t = Math.max(0, Math.min(1, (now - start) / RETURN_FADE_MS));
       returnLevel = t * t * (3 - 2 * t);
       setVolume(ordinaryVolume);
+      if (t > 0) bgm.muted = false;
       returnFrame = t < 1 ? requestAnimationFrame(step) : 0;
     };
-    step(performance.now());
+    returnFrame = requestAnimationFrame(step);
   }
 
   function readPreference() {
@@ -205,6 +210,10 @@
     enabled = Boolean(nextEnabled);
     savePreference();
     renderToggle();
+    if (!enabled) {
+      cancelReturnFade();
+      bgm.muted = false;
+    }
     if (eventSession) {
       eventSession.userChanged();
       return;
@@ -217,7 +226,6 @@
   // Called synchronously by each map's accepted movement gesture. A hidden
   // legacy toggle preference must not prevent the requested map music starting.
   function startFromMovement() {
-    if (returnContext && returnContext.state !== "running") prepareReturnOutput();
     if (!enteredWorld) {
       enteredWorld = true;
       enabled = true;
@@ -240,11 +248,18 @@
 
   function suspendTransport() {
     if (eventSession) eventSession.suspendTransport();
-    else pauseBgm(true);
+    else {
+      cancelReturnFade();
+      bgm.muted = false;
+      pauseBgm(true);
+    }
   }
   function recoverTransport() {
     if (eventSession) eventSession.recoverTransport();
-    else resumeBgm();
+    else {
+      bgm.muted = false;
+      resumeBgm();
+    }
   }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) suspendTransport();
@@ -273,6 +288,7 @@
   function beginEventSession() {
     if (eventSession) throw new Error("Audio event session already active");
     cancelFade();
+    cancelReturnFade();
     let alive = true;
     let level = 1;
     let silent = false;
@@ -433,8 +449,11 @@
         // Event hard-mute must never leak into normal gameplay after release.
         // Normal gameplay regains its own entered/enabled transport intent.
         if (fadeIn) fadeInOnReturn();
+        else {
+          cancelReturnFade();
+          bgm.muted = false;
+        }
         setVolume(transportAvailable() && !failed ? targetVolume : 0);
-        bgm.muted = false;
         resumeBgm();
       },
     };
