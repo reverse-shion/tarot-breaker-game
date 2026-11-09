@@ -999,6 +999,36 @@
    linear-gradient(115deg,#18294c,#3c4784 45%,#78518c)!important;
 }
 
+/* Let each wisp lose its silhouette before the resolved pose appears. */
+#caritas-event[data-rules="tactical-v1"][data-special="PURIFICATION"] .cb-abyss i{
+ opacity:0!important;
+ transition:opacity var(--cb-purification,1100ms) ease-out;
+}
+/* World-space washes follow the painted cave through camera pans. */
+#caritas-event[data-rules="tactical-v1"] .cb-world-background::before,
+#caritas-event[data-rules="tactical-v1"] .cb-world-background::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-world-background::before{
+ background:radial-gradient(ellipse at 9% 10%,#251233b8,transparent 42%),
+   radial-gradient(ellipse at 90% 100%,#1c103a9e,transparent 49%),
+   linear-gradient(155deg,#12102766,transparent 60%);
+ opacity:var(--cb-field-corruption,0);transition:opacity 900ms ease-out;
+}
+#caritas-event[data-rules="tactical-v1"] .cb-world-background::after{
+ background:linear-gradient(112deg,transparent 19%,#fff1b533 23%,#fff0c466 25%,transparent 30%),
+   radial-gradient(ellipse at 24% 10%,#fff2c778,transparent 45%);
+ opacity:0;transition:opacity 3.2s ease-in-out;
+}
+#caritas-event[data-special="PURIFICATION"] .cb-world-background::before,
+#caritas-event[data-special="CARITAS_REPLY"] .cb-world-background::before{opacity:0}
+#caritas-event[data-special="PURIFICATION"] .cb-world-background::after{opacity:.35}
+#caritas-event[data-special="CARITAS_REPLY"] .cb-world-background::after{opacity:1}
+@media(prefers-reduced-motion:reduce){
+ #caritas-event[data-rules="tactical-v1"] .cb-world-background::before,
+ #caritas-event[data-rules="tactical-v1"] .cb-world-background::after{transition:none}
+}
+
 /* A02 tactical 3-choice fit v1 — modal visual correction only.
  * The prior 72dvh bottom sheet deliberately scrolled to protect long options,
  * but hid choice 3 on iPhone. Centre an intrinsic-height sheet in the *full*
