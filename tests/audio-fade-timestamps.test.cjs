@@ -20,6 +20,7 @@ function harness() {
     constructor(src) {
       this.src = src;
       this.paused = true;
+      this.muted = false;
       this._volume = 1;
       this.loop = false;
       this.preload = "";
