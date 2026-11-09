@@ -20,6 +20,7 @@ function harness() {
     constructor(src) {
       this.src = src;
       this.paused = true;
+      this.muted = false;
       this._volume = 1;
       this.loop = false;
       this.preload = "";
@@ -169,7 +170,7 @@ test("hidden-tab pause remains immediate; resuming still fades within range", as
   assert.equal(h.bgm.volume, 0);
 });
 
-test("map return holds silence for 550ms and fades the existing transport over three seconds", async () => {
+test("map return holds native silence for 1.8s and fades for three seconds", async () => {
   for (const useGraph of [false, true]) {
     const h = harness();
     const gain = {gain: {value: 1}, connect() {}};
@@ -190,14 +191,33 @@ test("map return holds silence for 550ms and fades the existing transport over t
     const session = h.window.TarotAudio.beginEventSession();
     session.holdSilent();
     session.release({fadeIn: true});
-    const audible = () => h.bgm.volume * gain.gain.value;
+    const audible = () => h.bgm.muted ? 0 : h.bgm.volume * gain.gain.value;
     assert.equal(audible(), 0);
-    h.deliverAt(11550);
+    assert.equal(h.bgm.muted, true);
+    h.deliverAt(12799);
     assert.equal(audible(), 0);
-    h.deliverAt(13050);
+    h.deliverAt(14300);
     assert.equal(audible(), .175);
-    h.deliverAt(14550);
+    h.deliverAt(15800);
     assert.equal(audible(), .35);
+    assert.equal(h.bgm.muted, false);
     assert.equal(h.counts().playCalls, 1);
   }
+});
+
+
+test("ordinary exploration BGM starts audible and no Web Audio route is created", async () => {
+  const h = harness();
+  let sourceCreated = false;
+  h.window.AudioContext = class {
+    state = "running";
+    createMediaElementSource() {sourceCreated = true; throw new Error("must not reroute normal BGM");}
+  };
+  h.window.TarotAudio.prepareReturnOutput();
+  await h.start();
+  h.deliverAt(10320);
+  assert.equal(sourceCreated, false);
+  assert.equal(h.bgm.paused, false);
+  assert.equal(h.bgm.muted, false);
+  assert.equal(h.bgm.volume, .35);
 });
