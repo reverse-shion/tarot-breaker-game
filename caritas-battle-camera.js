@@ -7,6 +7,7 @@
  'use strict';
  const SPECIAL=new Set(['selecting','special','purifying','purified']);
  function stateFor({phase='battle',special='',waiting=false,speaker=null,tactical=false}={}){
+  if(tactical&&phase==='special'&&['PURIFICATION','CARITAS_REPLY'].includes(special))return 'REACTION';
   if(SPECIAL.has(phase)||['FACE_CUTIN','DUAL_INCANTATION','TECHNIQUE_ART','PURIFICATION','CARITAS_REPLY'].includes(special))return 'SPECIAL';
   // Frame the recipient, not Caritas, on tactical counter-hit.
   if(tactical&&phase==='enemy-turn')return 'COUNTER_HIT';
@@ -35,7 +36,7 @@
     if(locked)return;
     const next=measure();
     if(next.width>0&&next.height>0&&
-       (Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
+       (!shown||Math.abs(next.width-size.width)>.5||Math.abs(next.height-size.height)>.5))apply(true);
    },
    focus(){if(locked)return;frozen=freeze();locked=true;paint({mode:'INPUT_LOCK',...size,frozen,instant:true});},
    blur(){if(!locked)return;locked=false;frozen=null;apply(true);},

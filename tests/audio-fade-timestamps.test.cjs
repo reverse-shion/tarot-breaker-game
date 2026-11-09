@@ -20,6 +20,7 @@ function harness() {
     constructor(src) {
       this.src = src;
       this.paused = true;
+      this.muted = false;
       this._volume = 1;
       this.loop = false;
       this.preload = "";
@@ -167,4 +168,59 @@ test("hidden-tab pause remains immediate; resuming still fades within range", as
   h.dispatch("window", "pagehide");
   assert.equal(h.bgm.paused, true);
   assert.equal(h.bgm.volume, 0);
+});
+
+test("map return holds native mute for 1800ms and fades the existing transport over three seconds", async () => {
+  for (const useGraph of [false, true]) {
+    const h = harness();
+    const gain = {gain: {value: 1}, connect() {}};
+    if (useGraph) {
+      h.window.AudioContext = class {
+        state = "running";
+        createGain() {return gain;}
+        createMediaElementSource(media) {
+          assert.equal(media, h.bgm);
+          return {connect() {}};
+        }
+      };
+      h.window.TarotAudio.prepareReturnOutput();
+    }
+    await h.start();
+    h.deliverAt(10320);
+    h.clock(11000);
+    const session = h.window.TarotAudio.beginEventSession();
+    session.holdSilent();
+    session.release({fadeIn: true});
+    const audible = () => h.bgm.muted ? 0 : h.bgm.volume * gain.gain.value;
+    assert.equal(audible(), 0);
+    assert.equal(h.bgm.muted, true);
+    h.deliverAt(12800);
+    assert.equal(audible(), 0);
+    assert.equal(h.bgm.muted, true);
+    h.deliverAt(14300);
+    assert.equal(audible(), .175);
+    assert.equal(h.bgm.muted, false);
+    h.deliverAt(15800);
+    assert.equal(audible(), .35);
+    assert.equal(h.bgm.muted, false);
+    assert.equal(h.counts().playCalls, 1);
+  }
+});
+
+
+test("normal map BGM is audible without any battle and remains audible after return", async () => {
+  const h = harness();
+  await h.start();
+  h.deliverAt(10320);
+  assert.equal(h.bgm.volume, 0.35);
+  assert.equal(h.bgm.paused, false);
+  assert.equal(h.bgm.muted, false);
+  h.clock(11000);
+  const session = h.window.TarotAudio.beginEventSession();
+  session.holdSilent();
+  session.release({fadeIn: true});
+  h.deliverAt(15800);
+  assert.equal(h.bgm.volume, 0.35);
+  assert.equal(h.bgm.muted, false);
+  assert.equal(h.counts().playCalls, 1);
 });
