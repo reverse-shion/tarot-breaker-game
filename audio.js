@@ -27,46 +27,38 @@
   let fadeToken = 0;
   let eventSession = null;
 
-  // Only Starroad opts into this output. Keep the media element (and its
-  // playback position) while the independent return envelope survives taps,
-  // dialogue volume changes, and release of the encounter session.
-  let returnContext, returnGain;
-  let returnFrame = 0, returnLevel = 1, ordinaryVolume = 0;
+  // Keep ordinary map BGM on its original native audio output.
+  // Only the post-battle return cue applies a short silence and fade.
+  // Routing the media element through a newly-created AudioContext can
+  // accidentally silence ordinary map music on iOS Safari.
+  let returnFrame = 0;
+  let returnLevel = 1;
+  let ordinaryVolume = 0;
   function prepareReturnOutput() {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) return;
-    try {
-      returnContext ||= new Context();
-      const connect = () => {
-        if (returnGain || returnContext.state !== "running") return;
-        const gain = returnContext.createGain();
-        gain.gain.value = returnLevel * ordinaryVolume;
-        gain.connect(returnContext.destination);
-        returnContext.createMediaElementSource(bgm).connect(gain);
-        returnGain = gain;
-        bgm.volume = 1;
-      };
-      if (returnContext.state === "running") connect();
-      else returnContext.resume().then(connect).catch(() => {});
-    } catch { /* Native media volume provides the fallback. */ }
+    // Retained for encounter callers; normal exploration needs no audio reroute.
   }
-
   function setVolume(value) {
-    ordinaryVolume = value;
-    if (returnGain) returnGain.gain.value = value * returnLevel;
-    else bgm.volume = value * returnLevel;
+    ordinaryVolume = Math.max(0, Math.min(1, value));
+    bgm.volume = Math.max(0, Math.min(1, ordinaryVolume * returnLevel));
   }
-
+  function cancelReturnFade() {
+    if (returnFrame) cancelAnimationFrame(returnFrame);
+    returnFrame = 0;
+    returnLevel = 1;
+  }
   function fadeInOnReturn() {
     if (returnFrame) cancelAnimationFrame(returnFrame);
-    const start = performance.now() + 550;
+    returnFrame = 0;
+    returnLevel = 0;
+    setVolume(ordinaryVolume);
+    const start = performance.now() + 1800;
     const step = now => {
       const t = Math.max(0, Math.min(1, (now - start) / 3000));
       returnLevel = t * t * (3 - 2 * t);
       setVolume(ordinaryVolume);
       returnFrame = t < 1 ? requestAnimationFrame(step) : 0;
     };
-    step(performance.now());
+    returnFrame = requestAnimationFrame(step);
   }
 
   function readPreference() {
@@ -217,7 +209,6 @@
   // Called synchronously by each map's accepted movement gesture. A hidden
   // legacy toggle preference must not prevent the requested map music starting.
   function startFromMovement() {
-    if (returnContext && returnContext.state !== "running") prepareReturnOutput();
     if (!enteredWorld) {
       enteredWorld = true;
       enabled = true;
@@ -433,6 +424,7 @@
         // Event hard-mute must never leak into normal gameplay after release.
         // Normal gameplay regains its own entered/enabled transport intent.
         if (fadeIn) fadeInOnReturn();
+        else cancelReturnFade();
         setVolume(transportAvailable() && !failed ? targetVolume : 0);
         bgm.muted = false;
         resumeBgm();
