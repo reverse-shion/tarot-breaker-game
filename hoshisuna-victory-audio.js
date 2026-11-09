@@ -35,7 +35,7 @@
   music.volume=VOLUME;music.muted=false;
  }
  function primeNative(){
-  if(!encounter||(!combat&&!victory)||!permitted()||playAttempt)return;
+  if(!encounter||(!combat&&!victory)||!permitted()||playAttempt||(victory&&music.ended))return;
   if(!music.paused){reveal();return;}
   const token=++generation;
   let result;

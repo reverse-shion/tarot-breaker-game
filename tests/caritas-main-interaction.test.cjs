@@ -403,6 +403,11 @@ async function finishSpecial(f){
   assert.equal(f.events.includes('tarot-breaker:hoshisuna-field-return-cue'),false,'Starroad remains muted under victory');
   assert.equal(f.shell.querySelector('#caritas-event').hidden,false,'victory music begins under final battle reply');
   f.pointer.advance();
+  f.advanceTime(6399);
+  assert.equal(f.state().special.phase,'CARITAS_REPLY');
+  assert.equal(f.events.includes('tarot-breaker:hoshisuna-field-return-cue'),false);
+  f.advanceTime(1);
+  f.pointer.advance();
   assert.equal(f.state().special.phase,'FAREWELL');
   const fieldCueIndex=f.events.lastIndexOf('tarot-breaker:hoshisuna-field-return-cue');
   assert.ok(fieldCueIndex>victoryIndex,'field music resumes when map becomes visible');
@@ -898,7 +903,7 @@ test('all cards use exact solo dialogue and one dual page before art, then disti
   const f=savedFixture(),root=f.shell.querySelector('#caritas-event');commitSpecial(f,root,c.name);
   assert.equal(f.lines.at(-1).actor,'shion');assert.doesNotMatch(f.lines.at(-1).text,/アストラル/);
   f.pointer.advance();assert.equal(f.lines.at(-1).actor,'shioriel');f.pointer.advance();assert.equal(f.lines.at(-1).text,chants[i]);assert.equal(f.lines.at(-1).actor,'shion-shioriel');
-  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……闇の中でも、お前たちの声は届いていた。……感謝する。');
+  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100+6400);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……闇の中でも、お前たちの声は届いていた。……感謝する。');
  }
 });
 test('purification save failure stays at A, retry commits B once without replaying AI or consumption',()=>{
@@ -906,7 +911,7 @@ test('purification save failure stays at A, retry commits B once without replayi
  const store=f.persistentStore,set=store.set.bind(store);let fail=true;store.set=(k,v)=>{if(fail)throw Error('quota');return set(k,v);};
  f.advanceTime(1100);assert.equal(f.state().special.phase,'PURIFICATION');assert.equal(f.state().battle.dark,42);assert.equal(f.state().saveBlocked,true);
  fail=false;const retry=f.button(root,'再試行');retry.click();retry.click();assert.equal(f.state().battle.dark,0);assert.equal(f.state().special.phase,'CARITAS_REPLY');assert.equal(saved(f).revision,1);
- f.pointer.advance();assert.equal(saved(f).revision,2);
+ f.advanceTime(6400);f.pointer.advance();assert.equal(saved(f).revision,2);
 });
 test('corrupt saves remain byte-identical, only reload/title actions are offered',()=>{
  for(const raw of ['{broken',JSON.stringify({version:15,battle:{}})]){

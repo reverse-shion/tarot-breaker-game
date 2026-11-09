@@ -406,7 +406,10 @@ function playSpecialSequence(){
  const linePhases={SHION_LINE:['シオン',t.shion,'SHIORIEL_LINE'],SHIORIEL_LINE:['シオリエル',t.shioriel,'DUAL_INCANTATION'],DUAL_INCANTATION:['シオン＆シオリエル',t.chant,'ART_PLAYBACK'],CARITAS_REPLY:['カリタス',t.reply,'FAREWELL']};
  if(linePhases[p]){
   const [speaker,text,next]=linePhases[p];
-  saySequence([[speaker,text]],()=>transitionSpecial(next));
+  const speak=()=>saySequence([[speaker,text]],()=>transitionSpecial(next));
+  // Let the first musical phrase and the clearing light land before dialogue.
+  if(p==='CARITAS_REPLY')runSpecialEffect(null,short?1200:6400,speak);
+  else speak();
   if(['SHION_LINE','SHIORIEL_LINE','DUAL_INCANTATION'].includes(p))runSpecialEffect(ui.cutin,short?120:600,()=>{},'entry');
  }else if(p==='FAREWELL'){
   playMapFarewell(()=>transitionSpecial('RETURNING'));
@@ -891,6 +894,7 @@ function render(){
  cardBox.hidden=!(readingOpen&&reading)||tactical&&finisher;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
  const displayedDark=visible.dark;
+ root.style.setProperty?.('--cb-field-corruption',String(displayedDark/100));
  setText(ui.enemyName,caritasDisplayName());ui.beast.alt=caritasDisplayName();
  root.setAttribute("aria-label",caritasDisplayName()+" 心象共鳴");
  setText(ui.res,visible.resonance+"/100");setText(ui.dark,displayedDark+"%");setText(ui.hp,visible.hp+"/100");
