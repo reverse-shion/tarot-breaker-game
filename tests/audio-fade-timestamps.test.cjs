@@ -168,3 +168,36 @@ test("hidden-tab pause remains immediate; resuming still fades within range", as
   assert.equal(h.bgm.paused, true);
   assert.equal(h.bgm.volume, 0);
 });
+
+test("map return holds silence for 550ms and fades the existing transport over three seconds", async () => {
+  for (const useGraph of [false, true]) {
+    const h = harness();
+    const gain = {gain: {value: 1}, connect() {}};
+    if (useGraph) {
+      h.window.AudioContext = class {
+        state = "running";
+        createGain() {return gain;}
+        createMediaElementSource(media) {
+          assert.equal(media, h.bgm);
+          return {connect() {}};
+        }
+      };
+      h.window.TarotAudio.prepareReturnOutput();
+    }
+    await h.start();
+    h.deliverAt(10320);
+    h.clock(11000);
+    const session = h.window.TarotAudio.beginEventSession();
+    session.holdSilent();
+    session.release({fadeIn: true});
+    const audible = () => h.bgm.volume * gain.gain.value;
+    assert.equal(audible(), 0);
+    h.deliverAt(11550);
+    assert.equal(audible(), 0);
+    h.deliverAt(13050);
+    assert.equal(audible(), .175);
+    h.deliverAt(14550);
+    assert.equal(audible(), .35);
+    assert.equal(h.counts().playCalls, 1);
+  }
+});

@@ -1,7 +1,4 @@
-/* Starroad field BGM: dialogue and manifestation stay audible.
- * Native hard mute occurs SYNCHRONOUSLY at the first abyss stain frame.
- * The user-started transport stays silent through combat, then returns during
- * the post-purification reply, BEFORE the map is revealed (iOS autoplay-safe). */
+/* Keep the field transport silent through combat and fade it in at map reveal. */
 (() => {
   'use strict';
   const OWNER = 'hoshisuna_caritas_prompt';
@@ -9,10 +6,17 @@
   let fieldReturned = false;
   let encounterSession = null;
 
-  function release() {
+  function primeReturnOutput() {
+    if (encounterActive) window.TarotAudio?.prepareReturnOutput?.();
+  }
+  window.addEventListener('pointerdown', primeReturnOutput, { capture:true, passive:true });
+  window.addEventListener('touchstart', primeReturnOutput, { capture:true, passive:true });
+  window.addEventListener('keydown', primeReturnOutput, true);
+
+  function release(fadeIn = false) {
     const session = encounterSession;
     encounterSession = null;
-    session?.release();
+    session?.release({ fadeIn });
   }
 
   function hardSilence() {
@@ -51,13 +55,10 @@
   // Resume from an in-progress battle without replaying the transition.
   window.addEventListener('tarot-breaker:hoshisuna-battle-start', hardSilence);
 
-  // The final post-purification battle reply is spoken while the battle UI
-  // still covers the map. Stop combat music first, then unmute the original
-  // already-running field transport so it leads into the map reveal.
   window.addEventListener('tarot-breaker:hoshisuna-field-return-cue', event => {
     if (event.detail?.source !== OWNER || !encounterActive || fieldReturned) return;
     fieldReturned = true;
-    release();
+    release(true);
   });
 
   window.addEventListener('tarot-breaker:interaction-end', event => {

@@ -27,6 +27,48 @@
   let fadeToken = 0;
   let eventSession = null;
 
+  // Only Starroad opts into this output. Keep the media element (and its
+  // playback position) while the independent return envelope survives taps,
+  // dialogue volume changes, and release of the encounter session.
+  let returnContext, returnGain;
+  let returnFrame = 0, returnLevel = 1, ordinaryVolume = 0;
+  function prepareReturnOutput() {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) return;
+    try {
+      returnContext ||= new Context();
+      const connect = () => {
+        if (returnGain || returnContext.state !== "running") return;
+        const gain = returnContext.createGain();
+        gain.gain.value = returnLevel * ordinaryVolume;
+        gain.connect(returnContext.destination);
+        returnContext.createMediaElementSource(bgm).connect(gain);
+        returnGain = gain;
+        bgm.volume = 1;
+      };
+      if (returnContext.state === "running") connect();
+      else returnContext.resume().then(connect).catch(() => {});
+    } catch { /* Native media volume provides the fallback. */ }
+  }
+
+  function setVolume(value) {
+    ordinaryVolume = value;
+    if (returnGain) returnGain.gain.value = value * returnLevel;
+    else bgm.volume = value * returnLevel;
+  }
+
+  function fadeInOnReturn() {
+    if (returnFrame) cancelAnimationFrame(returnFrame);
+    const start = performance.now() + 550;
+    const step = now => {
+      const t = Math.max(0, Math.min(1, (now - start) / 3000));
+      returnLevel = t * t * (3 - 2 * t);
+      setVolume(ordinaryVolume);
+      returnFrame = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    step(performance.now());
+  }
+
   function readPreference() {
     try {
       return localStorage.getItem(STORAGE_KEY) !== "0";
@@ -65,11 +107,11 @@
   function fadeTo(nextVolume, duration = FADE_MS, onComplete) {
     cancelFade();
     const token = fadeToken;
-    const from = bgm.volume;
+    const from = ordinaryVolume;
     const to = Math.max(0, Math.min(1, nextVolume));
 
     if (duration <= 0 || Math.abs(from - to) < 0.001) {
-      bgm.volume = to;
+      setVolume(to);
       onComplete?.();
       return;
     }
@@ -81,7 +123,7 @@
       // Clamp both interpolation progress and the HTMLMediaElement volume.
       const progress = Math.max(0, Math.min(1, (now - startedAt) / duration));
       const eased = 1 - Math.pow(1 - progress, 3);
-      bgm.volume = Math.max(0, Math.min(1, from + (to - from) * eased));
+      setVolume(Math.max(0, Math.min(1, from + (to - from) * eased)));
       if (progress < 1) {
         fadeFrame = requestAnimationFrame(step);
         return;
@@ -152,7 +194,7 @@
     if (immediate) {
       cancelFade();
       stopTransport();
-      bgm.volume = 0;
+      setVolume(0);
       return;
     }
     invalidatePlay();
@@ -175,6 +217,7 @@
   // Called synchronously by each map's accepted movement gesture. A hidden
   // legacy toggle preference must not prevent the requested map music starting.
   function startFromMovement() {
+    if (returnContext && returnContext.state !== "running") prepareReturnOutput();
     if (!enteredWorld) {
       enteredWorld = true;
       enabled = true;
@@ -245,7 +288,7 @@
       coefficientFrame = 0;
     };
     const apply = () => {
-      if (alive) bgm.volume = transportAvailable() && !silent && !failed ? targetVolume * level * silenceFactor : 0;
+      if (alive) setVolume(transportAvailable() && !silent && !failed ? targetVolume * level * silenceFactor : 0);
     };
     const tweenCoefficient = (value, duration, isSilence) => {
       if (!alive) return;
@@ -378,7 +421,7 @@
         if (!enabled) { token += 1; stopTransport(); }
         apply();
       },
-      release() {
+      release({ fadeIn = false } = {}) {
         if (!alive) return;
         token += 1;
         if (playAttempt) stopTransport();
@@ -389,8 +432,9 @@
         eventSession = null;
         // Event hard-mute must never leak into normal gameplay after release.
         // Normal gameplay regains its own entered/enabled transport intent.
+        if (fadeIn) fadeInOnReturn();
+        setVolume(transportAvailable() && !failed ? targetVolume : 0);
         bgm.muted = false;
-        bgm.volume = transportAvailable() && !failed ? targetVolume : 0;
         resumeBgm();
       },
     };
@@ -411,6 +455,7 @@
     setEnabled,
     startFromMovement,
     beginEventSession,
+    prepareReturnOutput,
     setCinematicLevel(value, duration = 0) { eventSession?.tweenCoefficient(value, duration, false); },
     setCinematicSilence(value, duration = 0) { eventSession?.tweenCoefficient(value ? 0 : 1, duration, true); },
   });
