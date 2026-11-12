@@ -35,7 +35,11 @@ test('free text advances once, pressure is paid, then consecutive writing is all
  settle(f);
  assert.equal(f.state().battle.turn,1);assert.ok(f.state().battle.hp<100);assert.equal(f.state().battle.resonance,35);
  assert.equal(persistentStore.get(LEGACY),'untouched legacy bytes');
- await write(f,root,'声が聞こえる。一緒に進もう').click();settle(f);
+ const secondSend=write(f,root,'声が聞こえる。一緒に進もう');
+ assert.equal(secondSend.disabled,false,'second action button disabled: '+JSON.stringify(f.state()));
+ await secondSend.click();
+ assert.equal(f.state().dialogueBusy,true,'second action should begin its Shion dialogue: '+JSON.stringify(f.state()));
+ settle(f);
  assert.equal(f.state().battle.turn,2);assert.equal(f.state().battle.lastEffect.approach,'reach');
  await write(f,root,'声が聞こえる。一緒に進もう').click();settle(f);
  assert.equal(f.state().battle.turn,3);assert.equal(f.state().battle.phase,'finisher');
