@@ -199,7 +199,7 @@ function restoreCheckpoint(){
   }
   if(battle.phase==="ending"){render();beginEnding();}
   else if(battle.phase==="defeat"){render();beginRetreat();}
-  else {render();playHeartVoiceOnce();}return true;
+  else render();return true;
  }catch(_){recoveryScreen();return true;}
 }
 function commitSpecialSelection(cardId,playbackMode){
