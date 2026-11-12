@@ -6,19 +6,46 @@
  'use strict';
  const RULES='tactical-v1';
  const OPTIONS=Object.freeze({...Base.READING_OPTIONS,
-  '不安':{title:'安心できる間合いを探る',text:'相手が安心していられる距離を探る。怖さを決めつけず、どこまで近づけるかを見極める。',shion:'近づかれるのが、今はつらいんだな。お前が立っていられる距離から、俺は話す。'},
-  '秘密':{title:'消えかけた声に耳を澄ます',text:'言葉を急かさず、声が届かない理由を探る。話したくないのか、闇に遮られているのかを見分ける。',shion:'言いかけた声が聞こえた。言えないことを迫りたいんじゃない。その声を、闇に消させたくない。'},
-  '無意識':{title:'残っている意志を探る',text:'沈黙のなかに残る意志を探る。次の一歩を代わりに決めず、相手の選択を待つ。',shion:'お前は、まだここに踏みとどまっている。その一歩をどうするか、俺はお前の言葉を聞きたい。'},
-  '忍耐':{title:'静かに支える',text:'距離を保って声を届ける。拒絶が強い時は安全に闇を解ける。アビスが声を遮っている時は、支えるだけでは闇は解けない。',shion:'急がなくていい。俺はここにいる。今、応じられる言葉からでいい。'},
-  '勇気':{title:'一歩踏み込む',text:'声が届く場所へ踏み込む。助けを求める声には大きく応えられる。明確な拒絶を押すと維持力を50失う。',shion:'その声を、確かに聞いた。俺も一歩踏み込む。届くところまで、この言葉を届ける！'},
-  '希望':{title:'願いを目印に届ける',text:'侵蝕をさらに5解く。その分、維持力を5多く使う。相手の未来は決めつけない。',shion:'先の道を俺が決めることはしない。それでも、今ここに小さな希望を置こう。'},
-  '癒し':{title:'傍らから届ける',text:'維持力の消耗を3抑える。拒絶を押して踏み込む時の50消耗は軽減できない。',shion:'お前を変えようとするより、まず俺の言葉を差し出す。受け取るかは、お前が選んでいい。'},
-  '願い':{title:'応答の余白を残す',text:'侵蝕を解けた時、共鳴がさらに5深まる。届かなかった同じ言葉を繰り返しても、共鳴は増えない。',shion:'今すぐ答えを決めなくていい。お前が応じられる場所に、この言葉を置く。'}
+  '不安':{title:'近づくことへの怖さを受け止める',text:'身を引く星獣に気づき、今の距離で話せるかを確かめる。相手が何を恐れているかは、まだ決めつけない。',shion:'……ここからなら、ゆっくり話せるか？'},
+  '秘密':{title:'途切れた声に耳を澄ます',text:'唸りや怒りの言葉に埋もれた声、アビスの侵蝕に遮られた言葉に耳を傾ける。',shion:'今、何か言おうとしただろ。途中までは聞こえた。'},
+  '無意識':{title:'踏みとどまる意志を信じる',text:'苦しみながらも自分を保とうとする星獣に目を向ける。まだ言葉を届ける相手がそこにいると読み、シオン自身の想いを伝える。',shion:'まだ、踏みとどまってるんだな。君と話がしたいんだ、俺は。アビスに呑まれたまま、終わってほしくない。'},
+  '忍耐':{title:'その場に留まる',text:'近づきたい気持ちを抑え、距離を保って待つ。拒絶が強いときに届きやすい。声をアビスに遮られているときは、待つだけでは闇を解けない。',shion:'……ここで待ってる。君の声を聞きながら、どうすればこの侵蝕を止められるか、考える。'},
+  '勇気':{title:'一歩踏み込む',text:'怖さを抱えたまま、声が届く場所へ一歩出る。明確な拒絶を押して踏み込むと、共鳴維持力を50失う。',shion:'一歩だけ、そっちへ行くよ。……もう少し近くで、君に伝えたい。'},
+  '希望':{title:'この道の先を思い描く',text:'今いる星砂の道を、闇が晴れたあとに一緒に歩きたいと伝える。届いたとき、闇侵蝕をさらに5解き、共鳴維持力を5多く使う。',shion:'闇が晴れたら、少し歩かないか。この道の先を、君と見てみたい。'},
+  '癒し':{title:'自分の怖さも打ち明ける',text:'相手の前で強く振る舞い続けず、シオン自身も怖がっていることを話す。通常の共鳴維持力の消耗を3抑える。',shion:'俺も怖い。アビスがこんなふうに暴走して……どうすれば止められるのか、まだ分からないんだ。'},
+  '願い':{title:'今してほしいことを尋ねる',text:'何が必要かを星獣に尋ねる。問いかけたあとは言葉を足さず、返事を待つ。闇を解けたとき共鳴がさらに5深まる。',shion:'俺に、どうしてほしい？'}
  });
  const OBSERVATIONS=Object.freeze({
-  closed:{speech:'……近づくでない。今は……答えられぬ。',clue:'星獣は身を引き、爪を立てて距離を保とうとしている。強く迫れば危険だ。',focus:['身を引くたび、闇が輪郭に張りつく。','拒絶の言葉は、まだ本人の声で聞こえる。','足が後ろへ退く。距離を保とうとしている。']},
-  storm:{speech:'……助け……声が……闇に……！',clue:'こちらへ顔を向けた。助けを求める声をアビスが遮る。支えて待つだけでは闇を解けない。',focus:['逃げる動きは止まった。こちらを見ている。','助けを求める声を、闇が遮っている。','足は止まり、前へ出ようともがいている。']},
-  wavering:{speech:'……まだ……歩きたい。だが、怖いのだ。',clue:'星獣は逃げずにこちらを見ている。支えても踏み込んでも届く。残りの維持力を見て選ぼう。',focus:['身を引かず、こちらを見ている。','恐れと願いが、同じ声で聞こえる。','自分の意志で踏みとどまっている。']}
+  closed:{
+   speech:'来るな。……グオオオ……お前たちの顔を見ているだけで、殺意が……。喰らってやる……。',
+   voices:[
+    '来るな。……グオオオ……お前たちの顔を見ているだけで、殺意が……。喰らってやる……。',
+    'ガァルル……消え、うせろ……ウォォ……。'
+   ],
+   clue:'星獣は身を引き、爪を立てている。近づくたび、唸り声が強くなる。',
+   focus:['身を引くたび、闇が輪郭に張りつく。','拒絶の言葉は、まだ本人の声で聞こえる。','足が後ろへ退く。距離を保とうとしている。']
+  },
+  storm:{
+   speech:'お前たちが死のうが……どうでもいい。',
+   voices:[
+    'お前たちが死のうが……どうでもいい。',
+    '……待て。今、私は……本当にそう思ったのか。この私が……？',
+    'アビスが……どうして、ここまで……。止まらぬ。憎しみが、何もかも……っ！',
+    '頼む。私の声が聞こえるなら……助けてくれ……！'
+   ],
+   clue:'星獣はこちらを向いている。何かを訴えようと口を開くが、そのたびに闇が喉元を覆う。',
+   focus:['逃げる動きは止まった。こちらを見ている。','助けを求める声を、闇が遮っている。','足は止まり、前へ出ようともがいている。']
+  },
+  wavering:{
+   speech:'お前たちの命も、自分の命さえ……惜しくなくなる。',
+   voices:[
+    'お前たちの命も、自分の命さえ……惜しくなくなる。このまま全部終われば、それでいいと……。',
+    'アビスに呑まれて……生きたいとさえ、思えなくなっていく。',
+    '怖いのだ。そんなことを、本気で思ってしまう。……私は、私でいられるのか。'
+   ],
+   clue:'星獣は目をそらさない。声を震わせながら、途切れそうになる言葉をつないでいる。',
+   focus:['身を引かず、こちらを見ている。','恐れと願いが、同じ声で聞こえる。','自分の意志で踏みとどまっている。']
+  }
  });
  // Endgame technique is not a random draw and not an extra card choice.
  // Every successful delivered reading contributes to three thematic affinities:
@@ -96,12 +123,22 @@
   n.phase=n.hp===0?'defeat':n.resonance===100&&n.dark<=25?'finisher':'read';
   return n;
  }
- function reaction(s,p){
-  if(p.misread)return '……近づくなと言った！ まだ、答えられぬのだ……！';
-  if(p.blocked)return '……聞こえて……いる。だが、この闇が……声を……！';
-  if(p.state==='closed')return '……その距離なら……お前の声が、聞こえる。';
-  if(p.state==='storm')return '……届いた。闇の向こうから、お前の声が……。';
-  return s.words[2]==='願い'?'……私が選んでよいのだな。……まだ、歩きたい。':'……怖さは残る。だが、もう一度、歩いてみたい。';
+ function reaction(s,p,{writtenShion=null}={}){
+  if(p.state==='closed')
+   return p.misread?'近づくなと言ったはずだ！　……その顔を、私に向けるな！'
+    :'……そこで止まれ。その先へ来るな。……グルル……。';
+  if(p.state==='storm')
+   return p.blocked?'……聞こえて……いる。だが、アビスが……止まらぬ……グオオオ……っ！'
+    :'……聞こえた。今、はっきりと……。頼む、もう少し……。';
+  if(s.words[2]==='希望')
+   return '……この道の先か。行きたい。だが……足が、まだ言うことを聞かぬ。';
+  if(s.words[2]==='願い')
+   return '……もう一度、お前の気持ちに触れたい。話してくれ……。';
+  // Free writing is not guaranteed to contain the authored confession of fear.
+  // Never make Caritas say "お前も怖いのか" unless Shion actually said so.
+  if(writtenShion!==null&&!/(俺も怖い|私も怖い|自分も怖い|僕も怖い|俺も恐れ|自分も恐れ|俺だって怖い|怖いんだ|怖かった)/u.test(writtenShion))
+   return '……少し、息がつける。だが……まだ、怖い。';
+  return '……お前も怖いのか。……そうか。私も、怖い。';
  }
  // Conservative prototype recognition, not an AI score or a claim of full intent understanding.
  // Negation/ambiguous prose is support; only an explicit forward invitation is reach.
@@ -113,7 +150,17 @@
   const route=/選ん|選ぶ|決め|待つ|待って/u.test(value)?'願い':/希望|願い|進もう/u.test(value)?'希望':'癒し';
   return {...s,words:[compass,reach?'勇気':'忍耐',route]};
  }
- function readingPages(s){return valid(s)?s.words.map(w=>OPTIONS[w].shion):[];}
+ function readingPages(s,{stormVoiceHeardThisTurn=false}={}){
+  if(!valid(s))return [];
+  const pages=s.words.map(w=>OPTIONS[w].shion);
+  if(s.words[0]==='秘密'){
+   const mood=Base.stateFor(s.dark);
+   pages[0]=mood==='closed'?"聞いてる。『来るな』って声も、ちゃんと届いてる。"
+    :mood==='storm'?(stormVoiceHeardThisTurn?"聞こえた。『頼む』って言ったよな。":"今、何か言おうとしただろ。途中までは聞こえた。")
+    :"……怖いんだな。アビスに呑まれて、自分の気持ちまで分からなくなるのが。";
+  }
+  return pages;
+ }
  function newGame(){return {...Base.newGame(),rules:RULES,finisherInfluence:emptyInfluence()};}
  function canSkill(s){return s.hp>0&&s.dark<=25&&Base.canSkill(s);}
  return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText,readingInfluence,finisherTechnique});
