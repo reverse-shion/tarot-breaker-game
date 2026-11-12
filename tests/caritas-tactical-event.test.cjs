@@ -25,6 +25,8 @@ function settle(f){
  f.pointer.advance();f.advanceTime(1050);
  while(f.state().dialogueBusy)f.pointer.advance();
  f.advanceTime(1050);
+ // On first entry into a new heart state, finish the newly authored star voice.
+ while(f.state().dialogueBusy)f.pointer.advance();
 }
 test('free text advances once, pressure is paid, then consecutive writing is allowed',async()=>{
  const {f,root,persistentStore}=setup();
@@ -103,7 +105,7 @@ test('third selection opens assembled reading without spending a turn; edit and 
  assert.equal(f.state().battle.words.filter(Boolean).length,3);
  select(2,1);
  assert.equal(root.querySelector('.cb-completion').hidden,false);
- assert.match(root.querySelector('.cb-completion-words').children[2].textContent,/受け取るか/);
+ assert.match(root.querySelector('.cb-completion-words').children[2].textContent,/俺も怖い/);
  const send=root.querySelector('.cb-completion-send');send.click();send.click();
  assert.equal(f.state().battle.turn,0,'must wait for shared dialogue');
  assert.equal(root.querySelector('.cb-completion').hidden,true);
