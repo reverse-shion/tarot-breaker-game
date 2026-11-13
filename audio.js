@@ -49,6 +49,9 @@
     if (returnFrame) cancelAnimationFrame(returnFrame);
     returnFrame = 0;
     returnLevel = 1;
+    // A return fade can be cancelled by a tab lifecycle event. Never leave
+    // the native muted gate permanently latched over normal map playback.
+    bgm.muted = false;
     setVolume(ordinaryVolume);
   }
 
@@ -231,7 +234,7 @@
       enabled = true;
       renderToggle();
     }
-    if (eventSession) eventSession.recoverTransport();
+    if (eventSession) eventSession.primeForReturn();
     else resumeBgm();
   }
 
@@ -331,6 +334,18 @@
     });
     const session = {
       capture,
+      // A direct encounter preview can reach combat before any map movement
+      // has started the native BGM. Prime that same map audio *silently* from
+      // a real combat/farewell gesture while iOS still permits playback.
+      primeForReturn() {
+        if (!alive || !transportAvailable()) return;
+        transportWanted = true;
+        bgm.muted = true;
+        silent = true;
+        silenceFactor = 0;
+        apply();
+        void playTransport();
+      },
       setBase(value) { if (!alive) return; targetVolume = Math.max(0, Math.min(1, Number(value) || 0)); apply(); },
       tweenCoefficient,
       setLevel(value) { if (!alive) return; cancelCoefficientFade(); level = Math.max(0, Math.min(1, Number(value) || 0)); apply(); },
@@ -440,8 +455,10 @@
       release({ fadeIn = false } = {}) {
         if (!alive) return;
         token += 1;
-        if (playAttempt) stopTransport();
-        else invalidatePlay();
+        // Do not kill an iOS-accepted but still pending play() when the map
+        // is about to return. Its promise may complete after the cue.
+        if (playAttempt && !fadeIn) stopTransport();
+        else if (!playAttempt) invalidatePlay();
         alive = false;
         cancelCoefficientFade();
         cancelFade();
