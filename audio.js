@@ -234,7 +234,7 @@
       enabled = true;
       renderToggle();
     }
-    if (eventSession) eventSession.primeForReturn();
+    if (eventSession) eventSession.resumeFromGesture();
     else resumeBgm();
   }
 
@@ -295,6 +295,7 @@
     let alive = true;
     let level = 1;
     let silent = false;
+    let explicitlyPaused = false;
     let token = 0;
     let failed = false;
     let transportWanted = !bgm.paused || Boolean(playAttempt);
@@ -337,11 +338,17 @@
       // A direct encounter preview can reach combat before any map movement
       // has started the native BGM. Prime that same map audio *silently* from
       // a real combat/farewell gesture while iOS still permits playback.
-      primeForReturn() {
-        if (!alive || !transportAvailable()) return;
+      resumeFromGesture() {
+        if (!alive || !transportAvailable() || explicitlyPaused) return;
+        if (!silent) {
+          // The map may have been deliberately revealed after a resume error:
+          // retry audibly without reapplying battle mute.
+          void this.recoverTransport();
+          return;
+        }
+        // Only a hard-muted combat blackout may prewarm for the next map.
         transportWanted = true;
         bgm.muted = true;
-        silent = true;
         silenceFactor = 0;
         apply();
         void playTransport();
@@ -356,6 +363,7 @@
         token += 1;
         cancelFade();
         transportWanted = false;
+        explicitlyPaused = true;
         stopTransport();
         bgm.muted = true;
         silent = true;
@@ -367,6 +375,7 @@
       // not depend on a fresh play() permission.
       holdSilent() {
         if (!alive) return false;
+        explicitlyPaused = false;
         cancelCoefficientFade();
         token += 1;
         cancelFade();
@@ -382,6 +391,7 @@
       // This preserves the captured return position without pausing transport.
       prepareSilent(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
+        explicitlyPaused = false;
         cancelCoefficientFade();
         token += 1;
         bgm.muted = true;
@@ -398,6 +408,7 @@
       // lost, report failure rather than silently relying on the next tap.
       revealSilent(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
+        explicitlyPaused = false;
         transportWanted = snapshot.playing;
         silent = false;
         silenceFactor = 1;
@@ -410,6 +421,7 @@
       },
       async resume(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
+        explicitlyPaused = false;
         const ownToken = ++token;
         transportWanted = snapshot.playing;
         bgm.muted = false;
