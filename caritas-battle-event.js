@@ -98,6 +98,9 @@ let pendingRegroupNext=null;
 let modalIndex=-1,readingOpen=false,deliveryMethod=null,committing=false,visualBattle=null,attempts=0;
 let modalReturnFocus=null; // Shared by card tap and modal keyboard handlers.
 let firstWrittenDelivered=false;
+let readingStepPending=false,readingStepAnimating=false;
+// Presentation-only record of which heart voices this encounter already spoke.
+let heartVoiceTurns=Object.create(null);
 let summaryEditing=false; // Presentation only; never persisted or used for scoring.
 // Presentation-only; no save state and no influence on battle arithmetic.
 const viewedReadingCards=new Set();
@@ -115,6 +118,32 @@ const replayStore=Object.freeze({
 const checkpointStore=transformationReplay?replayStore:localStorage;
 const runId=()=>globalThis.crypto?.randomUUID?.()||"caritas-"+Date.now()+"-"+Math.random().toString(36).slice(2);
 let record=S.create(battle,runId()),savedRaw=null,saveBlocked=false,recovery=false,retrySave=null;
+const HEART_VOICE_KEY="tb:dev:caritas:heart-voice:";
+function loadHeartVoiceTurns(){
+ heartVoiceTurns=Object.create(null);
+ try{
+  const value=JSON.parse(sessionStorage.getItem(HEART_VOICE_KEY+record.battleRunId)||"{}");
+  if(!value||typeof value!=="object"||Array.isArray(value))return;
+  for(const state of ["closed","storm","wavering"]){
+   if(Number.isInteger(value[state])&&value[state]>=0&&value[state]<=1000)heartVoiceTurns[state]=value[state];
+  }
+ }catch(_){ /* Private browsing leaves voice flags in memory for this run. */ }
+}
+function readingPagesForCurrent(s){
+ return tactical?C.readingPages(s,{stormVoiceHeardThisTurn:heartVoiceTurns.storm===s.turn}):C.readingPages(s);
+}
+function playHeartVoiceOnce(){
+ if(!tactical||story!=="battle"||dialogueBusy||suspended()||!(battle.phase==="read"||battle.phase==="finisher"))return false;
+ const state=C.stateFor(battle.dark);
+ if(state==="freed"||Object.prototype.hasOwnProperty.call(heartVoiceTurns,state))return false;
+ const voice=C.observation(battle).voices;
+ if(!Array.isArray(voice)||!voice.length)return false;
+ heartVoiceTurns[state]=battle.turn;
+ try{sessionStorage.setItem(HEART_VOICE_KEY+record.battleRunId,JSON.stringify(heartVoiceTurns));}catch(_){}
+ saySequence(voice.map(line=>["カリタス",line]),()=>render());
+ return true;
+}
+
 const specialLocked=()=>record.special.committed||saveBlocked||recovery;
 function getBattleView(){return visualBattle||battle;}
 function recoveryScreen(){
@@ -158,6 +187,7 @@ function restoreCheckpoint(){
   savedRaw=checkpointStore.getItem(SAVE_KEY);if(!savedRaw)return false;
   const data=JSON.parse(savedRaw);record=S.migrate(data,runId());
   firstWrittenDelivered=record.firstWrittenDelivered;aiCalls=record.aiCalls;
+  loadHeartVoiceTurns();
   if(!record.battle)return false;
   if(tactical&&record.battle.rules!==C.RULES)throw Error("tactical-save-mismatch");
   if(tactical&&record.battle.phase==="finisher"&&!C.canSkill(record.battle))throw Error("tactical-finisher-mismatch");
@@ -264,6 +294,7 @@ function beginBattle(){
  checkpoint();render();
  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-start"));
  if(!once){once=true;try{sessionStorage.setItem(onceKey,"1");}catch(_){}toast("月・力・星のカードをタップして意味を選ぼう");}
+ playHeartVoiceOnce();
 }
 const TECHNIQUES=Object.freeze({
  '18-the-moon':{name:'月',meaning:'分からない想いと向き合う',title:'星幻迷宮',chant:'星幻迷宮\nアストラル・ミラージュ！！',reading:'アストラル・ミラージュ',art:'./assets/battle/special/shioriel-18-astral-mirage.webp',shion:'俺には、まだ分からないことがある。だからこそ、お前の言葉を聞きたい。',shioriel:'シオン。見えない想いにも、光は届く。',reply:'……まだ言葉にできぬものがある。だが……隠すしかないと決めなくてもよいのかもしれぬ。'},
@@ -642,10 +673,22 @@ function saySequence(lines,callback,response=""){
  currentLine();
 }
 function advanceDialogue(){
- if(!dialogueBusy||suspended()||saveBlocked||recovery||story==="choice")return;
+ if(!dialogueBusy||suspended()||saveBlocked||recovery||story==="choice"||readingStepAnimating)return;
+ // The chosen Strength "勇気" makes Shion step, exactly once, AFTER
+ // that spoken line and BEFORE the Star line. World/camera remain unchanged.
+ if(readingStepPending&&dialogueIndex===1){
+  readingStepPending=false;readingStepAnimating=true;
+  root.dataset.readingStep="true";
+  setTimeout(()=>{
+   readingStepAnimating=false;
+   if(dialogueBusy&&!suspended())advanceDialogue();
+  },560);
+  return;
+ }
  dialogueIndex++;
  if(dialogueIndex<dialogueLines.length){currentLine();return;}
  dialogue.hide();dialogueBusy=false;dialogueLines=[];
+ readingStepPending=false;readingStepAnimating=false;
  root.dataset.dialogueBusy="false";root.dataset.actorSpeaking="none";
  caritasResponse="";renderCaritas();
  const callback=afterDialogue;afterDialogue=null;callback?.();
@@ -751,7 +794,7 @@ function start(){
                if(!manifestation.reveal()){recover("reveal interrupted");return;}
                story="manifested";root.dataset.phase="manifested";render();
                saySequence(REVEAL,()=>{
-                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;deliveryMethod=null;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};attempts++;root.hidden=false;
+                 battle=C.newGame();visualBattle=null;aiCalls=0;aiRetryAt=0;aiPanelOpen=false;deliveryMethod=null;aiPendingRequest=null;aiPendingText="";record={...S.create(battle,runId()),revision:record.revision,seenTechniques:record.seenTechniques,firstWrittenDelivered};heartVoiceTurns=Object.create(null);attempts++;root.hidden=false;
                   window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-transition-start",{detail:{source:OWNER}}));
                   stage("engulfing",2600,beginBattle);
                });
@@ -873,7 +916,7 @@ function renderCompletion(reading){
  ui.completionEdit.hidden=true; // Tap the filled card to edit directly.
  if(!ready){ui.completionWords.replaceChildren();setText(ui.completionForecast,"");return;}
  ui.completionWords.replaceChildren();
- for(const line of C.readingPages(battle))ui.completionWords.append(newEl("p","",line));
+ for(const line of readingPagesForCurrent(battle))ui.completionWords.append(newEl("p","",line));
  setText(ui.completionForecast,tacticalForecast(C.predict(battle)));
 }
 function render(){
@@ -957,7 +1000,10 @@ function render(){
  }
  setText(ui.wayHint,"書けなくても大丈夫。どちらの方法でも届けられます。");
  setText(ui.selectionReason,"解釈 "+chosenCount+"/3　"+(chosenCount===3?"3枚の言葉が揃いました":"カードをタップして意味を選ぶ"));
- setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,caritasDisplayText(C.STAGES[idx].clue));
+ if(tactical){
+  ui.speech.style.display="none";
+  setPhraseText(ui.clue,C.observation(visible).clue);
+ }else{setText(ui.speech,C.STAGES[idx].speech);setText(ui.clue,caritasDisplayText(C.STAGES[idx].clue));}
  cardBox.replaceChildren();
  for(let i=0;i<s.cards.length;i++){
   const card=s.cards[i],section=newEl("section","cb-card");
@@ -1216,7 +1262,7 @@ function deliverTacticalWritten(before,reading,data){
    visualBattle=before;
    // The deployed legacy API does not know tactical observations. Use its
    // Shion paraphrase, but keep the beast's state/response authored and consistent.
-   stage("word-strike",1050,()=>applyOutcome(selected,next,p));
+   stage("word-strike",1050,()=>applyOutcome(selected,next,p,{writtenShion:data.shion}));
   });
  },"written");
  render();
@@ -1234,8 +1280,10 @@ function perform(kind){
  // The selected three full meanings become one Shion reading in the main shared
  // dialogue UI (three short pages, never duplicated keyword recitation).
  committing=true;modalIndex=-1;readingOpen=false;render();
- const pages=C.readingPages(previous).map(line=>["シオン",line]);
+ const pages=readingPagesForCurrent(previous).map(line=>["シオン",line]);
  if(pages.length!==3){committing=false;readingOpen=true;render();return;}
+ readingStepPending=tactical&&previous.words[1]==="勇気";
+ root.dataset.readingStep="false";
  saySequence(pages,()=>{
    if(story!=="battle"||battle.turn!==previous.turn)return;
    const next=C.read(previous);
@@ -1245,16 +1293,17 @@ function perform(kind){
    });
  });
 }
-function applyOutcome(previous,next,p){
+function applyOutcome(previous,next,p,{writtenShion=null}={}){
  battle=next;visualBattle={...next,hp:previous.hp};story="battle";root.dataset.phase="battle";readingOpen=false;
  // Show the impact and both meters BEFORE Caritas reacts. Counterattack follows.
  render();
  const values=["闇−"+p.dark,"共鳴＋"+p.resonance];
  if(values.length)toast(values.join("　"));
- const reply=C.reaction(previous,p);
+ const reply=C.reaction(previous,p,{writtenShion});
+ root.dataset.beastResponse=tactical&&p.state==="wavering"?(previous.words[1]==="勇気"?"reach":"support"):"none";
  const replyLines=[["カリタス",reply]];
  if(tactical)toast(p.explanation+"　闇−"+p.dark+"／共鳴＋"+p.resonance);
- saySequence(replyLines,()=>{
+ const deliverReply=()=>saySequence(replyLines,()=>{
    if(p.hasCounter&&p.damage>0){
      root.dataset.counter="normal";root.dataset.ward="false";
      setText(ui.enemyCall,tactical?"アビスの圧力！":caritasDisplayName()+"の反撃！");
@@ -1262,12 +1311,17 @@ function applyOutcome(previous,next,p){
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
  },tactical&&(p.misread||p.blocked)?"":previous.words[2]);
+ // A question needs a beat of silence before the star beast answers.
+ if(tactical&&previous.words[2]==="願い")setTimeout(deliverReply,380);
+ else deliverReply();
 }
 function finalizeTurn(){
  visualBattle=null;story="battle";root.dataset.phase="battle";
+ root.dataset.readingStep="false";root.dataset.beastResponse="none";
  if(battle.phase==="defeat"){beginRetreat();return;}
  if(battle.phase==="ending"){beginEnding();return;}
  committing=false;readingOpen=false;deliveryMethod=null;aiPanelOpen=false;checkpoint();render();
+ playHeartVoiceOnce();
 }
 function beginRetreat(){
  if(story==="retreat"||story==="returning")return;

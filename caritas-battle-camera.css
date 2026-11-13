@@ -1,3 +1,37 @@
+/* Caritas heart-voice revision: small actor cues only; no map, camera or art edits.
+ * CSS translate composes with the existing idle/speech transform animations. */
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite{
+  translate:0 0;
+  transition:translate .56s ease-out;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-reading-step="true"] .cb-battle-world>.cb-shion-sprite{
+  translate:-14px 0;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-beast-response="support"][data-phase="battle"] .cb-battle-world>.cb-beast{
+  animation:cb-caritas-listen-support 2.2s ease-in-out both;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-beast-response="reach"][data-phase="battle"] .cb-battle-world>.cb-beast{
+  animation:cb-caritas-listen-reach 2.2s ease-in-out both;
+}
+@keyframes cb-caritas-listen-support{
+  0%{transform:translateY(0)}
+  55%{transform:translateY(1.8px)}
+  100%{transform:translateY(-2px)}
+}
+@keyframes cb-caritas-listen-reach{
+  0%{transform:translateX(0)}
+  28%{transform:translateX(-5px)}
+  100%{transform:translateX(1px)}
+}
+@media(prefers-reduced-motion:reduce){
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite{
+    transition:none;
+  }
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-beast-response][data-phase="battle"] .cb-battle-world>.cb-beast{
+    animation:none;
+  }
+}
+
 /* Existing HUD, controls, art and shared dialogue; opt-in A v0.2 framing only. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-frame,
 #game-shell #caritas-event[data-camera-layout="a02"][data-phase] .cb-frame{

@@ -49,6 +49,9 @@
     if (returnFrame) cancelAnimationFrame(returnFrame);
     returnFrame = 0;
     returnLevel = 1;
+    // A return fade can be cancelled by a tab lifecycle event. Never leave
+    // the native muted gate permanently latched over normal map playback.
+    bgm.muted = false;
     setVolume(ordinaryVolume);
   }
 
@@ -231,7 +234,7 @@
       enabled = true;
       renderToggle();
     }
-    if (eventSession) eventSession.recoverTransport();
+    if (eventSession) eventSession.resumeFromGesture();
     else resumeBgm();
   }
 
@@ -292,6 +295,7 @@
     let alive = true;
     let level = 1;
     let silent = false;
+    let explicitlyPaused = false;
     let token = 0;
     let failed = false;
     let transportWanted = !bgm.paused || Boolean(playAttempt);
@@ -331,6 +335,24 @@
     });
     const session = {
       capture,
+      // A direct encounter preview can reach combat before any map movement
+      // has started the native BGM. Prime that same map audio *silently* from
+      // a real combat/farewell gesture while iOS still permits playback.
+      resumeFromGesture() {
+        if (!alive || !transportAvailable() || explicitlyPaused) return;
+        if (!silent) {
+          // The map may have been deliberately revealed after a resume error:
+          // retry audibly without reapplying battle mute.
+          void this.recoverTransport();
+          return;
+        }
+        // Only a hard-muted combat blackout may prewarm for the next map.
+        transportWanted = true;
+        bgm.muted = true;
+        silenceFactor = 0;
+        apply();
+        void playTransport();
+      },
       setBase(value) { if (!alive) return; targetVolume = Math.max(0, Math.min(1, Number(value) || 0)); apply(); },
       tweenCoefficient,
       setLevel(value) { if (!alive) return; cancelCoefficientFade(); level = Math.max(0, Math.min(1, Number(value) || 0)); apply(); },
@@ -341,6 +363,7 @@
         token += 1;
         cancelFade();
         transportWanted = false;
+        explicitlyPaused = true;
         stopTransport();
         bgm.muted = true;
         silent = true;
@@ -352,6 +375,7 @@
       // not depend on a fresh play() permission.
       holdSilent() {
         if (!alive) return false;
+        explicitlyPaused = false;
         cancelCoefficientFade();
         token += 1;
         cancelFade();
@@ -367,6 +391,7 @@
       // This preserves the captured return position without pausing transport.
       prepareSilent(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
+        explicitlyPaused = false;
         cancelCoefficientFade();
         token += 1;
         bgm.muted = true;
@@ -383,6 +408,7 @@
       // lost, report failure rather than silently relying on the next tap.
       revealSilent(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
+        explicitlyPaused = false;
         transportWanted = snapshot.playing;
         silent = false;
         silenceFactor = 1;
@@ -395,6 +421,7 @@
       },
       async resume(snapshot) {
         if (!alive || snapshot?.source !== BGM_SRC) return false;
+        explicitlyPaused = false;
         const ownToken = ++token;
         transportWanted = snapshot.playing;
         bgm.muted = false;
@@ -440,8 +467,10 @@
       release({ fadeIn = false } = {}) {
         if (!alive) return;
         token += 1;
-        if (playAttempt) stopTransport();
-        else invalidatePlay();
+        // Do not kill an iOS-accepted but still pending play() when the map
+        // is about to return. Its promise may complete after the cue.
+        if (playAttempt && !fadeIn) stopTransport();
+        else if (!playAttempt) invalidatePlay();
         alive = false;
         cancelCoefficientFade();
         cancelFade();

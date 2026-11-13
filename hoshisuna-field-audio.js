@@ -7,7 +7,15 @@
   let encounterSession = null;
 
   function primeReturnOutput() {
-    if (encounterActive) window.TarotAudio?.prepareReturnOutput?.();
+    if (!encounterActive) return;
+    const audio = window.TarotAudio;
+    // A preview encounter can begin without the map movement that normally
+    // starts field music. Keep one native map track running silently during
+    // combat so the return cue never needs scripted autoplay on iPhone Safari.
+    // After return, each dialogue tap is also a genuine-gesture retry if iOS
+    // suspended that track while victory music was playing.
+    if (encounterSession || fieldReturned) audio?.startFromMovement?.();
+    else audio?.prepareReturnOutput?.();
   }
   window.addEventListener('pointerdown', primeReturnOutput, { capture:true, passive:true });
   window.addEventListener('touchstart', primeReturnOutput, { capture:true, passive:true });

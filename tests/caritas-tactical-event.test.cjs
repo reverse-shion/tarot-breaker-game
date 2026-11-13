@@ -22,9 +22,15 @@ function write(f,root,text){
  return root.querySelector('.cb-ai-send');
 }
 function settle(f){
- f.pointer.advance();f.advanceTime(1050);
- while(f.state().dialogueBusy)f.pointer.advance();
- f.advanceTime(1050);
+ // A "願い" reading now pauses before the star beast replies. Advance through
+ // dialogue, delayed reply, counterattack and any newly-entered heart voice.
+ for(let i=0;i<12;i++){
+  while(f.state().dialogueBusy)f.pointer.advance();
+  const current=f.state();
+  if(current.story==='battle'&&!current.committing&&!current.dialogueBusy)return;
+  f.advanceTime(1050);
+ }
+ throw new Error('tactical turn failed to settle: '+JSON.stringify(f.state()));
 }
 test('free text advances once, pressure is paid, then consecutive writing is allowed',async()=>{
  const {f,root,persistentStore}=setup();
@@ -45,7 +51,7 @@ test('repeated supportive writing cannot farm through the changed situation',asy
  const before=f.state().battle;await write(f,root,'助けるよ').click();settle(f);
  const after=f.state().battle;
  assert.equal(after.turn,before.turn+1);assert.equal(after.resonance,before.resonance);assert.equal(after.dark,before.dark);assert.ok(after.hp<before.hp);
- assert.match(f.lines.at(-1).text,/声を/);
+ assert.match(f.lines.at(-1).text,/アビスが……止まらぬ/);
 });
 test('duplicate and failed submissions do not consume an action or reward',async()=>{
  let finishRequest;const pending=new Promise(resolve=>{finishRequest=resolve;});
@@ -103,7 +109,7 @@ test('third selection opens assembled reading without spending a turn; edit and 
  assert.equal(f.state().battle.words.filter(Boolean).length,3);
  select(2,1);
  assert.equal(root.querySelector('.cb-completion').hidden,false);
- assert.match(root.querySelector('.cb-completion-words').children[2].textContent,/受け取るか/);
+ assert.match(root.querySelector('.cb-completion-words').children[2].textContent,/俺も怖い/);
  const send=root.querySelector('.cb-completion-send');send.click();send.click();
  assert.equal(f.state().battle.turn,0,'must wait for shared dialogue');
  assert.equal(root.querySelector('.cb-completion').hidden,true);
