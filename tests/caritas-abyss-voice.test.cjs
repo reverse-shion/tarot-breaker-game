@@ -83,6 +83,6 @@ test('presentation tracks voice per run, waits for Strength step, and keeps soun
  assert.match(event,/applyOutcome\(selected,next,p,\{writtenShion:data\.shion\}\)/);
  assert.match(event,/playHeartVoiceOnce\(\);/);
  assert.match(cameraCss,/data-reading-step="true"/);
- assert.match(html,/audio\.js\?v=20261110-d994-bgm-only&return=3/);
+ assert.match(html,/audio\.js\?v=20261110-d994-bgm-only&return=4/);
  assert.match(html,/caritas-tactical-core\.js\?v=2&ux=finisher-affinity-v1&voice=20261112/);
 });
