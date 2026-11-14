@@ -4,7 +4,7 @@
  'use strict';
  const qs=new URLSearchParams(location.search);
  if(qs.get('editor')!=='actors'||qs.get('camera')!=='a02'||qs.get('dev')!=='hoshisuna')return;
- const NEW_SHIORIEL='https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/a107c393f74d06017b201e8f89fd2f8c836d5fbd/assets/battle/character/shioriel.webp';
+ const NEW_SHIORIEL='./assets/battle/character/shioriel.webp';
  const KEY='tb.caritas.actor-editor.a02.v1';
  const defaults={shioriel:{x:1.35,y:7,h:61.5,w:41.5},shion:{x:1.57,y:8.5,h:51.5,w:28}};
  const clone=o=>JSON.parse(JSON.stringify(o));

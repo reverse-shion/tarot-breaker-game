@@ -61,14 +61,14 @@
  left:calc(var(--cb-camera-unit)*1.28 - var(--cb-world-height)*.309)!important;
  right:auto!important;top:auto!important;bottom:6%!important;
  width:calc(var(--cb-world-height)*.618)!important;height:84%!important;
- background:url('./assets/battle/camera/shioriel.webp') center bottom / contain no-repeat;
+ background:url('./assets/battle/character/shioriel.webp') center bottom / contain no-repeat;
  image-rendering:auto;z-index:8;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
  left:calc(var(--cb-camera-unit)*1.60 - var(--cb-world-height)*.223)!important;
  right:auto!important;top:auto!important;bottom:6%!important;
  width:calc(var(--cb-world-height)*.446)!important;height:82%!important;
- background:url('./assets/battle/camera/shion.webp') center bottom / contain no-repeat;
+ background:url('./assets/battle/character/shion.webp') center bottom / contain no-repeat;
  image-rendering:auto;z-index:9;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-beast,.cb-abyss,.cb-release){
@@ -244,7 +244,7 @@
  right:auto!important;top:auto!important;bottom:13%!important;
  width:calc(var(--cb-world-height)*.24)!important;
  height:40%!important;min-width:0!important;min-height:0!important;
- background-image:url('./assets/battle/camera/shioriel.webp')!important;
+ background-image:url('./assets/battle/character/shioriel.webp')!important;
  background-position:center bottom!important;
  background-size:contain!important;background-repeat:no-repeat!important;
  -webkit-mask-image:none!important;mask-image:none!important;
@@ -257,7 +257,7 @@
  right:auto!important;top:auto!important;bottom:13%!important;
  width:calc(var(--cb-world-height)*.20)!important;
  height:37%!important;min-width:0!important;min-height:0!important;
- background-image:url('./assets/battle/camera/shion.webp')!important;
+ background-image:url('./assets/battle/character/shion.webp')!important;
  background-position:center bottom!important;
  background-size:contain!important;background-repeat:no-repeat!important;
  -webkit-mask-image:none!important;mask-image:none!important;
@@ -274,7 +274,7 @@
  bottom:7%!important;
  width:calc(var(--cb-world-height)*.415)!important;
  height:61.5%!important;
- background-image:url('https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/a107c393f74d06017b201e8f89fd2f8c836d5fbd/assets/battle/character/shioriel.webp')!important;
+ background-image:url('./assets/battle/character/shioriel.webp')!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
  left:calc(var(--cb-camera-unit)*1.57 - var(--cb-world-height)*.14)!important;
@@ -813,10 +813,10 @@
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel{
   animation-delay:-1.35s!important;
-  --cb-actor-art:url('https://raw.githubusercontent.com/reverse-shion/tarot-breaker-game/a107c393f74d06017b201e8f89fd2f8c836d5fbd/assets/battle/character/shioriel.webp');
+  --cb-actor-art:url('./assets/battle/character/shioriel.webp');
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite{
-  --cb-actor-art:url('./assets/battle/camera/shion.webp');
+  --cb-actor-art:url('./assets/battle/character/shion.webp');
 }
 @keyframes cb-actor-idle-breathe{
   0%,100%{transform:translate3d(0,0,0)}
