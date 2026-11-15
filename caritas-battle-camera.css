@@ -947,11 +947,12 @@
     opacity:.4!important;
   }
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-angel{
+    animation:none!important;transform:none!important;
     filter:sepia(1) saturate(6) hue-rotate(312deg) brightness(1.25)
       drop-shadow(0 0 18px #ff4252)!important;
   }
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-angel::after{
-    opacity:.52!important;
+    animation:none!important;opacity:.52!important;
   }
 }
 
