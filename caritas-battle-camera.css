@@ -267,20 +267,21 @@
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-beast,.cb-abyss,.cb-release){
  bottom:12%!important;height:58%!important;
 }
-/* A v0.6: approved positions sampled from the iPhone on-screen editor.
-   Values use precisely the same x/y/h/w convention as the dev editor. */
+/* The A02 editor adjusts these anchors and scales both portrait dimensions together. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-angel{
- left:calc(var(--cb-camera-unit)*1.35 - var(--cb-world-height)*.2075)!important;
- bottom:7%!important;
- width:calc(var(--cb-world-height)*.415)!important;
- height:61.5%!important;
- background-image:url('./assets/battle/character/shioriel.webp')!important;
+ --cb-portrait-x:1.35;--cb-portrait-y:7;
+ --cb-portrait-width:.415;--cb-portrait-height:61.5%;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
- left:calc(var(--cb-camera-unit)*1.57 - var(--cb-world-height)*.14)!important;
- bottom:8.5%!important;
- width:calc(var(--cb-world-height)*.28)!important;
- height:51.5%!important;
+ --cb-portrait-x:1.59;--cb-portrait-y:7.5;
+ --cb-portrait-width:.364;--cb-portrait-height:66.95%;
+}
+#game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-angel,.cb-shion-sprite){
+ --cb-portrait-render-width:calc(var(--cb-world-height) * var(--cb-portrait-width) * var(--cb-portrait-scale,1));
+ left:calc(var(--cb-camera-unit) * var(--cb-portrait-x) - var(--cb-portrait-render-width) / 2)!important;
+ bottom:calc(var(--cb-portrait-y) * 1%)!important;
+ width:var(--cb-portrait-render-width)!important;
+ height:calc(var(--cb-portrait-height) * var(--cb-portrait-scale,1))!important;
 }
 /* Completion is a full-screen scrolling reading, not the cropped command drawer. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-completion:not([hidden]){
@@ -907,10 +908,10 @@
   filter:brightness(1.2) drop-shadow(0 0 12px #8ef4e7);
 }
 /* Keep camera debug editor unanimated for precise touch placement. */
-#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel){
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor-open="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel){
   animation:none!important;
 }
-#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor-open="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
   animation:none!important;opacity:0!important;
 }
 @media(prefers-reduced-motion:reduce){

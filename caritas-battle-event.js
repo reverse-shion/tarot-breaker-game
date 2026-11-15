@@ -7,6 +7,7 @@ if(!location.pathname.endsWith("/hoshisuna-main.html")||params.get("dev")!=="hos
 // previously saved battle resume semantics; replay never reads or writes them.
 const previewMode=params.getAll("preview").length===1?params.get("preview"):null;
 const encounterPreview=previewMode==="encounter";
+const actorEditorPreview=encounterPreview&&params.get("editor")==="actors";
 const transformationReplay=previewMode==="manifestation"||encounterPreview;
 const C=window.CaritasBattleCore, S=window.CaritasSpecialState;
 const tactical=C?.RULES==='tactical-v1';
@@ -1626,7 +1627,10 @@ function init(){
    onAdvance:advanceDialogue
  });
  preloadSpecialArt();
- if(!restoreCheckpoint())render();
+ // The portrait editor opens on the live reading frame with the encounter's in-memory store.
+ if(actorEditorPreview&&ui.camera){
+  busy=true;lock();story="battle";root.hidden=false;render();
+ }else if(!restoreCheckpoint())render();
  if(!transformationReplay)window.addEventListener("storage",event=>{if(event.key===SAVE_KEY&&event.newValue!==savedRaw)recoveryScreen();});
  timer=setInterval(tick,160);
  document.addEventListener("visibilitychange",()=>{if(suspended())pauseCinematic();else resumeCinematic();});

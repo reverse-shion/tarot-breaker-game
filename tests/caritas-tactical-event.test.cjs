@@ -32,6 +32,25 @@ function settle(f){
  }
  throw new Error('tactical turn failed to settle: '+JSON.stringify(f.state()));
 }
+test('portrait editor opens on the real A02 battle without touching the encounter checkpoint',async()=>{
+ const previous=S.create({...C.newGame(),dark:73},'existing-battle');
+ const bytes=JSON.stringify(previous);
+ const persistentStore=new Map([[KEY,bytes]]);
+ const preview='?dev=hoshisuna&battle=tactical&camera=a02&preview=encounter';
+ const cameraMount=()=>({update(){}});
+ const {f,root}=setup({locationSearch:preview+'&editor=actors',cameraMount,persistentStore});
+ assert.equal(root.hidden,false);
+ assert.equal(f.state().story,'battle');
+ assert.equal(f.state().battle.dark,100);
+ assert.equal(f.state().dialogueBusy,false);
+ await write(f,root,'怖ければ、ここで待つよ').click();
+ settle(f);
+ assert.equal(f.state().battle.turn,1);
+ assert.deepEqual([...persistentStore],[[KEY,bytes]]);
+ const ordinaryPreview=setup({locationSearch:preview,cameraMount,persistentStore});
+ assert.equal(ordinaryPreview.root.hidden,true);
+ assert.equal(ordinaryPreview.f.state().story,'idle');
+});
 test('free text advances once, pressure is paid, then consecutive writing is allowed',async()=>{
  const {f,root,persistentStore}=setup();
  const send=write(f,root,'怖ければ、ここで待つよ');await send.click();

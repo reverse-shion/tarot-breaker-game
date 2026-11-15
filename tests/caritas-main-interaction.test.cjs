@@ -20,7 +20,7 @@ class El{
  flatten(){return [this,...this.children.flatMap(c=>c.flatten())]}
  querySelector(q){return this.flatten().find(e=>q[0]==='#'?e.id===q.slice(1):e.className?.split(' ').includes(q.slice(1)))||null}
 }
-function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false,realDialogue=false,visualViewport}={}){
+function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFails=false,imageMode='failed',waapi=false,realDialogue=false,visualViewport,locationSearch,cameraMount}={}){
  const shell=new El('main'),creature=new El('div'),body=new El('body');body.classList.add('scene-ready');
  const layer=new El('section'),advance=new El('button'),speaker=new El('span'),speechText=new El('span'),next=new El('span');
  layer.id='dialogue-layer';layer.className='tb-dialogue-layer';layer.hidden=true;
@@ -56,6 +56,8 @@ function fixture({reduced=false,persistentStore=new Map(),fetchReply,storageFail
   localStorage:{getItem:k=>persistentStore.get(k)||null,setItem:(k,v)=>{if(storageFails)throw Error("quota");persistentStore.set(k,v)},removeItem:k=>persistentStore.delete(k)},setInterval:cb=>(intervals.push(cb),intervals.length),
   requestAnimationFrame:fn=>{fn();return 1},clearInterval(){},setTimeout:(cb,ms)=>{tasks.set(++id,{cb,at:now+ms});return id},clearTimeout:n=>tasks.delete(n),performance:{now:()=>now},URLSearchParams,console};
  const js=fs.readFileSync(path.join(__dirname,'../caritas-battle-event.js'),'utf8');
+ if(locationSearch) sandbox.location.search=locationSearch;
+ if(cameraMount) window.CaritasBattleCamera={mount:cameraMount};
  if(realDialogue){delete window.TarotDialogueUI;vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../shared-dialogue.js'),'utf8'),sandbox);}
  vm.runInNewContext(js,sandbox,{timeout:5000});
  const advanceTime=ms=>{const target=now+ms;for(;;){const due=[...tasks].filter(([,v])=>v.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;now=due[1].at;tasks.delete(due[0]);due[1].cb();}now=target};
