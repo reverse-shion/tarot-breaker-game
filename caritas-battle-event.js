@@ -277,10 +277,15 @@ function stage(name,duration,next){
 }
 function playReadingImpact(hasDamage,apply){
  if(!tactical||!ui.camera){stage("word-strike",1050,apply);return;}
- stage("word-card",180,()=>stage("word-resonance",560,()=>{
-  if(hasDamage)stage("word-strike",1050,apply);
-  else apply();
- }));
+ const finish=()=>{if(!specialLocked())apply();};
+ stage("word-card",180,()=>{
+  if(specialLocked())return;
+  stage("word-resonance",560,()=>{
+   if(specialLocked())return;
+   if(hasDamage)stage("word-strike",1050,finish);
+   else finish();
+  });
+ });
 }
 function pauseCinematic(){
  pauseSpecialEffect();
@@ -960,6 +965,7 @@ function render(){
  cardBox.hidden=!(readingOpen&&reading)||tactical&&finisher;
  if(story==="battle"&&s.phase==="finisher")ui.controls.hidden=false;
  const displayedDark=visible.dark;
+ const displayedMood=C.stateFor(displayedDark);
  root.style.setProperty?.('--cb-field-corruption',String(displayedDark/100));
  setText(ui.enemyName,caritasDisplayName());ui.beast.alt=caritasDisplayName();
  root.setAttribute("aria-label",caritasDisplayName()+" 心象共鳴");
@@ -973,7 +979,7 @@ function render(){
  setText(ui.resMood,writtenReward&&s.aiInsightTurn===s.turn
   ?"星響：＋"+(writtenReward.bonus+writtenReward.insight)+"（言葉"+writtenReward.bonus+"／理解"+writtenReward.insight+"）"
   :visible.resonance===100?"星響：満ちた":visible.resonance>=70?"星響：共鳴が深まる":visible.resonance>=30?"星響：光が届き始めた":"星響：声を待っている");
- setText(ui.mood,"心象："+C.STATES[C.stateFor(s.dark)]);
+ setText(ui.mood,"心象："+C.STATES[displayedMood]);
  if(tactical){
   const obs=C.observation(visible);
   setPhraseText(ui.observation,obs.clue);setPhraseText(ui.tarotObservation,obs.clue);setPhraseText(ui.writingObservation,obs.clue);
@@ -986,7 +992,7 @@ function render(){
   renderWritingIntent();
  }
  ui.resBar.style.width=visible.resonance+"%";ui.darkBar.style.width=displayedDark+"%";ui.hpBar.style.width=visible.hp+"%";
- root.dataset.mood=C.stateFor(s.dark);
+ root.dataset.mood=displayedMood;
  const p=C.predict(s),idx=C.stateFor(s.dark)==="closed"?0:C.stateFor(s.dark)==="storm"?1:2;
  if(tactical)setText(ui.tacticalPreview,tacticalForecast(p));
  const chosenCount=s.words.filter(Boolean).length;
