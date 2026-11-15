@@ -45,7 +45,7 @@
     const defaults = Object.fromEntries(names.map(name => {
       const style = getComputedStyle(actors[name]);
       return [name, {
-        scale: 100,
+        scale: Math.round(Number(style.getPropertyValue('--cb-portrait-scale') || 1) * 100),
         x: Number(style.getPropertyValue('--cb-portrait-x')),
         y: Number(style.getPropertyValue('--cb-portrait-y'))
       }];
@@ -219,7 +219,7 @@
     }
 
     update();
-    setOpen(true);
+    setOpen(params.get('panel') !== 'closed');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });

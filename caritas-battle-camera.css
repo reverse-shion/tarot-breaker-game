@@ -269,11 +269,11 @@
 }
 /* The A02 editor adjusts these anchors and scales both portrait dimensions together. */
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-angel{
- --cb-portrait-x:1.35;--cb-portrait-y:7;
+ --cb-portrait-x:1.35;--cb-portrait-y:10.5;
  --cb-portrait-width:.415;--cb-portrait-height:61.5%;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
- --cb-portrait-x:1.59;--cb-portrait-y:7.5;
+ --cb-portrait-x:1.62;--cb-portrait-y:10;--cb-portrait-scale:1.08;
  --cb-portrait-width:.364;--cb-portrait-height:66.95%;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-angel,.cb-shion-sprite){
