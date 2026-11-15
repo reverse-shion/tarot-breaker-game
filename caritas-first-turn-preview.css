@@ -270,11 +270,10 @@ meter::-moz-meter-bar { background: var(--fill); border-radius: 10px; }
   border-radius: 3px 7px 7px 3px;
   line-height: 1.6;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
 }
 .dialogue:not(:has(.speaker:not(:empty), .line:not(:empty), .clue:not(:empty))) { display: none; }
 .speaker { font-size: .75rem; color: var(--gold); }
-.line { margin-block: 3px 0; font-size: .9375rem; }
+.line { margin-block: 3px 0; font-size: .9375rem; white-space: pre-wrap; }
 .clue, .epilogue { color: #d9d5e7; font-size: .8125rem; }
 .line:not(:empty) + .clue { margin-top: 5px; }
 
