@@ -909,7 +909,7 @@ test('all cards use exact solo dialogue and one dual page before art, then disti
   },
   '08-strength':{
    shion:'少し、俺たちにも預けてくれ。',
-   shioriel:'シオン。次の波は、わたしの翼で受けよう。',
+   shioriel:'シオン。どんな攻撃でも私の翼で受けよう。',
    chant:'星獣咆哮\nアストラル・ブレイヴ！！',
    caritas:'……預けるのは、負けだと思っていた。……こんなに、息が楽になるのか。'
   },

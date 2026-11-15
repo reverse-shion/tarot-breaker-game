@@ -307,7 +307,7 @@ const TECHNIQUES=Object.freeze({
  '08-strength':{
   name:'力',meaning:'弱さを責めず向き合い方を選ぶ',title:'星獣咆哮',chant:'星獣咆哮\nアストラル・ブレイヴ！！',reading:'アストラル・ブレイヴ',art:'./assets/battle/special/shioriel-08-astral-brave.webp',
   shion:'少し、俺たちにも預けてくれ。',
-  shioriel:'シオン。次の波は、わたしの翼で受けよう。',
+  shioriel:'シオン。どんな攻撃でも私の翼で受けよう。',
   reply:'……預けるのは、負けだと思っていた。……こんなに、息が楽になるのか。'
  },
  '17-the-star':{
