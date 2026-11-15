@@ -21,10 +21,10 @@
   window.addEventListener('touchstart', primeReturnOutput, { capture:true, passive:true });
   window.addEventListener('keydown', primeReturnOutput, true);
 
-  function release(fadeIn = false) {
+  function release(options) {
     const session = encounterSession;
     encounterSession = null;
-    session?.release({ fadeIn });
+    session?.release(options);
   }
 
   function hardSilence() {
@@ -66,7 +66,7 @@
   window.addEventListener('tarot-breaker:hoshisuna-field-return-cue', event => {
     if (event.detail?.source !== OWNER || !encounterActive || fieldReturned) return;
     fieldReturned = true;
-    release(true);
+    release(event.detail.restart ? { restart:true } : { fadeIn:true });
   });
 
   window.addEventListener('tarot-breaker:interaction-end', event => {
@@ -75,7 +75,8 @@
     fieldReturned = false;
     release();
   });
-  window.addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', event => {
+    if (event.persisted) return; // Keep the muted session across a back/forward cache visit.
     encounterActive = false;
     release();
   });

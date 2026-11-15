@@ -6,9 +6,9 @@ const vm=require('node:vm');
 const root=path.join(__dirname,'..');
 const OWNER='hoshisuna_caritas_prompt';
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function fixture({readyState=4,deferred=false}={}){
+function fixture({readyState=4,deferred=false,webAudio=false}={}){
  const win=new EventTarget(),doc=new EventTarget();doc.hidden=false;
- let plays=0,pauses=0,music;const resolvers=[];
+ let plays=0,pauses=0,music,now=0,frameId=0;const resolvers=[],frames=new Map();
  class NativeAudio{
   constructor(src){this.src=src;this.loop=false;this.muted=false;this.volume=1;
    this.paused=true;this.readyState=readyState;this.currentTime=0;this.events={};music=this;}
@@ -19,15 +19,25 @@ function fixture({readyState=4,deferred=false}={}){
   pause(){pauses++;this.paused=true;}
  }
  const window={TarotAudio:{enabled:true},addEventListener:win.addEventListener.bind(win)};
+ const ramps=[];
+ if(webAudio)window.AudioContext=class{
+  constructor(){this.currentTime=5;this.state='suspended';this.destination={};}
+  resume(){this.state='running';return Promise.resolve();}
+  createGain(){return {connect(){},gain:{value:0,cancelScheduledValues(){},setValueAtTime(){},
+   linearRampToValueAtTime:(value,time)=>ramps.push([value,time])}};}
+  createMediaElementSource(){return {connect(){}};}
+ };
  const document={get hidden(){return doc.hidden;},addEventListener:doc.addEventListener.bind(doc)};
  vm.runInNewContext(fs.readFileSync(path.join(root,'hoshisuna-victory-audio.js'),'utf8'),
-  {window,document,Audio:NativeAudio,console});
- function emit(type,source){
+  {window,document,Audio:NativeAudio,console,performance:{now:()=>now},
+   requestAnimationFrame:fn=>{frames.set(++frameId,fn);return frameId;},cancelAnimationFrame:id=>frames.delete(id)});
+ function emit(type,source,detail={}){
   const e=new Event(type);
-  if(source!==undefined)Object.defineProperty(e,'detail',{value:{source}});
+  if(source!==undefined)Object.defineProperty(e,'detail',{value:{source,...detail}});
   win.dispatchEvent(e);
  }
- return {emit,doc,music,counts:()=>({plays,pauses}),
+ return {emit,doc,music,ramps,counts:()=>({plays,pauses}),
+  frame(at){now=at;const callbacks=[...frames.values()];frames.clear();for(const fn of callbacks)fn(at);},
   resolve(){for(const fn of resolvers.splice(0))fn();}};
 }
 
@@ -64,6 +74,37 @@ test('purification restarts from the first note exactly once and map return stop
  assert.equal(f.counts().plays,1);
  f.emit('tarot-breaker:hoshisuna-victory-stop',OWNER);
  assert.equal(f.music.muted,true);
+ assert.equal(f.music.paused,true);
+});
+
+test('the victory handoff fades from the current gain to zero before release',async()=>{
+ const f=fixture();
+ f.emit('tarot-breaker:interaction-start',OWNER);
+ f.emit('tarot-breaker:hoshisuna-battle-start');
+ f.emit('pointerdown');await flush();
+ f.emit('tarot-breaker:hoshisuna-victory-start',OWNER);
+ f.emit('tarot-breaker:hoshisuna-victory-fade',OWNER,{duration:1200});
+ f.frame(600);
+ assert.equal(f.music.volume,.21);
+ f.emit('pointerdown');await flush();
+ assert.equal(f.music.volume,.21,'a gesture during fade does not restore full volume');
+ f.frame(1200);
+ assert.equal(f.music.volume,0);
+ f.emit('tarot-breaker:hoshisuna-victory-stop',OWNER);
+ assert.equal(f.music.paused,true);
+ assert.equal(f.music.muted,true);
+});
+
+test('a gesture-unlocked audio graph schedules the fade at the audio clock',async()=>{
+ const f=fixture({webAudio:true});
+ f.emit('tarot-breaker:interaction-start',OWNER);
+ f.emit('tarot-breaker:hoshisuna-battle-start');
+ f.emit('pointerdown');await flush();
+ f.emit('tarot-breaker:hoshisuna-victory-start',OWNER);
+ f.emit('tarot-breaker:hoshisuna-victory-fade',OWNER,{duration:1200});
+ assert.equal(f.music.volume,1,'the gain node owns volume when the graph is ready');
+ assert.deepEqual(f.ramps,[[0,6.2]]);
+ f.emit('tarot-breaker:hoshisuna-victory-stop',OWNER);
  assert.equal(f.music.paused,true);
 });
 

@@ -66,8 +66,8 @@ function harness({ delayedPlay = false } = {}) {
   };
   vm.runInNewContext(audioSource, sandbox, {filename:'audio.js'});
   vm.runInNewContext(fieldSource, sandbox, {filename:'hoshisuna-field-audio.js'});
-  function emit(type, {source, target='window'} = {}) {
-    for (const fn of listeners[target].get(type) || []) fn(source ? {type,detail:{source}}:{type});
+  function emit(type, {source, target='window', ...detail} = {}) {
+    for (const fn of listeners[target].get(type) || []) fn(source ? {type,detail:{source,...detail}}:{type,...detail});
   }
   function frame(at) {
     now = at;
@@ -182,4 +182,44 @@ test('a suspended return fade never leaves native map music permanently muted',a
   await h.flush();
   h.frame(20400);
   assert(h.audible()>0, 'regular music resumes rather than staying hard-muted');
+});
+
+
+test('tactical victory restarts the existing field transport once at map reveal',async()=>{
+  const h=harness();
+  h.emit('tarot-breaker:interaction-start',{source:OWNER});
+  h.emit('tarot-breaker:hoshisuna-battle-start');
+  h.emit('pointerdown');await h.flush();
+  h.track.currentTime=45;
+  h.track.seeking=true;
+  h.emit('tarot-breaker:hoshisuna-field-return-cue',{source:OWNER,restart:true});
+  assert.equal(h.track.currentTime,0);
+  assert.equal(h.audible(),0,'old audio stays muted until seek completes');
+  h.track.seeking=false;
+  h.track.listeners.get('seeked')();
+  assert.equal(h.audible(),.16,'the first note is audible without the late-return delay');
+  h.track.currentTime=4;
+  h.emit('tarot-breaker:hoshisuna-field-return-cue',{source:OWNER,restart:true});
+  h.emit('tarot-breaker:interaction-end',{source:OWNER});
+  assert.equal(h.track.currentTime,4);
+  assert.equal(h.track.playCalls,1);
+});
+
+test('tactical return preserves an accepted native play and waits for metadata',async()=>{
+  const h=harness({delayedPlay:true});
+  h.emit('tarot-breaker:interaction-start',{source:OWNER});
+  h.emit('tarot-breaker:hoshisuna-battle-start');
+  h.emit('pointerdown');
+  h.track.currentTime=12;h.track.readyState=0;
+  h.emit('tarot-breaker:hoshisuna-field-return-cue',{source:OWNER,restart:true});
+  assert.equal(h.track.muted,true);
+  assert.equal(h.track.currentTime,12);
+  h.track.readyState=1;
+  h.track.listeners.get('loadedmetadata')();
+  assert.equal(h.track.currentTime,0);
+  assert.equal(h.track.muted,true);
+  h.resolvePlay();await h.flush();
+  assert.equal(h.track.currentTime,0);
+  assert.equal(h.audible(),.16);
+  assert.equal(h.track.playCalls,1);
 });

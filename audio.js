@@ -35,6 +35,7 @@
   let returnFrame = 0;
   let returnLevel = 1;
   let ordinaryVolume = 0;
+  let returnOpening = null;
 
   function prepareReturnOutput() {
     // Compatibility for encounter callers. Normal field music needs no reroute.
@@ -53,6 +54,23 @@
     // the native muted gate permanently latched over normal map playback.
     bgm.muted = false;
     setVolume(ordinaryVolume);
+  }
+
+  function revealReturnOpening() {
+    if (!returnOpening || !transportAvailable()) return;
+    if (returnOpening === "seek") {
+      if (Number.isFinite(bgm.readyState) && bgm.readyState < 1) return;
+      try {
+        bgm.currentTime = 0;
+        returnOpening = "reveal";
+      } catch { return; }
+    }
+    if (bgm.seeking || bgm.paused || playAttempt) return;
+    returnOpening = null;
+    bgm.muted = false;
+  }
+  for (const event of ["loadedmetadata", "canplay", "seeked"]) {
+    bgm.addEventListener(event, revealReturnOpening);
   }
 
   function fadeInOnReturn() {
@@ -190,11 +208,13 @@
     // reused. Its queued pause must not win before the promise continuation.
     if (!bgm.paused && !playAttempt) {
       transportAuthorized = true;
+      revealReturnOpening();
       fadeTo(targetVolume);
       return;
     }
     const played = await playTransport();
     if (!played || eventSession || !transportAvailable()) return;
+    revealReturnOpening();
     fadeTo(targetVolume);
   }
 
@@ -215,7 +235,7 @@
     renderToggle();
     if (!enabled) {
       cancelReturnFade();
-      bgm.muted = false;
+      bgm.muted = Boolean(returnOpening);
     }
     if (eventSession) {
       eventSession.userChanged();
@@ -253,14 +273,14 @@
     if (eventSession) eventSession.suspendTransport();
     else {
       cancelReturnFade();
-      bgm.muted = false;
+      bgm.muted = Boolean(returnOpening);
       pauseBgm(true);
     }
   }
   function recoverTransport() {
     if (eventSession) eventSession.recoverTransport();
     else {
-      bgm.muted = false;
+      bgm.muted = Boolean(returnOpening);
       resumeBgm();
     }
   }
@@ -290,6 +310,7 @@
   // Explicitly owned by the isolated dev event; ordinary callers never enter it.
   function beginEventSession() {
     if (eventSession) throw new Error("Audio event session already active");
+    returnOpening = null;
     cancelFade();
     cancelReturnFade();
     let alive = true;
@@ -464,12 +485,12 @@
         if (!enabled) { token += 1; stopTransport(); }
         apply();
       },
-      release({ fadeIn = false } = {}) {
+      release({ fadeIn = false, restart = false } = {}) {
         if (!alive) return;
         token += 1;
         // Do not kill an iOS-accepted but still pending play() when the map
         // is about to return. Its promise may complete after the cue.
-        if (playAttempt && !fadeIn) stopTransport();
+        if (playAttempt && !fadeIn && !restart) stopTransport();
         else if (!playAttempt) invalidatePlay();
         alive = false;
         cancelCoefficientFade();
@@ -477,12 +498,17 @@
         eventSession = null;
         // Event hard-mute must never leak into normal gameplay after release.
         // Normal gameplay regains its own entered/enabled transport intent.
-        if (fadeIn) fadeInOnReturn();
+        if (restart) {
+          cancelReturnFade();
+          returnOpening = "seek";
+          bgm.muted = true;
+        } else if (fadeIn) fadeInOnReturn();
         else {
           cancelReturnFade();
           bgm.muted = false;
         }
         setVolume(transportAvailable() && !failed ? targetVolume : 0);
+        if (restart) revealReturnOpening();
         resumeBgm();
       },
     };

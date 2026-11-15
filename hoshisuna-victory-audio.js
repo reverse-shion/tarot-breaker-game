@@ -15,12 +15,63 @@
  music.setAttribute('playsinline','');
  let encounter=false,combat=false,victory=false,openingPending=false;
  let playAttempt=null,generation=0;
+ let output=null,gainReady=false,fading=false,fadeFrame=0;
+ // Only the battle's one-shot cue uses gain. The shared field track stays native.
+ function prepareGain(){
+  const Context=window.AudioContext||window.webkitAudioContext;
+  if(!Context||fading||gainReady||(output?.gain&&output.context.state==='running'))return;
+  try{
+   output ||= {context:new Context(),gain:null};
+   const {context}=output;
+   gainReady=true;
+   Promise.resolve(context.resume()).then(()=>{
+    gainReady=false;
+    if(output.gain||!encounter||fading||context.state!=='running')return;
+    const gain=context.createGain();
+    gain.gain.value=VOLUME;
+    gain.connect(context.destination);
+    context.createMediaElementSource(music).connect(gain);
+    output.gain=gain;
+    music.volume=1;
+   }).catch(()=>{gainReady=false;});
+  }catch(_){gainReady=false;}
+ }
+ function setLevel(value){
+  if(output?.gain)output.gain.gain.value=value;
+  else music.volume=value;
+ }
+ function stopFade(){
+  if(fadeFrame)cancelAnimationFrame(fadeFrame);
+  fadeFrame=0;fading=false;
+  if(output?.gain)output.gain.gain.cancelScheduledValues(output.context.currentTime);
+ }
+ function fadeVictory(event){
+  if(event.detail?.source!==OWNER||!victory||fading)return;
+  const duration=Number(event.detail.duration);
+  if(!Number.isFinite(duration)||duration<=0)return;
+  fading=true;
+  if(music.paused||music.muted||music.ended)return;
+  if(output?.gain&&output.context.state==='running'){
+   const now=output.context.currentTime,gain=output.gain.gain;
+   gain.cancelScheduledValues(now);
+   gain.setValueAtTime(gain.value,now);
+   gain.linearRampToValueAtTime(0,now+duration/1000);
+   return;
+  }
+  const from=output?.gain?output.gain.gain.value:music.volume,start=performance.now();
+  const step=now=>{
+   const progress=Math.max(0,Math.min(1,(now-start)/duration));
+   setLevel(from*(1-progress));
+   fadeFrame=progress<1?requestAnimationFrame(step):0;
+  };
+  fadeFrame=requestAnimationFrame(step);
+ }
  const permitted=()=>!document.hidden&&window.TarotAudio?.enabled!==false;
  function pauseNative(){
   ++generation;playAttempt=null;music.muted=true;music.pause();
  }
  function stopVictory(){
-  victory=false;openingPending=false;pauseNative();music.loop=true;
+  stopFade();victory=false;openingPending=false;pauseNative();music.loop=true;
   try{music.currentTime=0;}catch(_){}
  }
  function seekOpening(){
@@ -30,9 +81,9 @@
   catch(_){openingPending=true;return false;}
  }
  function reveal(){
-  if(!encounter||!victory||!permitted()||music.paused||playAttempt)return;
+  if(!encounter||!victory||!permitted()||music.paused||playAttempt||fading)return;
   if(openingPending&&!seekOpening())return;
-  music.volume=VOLUME;music.muted=false;
+  setLevel(VOLUME);music.muted=false;
  }
  function primeNative(){
   if(!encounter||(!combat&&!victory)||!permitted()||playAttempt||(victory&&music.ended))return;
@@ -57,7 +108,10 @@
   seekOpening();
   if(!music.paused)reveal();else primeNative();
  }
- function gesture(){if(encounter&&(combat||victory))primeNative();}
+ function gesture(){
+  if(!encounter||(!combat&&!victory)||!permitted()||fading)return;
+  prepareGain();primeNative();
+ }
  window.addEventListener('tarot-breaker:interaction-start',event=>{
   if(event.detail?.source===OWNER){encounter=true;combat=false;}
  });
@@ -65,6 +119,7 @@
   if(encounter&&!victory)combat=true;
  });
  window.addEventListener('tarot-breaker:hoshisuna-victory-start',beginVictory);
+ window.addEventListener('tarot-breaker:hoshisuna-victory-fade',fadeVictory);
  window.addEventListener('tarot-breaker:hoshisuna-victory-stop',event=>{
   if(event.detail?.source===OWNER)stopVictory();
  });

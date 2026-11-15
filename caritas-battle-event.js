@@ -96,6 +96,7 @@ let once=false,busy=false,done=false,armed=true,noticed=false,owned=false,dialog
 let dialogueLines=[],dialogueIndex=0,afterDialogue=null,timer=0,toastTimer=0;
 let cinematicTimer=0,cinematicCallback=null,remaining=0,startedAt=0,pageAway=false;
 let pendingRegroupNext=null;
+let victoryCueStarted=false;
 let modalIndex=-1,readingOpen=false,deliveryMethod=null,committing=false,visualBattle=null,attempts=0;
 let modalReturnFocus=null; // Shared by card tap and modal keyboard handlers.
 let firstWrittenDelivered=false;
@@ -149,6 +150,7 @@ const specialLocked=()=>record.special.committed||saveBlocked||recovery;
 function getBattleView(){return visualBattle||battle;}
 function recoveryScreen(){
  cancelSpecialEffect();
+ ui.victoryLight.hidden=true;
  recovery=true;saveBlocked=true;busy=true;lock();root.hidden=false;story="recovery";root.dataset.phase=story;
  dialogue?.hide();dialogueBusy=false;
  showSaveProblem("戦闘記録を確認できません。結果の重複を防ぐため、進行を停止しました。",null,true);
@@ -260,6 +262,7 @@ const FAREWELL_DEPART=[
  ["しおぽん","はいなの〜！"]
 ];
 const FAREWELL_CLOSE_PAUSE_MS=1100;
+const VICTORY_FADE_MS=1200, MAP_REVEAL_MS=650;
 const suspended=()=>pageAway||document.hidden;
 function armCinematic(){
  if(!cinematicCallback||suspended())return;
@@ -292,12 +295,14 @@ function pauseCinematic(){
  window.TarotHoshisunaManifestation?.pause?.();
  if(cinematicTimer){clearTimeout(cinematicTimer);cinematicTimer=0;remaining=Math.max(0,remaining-(performance.now()-startedAt));}
  root.dataset.paused="true";
+ ui.victoryLight.dataset.paused="true";
 }
 function resumeCinematic(){
  resumeSpecialEffect();
  if(suspended())return;
  window.TarotHoshisunaManifestation?.resume?.();
  root.dataset.paused="false";
+ ui.victoryLight.dataset.paused="false";
  if(pendingRegroupNext){const next=pendingRegroupNext;pendingRegroupNext=null;next();}
  if(!cinematicTimer)armCinematic();
 }
@@ -459,6 +464,7 @@ function playSpecialSequence(){
  // Victory starts only once purification has completed its durable state transition.
  // Keep the field transport muted until the actual map return.
  if(p==='CARITAS_REPLY'){
+  victoryCueStarted=true;
   window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
   window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-victory-start",{detail:{source:OWNER}}));
  }
@@ -508,7 +514,6 @@ function showFarewellOnMap(){
  // Show the actual Starroad creature and canonical main dialogue, not a clone.
  window.dispatchEvent(new Event("tarot-breaker:hoshisuna-battle-stop"));
  window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-victory-stop",{detail:{source:OWNER}}));
- window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-field-return-cue",{detail:{source:OWNER}}));
  // Restore the fox, but the three original Tarot cards stay until the Close.
  const manifestation=window.TarotHoshisunaManifestation;
  manifestation?.clear?.({keepCards:true});
@@ -517,10 +522,31 @@ function showFarewellOnMap(){
  window.TarotHoshisunaAbyss?.setPhase?.("cleared");
  document.body.classList.remove('caritas-special-active');
  root.hidden=true;
+ window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-field-return-cue",{detail:{source:OWNER,restart:tactical}}));
  faceCaritas();
 }
 function playMapFarewell(next){
- showFarewellOnMap();
+ if(!tactical||!victoryCueStarted){
+  showFarewellOnMap();
+  speakMapFarewell(next);
+  return;
+ }
+ victoryCueStarted=false;
+ ui.victoryLight.hidden=false;
+ ui.victoryLight.dataset.fade="out";
+ window.dispatchEvent(new CustomEvent("tarot-breaker:hoshisuna-victory-fade",{detail:{source:OWNER,duration:VICTORY_FADE_MS}}));
+ stage("victory-fade-out",VICTORY_FADE_MS,()=>{
+  if(recovery||saveBlocked)return;
+  showFarewellOnMap();
+  ui.victoryLight.dataset.fade="in";
+  stage("victory-fade-in",MAP_REVEAL_MS,()=>{
+   if(recovery||saveBlocked)return;
+   ui.victoryLight.hidden=true;
+   speakMapFarewell(next);
+  });
+ });
+}
+function speakMapFarewell(next){
  const outro=window.TarotHoshisunaCaritasOutro;
  saySequence(FAREWELL_OPEN,()=>{
   // Face-up and stand-up are separate beats, reusing the same 16 authentic WebPs.
@@ -1643,6 +1669,11 @@ function init(){
  completionBody.append(completionBack,ui.completionTitle,ui.completionSubtitle,ui.completionCards,wordsBox,ui.completionForecast,ui.completionSend,editReading);
  ui.completion.append(completionBody);root.append(ui.completion);
  root.append(ui.selection,ui.artPlayback,ui.saveProblem,frame,written,ui.readingIntro,ui.toast,ui.guide,ui.finale,cutin,technique,ui.writingOverlay,ui.modal);shell.appendChild(root);
+ ui.victoryLight=newEl("div","cb-victory-light");
+ ui.victoryLight.hidden=true;ui.victoryLight.setAttribute("aria-hidden","true");
+ ui.victoryLight.style.setProperty?.("--cb-victory-fade",VICTORY_FADE_MS+"ms");
+ ui.victoryLight.style.setProperty?.("--cb-map-reveal",MAP_REVEAL_MS+"ms");
+ shell.appendChild(ui.victoryLight);
  ui.camera=window.CaritasBattleCamera?.mount({root,arena,input:ui.aiInput,
   actors:[beast,veil,release,shion,angel],frame,statusBand})||null;
  dialogue=window.TarotDialogueUI.bind({

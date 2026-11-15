@@ -375,3 +375,34 @@ test('reading-led single-button finisher commits all three technique arts and pr
   assert.equal(JSON.parse(persistentStore.get(KEY)).revision,revision,'never double-commit');
  }
 });
+
+
+test('tactical victory keeps the battle visible through the shared picture and music fade',()=>{
+ const ready={...C.newGame(),phase:'finisher',resonance:100,dark:20,hp:70};
+ let record=S.commit(S.create(ready,'tactical-victory-return'),'17-the-star');
+ while(record.special.phase!=='CARITAS_REPLY'){
+  record=S.transition(record,S.PHASES[S.PHASES.indexOf(record.special.phase)+1]);
+ }
+ const persistentStore=new Map([[KEY,JSON.stringify(record)]]);
+ const {f,root}=setup({...a02,persistentStore});
+ const light=f.shell.querySelector('.cb-victory-light');
+ f.advanceTime(6400);
+ assert.equal(f.lines.at(-1).text,'もう戻れないと思っていた。……今は……星界の草原でゆっくりしたい。');
+ f.pointer.advance();
+ assert.equal(root.dataset.phase,'victory-fade-out');
+ assert.equal(light.dataset.fade,'out');
+ assert.equal(f.events.at(-1),'tarot-breaker:hoshisuna-victory-fade');
+ f.advanceTime(600);f.visibility(true);f.advanceTime(2400);
+ assert.equal(light.dataset.paused,'true');
+ assert.equal(root.hidden,false);
+ f.visibility(false);f.advanceTime(599);
+ assert.equal(root.hidden,false);
+ assert.equal(f.events.includes('tarot-breaker:hoshisuna-field-return-cue'),false);
+ f.advanceTime(1);
+ assert.equal(root.hidden,true);
+ assert.equal(light.dataset.fade,'in');
+ assert.deepEqual(Array.from(f.events.slice(-2)),['tarot-breaker:hoshisuna-victory-stop','tarot-breaker:hoshisuna-field-return-cue']);
+ f.advanceTime(650);
+ assert.equal(light.hidden,true);
+ assert.notEqual(f.lines.at(-1).text,'もう戻れないと思っていた。……今は……星界の草原でゆっくりしたい。');
+});
