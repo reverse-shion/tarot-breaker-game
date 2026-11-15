@@ -10,6 +10,10 @@ vm.runInNewContext(fixtureSource+'\nmodule.exports=fixture;',{require,__dirname,
 const fixture=fixtureModule.exports;
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const response=()=>({ok:true,json:async()=>({shion:'俺はここにいる。',caritas:'……その声は聞こえておる。',understandingIds:['offer_support']})});
+const a02={
+ locationSearch:'?dev=hoshisuna&battle=tactical&camera=a02',
+ cameraMount:()=>({update(){}})
+};
 function setup(options={}){
  const initial=S.create(C.newGame(),'tactical-test');
  const persistentStore=options.persistentStore||new Map([[KEY,JSON.stringify(initial)],[LEGACY,'untouched legacy bytes']]);
@@ -221,9 +225,11 @@ test('three-card constellation is the only selection screen; results appear afte
  assert.equal(f.state().battle.words.filter(Boolean).length,3,'back retains selected card meanings');
 });
 
-test('Shion speaking state drives battlefield rim light and resets before Shioriel counter-hit',()=>{
- const {f,root}=setup();
+test('A02 exposes the card, wing and hit in order after the final Shion line',()=>{
+ const {f,root}=setup(a02);
  assert.equal(root.dataset.actorSpeaking,'none','no glow while the player is choosing');
+ const enemy=root.flatten().find(element=>element.className==='cb-hud enemy');
+ const darkness=()=>enemy.children[1].children[1].textContent;
  f.button(root,'選んで届ける').click();
  const select=(index,choice)=>{
   root.querySelector('.cb-completion-cards').children[index].click();
@@ -234,9 +240,31 @@ test('Shion speaking state drives battlefield rim light and resets before Shiori
  assert.ok(predicted.hasCounter&&predicted.damage>0,'this opening reading must trigger a real damaging counter');
  root.querySelector('.cb-completion-send').click();
  assert.equal(root.dataset.actorSpeaking,'shion','Shion must glow while he delivers a reading');
- while(f.state().dialogueBusy)f.pointer.advance();
+ for(let i=0;i<2;i++){
+  f.pointer.advance();
+  assert.equal(root.dataset.actorSpeaking,'shion');
+  assert.equal(root.dataset.phase,'battle','the first two pages never start the card effect');
+  assert.equal(f.state().battle.turn,0);
+ }
+ f.pointer.advance();
  assert.equal(root.dataset.actorSpeaking,'none','glow stops with shared dialogue');
- f.advanceTime(1050);
+ assert.equal(root.dataset.phase,'word-card');
+ assert.equal(darkness(),'100%');
+ f.advanceTime(90);f.visibility(true);f.advanceTime(3000);
+ assert.equal(root.dataset.phase,'word-card','backgrounding pauses the cue clock');
+ f.visibility(false);f.advanceTime(89);
+ assert.equal(root.dataset.phase,'word-card');
+ f.advanceTime(1);
+ assert.equal(root.dataset.phase,'word-resonance');
+ assert.equal(darkness(),'100%');
+ f.advanceTime(559);
+ assert.equal(root.dataset.phase,'word-resonance');
+ f.advanceTime(1);
+ assert.equal(root.dataset.phase,'word-strike');
+ f.advanceTime(1049);
+ assert.equal(darkness(),'100%');
+ f.advanceTime(1);
+ assert.equal(darkness(),(100-predicted.dark)+'%');
  assert.equal(root.dataset.actorSpeaking,'none','Caritas speech must not light Shion');
  assert.equal(f.state().dialogueBusy,true);
  f.pointer.advance();
@@ -244,6 +272,30 @@ test('Shion speaking state drives battlefield rim light and resets before Shiori
  assert.equal(root.dataset.phase,'enemy-turn','only the actual damaging counter causes the red Shioriel flash');
  f.advanceTime(1050);
  assert.notEqual(root.dataset.phase,'enemy-turn','red hit ends with the counter phase');
+ assert.equal(root.dataset.actorSpeaking,'none');
+});
+
+test('A02 written reading waits through every page and omits a hit when darkness cannot fall',async()=>{
+ const start=S.create({...C.newGame(),dark:70},'written-blocked');
+ const persistentStore=new Map([[KEY,JSON.stringify(start)]]);
+ const spoken='俺はここにいる。\n少し話を聞かせて。\nここで待つ。\n言葉を聞いている。';
+ const {f,root}=setup({...a02,persistentStore,fetchReply:()=>({
+  ok:true,json:async()=>({shion:spoken,caritas:'……聞こえている。'})
+ })});
+ await write(f,root,'静かに見守るよ').click();
+ assert.equal(root.dataset.actorSpeaking,'shion');
+ f.pointer.advance();
+ assert.equal(root.dataset.phase,'battle','the second written page keeps the focus on Shion');
+ assert.equal(f.state().battle.turn,0);
+ f.pointer.advance();
+ assert.equal(root.dataset.phase,'word-card');
+ f.advanceTime(180);
+ assert.equal(root.dataset.phase,'word-resonance');
+ f.advanceTime(560);
+ assert.equal(root.dataset.phase,'battle');
+ assert.equal(f.state().battle.dark,70);
+ assert.equal(f.state().battle.turn,1);
+ assert.equal(f.state().dialogueBusy,true);
  assert.equal(root.dataset.actorSpeaking,'none');
 });
 

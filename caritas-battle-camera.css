@@ -828,7 +828,15 @@
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite::before{
   width:100%;
-  background:radial-gradient(ellipse 10% 7% at 17% 17%, #fff8da 0%, #f6d88baa 29%, transparent 94%);
+  background:radial-gradient(ellipse 12% 9% at 17% 17%, #fffbea 0%, #ffe9a1dd 30%, transparent 94%);
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-shion-sprite::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:url('./assets/battle/character/shion.webp') center bottom / contain no-repeat;
+  filter:drop-shadow(0 0 3px #fff4cb) drop-shadow(0 0 11px #efc476) drop-shadow(0 0 18px #e2b870);
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-actor-speaking="shion"] .cb-battle-world>.cb-shion-sprite::after{
+  animation:cb-shion-speech-glow 2.2s ease-in-out infinite;
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel::before{
   height:100%;
@@ -840,15 +848,24 @@
   mask:var(--cb-actor-art) center / 100% 100% no-repeat;
   animation:cb-shioriel-wing-shimmer 6s ease-in-out infinite!important;
 }
-#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-actor-speaking="shion"],[data-actor-speaking="both"]) .cb-battle-world>.cb-shion-sprite::before{
-  animation:cb-shion-speech-glow .85s ease-out both!important;
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-phase="word-card"],[data-phase="word-resonance"]) .cb-battle-world>.cb-shion-sprite::before{
+  animation:cb-shion-card-glow .62s ease-out both!important;
 }
-#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-actor-speaking="shion"],[data-actor-speaking="both"]) .cb-battle-world>.cb-angel::before{
-  animation:cb-shioriel-wing-answer 1s .22s ease-out both!important;
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="word-resonance"] .cb-battle-world>.cb-angel::before{
+  animation:cb-shioriel-wing-answer .56s ease-out both!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="word-resonance"] .cb-battle-world>.cb-angel::after{
+  filter:brightness(1.28) drop-shadow(0 0 7px #ffecb5) drop-shadow(0 0 14px #d3c3ff);
+  animation:cb-shioriel-rim-answer .56s ease-out both;
 }
 @keyframes cb-shion-speech-glow{
-  0%,100%{opacity:0}
-  28%{opacity:.84}
+  0%,100%{opacity:.58}
+  50%{opacity:.86}
+}
+@keyframes cb-shion-card-glow{
+  0%{opacity:.45}
+  22%{opacity:1}
+  100%{opacity:0}
 }
 @keyframes cb-shioriel-wing-shimmer{
   0%,22%{opacity:0;background-position:left center}
@@ -857,7 +874,21 @@
 }
 @keyframes cb-shioriel-wing-answer{
   0%,100%{opacity:0}
-  34%{opacity:.58}
+  35%{opacity:.94}
+}
+@keyframes cb-shioriel-rim-answer{
+  0%,100%{opacity:0}
+  37%{opacity:.67}
+}
+@media(prefers-reduced-motion:no-preference){
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="word-strike"] .cb-battle-world>.cb-beast{
+    animation:cb-reading-hit 1.05s ease-out both, cb-reading-recoil 1.05s ease-out both;
+  }
+}
+@keyframes cb-reading-recoil{
+  0%,34%,100%{translate:0 0}
+  46%{translate:-8px 0}
+  68%{translate:-2px 0}
 }
 /* Retain the Shioriel silhouette layer for dialogue and counterattacks. */
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel::after{
@@ -927,22 +958,30 @@
   animation:none!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor-open="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::before,
-#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor-open="true"] .cb-battle-world>.cb-angel::after{
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-editor-open="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
   animation:none!important;opacity:0!important;
+}
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-paused="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::before,
+#game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-paused="true"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
+  animation-play-state:paused!important;
 }
 @media(prefers-reduced-motion:reduce){
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel){
     animation:none!important;transform:none!important;
   }
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::before,
-  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-actor-speaking="shion"],[data-actor-speaking="both"]) .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::before,
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-actor-speaking="shioriel"],[data-actor-speaking="both"]) .cb-battle-world>.cb-angel::after,
-  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel::after{
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::after{
     animation:none!important;
   }
-  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="shion"]:not([data-actor-editor-open="true"]) .cb-shion-sprite::before,
-  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="both"]:not([data-actor-editor-open="true"]) .cb-shion-sprite::before{
-    opacity:.4!important;
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="battle"][data-actor-speaking="shion"]:not([data-actor-editor-open="true"]) .cb-shion-sprite::after,
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-phase="word-card"],[data-phase="word-resonance"]):not([data-actor-editor-open="true"]) .cb-shion-sprite::before,
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="word-resonance"]:not([data-actor-editor-open="true"]) .cb-angel::before,
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="word-resonance"]:not([data-actor-editor-open="true"]) .cb-angel::after{
+    animation:none!important;opacity:.66!important;
+  }
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="word-resonance"]:not([data-actor-editor-open="true"]) .cb-shion-sprite::before{
+    opacity:.3!important;
   }
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"]:not([data-actor-editor-open="true"]) .cb-battle-world>.cb-angel{
     animation:none!important;transform:none!important;

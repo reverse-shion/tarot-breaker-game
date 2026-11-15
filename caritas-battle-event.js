@@ -275,6 +275,13 @@ function stage(name,duration,next){
  story=name;root.dataset.phase=name;render();
  cinematicCallback=next;remaining=duration;armCinematic();
 }
+function playReadingImpact(hasDamage,apply){
+ if(!tactical||!ui.camera){stage("word-strike",1050,apply);return;}
+ stage("word-card",180,()=>stage("word-resonance",560,()=>{
+  if(hasDamage)stage("word-strike",1050,apply);
+  else apply();
+ }));
+}
 function pauseCinematic(){
  pauseSpecialEffect();
  window.TarotHoshisunaManifestation?.pause?.();
@@ -1278,7 +1285,7 @@ function deliverTacticalWritten(before,reading,data){
    visualBattle=before;
    // The deployed legacy API does not know tactical observations. Use its
    // Shion paraphrase, but keep the beast's state/response authored and consistent.
-   stage("word-strike",1050,()=>applyOutcome(selected,next,p,{writtenShion:data.shion}));
+   playReadingImpact(p.dark>0,()=>applyOutcome(selected,next,p,{writtenShion:data.shion}));
   });
  },"written");
  render();
@@ -1304,8 +1311,8 @@ function perform(kind){
    if(story!=="battle"||battle.turn!==previous.turn)return;
    const next=C.read(previous);
    persist({...record,battle:next},()=>{battle=record.battle; // One committed attack, never replayed after reload.
-   visualBattle=previous; // Do not reveal the hit while Shioriel is attacking.
-   stage("word-strike",1050,()=>applyOutcome(previous,next,p));
+   visualBattle=previous;
+   playReadingImpact(p.dark>0,()=>applyOutcome(previous,next,p));
    });
  });
 }
