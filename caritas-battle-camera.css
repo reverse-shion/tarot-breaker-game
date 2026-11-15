@@ -273,7 +273,7 @@
  --cb-portrait-width:.415;--cb-portrait-height:61.5%;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>.cb-shion-sprite{
- --cb-portrait-x:1.62;--cb-portrait-y:10;--cb-portrait-scale:1.08;
+ --cb-portrait-x:1.62;--cb-portrait-y:10;--cb-portrait-scale:1;
  --cb-portrait-width:.364;--cb-portrait-height:66.95%;
 }
 #game-shell #caritas-event[data-camera-layout="a02"] .cb-battle-world>:is(.cb-angel,.cb-shion-sprite){
@@ -386,10 +386,7 @@
 /* Tactical visual affordances v2. Non-interactive information looks like
    information; clickable controls use fill and shadow. A02 only. */
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-arena>.cb-title{
- border:0!important;border-radius:0!important;
- background:transparent!important;box-shadow:none!important;
- text-shadow:0 2px 5px #081528,0 0 9px #091638!important;
- padding:4px 6px!important;pointer-events:none!important;
+ display:none!important;
 }
 #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-tactical-goal{
  border:0!important;border-radius:0!important;
