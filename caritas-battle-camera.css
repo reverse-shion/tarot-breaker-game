@@ -939,6 +939,7 @@
   }
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::before,
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-actor-speaking="shion"],[data-actor-speaking="both"]) .cb-battle-world>:is(.cb-shion-sprite,.cb-angel)::before,
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"]:is([data-actor-speaking="shioriel"],[data-actor-speaking="both"]) .cb-battle-world>.cb-angel::after,
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"] .cb-battle-world>.cb-angel::after{
     animation:none!important;
   }
@@ -946,12 +947,12 @@
   #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-actor-speaking="both"]:not([data-actor-editor-open="true"]) .cb-shion-sprite::before{
     opacity:.4!important;
   }
-  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-angel{
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"]:not([data-actor-editor-open="true"]) .cb-battle-world>.cb-angel{
     animation:none!important;transform:none!important;
     filter:sepia(1) saturate(6) hue-rotate(312deg) brightness(1.25)
       drop-shadow(0 0 18px #ff4252)!important;
   }
-  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"] .cb-angel::after{
+  #game-shell #caritas-event[data-camera-layout="a02"][data-rules="tactical-v1"][data-phase="enemy-turn"]:not([data-actor-editor-open="true"]) .cb-battle-world>.cb-angel::after{
     animation:none!important;opacity:.52!important;
   }
 }
