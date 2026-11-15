@@ -15,60 +15,75 @@
  music.setAttribute('playsinline','');
  let encounter=false,combat=false,victory=false,openingPending=false;
  let playAttempt=null,generation=0;
- let output=null,gainReady=false,fading=false,fadeFrame=0;
- // Only the battle's one-shot cue uses gain. The shared field track stays native.
- function prepareGain(){
-  const Context=window.AudioContext||window.webkitAudioContext;
-  if(!Context||fading||gainReady||(output?.gain&&output.context.state==='running'))return;
-  try{
-   output ||= {context:new Context(),gain:null};
-   const {context}=output;
-   gainReady=true;
-   Promise.resolve(context.resume()).then(()=>{
-    gainReady=false;
-    if(output.gain||!encounter||fading||context.state!=='running')return;
-    const gain=context.createGain();
-    gain.gain.value=VOLUME;
-    gain.connect(context.destination);
-    context.createMediaElementSource(music).connect(gain);
-    output.gain=gain;
-    music.volume=1;
-   }).catch(()=>{gainReady=false;});
-  }catch(_){gainReady=false;}
+ let fading=null,fadeFrame=0,fadeBuffer=null,fadeBufferRequested=false,fadeContext=null;
+ const platform=window.navigator?.platform||'';
+ const needsBufferedFade=/iPhone|iPad|iPod/.test(platform)||
+  (platform==='MacIntel'&&window.navigator?.maxTouchPoints>1);
+ function prepareFadeBuffer(){
+  const Decoder=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  if(!needsBufferedFade||!Decoder||fadeBufferRequested)return;
+  fadeBufferRequested=true;
+  // Offline decoding leaves the known-good native victory transport connected.
+  // Limit transient stereo PCM memory while keeping the original music asset.
+  fetch(SOURCE).then(response=>{
+   if(!response.ok)throw Error('Victory fade buffer unavailable');
+   return response.arrayBuffer();
+  }).then(bytes=>new Decoder(2,1,24000).decodeAudioData(bytes))
+   .then(buffer=>{fadeBuffer=buffer;}).catch(()=>{});
  }
- function setLevel(value){
-  if(output?.gain)output.gain.gain.value=value;
-  else music.volume=value;
+ function stopFadeBuffer(){
+  if(!fading?.source)return;
+  fading.source.stop();
+  fading.source=null;
  }
  function stopFade(){
   if(fadeFrame)cancelAnimationFrame(fadeFrame);
-  fadeFrame=0;fading=false;
-  if(output?.gain)output.gain.gain.cancelScheduledValues(output.context.currentTime);
+  fadeFrame=0;stopFadeBuffer();fading=null;
+ }
+ function playBufferedFade(fade){
+  const Context=window.AudioContext||window.webkitAudioContext;
+  if(!fadeBuffer||!Context)return;
+  try{
+   fadeContext ||= new Context();
+   const context=fadeContext;
+   Promise.resolve(context.resume()).then(()=>{
+    if(fading!==fade||!permitted()||music.paused||music.muted||context.state!=='running')return;
+    const left=fade.duration-(performance.now()-fade.startedAt);
+    const offset=music.currentTime;
+    if(left<100||!Number.isFinite(offset)||offset<0||offset>=fadeBuffer.duration)return;
+    const source=context.createBufferSource(),gain=context.createGain(),now=context.currentTime;
+    source.buffer=fadeBuffer;
+    gain.gain.setValueAtTime(music.volume,now);
+    gain.gain.linearRampToValueAtTime(0,now+left/1000);
+    gain.connect(context.destination);
+    source.connect(gain);
+    source.onended=()=>{source.disconnect();gain.disconnect();if(fade.source===source)fade.source=null;};
+    source.start(now,offset,left/1000);
+    fade.source=source;
+    // Switch only after the independent tail has started, within the light.
+    cancelAnimationFrame(fadeFrame);fadeFrame=0;
+    music.muted=true;music.pause();
+   }).catch(()=>{});
+  }catch(_){}
  }
  function fadeVictory(event){
   if(event.detail?.source!==OWNER||!victory||fading)return;
   const duration=Number(event.detail.duration);
   if(!Number.isFinite(duration)||duration<=0)return;
-  fading=true;
+  const fade=fading={duration,startedAt:performance.now(),source:null};
   if(music.paused||music.muted||music.ended)return;
-  if(output?.gain&&output.context.state==='running'){
-   const now=output.context.currentTime,gain=output.gain.gain;
-   gain.cancelScheduledValues(now);
-   gain.setValueAtTime(gain.value,now);
-   gain.linearRampToValueAtTime(0,now+duration/1000);
-   return;
-  }
-  const from=output?.gain?output.gain.gain.value:music.volume,start=performance.now();
+  const from=music.volume;
   const step=now=>{
-   const progress=Math.max(0,Math.min(1,(now-start)/duration));
-   setLevel(from*(1-progress));
+   const progress=Math.max(0,Math.min(1,(now-fade.startedAt)/duration));
+   music.volume=from*(1-progress);
    fadeFrame=progress<1?requestAnimationFrame(step):0;
   };
   fadeFrame=requestAnimationFrame(step);
+  playBufferedFade(fade);
  }
  const permitted=()=>!document.hidden&&window.TarotAudio?.enabled!==false;
  function pauseNative(){
-  ++generation;playAttempt=null;music.muted=true;music.pause();
+  ++generation;playAttempt=null;stopFadeBuffer();music.muted=true;music.pause();
  }
  function stopVictory(){
   stopFade();victory=false;openingPending=false;pauseNative();music.loop=true;
@@ -83,7 +98,7 @@
  function reveal(){
   if(!encounter||!victory||!permitted()||music.paused||playAttempt||fading)return;
   if(openingPending&&!seekOpening())return;
-  setLevel(VOLUME);music.muted=false;
+  music.volume=VOLUME;music.muted=false;
  }
  function primeNative(){
   if(!encounter||(!combat&&!victory)||!permitted()||playAttempt||(victory&&music.ended))return;
@@ -110,7 +125,7 @@
  }
  function gesture(){
   if(!encounter||(!combat&&!victory)||!permitted()||fading)return;
-  prepareGain();primeNative();
+  primeNative();prepareFadeBuffer();
  }
  window.addEventListener('tarot-breaker:interaction-start',event=>{
   if(event.detail?.source===OWNER){encounter=true;combat=false;}
