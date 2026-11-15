@@ -900,12 +900,42 @@ test('selection cancel has no writes or consumption; selection reload returns to
  f.button(root,'共鳴解放').click();const g=fixture({persistentStore:f.persistentStore});assert.equal(g.state().story,'battle');assert.equal(g.state().special.committed,false);
 });
 test('all cards use exact solo dialogue and one dual page before art, then distinct Caritas reply',()=>{
- const chants=['星幻迷宮\nアストラル・ミラージュ！！','星獣咆哮\nアストラル・ブレイヴ！！','星望祈願\nアストラル・グリモワール！！'];
- for(const [i,c] of Core.CARDS.entries()){
+ const expectedLines={
+  '18-the-moon':{
+   shion:'ここにいる。話せるところからでいい。',
+   shioriel:'シオン。声が途切れても、続きを待とう。',
+   chant:'星幻迷宮\nアストラル・ミラージュ！！',
+   caritas:'……お前たちが憎くてたまらなかった。心からそう思ってしまう自分が……怖かった。'
+  },
+  '08-strength':{
+   shion:'少し、俺たちにも預けてくれ。',
+   shioriel:'シオン。次の波は、わたしの翼で受けよう。',
+   chant:'星獣咆哮\nアストラル・ブレイヴ！！',
+   caritas:'……預けるのは、負けだと思っていた。……こんなに、息が楽になるのか。'
+  },
+  '17-the-star':{
+   shion:'帰りたい場所は、あるか？',
+   shioriel:'シオン。闇に迷わないように、道に星を灯そう。',
+   chant:'星望祈願\nアストラル・グリモワール！！',
+   caritas:'もう戻れないと思っていた。……今は……星界の草原でゆっくりしたい。'
+  }
+ };
+ for(const c of Core.CARDS){
+  const expected=expectedLines[c.id];
   const f=savedFixture(),root=f.shell.querySelector('#caritas-event');commitSpecial(f,root,c.name);
-  assert.equal(f.lines.at(-1).actor,'shion');assert.doesNotMatch(f.lines.at(-1).text,/アストラル/);
-  f.pointer.advance();assert.equal(f.lines.at(-1).actor,'shioriel');f.pointer.advance();assert.equal(f.lines.at(-1).text,chants[i]);assert.equal(f.lines.at(-1).actor,'shion-shioriel');
-  f.pointer.advance();assert.equal(f.state().dialogueBusy,false);f.advanceTime(2601+1100+6400);assert.equal(f.lines.at(-1).actor,'caritas');assert.notEqual(f.lines.at(-1).text,'……闇の中でも、お前たちの声は届いていた。……感謝する。');
+  assert.equal(f.lines.at(-1).actor,'shion');
+  assert.equal(f.lines.at(-1).text,expected.shion);
+  f.pointer.advance();
+  assert.equal(f.lines.at(-1).actor,'shioriel');
+  assert.equal(f.lines.at(-1).text,expected.shioriel);
+  f.pointer.advance();
+  assert.equal(f.lines.at(-1).actor,'shion-shioriel');
+  assert.equal(f.lines.at(-1).text,expected.chant);
+  f.pointer.advance();
+  assert.equal(f.state().dialogueBusy,false);
+  f.advanceTime(2601+1100+6400);
+  assert.equal(f.lines.at(-1).actor,'caritas');
+  assert.equal(f.lines.at(-1).text,expected.caritas);
  }
 });
 test('purification save failure stays at A, retry commits B once without replaying AI or consumption',()=>{

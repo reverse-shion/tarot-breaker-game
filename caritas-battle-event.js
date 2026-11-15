@@ -298,9 +298,24 @@ function beginBattle(){
  playHeartVoiceOnce();
 }
 const TECHNIQUES=Object.freeze({
- '18-the-moon':{name:'月',meaning:'分からない想いと向き合う',title:'星幻迷宮',chant:'星幻迷宮\nアストラル・ミラージュ！！',reading:'アストラル・ミラージュ',art:'./assets/battle/special/shioriel-18-astral-mirage.webp',shion:'俺には、まだ分からないことがある。だからこそ、お前の言葉を聞きたい。',shioriel:'シオン。見えない想いにも、光は届く。',reply:'……まだ言葉にできぬものがある。だが……隠すしかないと決めなくてもよいのかもしれぬ。'},
- '08-strength':{name:'力',meaning:'弱さを責めず向き合い方を選ぶ',title:'星獣咆哮',chant:'星獣咆哮\nアストラル・ブレイヴ！！',reading:'アストラル・ブレイヴ',art:'./assets/battle/special/shioriel-08-astral-brave.webp',shion:'俺は、誰かを責めるためにここへ来たわけじゃない。どう向き合うか、一緒に考えたい！',shioriel:'シオン。その意志に、星の力を重ねよう。',reply:'……強さとは、耐えることだけだと思っていた。……今は、別の向き合い方も探してみたい。'},
- '17-the-star':{name:'星',meaning:'未来を決めつけず希望を探す',title:'星望祈願',chant:'星望祈願\nアストラル・グリモワール！！',reading:'アストラル・グリモワール',art:'./assets/battle/special/shioriel-17-astral-grimoire.webp',shion:'お前の明日を、俺が決めるつもりはない。もし望むなら、次の一歩を共に探そう！',shioriel:'シオン。その願いを、星の光に託そう。',reply:'……この先がどうなるかは、まだ分からぬ。……それでも、次の一歩は私が選ぼう。'}
+ '18-the-moon':{
+  name:'月',meaning:'分からない想いと向き合う',title:'星幻迷宮',chant:'星幻迷宮\nアストラル・ミラージュ！！',reading:'アストラル・ミラージュ',art:'./assets/battle/special/shioriel-18-astral-mirage.webp',
+  shion:'ここにいる。話せるところからでいい。',
+  shioriel:'シオン。声が途切れても、続きを待とう。',
+  reply:'……お前たちが憎くてたまらなかった。心からそう思ってしまう自分が……怖かった。'
+ },
+ '08-strength':{
+  name:'力',meaning:'弱さを責めず向き合い方を選ぶ',title:'星獣咆哮',chant:'星獣咆哮\nアストラル・ブレイヴ！！',reading:'アストラル・ブレイヴ',art:'./assets/battle/special/shioriel-08-astral-brave.webp',
+  shion:'少し、俺たちにも預けてくれ。',
+  shioriel:'シオン。次の波は、わたしの翼で受けよう。',
+  reply:'……預けるのは、負けだと思っていた。……こんなに、息が楽になるのか。'
+ },
+ '17-the-star':{
+  name:'星',meaning:'未来を決めつけず希望を探す',title:'星望祈願',chant:'星望祈願\nアストラル・グリモワール！！',reading:'アストラル・グリモワール',art:'./assets/battle/special/shioriel-17-astral-grimoire.webp',
+  shion:'帰りたい場所は、あるか？',
+  shioriel:'シオン。闇に迷わないように、道に星を灯そう。',
+  reply:'もう戻れないと思っていた。……今は……星界の草原でゆっくりしたい。'
+ }
 });
 let selectedCard=null,shortPlayback=false,effectGeneration=0,activeEffect=null;
 // Card-specific purification remains. Fullscreen technique art is stationary;
