@@ -138,33 +138,48 @@
   const cumulative=emptyInfluence();
   for(const id of FINISHER_IDS)cumulative[id]=Math.min(10000,influence[id]+added[id]);
   const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,
+   respectedRefusal:respected(s)||(p.state==='closed'&&p.approach==='support'),
    finisherInfluence:cumulative,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
   n.phase=n.hp===0?'defeat':n.resonance===100&&n.dark<=25?'finisher':'read';
   return n;
  }
  function reaction(s,p,{writtenShion=null}={}){
-  if(p.state==='closed')
-   return p.misread?'近づくなと言ったはずだ！　……その顔を、私に向けるな！'
-    :'……そこで止まれ。その先へ来るな。……グルル……。';
-  if(p.state==='storm')
-   return p.blocked?'……聞こえて……いる。だが、アビスが……止まらぬ……グオオオ……っ！'
-    :'……聞こえた。今、はっきりと……。頼む、もう少し……。';
-  if(s.words[2]==='希望')
-   return '……この道の先か。行きたい。だが……足が、まだ言うことを聞かぬ。';
-  if(s.words[2]==='願い')
-   return '……もう一度、お前の気持ちに触れたい。話してくれ……。';
-  // Free writing is not guaranteed to contain the authored confession of fear.
-  // Never make Caritas say "お前も怖いのか" unless Shion actually said so.
-  if(writtenShion!==null&&!/(俺も怖い|私も怖い|自分も怖い|僕も怖い|俺も恐れ|自分も恐れ|俺だって怖い|怖いんだ|怖かった)/u.test(writtenShion))
-   return '……少し、息がつける。だが……まだ、怖い。';
-  return '……お前も怖いのか。……そうか。私も、怖い。';
+  const route=s.words[2];
+  const fearConfession=writtenShion===null||
+   /(俺も怖い|私も怖い|自分も怖い|僕も怖い|俺も恐れ|自分も恐れ|俺だって怖い|怖いんだ|怖かった)/u.test(writtenShion);
+  // Every chosen route leaves a recognisable trace without announcing the
+  // next optimal action. Never invent Shion's confession for free writing.
+  const echo=route==='希望'?'……この道の先を、まだ見てよいのだろうか。':
+   route==='願い'?'……何を望むのか、私にもまだ分からぬ。':
+   fearConfession?'……お前にも怖さがあるのか。':'……声だけは、聞こえている。';
+  // Moon's observation matters in the response as well as to the small
+  // darkness modifier, even when the player did not find the focal clue.
+  const moon=s.words[0]==='秘密'?'……途中まで、聞こえたか……。':
+   s.words[0]==='無意識'?'……私の中には、まだ……。':
+   '……身体が、言うことを聞かぬ……。';
+  if(p.state==='closed'){
+   if(p.misread)return '近づくなと言ったはずだ……！　……っ、爪が……止まらぬ……。';
+   return '……そこで止まれ。 '+moon+' '+echo;
+  }
+  if(p.state==='storm'){
+   const beginning=p.approach==='support'
+    ?'……まだ、そこにいるのか。……喉の闇が、また……。'
+    :respected(s)?'……そこにいた、お前が……。……っ、声が……。':
+     '……お前は……っ、今は……。……アビスが……。';
+   return beginning+' '+moon+' '+echo;
+  }
+  const beginning=p.approach==='support'
+   ?'……息を……整えられる。だが、まだ足が震える……。'
+   :'……っ……聞こえた。私は、まだここに……。';
+  return beginning+' '+moon+' '+echo;
  }
  // Conservative prototype recognition, not an AI score or a claim of full intent understanding.
  // Negation/ambiguous prose is support; only an explicit forward invitation is reach.
- function fromText(s,text){
+ function fromText(s,text,{approach='auto'}={}){
   const value=String(text).normalize('NFKC');
   const negated=/(ない|なく|ません|ぬ|ず|いけな|やめ|なよ|なで|思うな|言うな|するな|だめ|駄目|禁止|控え|止め|な[。！？!?\s]*$)/u.test(value);
-  const reach=!negated&&/(踏み込もう|踏み込みたい|踏み出そう|踏み出して|進もう|一緒に進む|手を伸ばして|手を取って)/u.test(value);
+  const detectedReach=!negated&&/(踏み込もう|踏み込みたい|踏み出そう|踏み出して|進もう|一緒に進む|手を伸ばして|手を取って)/u.test(value);
+  const reach=approach==='reach'||(approach!=='support'&&detectedReach);
   const compass=/声|聞|聴/u.test(value)?'秘密':/足|歩|一歩/u.test(value)?'無意識':'不安';
   const route=/選ん|選ぶ|決め|待つ|待って/u.test(value)?'願い':/希望|願い|進もう/u.test(value)?'希望':'癒し';
   return {...s,words:[compass,reach?'勇気':'忍耐',route]};
@@ -180,7 +195,7 @@
   }
   return pages;
  }
- function newGame(){return {...Base.newGame(),rules:RULES,finisherInfluence:emptyInfluence()};}
+ function newGame(){return {...Base.newGame(),rules:RULES,respectedRefusal:false,finisherInfluence:emptyInfluence()};}
  function canSkill(s){return s.hp>0&&s.dark<=25&&Base.canSkill(s);}
  return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText,readingInfluence,finisherTechnique});
 });
