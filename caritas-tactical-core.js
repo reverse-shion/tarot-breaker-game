@@ -129,7 +129,12 @@
   if(!misread&&s.words[2]==='癒し')cost=Math.max(2,cost-3);
   if(!misread&&s.words[2]==='願い')gain+=5;
   const dark=Math.min(Math.max(0,s.dark-1),relief),resonance=Math.min(100-s.resonance,gain),damage=Math.min(s.hp,cost);
-  return {state,dark,resonance,damage,rawDamage:cost,hasCounter:cost>0,power:relief,force:1,penetration:0,hit:dark,match:s.words[0]===focus?1:0,darkBucket:Base.bucket(dark),resBucket:Base.bucket(resonance),approach:reach?'reach':'support',misread,blocked:false,
+  // Existing Caritas illustrations communicate a conflicted reaction without
+  // inventing a new cut-in asset or telling the player which choice is right.
+  const pose=misread?'guarded':state==='closed'?'notice':
+   state==='storm'?(reach?(respectedBefore?'hesitate':'guarded'):(respectedBefore?'notice':'hesitate')):
+   (reach?'resolve':'accept');
+  return {state,pose,dark,resonance,damage,rawDamage:cost,hasCounter:cost>0,power:relief,force:1,penetration:0,hit:dark,match:s.words[0]===focus?1:0,darkBucket:Base.bucket(dark),resBucket:Base.bucket(resonance),approach:reach?'reach':'support',misread,blocked:false,
    explanation:misread?'距離を求める相手へ踏み込み、警戒が強まった。':reach?'言葉は届いた。闇が揺らいだが、身体には緊張も残る。':'相手が呼吸を整える余地ができた。闇はまだ残っている。'};
  }
  function read(s){
