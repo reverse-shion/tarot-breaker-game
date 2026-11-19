@@ -137,7 +137,8 @@
   const influence=inheritedInfluence(s),added=readingInfluence(s.words,p);
   const cumulative=emptyInfluence();
   for(const id of FINISHER_IDS)cumulative[id]=Math.min(10000,influence[id]+added[id]);
-  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,
+  // Preserve the delivered reading, but ask the player to read the changed beast anew.
+  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),words:[null,null,null],lastReading:[...s.words],lastEffect:p,
    respectedRefusal:respected(s)||(p.state==='closed'&&p.approach==='support'),
    finisherInfluence:cumulative,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
   n.phase=n.hp===0?'defeat':n.resonance===100&&n.dark<=25?'finisher':'read';
