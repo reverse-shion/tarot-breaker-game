@@ -9,11 +9,11 @@
   '不安':{title:'近づくことへの怖さを受け止める',text:'身を引く星獣に気づき、今の距離で話せるかを確かめる。相手が何を恐れているかは、まだ決めつけない。',shion:'……ここからなら、ゆっくり話せるか？'},
   '秘密':{title:'途切れた声に耳を澄ます',text:'唸りや怒りの言葉に埋もれた声、アビスの侵蝕に遮られた言葉に耳を傾ける。',shion:'今、何か言おうとしただろ。途中までは聞こえた。'},
   '無意識':{title:'踏みとどまる意志を信じる',text:'苦しみながらも自分を保とうとする星獣に目を向ける。まだ言葉を届ける相手がそこにいると読み、シオン自身の想いを伝える。',shion:'まだ、踏みとどまってるんだな。君と話がしたいんだ、俺は。アビスに呑まれたまま、終わってほしくない。'},
-  '忍耐':{title:'その場に留まる',text:'近づきたい気持ちを抑え、距離を保って待つ。拒絶が強いときに届きやすい。声をアビスに遮られているときは、待つだけでは闇を解けない。',shion:'……ここで待ってる。君の声を聞きながら、どうすればこの侵蝕を止められるか、考える。'},
-  '勇気':{title:'一歩踏み込む',text:'怖さを抱えたまま、声が届く場所へ一歩出る。明確な拒絶を押して踏み込むと、共鳴維持力を50失う。',shion:'一歩だけ、そっちへ行くよ。……もう少し近くで、君に伝えたい。'},
-  '希望':{title:'この道の先を思い描く',text:'今いる星砂の道を、闇が晴れたあとに一緒に歩きたいと伝える。届いたとき、闇侵蝕をさらに5解き、共鳴維持力を5多く使う。',shion:'闇が晴れたら、少し歩かないか。この道の先を、君と見てみたい。'},
-  '癒し':{title:'自分の怖さも打ち明ける',text:'相手の前で強く振る舞い続けず、シオン自身も怖がっていることを話す。通常の共鳴維持力の消耗を3抑える。',shion:'俺も怖い。アビスがこんなふうに暴走して……どうすれば止められるのか、まだ分からないんだ。'},
-  '願い':{title:'今してほしいことを尋ねる',text:'何が必要かを星獣に尋ねる。問いかけたあとは言葉を足さず、返事を待つ。闇を解けたとき共鳴がさらに5深まる。',shion:'俺に、どうしてほしい？'}
+  '忍耐':{title:'その場に留まる',text:'距離を保ち、相手が息を整える余地を残す。安心につながるかもしれないが、闇が残る中で待ち続けるべきかは分からない。',shion:'……ここで待ってる。君の声を聞きながら、どうすればこの侵蝕を止められるか、考える。'},
+  '勇気':{title:'一歩踏み込む',text:'怖さを抱えたまま、相手へ一歩近づく。声が届くこともあれば、相手の拒絶や緊張を強めることもある。',shion:'一歩だけ、そっちへ行くよ。……もう少し近くで、君に伝えたい。'},
+  '希望':{title:'この道の先を思い描く',text:'闇が晴れた後の未来を一緒に思い描く。前へ進む力になることも、今の相手にはまだ遠すぎることもある。',shion:'闇が晴れたら、少し歩かないか。この道の先を、君と見てみたい。'},
+  '癒し':{title:'自分の怖さも打ち明ける',text:'相手の前で強く振る舞い続けず、自分の怖さも差し出す。安心が生まれるかどうかは相手の受け取り方次第。',shion:'俺も怖い。アビスがこんなふうに暴走して……どうすれば止められるのか、まだ分からないんだ。'},
+  '願い':{title:'今してほしいことを尋ねる',text:'何が必要かを星獣に尋ねる。答えを急がせない一方、言葉にできない相手には負担となるかもしれない。',shion:'俺に、どうしてほしい？'}
  });
  const OBSERVATIONS=Object.freeze({
   closed:{
@@ -33,7 +33,7 @@
     'アビスが……どうして、ここまで……。止まらぬ。憎しみが、何もかも……っ！',
     '頼む。私の声が聞こえるなら……助けてくれ……！'
    ],
-   clue:'星獣はこちらを向いている。何かを訴えようと口を開くが、そのたびに闇が喉元を覆う。',
+   clue:'星獣はこちらを見るが、爪は地面を削っている。何かを言いかけるたび、喉元に闇がまとわりつく。',
    focus:['逃げる動きは止まった。こちらを見ている。','助けを求める声を、闇が遮っている。','足は止まり、前へ出ようともがいている。']
   },
   wavering:{
@@ -96,56 +96,96 @@
  }
  function optionsFor(card){return card.role==='TRIGGER'?['忍耐','勇気']:card.words;}
  function valid(s){return Base.valid(s)&&s.words[1]!=='自制';}
- function observation(s){return OBSERVATIONS[Base.stateFor(s.dark)]||OBSERVATIONS.wavering;}
+ function respected(s){return s.respectedRefusal===true;}
+ function observation(s){
+  const state=Base.stateFor(s.dark),base=OBSERVATIONS[state]||OBSERVATIONS.wavering;
+  if(state==='storm')return {...base,clue:respected(s)
+    ?'星獣は離れた場所から視線を向ける。爪はまだ地面を掴み、口を開くたび喉の闇が脈打つ。'
+    :'星獣は足を引きかけて止める。こちらを見る一方、爪は強く地面を削り、声は闇に遮られる。'};
+  if(state==='closed'&&s.turn>0&&s.lastEffect?.misread)
+   return {...base,clue:'星獣はさらに身を引いたが、こちらから目を逸らさない。爪は震えたまま地面を掻く。'};
+  return base;
+ }
  function predict(s){
   if(s.phase!=='read'||!valid(s))return null;
-  const state=Base.stateFor(s.dark),reach=s.words[1]==='勇気',misread=reach&&state==='closed',blocked=!reach&&state==='storm';
-  let relief=state==='closed'?(reach?5:30):state==='storm'?(reach?30:0):(reach?25:15);
-  let cost=misread?50:state==='closed'?5:state==='storm'?(reach?15:10):(reach?20:5);
-  let gain=blocked||misread?0:state==='closed'?30:state==='storm'?35:(reach?35:25);
-  // Compass observations have a visible affinity bonus, never a wrong-answer penalty.
+  const state=Base.stateFor(s.dark),reach=s.words[1]==='勇気';
+  const misread=reach&&state==='closed';
+  // Waiting offers steadier progress; approaching changes things faster at
+  // higher risk. Neither action becomes universally correct after "荒れる".
+  let relief=state==='closed'?(reach?5:30):state==='storm'?(reach?29:15):(reach?25:17);
+  let cost=misread?(s.turn===0?18:45):state==='closed'?5:state==='storm'?(reach?15:6):(reach?20:5);
+  let gain=misread?0:state==='closed'?30:state==='storm'?(reach?34:19):(reach?35:27);
+  const respectedBefore=respected(s);
+  // A small consequence of earlier boundaries, not a second answer table.
+  if(state==='storm'){
+   if(reach)cost+=respectedBefore?-3:5;
+   else if(!respectedBefore)gain+=4; // Staying now can repair an earlier rush.
+  }
+  if(state==='wavering'&&s.lastReading?.[1]==='勇気'&&!reach)
+   gain+=4; // Give space after a tense approach.
   const focus=['不安','秘密','無意識'][state==='closed'?0:state==='storm'?1:2];
-  if(!misread&&!blocked&&s.words[0]===focus)relief+=3;
-  if(!misread&&!blocked&&s.words[2]==='希望'){relief+=5;cost+=5;}
+  if(!misread&&s.words[0]===focus)relief+=3;
+  if(!misread&&s.words[2]==='希望'){relief+=5;cost+=5;}
   if(!misread&&s.words[2]==='癒し')cost=Math.max(2,cost-3);
-  if(!misread&&!blocked&&s.words[2]==='願い')gain+=5;
+  if(!misread&&s.words[2]==='願い')gain+=5;
   const dark=Math.min(Math.max(0,s.dark-1),relief),resonance=Math.min(100-s.resonance,gain),damage=Math.min(s.hp,cost);
-  return {state,dark,resonance,damage,rawDamage:cost,hasCounter:cost>0,power:relief,force:1,penetration:0,hit:dark,match:s.words[0]===focus?1:0,darkBucket:Base.bucket(dark),resBucket:Base.bucket(resonance),approach:reach?'reach':'support',misread,blocked,
-   explanation:misread?'拒絶を押してしまった。距離を取り、声が届く場所を探そう。':blocked?'声を遮るアビスが残る。本人はこちらを見ている。今は踏み込む余地がある。':reach?'助けを求める声へ踏み込み、闇を解いた。':'距離を保って支え、闇を解いた。'};
+  // Existing Caritas illustrations communicate a conflicted reaction without
+  // inventing a new cut-in asset or telling the player which choice is right.
+  const pose=misread?'guarded':state==='closed'?'notice':
+   state==='storm'?(reach?(respectedBefore?'hesitate':'guarded'):(respectedBefore?'notice':'hesitate')):
+   (reach?'resolve':'accept');
+  return {state,pose,dark,resonance,damage,rawDamage:cost,hasCounter:cost>0,power:relief,force:1,penetration:0,hit:dark,match:s.words[0]===focus?1:0,darkBucket:Base.bucket(dark),resBucket:Base.bucket(resonance),approach:reach?'reach':'support',misread,blocked:false,
+   explanation:misread?'距離を求める相手へ踏み込み、警戒が強まった。':reach?'言葉は届いた。闇が揺らいだが、身体には緊張も残る。':'相手が呼吸を整える余地ができた。闇はまだ残っている。'};
  }
  function read(s){
   const p=predict(s);if(!p)return s;
   const influence=inheritedInfluence(s),added=readingInfluence(s.words,p);
   const cumulative=emptyInfluence();
   for(const id of FINISHER_IDS)cumulative[id]=Math.min(10000,influence[id]+added[id]);
-  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),lastReading:[...s.words],lastEffect:p,
+  // Preserve the delivered reading, but ask the player to read the changed beast anew.
+  const n={...s,turn:s.turn+1,step:Math.min(2,s.step+1),words:[null,null,null],lastReading:[...s.words],lastEffect:p,
+   respectedRefusal:respected(s)||(p.state==='closed'&&p.approach==='support'),
    finisherInfluence:cumulative,hp:s.hp-p.damage,dark:s.dark-p.dark,resonance:s.resonance+p.resonance};
   n.phase=n.hp===0?'defeat':n.resonance===100&&n.dark<=25?'finisher':'read';
   return n;
  }
  function reaction(s,p,{writtenShion=null}={}){
-  if(p.state==='closed')
-   return p.misread?'近づくなと言ったはずだ！　……その顔を、私に向けるな！'
-    :'……そこで止まれ。その先へ来るな。……グルル……。';
-  if(p.state==='storm')
-   return p.blocked?'……聞こえて……いる。だが、アビスが……止まらぬ……グオオオ……っ！'
-    :'……聞こえた。今、はっきりと……。頼む、もう少し……。';
-  if(s.words[2]==='希望')
-   return '……この道の先か。行きたい。だが……足が、まだ言うことを聞かぬ。';
-  if(s.words[2]==='願い')
-   return '……もう一度、お前の気持ちに触れたい。話してくれ……。';
-  // Free writing is not guaranteed to contain the authored confession of fear.
-  // Never make Caritas say "お前も怖いのか" unless Shion actually said so.
-  if(writtenShion!==null&&!/(俺も怖い|私も怖い|自分も怖い|僕も怖い|俺も恐れ|自分も恐れ|俺だって怖い|怖いんだ|怖かった)/u.test(writtenShion))
-   return '……少し、息がつける。だが……まだ、怖い。';
-  return '……お前も怖いのか。……そうか。私も、怖い。';
+  const route=s.words[2];
+  const fearConfession=writtenShion===null||
+   /(俺も怖い|私も怖い|自分も怖い|僕も怖い|俺も恐れ|自分も恐れ|俺だって怖い|怖いんだ|怖かった)/u.test(writtenShion);
+  // Every chosen route leaves a recognisable trace without announcing the
+  // next optimal action. Never invent Shion's confession for free writing.
+  const echo=route==='希望'?'……この道の先を、まだ見てよいのだろうか。':
+   route==='願い'?'……何を望むのか、私にもまだ分からぬ。':
+   fearConfession?'……お前にも怖さがあるのか。':'……声だけは、聞こえている。';
+  // Moon's observation matters in the response as well as to the small
+  // darkness modifier, even when the player did not find the focal clue.
+  const moon=s.words[0]==='秘密'?'……途中まで、聞こえたか……。':
+   s.words[0]==='無意識'?'……私の中には、まだ……。':
+   '……身体が、言うことを聞かぬ……。';
+  if(p.state==='closed'){
+   if(p.misread)return '近づくなと言ったはずだ……！　……っ、爪が……止まらぬ……。';
+   return '……そこで止まれ。 '+moon+' '+echo;
+  }
+  if(p.state==='storm'){
+   const beginning=p.approach==='support'
+    ?'……まだ、そこにいるのか。……喉の闇が、また……。'
+    :respected(s)?'……そこにいた、お前が……。……っ、声が……。':
+     '……お前は……っ、今は……。……アビスが……。';
+   return beginning+' '+moon+' '+echo;
+  }
+  const beginning=p.approach==='support'
+   ?'……息を……整えられる。だが、まだ足が震える……。'
+   :'……っ……聞こえた。私は、まだここに……。';
+  return beginning+' '+moon+' '+echo;
  }
  // Conservative prototype recognition, not an AI score or a claim of full intent understanding.
  // Negation/ambiguous prose is support; only an explicit forward invitation is reach.
- function fromText(s,text){
+ function fromText(s,text,{approach='auto'}={}){
   const value=String(text).normalize('NFKC');
   const negated=/(ない|なく|ません|ぬ|ず|いけな|やめ|なよ|なで|思うな|言うな|するな|だめ|駄目|禁止|控え|止め|な[。！？!?\s]*$)/u.test(value);
-  const reach=!negated&&/(踏み込もう|踏み込みたい|踏み出そう|踏み出して|進もう|一緒に進む|手を伸ばして|手を取って)/u.test(value);
+  const detectedReach=!negated&&/(踏み込もう|踏み込みたい|踏み出そう|踏み出して|進もう|一緒に進む|手を伸ばして|手を取って)/u.test(value);
+  const reach=approach==='reach'||(approach!=='support'&&detectedReach);
   const compass=/声|聞|聴/u.test(value)?'秘密':/足|歩|一歩/u.test(value)?'無意識':'不安';
   const route=/選ん|選ぶ|決め|待つ|待って/u.test(value)?'願い':/希望|願い|進もう/u.test(value)?'希望':'癒し';
   return {...s,words:[compass,reach?'勇気':'忍耐',route]};
@@ -161,7 +201,7 @@
   }
   return pages;
  }
- function newGame(){return {...Base.newGame(),rules:RULES,finisherInfluence:emptyInfluence()};}
+ function newGame(){return {...Base.newGame(),rules:RULES,respectedRefusal:false,finisherInfluence:emptyInfluence()};}
  function canSkill(s){return s.hp>0&&s.dark<=25&&Base.canSkill(s);}
  return Object.freeze({...Base,RULES,READING_OPTIONS:OPTIONS,optionsFor,valid,predict,read,reaction,readingPages,newGame,canSkill,observation,fromText,readingInfluence,finisherTechnique});
 });

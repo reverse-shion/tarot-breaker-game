@@ -19,7 +19,9 @@
   if(amount===0)return {pose:'normal',src:images.normal,darkness:0};
   let pose=amount>=86?'closed':amount>=71?'guarded':amount>=56?'resist':amount>=36?'hesitate':amount>=16?'notice':'resolve';
   if(finisher)pose='resolve';
-  if(speaking&&response)pose=({'癒し':'accept','願い':'notice','希望':'resolve',written:'accept'})[response]||pose;
+  if(speaking&&response)pose=({'癒し':'accept','願い':'notice','希望':'resolve',written:'accept',
+   'pose:guarded':'guarded','pose:notice':'notice','pose:hesitate':'hesitate',
+   'pose:accept':'accept','pose:resolve':'resolve'})[response]||pose;
   if(phase==='word-strike')pose='guarded';
   if(phase==='enemy-turn')pose='resist';
   // The beast finally relaxes during the release, but remains invaded until the real zero commit.

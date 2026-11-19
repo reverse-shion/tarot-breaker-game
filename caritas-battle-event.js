@@ -910,24 +910,27 @@ function setPhraseText(el,value){
   el.replaceChildren(fragment);el.classList.add("cb-ja-phrase");
  }catch(_){setText(el,value);}
 }
-function tacticalChoiceHint(role,word,state){
- if(role==="COMPASS")return "観察が心象に合えば侵蝕をさらに3解く。外れても追加ペナルティなし。";
- if(role==="ROUTE")return {希望:"侵蝕を解けた時、さらに5減らす／維持力を5多く使う。",癒し:"通常の維持力消耗を3軽減（拒絶への踏み込みは対象外）。",願い:"闇を解けた時、共鳴をさらに5深める。"}[word]||"";
- const tips={
-  closed:{忍耐:"闇侵蝕を大きく減らす／維持力の負担は小さい。",勇気:"拒絶を押す危険：侵蝕の減少は小さく、維持力を50失う。"},
-  storm:{忍耐:"維持力を使うが、闇侵蝕は減らせない。",勇気:"闇侵蝕を大きく減らす／維持力の負担は中程度。"},
-  wavering:{忍耐:"闇侵蝕を少しずつ減らす／維持力の負担は小さい。",勇気:"闇侵蝕をより大きく減らす／維持力の負担は高め。"}
- };
- return tips[state]?.[word]||"";
+function tacticalChoiceHint(role,word){
+ if(role==="COMPASS")return "星獣の言葉と仕草のどこに目を向けるか。読み違えても、次の観察につながる。";
+ if(role==="TRIGGER")return word==="忍耐"
+  ?"相手のために距離を保つ。待ち続けても、闇はすぐに消えないかもしれない。"
+  :"相手へ一歩踏み込む。届くか、警戒を招くかは相手の反応を確かめたい。";
+ return {希望:"未来を伝える。今の相手にはまだ遠い言葉かもしれない。",
+  癒し:"自分の怖さを打ち明ける。相手が受け取れるかは分からない。",
+  願い:"相手に尋ねて答えを待つ。声を出す余裕があるだろうか。"}[word]||"";
 }
 function tacticalForecast(p){
- if(!p)return "三枚を選ぶと、今回の働きかけと消耗が分かります。";
- return (p.approach==="reach"?"踏み込む":"支える")+"：侵蝕 −"+p.dark+"／共鳴 ＋"+p.resonance+"／維持力 −"+p.damage+(p.damage>=battle.hp?"　この行動で撤退":"")+(p.blocked?"　今の闇は解けません":"");
+ if(!p)return "星獣の様子を思い出し、三枚の言葉を組み立てよう。";
+ return (p.approach==="reach"?"一歩近づく働きかけ":"距離を保つ働きかけ")+"。結果は、言葉を届けた後の星獣の反応で確かめよう。";
 }
 function renderWritingIntent(){
  if(!tactical)return;
  const text=(ui.aiInput.value||"").trim();
- setText(ui.writingIntent,text?tacticalForecast(C.predict(C.fromText(battle,text))):"送信前に、文章から受け取った働きかけと消耗をここに表示します。");
+ if(!text){setText(ui.writingIntent,"言葉を入力すると、受け取った行動をここで確認できます。");return;}
+ const override=ui.writingSelect?.value||"auto";
+ const proposed=C.fromText(battle,text,{approach:override});
+ const action=proposed.words[1]==="勇気"?"一歩近づいて話す":"距離を保って話す";
+ setText(ui.writingIntent,"この言葉の行動： "+action+"。意図と違う場合は下で変更できます。");
 }
 function selectDeliveryMethod(method){
  if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
@@ -1076,7 +1079,7 @@ function render(){
   section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
   cardBox.append(section);
  }
- if(p){
+ if(p&&!tactical){
   const darkLabel=p.darkBucket==="大きく"?"大きく減少":p.darkBucket==="通常"?"減少":p.darkBucket==="わずかに"?"わずかに減少":"変化なし";
   const resLabel=p.resBucket==="大きく"?"大きく上昇":p.resBucket==="通常"?"上昇":p.resBucket==="わずかに"?"わずかに上昇":"変化なし";
   setText(ui.preview,p.dark===s.dark?"闇：解放":"闇："+darkLabel+"（"+p.dark+"）");
@@ -1100,6 +1103,7 @@ function render(){
   setText(ui.readBadge,p?("共鳴 +"+p.resonance):"3枚選択");
   if(tactical){
    ui.aiInput.disabled=!reading||aiBusy;
+   if(ui.writingSelect)ui.writingSelect.disabled=!reading||aiBusy||committing;
    ui.aiSend.disabled=!reading||deliveryMethod!=="write"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||!(ui.aiInput.value||"").trim();
    ui.aiSend.textContent=aiBusy?"返答を待っています…":aiCalls>=AI_CALL_LIMIT?"この戦闘では3回送信済み":"この言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
    setText(ui.writingHint,"文章だけで一手進みます。曖昧な言葉は「支える」として扱います。");
@@ -1122,7 +1126,7 @@ function render(){
   // Keep the primary button in one fixed place. Its own label communicates
   // progress; the separate gold progress banner is no longer needed.
   setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):tactical?"解釈を選択中 "+chosenCount+"/3":"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
- ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
+ ui.methods.hidden=!reading;ui.line.hidden=tactical||!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,"共鳴が満ちると解放");
  ui.skillHint.hidden=finisher;
@@ -1157,7 +1161,7 @@ function render(){
   ui.modalWords.hidden=false;
   setPhraseText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
-   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="COMPASS"?"観察が心象に合えば闇侵蝕−3。外れても追加ペナルティなし。":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
+   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical?"星獣の言葉と仕草から読み取ろう":"3つの解釈から選んでください");
   ui.modalNav.hidden=tactical&&deliveryMethod==="select";
   ui.modalImage.hidden=tactical&&deliveryMethod==="select";
   ui.modalPage.hidden=tactical&&deliveryMethod==="select";
@@ -1180,9 +1184,7 @@ function render(){
    const description=newEl("span","cb-modal-word-desc");setPhraseText(description,option.text);
    btn.append(newEl("strong","cb-modal-word-title",option.title),description);
    if(tactical){
-    const proposed=[...s.words];proposed[modalIndex]=word;
-    const forecast=proposed.every(Boolean)?C.predict({...s,words:proposed}):null;
-    const impact=forecast?"この組み合わせ：闇侵蝕−"+forecast.dark+"／共鳴＋"+forecast.resonance+"／維持力−"+forecast.damage:card.role==="COMPASS"?"":tacticalChoiceHint(card.role,word,C.stateFor(s.dark));
+    const impact=tacticalChoiceHint(card.role,word);
     if(impact)btn.append(newEl("span","cb-modal-impact",impact));
    }
    btn.setAttribute("aria-label",option.title);
@@ -1225,6 +1227,7 @@ async function sendAiReading(){
  if(suspended()||!readingOpen||deliveryMethod!=="write"||aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
  if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
  const reading=(ui.aiInput.value||"").trim();
+ const intendedApproach=tactical?(ui.writingSelect?.value||"auto"):"auto";
  if(!reading||reading.length>700){toast("ひと言から700文字までで入力してね");return;}
  if(Date.now()<aiRetryAt){toast("AIの再接続には少し時間をあけてください");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+aiSessionId;aiPendingText=reading;}
@@ -1266,7 +1269,7 @@ async function sendAiReading(){
   // Only the same unresolved battle turn is allowed to receive the dialogue/bonus.
   if(specialLocked()||story!=="battle"||battle.phase!=="read"||battle.turn!==requestTurn)return;
   const before=battle;
-  if(tactical){deliverTacticalWritten(before,reading,data);return;}
+  if(tactical){deliverTacticalWritten(before,reading,data,intendedApproach);return;}
   ui.aiInput.blur(); // Dismiss the keyboard before the unchanged shared dialogue.
   aiPanelOpen=false;ui.aiResult.textContent="";
   committing=true;
@@ -1303,8 +1306,8 @@ async function sendAiReading(){
  }
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
-function deliverTacticalWritten(before,reading,data){
- const selected=C.fromText(before,reading),p=C.predict(selected);
+function deliverTacticalWritten(before,reading,data,intendedApproach="auto"){
+ const selected=C.fromText(before,reading,{approach:intendedApproach}),p=C.predict(selected);
  if(!p)return;
  ui.aiInput.blur();aiPanelOpen=false;ui.aiResult.textContent="";
  committing=true;readingOpen=false;
@@ -1313,7 +1316,7 @@ function deliverTacticalWritten(before,reading,data){
   const next=C.read(selected);
   persist({...record,battle:next,firstWrittenDelivered:true,aiCalls:aiCalls+1,aiConfirmedCalls:aiCalls+1},()=>{
    battle=record.battle;aiCalls=record.aiCalls;firstWrittenDelivered=true;
-   ui.aiInput.value="";aiPendingRequest=null;aiPendingText="";aiRetryVisible=false;
+   ui.aiInput.value="";if(ui.writingSelect)ui.writingSelect.value="auto";aiPendingRequest=null;aiPendingText="";aiRetryVisible=false;
    visualBattle=before;
    // The deployed legacy API does not know tactical observations. Use its
    // Shion paraphrase, but keep the beast's state/response authored and consistent.
@@ -1352,20 +1355,20 @@ function applyOutcome(previous,next,p,{writtenShion=null}={}){
  battle=next;visualBattle={...next,hp:previous.hp};story="battle";root.dataset.phase="battle";readingOpen=false;
  // Show the impact and both meters BEFORE Caritas reacts. Counterattack follows.
  render();
- const values=["闇−"+p.dark,"共鳴＋"+p.resonance];
- if(values.length)toast(values.join("　"));
+ if(!tactical)toast("闇−"+p.dark+"　共鳴＋"+p.resonance);
  const reply=C.reaction(previous,p,{writtenShion});
  root.dataset.beastResponse=tactical&&p.state==="wavering"?(previous.words[1]==="勇気"?"reach":"support"):"none";
  const replyLines=[["カリタス",reply]];
- if(tactical)toast(p.explanation+"　闇−"+p.dark+"／共鳴＋"+p.resonance);
  const deliverReply=()=>saySequence(replyLines,()=>{
+   // Let Caritas answer before showing numerical feedback.
+   if(tactical)toast(p.explanation+"　闇−"+p.dark+"／共鳴＋"+p.resonance);
    if(p.hasCounter&&p.damage>0){
      root.dataset.counter="normal";root.dataset.ward="false";
      setText(ui.enemyCall,tactical?"アビスの圧力！":caritasDisplayName()+"の反撃！");
      setText(ui.enemyDamage,tactical?"共鳴維持力 −"+p.damage:"シオリエル HP −"+p.damage);
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
- },tactical&&(p.misread||p.blocked)?"":previous.words[2]);
+ },tactical?("pose:"+p.pose):previous.words[2]);
  // A question needs a beat of silence before the star beast answers.
  if(tactical&&previous.words[2]==="願い")setTimeout(deliverReply,380);
  else deliverReply();
@@ -1584,7 +1587,16 @@ function init(){
  writingPanel.append(writingReference,ui.aiPanel);
  const writingFooter=newEl("div","cb-writing-footer");
  ui.writingCount=newEl("span","cb-writing-count","0 / 700文字");
- if(tactical)writingFooter.append(ui.writingIntent);
+ if(tactical){
+  ui.writingSelect=newEl("select","cb-writing-intent-select");
+  for(const [value,title] of [["auto","文章から判断する"],["support","距離を保って話す"],["reach","一歩近づいて話す"]]){
+   const option=newEl("option","",title);option.value=value;ui.writingSelect.append(option);
+  }
+  ui.writingSelect.addEventListener("change",renderWritingIntent);
+  ui.writingSelectLabel=newEl("label","cb-writing-intent-label");
+  ui.writingSelectLabel.append(newEl("span","","意図した行動を確認・修正"),ui.writingSelect);
+  writingFooter.append(ui.writingIntent,ui.writingSelectLabel);
+ }
  writingFooter.append(ui.writingCount,ui.aiSend);
  ui.writingOverlay.append(writingHeader,writingContext,writingPanel,writingFooter);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
