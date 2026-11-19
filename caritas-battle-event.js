@@ -1368,7 +1368,7 @@ function applyOutcome(previous,next,p,{writtenShion=null}={}){
      setText(ui.enemyDamage,tactical?"共鳴維持力 −"+p.damage:"シオリエル HP −"+p.damage);
      stage("enemy-turn",1050,finalizeTurn);
    }else finalizeTurn();
- },tactical&&(p.misread||p.blocked)?"":previous.words[2]);
+ },tactical?("pose:"+p.pose):previous.words[2]);
  // A question needs a beat of silence before the star beast answers.
  if(tactical&&previous.words[2]==="願い")setTimeout(deliverReply,380);
  else deliverReply();
