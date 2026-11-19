@@ -1079,7 +1079,7 @@ function render(){
   section.append(btn,newEl("div","cb-chosen",deliveryMethod==="write"?"タップで拡大":s.words[i]?"✓ "+C.READING_OPTIONS[s.words[i]].title:viewedReadingCards.has(i)?"もう一度選ぶ":"意味を選ぶ"));
   cardBox.append(section);
  }
- if(p){
+ if(p&&!tactical){
   const darkLabel=p.darkBucket==="大きく"?"大きく減少":p.darkBucket==="通常"?"減少":p.darkBucket==="わずかに"?"わずかに減少":"変化なし";
   const resLabel=p.resBucket==="大きく"?"大きく上昇":p.resBucket==="通常"?"上昇":p.resBucket==="わずかに"?"わずかに上昇":"変化なし";
   setText(ui.preview,p.dark===s.dark?"闇：解放":"闇："+darkLabel+"（"+p.dark+"）");
@@ -1125,7 +1125,7 @@ function render(){
   // Keep the primary button in one fixed place. Its own label communicates
   // progress; the separate gold progress banner is no longer needed.
   setText(ui.selectSend,chosenCount===3?(tactical?"読みを確認する":"この言葉を届ける"):tactical?"解釈を選択中 "+chosenCount+"/3":"あと"+(3-chosenCount)+"つ、解釈を選ぶ");
- ui.methods.hidden=!reading;ui.line.hidden=!(reading&&deliveryMethod==="select"&&readingOpen);
+ ui.methods.hidden=!reading;ui.line.hidden=tactical||!(reading&&deliveryMethod==="select"&&readingOpen);
  ui.actions.hidden=!finisher;
  setText(ui.skillHint,"共鳴が満ちると解放");
  ui.skillHint.hidden=finisher;
@@ -1160,7 +1160,7 @@ function render(){
   ui.modalWords.hidden=false;
   setPhraseText(ui.modalSelected,s.words[modalIndex]
    ?"選択中："+C.READING_OPTIONS[s.words[modalIndex]].title
-   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical&&card.role==="COMPASS"?"観察が心象に合えば闇侵蝕−3。外れても追加ペナルティなし。":tactical&&card.role==="TRIGGER"?"支える／踏み込む。維持力と相手の様子を見て選ぶ":"3つの解釈から選んでください");
+   :deliveryMethod==="write"?"カードの意味を参考にできます":tactical?"星獣の言葉と仕草から読み取ろう":"3つの解釈から選んでください");
   ui.modalNav.hidden=tactical&&deliveryMethod==="select";
   ui.modalImage.hidden=tactical&&deliveryMethod==="select";
   ui.modalPage.hidden=tactical&&deliveryMethod==="select";
@@ -1183,9 +1183,7 @@ function render(){
    const description=newEl("span","cb-modal-word-desc");setPhraseText(description,option.text);
    btn.append(newEl("strong","cb-modal-word-title",option.title),description);
    if(tactical){
-    const proposed=[...s.words];proposed[modalIndex]=word;
-    const forecast=proposed.every(Boolean)?C.predict({...s,words:proposed}):null;
-    const impact=forecast?"この組み合わせ：闇侵蝕−"+forecast.dark+"／共鳴＋"+forecast.resonance+"／維持力−"+forecast.damage:card.role==="COMPASS"?"":tacticalChoiceHint(card.role,word,C.stateFor(s.dark));
+    const impact=tacticalChoiceHint(card.role,word);
     if(impact)btn.append(newEl("span","cb-modal-impact",impact));
    }
    btn.setAttribute("aria-label",option.title);
@@ -1355,13 +1353,13 @@ function applyOutcome(previous,next,p,{writtenShion=null}={}){
  battle=next;visualBattle={...next,hp:previous.hp};story="battle";root.dataset.phase="battle";readingOpen=false;
  // Show the impact and both meters BEFORE Caritas reacts. Counterattack follows.
  render();
- const values=["闇−"+p.dark,"共鳴＋"+p.resonance];
- if(values.length)toast(values.join("　"));
+ if(!tactical)toast("闇−"+p.dark+"　共鳴＋"+p.resonance);
  const reply=C.reaction(previous,p,{writtenShion});
  root.dataset.beastResponse=tactical&&p.state==="wavering"?(previous.words[1]==="勇気"?"reach":"support"):"none";
  const replyLines=[["カリタス",reply]];
- if(tactical)toast(p.explanation+"　闇−"+p.dark+"／共鳴＋"+p.resonance);
  const deliverReply=()=>saySequence(replyLines,()=>{
+   // Let Caritas answer before showing numerical feedback.
+   if(tactical)toast(p.explanation+"　闇−"+p.dark+"／共鳴＋"+p.resonance);
    if(p.hasCounter&&p.damage>0){
      root.dataset.counter="normal";root.dataset.ward="false";
      setText(ui.enemyCall,tactical?"アビスの圧力！":caritasDisplayName()+"の反撃！");
