@@ -910,24 +910,27 @@ function setPhraseText(el,value){
   el.replaceChildren(fragment);el.classList.add("cb-ja-phrase");
  }catch(_){setText(el,value);}
 }
-function tacticalChoiceHint(role,word,state){
- if(role==="COMPASS")return "観察が心象に合えば侵蝕をさらに3解く。外れても追加ペナルティなし。";
- if(role==="ROUTE")return {希望:"侵蝕を解けた時、さらに5減らす／維持力を5多く使う。",癒し:"通常の維持力消耗を3軽減（拒絶への踏み込みは対象外）。",願い:"闇を解けた時、共鳴をさらに5深める。"}[word]||"";
- const tips={
-  closed:{忍耐:"闇侵蝕を大きく減らす／維持力の負担は小さい。",勇気:"拒絶を押す危険：侵蝕の減少は小さく、維持力を50失う。"},
-  storm:{忍耐:"維持力を使うが、闇侵蝕は減らせない。",勇気:"闇侵蝕を大きく減らす／維持力の負担は中程度。"},
-  wavering:{忍耐:"闇侵蝕を少しずつ減らす／維持力の負担は小さい。",勇気:"闇侵蝕をより大きく減らす／維持力の負担は高め。"}
- };
- return tips[state]?.[word]||"";
+function tacticalChoiceHint(role,word){
+ if(role==="COMPASS")return "星獣の言葉と仕草のどこに目を向けるか。読み違えても、次の観察につながる。";
+ if(role==="TRIGGER")return word==="忍耐"
+  ?"相手のために距離を保つ。待つ時間にも、闇が進む危険がある。"
+  :"相手へ一歩踏み込む。届くか、警戒を招くかは相手の反応を確かめたい。";
+ return {希望:"未来を伝える。今の相手にはまだ遠い言葉かもしれない。",
+  癒し:"自分の怖さを打ち明ける。相手が受け取れるかは分からない。",
+  願い:"相手に尋ねて答えを待つ。声を出す余裕があるだろうか。"}[word]||"";
 }
 function tacticalForecast(p){
- if(!p)return "三枚を選ぶと、今回の働きかけと消耗が分かります。";
- return (p.approach==="reach"?"踏み込む":"支える")+"：侵蝕 −"+p.dark+"／共鳴 ＋"+p.resonance+"／維持力 −"+p.damage+(p.damage>=battle.hp?"　この行動で撤退":"")+(p.blocked?"　今の闇は解けません":"");
+ if(!p)return "星獣の様子を思い出し、三枚の言葉を組み立てよう。";
+ return (p.approach==="reach"?"一歩近づく働きかけ":"距離を保つ働きかけ")+"。結果は、言葉を届けた後の星獣の反応で確かめよう。";
 }
 function renderWritingIntent(){
  if(!tactical)return;
  const text=(ui.aiInput.value||"").trim();
- setText(ui.writingIntent,text?tacticalForecast(C.predict(C.fromText(battle,text))):"送信前に、文章から受け取った働きかけと消耗をここに表示します。");
+ if(!text){setText(ui.writingIntent,"言葉を入力すると、受け取った行動をここで確認できます。");return;}
+ const override=ui.writingSelect?.value||"auto";
+ const proposed=C.fromText(battle,text,{approach:override});
+ const action=proposed.words[1]==="勇気"?"一歩近づいて話す":"距離を保って話す";
+ setText(ui.writingIntent,"この言葉の行動： "+action+"。意図と違う場合は下で変更できます。");
 }
 function selectDeliveryMethod(method){
  if(specialLocked()||story!=="battle"||battle.phase!=="read"||committing||dialogueBusy||aiBusy||suspended())return;
