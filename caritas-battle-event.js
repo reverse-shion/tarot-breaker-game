@@ -1103,6 +1103,7 @@ function render(){
   setText(ui.readBadge,p?("共鳴 +"+p.resonance):"3枚選択");
   if(tactical){
    ui.aiInput.disabled=!reading||aiBusy;
+   if(ui.writingSelect)ui.writingSelect.disabled=!reading||aiBusy||committing;
    ui.aiSend.disabled=!reading||deliveryMethod!=="write"||aiBusy||aiCalls>=AI_CALL_LIMIT||Date.now()<aiRetryAt||!(ui.aiInput.value||"").trim();
    ui.aiSend.textContent=aiBusy?"返答を待っています…":aiCalls>=AI_CALL_LIMIT?"この戦闘では3回送信済み":"この言葉を届ける（残り"+(AI_CALL_LIMIT-aiCalls)+"回）";
    setText(ui.writingHint,"文章だけで一手進みます。曖昧な言葉は「支える」として扱います。");
@@ -1226,6 +1227,7 @@ async function sendAiReading(){
  if(suspended()||!readingOpen||deliveryMethod!=="write"||aiBusy||committing||dialogueBusy||story!=="battle"||battle.phase!=="read"||battle.aiInsightTurn===battle.turn||modalIndex>=0)return;
  if(aiCalls>=AI_CALL_LIMIT){toast("この戦闘のAI読み取りは3回までです");return;}
  const reading=(ui.aiInput.value||"").trim();
+ const intendedApproach=tactical?(ui.writingSelect?.value||"auto"):"auto";
  if(!reading||reading.length>700){toast("ひと言から700文字までで入力してね");return;}
  if(Date.now()<aiRetryAt){toast("AIの再接続には少し時間をあけてください");return;}
  if(reading!==aiPendingText){aiPendingRequest=globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+aiSessionId;aiPendingText=reading;}
@@ -1267,7 +1269,7 @@ async function sendAiReading(){
   // Only the same unresolved battle turn is allowed to receive the dialogue/bonus.
   if(specialLocked()||story!=="battle"||battle.phase!=="read"||battle.turn!==requestTurn)return;
   const before=battle;
-  if(tactical){deliverTacticalWritten(before,reading,data);return;}
+  if(tactical){deliverTacticalWritten(before,reading,data,intendedApproach);return;}
   ui.aiInput.blur(); // Dismiss the keyboard before the unchanged shared dialogue.
   aiPanelOpen=false;ui.aiResult.textContent="";
   committing=true;
@@ -1304,8 +1306,8 @@ async function sendAiReading(){
  }
  finally{clearTimeout(timer);aiBusy=false;render();}
 }
-function deliverTacticalWritten(before,reading,data){
- const selected=C.fromText(before,reading),p=C.predict(selected);
+function deliverTacticalWritten(before,reading,data,intendedApproach="auto"){
+ const selected=C.fromText(before,reading,{approach:intendedApproach}),p=C.predict(selected);
  if(!p)return;
  ui.aiInput.blur();aiPanelOpen=false;ui.aiResult.textContent="";
  committing=true;readingOpen=false;
@@ -1314,7 +1316,7 @@ function deliverTacticalWritten(before,reading,data){
   const next=C.read(selected);
   persist({...record,battle:next,firstWrittenDelivered:true,aiCalls:aiCalls+1,aiConfirmedCalls:aiCalls+1},()=>{
    battle=record.battle;aiCalls=record.aiCalls;firstWrittenDelivered=true;
-   ui.aiInput.value="";aiPendingRequest=null;aiPendingText="";aiRetryVisible=false;
+   ui.aiInput.value="";if(ui.writingSelect)ui.writingSelect.value="auto";aiPendingRequest=null;aiPendingText="";aiRetryVisible=false;
    visualBattle=before;
    // The deployed legacy API does not know tactical observations. Use its
    // Shion paraphrase, but keep the beast's state/response authored and consistent.
@@ -1585,7 +1587,16 @@ function init(){
  writingPanel.append(writingReference,ui.aiPanel);
  const writingFooter=newEl("div","cb-writing-footer");
  ui.writingCount=newEl("span","cb-writing-count","0 / 700文字");
- if(tactical)writingFooter.append(ui.writingIntent);
+ if(tactical){
+  ui.writingSelect=newEl("select","cb-writing-intent-select");
+  for(const [value,title] of [["auto","文章から判断する"],["support","距離を保って話す"],["reach","一歩近づいて話す"]]){
+   const option=newEl("option","",title);option.value=value;ui.writingSelect.append(option);
+  }
+  ui.writingSelect.addEventListener("change",renderWritingIntent);
+  ui.writingSelectLabel=newEl("label","cb-writing-intent-label");
+  ui.writingSelectLabel.append(newEl("span","","意図した行動を確認・修正"),ui.writingSelect);
+  writingFooter.append(ui.writingIntent,ui.writingSelectLabel);
+ }
  writingFooter.append(ui.writingCount,ui.aiSend);
  ui.writingOverlay.append(writingHeader,writingContext,writingPanel,writingFooter);
  ui.wayHint=newEl("p","cb-way-hint","書けなくても大丈夫。解釈だけでも届けられます。");
