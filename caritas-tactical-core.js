@@ -96,22 +96,41 @@
  }
  function optionsFor(card){return card.role==='TRIGGER'?['忍耐','勇気']:card.words;}
  function valid(s){return Base.valid(s)&&s.words[1]!=='自制';}
- function observation(s){return OBSERVATIONS[Base.stateFor(s.dark)]||OBSERVATIONS.wavering;}
+ function respected(s){return s.respectedRefusal===true;}
+ function observation(s){
+  const state=Base.stateFor(s.dark),base=OBSERVATIONS[state]||OBSERVATIONS.wavering;
+  if(state==='storm')return {...base,clue:respected(s)
+    ?'星獣は離れた場所から視線を向ける。爪はまだ地面を掴み、口を開くたび喉の闇が脈打つ。'
+    :'星獣は足を引きかけて止める。こちらを見る一方、爪は強く地面を削り、声は闇に遮られる。'};
+  if(state==='closed'&&s.turn>0&&s.lastEffect?.misread)
+   return {...base,clue:'星獣はさらに身を引いたが、こちらから目を逸らさない。爪は震えたまま地面を掻く。'};
+  return base;
+ }
  function predict(s){
   if(s.phase!=='read'||!valid(s))return null;
-  const state=Base.stateFor(s.dark),reach=s.words[1]==='勇気',misread=reach&&state==='closed',blocked=!reach&&state==='storm';
-  let relief=state==='closed'?(reach?5:30):state==='storm'?(reach?30:0):(reach?25:15);
-  let cost=misread?50:state==='closed'?5:state==='storm'?(reach?15:10):(reach?20:5);
-  let gain=blocked||misread?0:state==='closed'?30:state==='storm'?35:(reach?35:25);
-  // Compass observations have a visible affinity bonus, never a wrong-answer penalty.
+  const state=Base.stateFor(s.dark),reach=s.words[1]==='勇気';
+  const misread=reach&&state==='closed';
+  // Waiting offers steadier progress; approaching changes things faster at
+  // higher risk. Neither action becomes universally correct after "荒れる".
+  let relief=state==='closed'?(reach?5:30):state==='storm'?(reach?29:15):(reach?25:17);
+  let cost=misread?(s.turn===0?18:45):state==='closed'?5:state==='storm'?(reach?15:6):(reach?20:5);
+  let gain=misread?0:state==='closed'?30:state==='storm'?(reach?34:19):(reach?35:27);
+  const respectedBefore=respected(s);
+  // A small consequence of earlier boundaries, not a second answer table.
+  if(state==='storm'){
+   if(reach)cost+=respectedBefore?-3:5;
+   else if(!respectedBefore)gain+=4; // Staying now can repair an earlier rush.
+  }
+  if(state==='wavering'&&s.lastReading?.[1]==='勇気'&&!reach)
+   gain+=4; // Give space after a tense approach.
   const focus=['不安','秘密','無意識'][state==='closed'?0:state==='storm'?1:2];
-  if(!misread&&!blocked&&s.words[0]===focus)relief+=3;
-  if(!misread&&!blocked&&s.words[2]==='希望'){relief+=5;cost+=5;}
+  if(!misread&&s.words[0]===focus)relief+=3;
+  if(!misread&&s.words[2]==='希望'){relief+=5;cost+=5;}
   if(!misread&&s.words[2]==='癒し')cost=Math.max(2,cost-3);
-  if(!misread&&!blocked&&s.words[2]==='願い')gain+=5;
+  if(!misread&&s.words[2]==='願い')gain+=5;
   const dark=Math.min(Math.max(0,s.dark-1),relief),resonance=Math.min(100-s.resonance,gain),damage=Math.min(s.hp,cost);
-  return {state,dark,resonance,damage,rawDamage:cost,hasCounter:cost>0,power:relief,force:1,penetration:0,hit:dark,match:s.words[0]===focus?1:0,darkBucket:Base.bucket(dark),resBucket:Base.bucket(resonance),approach:reach?'reach':'support',misread,blocked,
-   explanation:misread?'拒絶を押してしまった。距離を取り、声が届く場所を探そう。':blocked?'声を遮るアビスが残る。本人はこちらを見ている。今は踏み込む余地がある。':reach?'助けを求める声へ踏み込み、闇を解いた。':'距離を保って支え、闇を解いた。'};
+  return {state,dark,resonance,damage,rawDamage:cost,hasCounter:cost>0,power:relief,force:1,penetration:0,hit:dark,match:s.words[0]===focus?1:0,darkBucket:Base.bucket(dark),resBucket:Base.bucket(resonance),approach:reach?'reach':'support',misread,blocked:false,
+   explanation:misread?'距離を求める相手へ踏み込み、警戒が強まった。':reach?'言葉は届いた。闇が揺らいだが、身体には緊張も残る。':'相手が呼吸を整える余地ができた。闇はまだ残っている。'};
  }
  function read(s){
   const p=predict(s);if(!p)return s;
